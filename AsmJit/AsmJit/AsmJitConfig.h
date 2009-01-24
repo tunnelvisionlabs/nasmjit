@@ -1,0 +1,96 @@
+// AsmJit - Complete JIT Assembler for C++ Language.
+
+// Copyright (c) 2006-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+// 
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+
+// This file is designed to be changeable. Platform specific changes
+// should be applied to this file and this guarantes and never versions
+// of AsmJit library will never overwrite generated config files.
+//
+// So modify this will by your build system or hand. Windows developers
+// should only define ASMJIT_WINDOWS and uncomment other platforms. Linux
+// developers should define ASMJIT_POSIX and uncomment other platforms, 
+// etc...
+
+// [Guard]
+#ifndef _ASMJIT_BUILD_H
+#define _ASMJIT_BUILD_H
+
+// [Include]
+//
+// Here should be optional include files that's needed fo successfuly
+// use macros defined here. Remember, AsmJit uses only AsmJit namespace
+// and all macros are used within it. So for example crash handler is
+// not called as AsmJit::crash(0) in ASMJIT_ILLEGAL() macro, but simply
+// as crash(0).
+#include <stdlib.h>
+
+// [AsmJit - OS]
+#define ASMJIT_WINDOWS 1
+#define ASMJIT_POSIX 2
+
+// HERE DEFINE YOUR OS
+#define ASMJIT_OS ASMJIT_WINDOWS
+// #define ASMJIT_OS ASMJIT_[WINDOWS|POSIX]
+
+#if !defined(ASMJIT_OS) || ASMJIT_OS < 1
+#error "AsmJit - Define ASMJIT_OS macro to your operating system"
+#endif // ASMJIT_OS
+
+// [AsmJit API]
+#define ASMJIT_API
+#define ASMJIT_VAR extern
+
+// [AsmJit - MEMORY]
+#define ASMJIT_MALLOC ::malloc
+#define ASMJIT_REALLOC ::realloc
+#define ASMJIT_FREE ::free
+
+// [AsmJit - Crash handler]
+namespace AsmJit
+{
+  static void crash(int* ptr = 0) { *ptr = 0; }
+}
+
+// [AsmJit - Types]
+namespace AsmJit
+{
+  typedef char Int8;
+  typedef unsigned char UInt8;
+  typedef short Int16;
+  typedef unsigned short UInt16;
+  typedef int Int32;
+  typedef unsigned int UInt32;
+}
+
+// [AsmJit - DEBUG]
+#if defined(DEBUG)
+#define ASMJIT_ILLEGAL() crash()
+#define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_ILLEGAL(); } while(0)
+#else
+#define ASMJIT_ILLEGAL() do {} while(0)
+#define ASMJIT_ASSERT(exp) do {} while(0)
+#endif // DEBUG
+
+// [Guard]
+#endif // _ASMJIT_BUILD
