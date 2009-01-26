@@ -61,16 +61,6 @@
 // significantly by Google Inc.
 // Copyright 2006-2008 the V8 project authors. All rights reserved.
 
-// TODOs:
-// [ ] FPU instructions and format is not well defined. Some instructions
-//     allows to store result in st(i) and others to get st(0) and st(i).
-//     This should be clear in the future.
-// [ ] Add SSE4a instruction set (AMD).
-// [ ] Add AMD 3dNow.
-// [ ] Add AMD 3dNow extensions.
-// [ ] X64 instructions not ported:
-//     test, j, jmp, call
-
 // [Guard]
 #ifndef _ASMJIT_X86_H
 #define _ASMJIT_X86_H
@@ -1514,66 +1504,7 @@ struct ASMJIT_API X86
     else
       ASMJIT_ILLEGAL();
   }
-#if 0
-  //! @brief Emit register / immediate or memory / immediate to buffer.
-  void emitImm(UInt8 o, const Op& dst, const Op& imm)
-  {
-    // reg (BYTE) <- imm
-    if (dst.op() == OP_REG && dst.regType() == REG_GPB)
-    {
-      // short form if the destination is 'al'.
-      ASMJIT_ASSERT(isInt8(imm.imm()));
 
-      if (dst.reg() == REG_AL)
-      {
-        // short form if the destination is 'al'.
-        emitByte((o << 3) | 0x04);
-        emitByte(imm.imm() & 0xFF);
-      }
-      else
-      {
-        emitByte(0x80);
-        emitReg(o, dst.regCode());
-        emitByte(imm.imm() & 0xFF);
-      }
-      return;
-    }
-
-    // reg (DWORD) <- imm
-    if (dst.op() == OP_REG && dst.regType() == REG_GPD)
-    {
-      if (dst.reg() == REG_EAX)
-      {
-        // short form if the destination is 'eax'.
-        emitByte((o << 3) | 0x05);
-        emitDWordImmediate(imm);
-      }
-      else
-      {
-        emitByte(0x81);
-        emitReg(o, dst.regCode());
-        emitDWordImmediate(imm);
-      }
-      return;
-    }
-
-    // Mem <- Imm
-    if (isInt8(imm.imm()))
-    {
-      // using a sign-extended 8-bit immediate.
-      emitByte(0x83);
-      emitOp(o, dst);
-      emitByte(imm.imm() & 0xFF);
-    }
-    else
-    {
-      // using a literal 32-bit immediate.
-      emitByte(0x81);
-      emitOp(o, dst);
-      emitDWordImmediate(imm);
-    }
-  }
-#endif
   //! @brief Emit complete bit operation.
   //!
   //! Used for RCL, RCR, ROL, ROR, SAL, SAR, SHL, SHR.
@@ -1779,36 +1710,30 @@ struct ASMJIT_API X86
   }
 
   //! @brief Emits MMX/SSE instruction in form: inst dst, src or [src...]
-  void emitMM(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src)
+  //!
+  //! @note
+  //! - prefix0 can be 0x00 (ignore), 0x66, 0xF2 or 0xF3
+  //! - opcode0 can be 0x00 (ignore) or any 8 bit number
+  //! - opcoded opcode1 and opcode2 are always emitted
+  void emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw = 0)
   {
     if (!ensureSpace()) return;
 
-    // Prefixes, we are using prefix1 and prefix2 as prefixes, but in fact
-    // MM-X86 instruction has only one prefix. In documentation is also that
-    // instruction has one or two opcodes, but never instructions has more.
+    if (prefix0) emitByte(prefix0);
 #if defined(ASMJIT_X86)
-    // no rex in 32 bit mode
-    if (prefix1) emitByte(prefix1);
-    if (prefix2) emitByte(prefix2);
+    emitRex(rexw, dstCode, src);
 #endif // ASMJIT_X86
-
-    // TODO: Verify!
-#if defined(ASMJIT_X64)
-    if (prefix1) emitByte(prefix1);
-    if (prefix2) emitByte(prefix2);
-    emitRex(1, dstCode, src);
-#endif // ASMJIT_X64
-
+    if (opcode0) emitByte(opcode0);
     emitByte(opcode1);
     emitByte(opcode2);
     emitOp(dstCode, src);
   }
 
   //! @brief Emits MMX/SSE instruction in form: inst dst, src or [src], imm8
-  void emitMM(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8)
+  void emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw = 0)
   {
     if (!ensureSpace()) return;
-    emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src);
+    emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src, rexw);
     emitByte(imm8 & 0xFF);
   }
 
@@ -3578,70 +3503,50 @@ struct ASMJIT_API X86
   {
     switch (op1.op() << 4 | op2.op())
     {
-      // Reg + Reg
+      // Reg/Mem + Reg
       case (OP_REG << 4) | OP_REG:
-        ASMJIT_ASSERT(op1.size() == op2.size());
-        switch (op1.size())
-        {
-          case 1:
-            emitByte(0x84);
-            emitReg(op1.regCode(), op2.regCode());
-            return;
-          case 4:
-            emitByte(0x85);
-            emitReg(op1.regCode(), op2.regCode());
-            return;
-        }
-        break;
-
-      // Mem + Reg
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(op1.size() == op2.size());
-        switch (op1.size())
-        {
-          case 1:
-            emitByte(0x84);
-            emitMem(op2.regCode(), op1);
-            return;
-          case 4:
-            emitByte(0x85);
-            emitMem(op2.regCode(), op1);
-            return;
-        }
-        break;
 
-      // Reg + Imm
+        if (op2.size() == 2) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
+        emitRex(op2.size() == 8, op2.regCode(), op1);
+#endif // ASMJIT_X64
+        emitByte(0x84 + (op2.size() != 1));
+        emitOp(op2.regCode(), op1);
+        return;
+
       case (OP_REG << 4) | OP_IMM:
-        if (op1.reg() == REG_AL)
+        if (op1.regCode() == 0)
         {
-          emitByte(0xA8);
-          emitByte(op2.imm() & 0xFF);
-          return;
-        }
-        else if (op1.reg() == REG_EAX)
-        {
-          emitByte(0xA9);
-          emitDWordImmediate(op2);
+          if (op1.regSize() == 2) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
+          emitRex(op1.regSize() == 8, 0, op1);
+#endif // ASMJIT_X64
+          emitByte(0xA8 + (op1.regSize() != 1));
+          if (op1.regSize() == 1)
+            emitByteImmediate(op2);
+          else if (op1.regSize() == 2)
+            emitWordImmediate(op2);
+          else
+            emitDWordImmediate(op2);
           return;
         }
         // ... fall through ...
-      // Mem + Imm
       case (OP_MEM << 4) | OP_IMM:
+        if (op1.size() == 2) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
+        emitRex(op1.size() == 8, 0, op1);
+#endif // ASMJIT_X64
+        emitByte(0xF6 + (op1.size() != 1));
+        emitOp(0, op1);
         if (op1.size() == 1)
-        {
-          emitByte(0xF6);
-          emitOp(0, op1);
-          emitByte(op2.imm() & 0xFF);
-          return;
-        }
-        if (op1.size() == 4)
-        {
-          emitByte(0xF7);
-          emitOp(0, op1);
+          emitByteImmediate(op2);
+        else if (op1.size() == 2)
+          emitWordImmediate(op2);
+        else
           emitDWordImmediate(op2);
-          return;
-        }
-        break;
+        return;
     }
 
     ASMJIT_ILLEGAL();
@@ -3724,106 +3629,84 @@ struct ASMJIT_API X86
   //! another one or from one memory location to another one. To move from
   //! SSE register to MMX (or vice versa), use @c movq() instruction,
   //! @c movdq2q() or movq2dq().
-  void movd(const Op& dst, const Op& src)
+  void movd(const Op& _dst, const Op& _src)
   {
-    if (!ensureSpace()) return;
+    const Op* dst = &_dst;
+    const Op* src = &_src;
+    UInt8 opCode = 0x6E;
+    bool isSSE = false;
 
-    switch (dst.op() << 4 | src.op())
+    // Swap dst/src to be in format Reg/Mem, Reg
+    if (dst->op() == OP_REG && src->op() == OP_MEM)
     {
-      // Reg <- Reg
-      case (OP_REG << 4) | OP_REG:
-        // MMX
-        if (dst.regType() == REG_MMX && src.regType() == REG_GPD)
-        {
-          emitByte(0x0F);
-          emitByte(0x6E);
-          emitReg(dst.regCode(), src.regCode());
-          return;
-        }
-        if (dst.regType() == REG_GPD && src.regType() == REG_MMX)
-        {
-          emitByte(0x0F);
-          emitByte(0x7E);
-          emitReg(src.regCode(), dst.regCode());
-          return;
-        }
-        // SSE
-        if (dst.regType() == REG_SSE && src.regType() == REG_GPD)
-        {
-          emitByte(0x66);
-          emitByte(0x0F);
-          emitByte(0x6E);
-          emitReg(dst.regCode(), src.regCode());
-          return;
-        }
-        if (dst.regType() == REG_GPD && src.regType() == REG_SSE)
-        {
-          emitByte(0x66);
-          emitByte(0x0F);
-          emitByte(0x7E);
-          emitReg(src.regCode(), dst.regCode());
-          return;
-        }
-        break;
-
-      // Reg <- Mem
-      case (OP_REG << 4) | OP_MEM:
-        // MMX
-        if (dst.regType() == REG_MMX)
-        {
-          if (src.size() == 4)
-          {
-            emitByte(0x0F);
-            emitByte(0x6E);
-            emitMem(dst.regCode(), src);
-            return;
-          }
-        }
-        // SSE
-        if (dst.regType() == REG_SSE)
-        {
-          if (src.size() == 4)
-          {
-            emitByte(0x66);
-            emitByte(0x0F);
-            emitByte(0x6E);
-            emitMem(dst.regCode(), src);
-            return;
-          }
-        }
-        break;
-
-      // Mem <- Reg
-      case (OP_MEM << 4) | OP_REG:
-        // MMX
-        if (src.regType() == REG_MMX)
-        {
-          if (dst.size() == 4)
-          {
-            emitByte(0x0F);
-            emitByte(0x7E);
-            emitMem(src.regCode(), dst);
-            return;
-          }
-        }
-        // SSE
-        if (src.regType() == REG_SSE)
-        {
-          if (dst.size() == 4)
-          {
-            emitByte(0x66);
-            emitByte(0x0F);
-            emitByte(0x7E);
-            emitMem(src.regCode(), dst);
-            return;
-          }
-        }
-        break;
+      dst = &_src;
+      src = &_dst;
+      opCode = 0x7E;
+      isSSE = src->regType() == REG_SSE;
     }
 
-    ASMJIT_ILLEGAL();
+    if (dst->op() == OP_REG && src->op() == OP_REG)
+    {
+      isSSE = dst->regType() == REG_SSE || 
+              src->regType() == REG_SSE;
+      
+      if (dst->regType() == REG_GPD) opCode = 0x7E;
+    }
+
+    // now we have operands in form Reg/Mem, Reg
+    ASMJIT_ASSERT(
+      (dst->op() == OP_MEM && (src->regType() == REG_MMX || src->regType() == REG_SSE)) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_MMX && src->regType() == REG_GPD ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_SSE && src->regType() == REG_GPD ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_GPD && src->regType() == REG_MMX ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_GPD && src->regType() == REG_SSE )
+    );
+
+    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), *dst);
   }
-  
+
+#if defined(ASMJIT_X64)
+  //! @brief Internal function called from @c movq().
+  //!
+  //! This function implements 64 bit only @c movq() instruction.
+  //! @internal
+  void _movq_x64(const Op& _dst, const Op& _src)
+  {
+    const Op* dst = &_dst;
+    const Op* src = &_src;
+    UInt8 opCode = 0x6E;
+    bool isSSE = false;
+
+    // Swap dst/src to be in format Reg/Mem, Reg
+    if (dst->op() == OP_REG && src->op() == OP_MEM)
+    {
+      dst = &_src;
+      src = &_dst;
+      opCode = 0x7E;
+      isSSE = src->regType() == REG_SSE;
+    }
+
+    if (dst->op() == OP_REG && src->op() == OP_REG)
+    {
+      isSSE = dst->regType() == REG_SSE || 
+              src->regType() == REG_SSE;
+      
+      if (dst->regType() == REG_GPQ) opCode = 0x7E;
+    }
+
+    // now we have operands in form Reg/Mem, Reg
+    ASMJIT_ASSERT(
+      (dst->op() == OP_MEM && (src->regType() == REG_MMX || src->regType() == REG_SSE)) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_MMX && src->regType() == REG_GPQ ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_SSE && src->regType() == REG_GPQ ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_GPQ && src->regType() == REG_MMX ) ||
+      (dst->op() == OP_REG &&  dst->regType() == REG_GPQ && src->regType() == REG_SSE )
+    );
+
+    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), dst, 1);
+  }
+#endif // ASMJIT_X64
+
   //! @brief Move 64 bits (MMX).
   void movq(const Op& dst, const Op& src)
   {
@@ -3834,37 +3717,25 @@ struct ASMJIT_API X86
       case (OP_REG << 4) | OP_REG:
         if (dst.regType() == REG_MMX && src.regType() == REG_MMX)
         {
-          emitByte(0x0F);
-          emitByte(0x6F);
-          emitReg(dst.regCode(), src.regCode());
+          emitMM(0x00, 0x00, 0x0F, 0x6F, dst.regCode(), src);
           return;
         }
         if (dst.regType() == REG_SSE && src.regType() == REG_SSE)
         {
-          emitByte(0xF3);
-          emitByte(0x0F);
-          emitByte(0x7E);
-          emitReg(dst.regCode(), src.regCode());
-          return;
-        }
-
-        // Convenience - movq2dq
-        if (dst.regType() == REG_SSE && src.regType() == REG_MMX)
-        {
-          emitByte(0xF3);
-          emitByte(0x0F);
-          emitByte(0xD6);
-          emitReg(dst.regCode(), src.regCode());
+          emitMM(0xF2, 0x00, 0x0F, 0x7E, dst.regCode(), src);
           return;
         }
 
         // Convenience - movdq2q
         if (dst.regType() == REG_MMX && src.regType() == REG_SSE)
         {
-          emitByte(0xF2);
-          emitByte(0x0F);
-          emitByte(0xD6);
-          emitReg(dst.regCode(), src.regCode());
+          emitMM(0xF2, 0x00, 0x0F, 0xD6, dst.regCode(), src);
+          return;
+        }
+        // Convenience - movq2dq
+        if (dst.regType() == REG_SSE && src.regType() == REG_MMX)
+        {
+          emitMM(0xF3, 0x00, 0x0F, 0xD6, dst.regCode(), src);
           return;
         }
         break;
@@ -3872,17 +3743,12 @@ struct ASMJIT_API X86
       case (OP_REG << 4) | OP_MEM:
         if (dst.regType() == REG_MMX)
         {
-          emitByte(0x0F);
-          emitByte(0x6F);
-          emitMem(dst.regCode(), src);
+          emitMM(0x00, 0x00, 0x0F, 0x6F, dst.regCode(), src);
           return;
         }
         if (dst.regType() == REG_SSE)
         {
-          emitByte(0xF3);
-          emitByte(0x0F);
-          emitByte(0x7E);
-          emitMem(dst.regCode(), src);
+          emitMM(0xF3, 0x00, 0x0F, 0x7F, dst.regCode(), src);
           return;
         }
         break;
@@ -3890,23 +3756,22 @@ struct ASMJIT_API X86
       case (OP_MEM << 4) | OP_REG:
         if (src.regType() == REG_MMX)
         {
-          emitByte(0x0F);
-          emitByte(0x7F);
-          emitMem(src.regCode(), dst);
+          emitMM(0x00, 0x00, 0x0F, 0x7F, src.regCode(), dst);
           return;
         }
         if (src.regType() == REG_SSE)
         {
-          emitByte(0xF3);
-          emitByte(0x0F);
-          emitByte(0xD6);
-          emitMem(src.regCode(), dst);
+          emitMM(0xF3, 0x00, 0x0F, 0xD6, src.regCode(), dst);
           return;
         }
         break;
     }
 
+#if defined(ASMJIT_X64)
+    _movq_x64(dst, src);
+#else
     ASMJIT_ILLEGAL();
+#endif // ASMJIT_X64
   }
 
   //! @brief Pack with Signed Saturation (MMX).
@@ -4312,7 +4177,7 @@ struct ASMJIT_API X86
   void addss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x58, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x58, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical And Not For SP-FP (SSE).
@@ -4333,14 +4198,14 @@ struct ASMJIT_API X86
   void cmpps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x00, 0x0F, 0xC2, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x00, 0x0F, 0xC2, dst.regCode(), src, imm8);
   }
 
   //! @brief Compare Scalar SP-FP Values (SSE).
   void cmpss(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0xC2, dst.regCode(), src, imm8);
+    emitMMi(0xF3, 0x00, 0x0F, 0xC2, dst.regCode(), src, imm8);
   }
 
   //! @brief Scalar Ordered SP-FP Compare and Set EFLAGS (SSE).
@@ -4368,14 +4233,14 @@ struct ASMJIT_API X86
   void cvtsi2ss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_GPD) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x2A, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x2A, dst.regCode(), src);
   }
 
   //! @brief Scalar SP-FP to Signed INT32 Conversion (SSE).
   void cvtss2si(const MMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_GPD) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x2D, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x2D, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP to Packed INT32 Conversion (truncate) (SSE).
@@ -4389,7 +4254,7 @@ struct ASMJIT_API X86
   void cvttss2si(const Register& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x2C, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x2C, dst.regCode(), src, dst.regType() == REG_GPQ);
   }
 
   //! @brief Packed SP-FP Divide (SSE).
@@ -4403,7 +4268,7 @@ struct ASMJIT_API X86
   void divss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x5E, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x5E, dst.regCode(), src);
   }
 
   //! @brief Load Streaming SIMD Extension Control/Status (SSE).
@@ -4432,7 +4297,7 @@ struct ASMJIT_API X86
   void maxss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x5F, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x5F, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP Minimum (SSE).
@@ -4446,7 +4311,7 @@ struct ASMJIT_API X86
   void minss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x5D, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x5D, dst.regCode(), src);
   }
 
   //! @brief Move Aligned Packed SP-FP Values (SSE).
@@ -4539,11 +4404,11 @@ struct ASMJIT_API X86
         // ... fall through ...
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0xF3, 0x0F, 0x10, dst.regCode(), src);
+        emitMM(0xF3, 0x00, 0x0F, 0x10, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0xF3, 0x0F, 0x11, src.regCode(), dst);
+        emitMM(0xF3, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -4573,14 +4438,14 @@ struct ASMJIT_API X86
   void mulps(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x59, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x59, dst.regCode(), src);
   }
    
   //! @brief Scalar SP-FP Multiply (SSE).
   void mulss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x59, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x59, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical OR for SP-FP Data (SSE).
@@ -4607,14 +4472,14 @@ struct ASMJIT_API X86
   //! @brief Extract Word (SSE).
   void pextrw(const Register& dst, const MMRegister& src, int imm8)
   {
-    emitMM(0x00, 0x00, 0x0F, 0xC5, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x00, 0x0F, 0xC5, dst.regCode(), src, imm8);
   }
   
   //! @brief Insert Word (SSE).
   void pinsrw(const MMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_MMX) || src.op() == OP_MEM);
-    emitMM(0x00, 0x00, 0x0F, 0xC4, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x00, 0x0F, 0xC4, dst.regCode(), src, imm8);
   }
   
   //! @brief Packed Signed Integer Word Maximum (SSE).
@@ -4648,7 +4513,7 @@ struct ASMJIT_API X86
   //! @brief Move Byte Mask To Integer (SSE).
   void pmovmskb(const Register& dst, const MMRegister& src)
   {
-    emitMM(0x00, 0x00, 0x0F, 0xD7, dst.regCode(), src);
+    emitMM(0x00, 0x00, 0x0F, 0xD7, dst.regCode(), src, dst.regType() == REG_GPQ);
   }
 
   //! @brief Packed Multiply High Unsigned (SSE).
@@ -4669,7 +4534,7 @@ struct ASMJIT_API X86
   void pshufw(const MMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_MMX) || src.op() == OP_MEM);
-    emitMM(0x00, 0x00, 0x0F, 0x70, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x00, 0x0F, 0x70, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed SP-FP Reciprocal (SSE).
@@ -4683,7 +4548,7 @@ struct ASMJIT_API X86
   void rcpss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x53, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x53, dst.regCode(), src);
   }
 
   //! @brief Prefetch (SSE).
@@ -4697,7 +4562,7 @@ struct ASMJIT_API X86
   void psadbw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xF6, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xF6, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP Square Root Reciprocal (SSE).
@@ -4711,7 +4576,7 @@ struct ASMJIT_API X86
   void rsqrtss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x52, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x52, dst.regCode(), src);
   }
   
   //! @brief Store fence (SSE).
@@ -4725,7 +4590,7 @@ struct ASMJIT_API X86
   void shufps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x00, 0x0F, 0xC6, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x00, 0x0F, 0xC6, dst.regCode(), src, imm8);
   }
   
   //! @brief Packed SP-FP Square Root (SSE).
@@ -4739,7 +4604,7 @@ struct ASMJIT_API X86
   void sqrtss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x51, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x51, dst.regCode(), src);
   }
 
   //! @brief Store Streaming SIMD Extension Control/Status (SSE).
@@ -4759,7 +4624,7 @@ struct ASMJIT_API X86
   void subss(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x51, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x51, dst.regCode(), src);
   }
   
   //! @brief Unordered Scalar SP-FP compare and set EFLAGS (SSE).
@@ -4798,28 +4663,28 @@ struct ASMJIT_API X86
   void addpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x58, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x58, dst.regCode(), src);
   }
 
   //! @brief Scalar DP-FP Add (SSE2).
   void addsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x58, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x58, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical And Not For DP-FP (SSE2).
   void andnpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x55, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x55, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical And For DP-FP (SSE2).
   void andpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x54, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x54, dst.regCode(), src);
   }
 
   //! @brief Flush Cache Line (SSE2).
@@ -4833,28 +4698,28 @@ struct ASMJIT_API X86
   void cmppd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0xC2, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x00, 0x0F, 0xC2, dst.regCode(), src, imm8);
   }
 
   //! @brief Compare Scalar SP-FP Values (SSE2).
   void cmpsd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0xC2, dst.regCode(), src, imm8);
+    emitMMi(0xF2, 0x00, 0x0F, 0xC2, dst.regCode(), src, imm8);
   }
 
   //! @brief Scalar Ordered DP-FP Compare and Set EFLAGS (SSE2).
   void comisd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x2F, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x2F, dst.regCode(), src);
   }
 
   //! @brief Convert Packed Dword Integers to Packed DP-FP Values (SSE2).
   void cvtdq2pd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0xE6, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0xE6, dst.regCode(), src);
   }
 
   //! @brief Convert Packed Dword Integers to Packed SP-FP Values (SSE2).
@@ -4867,31 +4732,31 @@ struct ASMJIT_API X86
   //! @brief Convert Packed DP-FP Values to Packed Dword Integers (SSE2).
   void cvtpd2dq(const XMMRegister& dst, const Op& src)
   {
-    emitMM(0x00, 0xF2, 0x0F, 0xE6, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0xE6, dst.regCode(), src);
   }
 
   //! @brief Convert Packed DP-FP Values to Packed Dword Integers (SSE2).
   void cvtpd2pi(const MMRegister& dst, const Op& src)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x2D, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x2D, dst.regCode(), src);
   }
 
   //! @brief Convert Packed DP-FP Values to Packed SP-FP Values (SSE2).
   void cvtpd2ps(const XMMRegister& dst, const Op& src)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x5A, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5A, dst.regCode(), src);
   }
 
   //! @brief Convert Packed Dword Integers to Packed DP-FP Values (SSE2).
   void cvtpi2pd(const XMMRegister& dst, const Op& src64)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x2A, dst.regCode(), src64);
+    emitMM(0x66, 0x00, 0x0F, 0x2A, dst.regCode(), src64);
   }
 
   //! @brief Convert Packed SP-FP Values to Packed Dword Integers (SSE2).
   void cvtps2dq(const XMMRegister& dst, const Op& src)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x5B, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5B, dst.regCode(), src);
   }
 
   //! @brief Convert Packed SP-FP Values to Packed DP-FP Values (SSE2).
@@ -4904,76 +4769,76 @@ struct ASMJIT_API X86
   //! @brief Convert Scalar DP-FP Value to Dword Integer (SSE2).
   void cvtsd2si(const Register& dst, const Op& src)
   {
-    emitMM(0x00, 0xF2, 0x0F, 0x2D, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x2D, dst.regCode(), src, dst.regType() == REG_GPQ);
   }
 
   //! @brief Convert Scalar DP-FP Value to Scalar SP-FP Value (SSE2).
   void cvtsd2ss(const XMMRegister& dst, const Op& src)
   {
-    emitMM(0x00, 0xF2, 0x0F, 0x5A, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x5A, dst.regCode(), src);
   }
 
   //! @brief Convert Dword Integer to Scalar DP-FP Value (SSE2).
   void cvtsi2sd(const XMMRegister& dst, const Op& src32)
   {
     ASMJIT_ASSERT((src32.op() == OP_REG && src32.regType() == REG_GPD) || (src32.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x2A, dst.regCode(), src32);
+    emitMM(0xF2, 0x00, 0x0F, 0x2A, dst.regCode(), src32);
   }
 
   //! @brief Convert Scalar SP-FP Value to Scalar DP-FP Value (SSE2).
   void cvtss2sd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x5A, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x5A, dst.regCode(), src);
   }
 
   //! @brief Convert Scalar SP-FP Value to Dword Integer (SSE2).
   void cvtss2si(const Register& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x2D, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x2D, dst.regCode(), src, dst.regType() == REG_GPQ);
   }
 
   //! @brief Convert with Truncation Packed DP-FP Values to Packed Dword Integers (SSE2).
   void cvttpd2pi(const MMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x2C, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x2C, dst.regCode(), src);
   }
 
   //! @brief Convert with Truncation Packed DP-FP Values to Packed Dword Integers (SSE2).
   void cvttpd2dq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0xE6, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xE6, dst.regCode(), src);
   }
 
   //! @brief Convert with Truncation Packed SP-FP Values to Packed Dword Integers (SSE2).
   void cvttps2dq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF3, 0x0F, 0x5B, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x5B, dst.regCode(), src);
   }
 
   //! @brief Convert with Truncation Scalar DP-FP Value to Signed Dword Integer (SSE2).
   void cvttsd2si(const Register& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x2C, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x2C, dst.regCode(), src, dst.regType() == REG_GPQ);
   }
 
   //! @brief Packed DP-FP Divide (SSE2).
   void divpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x5E, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5E, dst.regCode(), src);
   }
 
   //! @brief Scalar DP-FP Divide (SSE2).
   void divsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x5E, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x5E, dst.regCode(), src);
   }
 
   //! @brief Load Fence (SSE2).
@@ -4990,21 +4855,21 @@ struct ASMJIT_API X86
   //! @note Target is DS:EDI.
   void maskmovdqu(const XMMRegister& src, const XMMRegister& mask)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x57, src.regCode(), mask);
+    emitMM(0x66, 0x00, 0x0F, 0x57, src.regCode(), mask);
   }
 
   //! @brief Return Maximum Packed Double-Precision FP Values (SSE2).
   void maxpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x5F, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5F, dst.regCode(), src);
   }
 
   //! @brief Return Maximum Scalar Double-Precision FP Value (SSE2).
   void maxsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x5F, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x5F, dst.regCode(), src);
   }
 
   //! @brief Memory Fence (SSE2).
@@ -5020,14 +4885,14 @@ struct ASMJIT_API X86
   void minpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x5D, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5D, dst.regCode(), src);
   }
 
   //! @brief Return Minimum Scalar Double-Precision FP Value (SSE2).
   void minsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x5D, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x5D, dst.regCode(), src);
   }
 
   //! @brief Move Aligned Double Quadword (SSE2).
@@ -5042,13 +4907,13 @@ struct ASMJIT_API X86
       // Reg <- Mem
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x6F, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x6F, dst.regCode(), src);
         return;
 
       // Mem <- Reg
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x7F, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x7F, dst.regCode(), src);
         return;
     }
 
@@ -5067,13 +4932,13 @@ struct ASMJIT_API X86
       // Reg <- Mem
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0xF3, 0x0F, 0x6F, dst.regCode(), src);
+        emitMM(0xF3, 0x00, 0x0F, 0x6F, dst.regCode(), src);
         return;
 
       // Mem <- Reg
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0xF3, 0x0F, 0x7F, dst.regCode(), src);
+        emitMM(0xF3, 0x00, 0x0F, 0x7F, dst.regCode(), src);
         return;
     }
 
@@ -5089,7 +4954,7 @@ struct ASMJIT_API X86
   //! @brief Extract Packed DP-FP Sign Mask (SSE2).
   void movmskpd(const Register& dst, const XMMRegister& src)
   {
-    emitMM(0x00, 0x66, 0x0F, 0x50, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x50, dst.regCode(), src);
   }
 
   //! @brief Move Scalar Double-Precision FP Value (SSE2).
@@ -5102,11 +4967,11 @@ struct ASMJIT_API X86
         // ... fall through ...
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0xF2, 0x0F, 0x10, dst.regCode(), src);
+        emitMM(0xF2, 0x00, 0x0F, 0x10, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0xF2, 0x0F, 0x11, src.regCode(), dst);
+        emitMM(0xF2, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5121,11 +4986,11 @@ struct ASMJIT_API X86
     {
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x28, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x28, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x29, src.regCode(), dst);
+        emitMM(0x66, 0x00, 0x0F, 0x29, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5134,13 +4999,13 @@ struct ASMJIT_API X86
   //! @brief Move Quadword from XMM to MMX Technology Register (SSE2).
   void movdq2q(const MMRegister& dst, const XMMRegister& src)
   {
-    emitMM(0x00, 0xF2, 0x0F, 0xD6, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0xD6, dst.regCode(), src);
   }
 
   //! @brief Move Quadword from MMX Technology to XMM Register (SSE2).
   void movq2dq(const XMMRegister& dst, const MMRegister& src)
   {
-    emitMM(0x00, 0xF3, 0x0F, 0xD6, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0xD6, dst.regCode(), src);
   }
 
   //! @brief Move High Packed Double-Precision FP Value (SSE2).
@@ -5150,11 +5015,11 @@ struct ASMJIT_API X86
     {
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x16, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x16, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x17, src.regCode(), dst);
+        emitMM(0x66, 0x00, 0x0F, 0x17, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5167,11 +5032,11 @@ struct ASMJIT_API X86
     {
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x12, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x12, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x13, src.regCode(), dst);
+        emitMM(0x66, 0x00, 0x0F, 0x13, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5181,21 +5046,21 @@ struct ASMJIT_API X86
   void movntdq(const Op& dst, const XMMRegister& src)
   {
     ASMJIT_ASSERT(dst.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xE7, src.regCode(), dst);
+    emitMM(0x66, 0x00, 0x0F, 0xE7, src.regCode(), dst);
   }
 
   //! @brief Store Store DWORD Using Non-Temporal Hint (SSE2).
   void movnti(const Op& dst, const Register& src)
   {
     ASMJIT_ASSERT(dst.op() == OP_MEM);
-    emitMM(0x00, 0x00, 0x0F, 0xC3, src.regCode(), dst);
+    emitMM(0x00, 0x00, 0x0F, 0xC3, src.regCode(), dst, src.regType() == REG_GPQ);
   }
 
   //! @brief Store Packed Double-Precision FP Values Using Non-Temporal Hint (SSE2).
   void movntpd(const Op& dst, const XMMRegister& src)
   {
     ASMJIT_ASSERT(dst.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x2B, src.regCode(), dst);
+    emitMM(0x66, 0x00, 0x0F, 0x2B, src.regCode(), dst);
   }
 
   //! @brief Move Unaligned Packed Double-Precision FP Values (SSE2).
@@ -5205,11 +5070,11 @@ struct ASMJIT_API X86
     {
       case (OP_REG << 4) | OP_MEM:
         ASMJIT_ASSERT(dst.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x10, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0x10, dst.regCode(), src);
         return;
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        emitMM(0x00, 0x66, 0x0F, 0x11, src.regCode(), dst);
+        emitMM(0x66, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5219,63 +5084,63 @@ struct ASMJIT_API X86
   void mulpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x59, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x59, dst.regCode(), src);
   }
 
   //! @brief Scalar DP-FP Multiply (SSE2).
   void mulsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0xF2, 0x0F, 0x59, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x59, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical OR for DP-FP Data (SSE2).
   void orpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x66, 0x0F, 0x56, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x56, dst.regCode(), src);
   }
 
   //! @brief Pack with Signed Saturation (SSE2).
   void packsswb(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x63, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x00, 0x0F, 0x63, dst.regCode(), src, imm8);
   }
 
   //! @brief Pack with Signed Saturation (SSE2).
   void packssdw(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x6B, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x00, 0x0F, 0x6B, dst.regCode(), src, imm8);
   }
 
   //! @brief Pack with Unsigned Saturation (SSE2).
   void packuswb(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x67, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x00, 0x0F, 0x67, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed BYTE Add (SSE2).
   void paddb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xFC, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xFC, dst.regCode(), src);
   }
   
   //! @brief Packed WORD Add (SSE2).
   void paddw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xFD, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xFD, dst.regCode(), src);
   }
   
   //! @brief Packed DWORD Add (SSE2).
   void paddd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xFE, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xFE, dst.regCode(), src);
   }
 
   //! @brief Packed QWORD Add (SSE2).
@@ -5289,49 +5154,49 @@ struct ASMJIT_API X86
   void paddq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xD4, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xD4, dst.regCode(), src);
   }
 
   //! @brief Packed Add with Saturation (SSE2).
   void paddsb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xEC, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xEC, dst.regCode(), src);
   }
 
   //! @brief Packed Add with Saturation (SSE2).
   void paddsw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xED, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xED, dst.regCode(), src);
   }
   
   //! @brief Packed Add Unsigned with Saturation (SSE2).
   void paddusb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xDC, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xDC, dst.regCode(), src);
   }
 
   //! @brief Packed Add Unsigned with Saturation (SSE2).
   void paddusw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xDD, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xDD, dst.regCode(), src);
   }
 
   //! @brief Logical AND (SSE2).
   void pand(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xDB, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xDB, dst.regCode(), src);
   }
 
   //! @brief Logical AND Not (SSE2).
   void pandn(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xDF, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xDF, dst.regCode(), src);
   }
 
   //! @brief Spin Loop Hint (SSE2).
@@ -5346,42 +5211,42 @@ struct ASMJIT_API X86
   void pcmpeqb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x74, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x74, dst.regCode(), src);
   }
 
   //! @brief Packed Compare for Equal (WORDS) (SSE2).
   void pcmpeqw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x75, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x75, dst.regCode(), src);
   }
 
   //! @brief Packed Compare for Equal (DWORDS) (SSE2).
   void pcmpeqd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x76, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x76, dst.regCode(), src);
   }
 
   //! @brief Packed Compare for Greater Than (BYTES) (SSE2).
   void pcmpgtb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x64, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x64, dst.regCode(), src);
   }
 
   //! @brief Packed Compare for Greater Than (WORDS) (SSE2).
   void pcmpgtw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x65, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x65, dst.regCode(), src);
   }
 
   //! @brief Packed Compare for Greater Than (DWORDS) (SSE2).
   void pcmpgtd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x66, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x66, dst.regCode(), src);
   }
 
   //! @brief Move Byte Mask (SSE2).
@@ -5390,23 +5255,23 @@ struct ASMJIT_API X86
     ASMJIT_ASSERT(src.op() == OP_REG && (src.regType() == REG_MMX || src.regType() == REG_SSE));
 
     if (src.regType() == REG_MMX)
-      emitMM(0x00, 0x00, 0x0F, 0xD7, dst.regCode(), src);
+      emitMM(0x00, 0x00, 0x0F, 0xD7, dst.regCode(), src, dst.regType() == REG_GPQ);
     else
-      emitMM(0x00, 0x66, 0x0F, 0xD7, dst.regCode(), src);
+      emitMM(0x66, 0x00, 0x0F, 0xD7, dst.regCode(), src);
   }
 
   //! @brief Packed Multiply High (SSE2).
   void pmulhw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xE5, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xE5, dst.regCode(), src);
   }
   
   //! @brief Packed Multiply Low (SSE2).
   void pmullw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xD5, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xD5, dst.regCode(), src);
   }
 
   //! @brief Packed Multiply to QWORD (SSE2).
@@ -5420,14 +5285,14 @@ struct ASMJIT_API X86
   void pmuludq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xF4, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xF4, dst.regCode(), src);
   }
 
   //! @brief Bitwise Logical OR (SSE2).
   void por(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xEB, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xEB, dst.regCode(), src);
   }
 
   //! @brief Packed Shift Right Arithmetic (SSE2).
@@ -5437,10 +5302,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xE1, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xE1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x71, 4, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x71, 4, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5453,10 +5318,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xE2, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xE2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x72, 4, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x72, 4, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5470,10 +5335,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xF1, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xF1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x71, 6, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x71, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5486,10 +5351,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xF2, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xF2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x72, 6, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x72, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5502,10 +5367,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xF3, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xF3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x73, 6, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x73, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5517,7 +5382,7 @@ struct ASMJIT_API X86
     switch (src.op())
     {
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x73, 7, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x73, 7, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5527,21 +5392,21 @@ struct ASMJIT_API X86
   void psubb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xF8, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xF8, dst.regCode(), src);
   }
 
   //! @brief Packed Subtract (SSE2).
   void psubw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xF9, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xF9, dst.regCode(), src);
   }
 
   //! @brief Packed Subtract (SSE2).
   void psubd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xFA, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xFA, dst.regCode(), src);
   }
 
   //! @brief Packed Subtract (SSE2).
@@ -5555,35 +5420,35 @@ struct ASMJIT_API X86
   void psubq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xFB, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xFB, dst.regCode(), src);
   }
 
   //! @brief Packed Multiply and Add (SSE2).
   void pmaddwd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xF5, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xF5, dst.regCode(), src);
   }
 
   //! @brief Shuffle Packed DWORDs (SSE2).
   void pshufd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x70, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x00, 0x0F, 0x70, dst.regCode(), src, imm8);
   }
 
   //! @brief Shuffle Packed High Words (SSE2).
   void pshuhw(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x70, dst.regCode(), src, imm8);
+    emitMMi(0xF3, 0x00, 0x0F, 0x70, dst.regCode(), src, imm8);
   }
 
   //! @brief Shuffle Packed Low Words (SSE2).
   void pshulw(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x70, dst.regCode(), src, imm8);
+    emitMMi(0xF2, 0x00, 0x0F, 0x70, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed Shift Right Logical (SSE2).
@@ -5593,10 +5458,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xD1, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xD1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x71, 2, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x71, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5609,10 +5474,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xD2, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xD2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x72, 2, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x72, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5625,10 +5490,10 @@ struct ASMJIT_API X86
     {
       case OP_REG:
       case OP_MEM:
-        emitMM(0x00, 0x66, 0x0F, 0xD3, dst.regCode(), src);
+        emitMM(0x66, 0x00, 0x0F, 0xD3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x66, 0x0F, 0x73, 2, dst, src.imm());
+        emitMM(0x66, 0x00, 0x0F, 0x73, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5638,147 +5503,147 @@ struct ASMJIT_API X86
   void psubsb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xE8, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xE8, dst.regCode(), src);
   }
   
   //! @brief Packed Subtract with Saturation (SSE2).
   void psubsw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xE9, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xE9, dst.regCode(), src);
   }
 
   //! @brief Packed Subtract with Unsigned Saturation (SSE2).
   void psubusb(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xD8, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xD8, dst.regCode(), src);
   }
   
   //! @brief Packed Subtract with Unsigned Saturation (SSE2).
   void psubusw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xD9, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xD9, dst.regCode(), src);
   }
 
   //! @brief Unpack High Data (SSE2).
   void punpckhbw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x68, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x68, dst.regCode(), src);
   }
 
   //! @brief Unpack High Data (SSE2).
   void punpckhwd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x69, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x69, dst.regCode(), src);
   }
 
   //! @brief Unpack High Data (SSE2).
   void punpckhdq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x6A, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x6A, dst.regCode(), src);
   }
 
   //! @brief Unpack High Data (SSE2).
   void punpckhqdq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x6D, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x6D, dst.regCode(), src);
   }
 
   //! @brief Unpack Low Data (SSE2).
   void punpcklbw(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x60, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x60, dst.regCode(), src);
   }
 
   //! @brief Unpack Low Data (SSE2).
   void punpcklwd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x61, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x61, dst.regCode(), src);
   }
 
   //! @brief Unpack Low Data (SSE2).
   void punpckldq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x62, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x62, dst.regCode(), src);
   }
 
   //! @brief Unpack Low Data (SSE2).
   void punpcklqdq(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x6C, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x6C, dst.regCode(), src);
   }
 
   //! @brief Bitwise Exclusive OR (SSE2).
   void pxor(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xEF, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xEF, dst.regCode(), src);
   }
 
   //! @brief Compute Square Roots of Packed DP-FP Values (SSE2).
   void sqrtpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x51, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x51, dst.regCode(), src);
   }
 
   //! @brief Compute Square Root of Scalar DP-FP Value (SSE2).
   void sqrtsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x51, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x51, dst.regCode(), src);
   }
 
   //! @brief Packed DP-FP Subtract (SSE2).
   void subpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x5C, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x5C, dst.regCode(), src);
   }
 
   //! @brief Scalar DP-FP Subtract (SSE2).
   void subsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x5C, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x5C, dst.regCode(), src);
   }
 
   //! @brief Scalar Unordered DP-FP Compare and Set EFLAGS (SSE2).
   void ucomisd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x2E, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x2E, dst.regCode(), src);
   }
 
   //! @brief Unpack and Interleave High Packed Double-Precision FP Values (SSE2).
   void unpckhpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x15, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x15, dst.regCode(), src);
   }
 
   //! @brief Unpack and Interleave Low Packed Double-Precision FP Values (SSE2).
   void unpcklpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x14, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x14, dst.regCode(), src);
   }
 
   //! @brief Bit-wise Logical OR for DP-FP Data (SSE2).
   void xorpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x57, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x57, dst.regCode(), src);
   }
 
   // -------------------------------------------------------------------------
@@ -5789,14 +5654,14 @@ struct ASMJIT_API X86
   void addsubpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0xD0, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0xD0, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP Add/Subtract (SSE3).
   void addsubps(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0xD0, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0xD0, dst.regCode(), src);
   }
 
   //! @brief Store Integer with Truncation (SSE3).
@@ -5830,35 +5695,35 @@ struct ASMJIT_API X86
   void haddpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x7C, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x7C, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP Horizontal Add (SSE3).
   void haddps(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x7C, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x7C, dst.regCode(), src);
   }
 
   //! @brief Packed DP-FP Horizontal Subtract (SSE3).
   void hsubpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0x66, 0x0F, 0x7D, dst.regCode(), src);
+    emitMM(0x66, 0x00, 0x0F, 0x7D, dst.regCode(), src);
   }
 
   //! @brief Packed SP-FP Horizontal Subtract (SSE3).
   void hsubps(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x7D, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x7D, dst.regCode(), src);
   }
 
   //! @brief Load Unaligned Integer 128 Bits (SSE3).
   void lddqu(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT(src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0xF0, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0xF0, dst.regCode(), src);
   }
 
   //! @brief Set Up Monitor Address (SSE3).
@@ -5874,21 +5739,21 @@ struct ASMJIT_API X86
   void movddup(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF2, 0x0F, 0x12, dst.regCode(), src);
+    emitMM(0xF2, 0x00, 0x0F, 0x12, dst.regCode(), src);
   }
 
   //! @brief Move Packed SP-FP High and Duplicate (SSE3).
   void movshdup(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x16, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x16, dst.regCode(), src);
   }
 
   //! @brief Move Packed SP-FP Low and Duplicate (SSE3).
   void movsldup(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x00, 0xF3, 0x0F, 0x12, dst.regCode(), src);
+    emitMM(0xF3, 0x00, 0x0F, 0x12, dst.regCode(), src);
   }
 
   //! @brief Monitor Wait (SSE3).
@@ -6118,14 +5983,14 @@ struct ASMJIT_API X86
   void palignr(const MMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_MMX) || (src.op() == OP_MEM));
-    emitMM(0x00, 0x0F, 0x3A, 0x0F, dst.regCode(), src, imm8);
+    emitMMi(0x00, 0x0F, 0x3A, 0x0F, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed Shuffle Bytes (SSSE3).
   void palignr(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x66, 0x0F, 0x3A, 0x0F, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0F, dst.regCode(), src, imm8);
   }
 
   // -------------------------------------------------------------------------
@@ -6136,14 +6001,14 @@ struct ASMJIT_API X86
   void blendpd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x66, 0x0F, 0x3A, 0x0D, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0D, dst.regCode(), src, imm8);
   }
 
   //! @brief Blend Packed SP-FP Values (SSE4.1).
   void blendps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
-    emitMM(0x66, 0x0F, 0x3A, 0x0C, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0C, dst.regCode(), src, imm8);
   }
 
   //! @brief Variable Blend Packed DP-FP Values (SSE4.1).
@@ -6164,22 +6029,22 @@ struct ASMJIT_API X86
   void dppd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x41, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x41, dst.regCode(), src, imm8);
   } 
 
   //! @brief Dot Product of Packed SP-FP Values (SSE4.1).
   void dpps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x40, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x40, dst.regCode(), src, imm8);
   } 
 
   //! @brief Extract Packed SP-FP Value @brief (SSE4.1).
   void extractps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x17, dst.regCode(), src, imm8);
-   }
+    emitMMi(0x66, 0x0F, 0x3A, 0x17, dst.regCode(), src, imm8);
+  }
 
   //! @brief Load Double Quadword Non-Temporal Aligned Hint (SSE4.1).
   void movntdqa(const XMMRegister& dst, const Op& src)
@@ -6192,7 +6057,7 @@ struct ASMJIT_API X86
   void mpsadbw(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x42, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x42, dst.regCode(), src, imm8);
   }
 
   //! @brief Pack with Unsigned Saturation (SSE4.1).
@@ -6213,7 +6078,7 @@ struct ASMJIT_API X86
   void pblendw(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x0E, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0E, dst.regCode(), src, imm8);
   }
 
   //! @brief Compare Packed Qword Data for Equal (SSE4.1).
@@ -6228,7 +6093,7 @@ struct ASMJIT_API X86
   {
     ASMJIT_ASSERT((dst.op() == OP_REG && dst.regType() == REG_GPD) ||
                   (dst.op() == OP_MEM && dst.size() == 1));
-    emitMM(0x66, 0x0F, 0x3A, 0x14, src.regCode(), dst, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x14, src.regCode(), dst, imm8);
   }
 
   //! @brief Extract Word (SSE4.1).
@@ -6236,7 +6101,7 @@ struct ASMJIT_API X86
   {
     ASMJIT_ASSERT((dst.op() == OP_REG && dst.regType() == REG_GPD) ||
                   (dst.op() == OP_MEM && dst.size() == 2));
-    emitMM(0x66, 0x0F, 0x3A, 0x15, src.regCode(), dst, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x15, src.regCode(), dst, imm8);
   }
 
   //! @brief Extract Dword (SSE4.1).
@@ -6244,7 +6109,7 @@ struct ASMJIT_API X86
   {
     ASMJIT_ASSERT((dst.op() == OP_REG && dst.regType() == REG_GPD) ||
                   (dst.op() == OP_MEM && dst.size() == 4));
-    emitMM(0x66, 0x0F, 0x3A, 0x16, src.regCode(), dst, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x16, src.regCode(), dst, imm8);
   }
 
   //! @brief Packed Horizontal Word Minimum (SSE4.1).
@@ -6258,14 +6123,14 @@ struct ASMJIT_API X86
   void pinsrb(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x20, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x20, dst.regCode(), src, imm8);
   }
 
   //! @brief Insert Dword (SSE4.1).
   void pinsrd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x22, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x22, dst.regCode(), src, imm8);
   }
 
   //! @brief Maximum of Packed Word Integers (SSE4.1).
@@ -6433,28 +6298,28 @@ struct ASMJIT_API X86
   void roundps(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x08, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x08, dst.regCode(), src, imm8);
   }
 
   //! @brief Round Scalar SP-FP Values (SSE4.1).
   void roundss(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x0A, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0A, dst.regCode(), src, imm8);
   }
 
   //! @brief Round Packed DP-FP Values (SSE4.1).
   void roundpd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x09, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x09, dst.regCode(), src, imm8);
   }
 
   //! @brief Round Scalar DP-FP Values (SSE4.1).
   void roundsd(const XMMRegister& dst, const Op& src, int imm8)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || src.op() == OP_MEM);
-    emitMM(0x66, 0x0F, 0x3A, 0x0B, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x0B, dst.regCode(), src, imm8);
   }
 
   // -------------------------------------------------------------------------
@@ -6465,41 +6330,39 @@ struct ASMJIT_API X86
   void crc32(const Register& dst, const Op& src)
   {
     ASMJIT_ASSERT(dst.regType() == REG_GPD);
+    if (!ensureSpace()) return;
 
-    switch (src.size())
-    {
-      case 1:
-        emitMM(0xF2, 0x0F, 0x38, 0xF0, dst.regCode(), src);
-        return;
-      case 4:
-        emitMM(0xF2, 0x0F, 0x38, 0xF1, dst.regCode(), src);
-        return;
-    }
-    ASMJIT_ILLEGAL();
+    if (src.size() == 2) emitByte(0x66);
+    emitByte(0xF2);
+    emitRex(dst.regType() == REG_GPQ, dst.regCode(), src);
+    emitByte(0x0F);
+    emitByte(0x38);
+    emitByte(0xF0 + (src.size() != 1));
+    emitOp(dst.regCode(), src);
   }
 
   //! @brief Packed Compare Explicit Length Strings, Return Index (SSE4.2).
   void pcmpestri(const XMMRegister& dst, const Op& src, int imm8)
   {
-    emitMM(0x66, 0x0F, 0x3A, 0x61, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x61, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed Compare Explicit Length Strings, Return Mask (SSE4.2).
   void pcmpestrm(const XMMRegister& dst, const Op& src, int imm8)
   {
-    emitMM(0x66, 0x0F, 0x3A, 0x60, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x60, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed Compare Implicit Length Strings, Return Index (SSE4.2).
   void pcmpistri(const XMMRegister& dst, const Op& src, int imm8)
   {
-    emitMM(0x66, 0x0F, 0x3A, 0x63, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x63, dst.regCode(), src, imm8);
   }
 
   //! @brief Packed Compare Implicit Length Strings, Return Mask (SSE4.2).
   void pcmpistrm(const XMMRegister& dst, const Op& src, int imm8)
   {
-    emitMM(0x66, 0x0F, 0x3A, 0x62, dst.regCode(), src, imm8);
+    emitMMi(0x66, 0x0F, 0x3A, 0x62, dst.regCode(), src, imm8);
   }
 
   //! @brief Compare Packed Data for Greater Than (SSE4.2).
@@ -6511,7 +6374,12 @@ struct ASMJIT_API X86
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
   void popcnt(const Register& dst, const Op& src)
   {
-    emitMM(0x00, 0xF3, 0x0F, 0xB8, dst.regCode(), src);
+    if (dst.regType() == REG_GPW) emitByte(0x66); // 16 bit
+    emitByte(0xF3);
+#if defined(ASMJIT_X64)
+    emitRex(dst.regType() == REG_GPQ, dst.regCode(), src);
+#endif // ASMJIT_X64
+    emitOp(dst.regCode(), src);
   }
 
   // -------------------------------------------------------------------------
@@ -6528,6 +6396,9 @@ struct ASMJIT_API X86
   void amd_prefetch(const Op& mem)
   {
     if (!ensureSpace()) return;
+#if defined(ASMJIT_X64)
+    emitRex(0, 0, mem);
+#endif // ASMJIT_X64
     emitByte(0x0F);
     emitByte(0x0D);
     emitMem(0, mem);
@@ -6543,6 +6414,9 @@ struct ASMJIT_API X86
   void amd_prefetchw(const Op& mem)
   {
     if (!ensureSpace()) return;
+#if defined(ASMJIT_X64)
+    emitRex(0, 1, mem);
+#endif // ASMJIT_X64
     emitByte(0x0F);
     emitByte(0x0D);
     emitMem(1, mem);

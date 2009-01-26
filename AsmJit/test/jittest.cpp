@@ -47,23 +47,8 @@ int main(int argc, char* argv[])
   a.push(nbp);
   a.mov(nbp, nsp);
 
-  a.push(nbx);
-
   // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  //a.mov(nax, imm(1024));
-  //a.mov(al, 10);
-  //a.inc(nax);
   a.mov(nax, 1024);
-  a.mov(ndx, 2048);
-  a.cmp(nbx, 1);
-  a.cmov(C_EQUAL, nax, ndx);
-  a.mov(cl, 1);
-  a.shl(ah, cl);
-  a.shl(ax, 2);
-  a.shr(nax, 1);
-  //a.mov(r15b, 1);
-
-  a.pop(nbx);
 
   // Epilog.
   a.mov(nsp, nbp);
