@@ -50,17 +50,18 @@
 #define ASMJIT_POSIX 2
 
 // HERE DEFINE YOUR OS
+#define ASMJIT_OS ASMJIT_WINDOWS
 // #define ASMJIT_OS ASMJIT_[WINDOWS|POSIX]
 
 #if !defined(ASMJIT_OS) || ASMJIT_OS < 1
 #error "AsmJit - Define ASMJIT_OS macro to your operating system"
 #endif // ASMJIT_OS
 
-// [AsmJit API]
+// [AsmJit - API]
 #define ASMJIT_API
 #define ASMJIT_VAR extern
 
-// [AsmJit - MEMORY]
+// [AsmJit - Memory]
 #define ASMJIT_MALLOC ::malloc
 #define ASMJIT_REALLOC ::realloc
 #define ASMJIT_FREE ::free
@@ -71,6 +72,17 @@ namespace AsmJit
   static void crash(int* ptr = 0) { *ptr = 0; }
 }
 
+// [AsmJit - Architecture]
+// define it only if it's not defined. In some systems we can
+// use -D command in compiler to bypass this autodetection.
+#if !defined(ASMJIT_X86) && !defined(ASMJIT_X64)
+# if defined(__x86_64__) || defined(_WIN64)
+#  define ASMJIT_X64 // x86-64
+# else
+#  define ASMJIT_X86
+# endif
+#endif
+
 // [AsmJit - Types]
 namespace AsmJit
 {
@@ -80,15 +92,39 @@ namespace AsmJit
   typedef unsigned short UInt16;
   typedef int Int32;
   typedef unsigned int UInt32;
+
+#if defined(_MSC_VER)
+  typedef __int64 Int64;
+  typedef unsigned __int64 UInt64;
+#else // GCC, other compilers ?
+  typedef long long Int64;
+  typedef unsigned long long UInt64;
+#endif
+
+#if defined(ASMJIT_X86)
+  typedef Int32 SysInt;
+  typedef UInt32 SysUInt;
+#else
+  typedef Int64 SysInt;
+  typedef UInt64 SysUInt;
+#endif
 }
 
-// [AsmJit - DEBUG]
-#if defined(DEBUG)
-#define ASMJIT_ILLEGAL() crash()
-#define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_ILLEGAL(); } while(0)
+#if defined(_MSC_VER)
+# define ASMJIT_INT64_C(num) num##i64
+# define ASMJIT_UINT64_C(num) num##ui64
 #else
-#define ASMJIT_ILLEGAL() do {} while(0)
-#define ASMJIT_ASSERT(exp) do {} while(0)
+# define ASMJIT_INT64_C(num) num##LL
+# define ASMJIT_UINT64_C(num) num##ULL
+#endif
+
+// [AsmJit - Debug]
+#if defined(DEBUG) || 1
+# define ASMJIT_ILLEGAL() crash()
+# define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_ILLEGAL(); } while(0)
+#else
+# define ASMJIT_ILLEGAL() do {} while(0)
+# define ASMJIT_ASSERT(exp) do {} while(0)
 #endif // DEBUG
 
 // [Guard]

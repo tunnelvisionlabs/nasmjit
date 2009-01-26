@@ -45,8 +45,9 @@
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
-//! Asm tips:
-//! - http://www.mark.masmcode.com/
+//! Useful links:
+//! - http://www.mark.masmcode.com/ (Tips)
+//! - http://www.ragestorm.net/distorm/ (BSD licenced disassembler)
 
 //! @defgroup AsmJit_Config AsmJit configuration.
 //!

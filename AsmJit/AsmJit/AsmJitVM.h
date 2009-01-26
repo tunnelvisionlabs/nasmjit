@@ -86,16 +86,16 @@ struct ASMJIT_API VM
   //! Pages are readable/writeable, but they are not guaranteed to be 
   //! executable unless 'canExecute' is true. Returns the address of 
   //! allocated memory, or NULL if failed.
-  static void* alloc(size_t length, size_t* allocated, bool canExecute);
+  static void* alloc(SysUInt length, SysUInt* allocated, bool canExecute);
 
   //! @brief Free memory allocated by @c alloc()
-  static void free(void* addr, size_t length);
+  static void free(void* addr, SysUInt length);
 
   //! @brief Get the Alignment guaranteed by alloc().
-  static size_t alignment();
+  static SysUInt alignment();
 
   //! @brief Returns size of one page.
-  static size_t pageSize();
+  static SysUInt pageSize();
 };
 
 //! @}

@@ -69,50 +69,122 @@ namespace AsmJit {
 
 // [Registers]
 
-Register eax = { REG_EAX };
-Register ecx = { REG_ECX };
-Register edx = { REG_EDX };
-Register ebx = { REG_EBX };
-Register esp = { REG_ESP };
-Register ebp = { REG_EBP };
-Register esi = { REG_ESI };
-Register edi = { REG_EDI };
+// 8 bit general purpose registers
+const Register al = { REG_AL };
+const Register cl = { REG_CL };
+const Register dl = { REG_DL };
+const Register bl = { REG_BL };
+const Register ah = { REG_AH };
+const Register ch = { REG_CH };
+const Register dh = { REG_DH };
+const Register bh = { REG_BH };
 
-Register ax = { REG_AX };
-Register cx = { REG_CX };
-Register dx = { REG_DX };
-Register bx = { REG_BX };
-Register sp = { REG_SP };
-Register bp = { REG_BP };
-Register si = { REG_SI };
-Register di = { REG_DI };
+#if defined(ASMJIT_X64)
+const Register r8b = { REG_R8B };
+const Register r9b = { REG_R9B };
+const Register r10b = { REG_R10B };
+const Register r11b = { REG_R11B };
+const Register r12b = { REG_R12B };
+const Register r13b = { REG_R13B };
+const Register r14b = { REG_R14B };
+const Register r15b = { REG_R15B };
+#endif // ASMJIT_X64
 
-Register al = { REG_AL };
-Register cl = { REG_CL };
-Register dl = { REG_DL };
-Register bl = { REG_BL };
-Register ah = { REG_AH };
-Register ch = { REG_CH };
-Register dh = { REG_DH };
-Register bh = { REG_BH };
+// 16 bit general purpose registers
+const Register ax = { REG_AX };
+const Register cx = { REG_CX };
+const Register dx = { REG_DX };
+const Register bx = { REG_BX };
+const Register sp = { REG_SP };
+const Register bp = { REG_BP };
+const Register si = { REG_SI };
+const Register di = { REG_DI };
 
-MMRegister mm0 = { REG_MM0 };
-MMRegister mm1 = { REG_MM1 };
-MMRegister mm2 = { REG_MM2 };
-MMRegister mm3 = { REG_MM3 };
-MMRegister mm4 = { REG_MM4 };
-MMRegister mm5 = { REG_MM5 };
-MMRegister mm6 = { REG_MM6 };
-MMRegister mm7 = { REG_MM7 };
+// 32 bit general purpose registers
+const Register eax = { REG_EAX };
+const Register ecx = { REG_ECX };
+const Register edx = { REG_EDX };
+const Register ebx = { REG_EBX };
+const Register esp = { REG_ESP };
+const Register ebp = { REG_EBP };
+const Register esi = { REG_ESI };
+const Register edi = { REG_EDI };
 
-XMMRegister xmm0 = { REG_XMM0 };
-XMMRegister xmm1 = { REG_XMM1 };
-XMMRegister xmm2 = { REG_XMM2 };
-XMMRegister xmm3 = { REG_XMM3 };
-XMMRegister xmm4 = { REG_XMM4 };
-XMMRegister xmm5 = { REG_XMM5 };
-XMMRegister xmm6 = { REG_XMM6 };
-XMMRegister xmm7 = { REG_XMM7 };
+#if defined(ASMJIT_X64)
+const Register r8d = { REG_R8D };
+const Register r9d = { REG_R9D };
+const Register r10d = { REG_R10D };
+const Register r11d = { REG_R11D };
+const Register r12d = { REG_R12D };
+const Register r13d = { REG_R13D };
+const Register r14d = { REG_R14D };
+const Register r15d = { REG_R15D };
+#endif // ASMJIT_X64
+
+// mmx registers
+const MMRegister mm0 = { REG_MM0 };
+const MMRegister mm1 = { REG_MM1 };
+const MMRegister mm2 = { REG_MM2 };
+const MMRegister mm3 = { REG_MM3 };
+const MMRegister mm4 = { REG_MM4 };
+const MMRegister mm5 = { REG_MM5 };
+const MMRegister mm6 = { REG_MM6 };
+const MMRegister mm7 = { REG_MM7 };
+
+// sse registers
+const XMMRegister xmm0 = { REG_XMM0 };
+const XMMRegister xmm1 = { REG_XMM1 };
+const XMMRegister xmm2 = { REG_XMM2 };
+const XMMRegister xmm3 = { REG_XMM3 };
+const XMMRegister xmm4 = { REG_XMM4 };
+const XMMRegister xmm5 = { REG_XMM5 };
+const XMMRegister xmm6 = { REG_XMM6 };
+const XMMRegister xmm7 = { REG_XMM7 };
+
+// 64 bit mode
+#if defined(ASMJIT_X64)
+const XMMRegister xmm8 = { REG_XMM8 };
+const XMMRegister xmm9 = { REG_XMM9 };
+const XMMRegister xmm10 = { REG_XMM10 };
+const XMMRegister xmm11 = { REG_XMM11 };
+const XMMRegister xmm12 = { REG_XMM12 };
+const XMMRegister xmm13 = { REG_XMM13 };
+const XMMRegister xmm14 = { REG_XMM14 };
+const XMMRegister xmm15 = { REG_XMM15 };
+#endif // ASMJIT_X64
+
+// 64 bit mode
+#if defined(ASMJIT_X64)
+// 64 bit mode general purpose registers
+const Register rax = { REG_RAX };
+const Register rcx = { REG_RCX };
+const Register rdx = { REG_RDX };
+const Register rbx = { REG_RBX };
+const Register rsp = { REG_RSP };
+const Register rbp = { REG_RBP };
+const Register rsi = { REG_RSI };
+const Register rdi = { REG_RDI };
+const Register r8  = { REG_R8  };
+const Register r9  = { REG_R9  };
+const Register r10 = { REG_R10 };
+const Register r11 = { REG_R11 };
+const Register r12 = { REG_R12 };
+const Register r13 = { REG_R13 };
+const Register r14 = { REG_R14 };
+const Register r15 = { REG_R15 };
+#endif // ASMJIT_X64
+
+// native general purpose registers
+// (shared between 32 bit mode and 64 bit mode)
+
+const Register nax = { REG_NAX };
+const Register ncx = { REG_NCX };
+const Register ndx = { REG_NDX };
+const Register nbx = { REG_NBX };
+const Register nsp = { REG_NSP };
+const Register nbp = { REG_NBP };
+const Register nsi = { REG_NSI };
+const Register ndi = { REG_NDI };
 
 // [AsmJit::X86]
 
@@ -129,11 +201,11 @@ X86::~X86()
   free();
 }
 
-bool X86::realloc(size_t to)
+bool X86::realloc(SysInt to)
 {
   if (capacity() < to)
   {
-    size_t len = codeSize();
+    SysInt len = codeSize();
 
     UInt8 *newdata;
     if (pData)
@@ -155,8 +227,8 @@ bool X86::realloc(size_t to)
 
 bool X86::grow()
 {
-  size_t to = _capacity;
-  size_t pageSize = VM::pageSize();
+  SysInt to = _capacity;
+  SysInt pageSize = VM::pageSize();
 
   if (to < pageSize) 
     to = pageSize;

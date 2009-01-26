@@ -44,19 +44,34 @@ int main(int argc, char* argv[])
   X86 a;
 
   // Prolog.
-  a.push(ebp);
-  a.mov(ebp, esp);
+  a.push(nbp);
+  a.mov(nbp, nsp);
 
-  // Mov 1024 to EAX, EAX is also return value.
-  a.mov(eax, imm(1024));
+  a.push(nbx);
+
+  // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
+  //a.mov(nax, imm(1024));
+  //a.mov(al, 10);
+  //a.inc(nax);
+  a.mov(nax, 1024);
+  a.mov(ndx, 2048);
+  a.cmp(nbx, 1);
+  a.cmov(C_EQUAL, nax, ndx);
+  a.mov(cl, 1);
+  a.shl(ah, cl);
+  a.shl(ax, 2);
+  a.shr(nax, 1);
+  //a.mov(r15b, 1);
+
+  a.pop(nbx);
 
   // Epilog.
-  a.mov(esp, ebp);
-  a.pop(ebp);
+  a.mov(nsp, nbp);
+  a.pop(nbp);
   a.ret();
 
   // Alloc execute enabled memory and call generated function.
-  size_t vsize;
+  SysUInt vsize;
   void *vmem = VM::alloc(a.codeSize(), &vsize, true);
   memcpy(vmem, a.pData, a.codeSize());
 

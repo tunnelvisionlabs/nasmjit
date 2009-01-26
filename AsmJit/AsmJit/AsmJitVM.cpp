@@ -55,20 +55,22 @@
 #include "AsmJitVM.h"
 
 // helpers
-static bool isAligned(size_t base, size_t alignment)
+namespace AsmJit {
+
+static bool isAligned(SysUInt base, SysUInt alignment)
 {
   return base % alignment == 0;
 }
 
-static size_t roundUp(size_t base, size_t pageSize)
+static SysUInt roundUp(SysUInt base, SysUInt pageSize)
 {
-  size_t over = base % pageSize;
+  SysUInt over = base % pageSize;
   return base + (over > 0 ? pageSize - over : 0);
 }
 
 // Implementation is from "Hacker's Delight" by Henry S. Warren, Jr.,
 // figure 3-3, page 48, where the function is called clp2.
-static size_t roundUpToPowerOf2(size_t base)
+static SysUInt roundUpToPowerOf2(SysUInt base)
 {
   base -= 1;
 
@@ -78,11 +80,14 @@ static size_t roundUpToPowerOf2(size_t base)
   base = base | (base >> 8);
   base = base | (base >> 16);
 
-  // 64 bit
-  if (sizeof(size_t) == 8) base = base | (base >> 32);
+#if defined(ASMJIT_X64)
+  base = base | (base >> 32);
+#endif // ASMJIT_X64
 
   return base + 1;
 }
+
+} // AsmJit namespace
 
 // ============================================================================
 // [Windows]
@@ -105,8 +110,8 @@ struct VMLocal
     pageSize = roundUpToPowerOf2(info.dwPageSize);
   }
 
-  size_t alignment;
-  size_t pageSize;
+  SysUInt alignment;
+  SysUInt pageSize;
 };
 
 static VMLocal& vm()
@@ -115,33 +120,33 @@ static VMLocal& vm()
   return vm;
 };
 
-void* VM::alloc(size_t length, size_t* allocated, bool canExecute)
+void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 {
   // VirtualAlloc rounds allocated size to page size automatically.
-  size_t msize = roundUp(length, vm().pageSize);
+  SysUInt msize = roundUp(length, vm().pageSize);
 
   // Windows XP SP2 / Vista allows Data Excution Prevention (DEP).
   WORD protect = canExecute ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
   LPVOID mbase = VirtualAlloc(NULL, msize, MEM_COMMIT | MEM_RESERVE, protect);
   if (mbase == NULL) return NULL;
 
-  ASMJIT_ASSERT(isAligned(reinterpret_cast<size_t>(mbase), vm().alignment));
+  ASMJIT_ASSERT(isAligned(reinterpret_cast<SysUInt>(mbase), vm().alignment));
 
   if (allocated) *allocated = msize;
   return mbase;
 }
 
-void VM::free(void* addr, size_t /* length */)
+void VM::free(void* addr, SysUInt /* length */)
 {
   VirtualFree(addr, 0, MEM_RELEASE);
 }
 
-size_t VM::alignment()
+SysUInt VM::alignment()
 {
   return vm().alignment;
 }
 
-size_t VM::pageSize()
+SysUInt VM::pageSize()
 {
   return vm().pageSize;
 }
@@ -174,8 +179,8 @@ struct VMLocal
     alignment = pageSize = getpagesize();
   }
 
-  size_t alignment;
-  size_t pageSize;
+  SysUInt alignment;
+  SysUInt pageSize;
 };
 
 static VMLocal& vm()
@@ -184,9 +189,9 @@ static VMLocal& vm()
   return vm;
 }
 
-void* VM::alloc(size_t length, size_t* allocated, bool canExecute)
+void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 {
-  size_t msize = roundUp(length, vm().pageSize);
+  SysUInt msize = roundUp(length, vm().pageSize);
   int protection = PROT_READ | PROT_WRITE | (canExecute ? PROT_EXEC : 0);
   void* mbase = mmap(NULL, msize, protection, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (mbase == MAP_FAILED) return NULL;
@@ -194,17 +199,17 @@ void* VM::alloc(size_t length, size_t* allocated, bool canExecute)
   return mbase;
 }
 
-void VM::free(void* addr, size_t length)
+void VM::free(void* addr, SysUInt length)
 {
   munmap(addr, length);
 }
 
-size_t VM::alignment()
+SysUInt VM::alignment()
 {
   return vm().alignment;
 }
 
-size_t VM::pageSize()
+SysUInt VM::pageSize()
 {
   return vm().pageSize;
 }
