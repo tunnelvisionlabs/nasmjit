@@ -36,7 +36,6 @@ author have no access to different architectures than X86 (32 and 64 bit).
     [ ] Add SSE4a instruction set (AMD).
     [ ] Add AMD 3dNow.
     [ ] Add AMD 3dNow extensions.
-    [ ] X64 instructions not ported: j, jmp, call
 
 [ ] ARM
 
