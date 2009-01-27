@@ -283,12 +283,12 @@ struct BitField
 {
   // Tells whether the provided value fits into the bit field.
   static bool isValid(T value) {
-    return (static_cast<SysUInt>(value) & ~((1U << (size)) - 1)) == 0;
+    return (static_cast<SysUInt>(value) & ~(((SysUInt)1U << (size)) - 1)) == 0;
   }
 
   // Returns a UInt32 mask of bit field.
   static SysUInt mask() {
-    return (1U << (size + shift)) - (1U << shift);
+    return (1U << (size + shift)) - ((SysUInt)1U << shift);
   }
 
   // Returns a UInt32 with the bit field value encoded.
@@ -301,7 +301,7 @@ struct BitField
   // Extracts the bit field from the value.
   static T decode(SysUInt value)
   {
-    return static_cast<T>((value >> shift) & ((1U << (size)) - 1));
+    return static_cast<T>((value >> shift) & (((SysUInt)1U << (size)) - (SysUInt)1));
   }
 };
 
@@ -683,7 +683,7 @@ private:
   SysInt _data;
 
   struct TypeField: public BitField<Type, 0, 1> {};
-  struct NextField: public BitField<SysInt,  1, (sizeof(SysInt)*8)-1> {};
+  struct NextField: public BitField<SysInt,  1, ((sizeof(SysInt)*8)-1)> {};
 
   inline void init(Label* L, Type type);
 
@@ -1865,9 +1865,13 @@ struct ASMJIT_API X86
   //! or a memory location.
   void call(const Op& adr)
   {
-    ASMJIT_ASSERT(adr.op() != OP_IMM);
+    ASMJIT_ASSERT((adr.op() == OP_REG && adr.regType() == REG_GPN) ||
+                  (adr.op() == OP_MEM));
     if (!ensureSpace()) return;
 
+#if defined(ASMJIT_X64)
+    emitRex(0, 2, adr);
+#endif // ASMJIT_X64
     emitByte(0xFF);
     emitOp(2, adr);
   }
@@ -1879,12 +1883,12 @@ struct ASMJIT_API X86
     if (!ensureSpace()) return;
     if (L->isBound())
     {
-      const int long_size = 5;
+      const SysInt long_size = 5;
       SysInt offs = L->pos() - offset();
       ASMJIT_ASSERT(offs <= 0);
       // 1110 1000 #32-bit disp
       emitByte(0xE8);
-      emitDWord(offs - long_size);
+      emitDWord((Int32)(offs - long_size));
     }
     else
     {
@@ -2715,7 +2719,7 @@ struct ASMJIT_API X86
     if (!ensureSpace()) return;
     if (src.size() == 2) emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
-    emitRex(src.size() == 8, 5, by);
+    emitRex(src.size() == 8, 5, src);
 #endif // ASMJIT_X64
     emitByte(0xF6 + (src.size() != 1));
     emitOp(5, src);
@@ -2910,6 +2914,16 @@ struct ASMJIT_API X86
       emitByte(0xE9);
       emitDisp(L, Displacement::UNCONDITIONAL_JUMP);
     }
+  }
+  
+  void jmp(const Register& adr)
+  {
+    ASMJIT_ASSERT(adr.regType() == REG_GPN);
+#if defined(ASMJIT_X64)
+    emitRex(0, 4, adr);
+#endif // ASMJIT_X64
+    emitByte(0xFF);
+    emitReg(4, adr.regCode());
   }
 
   //! @brief Load Effective Address
@@ -3703,7 +3717,7 @@ struct ASMJIT_API X86
       (dst->op() == OP_REG &&  dst->regType() == REG_GPQ && src->regType() == REG_SSE )
     );
 
-    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), dst, 1);
+    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), *dst, 1);
   }
 #endif // ASMJIT_X64
 
