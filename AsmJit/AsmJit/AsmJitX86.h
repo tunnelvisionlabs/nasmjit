@@ -3648,35 +3648,32 @@ struct ASMJIT_API X86
     const Op* dst = &_dst;
     const Op* src = &_src;
     UInt8 opCode = 0x6E;
-    bool isSSE = false;
 
-    // Swap dst/src to be in format Reg/Mem, Reg
-    if (dst->op() == OP_REG && src->op() == OP_MEM)
+    // Swap dst/src to be in format (X)MMReg, Reg/Mem
+    if (dst->op() == OP_MEM && src->op() == OP_REG)
     {
       dst = &_src;
       src = &_dst;
       opCode = 0x7E;
-      isSSE = src->regType() == REG_SSE;
     }
 
+    // Swap dst/src to be in format (X)MMReg, GPReg
     if (dst->op() == OP_REG && src->op() == OP_REG)
     {
-      isSSE = dst->regType() == REG_SSE || 
-              src->regType() == REG_SSE;
-      
-      if (dst->regType() == REG_GPD) opCode = 0x7E;
+      if (dst->regType() == REG_GPD) 
+      {
+        dst = &_src;
+        src = &_dst;
+        opCode = 0x7E;
+      }
     }
 
-    // now we have operands in form Reg/Mem, Reg
+    // now we have operands in form (X)MMReg, GPReg/Mem
     ASMJIT_ASSERT(
-      (dst->op() == OP_MEM && (src->regType() == REG_MMX || src->regType() == REG_SSE)) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_MMX && src->regType() == REG_GPD ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_SSE && src->regType() == REG_GPD ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_GPD && src->regType() == REG_MMX ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_GPD && src->regType() == REG_SSE )
-    );
+      (dst->op() == OP_REG && (dst->regType() == REG_MMX || dst->regType() == REG_SSE)) &&
+      (src->op() == OP_MEM || (src->op()      == OP_REG  && src->regType() == REG_GPD)) );
 
-    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), *dst);
+    emitMM(dst->regType() == REG_SSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, dst->regCode(), *src);
   }
 
 #if defined(ASMJIT_X64)
@@ -3689,35 +3686,32 @@ struct ASMJIT_API X86
     const Op* dst = &_dst;
     const Op* src = &_src;
     UInt8 opCode = 0x6E;
-    bool isSSE = false;
 
-    // Swap dst/src to be in format Reg/Mem, Reg
-    if (dst->op() == OP_REG && src->op() == OP_MEM)
+    // Swap dst/src to be in format (X)MMReg, Reg/Mem
+    if (dst->op() == OP_MEM && src->op() == OP_REG)
     {
       dst = &_src;
       src = &_dst;
       opCode = 0x7E;
-      isSSE = src->regType() == REG_SSE;
     }
 
+    // Swap dst/src to be in format (X)MMReg, GPReg
     if (dst->op() == OP_REG && src->op() == OP_REG)
     {
-      isSSE = dst->regType() == REG_SSE || 
-              src->regType() == REG_SSE;
-      
-      if (dst->regType() == REG_GPQ) opCode = 0x7E;
+      if (dst->regType() == REG_GPD) 
+      {
+        dst = &_src;
+        src = &_dst;
+        opCode = 0x7E;
+      }
     }
 
-    // now we have operands in form Reg/Mem, Reg
+    // now we have operands in form (X)MMReg, GPReg/Mem
     ASMJIT_ASSERT(
-      (dst->op() == OP_MEM && (src->regType() == REG_MMX || src->regType() == REG_SSE)) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_MMX && src->regType() == REG_GPQ ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_SSE && src->regType() == REG_GPQ ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_GPQ && src->regType() == REG_MMX ) ||
-      (dst->op() == OP_REG &&  dst->regType() == REG_GPQ && src->regType() == REG_SSE )
-    );
+      (dst->op() == OP_REG && (dst->regType() == REG_MMX || dst->regType() == REG_SSE)) &&
+      (src->op() == OP_MEM || (src->op()      == OP_REG  && src->regType() == REG_GPQ)) );
 
-    emitMM(isSSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, src->regCode(), *dst, 1);
+    emitMM(dst->regType() == REG_SSE ? 0x66 : 0x00, 0x00, 0x0F, opCode, dst->regCode(), *src, 1);
   }
 #endif // ASMJIT_X64
 
