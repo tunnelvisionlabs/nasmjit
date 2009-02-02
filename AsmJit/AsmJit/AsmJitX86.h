@@ -1316,41 +1316,6 @@ struct ASMJIT_API X86
     emitMod(3, o, r);
   }
 
-
-#if 0
-	void if16bit(const Operand& reg1, const Operand& reg2)
-	{
-		// except movsx(16bit, 32/64bit)
-		if ((reg1.isBit(16) && !reg2.isBit(i32e)) || (reg2.isBit(16) && !reg1.isBit(i32e))) db(0x66);
-	}
-	void rexAddr(const Address& addr, const Reg& reg = Reg())
-	{
-#ifdef XBYAK64
-		if (addr.is32bit_) db(0x67);
-#endif
-		if16bit(reg, addr);
-		uint32 rex = addr.getRex() | reg.getRex();
-		if (reg.isREG(64)) rex |= 0x48;
-		if (rex) db(rex);
-	}
-	void rex(const Operand& op1, const Operand& op2 = Operand())
-	{
-		if (op1.isMEM()) {
-			rexAddr(static_cast<const Address&>(op1), static_cast<const Reg&>(op2));
-		} else if (op2.isMEM()) {
-			rexAddr(static_cast<const Address&>(op2), static_cast<const Reg&>(op1));
-		} else {
-			const Reg& reg1 = static_cast<const Reg&>(op1);
-			const Reg& reg2 = static_cast<const Reg&>(op2);
-			// ModRM(reg, base);
-			if16bit(reg1, reg2);
-			uint8 rex = reg2.getRex(Reg(), reg1);
-			if (reg1.isREG(64) || reg2.isREG(64)) rex |= 0x48;
-			if (rex) db(rex);
-		}
-	}
-#endif
-
 #if defined(ASMJIT_X64)
   //! @brief Emits REX.W prefix in 64 bit mode.
   //!
