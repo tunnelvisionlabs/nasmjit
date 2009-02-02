@@ -3954,7 +3954,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xF1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x71, 6, dst.regCode(), src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x71, 6, dst.regCode(), src.imm());
         return;
     }
   }
@@ -3971,7 +3971,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xF2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x72, 6, dst.regCode(), src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x72, 6, dst.regCode(), src.imm());
         return;
     }
   }
@@ -3988,7 +3988,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xF3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x73, 6, dst.regCode(), src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x73, 6, dst, src.imm());
         return;
     }
   }
@@ -4005,7 +4005,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xE1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x71, 4, dst.regCode(), src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x71, 4, dst.regCode(), src.imm());
         return;
     }
   }
@@ -4022,7 +4022,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xE2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x72, 4, dst.regCode(), src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x72, 4, dst.regCode(), src.imm());
         return;
     }
   }
@@ -4039,7 +4039,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xD1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x71, 2, dst, src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x71, 2, dst, src.imm());
         return;
     }
   }
@@ -4056,7 +4056,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xD2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x72, 2, dst, src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x72, 2, dst, src.imm());
         return;
     }
   }
@@ -4073,7 +4073,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0xD3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x00, 0x00, 0x0F, 0x73, 2, dst, src.imm());
+        emitMMi(0x00, 0x00, 0x0F, 0x73, 2, dst, src.imm());
         return;
     }
   }
@@ -5319,7 +5319,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xE1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x71, 4, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x71, 4, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5335,7 +5335,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xE2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x72, 4, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x72, 4, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5352,7 +5352,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xF1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x71, 6, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x71, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5368,7 +5368,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xF2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x72, 6, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x72, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5384,7 +5384,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xF3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x73, 6, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x73, 6, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5396,7 +5396,7 @@ struct ASMJIT_API X86
     switch (src.op())
     {
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x73, 7, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x73, 7, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5475,7 +5475,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xD1, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x71, 2, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x71, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5491,7 +5491,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xD2, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x72, 2, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x72, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
@@ -5507,7 +5507,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0xD3, dst.regCode(), src);
         return;
       case OP_IMM:
-        emitMM(0x66, 0x00, 0x0F, 0x73, 2, dst, src.imm());
+        emitMMi(0x66, 0x00, 0x0F, 0x73, 2, dst, src.imm());
         return;
     }
     ASMJIT_ILLEGAL();
