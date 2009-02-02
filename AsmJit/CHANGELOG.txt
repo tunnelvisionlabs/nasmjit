@@ -1,3 +1,6 @@
+2009-02-02
+- Fixed issue #3, mmx/sse instructions with immediates and movd().
+
 2009-01-26:
 - Finished X64 support
 
