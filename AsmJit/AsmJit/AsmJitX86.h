@@ -62,8 +62,8 @@
 // Copyright 2006-2008 the V8 project authors. All rights reserved.
 
 // [Guard]
-#ifndef _ASMJIT_X86_H
-#define _ASMJIT_X86_H
+#ifndef _ASMJITX86_H
+#define _ASMJITX86_H
 
 // [Dependencies]
 #include "AsmJitConfig.h"
@@ -1467,7 +1467,7 @@ struct ASMJIT_API X86
     else if (op.op() == OP_MEM)
       emitMem(o, op);
     else
-      ASMJIT_ILLEGAL();
+      ASMJIT_CRASH();
   }
 
   //! @brief Emit complete bit operation.
@@ -1491,7 +1491,9 @@ struct ASMJIT_API X86
     if (src.op() == OP_REG) opCode |= 0x02;
 
     if (dst.size() == 2) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
     emitRex(dst.size() == 8, ModR, dst);
+#endif // ASMJIT_X64
     emitByte(opCode);
     emitOp(ModR, dst);
     if (useImm8) emitByte(src.imm());
@@ -1660,7 +1662,7 @@ struct ASMJIT_API X86
       }
     }
 
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   void emitArithFP(int opcode1, int opcode2, int i)
@@ -2084,7 +2086,9 @@ struct ASMJIT_API X86
     }
 #endif // ASMJIT_X86
 
+#if defined(ASMJIT_X64)
     emitRex(dst.size() == 8, 1, dst);
+#endif // ASMJIT_X64
     emitByte(0xFE + (dst.size() != 1));
     emitOp(1, dst);
   }
@@ -2245,7 +2249,7 @@ struct ASMJIT_API X86
         emitByte(0xD8 + i);
         return;
       default:
-        ASMJIT_ILLEGAL();
+        ASMJIT_CRASH();
     }
   }
 
@@ -2311,7 +2315,7 @@ struct ASMJIT_API X86
     }
     else
     {
-      ASMJIT_ILLEGAL();
+      ASMJIT_CRASH();
     }
   }
 
@@ -2705,7 +2709,9 @@ struct ASMJIT_API X86
     if (src.op() == OP_REG || src.op() == OP_MEM)
     {
       if (dst.regType() == REG_GPW) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
       emitRex(dst.regType() == REG_GPQ, dst.regCode(), src);
+#endif // ASMJIT_X64
       emitByte(0x0F);
       emitByte(0xAF);
       emitOp(dst.regCode(), src);
@@ -2781,7 +2787,9 @@ struct ASMJIT_API X86
     }
 #endif // ASMJIT_X86
 
+#if defined(ASMJIT_X64)
     emitRex(dst.size() == 8, 0, dst);
+#endif // ASMJIT_X64
     emitByte(0xFE + (dst.size() != 1));
     emitOp(0, dst);
   }
@@ -3055,7 +3063,7 @@ struct ASMJIT_API X86
         break;
     }
 
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move with Sign-Extension.
@@ -3089,7 +3097,7 @@ struct ASMJIT_API X86
         emitOp(dst.regCode(), src);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
 #if defined(ASMJIT_X64)
@@ -3134,7 +3142,7 @@ struct ASMJIT_API X86
         emitOp(dst.regCode(), src);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Unsigned multiply.
@@ -3233,12 +3241,14 @@ struct ASMJIT_API X86
         emitByte(0x58 | op.regCode());
         break;
       case OP_MEM:
+#if defined(ASMJIT_X64)
         emitRex(1, 0, op);
+#endif // ASMJIT_X64
         emitByte(0x8F);
         emitMem(0, op);
         break;
       default:
-        ASMJIT_ILLEGAL();
+        ASMJIT_CRASH();
     }
   }
 
@@ -3274,7 +3284,9 @@ struct ASMJIT_API X86
     switch (op.op())
     {
       case OP_MEM:
+#if defined(ASMJIT_X64)
         emitRex(1, 6, op);
+#endif // ASMJIT_X64
         emitByte(0xFF);
         emitMem(6, op);
         break;
@@ -3297,7 +3309,7 @@ struct ASMJIT_API X86
         }
         break;
       default:
-        ASMJIT_ILLEGAL();
+        ASMJIT_CRASH();
         break;
     }
   }
@@ -3528,7 +3540,7 @@ struct ASMJIT_API X86
         return;
     }
 
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Undefined instruction.
@@ -3743,7 +3755,7 @@ struct ASMJIT_API X86
 #if defined(ASMJIT_X64)
     _movq_x64(dst, src);
 #else
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
 #endif // ASMJIT_X64
   }
 
@@ -4304,7 +4316,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0x29, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move 64 Bits Non Temporal (SSE).
@@ -4334,7 +4346,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0x17, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Low to High Packed SP-FP (SSE).
@@ -4357,7 +4369,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0x13, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
   
   //! @brief Move Aligned Four Packed SP-FP Non Temporal (SSE).
@@ -4384,7 +4396,7 @@ struct ASMJIT_API X86
         emitMM(0xF3, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Unaligned Packed SP-FP Values (SSE).
@@ -4404,7 +4416,7 @@ struct ASMJIT_API X86
         emitMM(0x00, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed SP-FP Multiply (SSE).
@@ -4890,7 +4902,7 @@ struct ASMJIT_API X86
         return;
     }
 
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Unaligned Double Quadword (SSE2).
@@ -4915,7 +4927,7 @@ struct ASMJIT_API X86
         return;
     }
 
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Extract Packed SP-FP Sign Mask (SSE2).
@@ -4947,7 +4959,7 @@ struct ASMJIT_API X86
         emitMM(0xF2, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Aligned Packed Double-Precision FP Values (SSE2).
@@ -4966,7 +4978,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0x29, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Quadword from XMM to MMX Technology Register (SSE2).
@@ -4995,7 +5007,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0x17, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Move Low Packed Double-Precision FP Value (SSE2).
@@ -5012,7 +5024,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0x13, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Store Double Quadword Using Non-Temporal Hint (SSE2).
@@ -5050,7 +5062,7 @@ struct ASMJIT_API X86
         emitMM(0x66, 0x00, 0x0F, 0x11, src.regCode(), dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed DP-FP Multiply (SSE2).
@@ -5281,7 +5293,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x71, 4, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
   
   //! @brief Packed Shift Right Arithmetic (SSE2).
@@ -5297,7 +5309,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x72, 4, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
 
@@ -5314,7 +5326,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x71, 6, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Shift Left Logical (SSE2).
@@ -5330,7 +5342,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x72, 6, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
   
   //! @brief Packed Shift Left Logical (SSE2).
@@ -5346,7 +5358,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x73, 6, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Shift Left Logical (SSE2).
@@ -5358,7 +5370,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x73, 7, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Subtract (SSE2).
@@ -5437,7 +5449,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x71, 2, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Shift Right Logical (SSE2).
@@ -5453,7 +5465,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x72, 2, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Shift Right Logical (SSE2).
@@ -5469,7 +5481,7 @@ struct ASMJIT_API X86
         emitMMi(0x66, 0x00, 0x0F, 0x73, 2, dst, src.imm());
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed Subtract with Saturation (SSE2).
@@ -5646,22 +5658,28 @@ struct ASMJIT_API X86
     switch (dst.size())
     {
       case 2:
+#if defined(ASMJIT_X64)
         emitRex(0, 1, dst);
+#endif // ASMJIT_X64
         emitByte(0xDF);
         emitMem(1, dst);
         return;
       case 4:
+#if defined(ASMJIT_X64)
         emitRex(0, 1, dst);
+#endif // ASMJIT_X64
         emitByte(0xDB);
         emitMem(1, dst);
         return;
       case 8:
+#if defined(ASMJIT_X64)
         emitRex(0, 1, dst);
+#endif // ASMJIT_X64
         emitByte(0xDD);
         emitMem(1, dst);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   //! @brief Packed DP-FP Horizontal Add (SSE3).
@@ -6307,7 +6325,9 @@ struct ASMJIT_API X86
 
     if (src.size() == 2) emitByte(0x66);
     emitByte(0xF2);
+#if defined(ASMJIT_X64)
     emitRex(dst.regType() == REG_GPQ, dst.regCode(), src);
+#endif // ASMJIT_X64
     emitByte(0x0F);
     emitByte(0x38);
     emitByte(0xF0 + (src.size() != 1));
@@ -6421,14 +6441,16 @@ struct ASMJIT_API X86
                       dst->regType() == REG_GPQ);
 
         if (dst->regType() == REG_GPW) emitByte(0x66); // 16 bit
+#if defined(ASMJIT_X64)
         emitRex(dst->regType() == REG_GPQ, dst->regCode(), *src);
+#endif // ASMJIT_X64
         emitByte(0x0F);
         emitByte(0x38);
         emitByte(opCode);
         emitMem(dst->regCode(), *src);
         return;
     }
-    ASMJIT_ILLEGAL();
+    ASMJIT_CRASH();
   }
 
   // -------------------------------------------------------------------------
@@ -6520,4 +6542,4 @@ struct ASMJIT_API X86
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJIT_X86_H
+#endif // _ASMJITX86_H

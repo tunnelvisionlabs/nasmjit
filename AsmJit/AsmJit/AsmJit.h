@@ -101,11 +101,11 @@
 //! @def ASMJIT_FREE
 //! @brief Function to call to free dynamic memory.
 
-//! @def ASMJIT_ILLEGAL
+//! @def ASMJIT_CRASH
 //! @brief Code that is execute if an one or more operands are invalid.
 
 //! @def ASMJIT_ASSERT
-//! @brief Assertion macro. Default implementation calls @c ASMJIT_ILLEGAL
+//! @brief Assertion macro. Default implementation calls @c ASMJIT_CRASH
 //! if assert fails.
 
 //! @}

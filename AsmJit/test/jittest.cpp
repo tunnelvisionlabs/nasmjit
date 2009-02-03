@@ -34,7 +34,7 @@
 #include "../AsmJit/AsmJitVM.h"
 
 // This is type of function we will generate
-typedef int (*VoidFn)();
+typedef int (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -55,13 +55,20 @@ int main(int argc, char* argv[])
   a.pop(nbp);
   a.ret();
 
+  // NOTE:
+  // This function can be also completely rewritten to this form:
+  //   a.mov(nax, 1024);
+  //   a.ret();
+  // If you are interested in removing prolog and epilog, please
+  // study calling conventions and check register preservations.
+
   // Alloc execute enabled memory and call generated function.
   SysUInt vsize;
   void *vmem = VM::alloc(a.codeSize(), &vsize, true);
   memcpy(vmem, a.pData, a.codeSize());
 
   // Cast vmem to our function and call the code.
-  int result = ( reinterpret_cast<VoidFn>(vmem)() );
+  int result = ( reinterpret_cast<MyFn>(vmem)() );
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);

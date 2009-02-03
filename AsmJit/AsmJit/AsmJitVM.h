@@ -103,4 +103,4 @@ struct ASMJIT_API VM
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJIT_VM
+#endif // _ASMJIT_VM_H

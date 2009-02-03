@@ -25,23 +25,20 @@
 
 // This file is designed to be changeable. Platform specific changes
 // should be applied to this file and this guarantes and never versions
-// of AsmJit library will never overwrite generated config files.
+// of BlitJit library will never overwrite generated config files.
 //
-// So modify this will by your build system or hand. Windows developers
-// should only define ASMJIT_WINDOWS and uncomment other platforms. Linux
-// developers should define ASMJIT_POSIX and uncomment other platforms, 
-// etc...
+// So modify this will by your build system or hand.
 
 // [Guard]
-#ifndef _ASMJIT_BUILD_H
-#define _ASMJIT_BUILD_H
+#ifndef _ASMJITCONFIG_H
+#define _ASMJITCONFIG_H
 
 // [Include]
 //
 // Here should be optional include files that's needed fo successfuly
 // use macros defined here. Remember, AsmJit uses only AsmJit namespace
 // and all macros are used within it. So for example crash handler is
-// not called as AsmJit::crash(0) in ASMJIT_ILLEGAL() macro, but simply
+// not called as AsmJit::crash(0) in ASMJIT_CRASH() macro, but simply
 // as crash(0).
 #include <stdlib.h>
 
@@ -49,21 +46,38 @@
 #define ASMJIT_WINDOWS 1
 #define ASMJIT_POSIX 2
 
-// HERE DEFINE YOUR OS
-// #define ASMJIT_OS ASMJIT_[WINDOWS|POSIX]
+#if defined(WINDOWS) || defined(_WIN32) || defined(_WIN64)
+# define ASMJIT_OS ASMJIT_WINDOWS
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
+      defined(__NetBSD__) || defined(__DragonFly__)
+# define ASMJIT_OS ASMJIT_POSIX
+#endif
 
 #if !defined(ASMJIT_OS) || ASMJIT_OS < 1
 #error "AsmJit - Define ASMJIT_OS macro to your operating system"
 #endif // ASMJIT_OS
 
 // [AsmJit - API]
-#define ASMJIT_API
+#if !defined(ASMJIT_API)
+# define ASMJIT_API
+#endif // ASMJIT_API
+
+#if !defined(ASMJIT_VAR)
 #define ASMJIT_VAR extern
+#endif // ASMJIT_VAR
 
 // [AsmJit - Memory]
-#define ASMJIT_MALLOC ::malloc
-#define ASMJIT_REALLOC ::realloc
-#define ASMJIT_FREE ::free
+#if !defined(ASMJIT_MALLOC)
+# define ASMJIT_MALLOC ::malloc
+#endif // ASMJIT_MALLOC
+
+#if !defined(ASMJIT_REALLOC)
+# define ASMJIT_REALLOC ::realloc
+#endif // ASMJIT_REALLOC
+
+#if !defined(ASMJIT_FREE)
+# define ASMJIT_FREE ::free
+#endif // ASMJIT_FREE
 
 // [AsmJit - Crash handler]
 namespace AsmJit
@@ -117,14 +131,22 @@ namespace AsmJit
 # define ASMJIT_UINT64_C(num) num##ULL
 #endif
 
-// [AsmJit - Debug]
+// [BlitJit - Debug]
 #if defined(DEBUG) || 1
-# define ASMJIT_ILLEGAL() crash()
-# define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_ILLEGAL(); } while(0)
+# if !defined(ASMJIT_CRASH)
+#  define ASMJIT_CRASH() crash()
+# endif
+# if !defined(ASMJIT_ASSERT)
+#  define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_CRASH(); } while(0)
+# endif
 #else
-# define ASMJIT_ILLEGAL() do {} while(0)
-# define ASMJIT_ASSERT(exp) do {} while(0)
+# if !defined(ASMJIT_CRASH)
+#  define ASMJIT_CRASH() do {} while(0)
+# endif
+# if !defined(ASMJIT_ASSERT)
+#  define ASMJIT_ASSERT(exp) do {} while(0)
+# endif
 #endif // DEBUG
 
 // [Guard]
-#endif // _ASMJIT_BUILD
+#endif // _ASMJITCONFIG_H
