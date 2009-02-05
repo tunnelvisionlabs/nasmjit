@@ -109,7 +109,7 @@ void cpuid(UInt32 in, CpuId* out)
 
 // 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler.
 // ASMJIT_X64 is here only for readibility, only VS2005 can compile 64 bit code.
-#if 0 && _MSC_VER >= 1400 || ASMJIT_X64
+#if _MSC_VER >= 1400 || ASMJIT_X64
   // done by intrinsics
   __cpuid(reinterpret_cast<int*>(out->i), in);
 #else // _MSC_VER < 1400
