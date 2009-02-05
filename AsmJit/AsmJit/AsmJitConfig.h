@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2006-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -54,7 +54,7 @@
 #endif
 
 #if !defined(ASMJIT_OS) || ASMJIT_OS < 1
-#error "AsmJit - Define ASMJIT_OS macro to your operating system"
+# error "AsmJit - Define ASMJIT_OS macro to your operating system"
 #endif // ASMJIT_OS
 
 // [AsmJit - API]
@@ -63,7 +63,7 @@
 #endif // ASMJIT_API
 
 #if !defined(ASMJIT_VAR)
-#define ASMJIT_VAR extern
+# define ASMJIT_VAR extern
 #endif // ASMJIT_VAR
 
 // [AsmJit - Memory]
@@ -95,6 +95,24 @@ namespace AsmJit
 #  define ASMJIT_X86
 # endif
 #endif
+
+// [AsmJit - Calling Conventions]
+#if defined(ASMJIT_X86)
+# if defined(__GNUC__)
+#  define ASMJIT_FASTCALL_2 __attribute__((regparm(2)))
+#  define ASMJIT_FASTCALL_3 __attribute__((regparm(3)))
+#  define ASMJIT_STDCALL    __attribute__((stdcall))
+#  define ASMJIT_CDECL      __attribute__((cdecl))
+# else
+#  define ASMJIT_FASTCALL_2 __fastcall
+#  define ASMJIT_STDCALL    __stdcall
+#  define ASMJIT_CDECL      __cdecl
+# endif
+#else
+# define ASMJIT_FASTCALL_2
+# define ASMJIT_STDCALL
+# define ASMJIT_CDECL
+#endif // ASMJIT_X86
 
 // [AsmJit - Types]
 namespace AsmJit

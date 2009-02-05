@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2006-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -1681,7 +1681,7 @@ struct ASMJIT_API X86
   //! @note
   //! - prefix0 can be 0x00 (ignore), 0x66, 0xF2 or 0xF3
   //! - opcode0 can be 0x00 (ignore) or any 8 bit number
-  //! - opcoded opcode1 and opcode2 are always emitted
+  //! - opcodes opcode1 and opcode2 are always emitted
   void emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw = 0)
   {
     if (!ensureSpace()) return;
@@ -1723,7 +1723,7 @@ struct ASMJIT_API X86
   void align(int m)
   {
     if (!ensureSpace()) return;
-    ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16);
+    ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16 || m == 32);
     while ((offset() & (m - 1)) != 0) nop();
   }
 
