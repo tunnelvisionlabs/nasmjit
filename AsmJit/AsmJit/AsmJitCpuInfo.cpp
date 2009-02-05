@@ -54,13 +54,18 @@
 
 #include "AsmJitCpuInfo.h"
 
-#if defined(_MSC_VER)
-#include <intrin.h>
-#endif // _MSC_VER
-
 #if ASMJIT_OS == ASMJIT_WINDOWS
 #include <windows.h>
 #endif // ASMJIT_WINDOWS
+
+// 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler. This
+// shouldn't affect x64 compilation, because x64 compiler starts with
+// VS2005 (VC8.0).
+#if defined(_MSC_VER)
+#if _MSC_VER >= 1400
+#include <intrin.h>
+#endif // _MSC_VER >= 1400 (>= VS2005)
+#endif // _MSC_VER
 
 #if ASMJIT_OS == ASMJIT_POSIX
 #include <errno.h>
@@ -91,13 +96,40 @@ static UInt32 detectNumberOfProcessors(void)
 #endif
 }
 
+// This is messy, I know. cpuid is implemented as intrinsic in VS2005, but
+// we should support other compilers as well. Main problem is that MS compilers
+// in 64 bit mode not allows to use inline assembler, so we need intrinsic and
+// we need also asm version.
+
+// cpuid() and detectCpuInfo() for x86 and x64 platforms begins here.
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
 void cpuid(UInt32 in, CpuId* out)
 {
 #if defined(_MSC_VER)
+
+// 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler.
+// ASMJIT_X64 is here only for readibility, only VS2005 can compile 64 bit code.
+#if 0 && _MSC_VER >= 1400 || ASMJIT_X64
   // done by intrinsics
   __cpuid(reinterpret_cast<int*>(out->i), in);
+#else // _MSC_VER < 1400
+  UInt32 cpuid_in = in;
+  UInt32* cpuid_out = out->i;
+
+  __asm
+  {
+    mov     eax, cpuid_in
+    mov     edi, cpuid_out
+    cpuid
+    mov     dword ptr[edi +  0], eax
+    mov     dword ptr[edi +  4], ebx
+    mov     dword ptr[edi +  8], ecx
+    mov     dword ptr[edi + 12], edx
+  }
+#endif // _MSC_VER < 1400
+
 #elif defined(__GNUC__)
+
 # if defined(CORE_ARCH_X86)
 // Inline cpuid instruction.  In PIC compilations, %ebx contains the address
 // of the global offset table.  To avoid breaking such executables, this code
@@ -115,6 +147,7 @@ void cpuid(UInt32 in, CpuId* out)
        : "=a" (a), "=D" (b), "=c" (c), "=d" (d) : "a" (inp))
 # endif
   __mycpuid(out->eax, out->ebx, out->ecx, out->edx, in);
+
 #endif // compiler
 }
 
