@@ -592,6 +592,26 @@ ASMJIT_VAR const XMMRegister xmm14;
 ASMJIT_VAR const XMMRegister xmm15;
 #endif // ASMJIT_X64
 
+//! @brief 80-bit x87 floating point register.
+struct X87Register
+{
+  inline int reg() const { return _code; }
+  inline int regSize() const { return 8; }
+
+  inline bool operator==(const XMMRegister& other) const { return _code == other._code; }
+  inline bool operator!=(const XMMRegister& other) const { return _code != other._code; }
+
+  UInt8 _code;
+};
+
+//! @brief returns x87 register with index @a i.
+static inline X87Register st(int i)
+{
+  ASMJIT_ASSERT(i >= 0 && i < 8);
+  X87Register r = { i };
+  return r;
+}
+
 //! @brief  Returns the equivalent of !cc.
 //!
 //! Negation of the default no_condition (-1) results in a non-default
@@ -791,7 +811,7 @@ inline void Displacement::init(Label* L, Type type)
 //! to do that.
 //!
 //! To create operand do not use Op's constructors, instead use methods for
-//! that like @c imm() for creating immediate operand or @c byte_ptr(), 
+//! that like @c imm() for creating immediate operand or @c ptr(), @c byte_ptr(),
 //! @c word_ptr(), @c dword_ptr(), @c qword_ptr() and dqword_ptr() methods.
 //! Register operands are created by constructor (implicit), so for registers
 //! you don't need to call for example Op(eax).
@@ -1676,6 +1696,15 @@ struct ASMJIT_API X86
     emitByte(opcode2 + i);
   }
 
+  void emitArithFPMem(int opcode, UInt8 o, const Op& mem)
+  {
+    ASMJIT_ASSERT(mem.op() == OP_MEM);
+    if (!ensureSpace()) return;
+
+    emitByte(opcode);
+    emitMem(o, mem);
+  }
+
   //! @brief Emits MMX/SSE instruction in form: inst dst, src or [src...]
   //!
   //! @note
@@ -2109,11 +2138,11 @@ struct ASMJIT_API X86
     emitOp(6, dst);
   }
 
-  //! @brief Compute 2^x - 1.
+  //! @brief Compute 2^x - 1 (FPU).
   //!
   //! This instruction calculates the exponential value of 2 to the power 
   //! of the source operand minus 1. The source operand is located in 
-  //! register ST(0) and the result is also stored in ST(0). The value of the 
+  //! register st(0) and the result is also stored in st(0). The value of the 
   //! source operand must lie in the range –1.0 to +1.0. If the source value is 
   //! outside this range, the result is undefined.
   void f2xm1()
@@ -2124,9 +2153,9 @@ struct ASMJIT_API X86
     emitByte(0xF0);
   }
 
-  //! @brief Absolute Value.
+  //! @brief Absolute Value of st(0) (FPU).
   //!
-  //! This instruction clears the sign bit of ST(0) to create the absolute 
+  //! This instruction clears the sign bit of st(0) to create the absolute 
   //! value of the operand.
   void fabs()
   {
@@ -2136,21 +2165,34 @@ struct ASMJIT_API X86
     emitByte(0xE1);
   }
 
-  //! @brief Add.
-  void fadd(int i)
+  //! @brief Add @a src to @a dst and store result in @a dst (FPU).
+  //!
+  //! @note One of dst or src must be st(0).
+  void fadd(const X87Register& dst, const X87Register& src)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDC, 0xC0, i);
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xC0, src.reg());
+    else if (src.reg() == 0)
+      emitArithFP(0xDC, 0xC0, dst.reg());
+    else
+      ASMJIT_CRASH();
   }
 
-  //! @brief Add and POP register stack.
-  void faddp(int i)
+  //! @brief Add @a src to st(0) and store result in st(0) (FPU).
+  //!
+  //! @note SP-FP or DP-FP determined by @a adr size.
+  void fadd(const Op& src)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDE, 0xC0, i);
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 0, src);
   }
 
-  //! @brief Load Binary Coded Decimal.
+  //! @brief Add st(0) to @a dst and POP register stack (FPU).
+  void faddp(const X87Register& dst = st(1))
+  {
+    emitArithFP(0xDE, 0xC0, dst.reg());
+  }
+
+  //! @brief Load Binary Coded Decimal (FPU).
   //!
   //! This instruction converts the BCD source operand into extended-real 
   //! format and pushes the value onto the FPU stack. The source operand 
@@ -2161,32 +2203,26 @@ struct ASMJIT_API X86
   //! undefined result.
   void fbld(const Op& src)
   {
-    if (!ensureSpace()) return;
-
-    emitByte(0xDF);
-    emitMem(4, src);
+    emitArithFPMem(0xDF, 4, src);
   }
 
-  //! @brief Store BCD Integer and Pop.
+  //! @brief Store BCD Integer and Pop (FPU).
   //!
-  //! This instruction converts the value in the ST(0) register to an 18-digit 
+  //! This instruction converts the value in the st(0) register to an 18-digit 
   //! packed BCD integer, stores the result in the destination operand, and 
   //! pops the register stack. If the source value is a non-integral value, it 
   //! is rounded to an integer value, according to rounding mode specified by
   //! the RC field of the FPU control word. To pop the register stack, the 
-  //! processor marks the ST(0) register as empty and increments the stack 
+  //! processor marks the st(0) register as empty and increments the stack 
   //! pointer (TOP) by 1.
   void fbstp(const Op& dst)
   {
-    if (!ensureSpace()) return;
-
-    emitByte(0xDF);
-    emitMem(6, dst);
+    emitArithFPMem(0xDF, 6, dst);
   }
 
-  //! @brief Change Sign.
+  //! @brief Change st(0) Sign (FPU).
   //!
-  //! This instruction complements the sign bit of ST(0). This operation 
+  //! This instruction complements the sign bit of st(0). This operation 
   //! changes a positive value into a negative value of equal magnitude 
   //! or vice versa.
   void fchs()
@@ -2197,70 +2233,97 @@ struct ASMJIT_API X86
     emitByte(0xE0);
   }
 
-  //! @brief FP Conditional Move.
+  //! @brief Clear Exceptions (FPU).
+  //!
+  //! Clear floating-point exception flags after checking for pending unmasked 
+  //! floatingpoint exceptions.
+  //!
+  //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE, and IE), 
+  //! the exception summary status flag (ES), the stack fault flag (SF), and
+  //! the busy flag (B) in the FPU status word. The FCLEX instruction checks 
+  //! for and handles any pending unmasked floating-point exceptions before 
+  //! clearing the exception flags.
+  void fclex()
+  {
+    if (!ensureSpace()) return;
+
+    emitByte(0x9B);
+    emitByte(0xDB);
+    emitByte(0xE2);
+  }
+
+  //! @brief Clear Exceptions (FPU).
+  //!
+  //! Clear floating-point exception flags without checking for pending 
+  //! unmasked floating-point exceptions.
+  //!
+  //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE, and IE), 
+  //! the exception summary status flag (ES), the stack fault flag (SF), and
+  //! the busy flag (B) in the FPU status word. The FCLEX instruction does
+  //! not checks for and handles any pending unmasked floating-point exceptions
+  //! before clearing the exception flags.
+  void fnclex()
+  {
+    if (!ensureSpace()) return;
+
+    emitByte(0xDB);
+    emitByte(0xE2);
+  }
+
+  //! @brief FP Conditional Move (FPU).
   //!
   //! This instruction tests the status flags in the EFLAGS register and 
   //! moves the source operand (second operand) to the destination operand 
   //! (first operand) if the given test condition is true.
-  void fcmov(CONDITION cc, int i)
+  void fcmov(CONDITION cc, const X87Register& src)
   {
     if (!ensureSpace()) return;
 
+    UInt8 opCode = 0x00;
     switch (cc)
     {
-      // if below
-      case C_BELOW:
-        emitByte(0xDA);
-        emitByte(0xC0 + i);
-        return;
-      // if equal
-      case C_EQUAL:
-        emitByte(0xDA);
-        emitByte(0xC8 + i);
-        return;
-      // if below or equal
-      case C_BELOW_EQUAL:
-        emitByte(0xDA);
-        emitByte(0xD0 + i);
-        return;
-      // if unordered
-      case C_FP_UNORDERED:
-        emitByte(0xDA);
-        emitByte(0xD8 + i);
-        return;
-      // if not below
-      case C_ABOVE_EQUAL:
-        emitByte(0xDB);
-        emitByte(0xC0 + i);
-        return;
-      // if not equal
-      case C_NOT_EQUAL:
-        emitByte(0xDB);
-        emitByte(0xC8 + i);
-        return;
-      // if not below or equal
-      case C_ABOVE:
-        emitByte(0xDB);
-        emitByte(0xD0 + i);
-        return;
-      // if not unordered
-      case C_FP_NOT_UNORDERED:
-        emitByte(0xDB);
-        emitByte(0xD8 + i);
-        return;
-      default:
-        ASMJIT_CRASH();
+      case C_BELOW           : opCode = 0xC0; break;
+      case C_EQUAL           : opCode = 0xC8; break;
+      case C_BELOW_EQUAL     : opCode = 0xD0; break;
+      case C_FP_UNORDERED    : opCode = 0xD8; break;
+      case C_ABOVE_EQUAL     : opCode = 0xC0; break;
+      case C_NOT_EQUAL       : opCode = 0xC8; break;
+      case C_ABOVE           : opCode = 0xD0; break;
+      case C_FP_NOT_UNORDERED: opCode = 0xD8; break;
+
+      default: ASMJIT_CRASH();
     }
+
+    emitByte(0xDA);
+    emitByte(opCode + src.reg());
   }
 
-  void fcomp()
+  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a src (FPU).
+  void fcom(const Op& src)
   {
-    if (!ensureSpace()) return;
-
-    emitByte(0xD8);
-    emitByte(0xD9);
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 2, src);
   }
 
+  //! @brief Compare st(0) with @a reg (FPU).
+  void fcom(const X87Register& reg = st(1))
+  {
+    emitArithFP(0xD8, 0xD0, reg.reg());
+  }
+
+  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a adr and pop the 
+  //! stack (FPU).
+  void fcomp(const Op& adr)
+  {
+    emitArithFPMem(adr.size() == 4 ? 0xD8 : 0xDC, 3, adr);
+  }
+
+  //! @brief Compare st(0) with @a reg and pop the stack (FPU).
+  void fcomp(const X87Register& reg = st(1))
+  {
+    emitArithFP(0xD8, 0xD8, reg.reg());
+  }
+
+  //! @brief Compare st(0) with st(1) and pop register stack twice (FPU).
   void fcompp()
   {
     if (!ensureSpace()) return;
@@ -2269,10 +2332,22 @@ struct ASMJIT_API X86
     emitByte(0xD9);
   }
 
-  //! @brief Cosine.
+  //! @brief Compare st(0) and @a reg and Set EFLAGS (FPU).
+  void fcomi(const X87Register& reg)
+  {
+    emitArithFP(0xDB, 0xF0, reg.reg());
+  }
+
+  //! @brief Compare st(0) and @a reg and Set EFLAGS and pop the stack (FPU).
+  void fcomip(const X87Register& reg)
+  {
+    emitArithFP(0xDF, 0xF0, reg.reg());
+  }
+
+  //! @brief Cosine (FPU).
   //!
   //! This instruction calculates the cosine of the source operand in 
-  //! register ST(0) and stores the result in ST(0).
+  //! register st(0) and stores the result in st(0).
   void fcos()
   {
     if (!ensureSpace()) return;
@@ -2280,80 +2355,163 @@ struct ASMJIT_API X86
     emitByte(0xFF);
   }
 
-  void fdiv(int i)
+  //! @brief Decrement Stack-Top Pointer (FPU).
+  //!
+  //! Subtracts one from the TOP field of the FPU status word (decrements 
+  //! the top-ofstack pointer). If the TOP field contains a 0, it is set 
+  //! to 7. The effect of this instruction is to rotate the stack by one 
+  //! position. The contents of the FPU data registers and tag register 
+  //! are not affected.
+  void fdecstp()
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xDC, 0xF8, i);
+    emitByte(0xD9);
+    emitByte(0xF6);
   }
 
-  void fdivp(int i)
+  //! @brief Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  void fdiv(const Op& src)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDE, 0xF8, i);
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 6, src);
   }
 
-  void ffree(int i)
+  //! @brief Divide @a dst by @a src (FPU).
+  //!
+  //! @note One of @a dst or @a src register must be st(0).
+  void fdiv(const X87Register& dst, const X87Register& src)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDD, 0xC0, i);
-  }
+    ASMJIT_ASSERT(dst.reg() == 0 || src.reg() == 0);
 
-  //! @brief Add 16 bit or 32 bit integer.
-  void fiadd(const Op& adr)
-  {
-    if (!ensureSpace()) return;
-
-    if (adr.size() == 2)
-    {
-      emitByte(0xDE);
-      emitMem(0, adr);
-    }
-    else if (adr.size() == 4)
-    {
-      emitByte(0xDA);
-      emitMem(0, adr);
-    }
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xF0, src.reg());
     else
-    {
-      ASMJIT_CRASH();
-    }
+      emitArithFP(0xDC, 0xF8, dst.reg());
   }
 
-  void fild_s(const Op& adr)
+  //! @brief Divide @a reg by st(0) (FPU).
+  void fdivp(const X87Register& reg = st(1))
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDB);
-    emitMem(0, adr);
+    emitArithFP(0xDE, 0xF8, reg.reg());
   }
 
-  void fild_d(const Op& adr)
+  //! @brief Reverse Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  void fdivr(const Op& src)
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDF);
-    emitMem(5, adr);
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 7, src);
   }
 
-  void fistp_s(const Op& adr)
+  //! @brief Reverse Divide @a dst by @a src (FPU).
+  //!
+  //! @note One of @a dst or @a src register must be st(0).
+  void fdivr(const X87Register& dst, const X87Register& src)
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDB);
-    emitMem(3, adr);
+    ASMJIT_ASSERT(dst.reg() == 0 || src.reg() == 0);
+
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xF8, src.reg());
+    else
+      emitArithFP(0xDC, 0xF0, dst.reg());
   }
 
-  void fist_s(const Op& adr)
+  //! @brief Reverse Divide @a reg by st(0) (FPU).
+  void fdivrp(const X87Register& reg = st(1))
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDB);
-    emitMem(2, adr);
+    emitArithFP(0xDE, 0xF0, reg.reg());
   }
 
-  void fistp_d(const Op& adr)
+  //! @brief Free Floating-Point Register (FPU).
+  //!
+  //! Sets the tag in the FPU tag register associated with register @a reg
+  //! to empty (11B). The contents of @a reg and the FPU stack-top pointer 
+  //! (TOP) are not affected.
+  void ffree(const X87Register& reg)
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDF);
-    emitMem(7, adr);
+    emitArithFP(0xDD, 0xC0, reg.reg());
   }
 
+  //! @brief Add 16 bit or 32 bit integer to st(0) (FPU).
+  void fiadd(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 0, src);
+  }
+
+  //! @brief Compare st(0) with 16 bit or 32 bit Integer (FPU).
+  void ficom(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 2, src);
+  }
+
+  //! @brief Compare st(0) with 16 bit or 32 bit Integer and pop the stack (FPU).
+  void ficomp(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 3, src);
+  }
+
+  //! @brief Divide st(0) by 32 bit or 16 bit integer (@a src) (FPU).
+  void fidiv(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 6, src);
+  }
+
+  //! @brief Reverse Divide st(0) by 32 bit or 16 bit integer (@a src) (FPU).
+  void fidivr(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 7, src);
+  }
+
+  //! @brief Load 16 bit, 32 bit or 64 bit Integer and push it to the stack (FPU).
+  //!
+  //! Converts the signed-integer source operand into double extended-precision 
+  //! floating point format and pushes the value onto the FPU register stack. 
+  //! The source operand can be a word, doubleword, or quadword integer. It is 
+  //! loaded without rounding errors. The sign of the source operand is 
+  //! preserved.
+  void fild(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4 || src.size() == 8);
+
+    if (src.size() == 2)
+      emitArithFPMem(0xDF, 0, src);
+    else if (src.size() == 4)
+      emitArithFPMem(0xDB, 0, src);
+    else
+      emitArithFPMem(0xDF, 5, src);
+  }
+
+  //! @brief Multiply st(0) by 16 bit or 32 bit integer and store it 
+  //! to st(0) (FPU).
+  void fimul(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 1, src);
+  }
+
+  //! @brief Increment Stack-Top Pointer (FPU).
+  //!
+  //! Adds one to the TOP field of the FPU status word (increments the 
+  //! top-of-stack pointer). If the TOP field contains a 7, it is set to 0. 
+  //! The effect of this instruction is to rotate the stack by one position. 
+  //! The contents of the FPU data registers and tag register are not affected.
+  //! This operation is not equivalent to popping the stack, because the tag 
+  //! for the previous top-of-stack register is not marked empty.
   void fincstp()
   {
     if (!ensureSpace()) return;
@@ -2361,19 +2519,95 @@ struct ASMJIT_API X86
     emitByte(0xF7);
   }
 
-  void fisub_s(const Op& adr)
+  //! @brief Initialize Floating-Point Unit (FPU).
+  //!
+  //! Initialize FPU after checking for pending unmasked floating-point 
+  //! exceptions.
+  void finit()
   {
     if (!ensureSpace()) return;
-    emitByte(0xDA);
-    emitMem(4, adr);
+    emitByte(0x9B);
+    emitByte(0xDB);
+    emitByte(0xE3);
   }
 
-  void fld(int i)
+  //! @brief Subtract 16 bit or 32 bit integer from st(0) and store result to 
+  //! st(0) (FPU).
+  void fisub(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 4, src);
+  }
+
+  //! @brief Reverse Subtract 16 bit or 32 bit integer from st(0) and 
+  //! store result to  st(0) (FPU).
+  void fisubr(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
+
+    emitArithFPMem(src.size() == 2 ? 0xDE : 0xDA, 5, src);
+  }
+
+  //! @brief Initialize Floating-Point Unit (FPU).
+  //!
+  //! Initialize FPU without checking for pending unmasked floating-point
+  //! exceptions.
+  void fninit()
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xD9, 0xC0, i);
+    emitByte(0xDB);
+    emitByte(0xE3);
   }
 
+  //! @brief Store st(0) as 16 bit or 32 bit Integer to @a dst (FPU).
+  void fist(const Op& dst)
+  {
+    ASMJIT_ASSERT(dst.op() == OP_MEM);
+    ASMJIT_ASSERT(dst.size() == 2 || dst.size() == 4);
+
+    emitArithFPMem(dst.size() == 2 ? 0xDF : 0xDB, 2, dst);
+  }
+
+  //! @brief Store st(0) as 16 bit, 32 bit or 64 bit Integer to @a dst and pop
+  //! stack (FPU).
+  void fistp(const Op& dst)
+  {
+    ASMJIT_ASSERT(dst.op() == OP_MEM);
+    ASMJIT_ASSERT(dst.size() == 2 || dst.size() == 4 || dst.size() == 8);
+
+    if (dst.size() == 2)
+      emitArithFPMem(0xDF, 3, dst);
+    else if (dst.size() == 4)
+      emitArithFPMem(0xDB, 3, dst);
+    else
+      emitArithFPMem(0xDF, 7, dst);
+  }
+
+  //! @brief Push 32 bit, 64 bit or 80 bit Floating Point Value onto the FPU 
+  //! register stack (FPU).
+  void fld(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 4 || src.size() == 8 || src.size() == 10);
+
+    if (src.size() == 4)
+      emitArithFPMem(0xD9, 0, src);
+    else if (src.size() == 8)
+      emitArithFPMem(0xDD, 0, src);
+    else
+      emitArithFPMem(0xDB, 5, src);
+  }
+
+  //! @brief Push @a reg onto the FPU register stack (FPU).
+  void fld(const X87Register& reg)
+  {
+    emitArithFP(0xD9, 0xC0, reg.reg());
+  }
+
+  //! @brief Push +1.0 onto the FPU register stack (FPU).
   void fld1()
   {
     if (!ensureSpace()) return;
@@ -2381,27 +2615,23 @@ struct ASMJIT_API X86
     emitByte(0xE8);
   }
 
-  void fldz()
+  //! @brief Push log2(10) onto the FPU register stack (FPU).
+  void fld12t()
   {
     if (!ensureSpace()) return;
     emitByte(0xD9);
-    emitByte(0xEE);
+    emitByte(0xE9);
   }
 
-  void fld_s(const Op& adr)
+  //! @brief Push log2(e) onto the FPU register stack (FPU).
+  void fld12e()
   {
     if (!ensureSpace()) return;
     emitByte(0xD9);
-    emitMem(0, adr);
+    emitByte(0xEA);
   }
 
-  void fld_d(const Op& adr)
-  {
-    if (!ensureSpace()) return;
-    emitByte(0xDD);
-    emitMem(0, adr);
-  }
-
+  //! @brief Push pi onto the FPU register stack (FPU).
   void fldpi()
   {
     if (!ensureSpace()) return;
@@ -2409,25 +2639,136 @@ struct ASMJIT_API X86
     emitByte(0xEB);
   }
 
-  void fnstsw_ax()
+  //! @brief Push log10(2) onto the FPU register stack (FPU).
+  void fldlg2()
   {
     if (!ensureSpace()) return;
-    emitByte(0xDF);
-    emitByte(0xE0);
+    emitByte(0xD9);
+    emitByte(0xEC);
   }
 
-  void fmul(int i)
+  //! @brief Push ln(2) onto the FPU register stack (FPU).
+  void fldln2()
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xDC, 0xC8, i);
+    emitByte(0xD9);
+    emitByte(0xED);
   }
 
-  void fmulp(int i)
+  //! @brief Push +0.0 onto the FPU register stack (FPU).
+  void fldz()
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xDE, 0xC8, i);
+    emitByte(0xD9);
+    emitByte(0xEE);
+  }
+  
+  //! @brief Load x87 FPU Control Word (2 bytes) (FPU).
+  void fldcw(const Op& src)
+  {
+    emitArithFPMem(0xD9, 5, src);
   }
 
+  //! @brief Load x87 FPU Environment (14 or 28 bytes) (FPU).
+  void fldenv(const Op& src)
+  {
+    emitArithFPMem(0xD9, 4, src);
+  }
+
+  //! @brief Multiply @a dst by @a src and store result in @a dst (FPU).
+  //!
+  //! @note One of dst or src must be st(0).
+  void fmul(const X87Register& dst, const X87Register& src)
+  {
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xC8, src.reg());
+    else if (src.reg() == 0)
+      emitArithFP(0xDC, 0xC8, dst.reg());
+    else
+      ASMJIT_CRASH();
+  }
+
+  //! @brief Multiply st(0) by @a src and store result in st(0) (FPU).
+  //!
+  //! @note SP-FP or DP-FP determined by @a adr size.
+  void fmul(const Op& src)
+  {
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 1, src);
+  }
+
+  //! @brief Multiply st(0) by @a dst and POP register stack (FPU).
+  void fmulp(const X87Register& dst = st(1))
+  {
+    emitArithFP(0xDE, 0xC8, dst.reg());
+  }
+
+  //! @brief No Operation (FPU).
+  void fnop()
+  {
+    if (!ensureSpace()) return;
+    emitByte(0xD9);
+    emitByte(0xD0);
+  }
+
+  //! @brief Save FPU State (FPU).
+  //!
+  //! Store FPU environment to m94byte or m108byte without
+  //! checking for pending unmasked FP exceptions.
+  //! Then re-initialize the FPU.
+  void fnsave(const Op& dst)
+  {
+    emitArithFPMem(0xDD, 6, dst);
+  }
+
+  //! @brief Store x87 FPU Environment (FPU).
+  //!
+  //! Store FPU environment to @a dst (14 or 28 Bytes) without checking for
+  //! pending unmasked floating-point exceptions. Then mask all floating
+  //! point exceptions.
+  void fnstenv(const Op& dst)
+  {
+    emitArithFPMem(0xD9, 6, dst);
+  }
+
+  //! @brief Store x87 FPU Control Word (FPU).
+  //!
+  //! Store FPU control word to @a dst (2 Bytes) without checking for pending 
+  //! unmasked floating-point exceptions.
+  void fnstcw(const Op& dst)
+  {
+    emitArithFPMem(0xD9, 7, dst);
+  }
+
+  //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+  void fnstsw(const Op& dst)
+  {
+    ASMJIT_ASSERT(dst.op() == OP_MEM || (dst.op() == OP_REG && dst.reg() == REG_AX));
+
+    if (dst.op() == OP_REG)
+    {
+      if (!ensureSpace()) return;
+      emitByte(0xDF);
+      emitByte(0xE0);
+    }
+    else
+    {
+      emitArithFPMem(0xDF, 7, dst);
+    }
+  }
+
+  //! @brief Partial Arctangent (FPU).
+  //!
+  //! Replace st(1) with arctan(st(1)/st(0)) and pop the register stack.
+  void fpatan()
+  {
+    if (!ensureSpace()) return;
+    emitByte(0xD9);
+    emitByte(0xF3);
+  }
+
+  //! @brief Partial Remainder (FPU).
+  //!
+  //! Replace st(0) with the remainder obtained from dividing st(0) by st(1).
   void fprem()
   {
     if (!ensureSpace()) return;
@@ -2435,6 +2776,10 @@ struct ASMJIT_API X86
     emitByte(0xF8);
   }
 
+  //! @brief Partial Remainder (FPU).
+  //!
+  //! Replace st(0) with the IEEE remainder obtained from dividing st(0) by 
+  //! st(1).
   void fprem1()
   {
     if (!ensureSpace()) return;
@@ -2442,7 +2787,9 @@ struct ASMJIT_API X86
     emitByte(0xF5);
   }
 
-  //! @brief Partial Tangent.
+  //! @brief Partial Tangent (FPU).
+  //! 
+  //! Replace st(0) with its tangent and push 1 onto the FPU stack.
   void fptan()
   {
     if (!ensureSpace()) return;
@@ -2450,6 +2797,9 @@ struct ASMJIT_API X86
     emitByte(0xF2);
   }
 
+  //! @brief Round to Integer (FPU).
+  //!
+  //! Rount st(0) to an Integer.
   void frndint()
   {
     if (!ensureSpace()) return;
@@ -2457,18 +2807,15 @@ struct ASMJIT_API X86
     emitByte(0xFC);
   }
 
-  //! @brief Restore FPU State.
+  //! @brief Restore FPU State (FPU).
   //!
   //! Load FPU state from src (94 bytes or 108 bytes).
   void frstor(const Op& src)
   {
-    if (!ensureSpace()) return;
-
-    emitByte(0xDD);
-    emitMem(4, src);
+    emitArithFPMem(0xDD, 4, src);
   }
 
-  //! @brief Save FPU State.
+  //! @brief Save FPU State (FPU).
   //!
   //! Store FPU state to m94byte or m108byte after checking for
   //! pending unmasked FP exceptions. Then reinitialize
@@ -2476,27 +2823,13 @@ struct ASMJIT_API X86
   void fsave(const Op& dst)
   {
     if (!ensureSpace()) return;
-
     emitByte(0x9B);
-    emitByte(0xDD);
-    emitMem(6, dst);
+    emitArithFPMem(0xDD, 6, dst);
   }
 
-  //! @brief Save FPU State.
-  //! Store FPU environment to m94byte or m108byte without
-  //! checking for pending unmasked FP exceptions.
-  //! Then re-initialize the FPU.
-  void fnsave(const Op& dst)
-  {
-    if (!ensureSpace()) return;
-
-    emitByte(0xDD);
-    emitMem(6, dst);
-  }
-
-  //! @brief Scale.
+  //! @brief Scale (FPU).
   //!
-  //! Scale ST(0) by ST(1).
+  //! Scale st(0) by st(1).
   void fscale()
   {
     if (!ensureSpace()) return;
@@ -2505,20 +2838,21 @@ struct ASMJIT_API X86
     emitByte(0xFD);
   }
 
-  //! @brief Sine.
+  //! @brief Sine (FPU).
   //!
   //! This instruction calculates the sine of the source operand in 
-  //! register ST(0) and stores the result in ST(0).
+  //! register st(0) and stores the result in st(0).
   void fsin()
   {
     if (!ensureSpace()) return;
+
     emitByte(0xD9);
     emitByte(0xFE);
   }
 
-  //! @brief Sine and Cosine.
+  //! @brief Sine and Cosine (FPU).
   //!
-  //! Compute the sine and cosine of ST(0); replace ST(0) with
+  //! Compute the sine and cosine of st(0); replace st(0) with
   //! the sine, and push the cosine onto the register stack.
   void fsincos()
   {
@@ -2527,9 +2861,9 @@ struct ASMJIT_API X86
     emitByte(0xFB);
   }
 
-  //! @brief Square Root.
+  //! @brief Square Root (FPU).
   //!
-  //! Calculates square root of ST(0) and stores the result in ST(0).
+  //! Calculates square root of st(0) and stores the result in st(0).
   void fsqrt()
   {
     if (!ensureSpace()) return;
@@ -2537,38 +2871,152 @@ struct ASMJIT_API X86
     emitByte(0xFA);
   }
 
-  void fstp_s(const Op& adr)
+  //! @brief Store Floating Point Value (FPU).
+  //!
+  //! Store st(0) as 32 bit or 64 bit floating point value to @a dst.
+  void fst(const Op& dst)
   {
-    if (!ensureSpace()) return;
-    emitByte(0xD9);
-    emitMem(3, adr);
+    ASMJIT_ASSERT(dst.op() == OP_MEM);
+    ASMJIT_ASSERT(dst.size() == 4 || dst.size() == 8);
+    emitArithFPMem(dst.size() == 4 ? 0xD9 : 0xDD, 2, dst);
   }
 
-  void fstp_d(const Op& adr)
+  //! @brief Store Floating Point Value (FPU).
+  //!
+  //! Store st(0) to !a reg.
+  void fst(const X87Register& reg)
   {
-    if (!ensureSpace()) return;
-    emitByte(0xDD);
-    emitMem(3, adr);
+    emitArithFP(0xDD, 0xD0, reg.reg());
   }
 
-  void fsub(int i)
+  //! @brief Store Floating Point Value and Pop Register Stack (FPU).
+  //!
+  //! Store st(0) as 32 bit or 64 bit floating point value to @a dst
+  //! and pop register stack.
+  void fstp(const Op& dst)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDC, 0xE8, i);
+    ASMJIT_ASSERT(dst.op() == OP_MEM);
+    ASMJIT_ASSERT(dst.size() == 4 || dst.size() == 8 || dst.size() == 10);
+
+    if (dst.size() == 4)
+      emitArithFPMem(0xD9, 3, dst);
+    else if (dst.size() == 8)
+      emitArithFPMem(0xDD, 3, dst);
+    else
+      emitArithFPMem(0xDB, 7, dst);
   }
 
-  void fsubp(int i)
+  //! @brief Store Floating Point Value and Pop Register Stack  (FPU).
+  //!
+  //! Store st(0) to !a reg and pop register stack.
+  void fstp(const X87Register& reg)
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDE, 0xE8, i);
+    emitArithFP(0xDD, 0xD8, reg.reg());
   }
 
-  void fsubrp(int i)
+  //! @brief Store x87 FPU Control Word (FPU).
+  //!
+  //! Store FPU control word to @a dst (2 Bytes) after checking for pending 
+  //! unmasked floating-point exceptions.
+  void fstcw(const Op& dst)
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xDE, 0xE0, i);
+    emitByte(0x9B);
+    emitArithFPMem(0xD9, 7, dst);
   }
 
+  //! @brief Store x87 FPU Environment (FPU).
+  //!
+  //! Store FPU environment to @a dst (14 or 28 Bytes) after checking for
+  //! pending unmasked floating-point exceptions. Then mask all floating
+  //! point exceptions.
+  void fstenv(const Op& dst)
+  {
+    if (!ensureSpace()) return;
+    emitByte(0x9B);
+    emitArithFPMem(0xD9, 6, dst);
+  }
+
+  //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+  void fstsw(const Op& dst)
+  {
+    ASMJIT_ASSERT(dst.op() == OP_MEM || (dst.op() == OP_REG && dst.reg() == REG_AX));
+
+    if (dst.op() == OP_REG)
+    {
+      if (!ensureSpace()) return;
+      emitByte(0x9B);
+      emitByte(0xDF);
+      emitByte(0xE0);
+    }
+    else
+    {
+      emitByte(0x9B);
+      emitArithFPMem(0xDF, 7, dst);
+    }
+  }
+
+  //! @brief Subtract @a src from @a dst and store result in @a dst (FPU).
+  //!
+  //! @note One of dst or src must be st(0).
+  void fsub(const X87Register& dst, const X87Register& src)
+  {
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xE0, src.reg());
+    else if (src.reg() == 0)
+      emitArithFP(0xDC, 0xE8, dst.reg());
+    else
+      ASMJIT_CRASH();
+  }
+
+  //! @brief Subtract @a src from st(0) and store result in st(0) (FPU).
+  //!
+  //! @note SP-FP or DP-FP determined by @a adr size.
+  void fsub(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 4 || src.size() == 8);
+
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 4, src);
+  }
+
+  //! @brief Subtract st(0) from @a dst and POP register stack (FPU).
+  void fsubp(const X87Register& dst = st(1))
+  {
+    emitArithFP(0xDE, 0xE8, dst.reg());
+  }
+
+  //! @brief Reverse Subtract @a src from @a dst and store result in @a dst (FPU).
+  //!
+  //! @note One of dst or src must be st(0).
+  void fsubr(const X87Register& dst, const X87Register& src)
+  {
+    if (dst.reg() == 0)
+      emitArithFP(0xD8, 0xE8, src.reg());
+    else if (src.reg() == 0)
+      emitArithFP(0xDC, 0xE0, dst.reg());
+    else
+      ASMJIT_CRASH();
+  }
+
+  //! @brief Reverse Subtract @a src from st(0) and store result in st(0) (FPU).
+  //!
+  //! @note SP-FP or DP-FP determined by @a adr size.
+  void fsubr(const Op& src)
+  {
+    ASMJIT_ASSERT(src.op() == OP_MEM);
+    ASMJIT_ASSERT(src.size() == 4 || src.size() == 8);
+
+    emitArithFPMem(src.size() == 4 ? 0xD8 : 0xDC, 5, src);
+  }
+
+  //! @brief Reverse Subtract st(0) from @a dst and POP register stack (FPU).
+  void fsubrp(const X87Register& dst = st(1))
+  {
+    emitArithFP(0xDE, 0xE0, dst.reg());
+  }
+
+  //! @brief Floating point test - Compare st(0) with 0.0. (FPU).
   void ftst() 
   {
     if (!ensureSpace()) return;
@@ -2576,15 +3024,38 @@ struct ASMJIT_API X86
     emitByte(0xE4);
   }
 
-  void fucomp(int i)
+  //! @brief Unordered Compare st(0) with @a reg (FPU).
+  void fucom(const X87Register& reg = st(1))
   {
-    if (!ensureSpace()) return;
-    emitArithFP(0xDD, 0xE8, i);
+    emitArithFP(0xDD, 0xE0, reg.reg());
   }
 
+  //! @brief Unordered Compare st(0) and @a reg, check for ordered values
+  //! and Set EFLAGS (FPU).
+  void fucomi(const X87Register& reg)
+  {
+    emitArithFP(0xDB, 0xE8, reg.reg());
+  }
+
+  //! @brief UnorderedCompare st(0) and @a reg, Check for ordered values
+  //! and Set EFLAGS and pop the stack (FPU).
+  void fucomip(const X87Register& reg = st(1))
+  {
+    emitArithFP(0xDF, 0xE8, reg.reg());
+  }
+
+  //! @brief Unordered Compare st(0) with @a reg and pop register stack (FPU).
+  void fucomp(const X87Register& reg = st(1))
+  {
+    emitArithFP(0xDD, 0xE8, reg.reg());
+  }
+
+  //! @brief Unordered compare st(0) with st(1) and pop register stack twice 
+  //! (FPU).
   void fucompp()
   {
     if (!ensureSpace()) return;
+
     emitByte(0xDA);
     emitByte(0xE9);
   }
@@ -2592,16 +3063,34 @@ struct ASMJIT_API X86
   void fwait()
   {
     if (!ensureSpace()) return;
+
     emitByte(0x9B);
   }
 
-  void fxch(int i)
+  //! @brief Examine st(0) (FPU).
+  //!
+  //! Examines the contents of the ST(0) register and sets the condition code 
+  //! flags C0, C2, and C3 in the FPU status word to indicate the class of 
+  //! value or number in the register.
+  void fxam()
   {
     if (!ensureSpace()) return;
-    emitArithFP(0xD9, 0xC8, i);
+
+    emitByte(0xD9);
+    emitByte(0xE5);
   }
 
-  //! @brief Restore FP And MMX(tm) State And Streaming SIMD Extension State.
+  //! @brief Exchange Register Contents (FPU).
+  //!
+  //! Exchange content of st(0) with @a reg.
+  void fxch(const X87Register& reg = st(1))
+  {
+    if (!ensureSpace()) return;
+    emitArithFP(0xD9, 0xC8, reg.reg());
+  }
+
+  //! @brief Restore FP And MMX(tm) State And Streaming SIMD Extension State 
+  //! (FPU, MMX, SSE).
   //!
   //! Load FP and MMX(tm) technology and Streaming SIMD Extension state from 
   //! src512
@@ -2609,12 +3098,16 @@ struct ASMJIT_API X86
   {
     if (!ensureSpace()) return;
 
+#if defined(ASMJIT_X64)
+    emitRex(0, 1, src512);
+#endif // ASMJIT_X64
     emitByte(0x0F);
     emitByte(0xAE);
     emitMem(1, src512);
   }
 
-  //! @brief Store FP and MMX(tm) State and Streaming SIMD Extension State.
+  //! @brief Store FP and MMX(tm) State and Streaming SIMD Extension State 
+  //! (FPU, MMX, SSE).
   //!
   //! Store FP and MMX(tm) technology state and Streaming SIMD Extension state 
   //! to dst512.
@@ -2622,15 +3115,18 @@ struct ASMJIT_API X86
   {
     if (!ensureSpace()) return;
 
+#if defined(ASMJIT_X64)
+    emitRex(0, 0, dst512);
+#endif // ASMJIT_X64
     emitByte(0x0F);
     emitByte(0xAE);
     emitMem(0, dst512);
   }
 
-  //! @brief Extract Exponent and Significand.
+  //! @brief Extract Exponent and Significand (FPU).
   //!
-  //! Separate value in ST(0) into exponent and significand, store exponent 
-  //! in ST(0), and push the significand onto the register stack.
+  //! Separate value in st(0) into exponent and significand, store exponent 
+  //! in st(0), and push the significand onto the register stack.
   void fxtract()
   {
     if (!ensureSpace()) return;
@@ -2639,9 +3135,9 @@ struct ASMJIT_API X86
     emitByte(0xF4);
   }
 
-  //! @brief Compute y * log_2(x).
+  //! @brief Compute y * log2(x).
   //!
-  //! Replace ST(1) with (ST(1) * log2ST(0)) and pop the register stack.
+  //! Replace st(1) with (st(1) * log2st(0)) and pop the register stack.
   void fyl2x()
   {
     if (!ensureSpace()) return;
@@ -2652,7 +3148,7 @@ struct ASMJIT_API X86
 
   //! @brief Compute y * log_2(x+1).
   //!
-  //! Replace ST(1) with (ST(1) * (log2ST(0) + 1.0)) and pop the register stack.
+  //! Replace st(1) with (st(1) * (log2st(0) + 1.0)) and pop the register stack.
   void fyl2xp1()
   {
     if (!ensureSpace()) return;

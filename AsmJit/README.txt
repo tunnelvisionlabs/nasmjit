@@ -30,12 +30,10 @@ will be supported in the future, but other platforms needs volunteers, because
 author have no access to different architectures than X86 (32 and 64 bit).
 
 [x] X86 32/64 bit
-    [ ] FPU instructions and format is not well defined. Some instructions
-        allows to store result in st(i) and others to get st(0) and st(i).
-        This should be clear in the future.
     [ ] Add SSE4a instruction set (AMD).
     [ ] Add AMD 3dNow.
     [ ] Add AMD 3dNow extensions.
+    [ ] Better AMD CpuInfo 
 
 [ ] ARM
 

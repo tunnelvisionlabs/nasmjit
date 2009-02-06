@@ -25,7 +25,7 @@
 
 // This file is designed to be changeable. Platform specific changes
 // should be applied to this file and this guarantes and never versions
-// of BlitJit library will never overwrite generated config files.
+// of AsmJit library will never overwrite generated config files.
 //
 // So modify this will by your build system or hand.
 
@@ -149,7 +149,7 @@ namespace AsmJit
 # define ASMJIT_UINT64_C(num) num##ULL
 #endif
 
-// [BlitJit - Debug]
+// [AsmJit - Debug]
 #if defined(DEBUG) || 1
 # if !defined(ASMJIT_CRASH)
 #  define ASMJIT_CRASH() crash()
