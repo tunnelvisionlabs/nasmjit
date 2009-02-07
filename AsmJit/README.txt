@@ -3,7 +3,7 @@ AsmJit - Complete JIT Assembler for C++ Language
 
 http://code.google.com/p/asmjit/
 
-AsmJit is complete JIT assembly compiler for X86 platform. It can compile 
+AsmJit is complete JIT assembly compiler for X86/X64 platform. It can compile 
 nearly complete (most useful) instruction set with very friendly way. AsmJit
 was designed to be embeddable to any project and this is the reason for MIT
 licence that allows to do everything what you want with source code. For 
@@ -14,28 +14,20 @@ Directory structure
 
 AsmJit - Directory where are sources needed to compile AsmJit. This directory
 is designed to be embeddable to your application as easy as possible. There is
-also AsmJitConfig.h header where you can configure platform and application
-specific features. Look at platform macros and change them to correct operating
-system (this should be maximum to make it working).
+also AsmJitConfig.h header where you can configure platform (if autodetection 
+now works) and application specific features. Look at platform macros to change
+some backends to your preferences.
 
 test - Directory with cmake project to test AsmJit library. It generates simple
 command line application that generates jit code on the fly and runs it. It's
-only as a demonstration how easy this can be done.
+only as a demonstration how easy this can be done. There is also cputest 
+application that demonstrates how to use cpuid() and cpuInfo() functions.
 
 Supported platforms
 ===================
 
-Only supported platform at this time is X86 32-bit. X86 64-bit platform (X64)
-will be supported in the future, but other platforms needs volunteers, because
-author have no access to different architectures than X86 (32 and 64 bit).
-
-[x] X86 32/64 bit
-    [ ] Add SSE4a instruction set (AMD).
-    [ ] Add AMD 3dNow.
-    [ ] Add AMD 3dNow extensions.
-    [ ] Better AMD CpuInfo 
-
-[ ] ARM
+Full supported platforms at this time are X86 (32-bit) and X64 (64 bit). Other
+platforms needs volunteers to support them.
 
 Examples
 ========

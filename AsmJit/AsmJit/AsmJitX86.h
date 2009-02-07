@@ -67,6 +67,7 @@
 
 // [Dependencies]
 #include "AsmJitConfig.h"
+#include "AsmJitUtil.h"
 
 // [AsmJit::]
 namespace AsmJit {
@@ -96,6 +97,7 @@ enum SIZE
   SIZE_WORD   = 2,
   SIZE_DWORD  = 4,
   SIZE_QWORD  = 8,
+  SIZE_TWORD  = 10,
   SIZE_DQWORD = 16
 };
 
@@ -270,6 +272,18 @@ enum FP_CW
   FP_CW_ROUND_DOWN    = 0x400,
   FP_CW_ROUND_UP      = 0x800,
   FP_CW_ROUND_TOZERO  = 0xC00
+};
+
+//! @brief Relocation info.
+enum RELOC_MODE
+{
+  //! @brief No relocation.
+  RELOC_NONE = 0,
+  //! @brief Overwrite relocation (immediates as constants).
+  RELOC_OVERWRITE = 1,
+
+  //! @brief Internal, used by jmp_rel() and j_rel()
+  RELOC_JMP_RELATIVE = 10
 };
 
 // Helpers
@@ -656,7 +670,7 @@ static inline CONDITION reverseCondition(CONDITION cc)
 //! A Displacement contains 2 different fields:
 //!
 //! next field: position of next displacement in the chain (0 = end of list)
-//1 type field: instruction type
+//! type field: instruction type
 //!
 //! A next value of null (0) indicates the end of a chain (note that there can
 //! be no displacement at position zero, because there is always at least one
@@ -800,6 +814,17 @@ inline void Displacement::init(Label* L, Type type)
   _data = NextField::encode(next) | TypeField::encode(type);
 }
 
+// [Relocation]
+
+//! @brief Structure used internally for relocations.
+struct RelocInfo
+{
+  SysUInt offset;
+  UInt8 size;
+  UInt8 mode;
+  UInt16 data;
+};
+
 // [Operand implementation]
 
 //! @brief Operand.
@@ -877,13 +902,16 @@ struct Op
   }
 
   // Immediate
-  inline Op(SysInt imm)
+  inline Op(SysInt imm, bool isUnsigned = false, UInt8 relocMode = RELOC_NONE)
   {
     _op[0] = OP_IMM;
-    _op[1] = 0xFF;
-    _op[2] = 0xFF;
+    _op[1] = relocMode;
+    _op[2] = isUnsigned;
     _op[3] = 0xFF;
-    _val = imm;
+    if (isUnsigned)
+      _val = (SysUInt)imm;
+    else
+      _val = imm;
 #if defined(ASMJIT_X86)
     _size = 4;
 #else
@@ -964,10 +992,34 @@ struct Op
 
   // [Immediate]
 
+  inline UInt8 relocMode() const
+  {
+    ASMJIT_ASSERT(op() == OP_IMM);
+    return _op[1];
+  }
+
+  //! @brief Return @c true if immediate value if unsigned. If operand
+  //! is not immediate, crash.
+  inline bool isUnsigned() const
+  {
+    ASMJIT_ASSERT(op() == OP_IMM);
+    return _op[2] != 0;
+  }
+
+  //! @brief Return immediate value if operand is immediate type, otherwise 
+  //! crash.
   inline SysInt imm() const
   {
     ASMJIT_ASSERT(op() == OP_IMM);
     return _val;
+  }
+
+  //! @brief Set immediate value to @a val. If operand is not immediate, crash.
+  inline void setImm(SysInt val, bool isUnsigned = false)
+  {
+    ASMJIT_ASSERT(op() == OP_IMM);
+    _val = val;
+    _op[2] = isUnsigned;
   }
 
   // [Members]
@@ -979,11 +1031,11 @@ struct Op
   //!
   //! _op[1] OP_REG: Register if operand is register. 
   //!        OP_MEM: Base register for memory operand.
-  //!        OP_IMM: Not used (0xFF)
+  //!        OP_IMM: Reloc mode (see @a RELOC_MODE)
   //!
   //! _op[2] OP_REG: Not used (0xFF)
   //!        OP_MEM: Index register for memory operand
-  //!        OP_IMM: Not used (0xFF)
+  //!        OP_IMM: 0 = Signed immediate, 1 = Unsigned immediate
   //!
   //! _op[3] OP_REG: Not used (0xFF)
   //!        OP_MEM: Shift for memory operand
@@ -997,10 +1049,19 @@ struct Op
   //! OP_REG: Not used (-1)
   //! OP_MEM: Displacement
   //! OP_IMM: Immediate (8 bit or 32 bit value)
-  SysInt _val;
+  union
+  {
+    SysInt _val;
+    SysUInt _uval;
+  };
 
   //! @brief Size of memory pointer, register or immediate in BYTES.
   UInt32 _size;
+
+  //! @brief Recorded relocations
+  mutable PodVector<RelocInfo> _relocations;
+
+  friend struct X86;
 };
 
 // [base + displacement]
@@ -1009,32 +1070,45 @@ struct Op
 inline Op ptr(const Register& base, SysInt disp = 0){ return Op(base, disp, 0); }
 //! @brief Create byte pointer operand.
 inline Op byte_ptr(const Register& base, SysInt disp = 0){ return Op(base, disp, SIZE_BYTE); }
-//! @brief Create word pointer operand.
+//! @brief Create word (2 Bytes) pointer operand.
 inline Op word_ptr(const Register& base, SysInt disp = 0) { return Op(base, disp, SIZE_WORD); }
-//! @brief Create dword pointer operand.
+//! @brief Create dword (4 Bytes) pointer operand.
 inline Op dword_ptr(const Register& base, SysInt disp = 0) { return Op(base, disp, SIZE_DWORD); }
-//! @brief Create qword pointer operand.
+//! @brief Create qword (8 Bytes) pointer operand.
 inline Op qword_ptr(const Register& base, SysInt disp = 0) { return Op(base, disp, SIZE_QWORD); }
-//! @brief Create dqword pointer operand.
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+inline Op tword_ptr(const Register& base, SysInt disp = 0) { return Op(base, disp, SIZE_TWORD); }
+//! @brief Create dqword (16 Bytes) pointer operand.
 inline Op dqword_ptr(const Register& base, SysInt disp = 0) { return Op(base, disp, SIZE_DQWORD); }
 
 // [base + (index << shift) + displacement]
 
-//! @brief Create byte pointer operand with not specified size.
+//! @brief Create pointer operand with not specified size.
 inline Op ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, 0); }
 //! @brief Create byte pointer operand.
 inline Op byte_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_BYTE); }
-//! @brief Create word pointer operand.
+//! @brief Create word (2 Bytes) pointer operand.
 inline Op word_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_WORD); }
-//! @brief Create dword pointer operand.
+//! @brief Create dword (4 Bytes) pointer operand.
 inline Op dword_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_DWORD); }
-//! @brief Create qword pointer operand.
+//! @brief Create qword (8 Bytes) pointer operand.
 inline Op qword_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_QWORD); }
-//! @brief Create dqword pointer operand.
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+inline Op tword_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_TWORD); }
+//! @brief Create dqword (16 Bytes) pointer operand.
 inline Op dqword_ptr(const Register& base, const Register& index, Int32 shift, SysInt disp = 0) { return Op(base, index, shift, disp, SIZE_DQWORD); }
 
-//! @brief Create immediate value operand.
-inline Op imm(SysInt imm) { return Op(imm); }
+//! @brief Create signed immediate value operand.
+inline Op imm(SysInt imm, UInt8 relocMode = RELOC_NONE) { return Op(imm, false, relocMode); }
+
+//! @brief Create unsigned immediate value operand.
+inline Op uimm(SysUInt imm, UInt8 relocMode = RELOC_NONE) { return Op((SysInt)imm, true, relocMode); }
+
+//! @brief Create Shuffle Constant for SSE shuffle instrutions.
+inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)
+{
+  return (z << 6) | (y << 4) | (x << 2) | w;
+}
 
 //! @brief X86 Assembler.
 //!
@@ -1057,7 +1131,7 @@ inline Op imm(SysInt imm) { return Op(imm); }
 //! buffer returned) to use it. If you don't take it, X86 destructor will
 //! free it. To run code, don't use malloc()'ed memory, but use 
 //! @c AsmJit::VM::alloc() to get memory for executing (specify canExecute to
-//! true). Code generated from X86 can be memcpy'ed to that buffer and called.
+//! true). Code generated from X86 can be relocated to that buffer and called.
 //!
 //! To generate instruction stream, use methods provided by X86 class. For 
 //! example to generate X86 function, you need to do this:
@@ -1090,9 +1164,8 @@ inline Op imm(SysInt imm) { return Op(imm); }
 //! SysInt vsize;
 //! void *vmem = VM::alloc(a.codeSize(), &vsize, true /* canExecute */);
 //!
-//! // Copy code to vmem. Code should be position indenpendent, if not,
-//! // use reloc().
-//! memcpy(vmem, a.pData, a.codeSize());
+//! // Relocate code to vmem.
+//! a.relocCode(vmem);
 //!
 //! // Cast vmem to void() function and call it
 //! reinterpret_cast<void (*)()>(vmem)();
@@ -1197,12 +1270,17 @@ struct ASMJIT_API X86
   // [Internal Buffer]
   // -------------------------------------------------------------------------
 
+  //! @brief Return start of assembler code buffer.
+  inline UInt8* code() const { return pData; }
+
   //! @brief Ensure space for next instruction
   inline bool ensureSpace() { return (pCur >= pMax) ? grow() : true; }
+
   //! @brief Return size of currently generated code.
   inline SysInt codeSize() const { return (SysInt)(pCur - pData); }
   //! @brief Return current offset in buffer (same as codeSize()).
   inline SysInt offset() const { return (SysInt)(pCur - pData); }
+
   //! @brief Return capacity of internal code buffer.
   inline SysInt capacity() const { return _capacity; }
 
@@ -1220,6 +1298,9 @@ struct ASMJIT_API X86
   void free();
   //! @brief Return internal buffer and NULL all pointers.
   UInt8* takeCode();
+
+  //! @brief Clear everything, but not deallocate buffers.
+  void clear();
 
   // -------------------------------------------------------------------------
   // [Setters / Getters]
@@ -1244,25 +1325,73 @@ struct ASMJIT_API X86
   }
 
   //! @brief Set byte at position @a pos.
-  inline void setByteAt(SysInt pos, int imm8)
+  inline void setByteAt(SysInt pos, UInt8 uimm8)
   {
-    *reinterpret_cast<UInt8*>(pData + pos) = imm8;
+    *reinterpret_cast<UInt8*>(pData + pos) = uimm8;
   }
 
-  //! @brief Set integer (dword size) at position @a pos.
-  inline void setIntAt(SysInt pos, int imm32)
+  //! @brief Set word at position @a pos.
+  inline void setWordAt(SysInt pos, UInt16 uimm16)
   {
-    *reinterpret_cast<int*>(pData + pos) = imm32;
+    *reinterpret_cast<UInt16*>(pData + pos) = uimm16;
   }
+
+  //! @brief Set word at position @a pos.
+  inline void setDWordAt(SysInt pos, UInt32 uimm32)
+  {
+    *reinterpret_cast<UInt32*>(pData + pos) = uimm32;
+  }
+
+  //! @brief Set word at position @a pos.
+  inline void setQWordAt(SysInt pos, UInt64 uimm64)
+  {
+    *reinterpret_cast<UInt64*>(pData + pos) = uimm64;
+  }
+
+  //! @brief Set custom variable @a imm at position @a pos.
+  //!
+  //! @note This function is used to patch existing code.
+  void setVarAt(SysInt pos, SysInt i, bool isUnsigned, UInt32 size);
 
   //! @brief Set displacement at label @a L position.
   inline void setDispAt(Label* L, Displacement disp)
   {
-    setIntAt(L->pos(), disp.data());
+    setDWordAt(L->pos(), (UInt32)disp.data());
   }
 
   // -------------------------------------------------------------------------
-  // Emitters 
+  // [Bind and Labels Declaration]
+  // -------------------------------------------------------------------------
+
+  //! @brief Bind label to the current offset.
+  //!
+  //! @note Label can be bound only once!
+  void bind(Label* L);
+
+  //! @brief Bind label to pos - called from bind(Label*L).
+  void bindTo(Label* L, SysInt pos);
+
+  //! @brief link label, called internally from jumpers.
+  void linkTo(Label* L, Label* appendix);
+
+  // -------------------------------------------------------------------------
+  // [Relocation helpers]
+  // -------------------------------------------------------------------------
+
+  //! @brief Relocate code to a given @a _buffer.
+  //!
+  //! A given buffer will be overriden, to get number of bytes required use
+  //! @c codeSize() or @c offset() methods.
+  void relocCode(void* _buffer);
+
+  //! @internal
+  bool writeRelocInfo(const Op& immediate, SysUInt relocOffset, UInt8 relocSize);
+
+  //! @brief Overwrites emitted immediate to a new value.
+  void overwrite(const Op& immediate);
+
+  // -------------------------------------------------------------------------
+  // [Emitters]
   //
   // These emitters are not protecting buffer from overrun, this must be 
   // done for each instruction by this:
@@ -1296,33 +1425,8 @@ struct ASMJIT_API X86
     pCur += 8;
   }
 
-  //! @brief Emit immediate operand of Byte size.
-  inline void emitByteImmediate(const Op& imm)
-  {
-    ASMJIT_ASSERT(imm.op() == OP_IMM);
-    emitByte(imm.imm());
-  }
-
-  //! @brief Emit immediate operand of Word size.
-  inline void emitWordImmediate(const Op& imm)
-  {
-    ASMJIT_ASSERT(imm.op() == OP_IMM);
-    emitWord(imm.imm());
-  }
-
-  //! @brief Emit immediate operand of DWord size.
-  inline void emitDWordImmediate(const Op& imm)
-  {
-    ASMJIT_ASSERT(imm.op() == OP_IMM);
-    emitDWord(imm.imm());
-  }
-
-  //! @brief Emit immediate operand of DWord size.
-  inline void emitQWordImmediate(const Op& imm)
-  {
-    ASMJIT_ASSERT(imm.op() == OP_IMM);
-    emitQWord(imm.imm());
-  }
+  //! @brief Emit immediate operand @a imm and specify it's @a size.
+  void emitImmediate(const Op& imm, UInt32 size);
 
   //! @brief Emit MODR/M byte.
   inline void emitMod(UInt8 m, UInt8 o, UInt8 r)
@@ -1375,86 +1479,21 @@ struct ASMJIT_API X86
 
   //! @brief Emits Register / Memory.
   //! @internal.
-  void _emitMem(UInt8 o, Int32 disp)
-  {
-    emitMod(0, o, 5);
-    emitDWord(disp);
-  }
+  void _emitMem(UInt8 o, Int32 disp);
 
   //! @brief Emit register / memory address.
   //! @internal.
   //!
   //! This function is called internally from @c emitMem(). It has no sence
   //! to call it manually.
-  void _emitMem(UInt8 o, UInt8 baseReg, Int32 disp)
-  {
-    if (baseReg == R_ESP)
-    {
-      if (disp == 0)
-      {
-        emitMod(0, o, R_ESP);
-        emitMod(0, R_ESP, R_ESP);
-      }
-      else if (isInt8(disp))
-      {
-        emitMod(1, o, R_ESP);
-        emitMod(0, R_ESP, R_ESP);
-        emitByte(disp);
-      }
-      else
-      {
-        emitMod(2, o, R_ESP);
-        emitMod(0, R_ESP, R_ESP);
-        emitDWord(disp);
-      }
-    }
-    else if (baseReg != R_EBP && disp == 0)
-    {
-      emitMod(0, o, baseReg);
-    }
-    else if (isInt8(disp))
-    {
-      emitMod(1, o, baseReg);
-      emitByte(disp);
-    }
-    else
-    {
-      emitMod(2, o, baseReg);
-      emitDWord(disp);
-    }
-  }
+  void _emitMem(UInt8 o, UInt8 baseReg, Int32 disp);
 
   //! @brief Emit register / memory address.
   //! @internal.
   //!
   //! This function is called internally from @c emitMem(). It has no sence
   //! to call it manually.
-  void _emitMem(UInt8 o, UInt8 baseReg, Int32 disp, UInt8 indexReg, int shift)
-  {
-    if (baseReg >= R_INVALID)
-    {
-      emitMod(0, o, 4);
-      emitMod(shift, indexReg, 5);
-      emitDWord(disp);
-    }
-    else if (disp == 0 && baseReg != R_EBP)
-    {
-      emitMod(0, o, 4);
-      emitMod(shift, indexReg, baseReg);
-    }
-    else if (isInt8(disp))
-    {
-      emitMod(1, o, 4);
-      emitMod(shift, indexReg, baseReg);
-      emitByte(disp);
-    }
-    else
-    {
-      emitMod(2, o, 4);
-      emitMod(shift, indexReg, 5);
-      emitDWord(disp);
-    }
-  }
+  void _emitMem(UInt8 o, UInt8 baseReg, Int32 disp, UInt8 indexReg, int shift);
 
   //! @brief Emit register / memory address combination to buffer.
   //! 
@@ -1462,15 +1501,7 @@ struct ASMJIT_API X86
   //! index and displacement.
   //!
   //! @note mem Operand must be @c OP_MEM type.
-  void emitMem(UInt8 o, const Op& mem)
-  {
-    ASMJIT_ASSERT(mem.op() == OP_MEM);
-
-    if (mem.hasIndex())
-      _emitMem(o, mem.baseRegCode(), mem.disp(), mem.indexRegCode(), mem.indexShift());
-    else
-      _emitMem(o, mem.baseRegCode(), mem.disp());
-  }
+  void emitMem(UInt8 o, const Op& mem);
 
   //! @brief Emit register / register or register / memory to buffer.
   //!
@@ -1480,230 +1511,29 @@ struct ASMJIT_API X86
   //! @note @a o is usually real register ID (see @c R) but some instructions
   //! have specific format and in that cases @a o is constant from opcode
   //! documentation.
-  void emitOp(UInt8 o, const Op& op)
-  {
-    if (op.op() == OP_REG)
-      emitReg(o, op.regCode());
-    else if (op.op() == OP_MEM)
-      emitMem(o, op);
-    else
-      ASMJIT_CRASH();
-  }
+  void emitOp(UInt8 o, const Op& op);
 
   //! @brief Emit complete bit operation.
   //!
   //! Used for RCL, RCR, ROL, ROR, SAL, SAR, SHL, SHR.
-  void _emitBitArith(const Op& dst, const Op& src, UInt8 ModR)
-  {
-    ASMJIT_ASSERT((dst.op() == OP_REG) ||
-                  (dst.op() == OP_MEM));
-    ASMJIT_ASSERT((src.op() == OP_REG && src.reg() == REG_CL) ||
-                  (src.op() == OP_IMM));
-
-    if (!ensureSpace()) return;
-
-    // generate opcode. For these operations is base 0xC0 or 0xD0.
-    bool useImm8 = (src.op() == OP_IMM && src.imm() != 1);
-    UInt8 opCode = useImm8 ? 0xC0 : 0xD0;
-
-    // size and operand type modifies the opcode
-    if (dst.size() != 1) opCode |= 0x01;
-    if (src.op() == OP_REG) opCode |= 0x02;
-
-    if (dst.size() == 2) emitByte(0x66); // 16 bit
-#if defined(ASMJIT_X64)
-    emitRex(dst.size() == 8, ModR, dst);
-#endif // ASMJIT_X64
-    emitByte(opCode);
-    emitOp(ModR, dst);
-    if (useImm8) emitByte(src.imm());
-  }
+  void _emitBitArith(const Op& dst, const Op& src, UInt8 ModR);
 
   //! @brief Emits SHLD or SHRD instruction.
-  void _emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UInt8 opCode)
-  {
-    ASMJIT_ASSERT(dst .op() == OP_MEM || (dst .op() == OP_REG));
-    ASMJIT_ASSERT(src2.op() == OP_IMM || (src2.op() == OP_REG && src2.reg() == REG_CL));
-    ASMJIT_ASSERT(dst.size() == src1.regSize());
-
-    if (src1.regCode() == REG_GPW) emitByte(0x66); // 16 bit
-#if defined(ASMJIT_X64)
-    emitRex(src1.regType() == REG_GPQ, src1.regCode(), dst);
-#endif // ASMJIT_X64
-    emitByte(0x0F);
-    emitByte(opCode + (src2.op() == OP_REG));
-    emitOp(src1.regCode(), dst);
-    if (src2.op() == OP_IMM) emitByte((UInt8)src2.imm());
-  }
+  void _emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UInt8 opCode);
 
   //! @brief Emit complete arithmetic operation.
   //!
   //! This function is used from small number of functions to emit arithmetic
   //! instruction (for example @c adc(), @c add(), @c or_()).
-  void _emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
-  {
-    if (!ensureSpace()) return;
+  void _emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o);
 
-    const Op* dst = &_dst;
-    const Op* src = &_src;
+  //! @brief Emit floating point instruction where source and destination
+  //! operands are st registers.
+  void emitArithFP(int opcode1, int opcode2, int i);
 
-    switch ((dst->op() << 4) | src->op())
-    {
-      // Mem <- Reg
-      case (OP_MEM << 4) | OP_REG:
-        // easiest way, how to do it (reverse operands)
-        opcode -= 2;
-        src = &_dst;
-        dst = &_src;
-        // ... fall through ...
-
-      // Reg <- Reg/Mem
-      case (OP_REG << 4) | OP_REG:
-      case (OP_REG << 4) | OP_MEM:
-        switch (dst->regType())
-        {
-          case REG_GPB:
-#if defined(ASMJIT_X64)
-            emitRex(0, dst->regCode(), *src);
-#endif // ASMJIT_X64
-            emitByte(opcode + 2);
-            emitOp(dst->regCode(), *src);
-            return;
-          case REG_GPW:
-            emitByte(0x66); // 16 bit prefix
-            // ... fall through ...
-          case REG_GPD:
-#if defined(ASMJIT_X64)
-            emitRex(0, dst->regCode(), *src);
-#endif // ASMJIT_X64
-            emitByte(opcode + 3);
-            emitOp(dst->regCode(), *src);
-            return;
-#if defined(ASMJIT_X64)
-          case REG_GPQ:
-            emitRex(1, dst->regCode(), *src);
-            emitByte(opcode + 3);
-            emitOp(dst->regCode(), *src);
-            return;
-#endif // ASMJIT_X86
-        }
-        break;
-
-      // Reg <- Imm
-      case (OP_REG << 4) | OP_IMM:
-      {
-        bool imm8Bit = isInt8(src->imm());
-
-        // AL, AX, EAX, RAX register shortcuts
-        switch (dst->reg())
-        {
-          // TODO: Check for REX prefixes here!
-          case REG_AL:
-            // short form if the destination is 'al'.
-            emitByte((o << 3) | 0x04);
-            emitByte((Int8)src->imm());
-            return;
-          case REG_AX:
-            emitByte(0x66); // 16 bit
-            emitByte((o << 3) | 0x05);
-            emitWord((Int16)src->imm());
-            return;
-          case REG_EAX:
-            emitByte((o << 3) | 0x05);
-            emitDWord((Int32)src->imm());
-            return;
-#if defined(ASMJIT_X64)
-          case REG_RAX:
-            emitByte(0x48); // REX.W
-            emitByte((o << 3) | 0x05);
-            emitDWord((Int32)src->imm());
-            return;
-#endif // ASMJIT_X64
-        }
-      }
-
-      // ... fall through ...
-
-      // Reg/Mem <- Imm
-      case (OP_MEM << 4) | OP_IMM:
-      {
-        bool imm8Bit = isInt8(src->imm());
-
-        // all others
-        switch (dst->size())
-        {
-          case 1:
-#if defined(ASMJIT_X64)
-            emitRex(0, o, *dst); // REX
-#endif // ASMJIT_X64
-            emitByte(0x80);
-            emitOp(o, *dst);
-            emitByteImmediate(*src);
-            return;
-
-          case 2:
-            emitByte(0x66); // 16 bit
-#if defined(ASMJIT_X64)
-            emitRex(0, o, *dst); // REX
-#endif // ASMJIT_X64
-            emitByte(imm8Bit ? 0x03 : 0x81);
-            emitOp(o, *dst);
-            if (imm8Bit)
-              emitByteImmediate(*src);
-            else
-              emitWordImmediate(*src);
-            return;
-
-          case 4:
-#if defined(ASMJIT_X64)
-            emitRex(0, o, *dst); // REX
-#endif // ASMJIT_X64
-            emitByte(imm8Bit ? 0x83 : 0x81);
-            emitOp(o, *dst);
-            if (imm8Bit)
-              emitByteImmediate(*src);
-            else
-              emitDWordImmediate(*src);
-            return;
-#if defined(ASMJIT_X64)
-          case 8:
-            emitRex(1, o, *dst); // REX.W
-            emitByte(imm8Bit ? 0x83 : 0x81);
-            emitOp(o, *dst);
-            if (imm8Bit)
-              emitByteImmediate(*src);
-            else
-              emitDWordImmediate(*src);
-            return;
-#endif // ASMJIT_X64
-        }
-
-        break;
-      }
-    }
-
-    ASMJIT_CRASH();
-  }
-
-  void emitArithFP(int opcode1, int opcode2, int i)
-  {
-    // wrong opcode
-    ASMJIT_ASSERT(isUInt8(opcode1) && isUInt8(opcode2));
-    // illegal stack offset
-    ASMJIT_ASSERT(0 <= i && i < 8);
-
-    emitByte(opcode1);
-    emitByte(opcode2 + i);
-  }
-
-  void emitArithFPMem(int opcode, UInt8 o, const Op& mem)
-  {
-    ASMJIT_ASSERT(mem.op() == OP_MEM);
-    if (!ensureSpace()) return;
-
-    emitByte(opcode);
-    emitMem(o, mem);
-  }
+  //! @brief Emit floating point instruction where source or destination 
+  //! operand is memory location @a mem.
+  void emitArithFPMem(int opcode, UInt8 o, const Op& mem);
 
   //! @brief Emits MMX/SSE instruction in form: inst dst, src or [src...]
   //!
@@ -1711,34 +1541,12 @@ struct ASMJIT_API X86
   //! - prefix0 can be 0x00 (ignore), 0x66, 0xF2 or 0xF3
   //! - opcode0 can be 0x00 (ignore) or any 8 bit number
   //! - opcodes opcode1 and opcode2 are always emitted
-  void emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw = 0)
-  {
-    if (!ensureSpace()) return;
-
-    if (prefix0) emitByte(prefix0);
-#if defined(ASMJIT_X86)
-    emitRex(rexw, dstCode, src);
-#endif // ASMJIT_X86
-    if (opcode0) emitByte(opcode0);
-    emitByte(opcode1);
-    emitByte(opcode2);
-    emitOp(dstCode, src);
-  }
+  void emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw = 0);
 
   //! @brief Emits MMX/SSE instruction in form: inst dst, src or [src], imm8
-  void emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw = 0)
-  {
-    if (!ensureSpace()) return;
-    emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src, rexw);
-    emitByte(imm8 & 0xFF);
-  }
+  void emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw = 0);
 
-  void emitDisp(Label* L, Displacement::Type type)
-  {
-    Displacement disp(L, type);
-    L->linkTo(offset());
-    emitDWord(static_cast<SysInt>(disp.data()));
-  }
+  void emitDisp(Label* L, Displacement::Type type);
 
   // -------------------------------------------------------------------------
   // [Helpers]
@@ -1749,12 +1557,7 @@ struct ASMJIT_API X86
   //! Typical usage of this is to align labels at start of inner loops.
   //!
   //! Inserts @c nop() instructions.
-  void align(int m)
-  {
-    if (!ensureSpace()) return;
-    ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16 || m == 32);
-    while ((offset() & (m - 1)) != 0) nop();
-  }
+  void align(int m);
 
   // -------------------------------------------------------------------------
   // [Instructions]
@@ -3240,7 +3043,7 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
       emitByte(0x6B);
       emitOp(dst.regCode(), src);
-      emitByteImmediate(imm);
+      emitImmediate(imm, 1);
       return;
     }
     else
@@ -3251,10 +3054,7 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
       emitByte(0x69);
       emitOp(dst.regCode(), src);
-      if (dst.regType() == REG_GPW)
-        emitWordImmediate(imm);
-      else
-        emitDWordImmediate(imm);
+      emitImmediate(imm, dst.regType() == REG_GPW ? 2 : 4);
       return;
     }
   }
@@ -3385,14 +3185,52 @@ struct ASMJIT_API X86
     }
   }
   
-  void jmp(const Register& adr)
+  void jmp(const Op& dst)
   {
-    ASMJIT_ASSERT(adr.regType() == REG_GPN);
+    ASMJIT_ASSERT((dst.op() == OP_REG && dst.regType() == REG_GPN) || dst.op() == OP_MEM);
 #if defined(ASMJIT_X64)
-    emitRex(0, 4, adr);
+    emitRex(0, 4, dst);
 #endif // ASMJIT_X64
     emitByte(0xFF);
-    emitReg(4, adr.regCode());
+    emitOp(4, dst);
+  }
+
+  //! @brief Same instruction as @c jmp(), but target is given as a pointer
+  //! to memory location that will be patched by relocCode() to real relative
+  //! address.
+  //!
+  //! This function are introduced here for performance, but it can be danger
+  //! to use it, because relative address is always 32 bit displacement (on
+  //! 64 bit platforms too!). So if the difference between target address and
+  //! current address is larger than 31 bits, jmp() can't be created. For that
+  //! reasons, there is second parameter (temporary register) that can be used
+  //! if relative addressing fails.
+  //!
+  //! So, jmp_rel will always reserve some space for failure cases.
+  void jmp_rel(void* ptr, const Register& temporary)
+  {
+    ASMJIT_ASSERT(temporary.regType() == REG_GPN);
+
+    // Emit mov and absolute jmp
+    SysInt jmpStart = offset();
+    mov(temporary, uimm((SysUInt)ptr));
+    SysInt jmpAddress = offset() - sizeof(SysInt);
+    jmp(temporary);
+    SysInt jmpSize = offset() - jmpStart;
+
+    // Store information about relocation
+    RelocInfo ri;
+    ri.offset = jmpStart;
+    ri.size = 4;
+    ri.mode = RELOC_JMP_RELATIVE;
+
+    // Data contains informations in two bytes:
+    // [0] - Offset relative to jmpStart where absolute address is read by 
+    //       relocCode()
+    // [1] - total size of jmp instructions generated by jmp_rel
+    ri.data = (UInt16)((jmpAddress - jmpStart) << 8) |
+              (UInt16)(jmpSize);
+    _relocations.append(ri);
   }
 
   //! @brief Load Effective Address
@@ -3480,7 +3318,7 @@ struct ASMJIT_API X86
             if (dst.regCode() >= 8) _emitRex(0, 1, 0, 0);
 #endif // ASMJIT_X64
             emitByte(0xB0 | (dst.regCode() & 0x7));
-            emitByte(src.imm());
+            emitImmediate(src, 1);
             return;
           case REG_GPW:
             emitByte(0x66); // 16 bit
@@ -3489,16 +3327,13 @@ struct ASMJIT_API X86
             if (dst.regCode() >= 8) _emitRex(0, 1, 0, 0);
 #endif // ASMJIT_X64
             emitByte(0xB8 | (dst.regCode() & 0x7));
-            if (dst.regType() == REG_GPW)
-              emitWord(src.imm());
-            else
-              emitDWord(src.imm());
+            emitImmediate(src, dst.regType() == REG_GPW ? 2 : 4);
             return;
 #if defined(ASMJIT_X64)
           case REG_GPQ:
             _emitRex(1, dst.regCode() >= 8, 0, 0);
             emitByte(0xB8 | (dst.regCode() & 0x7));
-            emitQWord(src.imm());
+            emitImmediate(src, 8);
             return;
 #endif // ASMJIT_X64
         }
@@ -3528,7 +3363,7 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
             emitByte(0xC6);
             emitMem(0, dst);
-            emitByte(src.imm());
+            emitImmediate(src, 1);
             return;
           case 2:
             emitByte(0x66); // 16 bit
@@ -3537,7 +3372,7 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
             emitByte(0xC7);
             emitMem(0, dst);
-            emitWordImmediate(src.imm());
+            emitImmediate(src, 2);
             return;
           case 4:
 #if defined(ASMJIT_X64)
@@ -3545,14 +3380,14 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
             emitByte(0xC7);
             emitMem(0, dst);
-            emitDWordImmediate(src.imm());
+            emitImmediate(src, 4);
             return;
 #if defined(ASMJIT_X64)
           case 8:
             emitRex(1, 0, dst);
             emitByte(0xC7);
             emitMem(0, dst);
-            emitDWordImmediate(src.imm());
+            emitImmediate(src, 4);
             return;
 #endif // ASMJIT_X64
         }
@@ -3793,15 +3628,15 @@ struct ASMJIT_API X86
         emitByte(0x50 | op.regCode());
         break;
       case OP_IMM:
-        if (isInt8(op.imm()))
+        if (isInt8(op.imm()) && op.relocMode() == RELOC_NONE)
         {
           emitByte(0x6A);
-          emitByte(op.imm());
+          emitImmediate(op, 1);
         }
         else
         {
           emitByte(0x68);
-          emitDWord(op.imm());
+          emitImmediate(op, 4);
         }
         break;
       default:
@@ -4012,11 +3847,11 @@ struct ASMJIT_API X86
 #endif // ASMJIT_X64
           emitByte(0xA8 + (op1.regSize() != 1));
           if (op1.regSize() == 1)
-            emitByteImmediate(op2);
+            emitImmediate(op2, 1);
           else if (op1.regSize() == 2)
-            emitWordImmediate(op2);
+            emitImmediate(op2, 2);
           else
-            emitDWordImmediate(op2);
+            emitImmediate(op2, 4);
           return;
         }
         // ... fall through ...
@@ -4028,11 +3863,11 @@ struct ASMJIT_API X86
         emitByte(0xF6 + (op1.size() != 1));
         emitOp(0, op1);
         if (op1.size() == 1)
-          emitByteImmediate(op2);
+          emitImmediate(op2, 1);
         else if (op1.size() == 2)
-          emitWordImmediate(op2);
+          emitImmediate(op2, 2);
         else
-          emitDWordImmediate(op2);
+          emitImmediate(op2, 4);
         return;
     }
 
@@ -6950,75 +6785,6 @@ struct ASMJIT_API X86
   }
 
   // -------------------------------------------------------------------------
-  // [Bind and Labels Declaration]
-  // -------------------------------------------------------------------------
-
-  //! @brief Bind label to the current offset.
-  //!
-  //! @note Label can be bound only once!
-  void bind(Label* L)
-  {
-    // label can only be bound once
-    ASMJIT_ASSERT(!L->isBound());
-    bindTo(L, offset());
-  }
-
-  //! @brief Bind label to pos - called from bind(Label*L).
-  void bindTo(Label* L, SysInt pos)
-  {
-    // must have a valid binding position
-    ASMJIT_ASSERT((SysInt)pos <= (SysInt)offset());
-
-    while (L->isLinked())
-    {
-      Displacement disp = getDispAt(L);
-      SysInt fixup_pos = L->pos();
-      if (disp.type() == Displacement::UNCONDITIONAL_JUMP)
-      {
-        // jmp expected
-        ASMJIT_ASSERT(getByteAt(fixup_pos - 1) == 0xE9);
-      }
-
-      // relative address, relative to point after address
-      SysInt immx = pos - (fixup_pos + sizeof(SysInt));
-      setIntAt(fixup_pos, immx);
-      disp.next(L);
-    }
-    L->bindTo(pos);
-  }
-
-  //! @brief link label, called internally from jumpers.
-  void linkTo(Label* L, Label* appendix)
-  {
-    if (appendix->isLinked())
-    {
-      if (L->isLinked())
-      {
-        // append appendix to L's list
-        Label p;
-        Label q = *L;
-        do {
-          p = q;
-          Displacement disp = getDispAt(&q);
-          disp.next(&q);
-        } while (q.isLinked());
-        Displacement disp = getDispAt(&p);
-        disp.linkTo(appendix);
-        setDispAt(&p, disp);
-        // to avoid assertion failure in ~Label
-        p.unuse();
-      }
-      else
-      {
-        // L is empty, simply use appendix
-        *L = *appendix;
-      }
-    }
-    // appendix should not be used anymore
-    appendix->unuse();
-  }
-
-  // -------------------------------------------------------------------------
   // [Internal buffer]
   // -------------------------------------------------------------------------
 
@@ -7031,6 +6797,12 @@ struct ASMJIT_API X86
 
   //! @brief Size of internal buffer.
   SysInt _capacity;
+
+  // -------------------------------------------------------------------------
+  // [Internal relocation variables]
+  // -------------------------------------------------------------------------
+
+  PodVector<RelocInfo> _relocations;
 };
 
 //! @}

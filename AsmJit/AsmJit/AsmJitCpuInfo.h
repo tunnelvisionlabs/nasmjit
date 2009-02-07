@@ -53,8 +53,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // [Guard]
-#ifndef _ASMJIT_CPUINFO_H
-#define _ASMJIT_CPUINFO_H
+#ifndef _ASMJITCPUINFO_H
+#define _ASMJITCPUINFO_H
 
 // [Dependencies]
 #include "AsmJitConfig.h"
@@ -200,4 +200,4 @@ ASMJIT_API CpuInfo* cpuInfo();
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJIT_CPUINFO_H
+#endif // _ASMJITCPUINFO_H

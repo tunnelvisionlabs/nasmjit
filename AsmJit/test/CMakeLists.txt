@@ -14,9 +14,11 @@ Set(ASMJIT_HEADERS
   ${ASMJIT_DIR}/AsmJit/AsmJit.h
   ${ASMJIT_DIR}/AsmJit/AsmJitConfig.h
   ${ASMJIT_DIR}/AsmJit/AsmJitCpuInfo.h
+  ${ASMJIT_DIR}/AsmJit/AsmJitUtil.h
   ${ASMJIT_DIR}/AsmJit/AsmJitVM.h
   ${ASMJIT_DIR}/AsmJit/AsmJitX86.h
 )
 
 Add_Executable(jittest jittest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 Add_Executable(cputest cputest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(reloctest reloctest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})

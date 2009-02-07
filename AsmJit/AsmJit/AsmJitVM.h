@@ -53,8 +53,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // [Guard]
-#ifndef _ASMJIT_VM_H
-#define _ASMJIT_VM_H
+#ifndef _ASMJITVM_H
+#define _ASMJITVM_H
 
 // [Dependencies]
 #include "AsmJitConfig.h"
@@ -103,4 +103,4 @@ struct ASMJIT_API VM
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJIT_VM_H
+#endif // _ASMJITVM_H

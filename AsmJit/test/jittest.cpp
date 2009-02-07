@@ -62,17 +62,24 @@ int main(int argc, char* argv[])
   // If you are interested in removing prolog and epilog, please
   // study calling conventions and check register preservations.
 
-  // Alloc execute enabled memory and call generated function.
+  // Alloc execute enabled memory
   SysUInt vsize;
   void *vmem = VM::alloc(a.codeSize(), &vsize, true);
-  memcpy(vmem, a.pData, a.codeSize());
+  if (!vmem) 
+  {
+    printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
+    return 1;
+  }
+
+  // Relocate generated code to vmem.
+  a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
   int result = ( reinterpret_cast<MyFn>(vmem)() );
+  printf("Result from jit function: %d\n", result);
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);
 
-  printf("Result from jit function: %d\n", result);
   return 0;
 }
