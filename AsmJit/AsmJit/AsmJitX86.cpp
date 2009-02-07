@@ -364,7 +364,7 @@ void X86::linkTo(Label* L, Label* appendix)
 // [AsmJit::X86 - Relocation helpers]
 // ----------------------------------------------------------------------------
 
-void X86::relocCode(void* _buffer)
+void X86::relocCode(void* _buffer) const
 {
   // Copy code
   UInt8* buffer = reinterpret_cast<UInt8*>(_buffer);

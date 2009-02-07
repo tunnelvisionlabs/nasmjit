@@ -1382,7 +1382,7 @@ struct ASMJIT_API X86
   //!
   //! A given buffer will be overriden, to get number of bytes required use
   //! @c codeSize() or @c offset() methods.
-  void relocCode(void* _buffer);
+  void relocCode(void* _buffer) const;
 
   //! @internal
   bool writeRelocInfo(const Op& immediate, SysUInt relocOffset, UInt8 relocSize);
