@@ -1,4 +1,9 @@
 2009-09-08
+- Released 0.5 (should be last stable release before Compiler support)
+- Fixed few GCC issued, fixed one broken opcode
+- Code refactorization, X86 to Assembler, refactorized header files
+
+2009-09-08
 - Relocations, toOffset(), released 0.4
 
 2009-02-03

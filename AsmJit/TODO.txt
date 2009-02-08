@@ -4,8 +4,8 @@ TODOs:
 [x] Add methods to return generated code() and to copy code to other location
     (will be used together with relative-relocations)
     Method name will be named relocCode()
-[ ] Add method to set current offset (Suggested by Mike).
-[ ] MacroX86
+[x] Add method to set current offset (Suggested by Mike).
+[ ] Add AsmJit::Compiler class
 [ ] Add SSE4a instruction set (AMD).
 [ ] Add AMD 3dNow.
 [ ] Add AMD 3dNow extensions.
