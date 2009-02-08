@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../AsmJit/AsmJitX86.h"
+#include "../AsmJit/AsmJitAssembler.h"
 #include "../AsmJit/AsmJitVM.h"
 
 // This is type of function we will generate
@@ -40,8 +40,8 @@ int main(int argc, char* argv[])
   using namespace AsmJit;
 
   // ==========================================================================
-  // STEP 1: Create function by dynamic way.
-  X86 a;
+  // STEP 1: Create function.
+  Assembler a;
 
   // Prolog.
   a.push(nbp);
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
   a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
-  int result = ( reinterpret_cast<MyFn>(vmem)() );
+  int result = reinterpret_cast<MyFn>(vmem)();
   printf("Result from jit function: %d\n", result);
 
   // Memory should be freed, but use VM::free() to do that.

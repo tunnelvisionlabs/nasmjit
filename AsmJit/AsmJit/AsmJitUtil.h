@@ -38,6 +38,202 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Util
 //! @{
 
+//! @Brief Buffer used to store instruction stream in AsmJit.
+//! 
+//! This class can be dangerous, if you don't know how it workd. Assembler
+//! instruction stream is usually constructed by multiple calling emit
+//! functions that emits bytes, words, dwords or qwords. But to decrease
+//! AsmJit library size and improve performance, we are not checking for
+//! buffer overflow for each emit operation, but only once in highler level
+//! emit instruction.
+//!
+//! So, if you want to use this class, you need to do buffer checking yourself
+//! by using @c ensureSpace() method. It's designed to grow buffer. Threshold
+//! for growing is named @c growThreshold() and it means count of bytes for
+//! emitting single operation. Default size is set to 16 bytes, because x86
+//! and x64 instruction can't be larget (so it's space to hold 1 instruction).
+//!
+//! Example using Buffer:
+//!
+//! @verbatim
+//! // Buffer instance, growThreshold == 16
+//! // (no memory allocated in constructor).
+//! AsmJit::Buffer buf(16);
+//!
+//! // Begin of emit stream, ensure space can fail on out of memory error.
+//! if (buf.ensureSpace()) 
+//! {
+//!   // here, you can emit up to 16 (growThreshold) bytes
+//!   buf.emitByte(0x00);
+//!   buf.emitByte(0x01);
+//!   buf.emitByte(0x02);
+//!   buf.emitByte(0x03);
+//!   ...
+//! }
+//! @endverbatim
+struct ASMJIT_API Buffer
+{
+  inline Buffer(SysInt growThreshold = 16) :
+    _data(NULL),
+    _cur(NULL),
+    _max(NULL),
+    _capacity(0),
+    _growThreshold(growThreshold)
+  {
+  }
+
+  inline ~Buffer()
+  {
+    if (_data) ASMJIT_FREE(_data);
+  }
+
+  //! @brief Return start of buffer.
+  inline UInt8* data() const { return _data; }
+
+  //! @brief Return current pointer in code buffer.
+  inline UInt8* cur() const { return _cur; }
+
+  //! @brief Return maximum pointer in code buffer for growing.
+  inline UInt8* maximum() const { return _max; }
+
+  //! @brief Return current offset in buffer (same as codeSize()).
+  inline SysInt offset() const { return (SysInt)(_cur - _data); }
+
+  //! @brief Return capacity of buffer.
+  inline SysInt capacity() const { return _capacity; }
+
+  //! @brief Return grow threshold.
+  inline SysInt growThreshold() const { return _growThreshold; }
+
+  //! @brief Ensure space for next instruction
+  inline bool ensureSpace() { return (_cur >= _max) ? grow() : true; }
+
+  //! @brief Sets offset to @a o and returns previous offset.
+  //!
+  //! This method can be used to truncate buffer or it's used to
+  //! overwrite specific position in buffer by Assembler.
+  inline SysInt toOffset(SysInt o) 
+  {
+    ASMJIT_ASSERT(o < _capacity);
+
+    SysInt prev = (SysInt)(_cur - _data);
+    _cur = _data + o;
+    return prev;
+  }
+
+  //! @brief Reallocate buffer.
+  //!
+  //! It's only used for growing, buffer is never reallocated to smaller 
+  //! number than current capacity() is.
+  bool realloc(SysInt to);
+
+  //! @brief Used to grow the buffer.
+  //!
+  //! It will typically realloc to twice size of capacity(), but if capacity()
+  //! is large, it will use smaller steps.
+  bool grow();
+
+  //! @brief Clear everything, but not deallocate buffer.
+  void clear();
+
+  //! @brief Free buffer and NULL all pointers.
+  void free();
+
+  //! @brief Return buffer and NULL all pointers.
+  UInt8* take();
+
+  //! @brief Emit Byte.
+  inline void emitByte(UInt8 x)
+  {
+    *_cur++ = x;
+  }
+
+  //! @brief Emit Word (2 bytes).
+  inline void emitWord(UInt16 x)
+  {
+    *(UInt16 *)_cur = x;
+    _cur += 2;
+  }
+
+  //! @brief Emit DWord (4 bytes).
+  inline void emitDWord(UInt32 x)
+  {
+    *(UInt32 *)_cur = x;
+    _cur += 4;
+  }
+
+  //! @brief Emit QWord (8 bytes).
+  inline void emitQWord(UInt64 x)
+  {
+    *(UInt64 *)_cur = x;
+    _cur += 8;
+  }
+
+  //! @brief Set byte at position @a pos.
+  inline UInt8 getByteAt(SysInt pos) const
+  {
+    return *reinterpret_cast<const UInt8*>(_data + pos);
+  }
+
+  //! @brief Set word at position @a pos.
+  inline UInt16 getWordAt(SysInt pos) const
+  {
+    return *reinterpret_cast<const UInt16*>(_data + pos);
+  }
+
+  //! @brief Set word at position @a pos.
+  inline UInt32 getDWordAt(SysInt pos) const
+  {
+    return *reinterpret_cast<const UInt32*>(_data + pos);
+  }
+
+  //! @brief Set word at position @a pos.
+  inline UInt64 getQWordAt(SysInt pos) const
+  {
+    return *reinterpret_cast<const UInt64*>(_data + pos);
+  }
+
+  //! @brief Set byte at position @a pos.
+  inline void setByteAt(SysInt pos, UInt8 x)
+  {
+    *reinterpret_cast<UInt8*>(_data + pos) = x;
+  }
+
+  //! @brief Set word at position @a pos.
+  inline void setWordAt(SysInt pos, UInt16 x)
+  {
+    *reinterpret_cast<UInt16*>(_data + pos) = x;
+  }
+
+  //! @brief Set word at position @a pos.
+  inline void setDWordAt(SysInt pos, UInt32 x)
+  {
+    *reinterpret_cast<UInt32*>(_data + pos) = x;
+  }
+
+  //! @brief Set word at position @a pos.
+  inline void setQWordAt(SysInt pos, UInt64 x)
+  {
+    *reinterpret_cast<UInt64*>(_data + pos) = x;
+  }
+
+  // All members are public, because they are accessed and modified by 
+  // Assembler directly.
+
+  //! @brief Beginning position of buffer.
+  UInt8* _data;
+  //! @brief Current position in buffer.
+  UInt8* _cur;
+  //! @brief Maximum position in buffer for realloc.
+  UInt8* _max;
+
+  //! @brief Buffer capacity (in bytes).
+  SysInt _capacity;
+
+  //! @brief Grow threshold
+  SysInt _growThreshold;
+};
+
 //! @brief Template used to store array of POD data structures.
 //!
 //! This template has these adventages over other vector<> templates:

@@ -61,9 +61,8 @@
 // significantly by Google Inc.
 // Copyright 2006-2008 the V8 project authors. All rights reserved.
 
-#include "AsmJitConfig.h"
+#include "AsmJitAssemblerX86X64.h"
 #include "AsmJitVM.h"
-#include "AsmJitX86.h"
 
 namespace AsmJit {
 
@@ -187,104 +186,47 @@ const Register nsi = { REG_NSI };
 const Register ndi = { REG_NDI };
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Construction / Destruction]
+// [AsmJit::Assembler - Construction / Destruction]
 // ----------------------------------------------------------------------------
 
-X86::X86() : 
-  pData(NULL),
-  pCur(NULL),
-  pMax(NULL),
-  _capacity(0)
+Assembler::Assembler() : 
+  _buffer(16)
 {
 }
 
-X86::~X86()
+Assembler::~Assembler()
 {
   free();
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Internal Buffer]
+// [AsmJit::Assembler - Internal Buffer]
 // ----------------------------------------------------------------------------
 
-bool X86::realloc(SysInt to)
+void Assembler::free()
 {
-  if (capacity() < to)
-  {
-    SysInt len = codeSize();
-
-    UInt8 *newdata;
-    if (pData)
-      newdata = (UInt8*)ASMJIT_REALLOC(pData, to);
-    else
-      newdata = (UInt8*)ASMJIT_MALLOC(to);
-    if (!newdata) return false;
-
-    pData = newdata;
-    pCur = newdata + len;
-    pMax = pData + to;
-    pMax -= (to >= 16) ? 16 : to;
-
-    _capacity = to;
-  }
-
-  return true;
-}
-
-bool X86::grow()
-{
-  SysInt to = _capacity;
-  SysInt pageSize = VM::pageSize();
-
-  if (to < pageSize) 
-    to = pageSize;
-  else if (to > 65536)
-    to += 65536;
-  else
-    to <<= 1;
-
-  return realloc(to);
-}
-
-void X86::free()
-{
-  if (pData)
-  {
-    ASMJIT_FREE(pData);
-
-    pData = NULL;
-    pCur = NULL;
-    pMax = NULL;
-
-    _capacity = 0;
-  }
-}
-
-UInt8* X86::takeCode()
-{
-  UInt8* result = pData;
-
-  pData = NULL;
-  pCur = NULL;
-  pMax = NULL;
-
-  _capacity = 0;
+  _buffer.free();
   _relocations.clear();
-
-  return result;
 }
 
-void X86::clear()
+UInt8* Assembler::takeCode()
 {
-  pCur = pData;
+  UInt8* code = _buffer.take();
+  _relocations.clear();
+  return code;
+}
+
+void Assembler::clear()
+{
+  _buffer.clear();
   _relocations.clear();
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Setters / Getters]
+// [AsmJit::Assembler - Setters / Getters]
 // ----------------------------------------------------------------------------
 
-void X86::setVarAt(SysInt pos, SysInt i, bool isUnsigned, UInt32 size)
+void Assembler::setVarAt(SysInt pos, SysInt i, bool isUnsigned, UInt32 size)
 {
   if (size == 1 &&  isUnsigned) setByteAt (pos, (UInt8 )       i);
   if (size == 1 && !isUnsigned) setByteAt (pos, (UInt8 )(Int8 )i);
@@ -297,17 +239,17 @@ void X86::setVarAt(SysInt pos, SysInt i, bool isUnsigned, UInt32 size)
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Bind and Labels Declaration]
+// [AsmJit::Assembler - Bind and Labels Declaration]
 // ----------------------------------------------------------------------------
 
-void X86::bind(Label* L)
+void Assembler::bind(Label* L)
 {
   // label can only be bound once
   ASMJIT_ASSERT(!L->isBound());
   bindTo(L, offset());
 }
 
-void X86::bindTo(Label* L, SysInt pos)
+void Assembler::bindTo(Label* L, SysInt pos)
 {
   // must have a valid binding position
   ASMJIT_ASSERT((SysInt)pos <= (SysInt)offset());
@@ -330,7 +272,7 @@ void X86::bindTo(Label* L, SysInt pos)
   L->bindTo(pos);
 }
 
-void X86::linkTo(Label* L, Label* appendix)
+void Assembler::linkTo(Label* L, Label* appendix)
 {
   if (appendix->isLinked())
   {
@@ -361,14 +303,14 @@ void X86::linkTo(Label* L, Label* appendix)
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Relocation helpers]
+// [AsmJit::Assembler - Relocation helpers]
 // ----------------------------------------------------------------------------
 
-void X86::relocCode(void* _buffer) const
+void Assembler::relocCode(void* _dst) const
 {
   // Copy code
-  UInt8* buffer = reinterpret_cast<UInt8*>(_buffer);
-  memcpy(buffer, pData, codeSize());
+  UInt8* dst = reinterpret_cast<UInt8*>(_dst);
+  memcpy(dst, _buffer.data(), codeSize());
 
   // Relocate
   const RelocInfo* rel = _relocations.data();
@@ -388,8 +330,8 @@ void X86::relocCode(void* _buffer) const
         SysInt jmpSize = ri.data & 0xFF;
 
         // Source and target addresses
-        SysUInt jmpFrom = ((SysUInt)buffer) + jmpStart;
-        SysUInt jmpTo = *reinterpret_cast<SysUInt *>(buffer + jmpAddress);
+        SysUInt jmpFrom = ((SysUInt)dst) + jmpStart;
+        SysUInt jmpTo = *reinterpret_cast<SysUInt *>(dst + jmpAddress);
 
         const int short_size = 2;
         const int long_size  = 5;
@@ -416,20 +358,20 @@ void X86::relocCode(void* _buffer) const
           if (isInt8(displacement - short_size))
           {
             // jmp rel8 (EB cb)
-            buffer[jmpStart] = 0xEB;
-            buffer[jmpStart+1] = (displacement - short_size) & 0xFF;
+            dst[jmpStart] = 0xEB;
+            dst[jmpStart+1] = (displacement - short_size) & 0xFF;
             z = short_size;
           }
           else
           {
             // jmp rel32 (E9 cd)
-            buffer[jmpStart] = 0xE9;
-            *reinterpret_cast<Int32*>(buffer + jmpStart + 1) = (displacement - long_size);
+            dst[jmpStart] = 0xE9;
+            *reinterpret_cast<Int32*>(dst + jmpStart + 1) = (displacement - long_size);
             z = long_size;
           }
 
           // set int3 to remaining bytes
-          for (; z < (SysUInt)jmpSize; z++) buffer[jmpStart+z] = 0xCC;
+          for (; z < (SysUInt)jmpSize; z++) dst[jmpStart+z] = 0xCC;
         }
         break;
       }
@@ -443,7 +385,7 @@ void X86::relocCode(void* _buffer) const
   }
 }
 
-bool X86::writeRelocInfo(const Op& immediate, SysUInt relocOffset, UInt8 relocSize)
+bool Assembler::writeRelocInfo(const Op& immediate, SysUInt relocOffset, UInt8 relocSize)
 {
   ASMJIT_ASSERT(immediate.op() == OP_IMM);
 
@@ -455,7 +397,7 @@ bool X86::writeRelocInfo(const Op& immediate, SysUInt relocOffset, UInt8 relocSi
   return immediate._relocations.append(ri);
 }
 
-void X86::overwrite(const Op& immediate) 
+void Assembler::overwrite(const Op& immediate) 
 {
   const RelocInfo* rel = immediate._relocations.data();
   SysUInt i, len = immediate._relocations.length();
@@ -468,98 +410,98 @@ void X86::overwrite(const Op& immediate)
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Emitters]
+// [AsmJit::Assembler - Emitters]
 // ----------------------------------------------------------------------------
 
-void X86::emitImmediate(const Op& imm, UInt32 size)
+void Assembler::_emitImmediate(const Op& imm, UInt32 size)
 {
   bool isUnsigned = imm.isUnsigned();
   SysInt i = imm.imm();
 
   if (imm.relocMode() != RELOC_NONE) writeRelocInfo(imm, (SysUInt)offset(), size);
 
-  if (size == 1 &&  isUnsigned) emitByte ((UInt8 )       i);
-  if (size == 1 && !isUnsigned) emitByte ((UInt8 )(Int8 )i);
-  if (size == 2 &&  isUnsigned) emitWord ((UInt16)       i);
-  if (size == 2 && !isUnsigned) emitWord ((UInt16)(Int16)i);
-  if (size == 4 &&  isUnsigned) emitDWord((UInt32)       i);
-  if (size == 4 && !isUnsigned) emitDWord((UInt32)(Int32)i);
-  if (size == 8 &&  isUnsigned) emitQWord((UInt64)       i);
-  if (size == 8 && !isUnsigned) emitQWord((UInt64)(Int64)i);
+  if (size == 1 &&  isUnsigned) _emitByte ((UInt8 )       i);
+  if (size == 1 && !isUnsigned) _emitByte ((UInt8 )(Int8 )i);
+  if (size == 2 &&  isUnsigned) _emitWord ((UInt16)       i);
+  if (size == 2 && !isUnsigned) _emitWord ((UInt16)(Int16)i);
+  if (size == 4 &&  isUnsigned) _emitDWord((UInt32)       i);
+  if (size == 4 && !isUnsigned) _emitDWord((UInt32)(Int32)i);
+  if (size == 8 &&  isUnsigned) _emitQWord((UInt64)       i);
+  if (size == 8 && !isUnsigned) _emitQWord((UInt64)(Int64)i);
 }
 
-void X86::_emitMem(UInt8 o, Int32 disp)
+void Assembler::_emitMem(UInt8 o, Int32 disp)
 {
-  emitMod(0, o, 5);
-  emitDWord(disp);
+  _emitMod(0, o, 5);
+  _emitDWord(disp);
 }
 
-void X86::_emitMem(UInt8 o, UInt8 baseReg, Int32 disp)
+void Assembler::_emitMem(UInt8 o, UInt8 baseReg, Int32 disp)
 {
   if (baseReg == R_ESP)
   {
     if (disp == 0)
     {
-      emitMod(0, o, R_ESP);
-      emitMod(0, R_ESP, R_ESP);
+      _emitMod(0, o, R_ESP);
+      _emitMod(0, R_ESP, R_ESP);
     }
     else if (isInt8(disp))
     {
-      emitMod(1, o, R_ESP);
-      emitMod(0, R_ESP, R_ESP);
-      emitByte(disp);
+      _emitMod(1, o, R_ESP);
+      _emitMod(0, R_ESP, R_ESP);
+      _emitByte(disp);
     }
     else
     {
-      emitMod(2, o, R_ESP);
-      emitMod(0, R_ESP, R_ESP);
-      emitDWord(disp);
+      _emitMod(2, o, R_ESP);
+      _emitMod(0, R_ESP, R_ESP);
+      _emitDWord(disp);
     }
   }
   else if (baseReg != R_EBP && disp == 0)
   {
-    emitMod(0, o, baseReg);
+    _emitMod(0, o, baseReg);
   }
   else if (isInt8(disp))
   {
-    emitMod(1, o, baseReg);
-    emitByte(disp);
+    _emitMod(1, o, baseReg);
+    _emitByte(disp);
   }
   else
   {
-    emitMod(2, o, baseReg);
-    emitDWord(disp);
+    _emitMod(2, o, baseReg);
+    _emitDWord(disp);
   }
 }
 
-void X86::_emitMem(UInt8 o, UInt8 baseReg, Int32 disp, UInt8 indexReg, int shift)
+void Assembler::_emitMem(UInt8 o, UInt8 baseReg, Int32 disp, UInt8 indexReg, int shift)
 {
   if (baseReg >= R_INVALID)
   {
-    emitMod(0, o, 4);
-    emitMod(shift, indexReg, 5);
-    emitDWord(disp);
+    _emitMod(0, o, 4);
+    _emitMod(shift, indexReg, 5);
+    _emitDWord(disp);
   }
   else if (disp == 0 && baseReg != R_EBP)
   {
-    emitMod(0, o, 4);
-    emitMod(shift, indexReg, baseReg);
+    _emitMod(0, o, 4);
+    _emitMod(shift, indexReg, baseReg);
   }
   else if (isInt8(disp))
   {
-    emitMod(1, o, 4);
-    emitMod(shift, indexReg, baseReg);
-    emitByte(disp);
+    _emitMod(1, o, 4);
+    _emitMod(shift, indexReg, baseReg);
+    _emitByte(disp);
   }
   else
   {
-    emitMod(2, o, 4);
-    emitMod(shift, indexReg, 5);
-    emitDWord(disp);
+    _emitMod(2, o, 4);
+    _emitMod(shift, indexReg, 5);
+    _emitDWord(disp);
   }
 }
 
-void X86::emitMem(UInt8 o, const Op& mem)
+void Assembler::_emitMem(UInt8 o, const Op& mem)
 {
   ASMJIT_ASSERT(mem.op() == OP_MEM);
 
@@ -569,17 +511,17 @@ void X86::emitMem(UInt8 o, const Op& mem)
     _emitMem(o, mem.baseRegCode(), mem.disp());
 }
 
-void X86::emitOp(UInt8 o, const Op& op)
+void Assembler::_emitOp(UInt8 o, const Op& op)
 {
   if (op.op() == OP_REG)
-    emitReg(o, op.regCode());
+    _emitReg(o, op.regCode());
   else if (op.op() == OP_MEM)
-    emitMem(o, op);
+    _emitMem(o, op);
   else
     ASMJIT_CRASH();
 }
 
-void X86::_emitBitArith(const Op& dst, const Op& src, UInt8 ModR)
+void Assembler::_emitBitArith(const Op& dst, const Op& src, UInt8 ModR)
 {
   ASMJIT_ASSERT((dst.op() == OP_REG) ||
                 (dst.op() == OP_MEM));
@@ -596,16 +538,16 @@ void X86::_emitBitArith(const Op& dst, const Op& src, UInt8 ModR)
   if (dst.size() != 1) opCode |= 0x01;
   if (src.op() == OP_REG) opCode |= 0x02;
 
-  if (dst.size() == 2) emitByte(0x66); // 16 bit
+  if (dst.size() == 2) _emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
-  emitRex(dst.size() == 8, ModR, dst);
+  _emitRex(dst.size() == 8, ModR, dst);
 #endif // ASMJIT_X64
-  emitByte(opCode);
-  emitOp(ModR, dst);
-  if (useImm8) emitImmediate(src, 1);
+  _emitByte(opCode);
+  _emitOp(ModR, dst);
+  if (useImm8) _emitImmediate(src, 1);
 }
 
-void X86::_emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UInt8 opCode)
+void Assembler::_emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UInt8 opCode)
 {
   ASMJIT_ASSERT(dst .op() == OP_MEM || (dst .op() == OP_REG));
   ASMJIT_ASSERT(src2.op() == OP_IMM || (src2.op() == OP_REG && src2.reg() == REG_CL));
@@ -613,17 +555,17 @@ void X86::_emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UIn
 
   if (!ensureSpace()) return;
 
-  if (src1.regCode() == REG_GPW) emitByte(0x66); // 16 bit
+  if (src1.regCode() == REG_GPW) _emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
-  emitRex(src1.regType() == REG_GPQ, src1.regCode(), dst);
+  _emitRex(src1.regType() == REG_GPQ, src1.regCode(), dst);
 #endif // ASMJIT_X64
-  emitByte(0x0F);
-  emitByte(opCode + (src2.op() == OP_REG));
-  emitOp(src1.regCode(), dst);
-  if (src2.op() == OP_IMM) emitImmediate(src2, 1);
+  _emitByte(0x0F);
+  _emitByte(opCode + (src2.op() == OP_REG));
+  _emitOp(src1.regCode(), dst);
+  if (src2.op() == OP_IMM) _emitImmediate(src2, 1);
 }
 
-void X86::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
+void Assembler::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
 {
   if (!ensureSpace()) return;
 
@@ -647,26 +589,26 @@ void X86::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
       {
         case REG_GPB:
 #if defined(ASMJIT_X64)
-          emitRex(0, dst->regCode(), *src);
+          _emitRex(0, dst->regCode(), *src);
 #endif // ASMJIT_X64
-          emitByte(opcode + 2);
-          emitOp(dst->regCode(), *src);
+          _emitByte(opcode + 2);
+          _emitOp(dst->regCode(), *src);
           return;
         case REG_GPW:
-          emitByte(0x66); // 16 bit prefix
+          _emitByte(0x66); // 16 bit prefix
           // ... fall through ...
         case REG_GPD:
 #if defined(ASMJIT_X64)
-          emitRex(0, dst->regCode(), *src);
+          _emitRex(0, dst->regCode(), *src);
 #endif // ASMJIT_X64
-          emitByte(opcode + 3);
-          emitOp(dst->regCode(), *src);
+          _emitByte(opcode + 3);
+          _emitOp(dst->regCode(), *src);
           return;
 #if defined(ASMJIT_X64)
         case REG_GPQ:
-          emitRex(1, dst->regCode(), *src);
-          emitByte(opcode + 3);
-          emitOp(dst->regCode(), *src);
+          _emitRex(1, dst->regCode(), *src);
+          _emitByte(opcode + 3);
+          _emitOp(dst->regCode(), *src);
           return;
 #endif // ASMJIT_X86
       }
@@ -681,23 +623,23 @@ void X86::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
         // TODO: Check for REX prefixes here!
         case REG_AL:
           // short form if the destination is 'al'.
-          emitByte((o << 3) | 0x04);
-          emitImmediate(*src, 1);
+          _emitByte((o << 3) | 0x04);
+          _emitImmediate(*src, 1);
           return;
         case REG_AX:
-          emitByte(0x66); // 16 bit
-          emitByte((o << 3) | 0x05);
-          emitImmediate(*src, 2);
+          _emitByte(0x66); // 16 bit
+          _emitByte((o << 3) | 0x05);
+          _emitImmediate(*src, 2);
           return;
         case REG_EAX:
-          emitByte((o << 3) | 0x05);
-          emitImmediate(*src, 4);
+          _emitByte((o << 3) | 0x05);
+          _emitImmediate(*src, 4);
           return;
 #if defined(ASMJIT_X64)
         case REG_RAX:
-          emitByte(0x48); // REX.W
-          emitByte((o << 3) | 0x05);
-          emitImmediate(*src, 4);
+          _emitByte(0x48); // REX.W
+          _emitByte((o << 3) | 0x05);
+          _emitImmediate(*src, 4);
           return;
 #endif // ASMJIT_X64
       }
@@ -715,46 +657,46 @@ void X86::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
       {
         case 1:
 #if defined(ASMJIT_X64)
-          emitRex(0, o, *dst); // REX
+          _emitRex(0, o, *dst); // REX
 #endif // ASMJIT_X64
-          emitByte(0x80);
-          emitOp(o, *dst);
-          emitImmediate(*src, 1);
+          _emitByte(0x80);
+          _emitOp(o, *dst);
+          _emitImmediate(*src, 1);
           return;
 
         case 2:
-          emitByte(0x66); // 16 bit
+          _emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
-          emitRex(0, o, *dst); // REX
+          _emitRex(0, o, *dst); // REX
 #endif // ASMJIT_X64
-          emitByte(imm8Bit ? 0x03 : 0x81);
-          emitOp(o, *dst);
+          _emitByte(imm8Bit ? 0x03 : 0x81);
+          _emitOp(o, *dst);
           if (imm8Bit)
-            emitImmediate(*src, 1);
+            _emitImmediate(*src, 1);
           else
-            emitImmediate(*src, 2);
+            _emitImmediate(*src, 2);
           return;
 
         case 4:
 #if defined(ASMJIT_X64)
-          emitRex(0, o, *dst); // REX
+          _emitRex(0, o, *dst); // REX
 #endif // ASMJIT_X64
-          emitByte(imm8Bit ? 0x83 : 0x81);
-          emitOp(o, *dst);
+          _emitByte(imm8Bit ? 0x83 : 0x81);
+          _emitOp(o, *dst);
           if (imm8Bit)
-            emitImmediate(*src, 1);
+            _emitImmediate(*src, 1);
           else
-            emitImmediate(*src, 4);
+            _emitImmediate(*src, 4);
           return;
 #if defined(ASMJIT_X64)
         case 8:
-          emitRex(1, o, *dst); // REX.W
-          emitByte(imm8Bit ? 0x83 : 0x81);
-          emitOp(o, *dst);
+          _emitRex(1, o, *dst); // REX.W
+          _emitByte(imm8Bit ? 0x83 : 0x81);
+          _emitOp(o, *dst);
           if (imm8Bit)
-            emitImmediate(*src, 1);
+            _emitImmediate(*src, 1);
           else
-            emitImmediate(*src, 4);
+            _emitImmediate(*src, 4);
           return;
 #endif // ASMJIT_X64
       }
@@ -766,7 +708,7 @@ void X86::_emitArithOp(const Op& _dst, const Op& _src, UInt8 opcode, UInt8 o)
   ASMJIT_CRASH();
 }
 
-void X86::emitArithFP(int opcode1, int opcode2, int i)
+void Assembler::_emitFP(int opcode1, int opcode2, int i)
 {
   // wrong opcode
   ASMJIT_ASSERT(isUInt8(opcode1) && isUInt8(opcode2));
@@ -775,55 +717,74 @@ void X86::emitArithFP(int opcode1, int opcode2, int i)
 
   if (!ensureSpace()) return;
 
-  emitByte(opcode1);
-  emitByte(opcode2 + i);
+  _emitByte(opcode1);
+  _emitByte(opcode2 + i);
 }
 
-void X86::emitArithFPMem(int opcode, UInt8 o, const Op& mem)
+void Assembler::_emitFPMem(int opcode, UInt8 o, const Op& mem)
 {
   ASMJIT_ASSERT(mem.op() == OP_MEM);
   if (!ensureSpace()) return;
 
-  emitByte(opcode);
-  emitMem(o, mem);
+  _emitByte(opcode);
+  _emitMem(o, mem);
 }
 
-void X86::emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw)
+void Assembler::_emitINST(
+  UInt8 prefix, UInt8 opcode1, UInt8 opcode2, UInt8 opcode3, 
+  UInt8 i16bit, UInt8 rexw, UInt8 o, const Op& op)
 {
   if (!ensureSpace()) return;
 
-  if (prefix0) emitByte(prefix0);
+  if (i16bit) _emitByte(0x66);     // 16 bit prefix
+  if (prefix) _emitByte(prefix);   // instruction prefix
+#if defined(ASMJIT_X64)
+  _emitRex(rexw, o, op);           // rex prefix
+#endif // ASMJIT_X64
+  if (opcode1) _emitByte(opcode1); // instruction opcodes
+  if (opcode2) _emitByte(opcode2);
+  _emitByte(opcode3);
+  _emitOp(o, op);                  // ModR/M, ...
+}
+
+void Assembler::_emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, UInt8 rexw)
+{
+  if (!ensureSpace()) return;
+
+  if (prefix0) _emitByte(prefix0);
 #if defined(ASMJIT_X86)
-  emitRex(rexw, dstCode, src);
+  _emitRex(rexw, dstCode, src);
 #endif // ASMJIT_X86
-  if (opcode0) emitByte(opcode0);
-  emitByte(opcode1);
-  emitByte(opcode2);
-  emitOp(dstCode, src);
+  if (opcode0) _emitByte(opcode0);
+  _emitByte(opcode1);
+  _emitByte(opcode2);
+  _emitOp(dstCode, src);
 }
 
-void X86::emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw)
+void Assembler::_emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw)
 {
   if (!ensureSpace()) return;
 
-  emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src, rexw);
-  emitByte(imm8 & 0xFF);
+  _emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src, rexw);
+  _emitByte(imm8 & 0xFF);
 }
 
-void X86::emitDisp(Label* L, Displacement::Type type)
+void Assembler::_emitDisp(Label* L, Displacement::Type type)
 {
   Displacement disp(L, type);
   L->linkTo(offset());
-  emitDWord(static_cast<SysInt>(disp.data()));
+  _emitDWord(static_cast<SysInt>(disp.data()));
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::X86 - Helpers]
+// [AsmJit::Assembler - Helpers]
 // ----------------------------------------------------------------------------
 
-void X86::align(int m)
+void Assembler::align(int m)
 {
   if (!ensureSpace()) return;
+  if (!m) return;
+
   ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16 || m == 32);
   while ((offset() & (m - 1)) != 0) nop();
 }

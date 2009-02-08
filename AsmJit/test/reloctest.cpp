@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../AsmJit/AsmJitX86.h"
+#include "../AsmJit/AsmJitAssembler.h"
 #include "../AsmJit/AsmJitVM.h"
 
 // This is type of function we will generate
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create first function.
-  X86 a;
+  Assembler a;
 
   // Immediate, we will overwrite it later
   // (this is used to show how relocation works)

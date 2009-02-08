@@ -23,14 +23,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is only included as an example and simple test if jit
-// compiler works.
+// This file is used to test AdvX86 code generation.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../AsmJit/AsmJitAssembler.h"
+#include "../AsmJit/AsmJitCompiler.h"
 #include "../AsmJit/AsmJitVM.h"
 
 // This is type of function we will generate
@@ -39,6 +39,8 @@ typedef int (*MyFn)();
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
+
+  SysInt i = 32;
 
   // ==========================================================================
   // STEP 1: Create function.
@@ -49,20 +51,13 @@ int main(int argc, char* argv[])
   a.mov(nbp, nsp);
 
   // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  a.mov(nax, 1024);
+  a.mov_ptr(nax, &i);
 
   // Epilog.
   a.mov(nsp, nbp);
   a.pop(nbp);
   a.ret();
   // ==========================================================================
-
-  // NOTE:
-  // This function can be also completely rewritten to this form:
-  //   a.mov(nax, 1024);
-  //   a.ret();
-  // If you are interested in removing prolog and epilog, please
-  // study calling conventions and check register preservations.
 
   // ==========================================================================
   // STEP 2: Alloc execution-enabled memory
@@ -78,7 +73,7 @@ int main(int argc, char* argv[])
   a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
-  int result = reinterpret_cast<MyFn>(vmem)();
+  int result = ( reinterpret_cast<MyFn>(vmem)() );
   printf("Result from jit function: %d\n", result);
 
   // Memory should be freed, but use VM::free() to do that.

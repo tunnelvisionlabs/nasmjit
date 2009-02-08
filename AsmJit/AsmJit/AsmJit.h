@@ -31,17 +31,17 @@
 
 //! @mainpage
 //!
-//! AsmJit is complete JIT assembler compiler for X86 platform. It can compile
-//! nearly complete (most useful) x86 instruction set with very friendly way. 
-//! AsmJit was designed to be embeddable to any C++ project and this is the 
-//! reason for MIT licence.
+//! AsmJit? is complete JIT assembler compiler for X86/X64 platform. It can 
+//! compile nearly complete (most useful) X86/X64 instruction set with very 
+//! friendly way. AsmJit? was designed to be embeddable to any C++ project
+//! and this is the reason for MIT licence.
 //!
-//! AsmJit is based on Google's V8 code, but modified to fit different code
-//! generation concepts. The unmodified code from V8 is probably only Label
-//! and Displacement implementation (that is very good). Main reasons for
-//! developers to choose AsmJit is very clean C++ design (but no stl or
-//! exceptions are used) that allows to write code by very similar way that 
-//! most assembler developers do.
+//! AsmJit? is based on Google's V8 code, but modified to fit different code 
+//! generation concepts and of course added support for X64. The unmodified
+//! code from V8 is probably only Label and Displacement implementation 
+//! (that is very good). Main reasons for developers to choose AsmJit? is very 
+//! clean C++ design (but no stl or exceptions are used) that allows to write 
+//! code by very similar way that most assembler developers do. 
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
@@ -114,10 +114,13 @@
 //! @brief Main AsmJit library namespace.
 
 // [Includes]
-
 #include "AsmJitConfig.h"
+
+#include "AsmJitAssembler.h"
+#include "AsmJitCompiler.h"
+#include "AsmJitCpuInfo.h"
+#include "AsmJitUtil.h"
 #include "AsmJitVM.h"
-#include "AsmJitX86.h"
 
 // [Guard]
 #endif // _ASMJIT_H
