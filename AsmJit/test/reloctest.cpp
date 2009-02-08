@@ -50,10 +50,9 @@ int main(int argc, char* argv[])
   }
 
   // addresses to generated functions (first is pointer to vmem, but second
-  // must be set after first function were relocated).
+  // must be set after first function was relocated).
   UInt8* first = vmem;
   UInt8* second;
-
   // ==========================================================================
 
   // ==========================================================================

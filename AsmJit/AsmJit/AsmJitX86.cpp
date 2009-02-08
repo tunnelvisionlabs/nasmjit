@@ -396,11 +396,13 @@ void X86::relocCode(void* _buffer) const
         // Calculate displacement, but very safe!
         if (jmpTo > jmpFrom)
         {
-          if (jmpTo - jmpFrom < 2147483647) displacement = (Int32)(jmpTo - jmpFrom);
+          SysUInt diff = jmpTo - jmpFrom;
+          if (diff < 2147483647 && diff >= long_size) displacement = (Int32)(diff);
         }
         else
         {
-          if (jmpFrom - jmpTo < 2147483647) displacement = -(Int32)(jmpFrom - jmpTo);
+          SysUInt diff = jmpFrom - jmpTo;
+          if (diff < 2147483647 - long_size) displacement = -(Int32)(diff);
         }
 
         // Ready to patch to relative displacement?
@@ -609,6 +611,8 @@ void X86::_emitShldShrd(const Op& dst, const Register& src1, const Op& src2, UIn
   ASMJIT_ASSERT(src2.op() == OP_IMM || (src2.op() == OP_REG && src2.reg() == REG_CL));
   ASMJIT_ASSERT(dst.size() == src1.regSize());
 
+  if (!ensureSpace()) return;
+
   if (src1.regCode() == REG_GPW) emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
   emitRex(src1.regType() == REG_GPQ, src1.regCode(), dst);
@@ -769,6 +773,8 @@ void X86::emitArithFP(int opcode1, int opcode2, int i)
   // illegal stack offset
   ASMJIT_ASSERT(0 <= i && i < 8);
 
+  if (!ensureSpace()) return;
+
   emitByte(opcode1);
   emitByte(opcode2 + i);
 }
@@ -799,6 +805,7 @@ void X86::emitMM(UInt8 prefix0, UInt8 opcode0, UInt8 opcode1, UInt8 opcode2, int
 void X86::emitMMi(UInt8 prefix1, UInt8 prefix2, UInt8 opcode1, UInt8 opcode2, int dstCode, const Op& src, int imm8, UInt8 rexw)
 {
   if (!ensureSpace()) return;
+
   emitMM(prefix1, prefix2, opcode1, opcode2, dstCode, src, rexw);
   emitByte(imm8 & 0xFF);
 }
