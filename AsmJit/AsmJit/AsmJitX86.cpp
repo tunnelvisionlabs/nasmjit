@@ -391,6 +391,9 @@ void X86::relocCode(void* _buffer) const
         SysUInt jmpFrom = ((SysUInt)buffer) + jmpStart;
         SysUInt jmpTo = *reinterpret_cast<SysUInt *>(buffer + jmpAddress);
 
+        const int short_size = 2;
+        const int long_size  = 5;
+
         Int32 displacement = 0;
 
         // Calculate displacement, but very safe!
@@ -408,9 +411,6 @@ void X86::relocCode(void* _buffer) const
         // Ready to patch to relative displacement?
         if (displacement != 0)
         {
-          const int short_size = 2;
-          const int long_size  = 5;
-
           SysUInt z;
 
           if (isInt8(displacement - short_size))

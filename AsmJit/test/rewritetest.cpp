@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test relocations.
+// This file is used to test overwriting of existing code.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,82 +40,57 @@ int main(int argc, char* argv[])
   using namespace AsmJit;
 
   // ==========================================================================
-  // Alloc execute enabled memory
-  SysUInt vsize;
-  UInt8 *vmem = (UInt8*)VM::alloc(4096 /* alloc more space */, &vsize, true);
-  if (!vmem)
-  {
-    printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
-    return 1;
-  }
-
-  // addresses to generated functions (first is pointer to vmem, but second
-  // must be set after first function was relocated).
-  UInt8* first = vmem;
-  UInt8* second;
-  // ==========================================================================
-
-  // ==========================================================================
-  // Create first function.
+  // STEP 1: Create function by dynamic way.
   X86 a;
-
-  // Immediate, we will overwrite it later
-  // (this is used to show how relocation works)
-  Op var = imm(0, RELOC_OVERWRITE);
 
   // Prolog.
   a.push(nbp);
   a.mov(nbp, nsp);
 
-  // Clear EAX/RAX
-  a.xor_(nax, nax);
+  // mark this offset
+  SysInt mark = a.offset();
 
-  // Here we will jump from another code. There is no sence to create labels,
-  // because they will be invalidated by code relocation.
-  SysInt jumpOffset = a.offset();
+  // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
+  // (This instruction will be patched.
+  a.mov(nax, 1024);
 
-  // Add 'var' to EAX/RAX, EAX/RAX is also return value.
-  a.add(nax, var);
+  a.mov(nax, ncx);
 
   // Epilog.
   a.mov(nsp, nbp);
   a.pop(nbp);
   a.ret();
+  // ==========================================================================
 
-  // Overwrite immediate variable
-  var.setImm(1024);
-  a.overwrite(var);
+  // ==========================================================================
+  // STEP 2: Patch code at 'mark' position. End variable is needed to remember 
+  // current offset (offset where we want to go back), because we must go back 
+  // to set correct code size (offset is also used as code size).
+  SysInt end = a.toOffset(mark);
+
+  // Patch
+  a.mov(ncx, 1024);
+
+  // Go back, this step is very IMPORTANT!
+  a.toOffset(end);
+  // ==========================================================================
+
+  // ==========================================================================
+  // STEP 3: Alloc execute enabled memory
+  SysUInt vsize;
+  void *vmem = VM::alloc(a.codeSize(), &vsize, true);
+  if (!vmem) 
+  {
+    printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
+    return 1;
+  }
 
   // Relocate generated code to vmem.
   a.relocCode(vmem);
-  // ==========================================================================
 
-  // Setup second function address
-  second = vmem + a.codeSize();
-
-  // ==========================================================================
-  // Create second function (we will reuse 'a' instance to do that).
-  a.clear();
-
-  a.push(nbp);
-  a.mov(nbp, nsp);
-
-  a.mov(nax, 1024);
-
-  // Make relative or absolute jump, ECX or RCX register will be used if
-  // relative jump is not possible.
-  a.jmp_rel((UInt8*)vmem + jumpOffset, ncx);
-
-  a.relocCode(second);
-  // ==========================================================================
-
-  // ==========================================================================
   // Cast vmem to our function and call the code.
-  int result1 = reinterpret_cast<MyFn>(first)();
-  int result2 = reinterpret_cast<MyFn>(second)();
-
-  printf("Result from first function: %d\n", result1);
-  printf("Result from second function: %d\n", result2);
+  int result = ( reinterpret_cast<MyFn>(vmem)() );
+  printf("Result from jit function: %d\n", result);
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);

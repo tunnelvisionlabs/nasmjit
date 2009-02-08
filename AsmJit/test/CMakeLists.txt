@@ -22,3 +22,4 @@ Set(ASMJIT_HEADERS
 Add_Executable(jittest jittest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 Add_Executable(cputest cputest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 Add_Executable(reloctest reloctest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(rewritetest rewritetest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})

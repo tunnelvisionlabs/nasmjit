@@ -40,7 +40,8 @@ int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
-  // Create function by dynamic way.
+  // ==========================================================================
+  // STEP 1: Create function by dynamic way.
   X86 a;
 
   // Prolog.
@@ -54,6 +55,7 @@ int main(int argc, char* argv[])
   a.mov(nsp, nbp);
   a.pop(nbp);
   a.ret();
+  // ==========================================================================
 
   // NOTE:
   // This function can be also completely rewritten to this form:
@@ -62,7 +64,8 @@ int main(int argc, char* argv[])
   // If you are interested in removing prolog and epilog, please
   // study calling conventions and check register preservations.
 
-  // Alloc execute enabled memory
+  // ==========================================================================
+  // STEP 2: Alloc execution-enabled memory
   SysUInt vsize;
   void *vmem = VM::alloc(a.codeSize(), &vsize, true);
   if (!vmem) 
@@ -80,6 +83,7 @@ int main(int argc, char* argv[])
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);
+  // ==========================================================================
 
   return 0;
 }

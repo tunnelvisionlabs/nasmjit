@@ -1278,8 +1278,20 @@ struct ASMJIT_API X86
 
   //! @brief Return size of currently generated code.
   inline SysInt codeSize() const { return (SysInt)(pCur - pData); }
+
   //! @brief Return current offset in buffer (same as codeSize()).
   inline SysInt offset() const { return (SysInt)(pCur - pData); }
+
+  //! @brief Sets offset to @a o and returns previous offset.
+  //!
+  //! This method can be used to truncate code (previous offset is not
+  //! recorded) or to overwrite instruction stream at position @a o.
+  inline SysInt toOffset(SysInt o) 
+  {
+    SysInt prev = (SysInt)(pCur - pData);
+    pCur = pData + o;
+    return prev;
+  }
 
   //! @brief Return capacity of internal code buffer.
   inline SysInt capacity() const { return _capacity; }
