@@ -5268,7 +5268,7 @@ struct ASMJIT_API Assembler
       // Mem <- Reg
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        _emitMM(0xF3, 0x00, 0x0F, 0x7F, dst.regCode(), src);
+        _emitMM(0xF3, 0x00, 0x0F, 0x7F, src.regCode(), dst);
         return;
     }
 
@@ -5310,8 +5310,6 @@ struct ASMJIT_API Assembler
   //! @brief Move Aligned Packed Double-Precision FP Values (SSE2).
   void movapd(const Op& dst, const Op& src)
   {
-    if (!ensureSpace()) return;
-
     switch ((dst.op() << 4) | src.op())
     {
       case (OP_REG << 4) | OP_MEM:
