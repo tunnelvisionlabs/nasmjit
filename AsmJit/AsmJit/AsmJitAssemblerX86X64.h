@@ -1099,6 +1099,14 @@ struct Op
   friend struct Assembler;
 };
 
+inline Register makegpb(UInt8 index) { Register r = { REG_GPB | index }; return r; }
+inline Register makegpw(UInt8 index) { Register r = { REG_GPW | index }; return r; }
+inline Register makegpd(UInt8 index) { Register r = { REG_GPD | index }; return r; }
+inline Register makegpq(UInt8 index) { Register r = { REG_GPQ | index }; return r; }
+inline Register makegpn(UInt8 index) { Register r = { REG_GPN | index }; return r; }
+inline MMRegister makemmx(UInt8 index) { MMRegister r = { REG_MMX | index }; return r; }
+inline XMMRegister makesse(UInt8 index) { XMMRegister r = { REG_SSE | index }; return r; }
+
 // [base + displacement]
 
 //! @brief Create pointer operand with not specified size.
@@ -1279,7 +1287,7 @@ struct ASMJIT_API Assembler
   //! @brief Creates Assembler instance.
   Assembler();
   //! @brief Destroys Assembler instance
-  ~Assembler();
+  virtual ~Assembler();
 
   // -------------------------------------------------------------------------
   // [Constants (for OPCODE generation)]
@@ -5203,21 +5211,21 @@ struct ASMJIT_API Assembler
     _emitReg(6, 0);
   }
 
-  //! @brief Return Minimum Packed Double-Precision FP Values (SSE2).
+  //! @brief Return Minimum Packed DP-FP Values (SSE2).
   void minpd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
     _emitMM(0x66, 0x00, 0x0F, 0x5D, dst.regCode(), src);
   }
 
-  //! @brief Return Minimum Scalar Double-Precision FP Value (SSE2).
+  //! @brief Return Minimum Scalar DP-FP Value (SSE2).
   void minsd(const XMMRegister& dst, const Op& src)
   {
     ASMJIT_ASSERT((src.op() == OP_REG && src.regType() == REG_SSE) || (src.op() == OP_MEM));
     _emitMM(0xF2, 0x00, 0x0F, 0x5D, dst.regCode(), src);
   }
 
-  //! @brief Move Aligned Double Quadword (SSE2).
+  //! @brief Move Aligned DQWord (SSE2).
   void movdqa(const Op& dst, const Op& src)
   {
     switch (dst.op() << 4 | src.op())
@@ -5235,7 +5243,7 @@ struct ASMJIT_API Assembler
       // Mem <- Reg
       case (OP_MEM << 4) | OP_REG:
         ASMJIT_ASSERT(src.regType() == REG_SSE);
-        _emitMM(0x66, 0x00, 0x0F, 0x7F, dst.regCode(), src);
+        _emitMM(0x66, 0x00, 0x0F, 0x7F, src.regCode(), dst);
         return;
     }
 
