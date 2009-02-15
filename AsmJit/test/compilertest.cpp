@@ -40,23 +40,22 @@ int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
-  SysInt i = 32;
-
   // ==========================================================================
   // STEP 1: Create function.
   Assembler a;
+  
+  // Use compiler to make a function
+  {
+    Compiler c;
 
-  // Prolog.
-  a.push(nbp);
-  a.mov(nbp, nsp);
+    c.beginFunction(CALL_CONV_PREFERRED);
+    c.prologue();
+    c.epilogue();
+    c.getFunction()->_changedGpnRegisters |= 0xFF;
+    c.endFunction();
 
-  // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  a.mov_ptr(nax, &i);
-
-  // Epilog.
-  a.mov(nsp, nbp);
-  a.pop(nbp);
-  a.ret();
+    c.build(a);
+  }
   // ==========================================================================
 
   // ==========================================================================

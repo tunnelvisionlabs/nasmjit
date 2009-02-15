@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 
   // Immediate, we will overwrite it later
   // (this is used to show how relocation works)
-  Op var = imm(0, RELOC_OVERWRITE);
+  Relocable var = 0;
 
   // Prolog.
   a.push(nbp);
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
   a.ret();
 
   // Overwrite immediate variable
-  var.setImm(1024);
+  var.setValue(1024);
   a.overwrite(var);
 
   // Relocate generated code to vmem.
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 
   // Make relative or absolute jump, ECX or RCX register will be used if
   // relative jump is not possible.
-  a.jmp_rel((UInt8*)vmem + jumpOffset, ncx);
+  a.jmp_ptr((UInt8*)vmem + jumpOffset, ncx);
 
   a.relocCode(second);
   // ==========================================================================
