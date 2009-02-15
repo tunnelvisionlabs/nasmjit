@@ -1,0 +1,1433 @@
+// AsmJit - Complete JIT Assembler for C++ Language.
+
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+// 
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+
+// [Guard]
+#ifndef _ASMJITDEFSX86X64_H
+#define _ASMJITDEFSX86X64_H
+
+// [Dependencies]
+#include "AsmJitConfig.h"
+#include "AsmJitUtil.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+namespace AsmJit {
+
+//! @brief Operand types that can be encoded in @c Op operand.
+enum OP
+{
+  //! @brief Operand is none, used only internally.
+  OP_NONE = 0,
+  //! @brief Operand is register.
+  OP_REG = 1,
+  //! @brief Operand is memory.
+  OP_MEM = 2,
+  //! @brief Operand is immediate.
+  OP_IMM = 3,
+};
+
+//! @brief Size of registers and pointers.
+enum SIZE
+{
+  //! @brief 1 byte size.
+  SIZE_BYTE   = 1,
+  //! @brief 2 bytes size.
+  SIZE_WORD   = 2,
+  //! @brief 4 bytes size.
+  SIZE_DWORD  = 4,
+  //! @brief 8 bytes size.
+  SIZE_QWORD  = 8,
+  //! @brief 10 bytes size.
+  SIZE_TWORD  = 10,
+  //! @brief 16 bytes size.
+  SIZE_DQWORD = 16
+};
+
+//! @brief Valid X86 register IDs.
+//!
+//! These codes are real, don't miss with @c REG enum! and don't use these
+//! values if you are not writing @c AsmJit::Serializer backend.
+enum RID
+{
+  RID_EAX = 0,
+  RID_ECX = 1,
+  RID_EDX = 2,
+  RID_EBX = 3,
+  RID_ESP = 4,
+  RID_EBP = 5,
+  RID_ESI = 6,
+  RID_EDI = 7,
+  // to check if register is invalid, use reg >= R_INVALID
+  RID_INVALID = 8
+};
+
+//! @brief Pseudo (not real X86) register codes used for generating opcodes.
+//!
+//! From this register code can be generated real x86 register ID, type of
+//! register and size of register.
+enum REG
+{
+  //! @brief Mask for register type.
+  REGTYPE_MASK = 0xF0,
+  //! @brief Mask for register code (index).
+  REGCODE_MASK = 0x0F,
+
+  // First nibble contains register type (mask 0xF0), Second nibble contains
+  // register index code.
+
+  // 8 bit, 16 bit and 32 bit general purpose registers
+  REG_GPB = 0x00,
+  REG_GPW = 0x10,
+  REG_GPD = 0x20,
+
+  // 64 bit registers (RAX, RBX, ...), not available in 32 bit mode
+  REG_GPQ = 0x30,
+
+  // native 32 bit or 64 bit registers
+#if defined(ASMJIT_X86)
+  REG_GPN = REG_GPD,
+#else
+  REG_GPN = REG_GPQ,
+#endif
+
+  // X87 (FPU) registers
+  REG_X87 = 0x50,
+
+  // 64 bit mmx registers
+  REG_MM = 0x60,
+  // 128 bit sse registers
+  REG_XMM = 0x70,
+
+  // 8/16 bit registers
+  REG_AL   = REG_GPB , REG_CL   , REG_DL   , REG_BL   , REG_AH   , REG_CH   , REG_DH   , REG_BH   ,
+#if defined(ASMJIT_X64)
+  REG_R8B            , REG_R9B  , REG_R10B , REG_R11B , REG_R12B , REG_R13B , REG_R14B , REG_R15B ,
+#endif // ASMJIT_X64
+  REG_AX   = REG_GPW , REG_CX   , REG_DX   , REG_BX   , REG_SP   , REG_BP   , REG_SI   , REG_DI   ,
+#if defined(ASMJIT_X64)
+  REG_R8W            , REG_R9W  , REG_R10W , REG_R11W , REG_R12W , REG_R13W , REG_R14W , REG_R15W ,
+#endif // ASMJIT_X64
+
+  // 32 bit registers
+  REG_EAX  = REG_GPD , REG_ECX  , REG_EDX  , REG_EBX  , REG_ESP  , REG_EBP  , REG_ESI  , REG_EDI  ,
+#if defined(ASMJIT_X64)
+  REG_R8D            , REG_R9D  , REG_R10D , REG_R11D , REG_R12D , REG_R13D , REG_R14D , REG_R15D ,
+#endif // ASMJIT_X64
+
+  // 64 bit registers
+#if defined(ASMJIT_X64)
+  REG_RAX  = REG_GPQ , REG_RCX  , REG_RDX  , REG_RBX  , REG_RSP  , REG_RBP  , REG_RSI  , REG_RDI  ,
+  REG_R8             , REG_R9   , REG_R10  , REG_R11  , REG_R12  , REG_R13  , REG_R14  , REG_R15  ,
+#endif // ASMJIT_X64
+
+  // MMX registers 
+  REG_MM0  = REG_MM , REG_MM1  , REG_MM2  , REG_MM3  , REG_MM4  , REG_MM5  , REG_MM6  , REG_MM7  ,
+
+  // SSE registers
+  REG_XMM0 = REG_XMM , REG_XMM1 , REG_XMM2 , REG_XMM3 , REG_XMM4 , REG_XMM5 , REG_XMM6 , REG_XMM7 ,
+#if defined(ASMJIT_X64)
+  REG_XMM8           , REG_XMM9 , REG_XMM10, REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15,
+#endif // ASMJIT_X64
+
+  // native registers (depends if processor runs in 32 bit or 64 bit mode)
+#if defined(ASMJIT_X86)
+  REG_NAX  = REG_GPD , REG_NCX  , REG_NDX  , REG_NBX  , REG_NSP  , REG_NBP  , REG_NSI  , REG_NDI  ,
+#else
+  REG_NAX  = REG_GPQ , REG_NCX  , REG_NDX  , REG_NBX  , REG_NSP  , REG_NBP  , REG_NSI  , REG_NDI  ,
+#endif
+
+  //! @brief Invalid register code.
+  NO_REG = 0xFF
+};
+
+//! @brief Prefetch hints.
+enum PREFETCH_HINT
+{
+  PREFETCH_T0  = 1,
+  PREFETCH_T1  = 2,
+  PREFETCH_T2  = 3,
+  PREFETCH_NTA = 0
+};
+
+//! @brief Condition codes.
+enum CONDITION
+{
+  //! @brief Any value < 0 is considered no condition.
+  C_NO_CONDITION  = -1,
+
+  C_OVERFLOW      =  0,
+  C_NO_OVERFLOW   =  1,
+  C_BELOW         =  2,
+  C_ABOVE_EQUAL   =  3,
+  C_EQUAL         =  4,
+  C_NOT_EQUAL     =  5,
+  C_BELOW_EQUAL   =  6,
+  C_ABOVE         =  7,
+  C_SIGN          =  8,
+  C_NOT_SIGN      =  9,
+  C_PARITY_EVEN   = 10,
+  C_PARITY_ODD    = 11,
+  C_LESS          = 12,
+  C_GREATER_EQUAL = 13,
+  C_LESS_EQUAL    = 14,
+  C_GREATER       = 15,
+
+  // aliases
+  C_ZERO          = C_EQUAL,
+  C_NOT_ZERO      = C_NOT_EQUAL,
+  C_NEGATIVE      = C_SIGN,
+  C_POSITIVE      = C_NOT_SIGN,
+
+  // x87 floating point only
+  C_FP_UNORDERED  = 100,
+  C_FP_NOT_UNORDERED = 101
+};
+
+//! @brief  Returns the equivalent of !cc.
+//!
+//! Negation of the default no_condition (-1) results in a non-default
+//! no_condition value (-2). As long as tests for no_condition check
+//! for condition < 0, this will work as expected.
+static inline CONDITION negateCondition(CONDITION cc)
+{
+  return static_cast<CONDITION>(cc ^ 1);
+}
+
+//! @brief Corresponds to transposing the operands of a comparison.
+static inline CONDITION reverseCondition(CONDITION cc)
+{
+  switch (cc) {
+    case C_BELOW:
+      return C_ABOVE;
+    case C_ABOVE:
+      return C_BELOW;
+    case C_ABOVE_EQUAL:
+      return C_BELOW_EQUAL;
+    case C_BELOW_EQUAL:
+      return C_ABOVE_EQUAL;
+    case C_LESS:
+      return C_GREATER;
+    case C_GREATER:
+      return C_LESS;
+    case C_GREATER_EQUAL:
+      return C_LESS_EQUAL;
+    case C_LESS_EQUAL:
+      return C_GREATER_EQUAL;
+    default:
+      return cc;
+  };
+}
+
+//! @brief Scale, can be used for addressing.
+//!
+//! See @c Op and addressing methods like @c byte_ptr(), @c word_ptr(),
+//! @c dword_ptr(), etc...
+enum SCALE
+{
+  //! @brief Scale 1 times (no scale).
+  TIMES_1 = 0,
+  //! @brief Scale 2 times (same as shifting to left by 1).
+  TIMES_2 = 1,
+  //! @brief Scale 4 times (same as shifting to left by 2).
+  TIMES_4 = 2,
+  //! @brief Scale 8 times (same as shifting to left by 3).
+  TIMES_8 = 3
+};
+
+//! @brief Condition hint.
+enum HINT
+{
+  //! @brief No hint.
+  HINT_NONE = 0,
+  //! @brief Condition will be taken (likely).
+  HINT_TAKEN = 0x3E,
+  //! @brief Condition will be not taken (unlikely).
+  HINT_NOT_TAKEN = 0x2E
+};
+
+//! @brief Floating point status.
+enum FP_STATUS
+{
+  FP_C0 = 0x100,
+  FP_C1 = 0x200,
+  FP_C2 = 0x400,
+  FP_C3 = 0x4000,
+  FP_CC_MASK = 0x4500
+};
+
+//! @brief Floating point control word.
+enum FP_CW
+{
+  FP_CW_INVOPEX_MASK  = 0x001,
+  FP_CW_DENOPEX_MASK  = 0x002,
+  FP_CW_ZERODIV_MASK  = 0x004,
+  FP_CW_OVFEX_MASK    = 0x008,
+  FP_CW_UNDFEX_MASK   = 0x010,
+  FP_CW_PRECEX_MASK   = 0x020,
+  FP_CW_PRECC_MASK    = 0x300,
+  FP_CW_ROUNDC_MASK   = 0xC00,
+
+  // values for precision control
+  FP_CW_PREC_SINGLE   = 0x000,
+  FP_CW_PREC_DOUBLE   = 0x200,
+  FP_CW_PREC_EXTENDED = 0x300,
+
+  // values for rounding control
+  FP_CW_ROUND_NEAREST = 0x000,
+  FP_CW_ROUND_DOWN    = 0x400,
+  FP_CW_ROUND_UP      = 0x800,
+  FP_CW_ROUND_TOZERO  = 0xC00
+};
+
+//! @brief Relocation info.
+enum RELOC_MODE
+{
+  //! @brief No relocation.
+  RELOC_NONE = 0,
+
+  //! @brief Overwrite relocation (immediates as constants).
+  RELOC_OVERWRITE = 1,
+
+  //! @brief Internal, used by @c AsmJit::Assembler::jmp_rel() and 
+  //! @c AsmJit::Assembler::j_rel()
+  RELOC_JMP_RELATIVE = 10
+};
+
+//! @brief Instruction codes (AsmJit specific)
+enum INST_X86_CODE
+{
+  // standard x86 instruction set
+  INST_ADC,
+  INST_ADD,
+  INST_AND,
+  INST_BSWAP,
+  INST_BTS,
+  INST_CALL,
+  INST_CBW,
+  INST_CWDE,
+  INST_CDQE, // X64 only
+  INST_CLC,
+  INST_CLD,
+  INST_CMC,
+  INST_CMOV,
+  INST_CMP,
+  INST_CMPXCHG,
+  INST_CMPXCHG8B,
+  INST_CMPXCHG16B, // X64 only
+  INST_CPUID,
+  INST_DAA, // X86 only
+  INST_DAS, // X86 only
+  INST_DEC,
+  INST_DIV,
+  INST_IDIV,
+  INST_IMUL,
+  INST_INC,
+  INST_INT3,
+  INST_J,
+  INST_JMP,
+  INST_JMP_PTR,
+  INST_LEA,
+  INST_LOCK,
+  INST_MOV,
+  INST_MOV_PTR,
+  INST_MOVSX,
+  INST_MOVSXD,
+  INST_MOVZX,
+  INST_MUL,
+  INST_NEG,
+  INST_NOP,
+  INST_NOT,
+  INST_OR,
+  INST_POP,
+  INST_POPAD, // X86 only
+  INST_POPFD, // X86 only
+  INST_PUSH,
+  INST_PUSHAD, // X86 only
+  INST_PUSHFD, // X86 only
+  INST_RCL,
+  INST_RCR,
+  INST_RDTSC,
+  INST_RDTSCP,
+  INST_RET,
+  INST_ROL,
+  INST_ROR,
+  INST_SAHF, // X86 only
+  INST_SBB,
+  INST_SAL,
+  INST_SAR,
+  INST_SHL,
+  INST_SHR,
+  INST_SHLD,
+  INST_SHRD,
+  INST_STC,
+  INST_STD,
+  INST_SUB,
+  INST_TEST,
+  INST_UD2,
+  INST_XADD,
+  INST_XCHG,
+  INST_XOR,
+
+  // standard x87 instruction set
+  INST_F2XM1,
+  INST_FABS,
+  INST_FADD,
+  INST_FADDP,
+  INST_FBLD,
+  INST_FBSTP,
+  INST_FCHS,
+  INST_FCLEX,
+  INST_FCMOV,
+  INST_FCOM,
+  INST_FCOMP,
+  INST_FCOMPP,
+  INST_FCOMI,
+  INST_FCOMIP,
+  INST_FCOS,
+  INST_FDECSTP,
+  INST_FDIV,
+  INST_FDIVP,
+  INST_FDIVR,
+  INST_FDIVRP,
+  INST_FFREE,
+  INST_FIADD,
+  INST_FICOM,
+  INST_FICOMP,
+  INST_FIDIV,
+  INST_FIDIVR,
+  INST_FILD,
+  INST_FIMUL,
+  INST_FINCSTP,
+  INST_FINIT,
+  INST_FIST,
+  INST_FISTP,
+  INST_FISUB,
+  INST_FISUBR,
+  INST_FLD,
+  INST_FLD1,
+  INST_FLDL2T,
+  INST_FLDL2E,
+  INST_FLDPI,
+  INST_FLDLG2,
+  INST_FLDLN2,
+  INST_FLDZ,
+  INST_FLDCW,
+  INST_FLDENV,
+  INST_FMUL,
+  INST_FMULP,
+  INST_FNCLEX,
+  INST_FNINIT,
+  INST_FNOP,
+  INST_FNSAVE,
+  INST_FNSTENV,
+  INST_FNSTCW,
+  INST_FNSTSW,
+  INST_FPATAN,
+  INST_FPREM,
+  INST_FPREM1,
+  INST_FPTAN,
+  INST_FRNDINT,
+  INST_FRSTOR,
+  INST_FSAVE,
+  INST_FSCALE,
+  INST_FSIN,
+  INST_FSINCOS,
+  INST_FSQRT,
+  INST_FST,
+  INST_FSTP,
+  INST_FSTCW,
+  INST_FSTENV,
+  INST_FSTSW,
+  INST_FSUB,
+  INST_FSUBP,
+  INST_FSUBR,
+  INST_FSUBRP,
+  INST_FTST,
+  INST_FUCOM,
+  INST_FUCOMI,
+  INST_FUCOMIP,
+  INST_FUCOMP,
+  INST_FUCOMPP,
+  INST_FWAIT,
+  INST_FXAM,
+  INST_FXCH,
+  INST_FXRSTOR,
+  INST_FXSAVE,
+  INST_FXTRACT,
+  INST_FYL2X,
+  INST_FYL2XP1,
+
+  // mmx/sseX instruction set
+  INST_ADDPD,
+  INST_ADDPS,
+  INST_ADDSD,
+  INST_ADDSS,
+  INST_ADDSUBPD,
+  INST_ADDSUBPS,
+  INST_AMD_PREFETCH,
+  INST_AMD_PREFETCHW,
+  INST_ANDNPD,
+  INST_ANDNPS,
+  INST_ANDPD,
+  INST_ANDPS,
+  INST_BLENDPD,
+  INST_BLENDPS,
+  INST_BLENDVPD,
+  INST_BLENDVPS,
+  INST_CLFLUSH,
+  INST_CMPPD,
+  INST_CMPPS,
+  INST_CMPSD,
+  INST_CMPSS,
+  INST_COMISD,
+  INST_COMISS,
+  INST_CRC32,
+  INST_CVTDQ2PD,
+  INST_CVTDQ2PS,
+  INST_CVTPD2DQ,
+  INST_CVTPD2PI,
+  INST_CVTPD2PS,
+  INST_CVTPI2PD,
+  INST_CVTPI2PS,
+  INST_CVTPS2DQ,
+  INST_CVTPS2PD,
+  INST_CVTPS2PI,
+  INST_CVTSD2SI,
+  INST_CVTSD2SS,
+  INST_CVTSI2SD,
+  INST_CVTSI2SS,
+  INST_CVTSS2SD,
+  INST_CVTSS2SI,
+  INST_CVTTPD2DQ,
+  INST_CVTTPD2PI,
+  INST_CVTTPS2DQ,
+  INST_CVTTPS2PI,
+  INST_CVTTSD2SI,
+  INST_CVTTSS2SI,
+  INST_DIVPD,
+  INST_DIVPS,
+  INST_DIVSD,
+  INST_DIVSS,
+  INST_DPPD,
+  INST_DPPS,
+  INST_EMMS,
+  INST_EXTRACTPS,
+  INST_FISTTP,
+  INST_HADDPD,
+  INST_HADDPS,
+  INST_HSUBPD,
+  INST_HSUBPS,
+  INST_LDDQU,
+  INST_LDMXCSR,
+  INST_LFENCE,
+  INST_MASKMOVDQU,
+  INST_MASKMOVQ,
+  INST_MAXPD,
+  INST_MAXPS,
+  INST_MAXSD,
+  INST_MAXSS,
+  INST_MFENCE,
+  INST_MINPD,
+  INST_MINPS,
+  INST_MINSD,
+  INST_MINSS,
+  INST_MONITOR,
+  INST_MOVAPD,
+  INST_MOVAPS,
+  INST_MOVBE,
+  INST_MOVD,
+  INST_MOVDDUP,
+  INST_MOVDQ2Q,
+  INST_MOVDQA,
+  INST_MOVDQU,
+  INST_MOVHLPS,
+  INST_MOVHPD,
+  INST_MOVHPS,
+  INST_MOVLHPS,
+  INST_MOVLPD,
+  INST_MOVLPS,
+  INST_MOVMSKPD,
+  INST_MOVMSKPS,
+  INST_MOVNTDQ,
+  INST_MOVNTDQA,
+  INST_MOVNTI,
+  INST_MOVNTPD,
+  INST_MOVNTPS,
+  INST_MOVNTQ,
+  INST_MOVQ,
+  INST_MOVQ2DQ,
+  INST_MOVSD,
+  INST_MOVSHDUP,
+  INST_MOVSLDUP,
+  INST_MOVSS,
+  INST_MOVUPD,
+  INST_MOVUPS,
+  INST_MPSADBW,
+  INST_MULPD,
+  INST_MULPS,
+  INST_MULSD,
+  INST_MULSS,
+  INST_MWAIT,
+  INST_ORPD,
+  INST_ORPS,
+  INST_PABSB,
+  INST_PABSD,
+  INST_PABSW,
+  INST_PACKSSDW,
+  INST_PACKSSWB,
+  INST_PACKUSDW,
+  INST_PACKUSWB,
+  INST_PADDB,
+  INST_PADDD,
+  INST_PADDQ,
+  INST_PADDSB,
+  INST_PADDSW,
+  INST_PADDUSB,
+  INST_PADDUSW,
+  INST_PADDW,
+  INST_PALIGNR,
+  INST_PAND,
+  INST_PANDN,
+  INST_PAUSE,
+  INST_PAVGB,
+  INST_PAVGW,
+  INST_PBLENDVB,
+  INST_PBLENDW,
+  INST_PCMPEQB,
+  INST_PCMPEQD,
+  INST_PCMPEQQ,
+  INST_PCMPEQW,
+  INST_PCMPESTRI,
+  INST_PCMPESTRM,
+  INST_PCMPGTB,
+  INST_PCMPGTD,
+  INST_PCMPGTQ,
+  INST_PCMPGTW,
+  INST_PCMPISTRI,
+  INST_PCMPISTRM,
+  INST_PEXTRB,
+  INST_PEXTRD,
+  INST_PEXTRQ,
+  INST_PEXTRW,
+  INST_PHADDD,
+  INST_PHADDSW,
+  INST_PHADDW,
+  INST_PHMINPOSUW,
+  INST_PHSUBD,
+  INST_PHSUBSW,
+  INST_PHSUBW,
+  INST_PINSRB,
+  INST_PINSRD,
+  INST_PINSRW,
+  INST_PMADDUBSW,
+  INST_PMADDWD,
+  INST_PMAXSB,
+  INST_PMAXSD,
+  INST_PMAXSW,
+  INST_PMAXUB,
+  INST_PMAXUD,
+  INST_PMAXUW,
+  INST_PMINSB,
+  INST_PMINSD,
+  INST_PMINSW,
+  INST_PMINUB,
+  INST_PMINUD,
+  INST_PMINUW,
+  INST_PMOVMSKB,
+  INST_PMOVSXBD,
+  INST_PMOVSXBQ,
+  INST_PMOVSXBW,
+  INST_PMOVSXDQ,
+  INST_PMOVSXWD,
+  INST_PMOVSXWQ,
+  INST_PMOVZXBD,
+  INST_PMOVZXBQ,
+  INST_PMOVZXBW,
+  INST_PMOVZXDQ,
+  INST_PMOVZXWD,
+  INST_PMOVZXWQ,
+  INST_PMULDQ,
+  INST_PMULHRSW,
+  INST_PMULHUW,
+  INST_PMULHW,
+  INST_PMULLD,
+  INST_PMULLW,
+  INST_PMULUDQ,
+  INST_POPCNT,
+  INST_POR,
+  INST_PREFETCH,
+  INST_PSADBW,
+  INST_PSHUFB,
+  INST_PSHUFD,
+  INST_PSHUFW,
+  INST_PSHUHW,
+  INST_PSHULW,
+  INST_PSIGNB,
+  INST_PSIGND,
+  INST_PSIGNW,
+  INST_PSLLD,
+  INST_PSLLDQ,
+  INST_PSLLQ,
+  INST_PSLLW,
+  INST_PSRAD,
+  INST_PSRAW,
+  INST_PSRLD,
+  INST_PSRLDQ,
+  INST_PSRLQ,
+  INST_PSRLW,
+  INST_PSUBB,
+  INST_PSUBD,
+  INST_PSUBQ,
+  INST_PSUBSB,
+  INST_PSUBSW,
+  INST_PSUBUSB,
+  INST_PSUBUSW,
+  INST_PSUBW,
+  INST_PTEST,
+  INST_PUNPCKHBW,
+  INST_PUNPCKHDQ,
+  INST_PUNPCKHQDQ,
+  INST_PUNPCKHWD,
+  INST_PUNPCKLBW,
+  INST_PUNPCKLDQ,
+  INST_PUNPCKLQDQ,
+  INST_PUNPCKLWD,
+  INST_PXOR,
+  INST_RCPPS,
+  INST_RCPSS,
+  INST_ROUNDPD,
+  INST_ROUNDPS,
+  INST_ROUNDSD,
+  INST_ROUNDSS,
+  INST_RSQRTPS,
+  INST_RSQRTSS,
+  INST_SFENCE,
+  INST_SHUFPS,
+  INST_SQRTPD,
+  INST_SQRTPS,
+  INST_SQRTSD,
+  INST_SQRTSS,
+  INST_STMXCSR,
+  INST_SUBPD,
+  INST_SUBPS,
+  INST_SUBSD,
+  INST_SUBSS,
+  INST_UCOMISD,
+  INST_UCOMISS,
+  INST_UNPCKHPD,
+  INST_UNPCKHPS,
+  INST_UNPCKLPD,
+  INST_UNPCKLPS,
+  INST_XORPD,
+  INST_XORPS,
+
+  _INST_COUNT
+};
+
+//! @brief Structure used internally for relocations.
+struct RelocInfo
+{
+  SysUInt offset;
+  UInt8 size;
+  UInt8 mode;
+  UInt16 data;
+};
+
+enum _MakeReg { MakeReg = 0 };
+enum _MakeMem { MakeMem = 0 };
+enum _MakeImm { MakeImm = 0 };
+
+//! @brief Operand, abstract class for register, address and immediate value.
+struct Operand
+{
+  inline Operand()
+  { memset(this, 0, sizeof(Operand)); }
+
+  inline Operand(_MakeReg makeReg, UInt8 code, UInt8 size)
+  {
+    ASMJIT_USE(makeReg);
+    _reg.op = OP_REG;
+    _reg.size = size;
+    _reg.code = code;
+    _reg.unused3 = NO_REG;
+    _reg.unused4 = 0;
+    _reg.unused5 = 0;
+  }
+
+  inline Operand(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 shift, SysInt displacement, UInt8 size)
+  {
+    ASMJIT_USE(makeMem);
+    _mem.op = OP_MEM;
+    _mem.size = size;
+    _mem.base = base;
+    _mem.index = index;
+    _mem.shift = shift;
+    _mem.displacement = displacement;
+  }
+
+  inline Operand(_MakeImm makeImm, SysInt i, UInt8 isUnsigned = false, UInt32 relocMode = RELOC_NONE)
+  {
+    ASMJIT_USE(makeImm);
+    _imm.op = OP_IMM;
+    _imm.size = 0;
+    _imm.isUnsigned = isUnsigned;
+    _imm.relocMode = (UInt8)relocMode;
+    _imm.unused4 = 0;
+    _imm.value = i;
+  }
+
+  // implicit immediate value constructor.
+  inline Operand(SysInt i)
+  {
+    _imm.op = OP_IMM;
+    _imm.size = 0;
+    _imm.isUnsigned = false;
+    _imm.relocMode = RELOC_NONE;
+    _imm.unused4 = 0;
+    _imm.value = i;
+  }
+
+  inline Operand(const Operand& other)
+  { _init(other); }
+
+  //! @brief Return type of operand, see @c OP.
+  inline UInt8 op() const { return _op.op; }
+  //! @brief Return size of operand in bytes.
+  inline UInt8 size() const { return _op.size; }
+
+  inline UInt8 isNone() const { return _op.op == OP_NONE; }
+  inline UInt8 isReg() const { return _op.op == OP_REG; }
+  inline UInt8 isMem() const { return _op.op == OP_MEM; }
+  inline UInt8 isImm() const { return _op.op == OP_IMM; }
+
+  inline UInt8 isRegType(UInt8 regType) const { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
+  inline UInt8 isRegCode(UInt8 regCode) const { return isReg() & (_reg.code == regCode); }
+  inline UInt8 isRegIndex(UInt8 regIndex) const { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
+
+  inline UInt8 isRegMem() const { return isMem() | isReg(); }
+  inline UInt8 isRegMem(UInt8 regType) const { return isMem() | isRegType(regType); }
+
+  //! @brief Generic operand data shared between all operands.
+  struct GenData
+  {
+    //! @brief Type of operand, see @c OP.
+    UInt8 op;
+    //! @brief Size of operand (register, address or immediate size).
+    UInt8 size;
+    UInt8 unused2;
+    UInt8 unused3;
+  };
+
+  //! @brief Register data.
+  struct RegData
+  {
+    //! @brief Type of operand, see @c OP.
+    UInt8 op;
+    //! @brief Size of register.
+    UInt8 size;
+    //! @brief Register code, see @c REG.
+    UInt8 code;
+    //! @brief Not used.
+    UInt8 unused3;
+    //! @brief Not used.
+    UInt32 unused4;
+    //! @brief Not used.
+    SysInt unused5;
+  };
+
+  //! @brief Memory address data.
+  struct MemData
+  {
+    //! @brief Type of operand, see @c OP.
+    UInt8 op;
+    //! @brief Size of pointer.
+    UInt8 size;
+    //! @brief Base register code, see @c REG.
+    UInt8 base;
+    //! @brief Index register code, see @c REG.
+    UInt8 index;
+    //! @brief Index register shift (for scaling).
+    UInt32 shift;
+    //! @brief Displacement.
+    SysInt displacement;
+  };
+
+  //! @brief Immediate value data.
+  struct ImmData
+  {
+    //! @brief Type of operand, see @c OP.
+    UInt8 op;
+    //! @brief Size of immediate (or 0 to autodetect).
+    UInt8 size;
+    //! @brief @c true if immediate is unsigned.
+    UInt8 isUnsigned;
+    //! @brief Not used.
+    UInt8 relocMode;
+    //! @brief Not used.
+    UInt32 unused4;
+    //! @brief Immediate value.
+    SysInt value;
+  };
+
+  union
+  {
+    //! @brief Generic operand data.
+    GenData _op;
+    //! @brief Register operand data.
+    RegData _reg;
+    //! @brief Memory operand data.
+    MemData _mem;
+    //! @brief Immediate operand data.
+    ImmData _imm;
+  };
+
+  inline void _init(const Operand& other)
+  {
+    memcpy(this, &other, sizeof(Operand));
+  }
+
+  inline void _copy(const Operand& other)
+  {
+    memcpy(this, &other, sizeof(Operand));
+  }
+};
+
+struct RegMem : public Operand
+{
+  inline RegMem(_MakeReg makeReg, UInt8 code, UInt8 size) : 
+    Operand(makeReg, code, size)
+  {}
+
+  inline RegMem(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 scale, SysInt displacement, UInt8 size) :
+    Operand(makeMem, base, index, scale, displacement, size)
+  {}
+
+  inline RegMem(const RegMem& other) : Operand(other) 
+  {}
+
+  inline RegMem& operator=(const RegMem& other)
+  { _copy(other); }
+};
+
+typedef RegMem MMRegMem;
+typedef RegMem XMMRegMem;
+
+struct BaseReg : public RegMem
+{
+  inline BaseReg(_MakeReg makeReg, UInt8 code, UInt8 size) : 
+    RegMem(makeReg, code, size)
+  {}
+
+  inline BaseReg(const BaseReg& other) : RegMem(other)
+  {}
+
+  inline BaseReg& operator=(const BaseReg& other)
+  { _copy(other); }
+
+  //! @brief Return register type, see @c REG.
+  inline UInt8 type() const { return (UInt8)(_reg.code & REGTYPE_MASK); }
+  //! @brief Return register code, see @c REG.
+  inline UInt8 code() const { return (UInt8)(_reg.code); }
+  //! @brief Return register index (value from 0 to 7/15).
+  inline UInt8 index() const { return (UInt8)(_reg.code & REGCODE_MASK); }
+
+  inline UInt8 isRegCode(UInt8 code) const
+  { return _reg.code == code; }
+
+  inline UInt8 isRegType(UInt8 type) const 
+  { return (_reg.code & REGTYPE_MASK) == type; }
+
+  inline UInt8 isRegIndex(UInt8 index) const
+  { return (_reg.code & REGCODE_MASK) == index; }
+
+  //! @brief Set register code.
+  inline void setCode(UInt8 code) { _reg.code = code; }
+};
+
+//! @brief General purpose register.
+//!
+//! This class is for all general purpose registers (64, 32, 16 and 8 bit).
+struct Register : public BaseReg
+{
+  inline Register(_MakeReg makeReg, UInt8 code) :
+    BaseReg(makeReg, code, static_cast<UInt8>(1U << ((code & REGTYPE_MASK) >> 4)))
+  {}
+
+  inline Register(const Register& other) : 
+    BaseReg(other)
+  {}
+
+  inline Register& operator=(const Register& other)
+  { _copy(other); }
+
+  inline bool operator==(const Register& other) const { return code() == other.code(); }
+  inline bool operator!=(const Register& other) const { return code() != other.code(); }
+};
+
+//! @brief 80-bit x87 floating point register.
+struct X87Register : public BaseReg
+{
+  inline X87Register(_MakeReg makeReg, UInt8 code) : 
+    BaseReg(makeReg, code | REG_X87, 10)
+  {}
+
+  inline X87Register(const X87Register& other) : 
+    BaseReg(other)
+  {}
+
+  inline X87Register& operator=(const X87Register& other)
+  { _copy(other); }
+
+  inline bool operator==(const X87Register& other) const { return code() == other.code(); }
+  inline bool operator!=(const X87Register& other) const { return code() != other.code(); }
+};
+
+//! @brief 64 bit MMX register.
+struct MMRegister : public BaseReg
+{
+  inline MMRegister(_MakeReg makeReg, UInt8 code) :
+    BaseReg(makeReg, code, 8)
+  {}
+
+  inline MMRegister(const MMRegister& other) :
+    BaseReg(other)
+  {}
+
+  inline MMRegister& operator=(const MMRegister& other)
+  { _copy(other); }
+
+  inline bool operator==(const MMRegister& other) const { return code() == other.code(); }
+  inline bool operator!=(const MMRegister& other) const { return code() != other.code(); }
+};
+
+//! @brief 128 bit SSE register.
+struct XMMRegister : public BaseReg
+{
+  inline XMMRegister(_MakeReg makeReg, UInt8 code) : 
+    BaseReg(makeReg, code, 16)
+  {
+  }
+
+  inline XMMRegister(const XMMRegister& other) :
+    BaseReg(other)
+  {
+  }
+
+  inline XMMRegister& operator=(const XMMRegister& other)
+  { _copy(other); }
+
+  inline bool operator==(const XMMRegister& other) const { return code() == other.code(); }
+  inline bool operator!=(const XMMRegister& other) const { return code() != other.code(); }
+};
+
+//! @brief 8 bit General purpose register.
+static const Register al(MakeReg, REG_AL);
+//! @brief 8 bit General purpose register.
+static const Register cl(MakeReg, REG_CL);
+//! @brief 8 bit General purpose register.
+static const Register dl(MakeReg, REG_DL);
+//! @brief 8 bit General purpose register.
+static const Register bl(MakeReg, REG_BL);
+//! @brief 8 bit General purpose register.
+static const Register ah(MakeReg, REG_AH);
+//! @brief 8 bit General purpose register.
+static const Register ch(MakeReg, REG_CH);
+//! @brief 8 bit General purpose register.
+static const Register dh(MakeReg, REG_DH);
+//! @brief 8 bit General purpose register.
+static const Register bh(MakeReg, REG_BH);
+
+#if defined(ASMJIT_X64)
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r8b(MakeReg, REG_R8B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r9b(MakeReg, REG_R9B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r10b(MakeReg, REG_R10B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r11b(MakeReg, REG_R11B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r12b(MakeReg, REG_R12B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r13b(MakeReg, REG_R13B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r14b(MakeReg, REG_R14B);
+//! @brief 8 bit General purpose register (64 bit mode only).
+static const Register r15b(MakeReg, REG_R15B);
+#endif // ASMJIT_X64
+
+//! @brief 16 bit General purpose register.
+static const Register ax(MakeReg, REG_AX);
+//! @brief 16 bit General purpose register.
+static const Register cx(MakeReg, REG_CX);
+//! @brief 16 bit General purpose register.
+static const Register dx(MakeReg, REG_DX);
+//! @brief 16 bit General purpose register.
+static const Register bx(MakeReg, REG_BX);
+//! @brief 16 bit General purpose register.
+static const Register sp(MakeReg, REG_SP);
+//! @brief 16 bit General purpose register.
+static const Register bp(MakeReg, REG_BP);
+//! @brief 16 bit General purpose register.
+static const Register si(MakeReg, REG_SI);
+//! @brief 16 bit General purpose register.
+static const Register di(MakeReg, REG_DI);
+
+#if defined(ASMJIT_X64)
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r8w(MakeReg, REG_R8W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r9w(MakeReg, REG_R9W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r10w(MakeReg, REG_R10W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r11w(MakeReg, REG_R11W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r12w(MakeReg, REG_R12W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r13w(MakeReg, REG_R13W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r14w(MakeReg, REG_R14W);
+//! @brief 16 bit General purpose register (64 bit mode only).
+static const Register r15w(MakeReg, REG_R15W);
+#endif // ASMJIT_X64
+
+//! @brief 32 bit General purpose register.
+static const Register eax(MakeReg, REG_EAX);
+//! @brief 32 bit General purpose register.
+static const Register ecx(MakeReg, REG_ECX);
+//! @brief 32 bit General purpose register.
+static const Register edx(MakeReg, REG_EDX);
+//! @brief 32 bit General purpose register.
+static const Register ebx(MakeReg, REG_EBX);
+//! @brief 32 bit General purpose register.
+static const Register esp(MakeReg, REG_ESP);
+//! @brief 32 bit General purpose register.
+static const Register ebp(MakeReg, REG_EBP);
+//! @brief 32 bit General purpose register.
+static const Register esi(MakeReg, REG_ESI);
+//! @brief 32 bit General purpose register.
+static const Register edi(MakeReg, REG_EDI);
+
+#if defined(ASMJIT_X64)
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rax(MakeReg, REG_RAX);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rcx(MakeReg, REG_RCX);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rdx(MakeReg, REG_RDX);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rbx(MakeReg, REG_RBX);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rsp(MakeReg, REG_RSP);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rbp(MakeReg, REG_RBP);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rsi(MakeReg, REG_RSI);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register rdi(MakeReg, REG_RDI);
+
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r8(MakeReg, REG_R8);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r9(MakeReg, REG_R9);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r10(MakeReg, REG_R10);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r11(MakeReg, REG_R11);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r12(MakeReg, REG_R12);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r13(MakeReg, REG_R13);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r14(MakeReg, REG_R14);
+//! @brief 64 bit General purpose register (64 bit mode only).
+static const Register r15(MakeReg, REG_R15);
+#endif // ASMJIT_X64
+
+//! @brief 32 bit General purpose register.
+static const Register nax(MakeReg, REG_NAX);
+//! @brief 32 bit General purpose register.
+static const Register ncx(MakeReg, REG_NCX);
+//! @brief 32 bit General purpose register.
+static const Register ndx(MakeReg, REG_NDX);
+//! @brief 32 bit General purpose register.
+static const Register nbx(MakeReg, REG_NBX);
+//! @brief 32 bit General purpose register.
+static const Register nsp(MakeReg, REG_NSP);
+//! @brief 32 bit General purpose register.
+static const Register nbp(MakeReg, REG_NBP);
+//! @brief 32 bit General purpose register.
+static const Register nsi(MakeReg, REG_NSI);
+//! @brief 32 bit General purpose register.
+static const Register ndi(MakeReg, REG_NDI);
+
+//! @brief 64 bit MMX register.
+static const MMRegister mm0(MakeReg, REG_MM0);
+//! @brief 64 bit MMX register.
+static const MMRegister mm1(MakeReg, REG_MM1);
+//! @brief 64 bit MMX register.
+static const MMRegister mm2(MakeReg, REG_MM2);
+//! @brief 64 bit MMX register.
+static const MMRegister mm3(MakeReg, REG_MM3);
+//! @brief 64 bit MMX register.
+static const MMRegister mm4(MakeReg, REG_MM4);
+//! @brief 64 bit MMX register.
+static const MMRegister mm5(MakeReg, REG_MM5);
+//! @brief 64 bit MMX register.
+static const MMRegister mm6(MakeReg, REG_MM6);
+//! @brief 64 bit MMX register.
+static const MMRegister mm7(MakeReg, REG_MM7);
+
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm0(MakeReg, REG_XMM0);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm1(MakeReg, REG_XMM1);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm2(MakeReg, REG_XMM2);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm3(MakeReg, REG_XMM3);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm4(MakeReg, REG_XMM4);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm5(MakeReg, REG_XMM5);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm6(MakeReg, REG_XMM6);
+//! @brief 128 bit SSE register.
+static const XMMRegister xmm7(MakeReg, REG_XMM7);
+
+#if defined(ASMJIT_X64)
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm8(MakeReg, REG_XMM8);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm9(MakeReg, REG_XMM9);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm10(MakeReg, REG_XMM10);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm11(MakeReg, REG_XMM11);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm12(MakeReg, REG_XMM12);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm13(MakeReg, REG_XMM13);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm14(MakeReg, REG_XMM14);
+//! @brief 128 bit SSE register (64 bit mode only).
+static const XMMRegister xmm15(MakeReg, REG_XMM15);
+#endif // ASMJIT_X64
+
+static inline Register mk_gpb(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPB)); }
+static inline Register mk_gpw(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPW)); }
+static inline Register mk_gpd(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPD)); }
+#if defined(ASMJIT_X64)
+static inline Register mk_gpq(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPQ)); }
+#endif
+static inline Register mk_gpn(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPN)); }
+static inline MMRegister mk_mm(UInt8 index) { return MMRegister(MakeReg, static_cast<UInt8>(index | REG_MM)); }
+static inline XMMRegister mk_xmm(UInt8 index) { return XMMRegister(MakeReg, static_cast<UInt8>(index | REG_XMM)); }
+
+//! @brief returns x87 register with index @a i.
+static inline X87Register st(int i)
+{
+  ASMJIT_ASSERT(i >= 0 && i < 8);
+  return X87Register(MakeReg, static_cast<UInt8>(i));
+}
+
+//! @brief Memory operand.
+struct Mem : public RegMem
+{
+  inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
+    RegMem(MakeMem, base.code(), NO_REG, 0, displacement, size)
+  {}
+
+  inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
+    RegMem(MakeMem, base.code(), index.code(), shift, displacement, size)
+  {}
+
+  inline Mem(const Mem& other) :
+    RegMem(other)
+  {}
+
+  inline Mem& operator=(const Mem& other)
+  { _copy(other); }
+
+  //! @brief Return if address has base register. 
+  inline bool hasBase() const { return _mem.base != NO_REG; }
+
+  //! @brief Return if address has index register.
+  //!
+  //! @note It's illegal to have index register and not base one.
+  inline bool hasIndex() const { return _mem.index != NO_REG; }
+
+  //! @brief Address base register or @c NO_REG.
+  inline int base() const { return _mem.base; }
+
+  //! @brief Address index register or @c NO_REG.
+  inline int index() const { return _mem.index; }
+
+  //! @brief Address index scale (0, 1, 2 or 3).
+  inline UInt32 shift() const { return _mem.shift; }
+
+  //! @brief Address relative displacement.
+  inline SysInt displacement() const { return _mem.displacement; }
+};
+
+// [base + displacement]
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr(const Register& base, SysInt disp = 0){ return Mem(base, disp, 0); }
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr(const Register& base, SysInt disp = 0){ return Mem(base, disp, SIZE_BYTE); }
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_WORD); }
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DWORD); }
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_QWORD); }
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_TWORD); }
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
+
+// [base + (index << shift) + displacement]
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, 0); }
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_BYTE); }
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_WORD); }
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DWORD); }
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_QWORD); }
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_TWORD); }
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
+
+//! @brief Immediate operand.
+struct Immediate : public Operand
+{
+  inline Immediate(SysInt i) : Operand(MakeImm, i, false) {}
+  inline Immediate(SysInt i, UInt8 isUnsigned) : Operand(MakeImm, i, isUnsigned) {}
+  inline Immediate(const Immediate& other) : Operand(other) {}
+
+  inline Immediate& operator=(SysInt val)
+  { setValue(val); return *this; }
+
+  inline Immediate& operator=(const Immediate& other)
+  { _copy(other); }
+
+  //! @brief Return true if immediate is unsigned value.
+  inline UInt8 isUnsigned() const { return _imm.isUnsigned; }
+
+  //! @brief Return relocation mode.
+  inline UInt8 relocMode() const { return _imm.relocMode; }
+
+  //! @brief Return signed immediate value.
+  inline SysInt value() const { return _imm.value; }
+
+  //! @brief Return unsigned immediate value.
+  inline SysUInt uvalue() const { return (SysUInt)_imm.value; }
+
+  //! @brief Set immediate value as signed type to @a val.
+  inline void setValue(SysInt val, UInt8 isUnsigned = false)
+  {
+    _imm.value = val; 
+    _imm.isUnsigned = isUnsigned;
+  }
+
+  //! @brief Set immediate value as unsigned type to @a val.
+  inline void setUValue(SysUInt val)
+  {
+    _imm.value = (SysInt)val;
+    _imm.isUnsigned = true;
+  }
+};
+
+//! @brief Create signed immediate value operand.
+static inline Immediate imm(SysInt i) { return Immediate(i, false); }
+
+//! @brief Create unsigned immediate value operand.
+static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
+
+struct Relocable : public Immediate
+{
+  inline Relocable(SysInt i, UInt8 isUnsigned = false) : Immediate(i, isUnsigned)
+  { _imm.relocMode = RELOC_OVERWRITE; }
+
+  inline Relocable(const Relocable& other) : Immediate(other)
+  { _imm.relocMode = RELOC_OVERWRITE; }
+
+  inline Relocable& operator=(const SysInt i)
+  { setValue(i); return *this; }
+
+  inline Relocable& operator=(const Relocable& other)
+  { _copy(other); }
+
+  inline void discard()
+  { _relocations.clear(); }
+
+  mutable PodVector<RelocInfo> _relocations;
+};
+
+// operand cast
+template<typename To> static inline To operand_cast(Operand& op) { return reinterpret_cast<To>(op); }
+template<typename To> static inline To operand_cast(const Operand& op) { return reinterpret_cast<To>(op); }
+
+#define MAKE_OPERAND_CAST(To, Expect) \
+template<> static inline To& operand_cast(Operand& op) \
+{ \
+  ASMJIT_ASSERT(Expect); \
+  return reinterpret_cast<To&>(op); \
+} \
+\
+template<> static inline const To& operand_cast(const Operand& op) \
+{ \
+  ASMJIT_ASSERT(Expect); \
+  return reinterpret_cast<const To&>(op); \
+}
+
+MAKE_OPERAND_CAST(BaseReg, (op.op() == OP_REG));
+MAKE_OPERAND_CAST(Register, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() <= REG_GPQ));
+MAKE_OPERAND_CAST(X87Register, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_X87));
+MAKE_OPERAND_CAST(MMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_MM));
+MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_XMM));
+MAKE_OPERAND_CAST(Mem, (op.op() == OP_MEM));
+MAKE_OPERAND_CAST(RegMem, (op.op() == OP_MEM || op.op() == OP_REG));
+MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
+MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immediate&>(op).relocMode() != RELOC_NONE));
+
+#undef MAKE_OPERAND_CAST
+
+//! @brief Create Shuffle Constant for SSE shuffle instrutions.
+static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)
+{ return (z << 6) | (y << 4) | (x << 2) | w; }
+
+} // AsmJit namespace
+
+// [Guard]
+#endif // _ASMJITDEFSX86X64_H

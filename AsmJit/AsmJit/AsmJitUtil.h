@@ -38,6 +38,47 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Util
 //! @{
 
+//! @brief Returns @c true if a given integer @a x is signed 8 bit integer
+inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
+//! @brief Returns @c true if a given integer @a x is unsigned 8 bit integer
+inline bool isUInt8(SysInt x) { return x >= 0 && x <= 255; }
+
+//! @brief Returns @c true if a given integer @a x is signed 16 bit integer
+inline bool isInt16(SysInt x) { return x >= -32768 && x <= 32767; }
+//! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
+inline bool isUInt16(SysInt x) { return x >= 0 && x <= 65535; }
+
+//! @brief Returns @c true if a given integer @a x is signed 16 bit integer
+inline bool isInt32(SysInt x) { return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647); }
+//! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
+inline bool isUInt32(SysInt x) { return x >= 0 && x <= ASMJIT_INT64_C(4294967295); }
+
+//! @brief used to cast float to integer and vica versa.
+//!
+//! @internal
+union IntFloatUnion
+{
+  int i;
+  float f;
+};
+
+//! @brief Binary casts integer to float.
+inline float intAsFloat(int x)
+{
+  IntFloatUnion u;
+  u.i = x;
+  return u.f;
+}
+
+//! @brief Binary casts float to integer.
+inline int floatAsInt(float f)
+{
+  IntFloatUnion u;
+  u.f = f;
+  return u.i;
+}
+
+
 //! @Brief Buffer used to store instruction stream in AsmJit.
 //! 
 //! This class can be dangerous, if you don't know how it workd. Assembler
@@ -287,8 +328,24 @@ struct PodVector
   bool prepend(const T& item)
   {
     if (_length == _capacity && !_grow()) return false;
-    memmove(_data + 1, _data, sizeof(T) * (_length++));
+
+    memmove(_data + 1, _data, sizeof(T) * _length);
     memcpy(_data, &item, sizeof(T));
+
+    _length++;
+    return true;
+  }
+
+  bool insert(SysUInt index, const T& item)
+  {
+    ASMJIT_ASSERT(index <= _length);
+    if (_length == _capacity && !_grow()) return false;
+
+    T* dst = _data + index;
+    memmove(dst + 1, dst, _length - index);
+    memcpy(dst, &item, sizeof(T));
+
+    _length++;
     return true;
   }
 
@@ -296,7 +353,10 @@ struct PodVector
   bool append(const T& item)
   {
     if (_length == _capacity && !_grow()) return false;
-    memcpy(_data + (_length++), &item, sizeof(T));
+
+    memcpy(_data + _length, &item, sizeof(T));
+
+    _length++;
     return true;
   }
 

@@ -23,48 +23,20 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// The AsmJit compiler is also based on V8 JIT compiler:
-//
-// Copyright 2006-2008 the V8 project authors. All rights reserved.
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-//     * Neither the name of Google Inc. nor the names of its
-//       contributors may be used to endorse or promote products derived
-//       from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+// [Dependencies]
 #include "AsmJitCpuInfo.h"
 
 #if ASMJIT_OS == ASMJIT_WINDOWS
-#include <windows.h>
+# include <windows.h>
 #endif // ASMJIT_WINDOWS
 
 // 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler. This
 // shouldn't affect x64 compilation, because x64 compiler starts with
 // VS2005 (VC8.0).
 #if defined(_MSC_VER)
-#if _MSC_VER >= 1400
-#include <intrin.h>
-#endif // _MSC_VER >= 1400 (>= VS2005)
+# if _MSC_VER >= 1400
+#  include <intrin.h>
+# endif // _MSC_VER >= 1400 (>= VS2005)
 #endif // _MSC_VER
 
 #if ASMJIT_OS == ASMJIT_POSIX
@@ -109,10 +81,10 @@ void cpuid(UInt32 in, CpuId* out)
 
 // 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler.
 // ASMJIT_X64 is here only for readibility, only VS2005 can compile 64 bit code.
-#if _MSC_VER >= 1400 || ASMJIT_X64
+# if _MSC_VER >= 1400 || defined(ASMJIT_X64)
   // done by intrinsics
   __cpuid(reinterpret_cast<int*>(out->i), in);
-#else // _MSC_VER < 1400
+# else // _MSC_VER < 1400
   UInt32 cpuid_in = in;
   UInt32* cpuid_out = out->i;
 
@@ -126,7 +98,7 @@ void cpuid(UInt32 in, CpuId* out)
     mov     dword ptr[edi +  8], ecx
     mov     dword ptr[edi + 12], edx
   }
-#endif // _MSC_VER < 1400
+# endif // _MSC_VER < 1400
 
 #elif defined(__GNUC__)
 

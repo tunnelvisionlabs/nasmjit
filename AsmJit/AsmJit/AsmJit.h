@@ -31,17 +31,16 @@
 
 //! @mainpage
 //!
-//! AsmJit? is complete JIT assembler compiler for X86/X64 platform. It can 
+//! AsmJit is complete JIT assembler compiler for X86/X64 platform. It can 
 //! compile nearly complete (most useful) X86/X64 instruction set with very 
-//! friendly way. AsmJit? was designed to be embeddable to any C++ project
+//! friendly way. AsmJit was designed to be embeddable to any C++ project
 //! and this is the reason for MIT licence.
 //!
-//! AsmJit? is based on Google's V8 code, but modified to fit different code 
-//! generation concepts and of course added support for X64. The unmodified
-//! code from V8 is probably only Label and Displacement implementation 
-//! (that is very good). Main reasons for developers to choose AsmJit? is very 
-//! clean C++ design (but no stl or exceptions are used) that allows to write 
-//! code by very similar way that most assembler developers do. 
+//! First versions of AsmJit was based on Google's V8 code, but now the code
+//! is totally different and V8 generation code or concepts are not used anymore.
+//! Main reasons for developers to choose AsmJit? is very clean C++ design (but 
+//! no stl or exceptions are used) that allows to write code by very similar 
+//! way that most assembler developers do. 
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
@@ -53,14 +52,19 @@
 //!
 //! Contains macros that can be redefined to fit to any project.
 
-//! @defgroup AsmJit_Main AsmJit code generation.
+//! @defgroup AsmJit_Assembler Assembler - low level code generation.
 //!
-//! Contains classes that's directly used to generate binary code.
+//! Contains classes that's directly used to generate binary code stream.
 
 //! @defgroup AsmJit_VM Virtual AsmJit virtual memory.
 //!
 //! Contains virtual memory management functions internally implemented
 //! by OS dependent way.
+
+//! @defgroup AsmJit_CpuInfo Get informations about host CPU.
+//!
+//! Contains structures and functions to call cpuid() and get advanced CPU
+//! informations
 
 //! @addtogroup AsmJit_Config
 //! @{

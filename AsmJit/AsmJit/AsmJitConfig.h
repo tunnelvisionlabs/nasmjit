@@ -46,16 +46,30 @@
 #define ASMJIT_WINDOWS 1
 #define ASMJIT_POSIX 2
 
-#if defined(WINDOWS) || defined(_WIN32) || defined(_WIN64)
+#if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
 # define ASMJIT_OS ASMJIT_WINDOWS
-#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
-      defined(__NetBSD__) || defined(__DragonFly__)
+#elif defined(__linux__)     || defined(__unix__)    || \
+      defined(__OpenBSD__)   || defined(__FreeBSD__) || defined(__NetBSD__) || \
+      defined(__DragonFly__) || defined(__BSD__)     || defined(__FREEBSD__) || \
+      defined(__APPLE__)
+# define ASMJIT_OS ASMJIT_POSIX
+#else
+# warning "AsmJit - Can't match operating system, using ASMJIT_POSIX"
 # define ASMJIT_OS ASMJIT_POSIX
 #endif
 
-#if !defined(ASMJIT_OS) || ASMJIT_OS < 1
-# error "AsmJit - Define ASMJIT_OS macro to your operating system"
-#endif // ASMJIT_OS
+// [AsmJit - Architecture]
+// define it only if it's not defined. In some systems we can
+// use -D command in compiler to bypass this autodetection.
+#if !defined(ASMJIT_X86) && !defined(ASMJIT_X64)
+# if defined(__x86_64__) || defined(__LP64) || defined(__IA64__) || \
+     defined(_M_X64)     || defined(_WIN64) 
+#  define ASMJIT_X64 // x86-64
+# else
+// _M_IX86, __INTEL__, __i386__
+#  define ASMJIT_X86
+# endif
+#endif
 
 // [AsmJit - API]
 #if !defined(ASMJIT_API)
@@ -85,17 +99,6 @@ namespace AsmJit
   static void crash(int* ptr = 0) { *ptr = 0; }
 }
 
-// [AsmJit - Architecture]
-// define it only if it's not defined. In some systems we can
-// use -D command in compiler to bypass this autodetection.
-#if !defined(ASMJIT_X86) && !defined(ASMJIT_X64)
-# if defined(__x86_64__) || defined(_WIN64)
-#  define ASMJIT_X64 // x86-64
-# else
-#  define ASMJIT_X86
-# endif
-#endif
-
 // [AsmJit - Calling Conventions]
 #if defined(ASMJIT_X86)
 # if defined(__GNUC__)
@@ -113,6 +116,9 @@ namespace AsmJit
 # define ASMJIT_STDCALL
 # define ASMJIT_CDECL
 #endif // ASMJIT_X86
+
+#define ASMJIT_USE(var) ((void)var)
+#define ASMJIT_NOP() ((void)0)
 
 // [AsmJit - Types]
 namespace AsmJit
@@ -150,7 +156,7 @@ namespace AsmJit
 #endif
 
 // [AsmJit - Debug]
-#if defined(DEBUG) || 1
+#if defined(DEBUG)
 # if !defined(ASMJIT_CRASH)
 #  define ASMJIT_CRASH() crash()
 # endif
@@ -159,10 +165,10 @@ namespace AsmJit
 # endif
 #else
 # if !defined(ASMJIT_CRASH)
-#  define ASMJIT_CRASH() do {} while(0)
+#  define ASMJIT_CRASH() ASMJIT_NOP()
 # endif
 # if !defined(ASMJIT_ASSERT)
-#  define ASMJIT_ASSERT(exp) do {} while(0)
+#  define ASMJIT_ASSERT(exp) ASMJIT_NOP()
 # endif
 #endif // DEBUG
 
