@@ -519,7 +519,7 @@ struct ASMJIT_API Assembler : public Serializer
   }
 
   //! @brief Emit REX prefix (64 bit mode only).
-  inline void _emitRexRM(UInt8 w, UInt8 opReg, const RegMem& rm)
+  inline void _emitRexRM(UInt8 w, UInt8 opReg, const BaseRegMem& rm)
   {
 #if defined(ASMJIT_X64)
     UInt8 r = (opReg & 0x8) != 0;
@@ -573,16 +573,16 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! @note @a opReg is usually real register ID (see @c R) but some instructions
   //! have specific format and in that cases @a opReg is part of opcode.
-  void _emitModRM(UInt8 opReg, const RegMem& op);
+  void _emitModRM(UInt8 opReg, const BaseRegMem& op);
 
   void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg);
-  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const RegMem& op);
+  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const BaseRegMem& op);
 
   void _emitFpu(UInt32 opCode);
   void _emitFpuSTI(UInt32 opCode, UInt32 sti);
   void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem);
 
-  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const RegMem& src);
+  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src);
 
   void _emitDisp(Label* L, Displacement::Type type);
 

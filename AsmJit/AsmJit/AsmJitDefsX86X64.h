@@ -531,7 +531,8 @@ enum INST_X86_CODE
   INST_IMUL,          // X86/X64
   INST_INC,           // X86/X64
   INST_INT3,          // X86/X64
-  INST_JA,            // X86/X64 (jcc)
+  INST_J,             // Begin (jcc)
+  INST_JA = INST_J,   // X86/X64 (jcc)
   INST_JAE,           // X86/X64 (jcc)
   INST_JB,            // X86/X64 (jcc)
   INST_JBE,           // X86/X64 (jcc)
@@ -824,7 +825,8 @@ enum _MakeReg { MakeReg = 0 };
 enum _MakeMem { MakeMem = 0 };
 enum _MakeImm { MakeImm = 0 };
 
-//! @brief Operand, abstract class for register, address and immediate value.
+//! @brief Operand, abstract class for register, memory location and immediate 
+//! value.
 struct Operand
 {
   inline Operand()
@@ -979,33 +981,35 @@ struct Operand
   }
 };
 
-struct RegMem : public Operand
+//! @brief Base class for registers and memory location.
+//!
+//! Reason for this class is that internally most functions supports
+//! source or destination operands that can be registers or memory location.
+struct BaseRegMem : public Operand
 {
-  inline RegMem(_MakeReg makeReg, UInt8 code, UInt8 size) : 
+  inline BaseRegMem(_MakeReg makeReg, UInt8 code, UInt8 size) : 
     Operand(makeReg, code, size)
   {}
 
-  inline RegMem(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 scale, SysInt displacement, UInt8 size) :
+  inline BaseRegMem(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 scale, SysInt displacement, UInt8 size) :
     Operand(makeMem, base, index, scale, displacement, size)
   {}
 
-  inline RegMem(const RegMem& other) : Operand(other) 
+  inline BaseRegMem(const BaseRegMem& other) : Operand(other) 
   {}
 
-  inline RegMem& operator=(const RegMem& other)
+  inline BaseRegMem& operator=(const BaseRegMem& other)
   { _copy(other); }
 };
 
-typedef RegMem MMRegMem;
-typedef RegMem XMMRegMem;
-
-struct BaseReg : public RegMem
+//! @brief Base class for all registers.
+struct BaseReg : public BaseRegMem
 {
   inline BaseReg(_MakeReg makeReg, UInt8 code, UInt8 size) : 
-    RegMem(makeReg, code, size)
+    BaseRegMem(makeReg, code, size)
   {}
 
-  inline BaseReg(const BaseReg& other) : RegMem(other)
+  inline BaseReg(const BaseReg& other) : BaseRegMem(other)
   {}
 
   inline BaseReg& operator=(const BaseReg& other)
@@ -1052,6 +1056,8 @@ struct Register : public BaseReg
 };
 
 //! @brief 80-bit x87 floating point register.
+//!
+//! To create instance of x87 register, use @c st() function.
 struct X87Register : public BaseReg
 {
   inline X87Register(_MakeReg makeReg, UInt8 code) : 
@@ -1319,19 +1325,19 @@ static inline X87Register st(int i)
   return X87Register(MakeReg, static_cast<UInt8>(i));
 }
 
-//! @brief Memory operand.
-struct Mem : public RegMem
+//! @brief Memory location operand.
+struct Mem : public BaseRegMem
 {
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
-    RegMem(MakeMem, base.code(), NO_REG, 0, displacement, size)
+    BaseRegMem(MakeMem, base.code(), NO_REG, 0, displacement, size)
   {}
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
-    RegMem(MakeMem, base.code(), index.code(), shift, displacement, size)
+    BaseRegMem(MakeMem, base.code(), index.code(), shift, displacement, size)
   {}
 
   inline Mem(const Mem& other) :
-    RegMem(other)
+    BaseRegMem(other)
   {}
 
   inline Mem& operator=(const Mem& other)
@@ -1375,6 +1381,15 @@ static inline Mem tword_ptr(const Register& base, SysInt disp = 0) { return Mem(
 //! @brief Create dqword (16 Bytes) pointer operand.
 static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
 
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_QWORD); }
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
+
 // [base + (index << shift) + displacement]
 
 //! @brief Create pointer operand with not specified size.
@@ -1392,7 +1407,21 @@ static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 
 //! @brief Create dqword (16 Bytes) pointer operand.
 static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
 
+//! @brief Create mmword (8 Bytes) pointer operand).
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_QWORD); }
+//! @brief Create xmmword (16 Bytes) pointer operand.
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
+
 //! @brief Immediate operand.
+//!
+//! Immediate operand is value that is inlined in binary instruction stream.
+//!
+//! To create immediate operand, use @c imm() and @c uimm() constructors 
+//! or constructors provided by @c Immediate class itself.
 struct Immediate : public Operand
 {
   inline Immediate(SysInt i) : Operand(MakeImm, i, false) {}
@@ -1438,6 +1467,7 @@ static inline Immediate imm(SysInt i) { return Immediate(i, false); }
 //! @brief Create unsigned immediate value operand.
 static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 
+//! @brief Relocable immediate operand.
 struct Relocable : public Immediate
 {
   inline Relocable(SysInt i, UInt8 isUnsigned = false) : Immediate(i, isUnsigned)
@@ -1481,7 +1511,7 @@ MAKE_OPERAND_CAST(X87Register, (op.op() == OP_REG && reinterpret_cast<const Regi
 MAKE_OPERAND_CAST(MMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_MM));
 MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_XMM));
 MAKE_OPERAND_CAST(Mem, (op.op() == OP_MEM));
-MAKE_OPERAND_CAST(RegMem, (op.op() == OP_MEM || op.op() == OP_REG));
+MAKE_OPERAND_CAST(BaseRegMem, (op.op() == OP_MEM || op.op() == OP_REG));
 MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
 MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immediate&>(op).relocMode() != RELOC_NONE));
 

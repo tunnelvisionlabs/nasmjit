@@ -39,45 +39,69 @@ namespace AsmJit {
 //! @{
 
 //! @brief Returns @c true if a given integer @a x is signed 8 bit integer
-inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
+static inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
 //! @brief Returns @c true if a given integer @a x is unsigned 8 bit integer
-inline bool isUInt8(SysInt x) { return x >= 0 && x <= 255; }
+static inline bool isUInt8(SysInt x) { return x >= 0 && x <= 255; }
 
 //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
-inline bool isInt16(SysInt x) { return x >= -32768 && x <= 32767; }
+static inline bool isInt16(SysInt x) { return x >= -32768 && x <= 32767; }
 //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
-inline bool isUInt16(SysInt x) { return x >= 0 && x <= 65535; }
+static inline bool isUInt16(SysInt x) { return x >= 0 && x <= 65535; }
 
 //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
-inline bool isInt32(SysInt x) { return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647); }
+static inline bool isInt32(SysInt x) { return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647); }
 //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
-inline bool isUInt32(SysInt x) { return x >= 0 && x <= ASMJIT_INT64_C(4294967295); }
+static inline bool isUInt32(SysInt x) { return x >= 0 && x <= ASMJIT_INT64_C(4294967295); }
 
-//! @brief used to cast float to integer and vica versa.
+//! @brief used to cast float to 32 bit integer and vica versa.
 //!
 //! @internal
-union IntFloatUnion
+union I32FPUnion
 {
-  int i;
+  Int32 i;
   float f;
 };
 
-//! @brief Binary casts integer to float.
-inline float intAsFloat(int x)
+//! @brief used to cast double to 64 bit integer and vica versa.
+//!
+//! @internal
+union I64FPUnion
 {
-  IntFloatUnion u;
-  u.i = x;
+  Int64 i;
+  double f;
+};
+
+//! @brief Binary casts 32 bit integer to float.
+static inline float int32AsFloat(Int32 i)
+{
+  I32FPUnion u;
+  u.i = i;
   return u.f;
 }
 
-//! @brief Binary casts float to integer.
-inline int floatAsInt(float f)
+//! @brief Binary casts float to 32 bit integer.
+static inline Int32 floatAsInt32(float f)
 {
-  IntFloatUnion u;
+  I32FPUnion u;
   u.f = f;
   return u.i;
 }
 
+//! @brief Binary casts 64 bit integer to double.
+static inline double int64AsDouble(Int64 i)
+{
+  I64FPUnion u;
+  u.i = i;
+  return u.f;
+}
+
+//! @brief Binary casts double to 64 bit integer.
+static inline Int64 doubleAsInt64(double f)
+{
+  I64FPUnion u;
+  u.f = f;
+  return u.i;
+}
 
 //! @Brief Buffer used to store instruction stream in AsmJit.
 //! 
@@ -259,7 +283,7 @@ struct ASMJIT_API Buffer
   }
 
   // All members are public, because they are accessed and modified by 
-  // Assembler directly.
+  // Assembler/Compiler directly.
 
   //! @brief Beginning position of buffer.
   UInt8* _data;

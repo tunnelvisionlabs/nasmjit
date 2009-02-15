@@ -95,72 +95,84 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Add with Carry.
-  //!
-  //! This instruction adds the destination operand (first operand), the source 
-  //! operand (second operand), and the carry (CF) flag and stores the result in 
-  //! the destination operand. The destination operand can be a register or a 
-  //! memory location; the source operand can be an immediate, a register, or a 
-  //! memory location. (However, two memory operands cannot be used in one 
-  //! instruction.) The state of the CF flag represents a carry from a previous 
-  //! addition. When an immediate value is used as an operand, it is 
-  //! sign-extended to the length of the destination operand format.
-  //!
-  //! Processor evaluates the result for both data types and sets the OF and CF 
-  //! flags to indicate a carry in the signed or unsigned result, respectively.
-  //! The SF flag indicates the sign of the signed result. The ADC instruction 
-  //! is usually executed as part of a multibyte or multiword addition in which
-  //! an ADD instruction is followed by an ADC instruction.
-  inline void adc(const Operand& dst, const Operand& src)
+  inline void adc(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_ADC, &dst, &src);
+  }
+  //! @brief Add with Carry.
+  inline void adc(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_ADC, &dst, &src);
+  }
+  //! @brief Add with Carry.
+  inline void adc(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_ADC, &dst, &src);
+  }
+  //! @brief Add with Carry.
+  inline void adc(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_ADC, &dst, &src);
+  }
+  //! @brief Add with Carry.
+  inline void adc(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_ADC, &dst, &src);
   }
 
   //! @brief Add.
-  //!
-  //! This instruction adds the first operand (destination operand) and the 
-  //! second operand (source operand) and stores the result in the destination 
-  //! operand. The destination operand can be a register or a memory location. 
-  //! The source operand can be an immediate, a register, or a memory location.
-  //! (However, two memory operands cannot be used in one instruction.) When an 
-  //! immediate value is used as an operand, it is sign-extended to the length 
-  //! of the destination operand format.
-  //!
-  //! The ADD instruction does not distinguish between signed or unsigned 
-  //! operands. Instead, the processor evaluates the result for both data 
-  //! types and sets the OF and CF flags to indicate a carry in the signed 
-  //! or unsigned result, respectively. The SF flag indicates the sign of 
-  //! the signed result.
-  inline void add(const Operand& dst, const Operand& src)
+  inline void add(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_ADD, &dst, &src);
+  }
+  //! @brief Add.
+  inline void add(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_ADD, &dst, &src);
+  }
+  //! @brief Add.
+  inline void add(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_ADD, &dst, &src);
+  }
+  //! @brief Add.
+  inline void add(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_ADD, &dst, &src);
+  }
+  //! @brief Add.
+  inline void add(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_ADD, &dst, &src);
   }
 
-  //! @brief Logical AND.
-  //!
-  //! This instruction performs a bitwise AND operation on the destination 
-  //! (first) and source (second) operands and stores the result in the 
-  //! destination operand location. The source operand can be an immediate, 
-  //! a register, or a memory location; the destination operand can be a 
-  //! register or a memory location. Two memory operands cannot, however, 
-  //! be used in one instruction. Each bit of the instruction result is a 
-  //! 1 if both corresponding bits of the operands are 1; otherwise, it 
-  //! becomes a 0.
-  inline void and_(const Operand& dst, const Operand& src)
+  //! @brief Logical And.
+  inline void and_(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_AND, &dst, &src);
+  }
+  //! @brief Logical And.
+  inline void and_(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_AND, &dst, &src);
+  }
+  //! @brief Logical And.
+  inline void and_(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_AND, &dst, &src);
+  }
+  //! @brief Logical And.
+  inline void and_(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_AND, &dst, &src);
+  }
+  //! @brief Logical And.
+  inline void and_(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_AND, &dst, &src);
   }
 
-  //! @brief Byte swap (in 4 byte register) (i486).
-  //!
-  //! This instruction reverses the byte order of a 32-bit (destination) 
-  //! register: bits 0 through 7 are swapped with bits 24 through 31, 
-  //! and bits 8 through 15 are swapped with bits 16 through 23. This 
-  //! instruction is provided for converting little-endian values to 
-  //! big-endian format and vice versa.
-  //! 
-  //! To swap bytes in a word value (16-bit register), use the XCHG 
-  //! instruction. When the BSWAP instruction references a 16-bit register,
-  //! the result is undefined.
+  //! @brief Byte swap (32 bit or 64 bit registers only) (i486).
   inline void bswap(const Register& dst)
   {
     ASMJIT_ASSERT(dst.type() == REG_GPD || dst.type() == REG_GPQ);
@@ -168,32 +180,28 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Bit test and set.
-  inline void bts(const RegMem& dst, const Register& src)
+  inline void bts(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_BTS, &dst, &src);
+  }
+  //! @brief Bit test and set.
+  inline void bts(const Mem& dst, const Register& src)
   {
     _emitX86(INST_BTS, &dst, &src);
   }
 
   //! @brief Call Procedure.
-  //!
-  //! This instruction saves procedure linking information on the stack 
-  //! and branches to the procedure (called procedure) specified with 
-  //! the destination (target) operand. The target operand specifies
-  //! the address of the first instruction in the called procedure. 
-  //! This operand can be an immediate value, a general-purpose register, 
-  //! or a memory location.
   inline void call(Label* L)
   {
     _emitX86Call(L);
   }
   //! @brief Call Procedure.
-  //! @overload
   inline void call(const Register& dst)
   {
     ASMJIT_ASSERT(dst.isRegType(REG_GPN));
     _emitX86(INST_MOV, &dst);
   }
   //! @brief Call Procedure.
-  //! @overload
   inline void call(const Mem& dst)
   {
     _emitX86(INST_MOV, &dst);
@@ -251,60 +259,45 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Conditional Move.
-  //!
-  //! The CMOVcc instructions check the state of one or more of the status 
-  //! flags in the EFLAGS register (CF, OF, PF, SF, and ZF) and perform 
-  //! a move operation if the flags are in a specified state (or condition). 
-  //! A condition code (cc) is associated with each instruction to indicate the
-  //! condition being tested for. If the condition is not satisfied, a move is 
-  //! not performed and execution continues with the instruction following the 
-  //! CMOVcc instruction. 
-  //!
-  //! These instructions can move a 16- or 32-bit value from memory to a 
-  //! general-purpose register or from one general-purpose register to 
-  //! another. Conditional moves of 8-bit register operands are not supported.
-  inline void cmov(CONDITION cc, const Register& dst, const RegMem& src)
+  inline void cmov(CONDITION cc, const Register& dst, const BaseRegMem& src)
   {
     Immediate imm((SysInt)cc);
     _emitX86(INST_CMOV, &dst, &src, &imm);
   }
 
   //! @brief Compare Two Operands.
-  //!
-  //! This instruction compares the first source operand with the second source
-  //! operand and sets the status flags in the EFLAGS register according to the 
-  //! results. The comparison is performed by subtracting the second operand 
-  //! from the first operand and then setting the status flags in the same 
-  //! manner as the SUB instruction. When an immediate value is used as an 
-  //! operand, it is signextended to the length of the first operand.
-  //!
-  //! The CMP instruction is typically used in conjunction with a conditional 
-  //! jump (Jcc), condition move (CMOVcc), or SETcc instruction. The condition 
-  //! codes used by the Jcc, CMOVcc, and SETcc instructions are based on the 
-  //! results of a CMP instruction. Appendix B, EFLAGS Condition Codes, in the 
-  //! Intel Architecture Software Developer’s Manual, Volume 1, shows the 
-  //! relationship of the status flags and the condition codes.
-  inline void cmp(const Operand& dst, const Operand& src)
+  inline void cmp(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_CMP, &dst, &src);
+  }
+  //! @brief Compare Two Operands.
+  inline void cmp(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_CMP, &dst, &src);
+  }
+  //! @brief Compare Two Operands.
+  inline void cmp(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_CMP, &dst, &src);
+  }
+  //! @brief Compare Two Operands.
+  inline void cmp(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_CMP, &dst, &src);
+  }
+  //! @brief Compare Two Operands.
+  inline void cmp(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_CMP, &dst, &src);
   }
 
   //! @brief Compare and Exchange (i486).
-  //!
-  //! This instruction compares the value in the AL, AX, or EAX register 
-  //! (depending on the size of the operand) with the first operand 
-  //! (destination operand). If the two values are equal, the second operand 
-  //! (source operand) is loaded into the destination operand. Otherwise, the 
-  //! destination operand is loaded into the AL, AX, or EAX register. 
-  //!
-  //! This instruction can be used with a LOCK prefix to allow the instruction 
-  //! to be executed atomically. To simplify the interface to the processor’s
-  //! bus,the destination operand receives a write cycle without regard to the 
-  //! result of the comparison. The destination operand is written back if the
-  //! comparison fails; otherwise, the source operand is written into the 
-  //! destination. (The processor never produces a locked read without also 
-  //! producing a locked write.)
-  inline void cmpxchg(const RegMem& dst, const Register& src)
+  inline void cmpxchg(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_CMPXCHG, &dst, &src);
+  }
+  //! @brief Compare and Exchange (i486).
+  inline void cmpxchg(const Mem& dst, const Register& src)
   {
     _emitX86(INST_CMPXCHG, &dst, &src);
   }
@@ -366,9 +359,14 @@ struct Serializer : public _Serializer
 #endif // ASMJIT_X86
 
   //! @brief Decrement by 1.
-  //!
   //! @note This instruction can be slower than sub(dst, 1)
-  inline void dec(const RegMem& dst)
+  inline void dec(const Register& dst)
+  {
+    _emitX86(INST_DEC, &dst);
+  }
+  //! @brief Decrement by 1.
+  //! @note This instruction can be slower than sub(dst, 1)
+  inline void dec(const Mem& dst)
   {
     _emitX86(INST_DEC, &dst);
   }
@@ -378,9 +376,15 @@ struct Serializer : public _Serializer
   //! This instruction divides (unsigned) the value in the AL, AX, or EAX 
   //! register by the source operand and stores the result in the AX, 
   //! DX:AX, or EDX:EAX registers.
-  inline void div(const RegMem& by)
+  inline void div(const Register& src)
   {
-    _emitX86(INST_DIV, &by);
+    _emitX86(INST_DIV, &src);
+  }
+  //! @brief Unsigned divide.
+  //! @overload
+  inline void div(const Mem& src)
+  {
+    _emitX86(INST_DIV, &src);
   }
 
   //! @brief Signed divide.
@@ -388,9 +392,15 @@ struct Serializer : public _Serializer
   //! This instruction divides (signed) the value in the AL, AX, or EAX 
   //! register by the source operand and stores the result in the AX, 
   //! DX:AX, or EDX:EAX registers.
-  inline void idiv(const RegMem& by)
+  inline void idiv(const Register& src)
   {
-    _emitX86(INST_IDIV, &by);
+    _emitX86(INST_IDIV, &src);
+  }
+  //! @brief Signed divide.
+  //! @overload
+  inline void idiv(const Mem& src)
+  {
+    _emitX86(INST_IDIV, &src);
   }
 
   //! @brief Signed multiply.
@@ -399,7 +409,12 @@ struct Serializer : public _Serializer
   //! is multiplied by the value in the AL, AX, or EAX register (depending
   //! on the operand size) and the product is stored in the AX, DX:AX, or 
   //! EDX:EAX registers, respectively.
-  inline void imul(const RegMem& src)
+  inline void imul(const Register& src)
+  {
+    _emitX86(INST_MOV, &src);
+  }
+  //! @overload
+  inline void imul(const Mem& src)
   {
     _emitX86(INST_MOV, &src);
   }
@@ -411,7 +426,19 @@ struct Serializer : public _Serializer
   //! register and the source operand is an immediate value, a general-purpose 
   //! register, or a memory location. The product is then stored in the 
   //! destination operand location.
-  inline void imul(const Register& dst, const Operand& src) 
+  inline void imul(const Register& dst, const Register& src) 
+  {
+    _emitX86(INST_IMUL, &dst, &src);
+  }
+  //! @brief Signed multiply.
+  //! @overload
+  inline void imul(const Register& dst, const Mem& src) 
+  {
+    _emitX86(INST_IMUL, &dst, &src);
+  }
+  //! @brief Signed multiply.
+  //! @overload
+  inline void imul(const Register& dst, const Immediate& src) 
   {
     _emitX86(INST_IMUL, &dst, &src);
   }
@@ -422,21 +449,25 @@ struct Serializer : public _Serializer
   //! location) is multiplied by the second source operand (an immediate 
   //! value). The product is then stored in the destination operand 
   //! (a general-purpose register).
-  inline void imul(const Register& dst, const RegMem& src, const Immediate& imm)
+  inline void imul(const Register& dst, const Register& src, const Immediate& imm)
+  {
+    _emitX86(INST_IMUL, &dst, &src, &imm);
+  }
+  //! @overload
+  inline void imul(const Register& dst, const Mem& src, const Immediate& imm)
   {
     _emitX86(INST_IMUL, &dst, &src, &imm);
   }
 
   //! @brief Increment by 1.
-  //!
-  //! This instruction adds one to the destination operand, while preserving 
-  //! the state of the CF flag. The destination operand can be a register or
-  //! a memory location. This instruction allows a loop counter to be updated
-  //! without disturbing the CF flag. (Use a ADD instruction with an immediate
-  //! operand of 1 to perform an increment operation that does updates the CF flag.)
-  //!
   //! @note This instruction can be slower than add(dst, 1)
-  inline void inc(const RegMem& dst)
+  inline void inc(const Register& dst)
+  {
+    _emitX86(INST_INC, &dst);
+  }
+  //! @brief Increment by 1.
+  //! @note This instruction can be slower than add(dst, 1)
+  inline void inc(const Mem& dst)
   {
     _emitX86(INST_INC, &dst);
   }
@@ -535,7 +566,7 @@ struct Serializer : public _Serializer
   }
 
   //! @overload
-  inline void jmp(const RegMem& dst)
+  inline void jmp(const BaseRegMem& dst)
   {
     _emitX86(INST_JMP, &dst);
   }
@@ -603,7 +634,31 @@ struct Serializer : public _Serializer
   //! @note To move MMX or SSE registers to/from GP registers or memory, use
   //! corresponding functions: @c movd(), @c movq(), etc. Passing MMX or SSE
   //! registers to @c mov() is illegal.
-  inline void mov(const Operand& dst, const Operand& src)
+  inline void mov(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_MOV, &dst, &src);
+  }
+  //! @brief Move.
+  //! @overload
+  inline void mov(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_MOV, &dst, &src);
+  }
+  //! @brief Move.
+  //! @overload
+  inline void mov(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_MOV, &dst, &src);
+  }
+  //! @brief Move.
+  //! @overload
+  inline void mov(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_MOV, &dst, &src);
+  }
+  //! @brief Move.
+  //! @overload
+  inline void mov(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_MOV, &dst, &src);
   }
@@ -633,14 +688,26 @@ struct Serializer : public _Serializer
   //! extends the value to 16, 32 or 64 bits.
   //!
   //! @sa movsxd().
-  void movsx(const Register& dst, const RegMem& src)
+  void movsx(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_MOVSX, &dst, &src);
+  }
+  //! @brief Move with Sign-Extension.
+  //! @overload
+  void movsx(const Register& dst, const Mem& src)
   {
     _emitX86(INST_MOVSX, &dst, &src);
   }
 
 #if defined(ASMJIT_X64)
   //! @brief Move DWord to QWord with sign-extension.
-  inline void movsxd(const Register& dst, const RegMem& src)
+  inline void movsxd(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_MOVSXD, &dst, &src);
+  }
+  //! @brief Move DWord to QWord with sign-extension.
+  //! @overload
+  inline void movsxd(const Register& dst, const Mem& src)
   {
     _emitX86(INST_MOVSXD, &dst, &src);
   }
@@ -652,7 +719,13 @@ struct Serializer : public _Serializer
   //! or memory location) to the destination operand (register) and zero 
   //! extends the value to 16 or 32 bits. The size of the converted value 
   //! depends on the operand-size attribute.
-  inline void movzx(const Register& dst, const RegMem& src)
+  inline void movzx(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_MOVZX, &dst, &src);
+  }
+  //! @brief Move with Zero-Extend.
+  //! @brief Overload
+  inline void movzx(const Register& dst, const Mem& src)
   {
     _emitX86(INST_MOVZX, &dst, &src);
   }
@@ -663,18 +736,24 @@ struct Serializer : public _Serializer
   //! is multiplied by the value in the AL, AX, or EAX register (depending
   //! on the operand size) and the product is stored in the AX, DX:AX, or 
   //! EDX:EAX registers, respectively.
-  inline void mul(const RegMem& by)
+  inline void mul(const Register& src)
   {
-    _emitX86(INST_MUL, &by);
+    _emitX86(INST_MUL, &src);
+  }
+  //! @brief Unsigned multiply.
+  //! @overload
+  inline void mul(const Mem& src)
+  {
+    _emitX86(INST_MUL, &src);
   }
 
   //! @brief Two's Complement Negation.
-  //!
-  //! This instruction replaces the value of operand (the destination operand)
-  //! with its two's complement. (This operation is equivalent to subtracting
-  //! the operand from 0.) The destination operand is located in a 
-  //! general-purpose register or a memory location.
-  inline void neg(const RegMem& dst)
+  inline void neg(const Register& dst)
+  {
+    _emitX86(INST_NEG, &dst);
+  }
+  //! @brief Two's Complement Negation.
+  inline void neg(const Mem& dst)
   {
     _emitX86(INST_NEG, &dst);
   }
@@ -691,27 +770,38 @@ struct Serializer : public _Serializer
   }
 
   //! @brief One's Complement Negation.
-  //!
-  //! This instruction performs a bitwise NOT operation (each 1 is cleared to 
-  //! 0, and each 0 is set to 1) on the destination operand and stores the 
-  //! result in the destination operand location. The destination operand 
-  //! can be a register or a memory location.
-  inline void not_(const RegMem& dst)
+  inline void not_(const Register& dst)
+  {
+    _emitX86(INST_NOT, &dst);
+  }
+  //! @brief One's Complement Negation.
+  inline void not_(const Mem& dst)
   {
     _emitX86(INST_NOT, &dst);
   }
 
   //! @brief Logical Inclusive OR.
-  //!
-  //! This instruction performs a bitwise inclusive OR operation between the 
-  //! destination (first) and source (second) operands and stores the result
-  //! in the destination operand location. The source operand can be an 
-  //! immediate, a register, or a memory location; the destination operand can
-  //! be a register or a memory location. (However, two memory operands cannot
-  //! be used in one instruction.) Each bit of the result of the OR instruction
-  //! is 0 if both corresponding bits of the operands are 0; otherwise, each bit 
-  //! is 1.
-  inline void or_(const Operand& dst, const Operand& src)
+  inline void or_(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_OR, &dst, &src);
+  }
+  //! @brief Logical Inclusive OR.
+  inline void or_(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_OR, &dst, &src);
+  }
+  //! @brief Logical Inclusive OR.
+  inline void or_(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_OR, &dst, &src);
+  }
+  //! @brief Logical Inclusive OR.
+  inline void or_(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_OR, &dst, &src);
+  }
+  //! @brief Logical Inclusive OR.
+  inline void or_(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_OR, &dst, &src);
   }
@@ -752,12 +842,22 @@ struct Serializer : public _Serializer
   }
 #endif // ASMJIT_X86
 
-  //! @brief Push DWORD/QWORD Onto the Stack.
+  //! @brief Push WORD/DWORD/QWORD Onto the Stack.
   //!
   //! @note 32 bit architecture pushed DWORD while 64 bit 
   //! pushes QWORD. 64 bit mode not provides instruction to
   //! push 32 bit register/memory.
-  inline void push(const Operand& op)
+  inline void push(const Register& op)
+  {
+    _emitX86(INST_PUSH, &op);
+  }
+  //! @brief Push WORD/DWORD/QWORD Onto the Stack.
+  inline void push(const Mem& op)
+  {
+    _emitX86(INST_PUSH, &op);
+  }
+  //! @brief Push WORD/DWORD/QWORD Onto the Stack.
+  inline void push(const Immediate& op)
   {
     _emitX86(INST_PUSH, &op);
   }
@@ -781,17 +881,47 @@ struct Serializer : public _Serializer
 #endif // ASMJIT_X86
 
   //! @brief Rotate Bits Left.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void rcl(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void rcl(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_RCL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  inline void rcl(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_RCL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  //! @note @a src register can be only @c cl.
+  inline void rcl(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_RCL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  inline void rcl(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_RCL, &dst, &src);
   }
 
   //! @brief Rotate Bits Right.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void rcr(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void rcr(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_RCR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  inline void rcr(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_RCR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  //! @note @a src register can be only @c cl.
+  inline void rcr(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_RCR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  inline void rcr(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_RCR, &dst, &src);
   }
@@ -821,17 +951,47 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Rotate Bits Left.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void rol(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void rol(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_ROL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  inline void rol(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_ROL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  //! @note @a src register can be only @c cl.
+  inline void rol(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_ROL, &dst, &src);
+  }
+  //! @brief Rotate Bits Left.
+  inline void rol(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_ROL, &dst, &src);
   }
 
   //! @brief Rotate Bits Right.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void ror(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void ror(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_ROR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  inline void ror(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_ROR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  //! @note @a src register can be only @c cl.
+  inline void ror(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_ROR, &dst, &src);
+  }
+  //! @brief Rotate Bits Right.
+  inline void ror(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_ROR, &dst, &src);
   }
@@ -845,55 +1005,165 @@ struct Serializer : public _Serializer
 #endif // ASMJIT_X86
 
   //! @brief Integer subtraction with borrow.
-  inline void sbb(const Operand& dst, const Operand& src)
+  inline void sbb(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SBB, &dst, &src);
+  }
+  //! @brief Integer subtraction with borrow.
+  inline void sbb(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_SBB, &dst, &src);
+  }
+  //! @brief Integer subtraction with borrow.
+  inline void sbb(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SBB, &dst, &src);
+  }
+  //! @brief Integer subtraction with borrow.
+  inline void sbb(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SBB, &dst, &src);
+  }
+  //! @brief Integer subtraction with borrow.
+  inline void sbb(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SBB, &dst, &src);
   }
 
   //! @brief Shift Bits Left.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void sal(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void sal(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SAL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  inline void sal(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SAL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  //! @note @a src register can be only @c cl.
+  inline void sal(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SAL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  inline void sal(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SAL, &dst, &src);
   }
 
   //! @brief Shift Bits Right.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void sar(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void sar(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SAR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  inline void sar(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SAR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  //! @note @a src register can be only @c cl.
+  inline void sar(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SAR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  inline void sar(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SAR, &dst, &src);
   }
 
   //! @brief Shift Bits Left.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void shl(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void shl(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SHL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  inline void shl(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SHL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  //! @note @a src register can be only @c cl.
+  inline void shl(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SHL, &dst, &src);
+  }
+  //! @brief Shift Bits Left.
+  inline void shl(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SHL, &dst, &src);
   }
 
   //! @brief Shift Bits Right.
-  //!
-  //! @note if @a src is register, it can be only @c cl.
-  inline void shr(const Operand& dst, const Operand& src)
+  //! @note @a src register can be only @c cl.
+  inline void shr(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SHR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  inline void shr(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SHR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  //! @note @a src register can be only @c cl.
+  inline void shr(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SHR, &dst, &src);
+  }
+  //! @brief Shift Bits Right.
+  inline void shr(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SHR, &dst, &src);
   }
 
   //! @brief Double Precision Shift Left.
-  //!
-  //! @note src2 operand can be only @c cl register or 8 bit immediate.
-  inline void shld(const RegMem& dst, const Register& src1, const Operand& src2)
+  //! @note src2 register can be only @c cl register.
+  inline void shld(const Register& dst, const Register& src1, const Register& src2)
+  {
+    _emitX86(INST_SHLD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Left.
+  inline void shld(const Register& dst, const Register& src1, const Immediate& src2)
+  {
+    _emitX86(INST_SHLD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Left.
+  //! @note src2 register can be only @c cl register.
+  inline void shld(const Mem& dst, const Register& src1, const Register& src2)
+  {
+    _emitX86(INST_SHLD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Left.
+  inline void shld(const Mem& dst, const Register& src1, const Immediate& src2)
   {
     _emitX86(INST_SHLD, &dst, &src1, &src2);
   }
 
   //! @brief Double Precision Shift Right.
-  //!
-  //! @note src2 operand can be only @c cl register or 8 bit immediate.
-  inline void shrd(const RegMem& dst, const Register& src1, const Operand& src2)
+  //! @note src2 register can be only @c cl register.
+  inline void shrd(const Register& dst, const Register& src1, const Register& src2)
+  {
+    _emitX86(INST_SHRD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Right.
+  inline void shrd(const Register& dst, const Register& src1, const Immediate& src2)
+  {
+    _emitX86(INST_SHRD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Right.
+  //! @note src2 register can be only @c cl register.
+  inline void shrd(const Mem& dst, const Register& src1, const Register& src2)
+  {
+    _emitX86(INST_SHRD, &dst, &src1, &src2);
+  }
+  //! @brief Double Precision Shift Right.
+  inline void shrd(const Mem& dst, const Register& src1, const Immediate& src2)
   {
     _emitX86(INST_SHRD, &dst, &src1, &src2);
   }
@@ -911,13 +1181,48 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Subtract.
-  inline void sub(const Operand& dst, const Operand& src)
+  inline void sub(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_SUB, &dst, &src);
+  }
+  //! @brief Subtract.
+  inline void sub(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_SUB, &dst, &src);
+  }
+  //! @brief Subtract.
+  inline void sub(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_SUB, &dst, &src);
+  }
+  //! @brief Subtract.
+  inline void sub(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_SUB, &dst, &src);
+  }
+  //! @brief Subtract.
+  inline void sub(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_SUB, &dst, &src);
   }
 
   //! @brief Logical Compare.
-  inline void test(const Operand& op1, const Operand& op2)
+  inline void test(const Register& op1, const Register& op2)
+  {
+    _emitX86(INST_TEST, &op1, &op2);
+  }
+  //! @brief Logical Compare.
+  inline void test(const Register& op1, const Immediate& op2)
+  {
+    _emitX86(INST_TEST, &op1, &op2);
+  }
+  //! @brief Logical Compare.
+  inline void test(const Mem& op1, const Register& op2)
+  {
+    _emitX86(INST_TEST, &op1, &op2);
+  }
+  //! @brief Logical Compare.
+  inline void test(const Mem& op1, const Immediate& op2)
   {
     _emitX86(INST_TEST, &op1, &op2);
   }
@@ -929,25 +1234,54 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Exchange and Add.
-  inline void xadd(const RegMem& dst, const Register& src)
+  inline void xadd(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_XADD, &dst, &src);
+  }
+  //! @brief Exchange and Add.
+  inline void xadd(const Mem& dst, const Register& src)
   {
     _emitX86(INST_XADD, &dst, &src);
   }
 
   //! @brief Exchange Register/Memory with Register.
-  inline void xchg(const RegMem& dst, const Register& src)
+  inline void xchg(const Register& dst, const Register& src)
   {
     _emitX86(INST_XCHG, &dst, &src);
   }
-
-  //! @brief Exchange Register with Register/Memory.
-  inline void xchg(const Register& dst, const RegMem& src)
+  //! @brief Exchange Register/Memory with Register.
+  inline void xchg(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_XCHG, &dst, &src);
+  }
+  //! @brief Exchange Register/Memory with Register.
+  inline void xchg(const Register& dst, const Mem& src)
   {
     _emitX86(INST_XCHG, &src, &dst);
   }
 
   //! @brief Exchange Register/Memory with Register.
-  inline void xor_(const Operand& dst, const Operand& src)
+  inline void xor_(const Register& dst, const Register& src)
+  {
+    _emitX86(INST_XOR, &dst, &src);
+  }
+  //! @brief Exchange Register/Memory with Register.
+  inline void xor_(const Register& dst, const Mem& src)
+  {
+    _emitX86(INST_XOR, &dst, &src);
+  }
+  //! @brief Exchange Register/Memory with Register.
+  inline void xor_(const Register& dst, const Immediate& src)
+  {
+    _emitX86(INST_XOR, &dst, &src);
+  }
+  //! @brief Exchange Register/Memory with Register.
+  inline void xor_(const Mem& dst, const Register& src)
+  {
+    _emitX86(INST_XOR, &dst, &src);
+  }
+  //! @brief Exchange Register/Memory with Register.
+  inline void xor_(const Mem& dst, const Immediate& src)
   {
     _emitX86(INST_XOR, &dst, &src);
   }
@@ -1025,27 +1359,6 @@ struct Serializer : public _Serializer
   }
 
   //! @brief FP Conditional Move (FPU).
-  //!
-  //! This instruction tests the status flags in the EFLAGS register and 
-  //! moves the source operand (second operand) to the destination operand 
-  //! (first operand) if the given test condition is true.
-  inline void fcmov(CONDITION cc, const X87Register& src)
-  {
-    switch (cc)
-    {
-      case C_BELOW           : fcmovb  (src); return;
-      case C_EQUAL           : fcmove  (src); return;
-      case C_BELOW_EQUAL     : fcmovbe (src); return;
-      case C_FP_UNORDERED    : fcmovu  (src); return;
-      case C_ABOVE_EQUAL     : fcmovnbe(src); return;
-      case C_NOT_EQUAL       : fcmovne (src); return;
-      case C_ABOVE           : fcmovnb (src); return;
-      case C_FP_NOT_UNORDERED: fcmovnu (src); return;
-      default: ASMJIT_ASSERT(0);
-    }
-  }
-
-  //! @brief FP Conditional Move (FPU).
   inline void fcmovb(const X87Register& src)
   {
     _emitX86(INST_FCMOVB, &src);
@@ -1086,27 +1399,27 @@ struct Serializer : public _Serializer
     _emitX86(INST_FCMOVU, &src);
   }
 
-  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a src (FPU).
-  inline void fcom(const Mem& src)
-  {
-    _emitX86(INST_FCOM, &src);
-  }
   //! @brief Compare st(0) with @a reg (FPU).
   inline void fcom(const X87Register& reg = st(1))
   {
     _emitX86(INST_FCOM, &reg);
   }
+  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a src (FPU).
+  inline void fcom(const Mem& src)
+  {
+    _emitX86(INST_FCOM, &src);
+  }
 
+  //! @brief Compare st(0) with @a reg and pop the stack (FPU).
+  inline void fcomp(const X87Register& reg = st(1))
+  {
+    _emitX86(INST_FCOMP, &reg);
+  }
   //! @brief Compare st(0) with 4 byte or 8 byte FP at @a adr and pop the 
   //! stack (FPU).
   inline void fcomp(const Mem& mem)
   {
     _emitX86(INST_FCOMP, &mem);
-  }
-  //! @brief Compare st(0) with @a reg and pop the stack (FPU).
-  inline void fcomp(const X87Register& reg = st(1))
-  {
-    _emitX86(INST_FCOMP, &reg);
   }
 
   //! @brief Compare st(0) with st(1) and pop register stack twice (FPU).
@@ -1148,11 +1461,6 @@ struct Serializer : public _Serializer
     _emitX86(INST_FDECSTP);
   }
 
-  //! @brief Divide st(0) by 32 bit or 64 bit FP value (FPU).
-  inline void fdiv(const Mem& src)
-  {
-    _emitX86(INST_FDIV, &src);
-  }
   //! @brief Divide @a dst by @a src (FPU).
   //!
   //! @note One of @a dst or @a src register must be st(0).
@@ -1161,17 +1469,18 @@ struct Serializer : public _Serializer
     ASMJIT_ASSERT(dst.index() == 0 || src.index() == 0);
     _emitX86(INST_FDIV, &dst, &src);
   }
+  //! @brief Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  inline void fdiv(const Mem& src)
+  {
+    _emitX86(INST_FDIV, &src);
+  }
 
   //! @brief Divide @a reg by st(0) (FPU).
   inline void fdivp(const X87Register& reg = st(1))
   {
     _emitX86(INST_FDIVP, &reg);
   }
-  //! @brief Reverse Divide st(0) by 32 bit or 64 bit FP value (FPU).
-  inline void fdivr(const Mem& src)
-  {
-    _emitX86(INST_FDIVR, &src);
-  }
+
   //! @brief Reverse Divide @a dst by @a src (FPU).
   //!
   //! @note One of @a dst or @a src register must be st(0).
@@ -1179,6 +1488,11 @@ struct Serializer : public _Serializer
   {
     ASMJIT_ASSERT(dst.index() == 0 || src.index() == 0);
     _emitX86(INST_FDIVR, &dst, &src);
+  }
+  //! @brief Reverse Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  inline void fdivr(const Mem& src)
+  {
+    _emitX86(INST_FDIVR, &src);
   }
 
   //! @brief Reverse Divide @a reg by st(0) (FPU).
@@ -1391,7 +1705,6 @@ struct Serializer : public _Serializer
     ASMJIT_ASSERT(dst.index() == 0 || src.index() == 0);
     _emitX86(INST_FMUL, &dst, &src);
   }
-
   //! @brief Multiply st(0) by @a src and store result in st(0) (FPU).
   //!
   //! @note SP-FP or DP-FP determined by @a adr size.
@@ -1457,7 +1770,7 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
-  inline void fnstsw(const RegMem& dst)
+  inline void fnstsw(const BaseRegMem& dst)
   {
     ASMJIT_ASSERT(dst.isMem() || dst.isRegCode(REG_AX));
     _emitX86(INST_FNSTSW, &dst);
@@ -1611,7 +1924,7 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
-  inline void fstsw(const RegMem& dst)
+  inline void fstsw(const BaseRegMem& dst)
   {
     ASMJIT_ASSERT(dst.isMem() || dst.isRegCode(REG_AX));
     _emitX86(INST_FSTSW, &dst);
@@ -1625,7 +1938,6 @@ struct Serializer : public _Serializer
     ASMJIT_ASSERT(dst.index() == 0 || src.index() == 0);
     _emitX86(INST_FSUB, &dst, &src);
   }
-
   //! @brief Subtract @a src from st(0) and store result in st(0) (FPU).
   //!
   //! @note SP-FP or DP-FP determined by @a adr size.
@@ -5392,7 +5704,7 @@ struct Serializer : public _Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
-  inline void crc32(const Register& dst, const RegMem& src)
+  inline void crc32(const Register& dst, const BaseRegMem& src)
   {
     ASMJIT_ASSERT(dst.isRegType(REG_GPD) || dst.isRegType(REG_GPQ));
     _emitX86(INST_CRC32, &dst, &src);
@@ -5454,7 +5766,7 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
-  inline void popcnt(const Register& dst, const RegMem& src)
+  inline void popcnt(const Register& dst, const BaseRegMem& src)
   {
     ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
     ASMJIT_ASSERT(src.op() == OP_MEM || 
