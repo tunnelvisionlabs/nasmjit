@@ -175,31 +175,64 @@ enum PREFETCH_HINT
 //! @brief Condition codes.
 enum CONDITION
 {
-  //! @brief Any value < 0 is considered no condition.
+  //! @brief No condition code.
   C_NO_CONDITION  = -1,
 
-  C_OVERFLOW      =  0,
-  C_NO_OVERFLOW   =  1,
-  C_BELOW         =  2,
-  C_ABOVE_EQUAL   =  3,
-  C_EQUAL         =  4,
-  C_NOT_EQUAL     =  5,
-  C_BELOW_EQUAL   =  6,
-  C_ABOVE         =  7,
-  C_SIGN          =  8,
-  C_NOT_SIGN      =  9,
-  C_PARITY_EVEN   = 10,
-  C_PARITY_ODD    = 11,
-  C_LESS          = 12,
-  C_GREATER_EQUAL = 13,
-  C_LESS_EQUAL    = 14,
-  C_GREATER       = 15,
+  // Condition codes from processor manuals.
+  C_A             = 0x7,
+  C_AE            = 0x3,
+  C_B             = 0x2,
+  C_BE            = 0x6,
+  C_C             = 0x2,
+  C_E             = 0x4,
+  C_G             = 0xF,
+  C_GE            = 0xD,
+  C_L             = 0xC,
+  C_LE            = 0xE,
+  C_NA            = 0x6,
+  C_NAE           = 0x2,
+  C_NB            = 0x3,
+  C_NBE           = 0x7,
+  C_NC            = 0x3,
+  C_NE            = 0x5,
+  C_NG            = 0xE,
+  C_NGE           = 0xC,
+  C_NL            = 0xD,
+  C_NLE           = 0xF,
+  C_NO            = 0x1,
+  C_NP            = 0xB,
+  C_NS            = 0x9,
+  C_NZ            = 0x5,
+  C_O             = 0x0,
+  C_P             = 0xA,
+  C_PE            = 0xA,
+  C_PO            = 0xB,
+  C_S             = 0x8,
+  C_Z             = 0x4,
+
+  // Simplified condition codes
+  C_OVERFLOW      = 0x0,
+  C_NO_OVERFLOW   = 0x1,
+  C_BELOW         = 0x2,
+  C_ABOVE_EQUAL   = 0x3,
+  C_EQUAL         = 0x4,
+  C_NOT_EQUAL     = 0x5,
+  C_BELOW_EQUAL   = 0x6,
+  C_ABOVE         = 0x7,
+  C_SIGN          = 0x8,
+  C_NOT_SIGN      = 0x9,
+  C_PARITY_EVEN   = 0xA,
+  C_PARITY_ODD    = 0xB,
+  C_LESS          = 0xC,
+  C_GREATER_EQUAL = 0xD,
+  C_LESS_EQUAL    = 0xE,
+  C_GREATER       = 0xF,
 
   // aliases
-  C_ZERO          = C_EQUAL,
-  C_NOT_ZERO      = C_NOT_EQUAL,
-  C_NEGATIVE      = C_SIGN,
-  C_POSITIVE      = C_NOT_SIGN,
+  C_ZERO          = 0x4,
+  C_NOT_ZERO      = 0x5,
+  C_NEGATIVE      = 0x8,
+  C_POSITIVE      = 0x9,
 
   // x87 floating point only
   C_FP_UNORDERED  = 16,
@@ -498,9 +531,38 @@ enum INST_X86_CODE
   INST_IMUL,          // X86/X64
   INST_INC,           // X86/X64
   INST_INT3,          // X86/X64
-  INST_J,             // X86/X64
-  INST_JMP,           // X86/X64
-  INST_JMP_PTR,       // X86/X64
+  INST_JA,            // X86/X64 (jcc)
+  INST_JAE,           // X86/X64 (jcc)
+  INST_JB,            // X86/X64 (jcc)
+  INST_JBE,           // X86/X64 (jcc)
+  INST_JC,            // X86/X64 (jcc)
+  INST_JE,            // X86/X64 (jcc)
+  INST_JG,            // X86/X64 (jcc)
+  INST_JGE,           // X86/X64 (jcc)
+  INST_JL,            // X86/X64 (jcc)
+  INST_JLE,           // X86/X64 (jcc)
+  INST_JNA,           // X86/X64 (jcc)
+  INST_JNAE,          // X86/X64 (jcc)
+  INST_JNB,           // X86/X64 (jcc)
+  INST_JNBE,          // X86/X64 (jcc)
+  INST_JNC,           // X86/X64 (jcc)
+  INST_JNE,           // X86/X64 (jcc)
+  INST_JNG,           // X86/X64 (jcc)
+  INST_JNGE,          // X86/X64 (jcc)
+  INST_JNL,           // X86/X64 (jcc)
+  INST_JNLE,          // X86/X64 (jcc)
+  INST_JNO,           // X86/X64 (jcc)
+  INST_JNP,           // X86/X64 (jcc)
+  INST_JNS,           // X86/X64 (jcc)
+  INST_JNZ,           // X86/X64 (jcc)
+  INST_JO,            // X86/X64 (jcc)
+  INST_JP,            // X86/X64 (jcc)
+  INST_JPE,           // X86/X64 (jcc)
+  INST_JPO,           // X86/X64 (jcc)
+  INST_JS,            // X86/X64 (jcc)
+  INST_JZ,            // X86/X64 (jcc)
+  INST_JMP,           // X86/X64 (jmp)
+  INST_JMP_PTR,       // X86/X64 (jmp)
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LEA,           // X86/X64

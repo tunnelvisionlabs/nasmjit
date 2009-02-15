@@ -458,8 +458,70 @@ struct Serializer : public _Serializer
   //! continues with the instruction following the Jcc instruction.
   inline void j(CONDITION cc, Label* L, HINT hint = HINT_NONE)
   {
+    ASMJIT_ASSERT((SysUInt)cc <= 0xF);
     _emitX86J(cc, L, hint);
   }
+
+  //! @brief Jump to label @a L if condition is met.
+  inline void ja  (Label* L, HINT hint = HINT_NONE) { j(C_A  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jae (Label* L, HINT hint = HINT_NONE) { j(C_AE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jb  (Label* L, HINT hint = HINT_NONE) { j(C_B  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jbe (Label* L, HINT hint = HINT_NONE) { j(C_BE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jc  (Label* L, HINT hint = HINT_NONE) { j(C_C  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void je  (Label* L, HINT hint = HINT_NONE) { j(C_E  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jg  (Label* L, HINT hint = HINT_NONE) { j(C_G  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jge (Label* L, HINT hint = HINT_NONE) { j(C_GE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jl  (Label* L, HINT hint = HINT_NONE) { j(C_L  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jle (Label* L, HINT hint = HINT_NONE) { j(C_LE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jna (Label* L, HINT hint = HINT_NONE) { j(C_NA , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnae(Label* L, HINT hint = HINT_NONE) { j(C_NAE, L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnb (Label* L, HINT hint = HINT_NONE) { j(C_NB , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnbe(Label* L, HINT hint = HINT_NONE) { j(C_NBE, L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnc (Label* L, HINT hint = HINT_NONE) { j(C_NC , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jne (Label* L, HINT hint = HINT_NONE) { j(C_NE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jng (Label* L, HINT hint = HINT_NONE) { j(C_NG , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnge(Label* L, HINT hint = HINT_NONE) { j(C_NGE, L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnl (Label* L, HINT hint = HINT_NONE) { j(C_NL , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnle(Label* L, HINT hint = HINT_NONE) { j(C_NLE, L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jno (Label* L, HINT hint = HINT_NONE) { j(C_NO , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnp (Label* L, HINT hint = HINT_NONE) { j(C_NP , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jns (Label* L, HINT hint = HINT_NONE) { j(C_NS , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jnz (Label* L, HINT hint = HINT_NONE) { j(C_NZ , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jo  (Label* L, HINT hint = HINT_NONE) { j(C_O  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jp  (Label* L, HINT hint = HINT_NONE) { j(C_P  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jpe (Label* L, HINT hint = HINT_NONE) { j(C_PE , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jpo (Label* L, HINT hint = HINT_NONE) { j(C_PO , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void js  (Label* L, HINT hint = HINT_NONE) { j(C_S  , L, hint); }
+  //! @brief Jump to label @a L if condition is met.
+  inline void jz  (Label* L, HINT hint = HINT_NONE) { j(C_Z  , L, hint); }
 
   //! @brief Jump.
   //!
