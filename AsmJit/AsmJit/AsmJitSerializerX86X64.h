@@ -969,8 +969,59 @@ struct Serializer : public _Serializer
   //! (first operand) if the given test condition is true.
   inline void fcmov(CONDITION cc, const X87Register& src)
   {
-    Immediate i(static_cast<SysInt>(cc));
-    _emitX86(INST_FCMOV, &src, &i);
+    switch (cc)
+    {
+      case C_BELOW           : fcmovb  (src); return;
+      case C_EQUAL           : fcmove  (src); return;
+      case C_BELOW_EQUAL     : fcmovbe (src); return;
+      case C_FP_UNORDERED    : fcmovu  (src); return;
+      case C_ABOVE_EQUAL     : fcmovnbe(src); return;
+      case C_NOT_EQUAL       : fcmovne (src); return;
+      case C_ABOVE           : fcmovnb (src); return;
+      case C_FP_NOT_UNORDERED: fcmovnu (src); return;
+      default: ASMJIT_ASSERT(0);
+    }
+  }
+
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovb(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVB, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovbe(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVBE, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmove(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVE, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovnb(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVNB, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovnbe(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVNBE, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovne(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVNE, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovnu(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVNU, &src);
+  }
+  //! @brief FP Conditional Move (FPU).
+  inline void fcmovu(const X87Register& src)
+  {
+    _emitX86(INST_FCMOVU, &src);
   }
 
   //! @brief Compare st(0) with 4 byte or 8 byte FP at @a src (FPU).
@@ -978,7 +1029,6 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_FCOM, &src);
   }
-
   //! @brief Compare st(0) with @a reg (FPU).
   inline void fcom(const X87Register& reg = st(1))
   {
@@ -991,7 +1041,6 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_FCOMP, &mem);
   }
-
   //! @brief Compare st(0) with @a reg and pop the stack (FPU).
   inline void fcomp(const X87Register& reg = st(1))
   {
@@ -1042,7 +1091,6 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_FDIV, &src);
   }
-
   //! @brief Divide @a dst by @a src (FPU).
   //!
   //! @note One of @a dst or @a src register must be st(0).
@@ -1057,13 +1105,11 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_FDIVP, &reg);
   }
-
   //! @brief Reverse Divide st(0) by 32 bit or 64 bit FP value (FPU).
   inline void fdivr(const Mem& src)
   {
     _emitX86(INST_FDIVR, &src);
   }
-
   //! @brief Reverse Divide @a dst by @a src (FPU).
   //!
   //! @note One of @a dst or @a src register must be st(0).

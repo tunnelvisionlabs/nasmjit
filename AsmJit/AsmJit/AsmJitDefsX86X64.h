@@ -202,8 +202,8 @@ enum CONDITION
   C_POSITIVE      = C_NOT_SIGN,
 
   // x87 floating point only
-  C_FP_UNORDERED  = 100,
-  C_FP_NOT_UNORDERED = 101
+  C_FP_UNORDERED  = 16,
+  C_FP_NOT_UNORDERED = 17
 };
 
 //! @brief  Returns the equivalent of !cc.
@@ -319,168 +319,8 @@ enum RELOC_MODE
 //! @brief Instruction codes (AsmJit specific)
 enum INST_X86_CODE
 {
-  // standard x86 instruction set
-  INST_ADC,
-  INST_ADD,
-  INST_AND,
-  INST_BSWAP,
-  INST_BTS,
-  INST_CALL,
-  INST_CBW,
-  INST_CWDE,
-  INST_CDQE, // X64 only
-  INST_CLC,
-  INST_CLD,
-  INST_CMC,
-  INST_CMOV,
-  INST_CMP,
-  INST_CMPXCHG,
-  INST_CMPXCHG8B,
-  INST_CMPXCHG16B, // X64 only
-  INST_CPUID,
-  INST_DAA, // X86 only
-  INST_DAS, // X86 only
-  INST_DEC,
-  INST_DIV,
-  INST_IDIV,
-  INST_IMUL,
-  INST_INC,
-  INST_INT3,
-  INST_J,
-  INST_JMP,
-  INST_JMP_PTR,
-  INST_LEA,
-  INST_LOCK,
-  INST_MOV,
-  INST_MOV_PTR,
-  INST_MOVSX,
-  INST_MOVSXD,
-  INST_MOVZX,
-  INST_MUL,
-  INST_NEG,
-  INST_NOP,
-  INST_NOT,
-  INST_OR,
-  INST_POP,
-  INST_POPAD, // X86 only
-  INST_POPFD, // X86 only
-  INST_PUSH,
-  INST_PUSHAD, // X86 only
-  INST_PUSHFD, // X86 only
-  INST_RCL,
-  INST_RCR,
-  INST_RDTSC,
-  INST_RDTSCP,
-  INST_RET,
-  INST_ROL,
-  INST_ROR,
-  INST_SAHF, // X86 only
-  INST_SBB,
-  INST_SAL,
-  INST_SAR,
-  INST_SHL,
-  INST_SHR,
-  INST_SHLD,
-  INST_SHRD,
-  INST_STC,
-  INST_STD,
-  INST_SUB,
-  INST_TEST,
-  INST_UD2,
-  INST_XADD,
-  INST_XCHG,
-  INST_XOR,
-
-  // standard x87 instruction set
-  INST_F2XM1,
-  INST_FABS,
-  INST_FADD,
-  INST_FADDP,
-  INST_FBLD,
-  INST_FBSTP,
-  INST_FCHS,
-  INST_FCLEX,
-  INST_FCMOV,
-  INST_FCOM,
-  INST_FCOMP,
-  INST_FCOMPP,
-  INST_FCOMI,
-  INST_FCOMIP,
-  INST_FCOS,
-  INST_FDECSTP,
-  INST_FDIV,
-  INST_FDIVP,
-  INST_FDIVR,
-  INST_FDIVRP,
-  INST_FFREE,
-  INST_FIADD,
-  INST_FICOM,
-  INST_FICOMP,
-  INST_FIDIV,
-  INST_FIDIVR,
-  INST_FILD,
-  INST_FIMUL,
-  INST_FINCSTP,
-  INST_FINIT,
-  INST_FIST,
-  INST_FISTP,
-  INST_FISUB,
-  INST_FISUBR,
-  INST_FLD,
-  INST_FLD1,
-  INST_FLDL2T,
-  INST_FLDL2E,
-  INST_FLDPI,
-  INST_FLDLG2,
-  INST_FLDLN2,
-  INST_FLDZ,
-  INST_FLDCW,
-  INST_FLDENV,
-  INST_FMUL,
-  INST_FMULP,
-  INST_FNCLEX,
-  INST_FNINIT,
-  INST_FNOP,
-  INST_FNSAVE,
-  INST_FNSTENV,
-  INST_FNSTCW,
-  INST_FNSTSW,
-  INST_FPATAN,
-  INST_FPREM,
-  INST_FPREM1,
-  INST_FPTAN,
-  INST_FRNDINT,
-  INST_FRSTOR,
-  INST_FSAVE,
-  INST_FSCALE,
-  INST_FSIN,
-  INST_FSINCOS,
-  INST_FSQRT,
-  INST_FST,
-  INST_FSTP,
-  INST_FSTCW,
-  INST_FSTENV,
-  INST_FSTSW,
-  INST_FSUB,
-  INST_FSUBP,
-  INST_FSUBR,
-  INST_FSUBRP,
-  INST_FTST,
-  INST_FUCOM,
-  INST_FUCOMI,
-  INST_FUCOMIP,
-  INST_FUCOMP,
-  INST_FUCOMPP,
-  INST_FWAIT,
-  INST_FXAM,
-  INST_FXCH,
-  INST_FXRSTOR,
-  INST_FXSAVE,
-  INST_FXTRACT,
-  INST_FYL2X,
-  INST_FYL2XP1,
-
-  // mmx/sseX instruction set
+  INST_ADC,           // X86/X64
+  INST_ADD,           // X86/X64
   INST_ADDPD,
   INST_ADDPS,
   INST_ADDSD,
@@ -489,6 +329,7 @@ enum INST_X86_CODE
   INST_ADDSUBPS,
   INST_AMD_PREFETCH,
   INST_AMD_PREFETCHW,
+  INST_AND,           // X86/X64
   INST_ANDNPD,
   INST_ANDNPS,
   INST_ANDPD,
@@ -497,13 +338,27 @@ enum INST_X86_CODE
   INST_BLENDPS,
   INST_BLENDVPD,
   INST_BLENDVPS,
+  INST_BSWAP,         // X86/X64 (i486)
+  INST_BTS,           // X86/X64
+  INST_CALL,          // X86/X64
+  INST_CBW,           // X86/X64
+  INST_CDQE,          // X64 only
+  INST_CLC,           // X86/X64
+  INST_CLD,           // X86/X64
   INST_CLFLUSH,
+  INST_CMC,           // X86/X64
+  INST_CMOV,          // X86/X64 (i586)
+  INST_CMP,           // X86/X64
   INST_CMPPD,
   INST_CMPPS,
   INST_CMPSD,
   INST_CMPSS,
+  INST_CMPXCHG,       // X86/X64 (i486)
+  INST_CMPXCHG16B,    // X64 only
+  INST_CMPXCHG8B,     // X86/X64 (i586)
   INST_COMISD,
   INST_COMISS,
+  INST_CPUID,         // X86/X64 (i486)
   INST_CRC32,
   INST_CVTDQ2PD,
   INST_CVTDQ2PS,
@@ -527,6 +382,11 @@ enum INST_X86_CODE
   INST_CVTTPS2PI,
   INST_CVTTSD2SI,
   INST_CVTTSS2SI,
+  INST_CWDE,          // X86/X64
+  INST_DAA,           // X86 only
+  INST_DAS,           // X86 only
+  INST_DEC,           // X86/X64
+  INST_DIV,           // X86/X64
   INST_DIVPD,
   INST_DIVPS,
   INST_DIVSD,
@@ -535,14 +395,117 @@ enum INST_X86_CODE
   INST_DPPS,
   INST_EMMS,
   INST_EXTRACTPS,
+  INST_F2XM1,         // X87
+  INST_FABS,          // X87
+  INST_FADD,          // X87
+  INST_FADDP,         // X87
+  INST_FBLD,          // X87
+  INST_FBSTP,         // X87
+  INST_FCHS,          // X87
+  INST_FCLEX,         // X87
+  INST_FCMOVB,        // X87
+  INST_FCMOVBE,       // X87
+  INST_FCMOVE,        // X87
+  INST_FCMOVNB,       // X87
+  INST_FCMOVNBE,      // X87
+  INST_FCMOVNE,       // X87
+  INST_FCMOVNU,       // X87
+  INST_FCMOVU,        // X87
+  INST_FCOM,          // X87
+  INST_FCOMI,         // X87
+  INST_FCOMIP,        // X87
+  INST_FCOMP,         // X87
+  INST_FCOMPP,        // X87
+  INST_FCOS,          // X87
+  INST_FDECSTP,       // X87
+  INST_FDIV,          // X87
+  INST_FDIVP,         // X87
+  INST_FDIVR,         // X87
+  INST_FDIVRP,        // X87
+  INST_FFREE,         // X87
+  INST_FIADD,         // X87
+  INST_FICOM,         // X87
+  INST_FICOMP,        // X87
+  INST_FIDIV,         // X87
+  INST_FIDIVR,        // X87
+  INST_FILD,          // X87
+  INST_FIMUL,         // X87
+  INST_FINCSTP,       // X87
+  INST_FINIT,         // X87
+  INST_FIST,          // X87
+  INST_FISTP,         // X87
   INST_FISTTP,
+  INST_FISUB,         // X87
+  INST_FISUBR,        // X87
+  INST_FLD,           // X87
+  INST_FLD1,          // X87
+  INST_FLDCW,         // X87
+  INST_FLDENV,        // X87
+  INST_FLDL2E,        // X87
+  INST_FLDL2T,        // X87
+  INST_FLDLG2,        // X87
+  INST_FLDLN2,        // X87
+  INST_FLDPI,         // X87
+  INST_FLDZ,          // X87
+  INST_FMUL,          // X87
+  INST_FMULP,         // X87
+  INST_FNCLEX,        // X87
+  INST_FNINIT,        // X87
+  INST_FNOP,          // X87
+  INST_FNSAVE,        // X87
+  INST_FNSTCW,        // X87
+  INST_FNSTENV,       // X87
+  INST_FNSTSW,        // X87
+  INST_FPATAN,        // X87
+  INST_FPREM,         // X87
+  INST_FPREM1,        // X87
+  INST_FPTAN,         // X87
+  INST_FRNDINT,       // X87
+  INST_FRSTOR,        // X87
+  INST_FSAVE,         // X87
+  INST_FSCALE,        // X87
+  INST_FSIN,          // X87
+  INST_FSINCOS,       // X87
+  INST_FSQRT,         // X87
+  INST_FST,           // X87
+  INST_FSTCW,         // X87
+  INST_FSTENV,        // X87
+  INST_FSTP,          // X87
+  INST_FSTSW,         // X87
+  INST_FSUB,          // X87
+  INST_FSUBP,         // X87
+  INST_FSUBR,         // X87
+  INST_FSUBRP,        // X87
+  INST_FTST,          // X87
+  INST_FUCOM,         // X87
+  INST_FUCOMI,        // X87
+  INST_FUCOMIP,       // X87
+  INST_FUCOMP,        // X87
+  INST_FUCOMPP,       // X87
+  INST_FWAIT,         // X87
+  INST_FXAM,          // X87
+  INST_FXCH,          // X87
+  INST_FXRSTOR,       // X87
+  INST_FXSAVE,        // X87
+  INST_FXTRACT,       // X87
+  INST_FYL2X,         // X87
+  INST_FYL2XP1,       // X87
   INST_HADDPD,
   INST_HADDPS,
   INST_HSUBPD,
   INST_HSUBPS,
+  INST_IDIV,          // X86/X64
+  INST_IMUL,          // X86/X64
+  INST_INC,           // X86/X64
+  INST_INT3,          // X86/X64
+  INST_J,             // X86/X64
+  INST_JMP,           // X86/X64
+  INST_JMP_PTR,       // X86/X64
   INST_LDDQU,
   INST_LDMXCSR,
+  INST_LEA,           // X86/X64
   INST_LFENCE,
+  INST_LOCK,          // X86/X64
   INST_MASKMOVDQU,
   INST_MASKMOVQ,
   INST_MAXPD,
@@ -555,6 +518,7 @@ enum INST_X86_CODE
   INST_MINSD,
   INST_MINSS,
   INST_MONITOR,
+  INST_MOV,           // X86/X64
   INST_MOVAPD,
   INST_MOVAPS,
   INST_MOVBE,
@@ -583,14 +547,23 @@ enum INST_X86_CODE
   INST_MOVSHDUP,
   INST_MOVSLDUP,
   INST_MOVSS,
+  INST_MOVSX,         // X86/X64
+  INST_MOVSXD,        // X86/X64
   INST_MOVUPD,
   INST_MOVUPS,
+  INST_MOVZX,         // X86/X64
+  INST_MOV_PTR,       // X86/X64
   INST_MPSADBW,
+  INST_MUL,           // X86/X64
   INST_MULPD,
   INST_MULPS,
   INST_MULSD,
   INST_MULSS,
   INST_MWAIT,
+  INST_NEG,           // X86/X64
+  INST_NOP,           // X86/X64
+  INST_NOT,           // X86/X64
+  INST_OR,            // X86/X64
   INST_ORPD,
   INST_ORPS,
   INST_PABSB,
@@ -676,7 +649,10 @@ enum INST_X86_CODE
   INST_PMULLD,
   INST_PMULLW,
   INST_PMULUDQ,
+  INST_POP,           // X86/X64
+  INST_POPAD,         // X86 only
   INST_POPCNT,
+  INST_POPFD,         // X86 only
   INST_POR,
   INST_PREFETCH,
   INST_PSADBW,
@@ -715,32 +691,58 @@ enum INST_X86_CODE
   INST_PUNPCKLDQ,
   INST_PUNPCKLQDQ,
   INST_PUNPCKLWD,
+  INST_PUSH,          // X86/X64
+  INST_PUSHAD,        // X86 only
+  INST_PUSHFD,        // X86 only
   INST_PXOR,
+  INST_RCL,           // X86/X64
   INST_RCPPS,
   INST_RCPSS,
+  INST_RCR,           // X86/X64
+  INST_RDTSC,         // X86/X64
+  INST_RDTSCP,        // X86/X64
+  INST_RET,           // X86/X64
+  INST_ROL,           // X86/X64
+  INST_ROR,           // X86/X64
   INST_ROUNDPD,
   INST_ROUNDPS,
   INST_ROUNDSD,
   INST_ROUNDSS,
   INST_RSQRTPS,
   INST_RSQRTSS,
+  INST_SAHF,          // X86 only
+  INST_SAL,           // X86/X64
+  INST_SAR,           // X86/X64
+  INST_SBB,           // X86/X64
   INST_SFENCE,
+  INST_SHL,           // X86/X64
+  INST_SHLD,          // X86/X64
+  INST_SHR,           // X86/X64
+  INST_SHRD,          // X86/X64
   INST_SHUFPS,
   INST_SQRTPD,
   INST_SQRTPS,
   INST_SQRTSD,
   INST_SQRTSS,
+  INST_STC,           // X86/X64
+  INST_STD,           // X86/X64
   INST_STMXCSR,
+  INST_SUB,           // X86/X64
   INST_SUBPD,
   INST_SUBPS,
   INST_SUBSD,
   INST_SUBSS,
+  INST_TEST,          // X86/X64
   INST_UCOMISD,
   INST_UCOMISS,
+  INST_UD2,           // X86/X64
   INST_UNPCKHPD,
   INST_UNPCKHPS,
   INST_UNPCKLPD,
   INST_UNPCKLPS,
+  INST_XADD,          // X86/X64 (i486)
+  INST_XCHG,          // X86/X64 (i486)
+  INST_XOR,           // X86/X64
   INST_XORPD,
   INST_XORPS,
 

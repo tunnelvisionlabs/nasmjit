@@ -543,9 +543,18 @@ enum I
   I_TEST,
   I_XCHG,
 
-  I_FPU_STI_OR_MEM,
-  I_FPU_MEM,
+  // Group for x87 FP instructions in format mem or st(i), st(i) (fadd, fsub, fdiv, ...)
+  I_X87_FPU,
+  // Group for x87 FP instructions in format st(i), st(i)
+  I_X87_STI,
+  // Group for fld/fst/fstp instruction, internally uses I_X87_MEM group.
+  I_X87_MEM_STI,
+  // Group for x87 FP instructions that uses Word, DWord, QWord or TWord memory pointer.
+  I_X87_MEM,
+  // Group for x87 FSTSW/FNSTSW instructions
+  I_X87_FSTSW,
 
+  // Group for movbe instruction
   I_MOVBE,
 
   // Group for MMX/SSE instructions in format (X)MM|Reg|Mem <- (X)MM|Reg|Mem,
@@ -576,36 +585,39 @@ enum I
 // Instruction operand flags
 enum O
 {
-  UNUSED = 0x00,
+  // x86
+  O_G8          = 0x01,
+  O_G16         = 0x02,
+  O_G32         = 0x04,
+  O_G64         = 0x08,
+  O_MEM         = 0x40,
+  O_IMM         = 0x80,
 
-  // x86 + extensions (mmx, sse)
-  O_G8   = 0x01,
-  O_NOREX= 0x01, // Used by MMX/SSE instructions, G8 is usused for them
-  O_G16  = 0x02,
-  O_G32  = 0x04,
-  O_G64  = 0x08,
-  O_MM   = 0x10,
-  O_XMM  = 0x20,
-  O_MEM  = 0x40,
-  O_IMM  = 0x80,
-
-  O_G8_16_32_64 = O_G64 | O_G32 | O_G16 | O_G8,
-  O_G16_32_64   = O_G64 | O_G32 | O_G16,
-  O_G32_64      = O_G64 | O_G32,
-
-  O_MM_MEM      = O_MM | O_MEM,
-  O_XMM_MEM     = O_XMM | O_MEM,
-  O_MM_XMM      = O_MM | O_XMM,
-  O_MM_XMM_MEM  = O_MM | O_XMM | O_MEM,
+  O_G8_16_32_64 = O_G64  | O_G32  | O_G16  | O_G8,
+  O_G16_32_64   = O_G64  | O_G32  | O_G16,
+  O_G32_64      = O_G64  | O_G32,
 
   // x87
-  O_FSTI    = 0x01,
-  O_FMEM_2  = 0x10,
-  O_FMEM_4  = 0x20,
-  O_FMEM_8  = 0x40,
-  O_FMEM_10 = 0x80,
+  O_FM_1        = 0x01,
+  O_FM_2        = 0x02,
+  O_FM_4        = 0x04,
+  O_FM_8        = 0x08,
+  O_FM_10       = 0x10,
 
-  O_FMEM_2_4_8 = O_FMEM_2 | O_FMEM_4 | O_FMEM_8
+  O_FM_2_4      = O_FM_2 | O_FM_4,
+  O_FM_2_4_8    = O_FM_2 | O_FM_4 | O_FM_8,
+  O_FM_4_8      = O_FM_4 | O_FM_8,
+  O_FM_4_8_10   = O_FM_4 | O_FM_8 | O_FM_10,
+
+  // mm|xmm
+  O_NOREX       = 0x01, // Used by MMX/SSE instructions, O_G8 is never used for them
+  O_MM          = 0x10,
+  O_XMM         = 0x20,
+
+  O_MM_MEM      = O_MM   | O_MEM,
+  O_XMM_MEM     = O_XMM  | O_MEM,
+  O_MM_XMM      = O_MM   | O_XMM,
+  O_MM_XMM_MEM  = O_MM   | O_XMM  | O_MEM
 };
 
 #if defined(ASMJIT_DEBUG_INSTRUCTION_MAP)
@@ -615,187 +627,23 @@ enum O
 #define MAKE_INST(code, name, type, o1Flags, o2Flags, opReg, opCode1, opCode2) \
         { type, o1Flags, o2Flags, opReg, opCode1, opCode2 }
 #endif // ASMJIT_DEBUG_INSTRUCTION_MAP
-#define __________ 0
-#define _______________ 0
 
 #define ToDo 0
 
 static const InstructionDescription x86instructions[] =
 {
   // Instruction code (enum)      | instruction name   | group           | operator 1 flags| operator 2 flags| r| opCode1   | opcode2
-  MAKE_INST(INST_ADC              , "adc"              , I_ALU           , UNUSED          , UNUSED          , 2, 0x0000000A, 0x00000080),
-  MAKE_INST(INST_ADD              , "add"              , I_ALU           , UNUSED          , UNUSED          , 0, 0x00000000, 0x00000080),
-  MAKE_INST(INST_AND              , "and"              , I_ALU           , UNUSED          , UNUSED          , 4, 0x00000020, 0x00000080),
-  MAKE_INST(INST_BSWAP            , "bswap"            , I_BSWAP         , _______________ , _______________ , 0, __________, 0),
-  MAKE_INST(INST_BTS              , "bts"              , I_RM_R          , UNUSED          , UNUSED          , 0, 0x00000FAB, 0),
-  MAKE_INST(INST_CALL             , "call"             , I_CALL          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_CBW              , "cbw"              , I_EMIT          , _______________ , _______________ , 0, 0x66000099, 0),
-  MAKE_INST(INST_CWDE             , "cwde"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000099, 0),
-  MAKE_INST(INST_CDQE             , "cdqe"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x48000099, 0),
-  MAKE_INST(INST_CLC              , "clc"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000F8, 0),
-  MAKE_INST(INST_CLD              , "cld"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000FC, 0),
-  MAKE_INST(INST_CMC              , "cmc"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000F5, 0),
-  MAKE_INST(INST_CMOV             , "cmov"             , I_CMOV          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_CMP              , "cmp"              , I_ALU           , UNUSED          , UNUSED          , 7, 0x00000038, 0x00000080),
-  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , I_RM_R_BEXT     , UNUSED          , UNUSED          , 0, 0x00000FB0, 0),
-  MAKE_INST(INST_CMPXCHG8B        , "cmpxchg8b"        , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 0),
-  MAKE_INST(INST_CMPXCHG16B       , "cmpxchg16b"       , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 1 /* RexW */),
-  MAKE_INST(INST_CPUID            , "cpuid"            , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000FA2, 0),
-  MAKE_INST(INST_DAA              , "daa"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000027, 0),
-  MAKE_INST(INST_DAS              , "das"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x0000002F, 0),
-  MAKE_INST(INST_DEC              , "dec"              , I_INC_DEC       , UNUSED          , UNUSED          , 1, 0x00000048, 0x000000FE),
-  MAKE_INST(INST_DIV              , "div"              , I_RM_BEXT       , UNUSED          , UNUSED          , 6, 0x000000F6, 0),
-  MAKE_INST(INST_IDIV             , "idiv"             , I_RM_BEXT       , UNUSED          , UNUSED          , 7, 0x000000F6, 0),
-  MAKE_INST(INST_IMUL             , "imul"             , I_IMUL          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_INC              , "inc"              , I_INC_DEC       , UNUSED          , UNUSED          , 0, 0x00000040, 0x000000FE),
-  MAKE_INST(INST_INT3             , "int3"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000CC, 0),
-  MAKE_INST(INST_J                , "j"                , I_J             , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_JMP              , "jmp"              , I_JMP           , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_JMP_PTR          , "jmp"              , I_JMP_PTR       , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_LEA              , "lea"              , I_LEA           , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_LOCK             , "lock"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000F0, 0),
-  MAKE_INST(INST_MOV              , "mov"              , I_MOV           , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_MOV_PTR          , "mov"              , I_MOV_PTR       , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_MOVSX            , "movsx"            , I_MOVSX         , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_MOVSXD           , "movsxd"           , I_MOVSXD        , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_MOVZX            , "movzx"            , I_MOVZX         , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_MUL              , "mul"              , I_RM_BEXT       , UNUSED          , UNUSED          , 4, 0x000000F6, 0),
-  MAKE_INST(INST_NEG              , "neg"              , I_RM_BEXT       , UNUSED          , UNUSED          , 3, 0x000000F6, 0),
-  MAKE_INST(INST_NOP              , "nop"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000090, 0),
-  MAKE_INST(INST_NOT              , "not"              , I_RM_BEXT       , UNUSED          , UNUSED          , 2, 0x000000F6, 0),
-  MAKE_INST(INST_OR               , "or"               , I_ALU           , UNUSED          , UNUSED          , 1, 0x00000008, 0x00000080),
-  MAKE_INST(INST_POP              , "pop"              , I_POP           , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_POPAD            , "popad"            , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000061, 0),
-  MAKE_INST(INST_POPFD            , "popfd"            , I_EMIT          , UNUSED          , UNUSED          , 0, 0x0000009D, 0),
-  MAKE_INST(INST_PUSH             , "push"             , I_PUSH          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_PUSHAD           , "pushad"           , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000060, 0),
-  MAKE_INST(INST_PUSHFD           , "pushfd"           , I_EMIT          , UNUSED          , UNUSED          , 0, 0x0000009C, 0),
-  MAKE_INST(INST_RCL              , "rcl"              , I_ROT           , UNUSED          , UNUSED          , 2, 0         , 0),
-  MAKE_INST(INST_RCR              , "rcr"              , I_ROT           , UNUSED          , UNUSED          , 3, 0         , 0),
-  MAKE_INST(INST_RDTSC            , "rdtsc"            , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000F31, 0),
-  MAKE_INST(INST_RDTSCP           , "rdtscp"           , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000F01F9, 0),
-  MAKE_INST(INST_RET              , "ret"              , I_RET           , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_ROL              , "rol"              , I_ROT           , UNUSED          , UNUSED          , 0, 0         , 0),
-  MAKE_INST(INST_ROR              , "ror"              , I_ROT           , UNUSED          , UNUSED          , 1, 0         , 0),
-  MAKE_INST(INST_SAHF             , "sahf"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x0000009E, 0),
-  MAKE_INST(INST_SBB              , "sbb"              , I_ALU           , UNUSED          , UNUSED          , 3, 0x00000018, 0x00000080),
-  MAKE_INST(INST_SAL              , "sal"              , I_ROT           , UNUSED          , UNUSED          , 4, 0         , 0),
-  MAKE_INST(INST_SAR              , "sar"              , I_ROT           , UNUSED          , UNUSED          , 7, 0         , 0),
-  MAKE_INST(INST_SHL              , "shl"              , I_ROT           , UNUSED          , UNUSED          , 4, 0         , 0),
-  MAKE_INST(INST_SHR              , "shr"              , I_ROT           , UNUSED          , UNUSED          , 5, 0         , 0),
-  MAKE_INST(INST_SHLD             , "shld"             , I_SHLD_SHRD     , UNUSED          , UNUSED          , 0, 0x00000FA4, 0),
-  MAKE_INST(INST_SHRD             , "shrd"             , I_SHLD_SHRD     , UNUSED          , UNUSED          , 0, 0x00000FAC, 0),
-  MAKE_INST(INST_STC              , "stc"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000F9, 0),
-  MAKE_INST(INST_STD              , "std"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000000FD, 0),
-  MAKE_INST(INST_SUB              , "sub"              , I_ALU           , UNUSED          , UNUSED          , 5, 0x00000028, 0x00000080),
-  MAKE_INST(INST_TEST             , "test"             , I_TEST          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_UD2              , "ud2"              , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000F0B, 0),
-  MAKE_INST(INST_XADD             , "xadd"             , I_RM_R_BEXT     , UNUSED          , UNUSED          , 0, 0x00000FC0, 0),
-  MAKE_INST(INST_XCHG             , "xchg"             , I_XCHG          , UNUSED          , UNUSED          , 0, __________, 0),
-  MAKE_INST(INST_XOR              , "xor"              , I_ALU           , UNUSED          , UNUSED          , 6, 0x00000030, 0x00000080),
-
-#define I_FPU_MEM_2_4 0
-#define I_FPU_MEM_2_4_8 0
-#define I_FCMOV 0
-#define I_FPU_FCLEX 0
-#define I_FPU_STI 0
-#define I_FPU_STI_OR_MEM 0
-  MAKE_INST(INST_F2XM1            , "f2xm1"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F0, 0),
-  MAKE_INST(INST_FABS             , "fabs"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E1, 0),
-  MAKE_INST(INST_FADD             , "fadd"             , I_FPU_STI_OR_MEM, 0               , 0               , 0, 0xD8C0DCC0, 0),
-  MAKE_INST(INST_FADDP            , "faddp"            , I_FPU_STI       , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FBLD             , "fbld"             , I_FPU_MEM       , 0               , 0               , 4, 0x000000DF, 4),
-  MAKE_INST(INST_FBSTP            , "fbstp"            , I_FPU_MEM       , 0               , 0               , 6, 0x000000DF, 6),
-  MAKE_INST(INST_FCHS             , "fchs"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E0, 0),
-  MAKE_INST(INST_FCLEX            , "fclex"            , I_FPU_FCLEX     , 0               , 0               , 0, 0x9B00DBE2, 0),
-  MAKE_INST(INST_FCMOV            , "fcmov"            , I_FCMOV         , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FCOM             , "fcom"             , I_FPU_MEM_2_4   , 0               , 0               , 2, 0x00DC00D8, 2),
-  MAKE_INST(INST_FCOMP            , "fcomp"            , I_FPU_MEM_2_4   , 0               , 0               , 3, 0x00DC00D8, 3),
-  MAKE_INST(INST_FCOMPP           , "fcompp"           , I_EMIT          , 0               , 0               , 0, 0x0000DED9, 0),
-  MAKE_INST(INST_FCOMI            , "fcomi"            , I_FPU_STI       , 0               , 0               , 0, 0x0000DBF0, 0),
-  MAKE_INST(INST_FCOMIP           , "fcomip"           , I_FPU_STI       , 0               , 0               , 0, 0x0000DFF0, 0),
-  MAKE_INST(INST_FCOS             , "fcos"             , I_EMIT          , 0               , 0               , 0, 0x0000D9FF, 0),
-  MAKE_INST(INST_FDECSTP          , "fdecstp"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F6, 0),
-  MAKE_INST(INST_FDIV             , "fdiv"             , I_FPU_STI_OR_MEM, 0               , 0               , 6, 0xD8F0DCF8, 6),
-  MAKE_INST(INST_FDIVP            , "fdivp"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FDIVR            , "fdivr"            , I_FPU_STI_OR_MEM, 0               , 0               , 7, 0xD8F8DCF0, 7),
-  MAKE_INST(INST_FDIVRP           , "fdivrp"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FFREE            , "ffree"            , I_FPU_STI       , 0               , 0               , 0, 0x0000DDC0, 0),
-  MAKE_INST(INST_FIADD            , "fiadd"            , I_FPU_MEM_2_4   , 0               , 0               , 0, 0x00DE00DA, 0),
-  MAKE_INST(INST_FICOM            , "ficom"            , I_FPU_MEM_2_4   , 0               , 0               , 2, 0x00DE00DA, 2),
-  MAKE_INST(INST_FICOMP           , "ficomp"           , I_FPU_MEM_2_4   , 0               , 0               , 3, 0x00DE00DA, 3),
-  MAKE_INST(INST_FIDIV            , "fidiv"            , I_FPU_MEM_2_4   , 0               , 0               , 6, 0x00DE00DA, 6),
-  MAKE_INST(INST_FIDIVR           , "fidivr"           , I_FPU_MEM_2_4   , 0               , 0               , 7, 0x00DE00DA, 7),
-  MAKE_INST(INST_FILD             , "fild"             , I_FPU_MEM_2_4_8 , 0               , 0               , 0, 0x00DF00DB, 0 + (5 << 4)),
-  MAKE_INST(INST_FIMUL            , "fimul"            , I_FPU_MEM_2_4   , 0               , 0               , 1, 0x00DE00DA, 1),
-  MAKE_INST(INST_FINCSTP          , "fincstp"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F7, 0),
-  MAKE_INST(INST_FINIT            , "finit"            , I_EMIT          , 0               , 0               , 0, 0x9B00DBE3, 0),
-  MAKE_INST(INST_FIST             , "fist"             , I_FPU_MEM_2_4   , 0               , 0               , 2, 0x00DF00DB, 2),
-  MAKE_INST(INST_FISTP            , "fistp"            , I_FPU_MEM_2_4_8 , 0               , 0               , 3, 0x00DF00DB, 3 + (7 << 4)),
-  MAKE_INST(INST_FISUB            , "fisub"            , I_FPU_MEM_2_4   , 0               , 0               , 2, 0x00DF00DB, 2),
-  MAKE_INST(INST_FISUBR           , "fisubr"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLD              , "fld"              , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLD1             , "fld1"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDL2T           , "fldl2t"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDL2E           , "fldl2e"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDPI            , "fldpi"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDLG2           , "fldlg2"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDLN2           , "fldln2"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDZ             , "fldz"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDCW            , "fldcw"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FLDENV           , "fldenv"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FMUL             , "fmul"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FMULP            , "fmulp"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNCLEX           , "fnclex"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNINIT           , "fninit"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNOP             , "fnop"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNSAVE           , "fnsave"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNSTENV          , "fnstenv"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNSTCW           , "fnstcw"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FNSTSW           , "fnstsw"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FPATAN           , "fpatan"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FPREM            , "fprem"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FPREM1           , "fprem1"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FPTAN            , "fptan"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FRNDINT          , "frndint"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FRSTOR           , "frstor"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSAVE            , "fsave"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSCALE           , "fscale"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSIN             , "fsin"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSINCOS          , "fsincos"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSQRT            , "fsqrt"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FST              , "fst"              , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSTP             , "fstp"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSTCW            , "fstcw"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSTENV           , "fstenv"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSTSW            , "fstsw"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSUB             , "fsub"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSUBP            , "fsubp"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSUBR            , "fsubr"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FSUBRP           , "fsubrp"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FTST             , "ftst"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FUCOM            , "fucom"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FUCOMI           , "fucomi"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FUCOMIP          , "fucomip"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FUCOMP           , "fucomp"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FUCOMPP          , "fucompp"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FWAIT            , "fwait"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FXAM             , "fxam"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FXCH             , "fxch"             , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FXRSTOR          , "fxrstor"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FXSAVE           , "fxsave"           , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FXTRACT          , "fxtract"          , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FYL2X            , "fyl2x"            , 0               , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_FYL2XP1          , "fyl2xp1"          , 0               , 0               , 0               , 0, 0         , 0),
-
+  MAKE_INST(INST_ADC              , "adc"              , I_ALU           , 0               , 0               , 2, 0x0000000A, 0x00000080),
+  MAKE_INST(INST_ADD              , "add"              , I_ALU           , 0               , 0               , 0, 0x00000000, 0x00000080),
   MAKE_INST(INST_ADDPD            , "addpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F58, 0),
   MAKE_INST(INST_ADDPS            , "addps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F58, 0),
   MAKE_INST(INST_ADDSD            , "addsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F58, 0),
   MAKE_INST(INST_ADDSS            , "addss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F58, 0),
   MAKE_INST(INST_ADDSUBPD         , "addsubpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000FD0, 0),
   MAKE_INST(INST_ADDSUBPS         , "addsubps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000FD0, 0),
-  MAKE_INST(INST_AMD_PREFETCH     , "amd_prefetch"     , I_M             , O_MEM           , UNUSED          , 0, 0x00000F0D, 0),
-  MAKE_INST(INST_AMD_PREFETCHW    , "amd_prefetchw"    , I_M             , O_MEM           , UNUSED          , 1, 0x00000F0D, 0),
+  MAKE_INST(INST_AMD_PREFETCH     , "amd_prefetch"     , I_M             , O_MEM           , 0               , 0, 0x00000F0D, 0),
+  MAKE_INST(INST_AMD_PREFETCHW    , "amd_prefetchw"    , I_M             , O_MEM           , 0               , 1, 0x00000F0D, 0),
+  MAKE_INST(INST_AND              , "and"              , I_ALU           , 0               , 0               , 4, 0x00000020, 0x00000080),
   MAKE_INST(INST_ANDNPD           , "andnpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F55, 0),
   MAKE_INST(INST_ANDNPS           , "andnps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F55, 0),
   MAKE_INST(INST_ANDPD            , "andpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F54, 0),
@@ -804,14 +652,28 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_BLENDPS          , "blendps"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A0C, 0),
   MAKE_INST(INST_BLENDVPD         , "blendvpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3815, 0),
   MAKE_INST(INST_BLENDVPS         , "blendvps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3814, 0),
-  MAKE_INST(INST_CLFLUSH          , "clflush"          , I_M             , O_MEM           , UNUSED          , 7, 0x00000FAE, 0),
+  MAKE_INST(INST_BSWAP            , "bswap"            , I_BSWAP         , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_BTS              , "bts"              , I_RM_R          , 0               , 0               , 0, 0x00000FAB, 0),
+  MAKE_INST(INST_CALL             , "call"             , I_CALL          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_CBW              , "cbw"              , I_EMIT          , 0               , 0               , 0, 0x66000099, 0),
+  MAKE_INST(INST_CDQE             , "cdqe"             , I_EMIT          , 0               , 0               , 0, 0x48000099, 0),
+  MAKE_INST(INST_CLC              , "clc"              , I_EMIT          , 0               , 0               , 0, 0x000000F8, 0),
+  MAKE_INST(INST_CLD              , "cld"              , I_EMIT          , 0               , 0               , 0, 0x000000FC, 0),
+  MAKE_INST(INST_CLFLUSH          , "clflush"          , I_M             , O_MEM           , 0               , 7, 0x00000FAE, 0),
+  MAKE_INST(INST_CMC              , "cmc"              , I_EMIT          , 0               , 0               , 0, 0x000000F5, 0),
+  MAKE_INST(INST_CMOV             , "cmov"             , I_CMOV          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_CMP              , "cmp"              , I_ALU           , 0               , 0               , 7, 0x00000038, 0x00000080),
   MAKE_INST(INST_CMPPD            , "cmppd"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x66000FC2, 0),
   MAKE_INST(INST_CMPPS            , "cmpps"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x00000FC2, 0),
   MAKE_INST(INST_CMPSD            , "cmpsd"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0xF2000FC2, 0),
   MAKE_INST(INST_CMPSS            , "cmpss"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0xF3000FC2, 0),
+  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , I_RM_R_BEXT     , 0               , 0               , 0, 0x00000FB0, 0),
+  MAKE_INST(INST_CMPXCHG16B       , "cmpxchg16b"       , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 1 /* RexW */),
+  MAKE_INST(INST_CMPXCHG8B        , "cmpxchg8b"        , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 0),
   MAKE_INST(INST_COMISD           , "comisd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F2F, 0),
   MAKE_INST(INST_COMISS           , "comiss"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F2F, 0),
-  MAKE_INST(INST_CRC32            , "crc32"            , I_R_RM_BEXT     , UNUSED          , UNUSED          , 0, 0xF20F38F0, 0),
+  MAKE_INST(INST_CPUID            , "cpuid"            , I_EMIT          , 0               , 0               , 0, 0x00000FA2, 0),
+  MAKE_INST(INST_CRC32            , "crc32"            , I_R_RM_BEXT     , ToDo            , ToDo            , 0, 0xF20F38F0, 0),
   MAKE_INST(INST_CVTDQ2PD         , "cvtdq2pd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000FE6, 0),
   MAKE_INST(INST_CVTDQ2PS         , "cvtdq2ps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5B, 0),
   MAKE_INST(INST_CVTPD2DQ         , "cvtpd2dq"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000FE6, 0),
@@ -834,34 +696,143 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_CVTTPS2PI        , "cvttps2pi"        , I_MMU_RMI       , O_MM            , O_XMM_MEM       , 0, 0x00000F2C, 0),
   MAKE_INST(INST_CVTTSD2SI        , "cvttsd2si"        , I_MMU_RMI       , O_G32_64        , O_XMM_MEM       , 0, 0xF2000F2C, 0),
   MAKE_INST(INST_CVTTSS2SI        , "cvttss2si"        , I_MMU_RMI       , O_G32_64        , O_XMM_MEM       , 0, 0xF3000F2C, 0),
+  MAKE_INST(INST_CWDE             , "cwde"             , I_EMIT          , 0               , 0               , 0, 0x00000099, 0),
+  MAKE_INST(INST_DAA              , "daa"              , I_EMIT          , 0               , 0               , 0, 0x00000027, 0),
+  MAKE_INST(INST_DAS              , "das"              , I_EMIT          , 0               , 0               , 0, 0x0000002F, 0),
+  MAKE_INST(INST_DEC              , "dec"              , I_INC_DEC       , 0               , 0               , 1, 0x00000048, 0x000000FE),
+  MAKE_INST(INST_DIV              , "div"              , I_RM_BEXT       , 0               , 0               , 6, 0x000000F6, 0),
   MAKE_INST(INST_DIVPD            , "divpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5E, 0),
   MAKE_INST(INST_DIVPS            , "divps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5E, 0),
   MAKE_INST(INST_DIVSD            , "divsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5E, 0),
   MAKE_INST(INST_DIVSS            , "divss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F5E, 0),
   MAKE_INST(INST_DPPD             , "dppd"             , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A41, 0),
   MAKE_INST(INST_DPPS             , "dpps"             , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A40, 0),
-  MAKE_INST(INST_EMMS             , "emms"             , I_EMIT          , UNUSED          , UNUSED          , 0, 0x00000F77, 0),
+  MAKE_INST(INST_EMMS             , "emms"             , I_EMIT          , 0               , 0               , 0, 0x00000F77, 0),
   MAKE_INST(INST_EXTRACTPS        , "extractps"        , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A17, 0),
-  MAKE_INST(INST_FISTTP           , "fisttp"           , ToDo            , ToDo            , ToDo            , 0, ToDo      , 0),
+  MAKE_INST(INST_F2XM1            , "f2xm1"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F0, 0),
+  MAKE_INST(INST_FABS             , "fabs"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E1, 0),
+  MAKE_INST(INST_FADD             , "fadd"             , I_X87_FPU       , 0               , 0               , 0, 0xD8C0DCC0, 0),
+  MAKE_INST(INST_FADDP            , "faddp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEC0, 0),
+  MAKE_INST(INST_FBLD             , "fbld"             , I_M             , O_MEM           , 0               , 4, 0x000000DF, 0),
+  MAKE_INST(INST_FBSTP            , "fbstp"            , I_M             , O_MEM           , 0               , 6, 0x000000DF, 0),
+  MAKE_INST(INST_FCHS             , "fchs"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E0, 0),
+  MAKE_INST(INST_FCLEX            , "fclex"            , I_EMIT          , 0               , 0               , 0, 0x9B00DBE2, 0),
+  MAKE_INST(INST_FCMOVB           , "fcmovb"           , I_X87_STI       , 0               , 0               , 0, 0x0000DAC0, 0),
+  MAKE_INST(INST_FCMOVBE          , "fcmovbe"          , I_X87_STI       , 0               , 0               , 0, 0x0000DAD0, 0),
+  MAKE_INST(INST_FCMOVE           , "fcmove"           , I_X87_STI       , 0               , 0               , 0, 0x0000DAC8, 0),
+  MAKE_INST(INST_FCMOVNB          , "fcmovnb"          , I_X87_STI       , 0               , 0               , 0, 0x0000DBC0, 0),
+  MAKE_INST(INST_FCMOVNBE         , "fcmovnbe"         , I_X87_STI       , 0               , 0               , 0, 0x0000DBD0, 0),
+  MAKE_INST(INST_FCMOVNE          , "fcmovne"          , I_X87_STI       , 0               , 0               , 0, 0x0000DBC8, 0),
+  MAKE_INST(INST_FCMOVNU          , "fcmovnu"          , I_X87_STI       , 0               , 0               , 0, 0x0000DBD8, 0),
+  MAKE_INST(INST_FCMOVU           , "fcmovu"           , I_X87_STI       , 0               , 0               , 0, 0x0000DAD8, 0),
+  MAKE_INST(INST_FCOM             , "fcom"             , I_X87_FPU       , 0               , 0               , 2, 0xD8DCD0D0, 0),
+  MAKE_INST(INST_FCOMI            , "fcomi"            , I_X87_STI       , 0               , 0               , 0, 0x0000DBF0, 0),
+  MAKE_INST(INST_FCOMIP           , "fcomip"           , I_X87_STI       , 0               , 0               , 0, 0x0000DFF0, 0),
+  MAKE_INST(INST_FCOMP            , "fcomp"            , I_X87_FPU       , 0               , 0               , 3, 0xD8DCD8D8, 0),
+  MAKE_INST(INST_FCOMPP           , "fcompp"           , I_EMIT          , 0               , 0               , 0, 0x0000DED9, 0),
+  MAKE_INST(INST_FCOS             , "fcos"             , I_EMIT          , 0               , 0               , 0, 0x0000D9FF, 0),
+  MAKE_INST(INST_FDECSTP          , "fdecstp"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F6, 0),
+  MAKE_INST(INST_FDIV             , "fdiv"             , I_X87_FPU       , 0               , 0               , 6, 0xD8DCF0F8, 0),
+  MAKE_INST(INST_FDIVP            , "fdivp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEF8, 0),
+  MAKE_INST(INST_FDIVR            , "fdivr"            , I_X87_FPU       , 0               , 0               , 7, 0xD8DCF8F0, 0),
+  MAKE_INST(INST_FDIVRP           , "fdivrp"           , I_X87_STI       , 0               , 0               , 0, 0x0000DEF0, 0),
+  MAKE_INST(INST_FFREE            , "ffree"            , I_X87_STI       , 0               , 0               , 0, 0x0000DDC0, 0),
+  MAKE_INST(INST_FIADD            , "fiadd"            , I_X87_MEM       , O_FM_2_4        , 0               , 0, 0xDEDA0000, 0),
+  MAKE_INST(INST_FICOM            , "ficom"            , I_X87_MEM       , O_FM_2_4        , 0               , 2, 0xDEDA0000, 0),
+  MAKE_INST(INST_FICOMP           , "ficomp"           , I_X87_MEM       , O_FM_2_4        , 0               , 3, 0xDEDA0000, 0),
+  MAKE_INST(INST_FIDIV            , "fidiv"            , I_X87_MEM       , O_FM_2_4        , 0               , 6, 0xDEDA0000, 0),
+  MAKE_INST(INST_FIDIVR           , "fidivr"           , I_X87_MEM       , O_FM_2_4        , 0               , 7, 0xDEDA0000, 0),
+  MAKE_INST(INST_FILD             , "fild"             , I_X87_MEM       , O_FM_2_4_8      , 0               , 0, 0xDFDBDF05, 0),
+  MAKE_INST(INST_FIMUL            , "fimul"            , I_X87_MEM       , O_FM_2_4        , 0               , 1, 0xDEDA0000, 0),
+  MAKE_INST(INST_FINCSTP          , "fincstp"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F7, 0),
+  MAKE_INST(INST_FINIT            , "finit"            , I_EMIT          , 0               , 0               , 0, 0x9B00DBE3, 0),
+  MAKE_INST(INST_FIST             , "fist"             , I_X87_MEM       , O_FM_2_4        , 0               , 2, 0xDFDB0000, 0),
+  MAKE_INST(INST_FISTP            , "fistp"            , I_X87_MEM       , O_FM_2_4_8      , 0               , 3, 0xDFDBDF07, 0),
+  MAKE_INST(INST_FISTTP           , "fisttp"           , I_X87_MEM       , O_FM_2_4_8      , 0               , 1, 0xDFDBDD01, 0),
+  MAKE_INST(INST_FISUB            , "fisub"            , I_X87_MEM       , O_FM_2_4        , 0               , 4, 0xDEDA0000, 0),
+  MAKE_INST(INST_FISUBR           , "fisubr"           , I_X87_MEM       , O_FM_2_4        , 0               , 5, 0xDEDA0000, 0),
+  MAKE_INST(INST_FLD              , "fld"              , I_X87_MEM_STI   , O_FM_4_8_10     , 0               , 0, 0x00D9DD00, 0xD9C0DB05),
+  MAKE_INST(INST_FLD1             , "fld1"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E8, 0),
+  MAKE_INST(INST_FLDCW            , "fldcw"            , I_M             , O_MEM           , 0               , 5, 0x000000D9, 0),
+  MAKE_INST(INST_FLDENV           , "fldenv"           , I_M             , O_MEM           , 0               , 4, 0x000000D9, 0),
+  MAKE_INST(INST_FLDL2E           , "fldl2e"           , I_EMIT          , 0               , 0               , 0, 0x0000D9EA, 0),
+  MAKE_INST(INST_FLDL2T           , "fldl2t"           , I_EMIT          , 0               , 0               , 0, 0x0000D9E9, 0),
+  MAKE_INST(INST_FLDLG2           , "fldlg2"           , I_EMIT          , 0               , 0               , 0, 0x0000D9EC, 0),
+  MAKE_INST(INST_FLDLN2           , "fldln2"           , I_EMIT          , 0               , 0               , 0, 0x0000D9ED, 0),
+  MAKE_INST(INST_FLDPI            , "fldpi"            , I_EMIT          , 0               , 0               , 0, 0x0000D9EB, 0),
+  MAKE_INST(INST_FLDZ             , "fldz"             , I_EMIT          , 0               , 0               , 0, 0x0000D9EE, 0),
+  MAKE_INST(INST_FMUL             , "fmul"             , I_X87_FPU       , 0               , 0               , 1, 0xD8DCC8C8, 0),
+  MAKE_INST(INST_FMULP            , "fmulp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEC8, 0),
+  MAKE_INST(INST_FNCLEX           , "fnclex"           , I_EMIT          , 0               , 0               , 0, 0x0000DBE2, 0),
+  MAKE_INST(INST_FNINIT           , "fninit"           , I_EMIT          , 0               , 0               , 0, 0x0000DBE3, 0),
+  MAKE_INST(INST_FNOP             , "fnop"             , I_EMIT          , 0               , 0               , 0, 0x0000D9D0, 0),
+  MAKE_INST(INST_FNSAVE           , "fnsave"           , I_M             , O_MEM           , 0               , 6, 0x000000DD, 0),
+  MAKE_INST(INST_FNSTCW           , "fnstcw"           , I_M             , O_MEM           , 0               , 7, 0x000000D9, 0),
+  MAKE_INST(INST_FNSTENV          , "fnstenv"          , I_M             , O_MEM           , 0               , 6, 0x000000D9, 0),
+  MAKE_INST(INST_FNSTSW           , "fnstsw"           , I_X87_FSTSW     , O_MEM           , 0               , 7, 0x000000DD, 0x0000DFE0),
+  MAKE_INST(INST_FPATAN           , "fpatan"           , I_EMIT          , 0               , 0               , 0, 0x0000D9F3, 0),
+  MAKE_INST(INST_FPREM            , "fprem"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F8, 0),
+  MAKE_INST(INST_FPREM1           , "fprem1"           , I_EMIT          , 0               , 0               , 0, 0x0000D9F5, 0),
+  MAKE_INST(INST_FPTAN            , "fptan"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F2, 0),
+  MAKE_INST(INST_FRNDINT          , "frndint"          , I_EMIT          , 0               , 0               , 0, 0x0000D9FC, 0),
+  MAKE_INST(INST_FRSTOR           , "frstor"           , I_M             , O_MEM           , 0               , 4, 0x000000DD, 0),
+  MAKE_INST(INST_FSAVE            , "fsave"            , I_M             , O_MEM           , 0               , 6, 0x9B0000DD, 0),
+  MAKE_INST(INST_FSCALE           , "fscale"           , I_EMIT          , 0               , 0               , 0, 0x0000D9FD, 0),
+  MAKE_INST(INST_FSIN             , "fsin"             , I_EMIT          , 0               , 0               , 0, 0x0000D9FE, 0),
+  MAKE_INST(INST_FSINCOS          , "fsincos"          , I_EMIT          , 0               , 0               , 0, 0x0000D9FB, 0),
+  MAKE_INST(INST_FSQRT            , "fsqrt"            , I_EMIT          , 0               , 0               , 0, 0x0000D9FA, 0),
+  MAKE_INST(INST_FST              , "fst"              , I_X87_MEM_STI   , O_FM_4_8        , 0               , 2, 0x00D9DD02, 0xDDD00000),
+  MAKE_INST(INST_FSTCW            , "fstcw"            , I_M             , O_MEM           , 0               , 7, 0x9B0000D9, 0),
+  MAKE_INST(INST_FSTENV           , "fstenv"           , I_M             , O_MEM           , 0               , 6, 0x9B0000D9, 0),
+  MAKE_INST(INST_FSTP             , "fstp"             , I_X87_MEM_STI   , O_FM_4_8_10     , 0               , 3, 0x00D9DD03, 0xDDD8DB07),
+  MAKE_INST(INST_FSTSW            , "fstsw"            , I_X87_FSTSW     , O_MEM           , 0               , 7, 0x9B0000DD, 0x9B00DFE0),
+  MAKE_INST(INST_FSUB             , "fsub"             , I_X87_FPU       , 0               , 0               , 4, 0xD8DCE0E8, 0),
+  MAKE_INST(INST_FSUBP            , "fsubp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEE8, 0),
+  MAKE_INST(INST_FSUBR            , "fsubr"            , I_X87_FPU       , 0               , 0               , 0, 0xD8DCE8E0, 0),
+  MAKE_INST(INST_FSUBRP           , "fsubrp"           , I_X87_STI       , 0               , 0               , 0, 0x0000DEE0, 0),
+  MAKE_INST(INST_FTST             , "ftst"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E4, 0),
+  MAKE_INST(INST_FUCOM            , "fucom"            , I_X87_STI       , 0               , 0               , 0, 0x0000DDE0, 0),
+  MAKE_INST(INST_FUCOMI           , "fucomi"           , I_X87_STI       , 0               , 0               , 0, 0x0000DBE8, 0),
+  MAKE_INST(INST_FUCOMIP          , "fucomip"          , I_X87_STI       , 0               , 0               , 0, 0x0000DFE8, 0),
+  MAKE_INST(INST_FUCOMP           , "fucomp"           , I_X87_STI       , 0               , 0               , 0, 0x0000DDE8, 0),
+  MAKE_INST(INST_FUCOMPP          , "fucompp"          , I_EMIT          , 0               , 0               , 0, 0x0000DAE9, 0),
+  MAKE_INST(INST_FWAIT            , "fwait"            , I_EMIT          , 0               , 0               , 0, 0x000000DB, 0),
+  MAKE_INST(INST_FXAM             , "fxam"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E5, 0),
+  MAKE_INST(INST_FXCH             , "fxch"             , I_X87_STI       , 0               , 0               , 0, 0x0000D9C9, 0),
+  MAKE_INST(INST_FXRSTOR          , "fxrstor"          , I_M             , 0               , 0               , 1, 0x00000FAE, 0),
+  MAKE_INST(INST_FXSAVE           , "fxsave"           , I_M             , 0               , 0               , 0, 0x00000FAE, 0),
+  MAKE_INST(INST_FXTRACT          , "fxtract"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F4, 0),
+  MAKE_INST(INST_FYL2X            , "fyl2x"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F1, 0),
+  MAKE_INST(INST_FYL2XP1          , "fyl2xp1"          , I_EMIT          , 0               , 0               , 0, 0x0000D9F9, 0),
   MAKE_INST(INST_HADDPD           , "haddpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F7C, 0),
   MAKE_INST(INST_HADDPS           , "haddps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F7C, 0),
   MAKE_INST(INST_HSUBPD           , "hsubpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F7D, 0),
   MAKE_INST(INST_HSUBPS           , "hsubps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F7D, 0),
+  MAKE_INST(INST_IDIV             , "idiv"             , I_RM_BEXT       , 0               , 0               , 7, 0x000000F6, 0),
+  MAKE_INST(INST_IMUL             , "imul"             , I_IMUL          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_INC              , "inc"              , I_INC_DEC       , 0               , 0               , 0, 0x00000040, 0x000000FE),
+  MAKE_INST(INST_INT3             , "int3"             , I_EMIT          , 0               , 0               , 0, 0x000000CC, 0),
+  MAKE_INST(INST_J                , "j"                , I_J             , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_JMP              , "jmp"              , I_JMP           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_JMP_PTR          , "jmp"              , I_JMP_PTR       , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_LDDQU            , "lddqu"            , I_MMU_RMI       , O_XMM           , O_MEM           , 0, 0xF2000FF0, 0),
-  MAKE_INST(INST_LDMXCSR          , "ldmxcsr"          , I_M             , UNUSED          , UNUSED          , 2, 0x00000FAE, 0),
-  MAKE_INST(INST_LFENCE           , "lfence"           , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000FAEE8, 0),
+  MAKE_INST(INST_LDMXCSR          , "ldmxcsr"          , I_M             , O_MEM           , 0               , 2, 0x00000FAE, 0),
+  MAKE_INST(INST_LEA              , "lea"              , I_LEA           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_LFENCE           , "lfence"           , I_EMIT          , 0               , 0               , 0, 0x000FAEE8, 0),
+  MAKE_INST(INST_LOCK             , "lock"             , I_EMIT          , 0               , 0               , 0, 0x000000F0, 0),
   MAKE_INST(INST_MASKMOVDQU       , "maskmovdqu"       , I_MMU_RMI       , O_XMM           , O_XMM           , 0, 0x66000F57, 0),
   MAKE_INST(INST_MASKMOVQ         , "maskmovq"         , I_MMU_RMI       , O_MM            , O_MM            , 0, 0x00000FF7, 0),
   MAKE_INST(INST_MAXPD            , "maxpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5F, 0),
   MAKE_INST(INST_MAXPS            , "maxps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5F, 0),
   MAKE_INST(INST_MAXSD            , "maxsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5F, 0),
   MAKE_INST(INST_MAXSS            , "maxss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F5F, 0),
-  MAKE_INST(INST_MFENCE           , "mfence"           , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000FAEF0, 0),
+  MAKE_INST(INST_MFENCE           , "mfence"           , I_EMIT          , 0               , 0               , 0, 0x000FAEF0, 0),
   MAKE_INST(INST_MINPD            , "minpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5D, 0),
   MAKE_INST(INST_MINPS            , "minps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5D, 0),
   MAKE_INST(INST_MINSD            , "minsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5D, 0),
   MAKE_INST(INST_MINSS            , "minss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F5D, 0),
-  MAKE_INST(INST_MONITOR          , "monitor"          , I_EMIT          , UNUSED          , UNUSED          , 0, 0x000F01C8, 0),
+  MAKE_INST(INST_MONITOR          , "monitor"          , I_EMIT          , 0               , 0               , 0, 0x000F01C8, 0),
+  MAKE_INST(INST_MOV              , "mov"              , I_MOV           , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MOVAPD           , "movapd"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x66000F28, 0x66000F29),
   MAKE_INST(INST_MOVAPS           , "movaps"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x00000F28, 0x00000F29),
   MAKE_INST(INST_MOVBE            , "movbe"            , I_MOVBE         ,O_G16_32_64|O_MEM,O_G16_32_64|O_MEM, 0, 0x000F38F0, 0x000F38F1),
@@ -890,14 +861,23 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_MOVSHDUP         , "movshdup"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F16, 0),
   MAKE_INST(INST_MOVSLDUP         , "movsldup"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F12, 0),
   MAKE_INST(INST_MOVSS            , "movss"            , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0xF3000F10, 0xF3000F11),
+  MAKE_INST(INST_MOVSX            , "movsx"            , I_MOVSX         , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_MOVSXD           , "movsxd"           , I_MOVSXD        , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MOVUPD           , "movupd"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x66000F10, 0x66000F11),
   MAKE_INST(INST_MOVUPS           , "movups"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x00000F10, 0x00000F11),
+  MAKE_INST(INST_MOVZX            , "movzx"            , I_MOVZX         , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_MOV_PTR          , "mov"              , I_MOV_PTR       , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MPSADBW          , "mpsadbw"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A42, 0),
+  MAKE_INST(INST_MUL              , "mul"              , I_RM_BEXT       , 0               , 0               , 4, 0x000000F6, 0),
   MAKE_INST(INST_MULPD            , "mulpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F59, 0),
   MAKE_INST(INST_MULPS            , "mulps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F59, 0),
   MAKE_INST(INST_MULSD            , "mulsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F59, 0),
   MAKE_INST(INST_MULSS            , "mulss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F59, 0),
   MAKE_INST(INST_MWAIT            , "mwait"            , I_EMIT          , 0               , 0               , 0, 0x000F01C9, 0),
+  MAKE_INST(INST_NEG              , "neg"              , I_RM_BEXT       , 0               , 0               , 3, 0x000000F6, 0),
+  MAKE_INST(INST_NOP              , "nop"              , I_EMIT          , 0               , 0               , 0, 0x00000090, 0),
+  MAKE_INST(INST_NOT              , "not"              , I_RM_BEXT       , 0               , 0               , 2, 0x000000F6, 0),
+  MAKE_INST(INST_OR               , "or"               , I_ALU           , 0               , 0               , 1, 0x00000008, 0x00000080),
   MAKE_INST(INST_ORPD             , "orpd"             , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F56, 0),
   MAKE_INST(INST_ORPS             , "orps"             , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F56, 0),
   MAKE_INST(INST_PABSB            , "pabsb"            , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F381C, 0),
@@ -983,7 +963,10 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PMULLD           , "pmulld"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3840, 0),
   MAKE_INST(INST_PMULLW           , "pmullw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FD5, 0),
   MAKE_INST(INST_PMULUDQ          , "pmuludq"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF4, 0),
-  MAKE_INST(INST_POPCNT           , "popcnt"           , I_R_RM          , UNUSED          , UNUSED          , 0, 0xF3000FB8, 0),
+  MAKE_INST(INST_POP              , "pop"              , I_POP           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_POPAD            , "popad"            , I_EMIT          , 0               , 0               , 0, 0x00000061, 0),
+  MAKE_INST(INST_POPCNT           , "popcnt"           , I_R_RM          , 0               , 0               , 0, 0xF3000FB8, 0),
+  MAKE_INST(INST_POPFD            , "popfd"            , I_EMIT          , 0               , 0               , 0, 0x0000009D, 0),
   MAKE_INST(INST_POR              , "por"              , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FEB, 0),
   MAKE_INST(INST_PREFETCH         , "prefetch"         , I_MMU_PREFETCH  , O_MEM           , O_IMM           , 0, 0         , 0),
   MAKE_INST(INST_PSADBW           , "psadbw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF6, 0),
@@ -1022,38 +1005,62 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PUNPCKLDQ        , "punpckldq"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F62, 0),
   MAKE_INST(INST_PUNPCKLQDQ       , "punpcklqdq"       , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F6C, 0),
   MAKE_INST(INST_PUNPCKLWD        , "punpcklwd"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F61, 0),
+  MAKE_INST(INST_PUSH             , "push"             , I_PUSH          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_PUSHAD           , "pushad"           , I_EMIT          , 0               , 0               , 0, 0x00000060, 0),
+  MAKE_INST(INST_PUSHFD           , "pushfd"           , I_EMIT          , 0               , 0               , 0, 0x0000009C, 0),
   MAKE_INST(INST_PXOR             , "pxor"             , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FEF, 0),
+  MAKE_INST(INST_RCL              , "rcl"              , I_ROT           , 0               , 0               , 2, 0         , 0),
   MAKE_INST(INST_RCPPS            , "rcpps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F53, 0),
   MAKE_INST(INST_RCPSS            , "rcpss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F53, 0),
+  MAKE_INST(INST_RCR              , "rcr"              , I_ROT           , 0               , 0               , 3, 0         , 0),
+  MAKE_INST(INST_RDTSC            , "rdtsc"            , I_EMIT          , 0               , 0               , 0, 0x00000F31, 0),
+  MAKE_INST(INST_RDTSCP           , "rdtscp"           , I_EMIT          , 0               , 0               , 0, 0x000F01F9, 0),
+  MAKE_INST(INST_RET              , "ret"              , I_RET           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_ROL              , "rol"              , I_ROT           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_ROR              , "ror"              , I_ROT           , 0               , 0               , 1, 0         , 0),
   MAKE_INST(INST_ROUNDPD          , "roundpd"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A09, 0),
   MAKE_INST(INST_ROUNDPS          , "roundps"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A08, 0),
   MAKE_INST(INST_ROUNDSD          , "roundsd"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A0B, 0),
   MAKE_INST(INST_ROUNDSS          , "roundss"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A0A, 0),
   MAKE_INST(INST_RSQRTPS          , "rsqrtps"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F52, 0),
   MAKE_INST(INST_RSQRTSS          , "rsqrtss"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F52, 0),
+  MAKE_INST(INST_SAHF             , "sahf"             , I_EMIT          , 0               , 0               , 0, 0x0000009E, 0),
+  MAKE_INST(INST_SAL              , "sal"              , I_ROT           , 0               , 0               , 4, 0         , 0),
+  MAKE_INST(INST_SAR              , "sar"              , I_ROT           , 0               , 0               , 7, 0         , 0),
+  MAKE_INST(INST_SBB              , "sbb"              , I_ALU           , 0               , 0               , 3, 0x00000018, 0x00000080),
   MAKE_INST(INST_SFENCE           , "sfence"           , I_M             , O_MEM           , 0               , 7, 0x00000FAE, 0),
+  MAKE_INST(INST_SHL              , "shl"              , I_ROT           , 0               , 0               , 4, 0         , 0),
+  MAKE_INST(INST_SHLD             , "shld"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FA4, 0),
+  MAKE_INST(INST_SHR              , "shr"              , I_ROT           , 0               , 0               , 5, 0         , 0),
+  MAKE_INST(INST_SHRD             , "shrd"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FAC, 0),
   MAKE_INST(INST_SHUFPS           , "shufps"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x00000FC6, 0),
   MAKE_INST(INST_SQRTPD           , "sqrtpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F51, 0),
   MAKE_INST(INST_SQRTPS           , "sqrtps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F51, 0),
   MAKE_INST(INST_SQRTSD           , "sqrtsd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F51, 0),
   MAKE_INST(INST_SQRTSS           , "sqrtss"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F51, 0),
+  MAKE_INST(INST_STC              , "stc"              , I_EMIT          , 0               , 0               , 0, 0x000000F9, 0),
+  MAKE_INST(INST_STD              , "std"              , I_EMIT          , 0               , 0               , 0, 0x000000FD, 0),
   MAKE_INST(INST_STMXCSR          , "stmxcsr"          , I_M             , O_MEM           , 0               , 3, 0x00000FAE, 0),
+  MAKE_INST(INST_SUB              , "sub"              , I_ALU           , 0               , 0               , 5, 0x00000028, 0x00000080),
   MAKE_INST(INST_SUBPD            , "subpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5C, 0),
   MAKE_INST(INST_SUBPS            , "subps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5C, 0),
   MAKE_INST(INST_SUBSD            , "subsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5C, 0),
   MAKE_INST(INST_SUBSS            , "subss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F51, 0),
+  MAKE_INST(INST_TEST             , "test"             , I_TEST          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_UCOMISD          , "ucomisd"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F2E, 0),
   MAKE_INST(INST_UCOMISS          , "ucomiss"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F2E, 0),
+  MAKE_INST(INST_UD2              , "ud2"              , I_EMIT          , 0               , 0               , 0, 0x00000F0B, 0),
   MAKE_INST(INST_UNPCKHPD         , "unpckhpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F15, 0),
   MAKE_INST(INST_UNPCKHPS         , "unpckhps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F15, 0),
   MAKE_INST(INST_UNPCKLPD         , "unpcklpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F14, 0),
   MAKE_INST(INST_UNPCKLPS         , "unpcklps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F14, 0),
+  MAKE_INST(INST_XADD             , "xadd"             , I_RM_R_BEXT     , 0               , 0               , 0, 0x00000FC0, 0),
+  MAKE_INST(INST_XCHG             , "xchg"             , I_XCHG          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_XOR              , "xor"              , I_ALU           , 0               , 0               , 6, 0x00000030, 0x00000080),
   MAKE_INST(INST_XORPD            , "xorpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F57, 0),
   MAKE_INST(INST_XORPS            , "xorps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F57, 0)
 };
 
-#undef __________
-#undef _______________
 #undef MAKE_INST
 
 void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
@@ -1837,6 +1844,120 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           o2->isRegType(REG_GPQ),
           operand_cast<const Register&>(*o2).code(),
           operand_cast<const Mem&>(*o1));
+        return;
+      }
+
+      break;
+    }
+
+    case I_X87_FPU:
+    {
+      if (o1->isRegType(REG_X87))
+      {
+        UInt8 i1 = operand_cast<const X87Register&>(*o1).index();
+        UInt8 i2 = 0;
+
+        if (code != INST_FCOM && code != INST_FCOMP)
+        {
+          if (!o2->isRegType(REG_X87)) goto illegalInstruction;
+          i2 = operand_cast<const X87Register&>(*o2).index();
+        }
+        else if (i1 != 0 && i2 != 0)
+        {
+          goto illegalInstruction;
+        }
+
+        _emitByte(i1 == 0
+          ? ((id.opCode1 & 0xFF000000) >> 24) 
+          : ((id.opCode1 & 0x00FF0000) >> 16));
+        _emitByte(i1 == 0 
+          ? ((id.opCode1 & 0x0000FF00) >>  8) + i2
+          : ((id.opCode1 & 0x000000FF)      ) + i1);
+        return;
+      }
+
+      if (o1->isMem() && (o1->size() == 4 || o1->size() == 8) && o2->isNone())
+      {
+        _emitByte(o1->size() == 4 
+          ? ((id.opCode1 & 0xFF000000) >> 24) 
+          : ((id.opCode1 & 0x00FF0000) >> 16));
+        _emitModM(id.opCodeR, operand_cast<const Mem&>(*o1));
+        return;
+      }
+
+      break;
+    }
+
+    case I_X87_STI:
+    {
+      if (o1->isRegType(REG_X87))
+      {
+        UInt8 i = operand_cast<const X87Register&>(*o1).index();
+        _emitByte((UInt8)((id.opCode1 & 0x0000FF00) >> 8));
+        _emitByte((UInt8)((id.opCode1 & 0x000000FF) + i));
+        return;
+      }
+      break;
+    }
+
+    case I_X87_FSTSW:
+    {
+      if (o1->isReg() && 
+          operand_cast<const BaseReg&>(*o1).type() <= REG_GPQ && 
+          operand_cast<const BaseReg&>(*o1).index())
+      {
+        _emitOpCode(id.opCode2);
+        return;
+      }
+
+      if (o1->isMem())
+      {
+        _emitX86RM(id.opCode1, 0, 0, id.opCodeR, operand_cast<const Mem&>(*o1));
+        return;
+      }
+
+      break;
+    }
+
+    case I_X87_MEM_STI:
+    {
+      if (o1->isRegType(REG_X87))
+      {
+        _emitByte((UInt8)((id.opCode2 & 0xFF000000) >> 24));
+        _emitByte((UInt8)((id.opCode2 & 0x00FF0000) >> 16) + 
+          operand_cast<const X87Register&>(*o1).index());
+        return;
+      }
+
+      // ... fall through to I_X87_MEM ...
+    }
+
+    case I_X87_MEM:
+    {
+      if (!o1->isMem()) goto illegalInstruction;
+
+      UInt8 opCode = 0x00, mod = 0;
+
+      if (o1->size() == 2 && id.o1Flags & O_FM_2)
+      {
+        opCode = (UInt8)((id.opCode1 & 0xFF000000) >> 24); 
+        mod    = id.opCodeR;
+      }
+      if (o1->size() == 4 && id.o1Flags & O_FM_4)
+      {
+        opCode = (UInt8)((id.opCode1 & 0x00FF0000) >> 16); 
+        mod    = id.opCodeR;
+      }
+      if (o1->size() == 8 && id.o1Flags & O_FM_8)
+      {
+        opCode = (UInt8)((id.opCode1 & 0x0000FF00) >>  8); 
+        mod    = (UInt8)((id.opCode1 & 0x000000FF)      );
+      }
+
+      if (opCode)
+      {
+        _emitByte(opCode);
+        _emitModM(mod, operand_cast<const Mem&>(*o1));
         return;
       }
 

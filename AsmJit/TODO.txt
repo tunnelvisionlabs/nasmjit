@@ -1,10 +1,5 @@
 TODOs:
 
-[x] Implement immediate relocations
-[x] Add methods to return generated code() and to copy code to other location
-    (will be used together with relative-relocations)
-    Method name will be named relocCode()
-[x] Add method to set current offset (Suggested by Mike).
 [ ] Add AsmJit::Compiler class
 [ ] Add SSE4a instruction set (AMD).
 [ ] Add AMD 3dNow.

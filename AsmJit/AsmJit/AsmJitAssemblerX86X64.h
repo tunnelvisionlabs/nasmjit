@@ -461,7 +461,7 @@ struct ASMJIT_API Assembler : public Serializer
   // [Assembler Emitters]
   //
   // These emitters are not protecting buffer from overrun, this must be 
-  // done for each instruction by this:
+  // done is _emitX86() methods by:
   //   if (!ensureSpace()) return;
   // -------------------------------------------------------------------------
 

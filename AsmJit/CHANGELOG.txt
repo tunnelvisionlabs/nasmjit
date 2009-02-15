@@ -1,9 +1,21 @@
-2009-09-08
+2009-02-15
+- Complete rewrite
+- Added Serializer
+- Added typesafe operands, introduced new operand Relocable
+- Assembler uses Serializer to serialize instructions and only overrides 
+  _emitX86() method to emit binary code.
+
+2009-02-10
+- Released 0.5.1 bugfix release
+- Fixed movdqa(), movdqu() bugs
+- Added new register constructors (they are used by Compiler)
+
+2009-02-08
 - Released 0.5 (should be last stable release before Compiler support)
 - Fixed few GCC issued, fixed one broken opcode
 - Code refactorization, X86 to Assembler, refactorized header files
 
-2009-09-08
+2009-02-08
 - Relocations, toOffset(), released 0.4
 
 2009-02-03
