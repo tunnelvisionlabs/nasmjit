@@ -38,6 +38,11 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Util
 //! @{
 
+//! @brief Cast used to cast pointer to function. It's like reinterpret_cast<>, 
+//! but uses internally C style cast to work in MinGW.
+template<typename T, typename Z>
+static inline T function_cast(Z* p) { return (T)p; }
+
 //! @brief Returns @c true if a given integer @a x is signed 8 bit integer
 static inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
 //! @brief Returns @c true if a given integer @a x is unsigned 8 bit integer
@@ -49,9 +54,23 @@ static inline bool isInt16(SysInt x) { return x >= -32768 && x <= 32767; }
 static inline bool isUInt16(SysInt x) { return x >= 0 && x <= 65535; }
 
 //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
-static inline bool isInt32(SysInt x) { return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647); }
+static inline bool isInt32(SysInt x)
+{
+#if defined(ASMJIT_X86)
+  return true;
+#else
+  return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647);
+#endif
+}
 //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
-static inline bool isUInt32(SysInt x) { return x >= 0 && x <= ASMJIT_INT64_C(4294967295); }
+static inline bool isUInt32(SysInt x)
+{
+#if defined(ASMJIT_X86)
+  return x >= 0;
+#else
+  return x >= 0 && x <= ASMJIT_INT64_C(4294967295);
+#endif
+}
 
 //! @brief used to cast float to 32 bit integer and vica versa.
 //!

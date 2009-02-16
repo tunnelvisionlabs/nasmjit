@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
   a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
-  int result = reinterpret_cast<MyFn>(vmem)();
+  int result = function_cast<MyFn>(vmem)();
   printf("Result from jit function: %d\n", result);
 
   // Memory should be freed, but use VM::free() to do that.

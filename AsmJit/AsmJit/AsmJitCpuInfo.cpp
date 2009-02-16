@@ -102,10 +102,8 @@ void cpuid(UInt32 in, CpuId* out)
 
 #elif defined(__GNUC__)
 
-# if defined(CORE_ARCH_X86)
-// Inline cpuid instruction.  In PIC compilations, %ebx contains the address
-// of the global offset table.  To avoid breaking such executables, this code
-// must preserve that register's value across cpuid instructions.
+// Note, need to preserve ebx/rbx register!
+# if defined(ASMJIT_X86)
 #  define __mycpuid(a, b, c, d, inp) \
   asm ("mov %%ebx, %%edi\n"    \
        "cpuid\n"               \

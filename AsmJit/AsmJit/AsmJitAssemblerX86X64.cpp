@@ -481,10 +481,7 @@ void Assembler::overwrite(const Relocable& relocable)
 // [AsmJit::Assembler - Abstract Emitters]
 // ----------------------------------------------------------------------------
 
-#define ASMJIT_DEBUG_INSTRUCTION_MAP
-
-// Used for NULL operands in _emitX86() function
-static const Operand::GenData none = { OP_NONE, 0, 0xFF, 0xFF };
+// #define ASMJIT_DEBUG_INSTRUCTION_MAP
 
 // Instruction description
 struct InstructionDescription
@@ -1096,13 +1093,11 @@ static const InstructionDescription x86instructions[] =
 
 void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
+  // Operands can't be non null, OP_NONE must be used instead
+  ASMJIT_ASSERT(o1 && o2 && o3);
+
   // Check for buffer space (and grow if needed).
   if (!ensureSpace()) return;
-
-  // Set NULL operators to OP_NONE
-  if (!o1) o1 = reinterpret_cast<const Operand*>(&none);
-  if (!o2) o2 = reinterpret_cast<const Operand*>(&none);
-  if (!o3) o3 = reinterpret_cast<const Operand*>(&none);
 
   if (code >= _INST_COUNT) return;
   const InstructionDescription& id = x86instructions[code];

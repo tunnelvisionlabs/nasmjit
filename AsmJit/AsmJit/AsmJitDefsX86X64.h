@@ -823,63 +823,17 @@ struct RelocInfo
   UInt16 data;
 };
 
-enum _MakeReg { MakeReg = 0 };
-enum _MakeMem { MakeMem = 0 };
-enum _MakeImm { MakeImm = 0 };
+struct _DontInitialize {};
+struct _Initialize {};
 
 //! @brief Operand, abstract class for register, memory location and immediate 
 //! value.
 struct Operand
 {
-  inline Operand()
-  { memset(this, 0, sizeof(Operand)); }
+  inline Operand() { memset(this, 0, sizeof(Operand)); }
+  inline Operand(const Operand& other) { _init(other); }
 
-  inline Operand(_MakeReg makeReg, UInt8 code, UInt8 size)
-  {
-    ASMJIT_USE(makeReg);
-    _reg.op = OP_REG;
-    _reg.size = size;
-    _reg.code = code;
-    _reg.unused3 = NO_REG;
-    _reg.unused4 = 0;
-    _reg.unused5 = 0;
-  }
-
-  inline Operand(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 shift, SysInt displacement, UInt8 size)
-  {
-    ASMJIT_USE(makeMem);
-    _mem.op = OP_MEM;
-    _mem.size = size;
-    _mem.base = base;
-    _mem.index = index;
-    _mem.shift = shift;
-    _mem.displacement = displacement;
-  }
-
-  inline Operand(_MakeImm makeImm, SysInt i, UInt8 isUnsigned = false, UInt32 relocMode = RELOC_NONE)
-  {
-    ASMJIT_USE(makeImm);
-    _imm.op = OP_IMM;
-    _imm.size = 0;
-    _imm.isUnsigned = isUnsigned;
-    _imm.relocMode = (UInt8)relocMode;
-    _imm.unused4 = 0;
-    _imm.value = i;
-  }
-
-  // implicit immediate value constructor.
-  inline Operand(SysInt i)
-  {
-    _imm.op = OP_IMM;
-    _imm.size = 0;
-    _imm.isUnsigned = false;
-    _imm.relocMode = RELOC_NONE;
-    _imm.unused4 = 0;
-    _imm.value = i;
-  }
-
-  inline Operand(const Operand& other)
-  { _init(other); }
+  inline Operand(const _DontInitialize&) {}
 
   //! @brief Return type of operand, see @c OP.
   inline UInt8 op() const { return _op.op; }
@@ -981,6 +935,22 @@ struct Operand
   {
     memcpy(this, &other, sizeof(Operand));
   }
+
+  //! @brief Private method to init whole operand.
+  //! 
+  //! If all parameters are constants then compiler can generate very small 
+  //! code (3 instructions) that's much better that code that generates for
+  //! each operand normally.
+  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, UInt32 i32, SysInt i32_64)
+  {
+    *reinterpret_cast<UInt32*>((UInt8*)this) = 
+      ((SysUInt)i8_0      ) | 
+      ((SysUInt)i8_1 <<  8) | 
+      ((SysUInt)i8_1 << 16) | 
+      ((SysUInt)i8_1 << 24) ;
+    *reinterpret_cast<UInt32*>((UInt8*)this + 4) = i32;
+    *reinterpret_cast<SysInt*>((UInt8*)this + 8) = i32_64;
+  }
 };
 
 //! @brief Base class for registers and memory location.
@@ -989,27 +959,16 @@ struct Operand
 //! source or destination operands that can be registers or memory location.
 struct BaseRegMem : public Operand
 {
-  inline BaseRegMem(_MakeReg makeReg, UInt8 code, UInt8 size) : 
-    Operand(makeReg, code, size)
-  {}
-
-  inline BaseRegMem(_MakeMem makeMem, UInt8 base, UInt8 index, UInt32 scale, SysInt displacement, UInt8 size) :
-    Operand(makeMem, base, index, scale, displacement, size)
-  {}
-
-  inline BaseRegMem(const BaseRegMem& other) : Operand(other) 
-  {}
-
-  inline BaseRegMem& operator=(const BaseRegMem& other)
-  { _copy(other); }
+  inline BaseRegMem(const _DontInitialize& dontInitialize) : Operand(dontInitialize) {}
+  inline BaseRegMem(const BaseRegMem& other) : Operand(other) {}
+  inline BaseRegMem& operator=(const BaseRegMem& other) { _copy(other); }
 };
 
 //! @brief Base class for all registers.
 struct BaseReg : public BaseRegMem
 {
-  inline BaseReg(_MakeReg makeReg, UInt8 code, UInt8 size) : 
-    BaseRegMem(makeReg, code, size)
-  {}
+  BaseReg(UInt8 code, UInt8 size) : BaseRegMem(_DontInitialize())
+  { _initAll(OP_REG, size, code, 0, 0, 0); }
 
   inline BaseReg(const BaseReg& other) : BaseRegMem(other)
   {}
@@ -1042,8 +1001,8 @@ struct BaseReg : public BaseRegMem
 //! This class is for all general purpose registers (64, 32, 16 and 8 bit).
 struct Register : public BaseReg
 {
-  inline Register(_MakeReg makeReg, UInt8 code) :
-    BaseReg(makeReg, code, static_cast<UInt8>(1U << ((code & REGTYPE_MASK) >> 4)))
+  inline Register(const _Initialize&, UInt8 code) :
+    BaseReg(code, static_cast<UInt8>(1U << ((code & REGTYPE_MASK) >> 4)))
   {}
 
   inline Register(const Register& other) : 
@@ -1062,8 +1021,8 @@ struct Register : public BaseReg
 //! To create instance of x87 register, use @c st() function.
 struct X87Register : public BaseReg
 {
-  inline X87Register(_MakeReg makeReg, UInt8 code) : 
-    BaseReg(makeReg, code | REG_X87, 10)
+  inline X87Register(const _Initialize&, UInt8 code) : 
+    BaseReg(code | REG_X87, 10)
   {}
 
   inline X87Register(const X87Register& other) : 
@@ -1080,8 +1039,8 @@ struct X87Register : public BaseReg
 //! @brief 64 bit MMX register.
 struct MMRegister : public BaseReg
 {
-  inline MMRegister(_MakeReg makeReg, UInt8 code) :
-    BaseReg(makeReg, code, 8)
+  inline MMRegister(const _Initialize&, UInt8 code) :
+    BaseReg(code, 8)
   {}
 
   inline MMRegister(const MMRegister& other) :
@@ -1098,8 +1057,8 @@ struct MMRegister : public BaseReg
 //! @brief 128 bit SSE register.
 struct XMMRegister : public BaseReg
 {
-  inline XMMRegister(_MakeReg makeReg, UInt8 code) : 
-    BaseReg(makeReg, code, 16)
+  inline XMMRegister(const _Initialize&, UInt8 code) : 
+    BaseReg(code, 16)
   {
   }
 
@@ -1116,227 +1075,231 @@ struct XMMRegister : public BaseReg
 };
 
 //! @brief 8 bit General purpose register.
-static const Register al(MakeReg, REG_AL);
+static const Register al(_Initialize(), REG_AL);
 //! @brief 8 bit General purpose register.
-static const Register cl(MakeReg, REG_CL);
+static const Register cl(_Initialize(), REG_CL);
 //! @brief 8 bit General purpose register.
-static const Register dl(MakeReg, REG_DL);
+static const Register dl(_Initialize(), REG_DL);
 //! @brief 8 bit General purpose register.
-static const Register bl(MakeReg, REG_BL);
+static const Register bl(_Initialize(), REG_BL);
 //! @brief 8 bit General purpose register.
-static const Register ah(MakeReg, REG_AH);
+static const Register ah(_Initialize(), REG_AH);
 //! @brief 8 bit General purpose register.
-static const Register ch(MakeReg, REG_CH);
+static const Register ch(_Initialize(), REG_CH);
 //! @brief 8 bit General purpose register.
-static const Register dh(MakeReg, REG_DH);
+static const Register dh(_Initialize(), REG_DH);
 //! @brief 8 bit General purpose register.
-static const Register bh(MakeReg, REG_BH);
+static const Register bh(_Initialize(), REG_BH);
 
 #if defined(ASMJIT_X64)
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r8b(MakeReg, REG_R8B);
+static const Register r8b(_Initialize(), REG_R8B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r9b(MakeReg, REG_R9B);
+static const Register r9b(_Initialize(), REG_R9B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r10b(MakeReg, REG_R10B);
+static const Register r10b(_Initialize(), REG_R10B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r11b(MakeReg, REG_R11B);
+static const Register r11b(_Initialize(), REG_R11B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r12b(MakeReg, REG_R12B);
+static const Register r12b(_Initialize(), REG_R12B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r13b(MakeReg, REG_R13B);
+static const Register r13b(_Initialize(), REG_R13B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r14b(MakeReg, REG_R14B);
+static const Register r14b(_Initialize(), REG_R14B);
 //! @brief 8 bit General purpose register (64 bit mode only).
-static const Register r15b(MakeReg, REG_R15B);
+static const Register r15b(_Initialize(), REG_R15B);
 #endif // ASMJIT_X64
 
 //! @brief 16 bit General purpose register.
-static const Register ax(MakeReg, REG_AX);
+static const Register ax(_Initialize(), REG_AX);
 //! @brief 16 bit General purpose register.
-static const Register cx(MakeReg, REG_CX);
+static const Register cx(_Initialize(), REG_CX);
 //! @brief 16 bit General purpose register.
-static const Register dx(MakeReg, REG_DX);
+static const Register dx(_Initialize(), REG_DX);
 //! @brief 16 bit General purpose register.
-static const Register bx(MakeReg, REG_BX);
+static const Register bx(_Initialize(), REG_BX);
 //! @brief 16 bit General purpose register.
-static const Register sp(MakeReg, REG_SP);
+static const Register sp(_Initialize(), REG_SP);
 //! @brief 16 bit General purpose register.
-static const Register bp(MakeReg, REG_BP);
+static const Register bp(_Initialize(), REG_BP);
 //! @brief 16 bit General purpose register.
-static const Register si(MakeReg, REG_SI);
+static const Register si(_Initialize(), REG_SI);
 //! @brief 16 bit General purpose register.
-static const Register di(MakeReg, REG_DI);
+static const Register di(_Initialize(), REG_DI);
 
 #if defined(ASMJIT_X64)
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r8w(MakeReg, REG_R8W);
+static const Register r8w(_Initialize(), REG_R8W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r9w(MakeReg, REG_R9W);
+static const Register r9w(_Initialize(), REG_R9W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r10w(MakeReg, REG_R10W);
+static const Register r10w(_Initialize(), REG_R10W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r11w(MakeReg, REG_R11W);
+static const Register r11w(_Initialize(), REG_R11W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r12w(MakeReg, REG_R12W);
+static const Register r12w(_Initialize(), REG_R12W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r13w(MakeReg, REG_R13W);
+static const Register r13w(_Initialize(), REG_R13W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r14w(MakeReg, REG_R14W);
+static const Register r14w(_Initialize(), REG_R14W);
 //! @brief 16 bit General purpose register (64 bit mode only).
-static const Register r15w(MakeReg, REG_R15W);
+static const Register r15w(_Initialize(), REG_R15W);
 #endif // ASMJIT_X64
 
 //! @brief 32 bit General purpose register.
-static const Register eax(MakeReg, REG_EAX);
+static const Register eax(_Initialize(), REG_EAX);
 //! @brief 32 bit General purpose register.
-static const Register ecx(MakeReg, REG_ECX);
+static const Register ecx(_Initialize(), REG_ECX);
 //! @brief 32 bit General purpose register.
-static const Register edx(MakeReg, REG_EDX);
+static const Register edx(_Initialize(), REG_EDX);
 //! @brief 32 bit General purpose register.
-static const Register ebx(MakeReg, REG_EBX);
+static const Register ebx(_Initialize(), REG_EBX);
 //! @brief 32 bit General purpose register.
-static const Register esp(MakeReg, REG_ESP);
+static const Register esp(_Initialize(), REG_ESP);
 //! @brief 32 bit General purpose register.
-static const Register ebp(MakeReg, REG_EBP);
+static const Register ebp(_Initialize(), REG_EBP);
 //! @brief 32 bit General purpose register.
-static const Register esi(MakeReg, REG_ESI);
+static const Register esi(_Initialize(), REG_ESI);
 //! @brief 32 bit General purpose register.
-static const Register edi(MakeReg, REG_EDI);
+static const Register edi(_Initialize(), REG_EDI);
 
 #if defined(ASMJIT_X64)
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rax(MakeReg, REG_RAX);
+static const Register rax(_Initialize(), REG_RAX);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rcx(MakeReg, REG_RCX);
+static const Register rcx(_Initialize(), REG_RCX);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rdx(MakeReg, REG_RDX);
+static const Register rdx(_Initialize(), REG_RDX);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rbx(MakeReg, REG_RBX);
+static const Register rbx(_Initialize(), REG_RBX);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rsp(MakeReg, REG_RSP);
+static const Register rsp(_Initialize(), REG_RSP);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rbp(MakeReg, REG_RBP);
+static const Register rbp(_Initialize(), REG_RBP);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rsi(MakeReg, REG_RSI);
+static const Register rsi(_Initialize(), REG_RSI);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register rdi(MakeReg, REG_RDI);
+static const Register rdi(_Initialize(), REG_RDI);
 
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r8(MakeReg, REG_R8);
+static const Register r8(_Initialize(), REG_R8);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r9(MakeReg, REG_R9);
+static const Register r9(_Initialize(), REG_R9);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r10(MakeReg, REG_R10);
+static const Register r10(_Initialize(), REG_R10);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r11(MakeReg, REG_R11);
+static const Register r11(_Initialize(), REG_R11);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r12(MakeReg, REG_R12);
+static const Register r12(_Initialize(), REG_R12);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r13(MakeReg, REG_R13);
+static const Register r13(_Initialize(), REG_R13);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r14(MakeReg, REG_R14);
+static const Register r14(_Initialize(), REG_R14);
 //! @brief 64 bit General purpose register (64 bit mode only).
-static const Register r15(MakeReg, REG_R15);
+static const Register r15(_Initialize(), REG_R15);
 #endif // ASMJIT_X64
 
 //! @brief 32 bit General purpose register.
-static const Register nax(MakeReg, REG_NAX);
+static const Register nax(_Initialize(), REG_NAX);
 //! @brief 32 bit General purpose register.
-static const Register ncx(MakeReg, REG_NCX);
+static const Register ncx(_Initialize(), REG_NCX);
 //! @brief 32 bit General purpose register.
-static const Register ndx(MakeReg, REG_NDX);
+static const Register ndx(_Initialize(), REG_NDX);
 //! @brief 32 bit General purpose register.
-static const Register nbx(MakeReg, REG_NBX);
+static const Register nbx(_Initialize(), REG_NBX);
 //! @brief 32 bit General purpose register.
-static const Register nsp(MakeReg, REG_NSP);
+static const Register nsp(_Initialize(), REG_NSP);
 //! @brief 32 bit General purpose register.
-static const Register nbp(MakeReg, REG_NBP);
+static const Register nbp(_Initialize(), REG_NBP);
 //! @brief 32 bit General purpose register.
-static const Register nsi(MakeReg, REG_NSI);
+static const Register nsi(_Initialize(), REG_NSI);
 //! @brief 32 bit General purpose register.
-static const Register ndi(MakeReg, REG_NDI);
+static const Register ndi(_Initialize(), REG_NDI);
 
 //! @brief 64 bit MMX register.
-static const MMRegister mm0(MakeReg, REG_MM0);
+static const MMRegister mm0(_Initialize(), REG_MM0);
 //! @brief 64 bit MMX register.
-static const MMRegister mm1(MakeReg, REG_MM1);
+static const MMRegister mm1(_Initialize(), REG_MM1);
 //! @brief 64 bit MMX register.
-static const MMRegister mm2(MakeReg, REG_MM2);
+static const MMRegister mm2(_Initialize(), REG_MM2);
 //! @brief 64 bit MMX register.
-static const MMRegister mm3(MakeReg, REG_MM3);
+static const MMRegister mm3(_Initialize(), REG_MM3);
 //! @brief 64 bit MMX register.
-static const MMRegister mm4(MakeReg, REG_MM4);
+static const MMRegister mm4(_Initialize(), REG_MM4);
 //! @brief 64 bit MMX register.
-static const MMRegister mm5(MakeReg, REG_MM5);
+static const MMRegister mm5(_Initialize(), REG_MM5);
 //! @brief 64 bit MMX register.
-static const MMRegister mm6(MakeReg, REG_MM6);
+static const MMRegister mm6(_Initialize(), REG_MM6);
 //! @brief 64 bit MMX register.
-static const MMRegister mm7(MakeReg, REG_MM7);
+static const MMRegister mm7(_Initialize(), REG_MM7);
 
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm0(MakeReg, REG_XMM0);
+static const XMMRegister xmm0(_Initialize(), REG_XMM0);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm1(MakeReg, REG_XMM1);
+static const XMMRegister xmm1(_Initialize(), REG_XMM1);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm2(MakeReg, REG_XMM2);
+static const XMMRegister xmm2(_Initialize(), REG_XMM2);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm3(MakeReg, REG_XMM3);
+static const XMMRegister xmm3(_Initialize(), REG_XMM3);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm4(MakeReg, REG_XMM4);
+static const XMMRegister xmm4(_Initialize(), REG_XMM4);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm5(MakeReg, REG_XMM5);
+static const XMMRegister xmm5(_Initialize(), REG_XMM5);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm6(MakeReg, REG_XMM6);
+static const XMMRegister xmm6(_Initialize(), REG_XMM6);
 //! @brief 128 bit SSE register.
-static const XMMRegister xmm7(MakeReg, REG_XMM7);
+static const XMMRegister xmm7(_Initialize(), REG_XMM7);
 
 #if defined(ASMJIT_X64)
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm8(MakeReg, REG_XMM8);
+static const XMMRegister xmm8(_Initialize(), REG_XMM8);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm9(MakeReg, REG_XMM9);
+static const XMMRegister xmm9(_Initialize(), REG_XMM9);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm10(MakeReg, REG_XMM10);
+static const XMMRegister xmm10(_Initialize(), REG_XMM10);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm11(MakeReg, REG_XMM11);
+static const XMMRegister xmm11(_Initialize(), REG_XMM11);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm12(MakeReg, REG_XMM12);
+static const XMMRegister xmm12(_Initialize(), REG_XMM12);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm13(MakeReg, REG_XMM13);
+static const XMMRegister xmm13(_Initialize(), REG_XMM13);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm14(MakeReg, REG_XMM14);
+static const XMMRegister xmm14(_Initialize(), REG_XMM14);
 //! @brief 128 bit SSE register (64 bit mode only).
-static const XMMRegister xmm15(MakeReg, REG_XMM15);
+static const XMMRegister xmm15(_Initialize(), REG_XMM15);
 #endif // ASMJIT_X64
 
-static inline Register mk_gpb(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPB)); }
-static inline Register mk_gpw(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPW)); }
-static inline Register mk_gpd(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPD)); }
+static inline Register mk_gpb(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPB)); }
+static inline Register mk_gpw(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPW)); }
+static inline Register mk_gpd(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPD)); }
 #if defined(ASMJIT_X64)
-static inline Register mk_gpq(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPQ)); }
+static inline Register mk_gpq(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPQ)); }
 #endif
-static inline Register mk_gpn(UInt8 index) { return Register(MakeReg, static_cast<UInt8>(index | REG_GPN)); }
-static inline MMRegister mk_mm(UInt8 index) { return MMRegister(MakeReg, static_cast<UInt8>(index | REG_MM)); }
-static inline XMMRegister mk_xmm(UInt8 index) { return XMMRegister(MakeReg, static_cast<UInt8>(index | REG_XMM)); }
+static inline Register mk_gpn(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPN)); }
+static inline MMRegister mk_mm(UInt8 index) { return MMRegister(_Initialize(), static_cast<UInt8>(index | REG_MM)); }
+static inline XMMRegister mk_xmm(UInt8 index) { return XMMRegister(_Initialize(), static_cast<UInt8>(index | REG_XMM)); }
 
 //! @brief returns x87 register with index @a i.
 static inline X87Register st(int i)
 {
   ASMJIT_ASSERT(i >= 0 && i < 8);
-  return X87Register(MakeReg, static_cast<UInt8>(i));
+  return X87Register(_Initialize(), static_cast<UInt8>(i));
 }
 
 //! @brief Memory location operand.
 struct Mem : public BaseRegMem
 {
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
-    BaseRegMem(MakeMem, base.code(), NO_REG, 0, displacement, size)
-  {}
+    BaseRegMem(_DontInitialize())
+  {
+    _initAll(OP_MEM, size, base.code(), NO_REG, 0, displacement);
+  }
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
-    BaseRegMem(MakeMem, base.code(), index.code(), shift, displacement, size)
-  {}
+    BaseRegMem(_DontInitialize())
+  {
+    _initAll(OP_MEM, size, base.code(), index.code(), shift, displacement);
+  }
 
   inline Mem(const Mem& other) :
     BaseRegMem(other)
@@ -1432,8 +1395,16 @@ static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32
 //! or constructors provided by @c Immediate class itself.
 struct Immediate : public Operand
 {
-  inline Immediate(SysInt i) : Operand(MakeImm, i, false) {}
-  inline Immediate(SysInt i, UInt8 isUnsigned) : Operand(MakeImm, i, isUnsigned) {}
+  Immediate(SysInt i) : Operand(_DontInitialize())
+  {
+    _initAll(OP_IMM, 0, 0, RELOC_NONE, 0, i);
+  }
+  
+  Immediate(SysInt i, UInt8 isUnsigned) : Operand(_DontInitialize())
+  {
+    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, 0, i);
+  }
+  
   inline Immediate(const Immediate& other) : Operand(other) {}
 
   inline Immediate& operator=(SysInt val)

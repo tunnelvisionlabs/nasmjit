@@ -971,7 +971,7 @@ int main(int argc, char* argv[])
 
   // Cast vmem to our function and call the code.
   // (This is convenience for IDEs to go directly to instruction stream)
-  reinterpret_cast<MyFn>(vmem)();
+  function_cast<MyFn>(vmem)();
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);

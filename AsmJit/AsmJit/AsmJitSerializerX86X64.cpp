@@ -40,4 +40,43 @@ _Serializer::~_Serializer()
 {
 }
 
+// ----------------------------------------------------------------------------
+// [AsmJit::Serializer - Helpers]
+// ----------------------------------------------------------------------------
+
+// Used for NULL operands in _emitX86() function
+static const Operand::GenData none = { OP_NONE, 0, 0xFF, 0xFF };
+
+void _Serializer::__emitX86(UInt32 code)
+{
+  _emitX86(code, 
+    reinterpret_cast<const Operand*>(&none), 
+    reinterpret_cast<const Operand*>(&none), 
+    reinterpret_cast<const Operand*>(&none));
+}
+
+void _Serializer::__emitX86(UInt32 code, const Operand* o1)
+{
+  _emitX86(code, 
+    o1, 
+    reinterpret_cast<const Operand*>(&none), 
+    reinterpret_cast<const Operand*>(&none));
+}
+
+void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2)
+{
+  _emitX86(code, 
+    o1, 
+    o2, 
+    reinterpret_cast<const Operand*>(&none));
+}
+
+void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+{
+  _emitX86(code, 
+    o1, 
+    o2, 
+    o3);
+}
+
 } // AsmJit namespace

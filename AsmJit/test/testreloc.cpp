@@ -111,8 +111,8 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Cast vmem to our function and call the code.
-  int result1 = reinterpret_cast<MyFn>(first)();
-  int result2 = reinterpret_cast<MyFn>(second)();
+  int result1 = function_cast<MyFn>(first)();
+  int result2 = function_cast<MyFn>(second)();
 
   printf("Result from first function: %d\n", result1);
   printf("Result from second function: %d\n", result2);

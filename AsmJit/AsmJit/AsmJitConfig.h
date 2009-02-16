@@ -156,7 +156,7 @@ namespace AsmJit
 #endif
 
 // [AsmJit - Debug]
-#if defined(DEBUG)
+#if defined(DEBUG) && 0
 # if !defined(ASMJIT_CRASH)
 #  define ASMJIT_CRASH() crash()
 # endif
