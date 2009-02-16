@@ -45,7 +45,7 @@ _Serializer::~_Serializer()
 // ----------------------------------------------------------------------------
 
 // Used for NULL operands in _emitX86() function
-static const Operand::GenData none = { OP_NONE, 0, 0xFF, 0xFF };
+static const Operand::GenData none = { OP_NONE, 0, 0, 0, 0 };
 
 void _Serializer::__emitX86(UInt32 code)
 {

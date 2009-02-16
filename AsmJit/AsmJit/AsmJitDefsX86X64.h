@@ -861,6 +861,7 @@ struct Operand
     UInt8 size;
     UInt8 unused2;
     UInt8 unused3;
+    SysInt unused4;
   };
 
   //! @brief Register data.
@@ -875,8 +876,6 @@ struct Operand
     //! @brief Not used.
     UInt8 unused3;
     //! @brief Not used.
-    UInt32 unused4;
-    //! @brief Not used.
     SysInt unused5;
   };
 
@@ -890,9 +889,24 @@ struct Operand
     //! @brief Base register code, see @c REG.
     UInt8 base;
     //! @brief Index register code, see @c REG.
+    //!
+    //! Index register is a bit complicated here, because we need to store here 
+    //! more informations than only register index (to save operand size).
+    //! First 3 bits are shift (this very likely SIB byte), next one bit means
+    //! if index is used or not. Last 4 bytes are representing index register
+    //! code (0-15 is sufficient for 32 bit platform and 64 bit platform).
+    //!
+    //! To get if this is base+index+displacement address use
+    //!   index & 0x10
+    //!
+    //! To get shift use:
+    //!   index >> 5
+    //!
+    //! To get index register use:
+    //!   index & 0xF
+    //!
+    //! See @c Mem implementation for details
     UInt8 index;
-    //! @brief Index register shift (for scaling).
-    UInt32 shift;
     //! @brief Displacement.
     SysInt displacement;
   };
@@ -908,8 +922,6 @@ struct Operand
     UInt8 isUnsigned;
     //! @brief Not used.
     UInt8 relocMode;
-    //! @brief Not used.
-    UInt32 unused4;
     //! @brief Immediate value.
     SysInt value;
   };
@@ -941,15 +953,14 @@ struct Operand
   //! If all parameters are constants then compiler can generate very small 
   //! code (3 instructions) that's much better that code that generates for
   //! each operand normally.
-  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, UInt32 i32, SysInt i32_64)
+  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64)
   {
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
       ((SysUInt)i8_0      ) | 
       ((SysUInt)i8_1 <<  8) | 
       ((SysUInt)i8_1 << 16) | 
       ((SysUInt)i8_1 << 24) ;
-    *reinterpret_cast<UInt32*>((UInt8*)this + 4) = i32;
-    *reinterpret_cast<SysInt*>((UInt8*)this + 8) = i32_64;
+    *reinterpret_cast<SysInt*>((UInt8*)this + 4) = i32_64;
   }
 };
 
@@ -968,7 +979,7 @@ struct BaseRegMem : public Operand
 struct BaseReg : public BaseRegMem
 {
   BaseReg(UInt8 code, UInt8 size) : BaseRegMem(_DontInitialize())
-  { _initAll(OP_REG, size, code, 0, 0, 0); }
+  { _initAll(OP_REG, size, code, 0, 0); }
 
   inline BaseReg(const BaseReg& other) : BaseRegMem(other)
   {}
@@ -1292,13 +1303,14 @@ struct Mem : public BaseRegMem
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, size, base.code(), NO_REG, 0, displacement);
+    _initAll(OP_MEM, size, base.index() | 0x10, 0x00, displacement);
   }
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, size, base.code(), index.code(), shift, displacement);
+    ASMJIT_ASSERT(shift <= 3);
+    _initAll(OP_MEM, size, base.index() | 0x10, (shift << 5) | 0x10 | index.index(), displacement);
   }
 
   inline Mem(const Mem& other) :
@@ -1309,21 +1321,21 @@ struct Mem : public BaseRegMem
   { _copy(other); }
 
   //! @brief Return if address has base register. 
-  inline bool hasBase() const { return _mem.base != NO_REG; }
+  inline bool hasBase() const { return (_mem.base & 0x10) != 0; }
 
   //! @brief Return if address has index register.
   //!
   //! @note It's illegal to have index register and not base one.
-  inline bool hasIndex() const { return _mem.index != NO_REG; }
+  inline bool hasIndex() const { return (_mem.index & 0x10) != 0; }
 
   //! @brief Address base register or @c NO_REG.
-  inline int base() const { return _mem.base; }
+  inline UInt8 base() const { return _mem.base & 0xF; }
 
   //! @brief Address index register or @c NO_REG.
-  inline int index() const { return _mem.index; }
+  inline UInt8 index() const { return _mem.index & 0xF; }
 
   //! @brief Address index scale (0, 1, 2 or 3).
-  inline UInt32 shift() const { return _mem.shift; }
+  inline UInt32 shift() const { return _mem.index >> 5; }
 
   //! @brief Address relative displacement.
   inline SysInt displacement() const { return _mem.displacement; }
@@ -1397,12 +1409,12 @@ struct Immediate : public Operand
 {
   Immediate(SysInt i) : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, 0, RELOC_NONE, 0, i);
+    _initAll(OP_IMM, 0, 0, RELOC_NONE, i);
   }
   
   Immediate(SysInt i, UInt8 isUnsigned) : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, 0, i);
+    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, i);
   }
   
   inline Immediate(const Immediate& other) : Operand(other) {}
