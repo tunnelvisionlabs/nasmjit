@@ -199,12 +199,12 @@ struct Serializer : public _Serializer
   inline void call(const Register& dst)
   {
     ASMJIT_ASSERT(dst.isRegType(REG_GPN));
-    _emitX86(INST_MOV, &dst);
+    _emitX86(INST_CALL, &dst);
   }
   //! @brief Call Procedure.
   inline void call(const Mem& dst)
   {
-    _emitX86(INST_MOV, &dst);
+    _emitX86(INST_CALL, &dst);
   }
 
   //! @brief Convert Byte to Word (Sign Extend).
@@ -411,12 +411,12 @@ struct Serializer : public _Serializer
   //! EDX:EAX registers, respectively.
   inline void imul(const Register& src)
   {
-    _emitX86(INST_MOV, &src);
+    _emitX86(INST_IMUL, &src);
   }
   //! @overload
   inline void imul(const Mem& src)
   {
-    _emitX86(INST_MOV, &src);
+    _emitX86(INST_IMUL, &src);
   }
 
   //! @brief Signed multiply.
@@ -832,15 +832,25 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_POPAD);
   }
-
-  //! @brief Pop Stack into EFLAGS Register.
-  //!
-  //! Pop top of stack into EFLAGS.
-  inline void popfd()
-  {
-    _emitX86(INST_POPFD);
-  }
 #endif // ASMJIT_X86
+
+  //! @brief Pop Stack into EFLAGS Register (32 bit or 64 bit).
+  inline void popf()
+  {
+#if defined(ASMJIT_X86)
+    popfd();
+#else
+    popfq();
+#endif
+  }
+
+#if defined(ASMJIT_X86)
+  //! @brief Pop Stack into EFLAGS Register (32 bit).
+  inline void popfd() { _emitX86(INST_POPFD); }
+#else
+  //! @brief Pop Stack into EFLAGS Register (64 bit).
+  inline void popfq() { _emitX86(INST_POPFQ); }
+#endif
 
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
   //!
@@ -870,14 +880,24 @@ struct Serializer : public _Serializer
   {
     _emitX86(INST_PUSHAD);
   }
+#endif // ASMJIT_X86
 
-  //! @brief Push EFLAGS Register onto the Stack.
-  //!
-  //! Push EFLAGS.
-  inline void pushfd()
+  //! @brief Push EFLAGS Register (32 bit or 64 bit) onto the Stack.
+  inline void pushf()
   {
-    _emitX86(INST_PUSHFD);
+#if defined(ASMJIT_X86)
+    pushfd();
+#else
+    pushfq();
+#endif
   }
+
+#if defined(ASMJIT_X86)
+  //! @brief Push EFLAGS Register (32 bit) onto the Stack.
+  inline void pushfd() { _emitX86(INST_PUSHFD); }
+#else
+  //! @brief Push EFLAGS Register (64 bit) onto the Stack.
+  inline void pushfq() { _emitX86(INST_PUSHFQ); }
 #endif // ASMJIT_X86
 
   //! @brief Rotate Bits Left.

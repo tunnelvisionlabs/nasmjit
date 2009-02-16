@@ -1,5 +1,6 @@
 TODOs:
 
+[ ] bts, btr, btc, bt, bsf, bsr
 [ ] Add AsmJit::Compiler class
 [ ] Add SSE4a instruction set (AMD).
 [ ] Add AMD 3dNow.

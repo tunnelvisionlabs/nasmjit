@@ -716,6 +716,7 @@ enum INST_X86_CODE
   INST_POPAD,         // X86 only
   INST_POPCNT,
   INST_POPFD,         // X86 only
+  INST_POPFQ,         // X64 only
   INST_POR,
   INST_PREFETCH,
   INST_PSADBW,
@@ -757,6 +758,7 @@ enum INST_X86_CODE
   INST_PUSH,          // X86/X64
   INST_PUSHAD,        // X86 only
   INST_PUSHFD,        // X86 only
+  INST_PUSHFQ,        // X64 only
   INST_PXOR,
   INST_RCL,           // X86/X64
   INST_RCPPS,
@@ -1390,6 +1392,9 @@ static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) { return Mem
 //! @note This constructor is provided only for convenience for sse programming.
 static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
 
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, sizeof(SysInt)); }
+
 // [base + (index << shift) + displacement]
 
 //! @brief Create pointer operand with not specified size.
@@ -1415,6 +1420,9 @@ static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32
 //!
 //! @note This constructor is provided only for convenience for sse programming.
 static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, sizeof(SysInt)); }
 
 //! @brief Immediate operand.
 //!

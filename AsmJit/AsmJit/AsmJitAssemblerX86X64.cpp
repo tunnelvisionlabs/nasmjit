@@ -633,7 +633,7 @@ enum O
 static const InstructionDescription x86instructions[] =
 {
   // Instruction code (enum)      | instruction name   | group           | operator 1 flags| operator 2 flags| r| opCode1   | opcode2
-  MAKE_INST(INST_ADC              , "adc"              , I_ALU           , 0               , 0               , 2, 0x0000000A, 0x00000080),
+  MAKE_INST(INST_ADC              , "adc"              , I_ALU           , 0               , 0               , 2, 0x00000010, 0x00000080),
   MAKE_INST(INST_ADD              , "add"              , I_ALU           , 0               , 0               , 0, 0x00000000, 0x00000080),
   MAKE_INST(INST_ADDPD            , "addpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F58, 0),
   MAKE_INST(INST_ADDPS            , "addps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F58, 0),
@@ -788,7 +788,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_FSTSW            , "fstsw"            , I_X87_FSTSW     , O_MEM           , 0               , 7, 0x9B0000DD, 0x9B00DFE0),
   MAKE_INST(INST_FSUB             , "fsub"             , I_X87_FPU       , 0               , 0               , 4, 0xD8DCE0E8, 0),
   MAKE_INST(INST_FSUBP            , "fsubp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEE8, 0),
-  MAKE_INST(INST_FSUBR            , "fsubr"            , I_X87_FPU       , 0               , 0               , 0, 0xD8DCE8E0, 0),
+  MAKE_INST(INST_FSUBR            , "fsubr"            , I_X87_FPU       , 0               , 0               , 5, 0xD8DCE8E0, 0),
   MAKE_INST(INST_FSUBRP           , "fsubrp"           , I_X87_STI       , 0               , 0               , 0, 0x0000DEE0, 0),
   MAKE_INST(INST_FTST             , "ftst"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E4, 0),
   MAKE_INST(INST_FUCOM            , "fucom"            , I_X87_STI       , 0               , 0               , 0, 0x0000DDE0, 0),
@@ -996,6 +996,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_POPAD            , "popad"            , I_EMIT          , 0               , 0               , 0, 0x00000061, 0),
   MAKE_INST(INST_POPCNT           , "popcnt"           , I_R_RM          , 0               , 0               , 0, 0xF3000FB8, 0),
   MAKE_INST(INST_POPFD            , "popfd"            , I_EMIT          , 0               , 0               , 0, 0x0000009D, 0),
+  MAKE_INST(INST_POPFQ            , "popfq"            , I_EMIT          , 0               , 0               , 0, 0x0000009D, 0),
   MAKE_INST(INST_POR              , "por"              , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FEB, 0),
   MAKE_INST(INST_PREFETCH         , "prefetch"         , I_MMU_PREFETCH  , O_MEM           , O_IMM           , 0, 0         , 0),
   MAKE_INST(INST_PSADBW           , "psadbw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF6, 0),
@@ -1037,6 +1038,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PUSH             , "push"             , I_PUSH          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_PUSHAD           , "pushad"           , I_EMIT          , 0               , 0               , 0, 0x00000060, 0),
   MAKE_INST(INST_PUSHFD           , "pushfd"           , I_EMIT          , 0               , 0               , 0, 0x0000009C, 0),
+  MAKE_INST(INST_PUSHFQ           , "pushfq"           , I_EMIT          , 0               , 0               , 0, 0x0000009C, 0),
   MAKE_INST(INST_PXOR             , "pxor"             , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FEF, 0),
   MAKE_INST(INST_RCL              , "rcl"              , I_ROT           , 0               , 0               , 2, 0         , 0),
   MAKE_INST(INST_RCPPS            , "rcpps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F53, 0),

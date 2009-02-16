@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-Project(asmjittest CXX)
+Project(test CXX)
 
 Set(ASMJIT_DIR "..")
 
@@ -31,8 +31,9 @@ Set(ASMJIT_HEADERS
 
 Add_Definitions(-DDEBUG)
 
-Add_Executable(compilertest compilertest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
-Add_Executable(cputest cputest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
-Add_Executable(jittest jittest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
-Add_Executable(reloctest reloctest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
-Add_Executable(rewritetest rewritetest.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testcompiler testcompiler.cpp ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testcpu      testcpu.cpp      ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testjit      testjit.cpp      ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testopcode   testopcode.cpp   ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testreloc    testreloc.cpp    ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
+Add_Executable(testrewrite  testrewrite.cpp  ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
