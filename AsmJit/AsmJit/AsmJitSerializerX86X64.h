@@ -186,13 +186,86 @@ struct Serializer : public _Serializer
     __emitX86(INST_BSWAP, &dst);
   }
 
+  //! @brief Bit test.
+  inline void bt(const Register& dst, const Register& src)
+  {
+    __emitX86(INST_BT, &dst, &src);
+  }
+  //! @brief Bit test.
+  inline void bt(const Register& dst, const Immediate& src)
+  {
+    __emitX86(INST_BT, &dst, &src);
+  }
+  //! @brief Bit test.
+  inline void bt(const Mem& dst, const Register& src)
+  {
+    __emitX86(INST_BT, &dst, &src);
+  }
+  //! @brief Bit test.
+  inline void bt(const Mem& dst, const Immediate& src)
+  {
+    __emitX86(INST_BT, &dst, &src);
+  }
+
+  //! @brief Bit test and complement.
+  inline void btc(const Register& dst, const Register& src)
+  {
+    __emitX86(INST_BTC, &dst, &src);
+  }
+  //! @brief Bit test and complement.
+  inline void btc(const Register& dst, const Immediate& src)
+  {
+    __emitX86(INST_BTC, &dst, &src);
+  }
+  //! @brief Bit test and complement.
+  inline void btc(const Mem& dst, const Register& src)
+  {
+    __emitX86(INST_BTC, &dst, &src);
+  }
+  //! @brief Bit test and complement.
+  inline void btc(const Mem& dst, const Immediate& src)
+  {
+    __emitX86(INST_BTC, &dst, &src);
+  }
+
+  //! @brief Bit test and reset.
+  inline void btr(const Register& dst, const Register& src)
+  {
+    __emitX86(INST_BTR, &dst, &src);
+  }
+  //! @brief Bit test and reset.
+  inline void btr(const Register& dst, const Immediate& src)
+  {
+    __emitX86(INST_BTR, &dst, &src);
+  }
+  //! @brief Bit test and reset.
+  inline void btr(const Mem& dst, const Register& src)
+  {
+    __emitX86(INST_BTR, &dst, &src);
+  }
+  //! @brief Bit test and reset.
+  inline void btr(const Mem& dst, const Immediate& src)
+  {
+    __emitX86(INST_BTR, &dst, &src);
+  }
+
   //! @brief Bit test and set.
   inline void bts(const Register& dst, const Register& src)
   {
     __emitX86(INST_BTS, &dst, &src);
   }
   //! @brief Bit test and set.
+  inline void bts(const Register& dst, const Immediate& src)
+  {
+    __emitX86(INST_BTS, &dst, &src);
+  }
+  //! @brief Bit test and set.
   inline void bts(const Mem& dst, const Register& src)
+  {
+    __emitX86(INST_BTS, &dst, &src);
+  }
+  //! @brief Bit test and set.
+  inline void bts(const Mem& dst, const Immediate& src)
   {
     __emitX86(INST_BTS, &dst, &src);
   }

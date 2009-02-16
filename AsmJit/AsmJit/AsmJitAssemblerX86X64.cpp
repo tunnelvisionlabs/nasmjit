@@ -512,6 +512,7 @@ enum I
 
   I_ALU,
   I_BSWAP,
+  I_BT,
   I_CALL,
   I_CMOV,
   I_IMUL,
@@ -650,7 +651,10 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_BLENDVPD         , "blendvpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3815, 0),
   MAKE_INST(INST_BLENDVPS         , "blendvps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3814, 0),
   MAKE_INST(INST_BSWAP            , "bswap"            , I_BSWAP         , 0               , 0               , 0, 0         , 0),
-  MAKE_INST(INST_BTS              , "bts"              , I_RM_R          , 0               , 0               , 0, 0x00000FAB, 0),
+  MAKE_INST(INST_BT               , "bt"               , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 4, 0x00000FA3, 0x00000FBA),
+  MAKE_INST(INST_BTC              , "btc"              , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 7, 0x00000FBB, 0x00000FBA),
+  MAKE_INST(INST_BTR              , "btr"              , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 6, 0x00000FB3, 0x00000FBA),
+  MAKE_INST(INST_BTS              , "bts"              , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 5, 0x00000FAB, 0x00000FBA),
   MAKE_INST(INST_CALL             , "call"             , I_CALL          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_CBW              , "cbw"              , I_EMIT          , 0               , 0               , 0, 0x66000099, 0),
   MAKE_INST(INST_CDQE             , "cdqe"             , I_EMIT          , 0               , 0               , 0, 0x48000099, 0),
@@ -1183,6 +1187,38 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 #endif // ASMJIT_X64
         _emitByte(0x0F);
         _emitModR(1, dst.code());
+        return;
+      }
+
+      break;
+    }
+
+    case I_BT:
+    {
+      if (o1->isRegMem() && o2->isReg())
+      {
+        const BaseRegMem& dst = operand_cast<const BaseRegMem&>(*o1);
+        const Register& src = operand_cast<const Register&>(*o2);
+
+        _emitX86RM(id.opCode1, 
+          src.isRegType(REG_GPW),
+          src.isRegType(REG_GPQ),
+          src.code(),
+          dst);
+        return;
+      }
+
+      if (o1->isRegMem() && o2->isImm())
+      {
+        const BaseRegMem& dst = operand_cast<const BaseRegMem&>(*o1);
+        const Immediate& src = operand_cast<const Immediate&>(*o2);
+
+        _emitX86RM(id.opCode2,
+          src.size() == 2,
+          src.size() == 8,
+          id.opCodeR,
+          dst);
+        _emitImmediate(src, 1);
         return;
       }
 

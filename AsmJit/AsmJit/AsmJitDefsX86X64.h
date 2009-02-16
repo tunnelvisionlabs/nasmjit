@@ -372,6 +372,9 @@ enum INST_X86_CODE
   INST_BLENDVPD,
   INST_BLENDVPS,
   INST_BSWAP,         // X86/X64 (i486)
+  INST_BT,            // X86/X64
+  INST_BTC,           // X86/X64
+  INST_BTR,           // X86/X64
   INST_BTS,           // X86/X64
   INST_CALL,          // X86/X64
   INST_CBW,           // X86/X64
