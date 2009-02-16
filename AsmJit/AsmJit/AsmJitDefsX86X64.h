@@ -961,9 +961,9 @@ struct Operand
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
       ((SysUInt)i8_0      ) | 
       ((SysUInt)i8_1 <<  8) | 
-      ((SysUInt)i8_1 << 16) | 
-      ((SysUInt)i8_1 << 24) ;
-    *reinterpret_cast<SysInt*>((UInt8*)this + 4) = i32_64;
+      ((SysUInt)i8_2 << 16) | 
+      ((SysUInt)i8_3 << 24) ;
+    *reinterpret_cast<SysInt*>((UInt8*)this + sizeof(UInt32)) = i32_64;
   }
 };
 
