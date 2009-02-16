@@ -124,7 +124,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     {
       _emitMod(0, opReg, 4);
       _emitSib(shift, indexReg, 5);
-      _emitDWord(disp);
+      _emitDWord(static_cast<UInt32>((Int32)disp));
     }
     else if (disp == 0 && baseReg != RID_EBP)
     {
@@ -135,13 +135,13 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     {
       _emitMod(1, opReg, 4);
       _emitSib(shift, indexReg, baseReg);
-      _emitByte(disp);
+      _emitByte(static_cast<UInt8>((Int8)disp));
     }
     else
     {
       _emitMod(2, opReg, 4);
       _emitSib(shift, indexReg, 5);
-      _emitDWord(disp);
+      _emitDWord(static_cast<UInt32>((Int32)disp));
     }
   }
   // [base + displacement]
@@ -161,13 +161,13 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
       {
         _emitMod(1, opReg, RID_ESP);
         _emitSib(0, RID_ESP, RID_ESP);
-        _emitByte(disp);
+        _emitByte(static_cast<UInt8>((Int8)disp));
       }
       else
       {
         _emitMod(2, opReg, RID_ESP);
         _emitSib(0, RID_ESP, RID_ESP);
-        _emitDWord(disp);
+        _emitDWord(static_cast<UInt32>((Int32)disp));
       }
     }
     else if (baseReg != RID_EBP && disp == 0)
@@ -177,12 +177,12 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     else if (isInt8(disp))
     {
       _emitMod(1, opReg, baseReg);
-      _emitByte(disp);
+      _emitByte(static_cast<UInt8>((Int8)disp));
     }
     else
     {
       _emitMod(2, opReg, baseReg);
-      _emitDWord(disp);
+      _emitDWord(static_cast<UInt32>((Int32)disp));
     }
   }
 }
@@ -1477,7 +1477,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         // Mem <- Imm
         case (OP_MEM << 4) | OP_IMM:
-          _emitX86RM(0xC6 + dst.size() != 1, 
+          _emitX86RM(0xC6 + (dst.size() != 1),
             dst.size() == 2,
             dst.size() == 8,
             0,
