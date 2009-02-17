@@ -514,7 +514,6 @@ enum I
   I_BSWAP,
   I_BT,
   I_CALL,
-  I_CMOV,
   I_IMUL,
   I_INC_DEC,
   I_J,
@@ -524,11 +523,10 @@ enum I
   I_M,
   I_MOV,
   I_MOV_PTR,
-  I_MOVSX,
+  I_MOVSX_MOVZX,
   I_MOVSXD,
-  I_MOVZX,
+  I_PUSH, // I_PUSH is implemented before I_POP
   I_POP,
-  I_PUSH,
   I_R_RM,
   I_R_RM_BEXT,
   I_RM,
@@ -650,6 +648,8 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_BLENDPS          , "blendps"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A0C, 0),
   MAKE_INST(INST_BLENDVPD         , "blendvpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3815, 0),
   MAKE_INST(INST_BLENDVPS         , "blendvps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3814, 0),
+  MAKE_INST(INST_BSF              , "bsf"              , I_R_RM          , 0               , 0               , 0, 0x00000FBC, 0),
+  MAKE_INST(INST_BSR              , "bsr"              , I_R_RM          , 0               , 0               , 0, 0x00000FBD, 0),
   MAKE_INST(INST_BSWAP            , "bswap"            , I_BSWAP         , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_BT               , "bt"               , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 4, 0x00000FA3, 0x00000FBA),
   MAKE_INST(INST_BTC              , "btc"              , I_BT            ,O_G16_32_64|O_MEM,O_G16_32_64|O_IMM, 7, 0x00000FBB, 0x00000FBA),
@@ -662,7 +662,36 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_CLD              , "cld"              , I_EMIT          , 0               , 0               , 0, 0x000000FC, 0),
   MAKE_INST(INST_CLFLUSH          , "clflush"          , I_M             , O_MEM           , 0               , 7, 0x00000FAE, 0),
   MAKE_INST(INST_CMC              , "cmc"              , I_EMIT          , 0               , 0               , 0, 0x000000F5, 0),
-  MAKE_INST(INST_CMOV             , "cmov"             , I_CMOV          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_CMOVA            , "cmova"            , I_R_RM          , 0               , 0               , 0, 0x00000F47, 0),
+  MAKE_INST(INST_CMOVAE           , "cmovae"           , I_R_RM          , 0               , 0               , 0, 0x00000F43, 0),
+  MAKE_INST(INST_CMOVB            , "cmovb"            , I_R_RM          , 0               , 0               , 0, 0x00000F42, 0),
+  MAKE_INST(INST_CMOVBE           , "cmovbe"           , I_R_RM          , 0               , 0               , 0, 0x00000F46, 0),
+  MAKE_INST(INST_CMOVC            , "cmovc"            , I_R_RM          , 0               , 0               , 0, 0x00000F42, 0),
+  MAKE_INST(INST_CMOVE            , "cmove"            , I_R_RM          , 0               , 0               , 0, 0x00000F44, 0),
+  MAKE_INST(INST_CMOVG            , "cmovg"            , I_R_RM          , 0               , 0               , 0, 0x00000F4F, 0),
+  MAKE_INST(INST_CMOVGE           , "cmovge"           , I_R_RM          , 0               , 0               , 0, 0x00000F4D, 0),
+  MAKE_INST(INST_CMOVL            , "cmovl"            , I_R_RM          , 0               , 0               , 0, 0x00000F4C, 0),
+  MAKE_INST(INST_CMOVLE           , "cmovle"           , I_R_RM          , 0               , 0               , 0, 0x00000F4E, 0),
+  MAKE_INST(INST_CMOVNA           , "cmovna"           , I_R_RM          , 0               , 0               , 0, 0x00000F46, 0),
+  MAKE_INST(INST_CMOVNAE          , "cmovnae"          , I_R_RM          , 0               , 0               , 0, 0x00000F42, 0),
+  MAKE_INST(INST_CMOVNB           , "cmovnb"           , I_R_RM          , 0               , 0               , 0, 0x00000F43, 0),
+  MAKE_INST(INST_CMOVNBE          , "cmovnbe"          , I_R_RM          , 0               , 0               , 0, 0x00000F47, 0),
+  MAKE_INST(INST_CMOVNC           , "cmovnc"           , I_R_RM          , 0               , 0               , 0, 0x00000F43, 0),
+  MAKE_INST(INST_CMOVNE           , "cmovne"           , I_R_RM          , 0               , 0               , 0, 0x00000F45, 0),
+  MAKE_INST(INST_CMOVNG           , "cmovng"           , I_R_RM          , 0               , 0               , 0, 0x00000F4E, 0),
+  MAKE_INST(INST_CMOVNGE          , "cmovnge"          , I_R_RM          , 0               , 0               , 0, 0x00000F4C, 0),
+  MAKE_INST(INST_CMOVNL           , "cmovnl"           , I_R_RM          , 0               , 0               , 0, 0x00000F4D, 0),
+  MAKE_INST(INST_CMOVNLE          , "cmovnle"          , I_R_RM          , 0               , 0               , 0, 0x00000F4F, 0),
+  MAKE_INST(INST_CMOVNO           , "cmovno"           , I_R_RM          , 0               , 0               , 0, 0x00000F41, 0),
+  MAKE_INST(INST_CMOVNP           , "cmovnp"           , I_R_RM          , 0               , 0               , 0, 0x00000F4B, 0),
+  MAKE_INST(INST_CMOVNS           , "cmovns"           , I_R_RM          , 0               , 0               , 0, 0x00000F49, 0),
+  MAKE_INST(INST_CMOVNZ           , "cmovnz"           , I_R_RM          , 0               , 0               , 0, 0x00000F45, 0),
+  MAKE_INST(INST_CMOVO            , "cmovo"            , I_R_RM          , 0               , 0               , 0, 0x00000F40, 0),
+  MAKE_INST(INST_CMOVP            , "cmovp"            , I_R_RM          , 0               , 0               , 0, 0x00000F4A, 0),
+  MAKE_INST(INST_CMOVPE           , "cmovpe"           , I_R_RM          , 0               , 0               , 0, 0x00000F4A, 0),
+  MAKE_INST(INST_CMOVPO           , "cmovpo"           , I_R_RM          , 0               , 0               , 0, 0x00000F4B, 0),
+  MAKE_INST(INST_CMOVS            , "cmovs"            , I_R_RM          , 0               , 0               , 0, 0x00000F48, 0),
+  MAKE_INST(INST_CMOVZ            , "cmovz"            , I_R_RM          , 0               , 0               , 0, 0x00000F44, 0),
   MAKE_INST(INST_CMP              , "cmp"              , I_ALU           , 0               , 0               , 7, 0x00000038, 0x00000080),
   MAKE_INST(INST_CMPPD            , "cmppd"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x66000FC2, 0),
   MAKE_INST(INST_CMPPS            , "cmpps"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x00000FC2, 0),
@@ -891,11 +920,11 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_MOVSHDUP         , "movshdup"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F16, 0),
   MAKE_INST(INST_MOVSLDUP         , "movsldup"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F12, 0),
   MAKE_INST(INST_MOVSS            , "movss"            , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0xF3000F10, 0xF3000F11),
-  MAKE_INST(INST_MOVSX            , "movsx"            , I_MOVSX         , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_MOVSX            , "movsx"            , I_MOVSX_MOVZX   , 0               , 0               , 0, 0x00000FBE, 0),
   MAKE_INST(INST_MOVSXD           , "movsxd"           , I_MOVSXD        , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MOVUPD           , "movupd"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x66000F10, 0x66000F11),
   MAKE_INST(INST_MOVUPS           , "movups"           , I_MMU_MOV       , O_XMM_MEM       , O_XMM_MEM       , 0, 0x00000F10, 0x00000F11),
-  MAKE_INST(INST_MOVZX            , "movzx"            , I_MOVZX         , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_MOVZX            , "movzx"            , I_MOVSX_MOVZX   , 0               , 0               , 0, 0x00000FB6, 0),
   MAKE_INST(INST_MOV_PTR          , "mov"              , I_MOV_PTR       , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MPSADBW          , "mpsadbw"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A42, 0),
   MAKE_INST(INST_MUL              , "mul"              , I_RM_BEXT       , 0               , 0               , 4, 0x000000F6, 0),
@@ -993,7 +1022,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PMULLD           , "pmulld"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3840, 0),
   MAKE_INST(INST_PMULLW           , "pmullw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FD5, 0),
   MAKE_INST(INST_PMULUDQ          , "pmuludq"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF4, 0),
-  MAKE_INST(INST_POP              , "pop"              , I_POP           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_POP              , "pop"              , I_POP           , 0               , 0               , 0, 0x00000058, 0x0000008F),
   MAKE_INST(INST_POPAD            , "popad"            , I_EMIT          , 0               , 0               , 0, 0x00000061, 0),
   MAKE_INST(INST_POPCNT           , "popcnt"           , I_R_RM          , 0               , 0               , 0, 0xF3000FB8, 0),
   MAKE_INST(INST_POPFD            , "popfd"            , I_EMIT          , 0               , 0               , 0, 0x0000009D, 0),
@@ -1036,7 +1065,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PUNPCKLDQ        , "punpckldq"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F62, 0),
   MAKE_INST(INST_PUNPCKLQDQ       , "punpcklqdq"       , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F6C, 0),
   MAKE_INST(INST_PUNPCKLWD        , "punpcklwd"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F61, 0),
-  MAKE_INST(INST_PUSH             , "push"             , I_PUSH          , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_PUSH             , "push"             , I_PUSH          , 0               , 0               , 6, 0x00000050, 0x000000FF),
   MAKE_INST(INST_PUSHAD           , "pushad"           , I_EMIT          , 0               , 0               , 0, 0x00000060, 0),
   MAKE_INST(INST_PUSHFD           , "pushfd"           , I_EMIT          , 0               , 0               , 0, 0x0000009C, 0),
   MAKE_INST(INST_PUSHFQ           , "pushfq"           , I_EMIT          , 0               , 0               , 0, 0x0000009C, 0),
@@ -1234,23 +1263,6 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           0, 
           0, 2, dst);
         return;
-      }
-
-      break;
-    }
-    
-    case I_CMOV:
-    {
-      if (o1->isReg() && o2->isRegMem() && o3->isImm())
-      {
-        const Register& dst = operand_cast<const Register&>(*o1);
-        const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
-        const Immediate& cc = operand_cast<const Immediate&>(*o3);
-
-        _emitX86RM(0x0F40 | (UInt32)cc.value(),
-          dst.isRegType(REG_GPW),
-          dst.isRegType(REG_GPQ), dst.code(), src);
-        return; 
       }
 
       break;
@@ -1512,34 +1524,22 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       break;
     }
 
-    case I_MOVSX:
+    case I_MOVSX_MOVZX:
     {
       if (o1->isReg() && o2->isRegMem())
       {
         const Register& dst = operand_cast<const Register&>(*o1);
         const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
 
-        switch (src.size())
-        {
-          case 1:
-            ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
-            _emitX86RM(0x00000FBE,
-              dst.isRegType(REG_GPW),
-              dst.isRegType(REG_GPQ),
-              dst.code(),
-              src);
-            return;
-          case 2:
-            ASMJIT_ASSERT(!dst.isRegType(REG_GPB) && !dst.isRegType(REG_GPW));
-            _emitX86RM(0x00000FBF,
-              0,
-              dst.isRegType(REG_GPQ),
-              dst.code(),
-              src);
-            return;
-          default:
-            goto illegalInstruction;
-        }
+        if (dst.isRegType(REG_GPB)) goto illegalInstruction;
+        if (src.size() != 1 && src.size() != 2) goto illegalInstruction;
+        if (src.size() == 2 && dst.isRegType(REG_GPW)) goto illegalInstruction;
+
+        _emitX86RM(id.opCode1 + (src.size() != 1),
+          dst.isRegType(REG_GPW),
+          dst.isRegType(REG_GPQ),
+          dst.code(),
+          src);
         return; 
       }
 
@@ -1562,77 +1562,10 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       break;
     }
 #endif // ASMJIT_X64
-    
-    case I_MOVZX:
-    { 
-      if (o1->isReg() && o2->isRegMem())
-      {
-        const Register& dst = operand_cast<const Register&>(*o1);
-        const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
 
-        switch (src.size())
-        {
-          case 1:
-            ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
-            _emitX86RM(0x00000FB6,
-              dst.isRegType(REG_GPW),
-              dst.isRegType(REG_GPQ), dst.code(), src);
-            return;
-          case 2:
-            ASMJIT_ASSERT(!dst.isRegType(REG_GPB) && !dst.isRegType(REG_GPW));
-            _emitX86RM(0x00000FB7,
-              0, 
-              dst.isRegType(REG_GPQ), dst.code(), src);
-            return;
-          default:
-            ASMJIT_CRASH();
-        }
-        return; 
-      }
-
-      break;
-    }
-
-    case I_POP:
-    {
-      if (o1->isReg())
-      {
-        ASMJIT_ASSERT(o1->isRegType(REG_GPW) || o1->isRegType(REG_GPN));
-        _emitX86Inl(0x58, o1->isRegType(REG_GPW), 0, operand_cast<const Register&>(*o1).code());
-        return;
-      }
-      if (o1->isMem())
-      {
-        _emitX86RM(0x8F, o1->size() == 2, 0, 0, operand_cast<const BaseRegMem&>(*o1));
-        return;
-      }
-
-      break;
-    }
-        
     case I_PUSH:
     {
-      if (o1->isReg())
-      {
-        const Register& reg = operand_cast<const Register&>(*o1);
-        ASMJIT_ASSERT(reg.isRegType(REG_GPW) || reg.isRegType(REG_GPN));
-
-        if (reg.type() == REG_GPW) _emitByte(0x66);
-        if (reg.code() & 0x8) _emitByte(0x41); // REX
-        _emitByte(0x50 | (reg.code() & 0x7));
-        return;
-      }
-      if (o1->isMem())
-      {
-        const Mem& op = operand_cast<const Mem&>(*o1);
-
-#if defined(ASMJIT_X64)
-        _emitRexRM(1, 6, op);
-#endif // ASMJIT_X64
-        _emitByte(0xFF);
-        _emitModM(6, op);
-        return;
-      }
+      // This section is only for immediates, memory/register operands are handled in I_POP.
       if (o1->isImm())
       {
         const Immediate& imm = operand_cast<const Immediate&>(*o1);
@@ -1650,9 +1583,27 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         return;
       }
 
-      break; 
+      // ... goto I_POP ...
     }
-    
+
+    case I_POP:
+    {
+      if (o1->isReg())
+      {
+        ASMJIT_ASSERT(o1->isRegType(REG_GPW) || o1->isRegType(REG_GPN));
+        _emitX86Inl(id.opCode1, o1->isRegType(REG_GPW), 0, operand_cast<const Register&>(*o1).code());
+        return;
+      }
+
+      if (o1->isMem())
+      {
+        _emitX86RM(id.opCode2, o1->size() == 2, 0, id.opCodeR, operand_cast<const BaseRegMem&>(*o1));
+        return;
+      }
+
+      break;
+    }
+
     case I_R_RM:
     {
       if (o1->isReg() && o2->isRegMem())

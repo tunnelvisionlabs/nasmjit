@@ -179,6 +179,32 @@ struct Serializer : public _Serializer
     __emitX86(INST_AND, &dst, &src);
   }
 
+  //! @brief Bit Scan Forward.
+  inline void bsf(const Register& dst, const Register& src)
+  {
+    ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
+    __emitX86(INST_BSF, &dst, &src);
+  }
+  //! @brief Bit Scan Forward.
+  inline void bsf(const Register& dst, const Mem& src)
+  {
+    ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
+    __emitX86(INST_BSF, &dst, &src);
+  }
+
+  //! @brief Bit Scan Reverse.
+  inline void bsr(const Register& dst, const Register& src)
+  {
+    ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
+    __emitX86(INST_BSR, &dst, &src);
+  }
+  //! @brief Bit Scan Reverse.
+  inline void bsr(const Register& dst, const Mem& src)
+  {
+    ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
+    __emitX86(INST_BSR, &dst, &src);
+  }
+
   //! @brief Byte swap (32 bit or 64 bit registers only) (i486).
   inline void bswap(const Register& dst)
   {
@@ -341,9 +367,69 @@ struct Serializer : public _Serializer
   //! @brief Conditional Move.
   inline void cmov(CONDITION cc, const Register& dst, const BaseRegMem& src)
   {
-    Immediate imm((SysInt)cc);
-    __emitX86(INST_CMOV, &dst, &src, &imm);
+    __emitX86(INST_CMOV + static_cast<UInt32>(cc), &dst, &src);
   }
+
+  //! @brief Conditional Move.
+  inline void cmova  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVA  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovae (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVAE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovb  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVB  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovbe (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVBE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovc  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVC  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmove  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVE  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovg  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVG  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovge (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVGE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovl  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVL  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovle (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVLE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovna (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNA , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnae(const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNAE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnb (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNB , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnbe(const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNBE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnc (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNC , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovne (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovng (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNG , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnge(const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNGE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnl (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNL , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnle(const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNLE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovno (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnp (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNP , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovns (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNS , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnz (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVNZ , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovo  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVO  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovp  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVP  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpe (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVPE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpo (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVPO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovs  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVS  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovz  (const Register& dst, const BaseRegMem& src) { __emitX86(INST_CMOVZ  , &dst, &src); }
 
   //! @brief Compare Two Operands.
   inline void cmp(const Register& dst, const Register& src)
@@ -5804,7 +5890,13 @@ struct Serializer : public _Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
-  inline void crc32(const Register& dst, const BaseRegMem& src)
+  inline void crc32(const Register& dst, const Register& src)
+  {
+    ASMJIT_ASSERT(dst.isRegType(REG_GPD) || dst.isRegType(REG_GPQ));
+    __emitX86(INST_CRC32, &dst, &src);
+  }
+  //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
+  inline void crc32(const Register& dst, const Mem& src)
   {
     ASMJIT_ASSERT(dst.isRegType(REG_GPD) || dst.isRegType(REG_GPQ));
     __emitX86(INST_CRC32, &dst, &src);

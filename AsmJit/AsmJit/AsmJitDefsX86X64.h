@@ -350,7 +350,7 @@ enum RELOC_MODE
 };
 
 //! @brief Instruction codes (AsmJit specific)
-enum INST_X86_CODE
+enum INST_CODE
 {
   INST_ADC,           // X86/X64
   INST_ADD,           // X86/X64
@@ -371,6 +371,8 @@ enum INST_X86_CODE
   INST_BLENDPS,
   INST_BLENDVPD,
   INST_BLENDVPS,
+  INST_BSF,           // X86/X64
+  INST_BSR,           // X86/X64
   INST_BSWAP,         // X86/X64 (i486)
   INST_BT,            // X86/X64
   INST_BTC,           // X86/X64
@@ -383,7 +385,37 @@ enum INST_X86_CODE
   INST_CLD,           // X86/X64
   INST_CLFLUSH,
   INST_CMC,           // X86/X64
-  INST_CMOV,          // X86/X64 (i586)
+  INST_CMOV,          // Begin (cmovcc) (i586)
+  INST_CMOVA=INST_CMOV,//X86/X64 (cmovcc) (i586)
+  INST_CMOVAE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVB,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVBE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVC,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVE,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVG,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVGE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVL,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVLE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNA,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNAE,       // X86/X64 (cmovcc) (i586)
+  INST_CMOVNB,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNBE,       // X86/X64 (cmovcc) (i586)
+  INST_CMOVNC,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNG,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNGE,       // X86/X64 (cmovcc) (i586)
+  INST_CMOVNL,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNLE,       // X86/X64 (cmovcc) (i586)
+  INST_CMOVNO,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNP,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNS,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVNZ,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVO,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVP,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVPE,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVPO,        // X86/X64 (cmovcc) (i586)
+  INST_CMOVS,         // X86/X64 (cmovcc) (i586)
+  INST_CMOVZ,         // X86/X64 (cmovcc) (i586)
   INST_CMP,           // X86/X64
   INST_CMPPD,
   INST_CMPPS,

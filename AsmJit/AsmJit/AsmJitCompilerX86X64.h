@@ -31,6 +31,7 @@
 #include "AsmJitConfig.h"
 
 #include "AsmJitAssembler.h"
+#include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 
 namespace AsmJit {
@@ -66,19 +67,6 @@ enum EMITTABLE_TYPE
   EMITTABLE_PROLOGUE = 4,
   //! @brief Emittable is function epilogue.
   EMITTABLE_EPILOGUE = 5
-};
-
-//! @brief Instruction type.
-enum INSTRUCTION_TYPE
-{
-  //! @brief Instruction is invalid (can't be used).
-  INSTRUCTION_NONE = 0
-};
-
-//! @brief Instruction format.
-enum INSTRUTION_FORMAT
-{
-
 };
 
 //! @brief Calling convention type.
@@ -352,17 +340,64 @@ struct ASMJIT_API Instruction : public Emittable
   Instruction(Compiler* c);
   virtual ~Instruction();
 
-  //! @brief Return instruction type, see @c INSTRUCTION_TYPE.
-  inline UInt16 instruction() const { return _instruction; }
+  //! @brief Return instruction code, see @c INST_CODE.
+  inline UInt32 code() const { return _code; }
 
-  //! @brief Return instruction format, see @c INSTRUCTION_FORMAT.
-  inline UInt16 format() const { return _format; }
+  //! @brief Return array of operands (3 operands total).
+  inline Operand* ops() { return _o; }
+
+  //! @brief Return first instruction operand.
+  inline Operand& o1() { return _o[0]; }
+  //! @brief Return first instruction operand.
+  inline const Operand& o1() const { return _o[0]; }
+
+  //! @brief Return second instruction operand.
+  inline Operand& o2() { return _o[1]; }
+  //! @brief Return second instruction operand.
+  inline const Operand& o2() const { return _o[1]; }
+
+  //! @brief Return third instruction operand.
+  inline Operand& o3() { return _o[2]; }
+  //! @brief Return third instruction operand.
+  inline const Operand& o3() const { return _o[2]; }
+
+  inline void setInst(UInt32 code)
+  {
+    _code = code;
+    _o[0]._initAll(OP_NONE, 0, 0, 0, 0);
+    _o[1]._initAll(OP_NONE, 0, 0, 0, 0);
+    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+  }
+
+  inline void setInst(UInt32 code, const Operand& o1)
+  {
+    _code = code;
+    _o[0] = o1;
+    _o[1]._initAll(OP_NONE, 0, 0, 0, 0);
+    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+  }
+
+  inline void setInst(UInt32 code, const Operand& o1, const Operand& o2)
+  {
+    _code = code;
+    _o[0] = o1;
+    _o[1] = o2;
+    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+  }
+
+  inline void setInst(UInt32 code, const Operand& o1, const Operand& o2, const Operand& o3)
+  {
+    _code = code;
+    _o[0] = o1;
+    _o[1] = o2;
+    _o[2] = o3;
+  }
 
 private:
-  //! @brief Type of instruction, see @c INSTRUCTION_TYPE.
-  UInt16 _instruction;
-  //! @brief Format of instruction, see @c INSTRUCTION_FORMAT.
-  UInt16 _format;
+  //! @brief Instruction code, see @c INST_CODE.
+  UInt32 _code;
+  //! @brief Instruction operands.
+  Operand _o[3];
 };
 
 //! @brief Function emittable.
