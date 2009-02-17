@@ -38,200 +38,9 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Assembler
 //! @{
 
-// Forward Declarations
-struct Displacement;
-struct Label;
-struct Assembler; 
-
-// Helpers
-
-//! @brief BitField is a help template for encoding and decode bitfield with
-//! unsigned content.
-//!
-//! @internal
-template<class T, int shift, int size>
-struct BitField
-{
-  // Tells whether the provided value fits into the bit field.
-  static bool isValid(T value) {
-    return (static_cast<SysUInt>(value) & ~(((SysUInt)1U << (size)) - 1)) == 0;
-  }
-
-  // Returns a UInt32 mask of bit field.
-  static SysUInt mask() {
-    return (1U << (size + shift)) - ((SysUInt)1U << shift);
-  }
-
-  // Returns a UInt32 with the bit field value encoded.
-  static SysUInt encode(T value)
-  {
-    ASMJIT_ASSERT(isValid(value));
-    return static_cast<SysUInt>(value) << shift;
-  }
-
-  // Extracts the bit field from the value.
-  static T decode(SysUInt value)
-  {
-    return static_cast<T>((value >> shift) & (((SysUInt)1U << (size)) - (SysUInt)1));
-  }
-};
-
-//! @brief Displacement.
-//!
-//! A Displacement describes the 32bit immediate field of an instruction which
-//! may be used together with a Label in order to refer to a yet unknown code
-//! position. Displacements stored in the instruction stream are used to describe
-//! the instruction and to chain a list of instructions using the same Label.
-//! A Displacement contains 2 different fields:
-//!
-//! next field: position of next displacement in the chain (0 = end of list)
-//! type field: instruction type
-//!
-//! A next value of null (0) indicates the end of a chain (note that there can
-//! be no displacement at position zero, because there is always at least one
-//! instruction byte before the displacement).
-//!
-//! Displacement _data field layout
-//!
-//! |31.....1| ......0|
-//! [  next  |  type  |
-//!
-//! @internal
-struct Displacement
-{
-  enum Type
-  {
-    UNCONDITIONAL_JUMP,
-    OTHER
-  };
-
-  explicit Displacement(SysInt data)
-  {
-    _data = data;
-  }
-
-  Displacement(Label* L, Type type)
-  {
-    init(L, type);
-  }
-
-  inline SysInt data() const
-  {
-    return _data;
-  }
-
-  inline Type type() const
-  {
-    return TypeField::decode(_data);
-  }
-
-  inline void next(Label* L) const;
-  inline void linkTo(Label* L);
-
-private:
-  SysInt _data;
-
-  struct TypeField: public BitField<Type, 0, 1> {};
-  struct NextField: public BitField<SysInt,  1, ((sizeof(SysInt)*8)-1)> {};
-
-  inline void init(Label* L, Type type);
-
-  friend struct Label;
-  friend struct Assembler;
-};
-
-//! @brief Labels represent pc locations.
-//!
-//! They are typically jump or call targets. After declaration, a label 
-//! can be freely used to denote known or (yet) unknown pc location. 
-//! AsmJit::Assembler::bind() is used to bind a label to the current pc.
-//!
-//! @note A label can be bound only once.
-struct Label
-{
-  //! @brief Creates new unused label.
-  inline Label() { unuse(); }
-  //! @brief Destroys label. If label is linked to some location, assertion is raised.
-  inline ~Label() { ASMJIT_ASSERT(!isLinked()); }
-
-  //! @brief Returns Unuse label (unbound or unlink).
-  inline void unuse() { _pos = 0; }
-
-  //! @brief Returns @c true if label is bound.
-  inline bool isBound()  const { return _pos <  0; }
-  //! @brief Returns @c true if label is unused (not bound or linked).
-  inline bool isUnused() const { return _pos == 0; }
-  //! @brief Returns @c true if label is linked.
-  inline bool isLinked() const { return _pos >  0; }
-
-  //! @brief Returns the position of bound or linked labels. Cannot be 
-  //! used for unused labels.
-  inline SysInt pos() const
-  {
-    if (_pos < 0) return -_pos - 1;
-    if (_pos > 0) return  _pos - 1;
-    ASMJIT_ASSERT(0);
-    return 0;
-  }
-
-private:
-  //! pos_ encodes both the binding state (via its sign)
-  //! and the binding position (via its value) of a label.
-  //!
-  //! pos_ <  0  bound label, pos() returns the jump target position
-  //! pos_ == 0  unused label
-  //! pos_ >  0  linked label, pos() returns the last reference position
-  SysInt _pos;
-
-  //! @brief Bind label to position @a pos.
-  inline void bindTo(SysInt pos) 
-  {
-    _pos = -pos - 1;
-    ASMJIT_ASSERT(isBound());
-  }
-
-  //! @brief Link label to position @a pos.
-  inline void linkTo(SysInt pos)
-  {
-    _pos =  pos + 1;
-    ASMJIT_ASSERT(isLinked());
-  }
-
-  friend struct Displacement;
-  friend struct Assembler;
-};
-
-inline void Displacement::next(Label* L) const
-{
-  SysInt n = NextField::decode(_data);
-  n > 0 ? L->linkTo(n) : L->unuse();
-}
-
-inline void Displacement::linkTo(Label* L)
-{
-  init(L, type());
-}
-
-inline void Displacement::init(Label* L, Type type)
-{
-  ASMJIT_ASSERT(!L->isBound());
-
-  SysInt next = 0;
-  if (L->isLinked())
-  {
-    next = L->pos();
-    // Displacements must be at positions > 0
-    ASMJIT_ASSERT(next > 0);
-  }
-
-  // Ensure that we _never_ overflow the next field.
-  // ASMJIT_ASSERT(NextField::isValid(Assembler::kMaximalBufferSize));
-  _data = NextField::encode(next) | TypeField::encode(type);
-}
-
 //! @brief X86/X64 Assembler.
 //!
-//! This class is the main class in AsmJit for generating X86/X64 binary. In
+//! This class is the main class in AsmJit for generating X86/X64 binary. It
 //! creates internal buffer, where opcodes are stored (don't worry about it,
 //! it's auto growing buffer) and contains methods for generating opcodes
 //! with compile time and runtime time (DEBUG) checks. Buffer is allocated 
@@ -241,16 +50,16 @@ inline void Displacement::init(Label* L, Type type)
 //! Buffer is allocated by @c ASMJIT_MALLOC, @c ASMJIT_REALLOC and 
 //! freed by @c ASMJIT_FREE macros. It's designed to fit your memory 
 //! management model and not to dictate you own. Default functions are from
-//! standard C library - malloc, realloc and free.
+//! standard C library - @c malloc, @c realloc and @c free.
 //!
 //! While you are over from emitting instructions, you can get size of code
-//! by codeSize() or offset() methods. These methods returns you code size
-//! (or more precisely current code offset) in bytes. Use takeCode() to take
-//! internal buffer (all pointers in Assembler instance will be zeroed and 
-//! current buffer returned) to use it. If you don't take it, Assembler 
-//! destructor will free it. To run code, don't use malloc()'ed memory, but
-//! use @c AsmJit::VM::alloc() to get memory for executing (specify
-//! canExecute to true). Code generated by Assembler can be relocated to that 
+//! by @c codeSize() or @c offset() methods. These methods returns you code
+//! size (or more precisely current code offset) in bytes. Use takeCode() to
+//! take internal buffer (all pointers in Assembler instance will be zeroed
+//! and current buffer returned) to use it. If you don't take it, @c Assembler
+//! destructor will free it. To run code, don't use @c malloc()'ed memory, but
+//! use @c AsmJit::VM::alloc() to get memory for executing (specify canExecute
+//! to @c true). Code generated by @c Assembler can be relocated to that
 //! buffer and called.
 //!
 //! To generate instruction stream, use methods provided by @c Assembler 
@@ -288,7 +97,7 @@ inline void Displacement::init(Label* L, Type type)
 //! a.relocCode(vmem);
 //!
 //! // Cast vmem to void() function and call it
-//! reinterpret_cast<void (*)()>(vmem)();
+//! function_cast<void (*)()>(vmem)();
 //!
 //! // Memory should be freed, but use VM::free() to do that.
 //! VM::free(vmem, vsize);
@@ -302,15 +111,15 @@ inline void Displacement::init(Label* L, Type type)
 //! Using labels
 //!
 //! While generating assembler code, you will usually need to create complex
-//! code with labels. Labels are fully supported and you can call jump or j..
-//! instructions to yet uninitialized label. Each label expects to be bound
-//! into offset. To bind label to specific offset, use @c bind() methos.
+//! code with labels. Labels are fully supported and you can call @c jmp or 
+//! @c jcc instructions to yet uninitialized label. Each label expects to be 
+//! bound into offset. To bind label to specific offset, use @c bind() method.
 //!
 //! @verbatim
 //! // Example: Usage of Label (32 bit code)
 //! //
 //! // Create simple DWORD memory copy function:
-//! // STDCALL void copy32(void* DST, const void* SRC, sysuint_t COUNT);
+//! // ASMJIT_STDCALL void copy32(void* DST, const void* SRC, sysuint_t COUNT);
 //! using namespace AsmJit;
 //!
 //! // X86/X64 assembler
@@ -342,8 +151,7 @@ inline void Displacement::init(Label* L, Type type)
 //! 
 //! // Repeat loop until ecx == 0
 //! a.dec(ecx);
-//! // See @c CONDITION codes, if ecx != 0, jump to L_Loop
-//! a.j(C_ZERO, &L_Loop);
+//! a.jz(&L_Loop);
 //! 
 //! // Epilog
 //! a.pop(edi);
@@ -416,26 +224,13 @@ struct ASMJIT_API Assembler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Set byte at position @a pos.
-  inline UInt8 getByteAt(SysInt pos) { return _buffer.getByteAt(pos); }
+  inline UInt8 getByteAt(SysInt pos) const { return _buffer.getByteAt(pos); }
   //! @brief Set word at position @a pos.
-  inline UInt16 getWordAt(SysInt pos) { return _buffer.getWordAt(pos); }
+  inline UInt16 getWordAt(SysInt pos) const { return _buffer.getWordAt(pos); }
   //! @brief Set word at position @a pos.
-  inline UInt32 getDWordAt(SysInt pos) { return _buffer.getDWordAt(pos); }
+  inline UInt32 getDWordAt(SysInt pos) const { return _buffer.getDWordAt(pos); }
   //! @brief Set word at position @a pos.
-  inline UInt64 getQWordAt(SysInt pos) { return _buffer.getQWordAt(pos); }
-
-  // TODO: Remove
-  //! @brief Return integer (dword size) at position @a pos.
-  inline UInt32 getIntAt(SysInt pos)
-  {
-    return *reinterpret_cast<UInt32*>(_buffer._data + pos);
-  }
-
-  //! @brief Displacement at position @a pos.
-  inline Displacement getDispAt(Label* L)
-  {
-    return Displacement(getIntAt(L->pos()));
-  }
+  inline UInt64 getQWordAt(SysInt pos) const { return _buffer.getQWordAt(pos); }
 
   //! @brief Set byte at position @a pos.
   inline void setByteAt(SysInt pos, UInt8 x) { _buffer.setByteAt(pos, x); }
@@ -446,16 +241,15 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief Set word at position @a pos.
   inline void setQWordAt(SysInt pos, UInt64 x) { _buffer.setQWordAt(pos, x); }
 
+  //! @brief Set word at position @a pos.
+  inline Int32 getInt32At(SysInt pos) const { return (Int32)_buffer.getDWordAt(pos); }
+  //! @brief Set int32 at position @a pos.
+  inline void setInt32At(SysInt pos, Int32 x) { _buffer.setDWordAt(pos, (Int32)x); }
+
   //! @brief Set custom variable @a imm at position @a pos.
   //!
   //! @note This function is used to patch existing code.
   void setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size);
-
-  //! @brief Set displacement at label @a L position.
-  inline void setDispAt(Label* L, Displacement disp)
-  {
-    setDWordAt(L->pos(), (UInt32)disp.data());
-  }
 
   // -------------------------------------------------------------------------
   // [Assembler Emitters]
@@ -473,6 +267,9 @@ struct ASMJIT_API Assembler : public Serializer
   inline void _emitDWord(UInt32 x) { _buffer.emitDWord(x); }
   //! @brief Emit QWord (8 bytes) to internal buffer.
   inline void _emitQWord(UInt64 x) { _buffer.emitQWord(x); }
+
+  //! @brief Emit Int32 (4 bytes) to internal buffer.
+  inline void _emitInt32(Int32 x) { _buffer.emitDWord((UInt32)x); }
 
   void _emitImmediate(const Immediate& imm, UInt32 size);
 
@@ -584,22 +381,7 @@ struct ASMJIT_API Assembler : public Serializer
 
   void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src);
 
-  void _emitDisp(Label* L, Displacement::Type type);
-
-  // -------------------------------------------------------------------------
-  // [Bind and Labels Declaration]
-  // -------------------------------------------------------------------------
-
-  //! @brief Bind label to the current offset.
-  //!
-  //! @note Label can be bound only once!
-  void bind(Label* L);
-
-  //! @brief Bind label to pos - called from bind(Label*L).
-  void bindTo(Label* L, SysInt pos);
-
-  //! @brief link label, called internally from jumpers.
-  void linkTo(Label* L, Label* appendix);
+  void _emitDisplacement(Label* L);
 
   // -------------------------------------------------------------------------
   // [Relocation helpers]
@@ -621,11 +403,25 @@ struct ASMJIT_API Assembler : public Serializer
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
-  virtual void _emitX86(UInt32 code, const Operand* o1 = NULL, const Operand* o2 = NULL, const Operand* o3 = NULL);
-  virtual void _emitX86Align(SysInt m);
-  virtual void _emitX86Call(Label* L);
-  virtual void _emitX86J(CONDITION cc, Label* L, HINT hint);
-  virtual void _emitX86Jmp(Label* L);
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+
+  // -------------------------------------------------------------------------
+  // [Align]
+  // -------------------------------------------------------------------------
+
+  virtual void align(SysInt m);
+
+  // -------------------------------------------------------------------------
+  // [Bind]
+  // -------------------------------------------------------------------------
+
+  //! @brief Bind label to the current offset.
+  //!
+  //! @note Label can be bound only once!
+  virtual void bind(Label* L);
+
+  //! @brief Bind label to pos - called from bind(Label*L).
+  void bindTo(Label* L, SysInt pos);
 
   // -------------------------------------------------------------------------
   // [Variables]

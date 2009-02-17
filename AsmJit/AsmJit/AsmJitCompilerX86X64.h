@@ -34,6 +34,8 @@
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 
+#include <string.h>
+
 namespace AsmJit {
 
 // forward declarations
@@ -364,17 +366,14 @@ struct ASMJIT_API Instruction : public Emittable
   inline void setInst(UInt32 code)
   {
     _code = code;
-    _o[0]._initAll(OP_NONE, 0, 0, 0, 0);
-    _o[1]._initAll(OP_NONE, 0, 0, 0, 0);
-    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+    memset(&_o[0], 0, sizeof(Operand)*3);
   }
 
   inline void setInst(UInt32 code, const Operand& o1)
   {
     _code = code;
     _o[0] = o1;
-    _o[1]._initAll(OP_NONE, 0, 0, 0, 0);
-    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+    memset(&_o[1], 0, sizeof(Operand)*2);
   }
 
   inline void setInst(UInt32 code, const Operand& o1, const Operand& o2)
@@ -382,7 +381,7 @@ struct ASMJIT_API Instruction : public Emittable
     _code = code;
     _o[0] = o1;
     _o[1] = o2;
-    _o[2]._initAll(OP_NONE, 0, 0, 0, 0);
+    memset(&_o[2], 0, sizeof(Operand)*1);
   }
 
   inline void setInst(UInt32 code, const Operand& o1, const Operand& o2, const Operand& o3)
@@ -662,7 +661,7 @@ struct ASMJIT_API Compiler
   //! Use @c beginFunction() and @c endFunction() methods to begin / end
   //! function block. Each function must be also started by @c prologue()
   //! and ended by @c epilogue() calls.
-  inline Function* getFunction() { return _function; }
+  inline Function* currentFunction() { return _currentFunction; }
 
   // -------------------------------------------------------------------------
   // [Function Builder]
@@ -670,7 +669,7 @@ struct ASMJIT_API Compiler
 
   //! @brief Begins a new function.
   //!
-  //! @note To get current function use @c getFunction() method.
+  //! @note To get current function use @c currentFunction() method.
   Function* beginFunction(UInt32 callingConvention);
 
   //! @brief Ends current function.
@@ -696,6 +695,29 @@ struct ASMJIT_API Compiler
   void build(Assembler& a);
 
   // -------------------------------------------------------------------------
+  // [Memory Management]
+  // -------------------------------------------------------------------------
+#if 0
+  // Only planned
+
+  // Memory management in compiler has these rules:
+  // - Everything created by compiler is freed by compiler.
+  // - To get decent performance, compiler always uses larger buffer for 
+  //   objects to allocate and when compiler instance is destroyed, this 
+  //   buffer is freed. Destructors of created objects are never called.
+  // REVISION NEEDED: This concept is not good, it's needed to call destructors
+
+  template<typename T>
+  inline T* newObject()
+  {
+    void* addr = _allocObject(sizeof(T));
+    return
+  }
+
+  void* _allocObject(SysUInt size);
+#endif
+
+  // -------------------------------------------------------------------------
   // [Variables]
   // -------------------------------------------------------------------------
 
@@ -703,11 +725,11 @@ private:
   //! @brief List of emittables.
   EmittableList _buffer;
 
-  //! @brief Position in _buffer
-  SysInt _position;
+  //! @brief Position in @c _buffer.
+  SysInt _currentPosition;
 
-  //! @brief Current function
-  Function* _function;
+  //! @brief Current function.
+  Function* _currentFunction;
 
 private:
   // disable copy

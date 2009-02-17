@@ -496,8 +496,8 @@ Variable::~Variable()
 // ----------------------------------------------------------------------------
 
 Compiler::Compiler() :
-  _position(0),
-  _function(NULL)
+  _currentPosition(0),
+  _currentFunction(NULL)
 {
 }
 
@@ -514,14 +514,14 @@ void Compiler::clear()
 {
   delAll(_buffer);
   _buffer.clear();
-  _position = 0;
+  _currentPosition = 0;
 }
 
 void Compiler::free()
 {
   delAll(_buffer);
   _buffer.free();
-  _position = 0;
+  _currentPosition = 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -530,9 +530,9 @@ void Compiler::free()
 
 Function* Compiler::beginFunction(UInt32 callingConvention)
 {
-  ASMJIT_ASSERT(_function == NULL);
+  ASMJIT_ASSERT(_currentFunction == NULL);
 
-  Function* f = _function = new Function(this);
+  Function* f = _currentFunction = new Function(this);
   f->setCallingConvention(callingConvention);
 
   emit(f);
@@ -541,23 +541,23 @@ Function* Compiler::beginFunction(UInt32 callingConvention)
 
 Function* Compiler::endFunction()
 {
-  ASMJIT_ASSERT(_function != NULL);
+  ASMJIT_ASSERT(_currentFunction != NULL);
 
-  Function* f = _function;
-  _function = NULL;
+  Function* f = _currentFunction;
+  _currentFunction = NULL;
   return f;
 }
 
 Prologue* Compiler::prologue()
 {
-  Prologue* block = new Prologue(this, getFunction());
+  Prologue* block = new Prologue(this, currentFunction());
   emit(block);
   return block;
 }
 
 Epilogue* Compiler::epilogue()
 {
-  Epilogue* block = new Epilogue(this, getFunction());
+  Epilogue* block = new Epilogue(this, currentFunction());
   emit(block);
   return block;
 }
@@ -571,7 +571,7 @@ void Compiler::emit(Emittable* emittable, bool endblock)
   if (endblock)
     _buffer.append(emittable);
   else
-    _buffer.insert(_position++, emittable);
+    _buffer.insert(_currentPosition++, emittable);
 }
 
 void Compiler::build(Assembler& a)

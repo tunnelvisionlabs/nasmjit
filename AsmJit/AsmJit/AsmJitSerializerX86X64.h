@@ -39,9 +39,6 @@
 
 namespace AsmJit {
 
-// forward declarations
-struct Label;
-
 //! @brief Assembler instruction seralizer base.
 //!
 //! @note Use always @c Serializer class, this class is only designed to 
@@ -65,11 +62,27 @@ struct ASMJIT_API _Serializer
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
-  virtual void _emitX86(UInt32 code, const Operand* o1 = NULL, const Operand* o2 = NULL, const Operand* o3 = NULL) = 0;
-  virtual void _emitX86Align(SysInt m) = 0;
-  virtual void _emitX86Call(Label* L) = 0;
-  virtual void _emitX86J(CONDITION cc, Label* L, HINT hint) = 0;
-  virtual void _emitX86Jmp(Label* L) = 0;
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
+
+  // -------------------------------------------------------------------------
+  // [Align]
+  // -------------------------------------------------------------------------
+
+  //! @brief Align buffer to @a m bytes.
+  //!
+  //! Typical usage of this is to align labels at start of inner loops.
+  //!
+  //! Inserts @c nop() instructions.
+  virtual void align(SysInt m) = 0;
+
+  // -------------------------------------------------------------------------
+  // [Bind]
+  // -------------------------------------------------------------------------
+
+  //! @brief Bind label to the current offset.
+  //!
+  //! @note Label can be bound only once!
+  virtual void bind(Label* L) = 0;
 
 protected:
   // helpers to decrease binary code size
@@ -90,16 +103,6 @@ struct Serializer : public _Serializer
   // -------------------------------------------------------------------------
   // [X86 Instructions]
   // -------------------------------------------------------------------------
-
-  //! @brief Align buffer to @a m bytes.
-  //!
-  //! Typical usage of this is to align labels at start of inner loops.
-  //!
-  //! Inserts @c nop() instructions.
-  inline void align(SysInt m)
-  {
-    _emitX86Align(m);
-  }
 
   //! @brief Add with Carry.
   inline void adc(const Register& dst, const Register& src)
@@ -177,6 +180,14 @@ struct Serializer : public _Serializer
   inline void and_(const Mem& dst, const Immediate& src)
   {
     __emitX86(INST_AND, &dst, &src);
+  }
+
+  //! @brief Bind label to the current offset.
+  //!
+  //! @note Label can be bound only once!
+  inline void bind(Label* L)
+  {
+    // TODO
   }
 
   //! @brief Bit Scan Forward.
@@ -297,11 +308,6 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Call Procedure.
-  inline void call(Label* L)
-  {
-    _emitX86Call(L);
-  }
-  //! @brief Call Procedure.
   inline void call(const Register& dst)
   {
     ASMJIT_ASSERT(dst.isRegType(REG_GPN));
@@ -311,6 +317,11 @@ struct Serializer : public _Serializer
   inline void call(const Mem& dst)
   {
     __emitX86(INST_CALL, &dst);
+  }
+  //! @brief Call Procedure.
+  inline void call(Label* L)
+  {
+    __emitX86(INST_CALL, L);
   }
 
   //! @brief Convert Byte to Word (Sign Extend).
@@ -656,7 +667,8 @@ struct Serializer : public _Serializer
   inline void j(CONDITION cc, Label* L, HINT hint = HINT_NONE)
   {
     ASMJIT_ASSERT((SysUInt)cc <= 0xF);
-    _emitX86J(cc, L, hint);
+    Immediate imm(hint);
+    __emitX86(INST_J + cc, L, &imm);
   }
 
   //! @brief Jump to label @a L if condition is met.
@@ -728,7 +740,7 @@ struct Serializer : public _Serializer
   //! instruction being jumped to.
   inline void jmp(Label* L)
   {
-    _emitX86Jmp(L);
+    __emitX86(INST_JMP, L);
   }
 
   //! @overload
@@ -1956,9 +1968,14 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
-  inline void fnstsw(const BaseRegMem& dst)
+  inline void fnstsw(const Register& dst)
   {
-    ASMJIT_ASSERT(dst.isMem() || dst.isRegCode(REG_AX));
+    ASMJIT_ASSERT(dst.isRegCode(REG_AX));
+    __emitX86(INST_FNSTSW, &dst);
+  }
+  //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+  inline void fnstsw(const Mem& dst)
+  {
     __emitX86(INST_FNSTSW, &dst);
   }
 
@@ -2110,9 +2127,14 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
-  inline void fstsw(const BaseRegMem& dst)
+  inline void fstsw(const Register& dst)
   {
-    ASMJIT_ASSERT(dst.isMem() || dst.isRegCode(REG_AX));
+    ASMJIT_ASSERT(dst.isRegCode(REG_AX));
+    __emitX86(INST_FSTSW, &dst);
+  }
+  //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+  inline void fstsw(const Mem& dst)
+  {
     __emitX86(INST_FSTSW, &dst);
   }
 
@@ -5958,12 +5980,16 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
-  inline void popcnt(const Register& dst, const BaseRegMem& src)
+  inline void popcnt(const Register& dst, const Register& src)
   {
     ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
-    ASMJIT_ASSERT(src.op() == OP_MEM || 
-                 (src.op() == OP_REG && operand_cast<const Register&>(src).type() == dst.type()));
-
+    ASMJIT_ASSERT(src.type() == dst.type());
+    __emitX86(INST_POPCNT, &dst, &src);
+  }
+  //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
+  inline void popcnt(const Register& dst, const Mem& src)
+  {
+    ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
     __emitX86(INST_POPCNT, &dst, &src);
   }
 

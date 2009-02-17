@@ -47,6 +47,8 @@ enum OP
   OP_MEM = 2,
   //! @brief Operand is immediate.
   OP_IMM = 3,
+  //! @brief Operand is label.
+  OP_LABEL = 4,
 };
 
 //! @brief Size of registers and pointers.
@@ -347,6 +349,13 @@ enum RELOC_MODE
   //! @brief Internal, used by @c AsmJit::Assembler::jmp_rel() and 
   //! @c AsmJit::Assembler::j_rel()
   RELOC_JMP_RELATIVE = 10
+};
+
+enum LABEL_STATE
+{
+  LABEL_UNUSED = 0,
+  LABEL_LINKED = 1,
+  LABEL_BOUND = 2
 };
 
 //! @brief Instruction codes (AsmJit specific)
@@ -879,6 +888,7 @@ struct Operand
   inline UInt8 isReg() const { return _op.op == OP_REG; }
   inline UInt8 isMem() const { return _op.op == OP_MEM; }
   inline UInt8 isImm() const { return _op.op == OP_IMM; }
+  inline UInt8 isLabel() const { return _op.op == OP_LABEL; }
 
   inline UInt8 isRegType(UInt8 regType) const { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
   inline UInt8 isRegCode(UInt8 regCode) const { return isReg() & (_reg.code == regCode); }
@@ -961,6 +971,20 @@ struct Operand
     SysInt value;
   };
 
+  struct LblData
+  {
+    //! @brief Type of operand, see @c OP.
+    UInt8 op;
+    //! @brief Size of label (4).
+    UInt8 size;
+    //! @brief State of label, see @c LABEL_STATE.
+    UInt8 state;
+    //! @brief Not used.
+    UInt8 unused3;
+    //! @brief Position (always positive, information depends to @c state).
+    SysInt position;
+  };
+
   union
   {
     //! @brief Generic operand data.
@@ -971,6 +995,8 @@ struct Operand
     MemData _mem;
     //! @brief Immediate operand data.
     ImmData _imm;
+    //! @brief Label data.
+    LblData _lbl;
   };
 
   inline void _init(const Operand& other)
@@ -1492,6 +1518,45 @@ static inline Immediate imm(SysInt i) { return Immediate(i, false); }
 
 //! @brief Create unsigned immediate value operand.
 static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
+
+//! @brief Label.
+//!
+//! Label represents locations typically used as jump targets, but may be also
+//! used as position where are stored constants or static variables.
+struct Label : public Operand
+{
+  //! @brief Create new unused label.
+  inline Label() 
+  { _initAll(OP_LABEL, 4, LABEL_UNUSED, 0, -1); }
+
+  //! @brief Destroy label. If label is linked to some location (not bound), 
+  //! assertion is raised (because generated code is invalid in this case).
+  inline ~Label() { ASMJIT_ASSERT(!isLinked()); }
+
+  //! @brief Unuse label (unbound or unlink) - Use with caution.
+  inline void unuse()
+  { _initAll(OP_LABEL, 4, LABEL_UNUSED, 0, -1); }
+
+  //! @brief Return label state, see @c LABEL_STATE. */
+  inline UInt8 state() const { return _lbl.state; }
+  //! @brief Returns @c true if label is unused (not bound or linked).
+  inline bool isUnused() const { return _lbl.state == LABEL_UNUSED; }
+  //! @brief Returns @c true if label is linked.
+  inline bool isLinked() const { return _lbl.state == LABEL_LINKED; }
+  //! @brief Returns @c true if label is bound.
+  inline bool isBound()  const { return _lbl.state == LABEL_BOUND; }
+
+  //! @brief Returns the position of bound or linked labels, -1 if label 
+  //! is unused.
+  inline SysInt position() const { return _lbl.position; }
+
+  //! @brief Set state and position
+  inline void set(UInt8 state, SysInt position)
+  {
+    _lbl.state = state; 
+    _lbl.position = position;
+  }
+};
 
 //! @brief Relocable immediate operand.
 struct Relocable : public Immediate

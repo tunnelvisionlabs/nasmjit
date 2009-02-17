@@ -293,84 +293,24 @@ void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMe
     _emitModM(opReg, operand_cast<const Mem&>(src));
 }
 
-void Assembler::_emitDisp(Label* L, Displacement::Type type)
+void Assembler::_emitDisplacement(Label* L)
 {
-  Displacement disp(L, type);
-  L->linkTo(offset());
-  _emitDWord(static_cast<SysInt>(disp.data()));
+  ASMJIT_ASSERT(!L->isBound());
+
+  Int32 o = (Int32)offset();
+  Int32 p = L->isLinked() ? (Int32)L->position() - o : 0;
+
+  L->set(LABEL_LINKED, o);
+  _emitInt32(p);
 }
 
 /*
 static void _emitModM(UInt8 o, Int32 disp)
 {
   _emitMod(0, o, 5);
-  _emitDWord(disp);
+  _emitInt32(disp);
 }
 */
-
-// ----------------------------------------------------------------------------
-// [AsmJit::Assembler - Bind and Labels Declaration]
-// ----------------------------------------------------------------------------
-
-void Assembler::bind(Label* L)
-{
-  // label can only be bound once
-  ASMJIT_ASSERT(!L->isBound());
-  bindTo(L, offset());
-}
-
-void Assembler::bindTo(Label* L, SysInt pos)
-{
-  // must have a valid binding position
-  ASMJIT_ASSERT((SysInt)pos <= (SysInt)offset());
-
-  while (L->isLinked())
-  {
-    Displacement disp = getDispAt(L);
-    SysInt fixup_pos = L->pos();
-    if (disp.type() == Displacement::UNCONDITIONAL_JUMP)
-    {
-      // jmp expected
-      ASMJIT_ASSERT(getByteAt(fixup_pos - 1) == 0xE9);
-    }
-
-    // relative address, relative to point after address
-    SysInt immx = pos - (fixup_pos + 4);
-    setDWordAt(fixup_pos, (UInt32)(SysUInt)immx);
-    disp.next(L);
-  }
-  L->bindTo(pos);
-}
-
-void Assembler::linkTo(Label* L, Label* appendix)
-{
-  if (appendix->isLinked())
-  {
-    if (L->isLinked())
-    {
-      // append appendix to L's list
-      Label p;
-      Label q = *L;
-      do {
-        p = q;
-        Displacement disp = getDispAt(&q);
-        disp.next(&q);
-      } while (q.isLinked());
-      Displacement disp = getDispAt(&p);
-      disp.linkTo(appendix);
-      setDispAt(&p, disp);
-      // to avoid assertion failure in ~Label
-      p.unuse();
-    }
-    else
-    {
-      // L is empty, simply use appendix
-      *L = *appendix;
-    }
-  }
-  // appendix should not be used anymore
-  appendix->unuse();
-}
 
 // ----------------------------------------------------------------------------
 // [AsmJit::Assembler - Relocation helpers]
@@ -403,8 +343,8 @@ void Assembler::relocCode(void* _dst) const
         SysUInt jmpFrom = ((SysUInt)dst) + jmpStart;
         SysUInt jmpTo = *reinterpret_cast<SysUInt *>(dst + jmpAddress);
 
-        const int short_size = 2;
-        const int long_size  = 5;
+        const int byte_size = 2;
+        const int dword_size  = 5;
 
         Int32 displacement = 0;
 
@@ -412,12 +352,12 @@ void Assembler::relocCode(void* _dst) const
         if (jmpTo > jmpFrom)
         {
           SysUInt diff = jmpTo - jmpFrom;
-          if (diff < 2147483647 && diff >= long_size) displacement = (Int32)(diff);
+          if (diff < 2147483647 && diff >= dword_size) displacement = (Int32)(diff);
         }
         else
         {
           SysUInt diff = jmpFrom - jmpTo;
-          if (diff < 2147483647 - long_size) displacement = -(Int32)(diff);
+          if (diff < 2147483647 - dword_size) displacement = -(Int32)(diff);
         }
 
         // Ready to patch to relative displacement?
@@ -425,19 +365,19 @@ void Assembler::relocCode(void* _dst) const
         {
           SysUInt z;
 
-          if (isInt8(displacement - short_size))
+          if (isInt8(displacement - byte_size))
           {
             // jmp rel8 (EB cb)
             dst[jmpStart] = 0xEB;
-            dst[jmpStart+1] = (displacement - short_size) & 0xFF;
-            z = short_size;
+            dst[jmpStart+1] = (displacement - byte_size) & 0xFF;
+            z = byte_size;
           }
           else
           {
             // jmp rel32 (E9 cd)
             dst[jmpStart] = 0xE9;
-            *reinterpret_cast<Int32*>(dst + jmpStart + 1) = (displacement - long_size);
-            z = long_size;
+            *reinterpret_cast<Int32*>(dst + jmpStart + 1) = (displacement - dword_size);
+            z = dword_size;
           }
 
           // set int3 to remaining bytes
@@ -514,6 +454,7 @@ enum I
   I_BSWAP,
   I_BT,
   I_CALL,
+  I_CRC32,
   I_IMUL,
   I_INC_DEC,
   I_J,
@@ -528,7 +469,6 @@ enum I
   I_PUSH, // I_PUSH is implemented before I_POP
   I_POP,
   I_R_RM,
-  I_R_RM_BEXT,
   I_RM,
   I_RM_BEXT,
   I_RM_R,
@@ -703,7 +643,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_COMISD           , "comisd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F2F, 0),
   MAKE_INST(INST_COMISS           , "comiss"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F2F, 0),
   MAKE_INST(INST_CPUID            , "cpuid"            , I_EMIT          , 0               , 0               , 0, 0x00000FA2, 0),
-  MAKE_INST(INST_CRC32            , "crc32"            , I_R_RM_BEXT     , ToDo            , ToDo            , 0, 0xF20F38F0, 0),
+  MAKE_INST(INST_CRC32            , "crc32"            , I_CRC32         , 0               , 0               , 0, 0xF20F38F0, 0),
   MAKE_INST(INST_CVTDQ2PD         , "cvtdq2pd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000FE6, 0),
   MAKE_INST(INST_CVTDQ2PS         , "cvtdq2ps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5B, 0),
   MAKE_INST(INST_CVTPD2DQ         , "cvtpd2dq"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000FE6, 0),
@@ -1265,9 +1205,47 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         return;
       }
 
+      if (o1->isLabel())
+      {
+        Label* L = (Label*)(o1);
+
+        if (L->isBound())
+        {
+          const SysInt dword_size = 5;
+          SysInt offs = L->position() - offset();
+          ASMJIT_ASSERT(offs <= 0);
+
+          _emitByte(0xE8);
+          _emitInt32((Int32)(offs - dword_size));
+        }
+        else
+        {
+          _emitByte(0xE8);
+          _emitDisplacement(L);
+        }
+        return;
+      }
+
       break;
     }
     
+    case I_CRC32:
+    {
+      if (o1->isReg() && o2->isRegMem())
+      {
+        const Register& dst = operand_cast<const Register&>(*o1);
+        const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
+        ASMJIT_ASSERT(dst.type() == REG_GPD || dst.type() == REG_GPQ);
+
+        _emitX86RM(id.opCode1 + (src.size() != 1),
+          src.size() == 2, 
+          dst.type() == 8, dst.code(), src);
+        return;
+      }
+
+      break;
+    }
+
     case I_IMUL:
     {
       // 1 operand
@@ -1277,6 +1255,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         _emitX86RM(0xF6 + (src.size() != 1),
           src.size() == 2,
           src.size() == 8, 5, src);
+        return;
       }
       // 2 operands
       else if (o1->isReg() && !o2->isNone() && o3->isNone())
@@ -1291,8 +1270,9 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           _emitX86RM(0x0FAF,
             dst.isRegType(REG_GPW), 
             dst.isRegType(REG_GPQ), dst.code(), operand_cast<const BaseRegMem&>(src));
+          return;
         }
-        else
+        else if (o2->isImm())
         {
           const Immediate& imm = operand_cast<const Immediate&>(*o2);
 
@@ -1310,6 +1290,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
               dst.isRegType(REG_GPQ), dst.code(), dst);
             _emitImmediate(imm, dst.isRegType(REG_GPW) ? 2 : 4);
           }
+          return;
         }
       }
       // 3 operands
@@ -1333,8 +1314,10 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
             dst.isRegType(REG_GPQ), dst.code(), src);
           _emitImmediate(imm, dst.isRegType(REG_GPW) ? 2 : 4);
         }
+        return;
       }
-      return;
+
+      break;
     }
     
     case I_INC_DEC:
@@ -1362,12 +1345,51 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       break;
     }
-    
+
     case I_J:
     {
+      if (o1->isLabel())
+      {
+        Label* label = (Label*)(o1);
+
+        if (o2->isImm() && operand_cast<const Immediate&>(*o1).value() != HINT_NONE)
+        {
+          UInt8 hint = operand_cast<const Immediate&>(*o1).value() & 0xFF;
+          _emitByte(hint);
+        }
+
+        if (label->isBound())
+        {
+          const int byte_size = 2;
+          const int dword_size = 6;
+          SysInt offs = label->position() - offset();
+
+          ASMJIT_ASSERT(offs <= 0);
+
+          if (isInt8(offs - byte_size))
+          {
+            _emitByte(0x70 | (UInt8)id.opCode1);
+            _emitByte((UInt8)(Int8)(offs - byte_size));
+          }
+          else
+          {
+            _emitByte(0x0F);
+            _emitByte(0x80 | (UInt8)id.opCode1);
+            _emitInt32((Int32)(offs - dword_size));
+          }
+        }
+        else
+        {
+          _emitByte(0x0F);
+          _emitByte(0x80 | (UInt8)id.opCode1);
+          _emitDisplacement(label);
+        }
+        return;
+      }
+
       break;
     }
-    
+
     case I_JMP:
     {
       if (o1->isRegMem())
@@ -1380,9 +1402,40 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         return; 
       }
 
+      if (o1->isLabel())
+      {
+        Label* label = (Label*)(o1);
+
+        if (label->isBound())
+        {
+          const int byte_size = 2;
+          const int dword_size = 5;
+          SysInt offs = label->position() - offset();
+
+          ASMJIT_ASSERT(offs <= 0);
+
+          if (isInt8(offs - byte_size))
+          {
+            _emitByte(0xEB);
+            _emitByte((UInt8)(Int8)(offs - byte_size));
+          }
+          else
+          {
+            _emitByte(0xE9);
+            _emitInt32((Int32)(offs - dword_size));
+          }
+        }
+        else
+        {
+          _emitByte(0xE9);
+          _emitDisplacement(label);
+        }
+        return;
+      }
+
       break;
     }
-    
+
     case I_JMP_PTR:
     {
       if (o1->isImm() && o2->isReg())
@@ -1613,21 +1666,6 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
 
         _emitX86RM(id.opCode1,
-          dst.type() == REG_GPW, 
-          dst.type() == REG_GPQ, dst.code(), src);
-        return;
-      }
-
-      break;
-    }
-    
-    case I_R_RM_BEXT:
-    {
-      if (o1->isReg() && o2->isRegMem())
-      {
-        const Register& dst = operand_cast<const Register&>(*o1);
-        const BaseRegMem& src = operand_cast<const BaseRegMem&>(*o2);
-        _emitX86RM(id.opCode1 + (dst.type() != REG_GPB),
           dst.type() == REG_GPW, 
           dst.type() == REG_GPQ, dst.code(), src);
         return;
@@ -2319,7 +2357,11 @@ illegalInstruction:
   ASMJIT_CRASH();
 }
 
-void Assembler::_emitX86Align(SysInt m)
+// ----------------------------------------------------------------------------
+// [AsmJit::Assembler - Align]
+// ----------------------------------------------------------------------------
+
+void Assembler::align(SysInt m)
 {
   if (!ensureSpace()) return;
   if (!m) return;
@@ -2328,97 +2370,34 @@ void Assembler::_emitX86Align(SysInt m)
   while ((offset() & (m - 1)) != 0) _emitByte(0x90);
 }
 
-void Assembler::_emitX86Call(Label* L)
+// ----------------------------------------------------------------------------
+// [AsmJit::Assembler - Bind]
+// ----------------------------------------------------------------------------
+
+void Assembler::bind(Label* L)
 {
-  if (!ensureSpace()) return;
-
-  if (L->isBound())
-  {
-    const SysInt long_size = 5;
-    SysInt offs = L->pos() - offset();
-    ASMJIT_ASSERT(offs <= 0);
-
-    _emitByte(0xE8);
-    _emitDWord((Int32)(offs - long_size));
-  }
-  else
-  {
-    _emitByte(0xE8);
-    _emitDisp(L, Displacement::OTHER);
-  }
+  // label can only be bound once
+  ASMJIT_ASSERT(!L->isBound());
+  bindTo(L, offset());
 }
 
-void Assembler::_emitX86J(CONDITION cc, Label* L, HINT hint)
+void Assembler::bindTo(Label* L, SysInt pos)
 {
-  ASMJIT_ASSERT(0 <= cc && cc < 16);
-  if (!ensureSpace()) return;
-
-  if (hint != HINT_NONE) _emitByte(static_cast<UInt8>(hint));
-
-  if (L->isBound())
+  if (L->isLinked())
   {
-    const int short_size = 2;
-    const int long_size  = 6;
-    SysInt offs = L->pos() - offset();
+    Int32 _pos = (Int32)pos;
+    Int32 prev = (Int32)L->position();
 
-    ASMJIT_ASSERT(offs <= 0);
-
-    if (isInt8(offs - short_size))
+    for (;;)
     {
-      // 0111 tttn #8-bit disp
-      _emitByte(0x70 | cc);
-      _emitByte((offs - short_size) & 0xFF);
-    }
-    else
-    {
-      // 0000 1111 1000 tttn #32-bit disp
-      _emitByte(0x0F);
-      _emitByte(0x80 | cc);
-      _emitDWord(offs - long_size);
+      Int32 chain = getInt32At(prev);
+      setInt32At(prev, _pos - (prev + 4));
+      if (chain == 0) break;
+      prev -= chain;
     }
   }
-  else
-  {
-    // 0000 1111 1000 tttn #32-bit disp
-    // Note: could eliminate cond. jumps to this jump if condition
-    //       is the same however, seems to be rather unlikely case.
-    _emitByte(0x0F);
-    _emitByte(0x80 | cc);
-    _emitDisp(L, Displacement::OTHER);
-  }
-}
 
-void Assembler::_emitX86Jmp(Label* L)
-{
-  if (!ensureSpace()) return;
-
-  if (L->isBound())
-  {
-    const int short_size = 2;
-    const int long_size  = 5;
-    int offs = L->pos() - offset();
-
-    ASMJIT_ASSERT(offs <= 0);
-
-    if (isInt8(offs - short_size))
-    {
-      // 1110 1011 #8-bit disp
-      _emitByte(0xEB);
-      _emitByte((offs - short_size) & 0xFF);
-    }
-    else
-    {
-      // 1110 1001 #32-bit disp
-      _emitByte(0xE9);
-      _emitDWord(offs - long_size);
-    }
-  }
-  else
-  {
-    // 1110 1001 #32-bit disp
-    _emitByte(0xE9);
-    _emitDisp(L, Displacement::UNCONDITIONAL_JUMP);
-  }
+  L->set(LABEL_BOUND, pos);
 }
 
 } // AsmJit namespace
