@@ -499,6 +499,7 @@ enum INST_CODE
   INST_FDIVP,         // X87
   INST_FDIVR,         // X87
   INST_FDIVRP,        // X87
+  INST_FEMMS,         // 3dNow!
   INST_FFREE,         // X87
   INST_FIADD,         // X87
   INST_FICOM,         // X87
@@ -614,7 +615,7 @@ enum INST_CODE
   INST_LFENCE,
   INST_LOCK,          // X86/X64
   INST_MASKMOVDQU,
-  INST_MASKMOVQ,
+  INST_MASKMOVQ,      // MMX Extensions
   INST_MAXPD,
   INST_MAXPS,
   INST_MAXSD,
@@ -647,7 +648,7 @@ enum INST_CODE
   INST_MOVNTI,
   INST_MOVNTPD,
   INST_MOVNTPS,
-  INST_MOVNTQ,
+  INST_MOVNTQ,        // MMX Extensions
   INST_MOVQ,
   INST_MOVQ2DQ,
   INST_MOVSD,
@@ -692,8 +693,8 @@ enum INST_CODE
   INST_PAND,
   INST_PANDN,
   INST_PAUSE,
-  INST_PAVGB,
-  INST_PAVGW,
+  INST_PAVGB,         // MMX Extensions
+  INST_PAVGW,         // MMX Extensions
   INST_PBLENDVB,
   INST_PBLENDW,
   INST_PCMPEQB,
@@ -711,7 +712,26 @@ enum INST_CODE
   INST_PEXTRB,
   INST_PEXTRD,
   INST_PEXTRQ,
-  INST_PEXTRW,
+  INST_PEXTRW,        // MMX Extensions
+  INST_PF2ID,         // 3dNow!
+  INST_PF2IW,         // 3dNow! Extensions
+  INST_PFACC,         // 3dNow!
+  INST_PFADD,         // 3dNow!
+  INST_PFCMPEQ,       // 3dNow!
+  INST_PFCMPGE,       // 3dNow!
+  INST_PFCMPGT,       // 3dNow!
+  INST_PFMAX,         // 3dNow!
+  INST_PFMIN,         // 3dNow!
+  INST_PFMUL,         // 3dNow!
+  INST_PFNACC,        // 3dNow! Extensions
+  INST_PFPNACC,       // 3dNow! Extensions
+  INST_PFRCP,         // 3dNow!
+  INST_PFRCPIT1,      // 3dNow!
+  INST_PFRCPIT2,      // 3dNow!
+  INST_PFRSQIT1,      // 3dNow!
+  INST_PFRSQRT,       // 3dNow!
+  INST_PFSUB,         // 3dNow!
+  INST_PFSUBR,        // 3dNow!
   INST_PHADDD,
   INST_PHADDSW,
   INST_PHADDW,
@@ -719,24 +739,26 @@ enum INST_CODE
   INST_PHSUBD,
   INST_PHSUBSW,
   INST_PHSUBW,
+  INST_PI2FD,         // 3dNow!
+  INST_PI2FW,         // 3dNow! Extensions
   INST_PINSRB,
   INST_PINSRD,
-  INST_PINSRW,
+  INST_PINSRW,        // MMX Extensions
   INST_PMADDUBSW,
   INST_PMADDWD,
   INST_PMAXSB,
   INST_PMAXSD,
-  INST_PMAXSW,
-  INST_PMAXUB,
+  INST_PMAXSW,        // MMX Extensions
+  INST_PMAXUB,        // MMX Extensions
   INST_PMAXUD,
   INST_PMAXUW,
   INST_PMINSB,
   INST_PMINSD,
-  INST_PMINSW,
-  INST_PMINUB,
+  INST_PMINSW,        // MMX Extensions
+  INST_PMINUB,        // MMX Extensions
   INST_PMINUD,
   INST_PMINUW,
-  INST_PMOVMSKB,
+  INST_PMOVMSKB,      // MMX Extensions
   INST_PMOVSXBD,
   INST_PMOVSXBQ,
   INST_PMOVSXBW,
@@ -751,7 +773,7 @@ enum INST_CODE
   INST_PMOVZXWQ,
   INST_PMULDQ,
   INST_PMULHRSW,
-  INST_PMULHUW,
+  INST_PMULHUW,       // MMX Extensions
   INST_PMULHW,
   INST_PMULLD,
   INST_PMULLW,
@@ -762,11 +784,11 @@ enum INST_CODE
   INST_POPFD,         // X86 only
   INST_POPFQ,         // X64 only
   INST_POR,
-  INST_PREFETCH,
-  INST_PSADBW,
+  INST_PREFETCH,      // MMX Extensions
+  INST_PSADBW,        // MMX Extensions
   INST_PSHUFB,
   INST_PSHUFD,
-  INST_PSHUFW,
+  INST_PSHUFW,        // MMX Extensions
   INST_PSHUHW,
   INST_PSHULW,
   INST_PSIGNB,
@@ -790,6 +812,7 @@ enum INST_CODE
   INST_PSUBUSB,
   INST_PSUBUSW,
   INST_PSUBW,
+  INST_PSWAPD,        // 3dNow! Extensions
   INST_PTEST,
   INST_PUNPCKHBW,
   INST_PUNPCKHDQ,
@@ -823,7 +846,7 @@ enum INST_CODE
   INST_SAL,           // X86/X64
   INST_SAR,           // X86/X64
   INST_SBB,           // X86/X64
-  INST_SFENCE,
+  INST_SFENCE,        // MMX Extensions
   INST_SHL,           // X86/X64
   INST_SHLD,          // X86/X64
   INST_SHR,           // X86/X64
@@ -850,7 +873,7 @@ enum INST_CODE
   INST_UNPCKLPD,
   INST_UNPCKLPS,
   INST_XADD,          // X86/X64 (i486)
-  INST_XCHG,          // X86/X64 (i486)
+  INST_XCHG,          // X86/X64 (i386)
   INST_XOR,           // X86/X64
   INST_XORPD,
   INST_XORPS,
@@ -931,9 +954,9 @@ struct Operand
     UInt8 op;
     //! @brief Size of pointer.
     UInt8 size;
-    //! @brief Base register code, see @c REG.
+    //! @brief Base register index, see @c REG.
     UInt8 base;
-    //! @brief Index register code, see @c REG.
+    //! @brief Index register index, see @c REG.
     //!
     //! Index register is a bit complicated here, because we need to store here 
     //! more informations than only register index (to save operand size).
@@ -971,14 +994,15 @@ struct Operand
     SysInt value;
   };
 
+  //! @brief Label data.
   struct LblData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
-    //! @brief Size of label (4).
-    UInt8 size;
     //! @brief State of label, see @c LABEL_STATE.
     UInt8 state;
+    //! @brief Not used.
+    UInt8 unused2;
     //! @brief Not used.
     UInt8 unused3;
     //! @brief Position (always positive, information depends to @c state).
@@ -1017,11 +1041,11 @@ struct Operand
   inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64)
   {
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
-      ((SysUInt)i8_0      ) | 
-      ((SysUInt)i8_1 <<  8) | 
-      ((SysUInt)i8_2 << 16) | 
+      ((SysUInt)i8_0      ) |
+      ((SysUInt)i8_1 <<  8) |
+      ((SysUInt)i8_2 << 16) |
       ((SysUInt)i8_3 << 24) ;
-    *reinterpret_cast<SysInt*>((UInt8*)this + sizeof(UInt32)) = i32_64;
+    *reinterpret_cast<SysInt*>(&this->_op.unused4) = i32_64;
   }
 };
 
@@ -1527,7 +1551,7 @@ struct Label : public Operand
 {
   //! @brief Create new unused label.
   inline Label() 
-  { _initAll(OP_LABEL, 4, LABEL_UNUSED, 0, -1); }
+  { _initAll(OP_LABEL, LABEL_UNUSED, 0, 0, -1); }
 
   //! @brief Destroy label. If label is linked to some location (not bound), 
   //! assertion is raised (because generated code is invalid in this case).
@@ -1535,7 +1559,7 @@ struct Label : public Operand
 
   //! @brief Unuse label (unbound or unlink) - Use with caution.
   inline void unuse()
-  { _initAll(OP_LABEL, 4, LABEL_UNUSED, 0, -1); }
+  { _initAll(OP_LABEL, LABEL_UNUSED, 0, 0, -1); }
 
   //! @brief Return label state, see @c LABEL_STATE. */
   inline UInt8 state() const { return _lbl.state; }

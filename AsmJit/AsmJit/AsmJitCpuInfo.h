@@ -57,17 +57,25 @@ ASMJIT_API void cpuid(UInt32 in, CpuId* out);
 struct CpuInfo
 {
   char vendor[16];
+  UInt32 vendorId;
   UInt32 family;
   UInt32 model;
+  UInt32 stepping;
   UInt32 numberOfProcessors;
   UInt32 features;
-  UInt32 featuresExt;
   UInt32 bugs;
+
+  enum VendorId
+  {
+    Vendor_Unknown = 0,
+    Vendor_INTEL = 1,
+    Vendor_AMD = 2,
+    Vendor_VIA = 3
+  };
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
   struct X86ExtendedInfo
   {
-    UInt32 steppingId;
     UInt32 processorType;
     UInt32 brandIndex;
     UInt32 clFlushCacheLineSize;
@@ -90,11 +98,15 @@ struct CpuInfo
     //! @brief Cpu has CMPXCHG16B instruction (64 bit processors)
     Feature_CMPXCHG16B = 1U << 4,
     //! @brief Cpu has CLFUSH instruction
-    Feature_CLFSH = 1U << 5,
+    Feature_CLFLUSH = 1U << 5,
     //! @brief Cpu has PREFETCH instruction
     Feature_PREFETCH = 1U << 6,
     //! @brief Cpu supports LAHF and SAHF instrictions.
     Feature_LAHF_SAHF = 1U << 7,
+    //! @brief Cpu supports FXSAVE and FXRSTOR instructions.
+    Feature_FXSR = 1U << 8,
+    //! @brief Cpu supports FXSAVE and FXRSTOR instruction optimizations (FFXSR).
+    Feature_FFXSR = 1U << 9,
 
     //! @brief Cpu has MMX.
     Feature_MMX = 1U << 10,
@@ -120,35 +132,20 @@ struct CpuInfo
     Feature_SSE4_1 = 1U << 20,
     //! @brief Cpu has SSE4.2.
     Feature_SSE4_2 = 1U << 21,
+    //! @brief Cpu has SSE5.
+    Feature_SSE5 = 1U << 22,
     //! @brief Cpu supports MONITOR and MWAIT instructions.
-    Feature_MotitorMWait = 1U << 22,
+    Feature_MotitorMWait = 1U << 23,
     //! @brief Cpu supports POPCNT instruction.
-    Feature_POPCNT = 1U << 23,
+    Feature_POPCNT = 1U << 24,
     //! @brief Cpu supports LZCNT instruction.
-    Feature_LZCNT  = 1U << 24,
+    Feature_LZCNT  = 1U << 25,
+    //! @brief Cpu supports multithreading.
+    Feature_MultiThreading = 1U << 29,
     //! @brief Cpu supports execute disable bit (execute protection).
-    Feature_ExecuteDisableBit = 1U << 31
-  };
-
-  enum FeatureExt
-  {
-    FeatureExt_CPLQualifiedDebugStore        = 1U << 0,
-    FeatureExt_EnhancedIntelSpeedStep        = 1U << 1,
-    FeatureExt_ThermalMonitor2               = 1U << 2,
-    FeatureExt_L1ContextId                   = 1U << 3,
-    FeatureExt_XTPRUpdateControl             = 1U << 4,
-    FeatureExt_PerfDebugCapabilityMSR        = 1U << 5,
-    FeatureExt_CmpLegacy                     = 1U << 7,
-    FeatureExt_SVM                           = 1U << 8,
-    FeatureExt_ExtApicSpace                  = 1U << 9,
-    FeatureExt_AltMovCr8                     = 1U << 10,
-    FeatureExt_SKINITandDEV                  = 1U << 11,
-    FeatureExt_SYSCALL_SYSRET                = 1U << 12,
-    FeatureExt_FFXSR                         = 1U << 13,
-    FeatureExt_1GBSupport                    = 1U << 14,
-    FeatureExt_64Available                   = 1U << 20,
-    FeatureExt_MultiThreading                = 1U << 30,
-    FeatureExt_VirtualMachineExtensions      = 1U << 31,
+    Feature_ExecuteDisableBit = 1U << 30,
+    //! @brief Cpu supports 64 bits.
+    Feature_64Bit = 1U << 31
   };
 
   enum Bug

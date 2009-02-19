@@ -381,7 +381,7 @@ struct ASMJIT_API Assembler : public Serializer
 
   void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src);
 
-  void _emitDisplacement(Label* L);
+  void _emitDisplacement(Label* label);
 
   // -------------------------------------------------------------------------
   // [Relocation helpers]
@@ -400,7 +400,7 @@ struct ASMJIT_API Assembler : public Serializer
   void overwrite(const Relocable& immediate);
 
   // -------------------------------------------------------------------------
-  // [Abstract Emitters]
+  // [EmitX86]
   // -------------------------------------------------------------------------
 
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
@@ -415,13 +415,10 @@ struct ASMJIT_API Assembler : public Serializer
   // [Bind]
   // -------------------------------------------------------------------------
 
-  //! @brief Bind label to the current offset.
-  //!
-  //! @note Label can be bound only once!
-  virtual void bind(Label* L);
+  virtual void bind(Label* label);
 
-  //! @brief Bind label to pos - called from bind(Label*L).
-  void bindTo(Label* L, SysInt pos);
+  //! @brief Bind label to pos - called from bind(Label* label).
+  void bindTo(Label* label, SysInt pos);
 
   // -------------------------------------------------------------------------
   // [Variables]

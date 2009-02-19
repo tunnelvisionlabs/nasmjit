@@ -293,14 +293,14 @@ void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMe
     _emitModM(opReg, operand_cast<const Mem&>(src));
 }
 
-void Assembler::_emitDisplacement(Label* L)
+void Assembler::_emitDisplacement(Label* label)
 {
-  ASMJIT_ASSERT(!L->isBound());
+  ASMJIT_ASSERT(!label->isBound());
 
   Int32 o = (Int32)offset();
-  Int32 p = L->isLinked() ? (Int32)L->position() - o : 0;
+  Int32 p = label->isLinked() ? (Int32)label->position() - o : 0;
 
-  L->set(LABEL_LINKED, o);
+  label->set(LABEL_LINKED, o);
   _emitInt32(p);
 }
 
@@ -343,8 +343,8 @@ void Assembler::relocCode(void* _dst) const
         SysUInt jmpFrom = ((SysUInt)dst) + jmpStart;
         SysUInt jmpTo = *reinterpret_cast<SysUInt *>(dst + jmpAddress);
 
-        const int byte_size = 2;
-        const int dword_size  = 5;
+        const int rel8_size = 2;
+        const int rel32_size = 5;
 
         Int32 displacement = 0;
 
@@ -352,12 +352,12 @@ void Assembler::relocCode(void* _dst) const
         if (jmpTo > jmpFrom)
         {
           SysUInt diff = jmpTo - jmpFrom;
-          if (diff < 2147483647 && diff >= dword_size) displacement = (Int32)(diff);
+          if (diff < 2147483647) displacement = (Int32)(diff);
         }
         else
         {
           SysUInt diff = jmpFrom - jmpTo;
-          if (diff < 2147483647 - dword_size) displacement = -(Int32)(diff);
+          if (diff < 2147483647 - rel32_size) displacement = -(Int32)(diff);
         }
 
         // Ready to patch to relative displacement?
@@ -365,19 +365,19 @@ void Assembler::relocCode(void* _dst) const
         {
           SysUInt z;
 
-          if (isInt8(displacement - byte_size))
+          if (isInt8(displacement - rel8_size))
           {
             // jmp rel8 (EB cb)
             dst[jmpStart] = 0xEB;
-            dst[jmpStart+1] = (displacement - byte_size) & 0xFF;
-            z = byte_size;
+            dst[jmpStart+1] = (UInt8)(Int8)(displacement - rel8_size);
+            z = rel8_size;
           }
           else
           {
             // jmp rel32 (E9 cd)
             dst[jmpStart] = 0xE9;
-            *reinterpret_cast<Int32*>(dst + jmpStart + 1) = (displacement - dword_size);
-            z = dword_size;
+            *reinterpret_cast<Int32*>(dst + jmpStart + 1) = (displacement - rel32_size);
+            z = rel32_size;
           }
 
           // set int3 to remaining bytes
@@ -405,7 +405,7 @@ bool Assembler::writeRelocInfo(const Relocable& relocable, SysUInt relocOffset, 
   return relocable._relocations.append(ri);
 }
 
-void Assembler::overwrite(const Relocable& relocable) 
+void Assembler::overwrite(const Relocable& relocable)
 {
   const RelocInfo* rel = relocable._relocations.data();
   SysUInt i, len = relocable._relocations.length();
@@ -470,9 +470,7 @@ enum I
   I_POP,
   I_R_RM,
   I_RM,
-  I_RM_BEXT,
   I_RM_R,
-  I_RM_R_BEXT,
   I_RET,
   I_ROT,
   I_SHLD_SHRD,
@@ -515,7 +513,10 @@ enum I
   // - Primary opcode is used for instructions in (X)MM|Reg <- (X)MM|Reg|Mem format,
   // - Secondary opcode is iused for instructions in (X)MM|Reg <- Imm format.
   I_MMU_RMI,
-  I_MMU_RM_IMM8
+  I_MMU_RM_IMM8,
+
+  // Group for 3dNow instructions
+  I_MMU_RM_3DNOW
 };
 
 // Instruction operand flags
@@ -637,7 +638,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_CMPPS            , "cmpps"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x00000FC2, 0),
   MAKE_INST(INST_CMPSD            , "cmpsd"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0xF2000FC2, 0),
   MAKE_INST(INST_CMPSS            , "cmpss"            , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0xF3000FC2, 0),
-  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , I_RM_R_BEXT     , 0               , 0               , 0, 0x00000FB0, 0),
+  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , I_RM_R          , 0               , 0               , 0, 0x00000FB0, 0),
   MAKE_INST(INST_CMPXCHG16B       , "cmpxchg16b"       , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 1 /* RexW */),
   MAKE_INST(INST_CMPXCHG8B        , "cmpxchg8b"        , I_M             , O_MEM           , 0               , 1, 0x00000FC7, 0),
   MAKE_INST(INST_COMISD           , "comisd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F2F, 0),
@@ -670,7 +671,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_DAA              , "daa"              , I_EMIT          , 0               , 0               , 0, 0x00000027, 0),
   MAKE_INST(INST_DAS              , "das"              , I_EMIT          , 0               , 0               , 0, 0x0000002F, 0),
   MAKE_INST(INST_DEC              , "dec"              , I_INC_DEC       , 0               , 0               , 1, 0x00000048, 0x000000FE),
-  MAKE_INST(INST_DIV              , "div"              , I_RM_BEXT       , 0               , 0               , 6, 0x000000F6, 0),
+  MAKE_INST(INST_DIV              , "div"              , I_RM            , 0               , 0               , 6, 0x000000F6, 0),
   MAKE_INST(INST_DIVPD            , "divpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5E, 0),
   MAKE_INST(INST_DIVPS            , "divps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5E, 0),
   MAKE_INST(INST_DIVSD            , "divsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5E, 0),
@@ -706,6 +707,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_FDIVP            , "fdivp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEF8, 0),
   MAKE_INST(INST_FDIVR            , "fdivr"            , I_X87_FPU       , 0               , 0               , 7, 0xD8DCF8F0, 0),
   MAKE_INST(INST_FDIVRP           , "fdivrp"           , I_X87_STI       , 0               , 0               , 0, 0x0000DEF0, 0),
+  MAKE_INST(INST_FEMMS            , "femms"            , I_EMIT          , 0               , 0               , 0, 0x00000F0E, 0),
   MAKE_INST(INST_FFREE            , "ffree"            , I_X87_STI       , 0               , 0               , 0, 0x0000DDC0, 0),
   MAKE_INST(INST_FIADD            , "fiadd"            , I_X87_MEM       , O_FM_2_4        , 0               , 0, 0xDEDA0000, 0),
   MAKE_INST(INST_FICOM            , "ficom"            , I_X87_MEM       , O_FM_2_4        , 0               , 2, 0xDEDA0000, 0),
@@ -778,7 +780,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_HADDPS           , "haddps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F7C, 0),
   MAKE_INST(INST_HSUBPD           , "hsubpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F7D, 0),
   MAKE_INST(INST_HSUBPS           , "hsubps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F7D, 0),
-  MAKE_INST(INST_IDIV             , "idiv"             , I_RM_BEXT       , 0               , 0               , 7, 0x000000F6, 0),
+  MAKE_INST(INST_IDIV             , "idiv"             , I_RM            , 0               , 0               , 7, 0x000000F6, 0),
   MAKE_INST(INST_IMUL             , "imul"             , I_IMUL          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_INC              , "inc"              , I_INC_DEC       , 0               , 0               , 0, 0x00000040, 0x000000FE),
   MAKE_INST(INST_INT3             , "int3"             , I_EMIT          , 0               , 0               , 0, 0x000000CC, 0),
@@ -867,15 +869,15 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_MOVZX            , "movzx"            , I_MOVSX_MOVZX   , 0               , 0               , 0, 0x00000FB6, 0),
   MAKE_INST(INST_MOV_PTR          , "mov"              , I_MOV_PTR       , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_MPSADBW          , "mpsadbw"          , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A42, 0),
-  MAKE_INST(INST_MUL              , "mul"              , I_RM_BEXT       , 0               , 0               , 4, 0x000000F6, 0),
+  MAKE_INST(INST_MUL              , "mul"              , I_RM            , 0               , 0               , 4, 0x000000F6, 0),
   MAKE_INST(INST_MULPD            , "mulpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F59, 0),
   MAKE_INST(INST_MULPS            , "mulps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F59, 0),
   MAKE_INST(INST_MULSD            , "mulsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F59, 0),
   MAKE_INST(INST_MULSS            , "mulss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F59, 0),
   MAKE_INST(INST_MWAIT            , "mwait"            , I_EMIT          , 0               , 0               , 0, 0x000F01C9, 0),
-  MAKE_INST(INST_NEG              , "neg"              , I_RM_BEXT       , 0               , 0               , 3, 0x000000F6, 0),
+  MAKE_INST(INST_NEG              , "neg"              , I_RM            , 0               , 0               , 3, 0x000000F6, 0),
   MAKE_INST(INST_NOP              , "nop"              , I_EMIT          , 0               , 0               , 0, 0x00000090, 0),
-  MAKE_INST(INST_NOT              , "not"              , I_RM_BEXT       , 0               , 0               , 2, 0x000000F6, 0),
+  MAKE_INST(INST_NOT              , "not"              , I_RM            , 0               , 0               , 2, 0x000000F6, 0),
   MAKE_INST(INST_OR               , "or"               , I_ALU           , 0               , 0               , 1, 0x00000008, 0x00000080),
   MAKE_INST(INST_ORPD             , "orpd"             , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F56, 0),
   MAKE_INST(INST_ORPS             , "orps"             , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F56, 0),
@@ -918,6 +920,25 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PEXTRD           , "pextrd"           , I_MMU_PEXTR     , O_G32     |O_MEM, O_XMM           , 0, 0x000F3A16, 0),
   MAKE_INST(INST_PEXTRQ           , "pextrq"           , I_MMU_PEXTR     , O_G32_64  |O_MEM, O_XMM           , 1, 0x000F3A16, 0),
   MAKE_INST(INST_PEXTRW           , "pextrw"           , I_MMU_PEXTR     , O_G32     |O_MEM, O_XMM | O_MM    , 0, 0x000F3A16, 0),
+  MAKE_INST(INST_PF2ID            , "pf2id"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x1D),
+  MAKE_INST(INST_PF2IW            , "pf2iw"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x1C),
+  MAKE_INST(INST_PFACC            , "pfacc"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xAE),
+  MAKE_INST(INST_PFADD            , "pfadd"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x9E),
+  MAKE_INST(INST_PFCMPEQ          , "pfcmpeq"          , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xB0),
+  MAKE_INST(INST_PFCMPGE          , "pfcmpge"          , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x90),
+  MAKE_INST(INST_PFCMPGT          , "pfcmpgt"          , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xA0),
+  MAKE_INST(INST_PFMAX            , "pfmax"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xA4),
+  MAKE_INST(INST_PFMIN            , "pfmin"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x94),
+  MAKE_INST(INST_PFMUL            , "pfmul"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xB4),
+  MAKE_INST(INST_PFNACC           , "pfnacc"           , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x8A),
+  MAKE_INST(INST_PFPNACC          , "pfpnacc"          , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x8E),
+  MAKE_INST(INST_PFRCP            , "pfrcp"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x96),
+  MAKE_INST(INST_PFRCPIT1         , "pfrcpit1"         , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xA6),
+  MAKE_INST(INST_PFRCPIT2         , "pfrcpit2"         , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xB6),
+  MAKE_INST(INST_PFRSQIT1         , "pfrsqit1"         , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xA7),
+  MAKE_INST(INST_PFRSQRT          , "pfrsqrt"          , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x97),
+  MAKE_INST(INST_PFSUB            , "pfsub"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x9A),
+  MAKE_INST(INST_PFSUBR           , "pfsubr"           , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xAA),
   MAKE_INST(INST_PHADDD           , "phaddd"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3802, 0),
   MAKE_INST(INST_PHADDSW          , "phaddsw"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3803, 0),
   MAKE_INST(INST_PHADDW           , "phaddw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3801, 0),
@@ -925,6 +946,8 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PHSUBD           , "phsubd"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3806, 0),
   MAKE_INST(INST_PHSUBSW          , "phsubsw"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3807, 0),
   MAKE_INST(INST_PHSUBW           , "phsubw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3805, 0),
+  MAKE_INST(INST_PI2FD            , "pi2fd"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x0D),
+  MAKE_INST(INST_PI2FW            , "pi2fw"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x0C),
   MAKE_INST(INST_PINSRB           , "pinsrb"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A20, 0),
   MAKE_INST(INST_PINSRD           , "pinsrd"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A22, 0),
   MAKE_INST(INST_PINSRW           , "pinsrw"           , I_MMU_RM_IMM8   , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FC4, 0),
@@ -996,6 +1019,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PSUBUSB          , "psubusb"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FD8, 0),
   MAKE_INST(INST_PSUBUSW          , "psubusw"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FD9, 0),
   MAKE_INST(INST_PSUBW            , "psubw"            , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF9, 0),
+  MAKE_INST(INST_PSWAPD           , "pswapd"           , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0xBB),
   MAKE_INST(INST_PTEST            , "ptest"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F3817, 0),
   MAKE_INST(INST_PUNPCKHBW        , "punpckhbw"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F68, 0),
   MAKE_INST(INST_PUNPCKHDQ        , "punpckhdq"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000F6A, 0),
@@ -1055,7 +1079,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_UNPCKHPS         , "unpckhps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F15, 0),
   MAKE_INST(INST_UNPCKLPD         , "unpcklpd"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F14, 0),
   MAKE_INST(INST_UNPCKLPS         , "unpcklps"         , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F14, 0),
-  MAKE_INST(INST_XADD             , "xadd"             , I_RM_R_BEXT     , 0               , 0               , 0, 0x00000FC0, 0),
+  MAKE_INST(INST_XADD             , "xadd"             , I_RM_R          , 0               , 0               , 0, 0x00000FC0, 0),
   MAKE_INST(INST_XCHG             , "xchg"             , I_XCHG          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_XOR              , "xor"              , I_ALU           , 0               , 0               , 6, 0x00000030, 0x00000080),
   MAKE_INST(INST_XORPD            , "xorpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F57, 0),
@@ -1207,21 +1231,21 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       if (o1->isLabel())
       {
-        Label* L = (Label*)(o1);
+        Label* label = (Label*)(o1);
 
-        if (L->isBound())
+        if (label->isBound())
         {
-          const SysInt dword_size = 5;
-          SysInt offs = L->position() - offset();
+          const SysInt rel32_size = 5;
+          SysInt offs = label->position() - offset();
           ASMJIT_ASSERT(offs <= 0);
 
           _emitByte(0xE8);
-          _emitInt32((Int32)(offs - dword_size));
+          _emitInt32((Int32)(offs - rel32_size));
         }
         else
         {
           _emitByte(0xE8);
-          _emitDisplacement(L);
+          _emitDisplacement(label);
         }
         return;
       }
@@ -1360,22 +1384,22 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (label->isBound())
         {
-          const int byte_size = 2;
-          const int dword_size = 6;
+          const int rel8_size = 2;
+          const int rel32_size = 6;
           SysInt offs = label->position() - offset();
 
           ASMJIT_ASSERT(offs <= 0);
 
-          if (isInt8(offs - byte_size))
+          if (isInt8(offs - rel8_size))
           {
             _emitByte(0x70 | (UInt8)id.opCode1);
-            _emitByte((UInt8)(Int8)(offs - byte_size));
+            _emitByte((UInt8)(Int8)(offs - rel8_size));
           }
           else
           {
             _emitByte(0x0F);
             _emitByte(0x80 | (UInt8)id.opCode1);
-            _emitInt32((Int32)(offs - dword_size));
+            _emitInt32((Int32)(offs - rel32_size));
           }
         }
         else
@@ -1408,21 +1432,21 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (label->isBound())
         {
-          const int byte_size = 2;
-          const int dword_size = 5;
+          const int rel8_size = 2;
+          const int rel32_size = 5;
           SysInt offs = label->position() - offset();
 
           ASMJIT_ASSERT(offs <= 0);
 
-          if (isInt8(offs - byte_size))
+          if (isInt8(offs - rel8_size))
           {
             _emitByte(0xEB);
-            _emitByte((UInt8)(Int8)(offs - byte_size));
+            _emitByte((UInt8)(Int8)(offs - rel8_size));
           }
           else
           {
             _emitByte(0xE9);
-            _emitInt32((Int32)(offs - dword_size));
+            _emitInt32((Int32)(offs - rel32_size));
           }
         }
         else
@@ -1679,20 +1703,6 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isRegMem())
       {
         const BaseRegMem& op = operand_cast<const BaseRegMem&>(*o1);
-        _emitX86RM(id.opCode1,
-          op.size() == 2,
-          op.size() == 8, (UInt8)id.opCodeR, op);
-        return;
-      }
-
-      break;
-    }
-
-    case I_RM_BEXT:
-    {
-      if (o1->isRegMem())
-      {
-        const BaseRegMem& op = operand_cast<const BaseRegMem&>(*o1);
         _emitX86RM(id.opCode1 + (op.size() != 1),
           op.size() == 2,
           op.size() == 8, (UInt8)id.opCodeR, op);
@@ -1703,23 +1713,6 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     }
     
     case I_RM_R:
-    {
-      if (o1->isRegMem() && o2->isReg())
-      {
-        const BaseRegMem& dst = operand_cast<const BaseRegMem&>(*o1);
-        const Register& src = operand_cast<const Register&>(*o2);
-        ASMJIT_ASSERT(src.type() != REG_GPB);
-
-        _emitX86RM(id.opCode1,
-          src.type() == REG_GPW, 
-          src.type() == REG_GPQ, src.code(), dst);
-        return;
-      }
-
-      break;
-    }
-    
-    case I_RM_R_BEXT:
     {
       if (o1->isRegMem() && o2->isReg())
       {
@@ -2350,6 +2343,20 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       break;
     }
+
+    case I_MMU_RM_3DNOW:
+    {
+      if (o1->isRegType(REG_MM) && (o2->isRegType(REG_MM) || o2->isMem()))
+      {
+        _emitMmu(id.opCode1, 0,
+          operand_cast<const BaseReg&>(*o1).code(),
+          operand_cast<const Mem&>(*o2)); 
+        _emitByte((UInt8)id.opCode2);
+        return;
+      }
+
+      break;
+    }
   }
 
 illegalInstruction:
@@ -2374,19 +2381,19 @@ void Assembler::align(SysInt m)
 // [AsmJit::Assembler - Bind]
 // ----------------------------------------------------------------------------
 
-void Assembler::bind(Label* L)
+void Assembler::bind(Label* label)
 {
   // label can only be bound once
-  ASMJIT_ASSERT(!L->isBound());
-  bindTo(L, offset());
+  ASMJIT_ASSERT(!label->isBound());
+  bindTo(label, offset());
 }
 
-void Assembler::bindTo(Label* L, SysInt pos)
+void Assembler::bindTo(Label* label, SysInt pos)
 {
-  if (L->isLinked())
+  if (label->isLinked())
   {
     Int32 _pos = (Int32)pos;
-    Int32 prev = (Int32)L->position();
+    Int32 prev = (Int32)label->position();
 
     for (;;)
     {
@@ -2397,7 +2404,7 @@ void Assembler::bindTo(Label* L, SysInt pos)
     }
   }
 
-  L->set(LABEL_BOUND, pos);
+  label->set(LABEL_BOUND, pos);
 }
 
 } // AsmJit namespace

@@ -36,6 +36,9 @@
 
 #include <string.h>
 
+// a little bit C++
+#include <new>
+
 namespace AsmJit {
 
 // forward declarations
@@ -59,16 +62,18 @@ enum EMITTABLE_TYPE
 {
   //! @brief Emittable is invalid (can't be used).
   EMITTABLE_NONE = 0,
+  //! @brief Emittable is .align directive.
+  EMITTABLE_ALIGN,
   //! @brief Emittable is single instruction.
-  EMITTABLE_INSTRUCTION = 1,
+  EMITTABLE_INSTRUCTION,
   //! @brief Emittable is block of instructions.
-  EMITTABLE_BLOCK = 2,
+  EMITTABLE_BLOCK,
   //! @brief Emittable is function declaration.
-  EMITTABLE_FUNCTION = 3,
+  EMITTABLE_FUNCTION,
   //! @brief Emittable is function prologue.
-  EMITTABLE_PROLOGUE = 4,
+  EMITTABLE_PROLOGUE,
   //! @brief Emittable is function epilogue.
-  EMITTABLE_EPILOGUE = 5
+  EMITTABLE_EPILOGUE
 };
 
 //! @brief Calling convention type.
@@ -250,7 +255,7 @@ enum CALL_CONV
 #if defined(ASMJIT_X86)
   CALL_CONV_PREFERRED = CALL_CONV_CDECL
 #else
-# if defined(WIN23) || defined(_WIN32) || defined(WINDOWS)
+# if defined(WIN32) || defined(_WIN32) || defined(WINDOWS)
   CALL_CONV_PREFERRED = CALL_CONV_X64W
 # else
   CALL_CONV_PREFERRED = CALL_CONV_X64U
@@ -336,11 +341,28 @@ private:
   inline Emittable& operator=(const Emittable& other);
 };
 
+struct ASMJIT_API Align : public Emittable
+{
+  Align(Compiler* c, SysInt size = 0);
+  virtual ~Align();
+
+  virtual void emit(Assembler& a);
+
+  inline SysInt size() const { return _size; }
+  inline void setSize(SysInt size) { _size = size; }
+
+private:
+  SysInt _size;
+};
+
 //! @brief Instruction emittable.
 struct ASMJIT_API Instruction : public Emittable
 {
   Instruction(Compiler* c);
+  Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
   virtual ~Instruction();
+
+  virtual void emit(Assembler& a);
 
   //! @brief Return instruction code, see @c INST_CODE.
   inline UInt32 code() const { return _code; }
@@ -623,6 +645,57 @@ private:
   inline Variable& operator=(const Variable& other);
 };
 
+//! @brief Memory allocator designed to fast alloc memory that will be freed
+//! in one step.
+//!
+//! @note This is hackery for performance. Concept is that objects created
+//! by @c Compiler are manager by compiler. This means that lifetime of 
+//! these objects are same as compiler lifetime (that's short).
+//!
+//! All emittables are allocated by @c Compiler by this way.
+struct ASMJIT_API Zone
+{
+  //! @brief Create new instance of @c Zone.
+  Zone(SysUInt chunkSize);
+  //! @brief Destroy zone instance.
+  ~Zone();
+
+  //! @brief Allocate @c size bytes of memory and return pointer to it.
+  void* alloc(SysUInt size);
+  //! @brief Free all allocated memory at once.
+  void freeAll();
+
+  //! @brief Return total size of allocated objects - by @c alloc().
+  inline SysUInt total() const { return _total; }
+  //! @brief Return (default) chunk size.
+  inline SysUInt chunkSize() const { return _chunkSize; }
+
+  //! @brief One allocated chunk of memory.
+  struct Chunk
+  {
+    //! @brief Link to previous chunk.
+    Chunk* prev;
+    //! @brief Position in this chunk.
+    SysUInt pos;
+    //! @brief Size of this chunk (in bytes).
+    SysUInt size;
+
+    //! @brief Data.
+    UInt8 data[4];
+
+    //! @brief Return count of remaining (unused) bytes in chunk.
+    inline SysUInt remain() const { return size - pos; }
+  };
+
+private:
+  //! @brief Last allocated chunk of memory.
+  Chunk* _chunks;
+  //! @brief Total size of allocated objects - by @c alloc() method.
+  SysUInt _total;
+  //! @brief One chunk size.
+  SysUInt _chunkSize;
+};
+
 //! @brief Compiler.
 //!
 //! This class is used to store instruction stream and allows to modify
@@ -634,7 +707,7 @@ private:
 //! it can result in more readable code, because @c AsmJit::Compiler contains 
 //! also register allocator and you can use variables instead of hardcoding 
 //! registers.
-struct ASMJIT_API Compiler
+struct ASMJIT_API Compiler : public Serializer
 {
   // -------------------------------------------------------------------------
   // [Construction / Destruction]
@@ -697,25 +770,71 @@ struct ASMJIT_API Compiler
   // -------------------------------------------------------------------------
   // [Memory Management]
   // -------------------------------------------------------------------------
-#if 0
   // Only planned
 
   // Memory management in compiler has these rules:
   // - Everything created by compiler is freed by compiler.
   // - To get decent performance, compiler always uses larger buffer for 
   //   objects to allocate and when compiler instance is destroyed, this 
-  //   buffer is freed. Destructors of created objects are never called.
-  // REVISION NEEDED: This concept is not good, it's needed to call destructors
+  //   buffer is freed. Destructors of active objects are called when 
+  //   destroying compiler instance. Destructors of abadonded compiler
+  //   objects are called immediately when abadonding it.
 
   template<typename T>
   inline T* newObject()
   {
     void* addr = _allocObject(sizeof(T));
-    return
+    return new(addr) T(this);
   }
 
-  void* _allocObject(SysUInt size);
-#endif
+  template<typename T, typename P1>
+  inline T* newObject(P1 p1)
+  {
+    void* addr = _allocObject(sizeof(T));
+    return new(addr) T(this, p1);
+  }
+
+  template<typename T, typename P1, typename P2>
+  inline T* newObject(P1 p1, P2 p2)
+  {
+    void* addr = _allocObject(sizeof(T));
+    return new(addr) T(this, p1, p2);
+  }
+
+  template<typename T, typename P1, typename P2, typename P3>
+  inline T* newObject(P1 p1, P2 p2, P3 p3)
+  {
+    void* addr = _allocObject(sizeof(T));
+    return new(addr) T(this, p1, p2, p3);
+  }
+
+  template<typename T, typename P1, typename P2, typename P3, typename P4>
+  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4)
+  {
+    void* addr = _allocObject(sizeof(T));
+    return new(addr) T(this, p1, p2, p3, p4);
+  }
+
+  inline void* _allocObject(SysUInt size)
+  { return _zone.alloc(size); }
+
+  // -------------------------------------------------------------------------
+  // [EmitX86]
+  // -------------------------------------------------------------------------
+
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+
+  // -------------------------------------------------------------------------
+  // [Align]
+  // -------------------------------------------------------------------------
+
+  virtual void align(SysInt m);
+
+  // -------------------------------------------------------------------------
+  // [Bind]
+  // -------------------------------------------------------------------------
+
+  virtual void bind(Label* label);
 
   // -------------------------------------------------------------------------
   // [Variables]
@@ -730,6 +849,9 @@ private:
 
   //! @brief Current function.
   Function* _currentFunction;
+
+  //! @brief Memory management.
+  Zone _zone;
 
 private:
   // disable copy

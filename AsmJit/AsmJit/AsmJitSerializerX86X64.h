@@ -62,6 +62,11 @@ struct ASMJIT_API _Serializer
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
+  //! @brief Emits X86/FPU or MM instruction.
+  //!
+  //! Operands @a o1, @a o2 or @a o3 can't be @c NULL.
+  //!
+  //! Use @c __emitX86() helpers to emit instructions.
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
 
   // -------------------------------------------------------------------------
@@ -82,7 +87,7 @@ struct ASMJIT_API _Serializer
   //! @brief Bind label to the current offset.
   //!
   //! @note Label can be bound only once!
-  virtual void bind(Label* L) = 0;
+  virtual void bind(Label* label) = 0;
 
 protected:
   // helpers to decrease binary code size
@@ -180,14 +185,6 @@ struct Serializer : public _Serializer
   inline void and_(const Mem& dst, const Immediate& src)
   {
     __emitX86(INST_AND, &dst, &src);
-  }
-
-  //! @brief Bind label to the current offset.
-  //!
-  //! @note Label can be bound only once!
-  inline void bind(Label* L)
-  {
-    // TODO
   }
 
   //! @brief Bit Scan Forward.
@@ -319,9 +316,9 @@ struct Serializer : public _Serializer
     __emitX86(INST_CALL, &dst);
   }
   //! @brief Call Procedure.
-  inline void call(Label* L)
+  inline void call(Label* label)
   {
-    __emitX86(INST_CALL, L);
+    __emitX86(INST_CALL, label);
   }
 
   //! @brief Convert Byte to Word (Sign Extend).
@@ -655,7 +652,7 @@ struct Serializer : public _Serializer
     __emitX86(INST_INT3);
   }
 
-  //! @brief Jump to label @a L if condition @a cc is met.
+  //! @brief Jump to label @a label if condition @a cc is met.
   //!
   //! This instruction checks the state of one or more of the status flags in 
   //! the EFLAGS register (CF, OF, PF, SF, and ZF) and, if the flags are in the 
@@ -664,73 +661,73 @@ struct Serializer : public _Serializer
   //! with each instruction to indicate the condition being tested for. If the 
   //! condition is not satisfied, the jump is not performed and execution 
   //! continues with the instruction following the Jcc instruction.
-  inline void j(CONDITION cc, Label* L, HINT hint = HINT_NONE)
+  inline void j(CONDITION cc, Label* label, HINT hint = HINT_NONE)
   {
     ASMJIT_ASSERT((SysUInt)cc <= 0xF);
     Immediate imm(hint);
-    __emitX86(INST_J + cc, L, &imm);
+    __emitX86(INST_J + cc, label, &imm);
   }
 
-  //! @brief Jump to label @a L if condition is met.
-  inline void ja  (Label* L, HINT hint = HINT_NONE) { j(C_A  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jae (Label* L, HINT hint = HINT_NONE) { j(C_AE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jb  (Label* L, HINT hint = HINT_NONE) { j(C_B  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jbe (Label* L, HINT hint = HINT_NONE) { j(C_BE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jc  (Label* L, HINT hint = HINT_NONE) { j(C_C  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void je  (Label* L, HINT hint = HINT_NONE) { j(C_E  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jg  (Label* L, HINT hint = HINT_NONE) { j(C_G  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jge (Label* L, HINT hint = HINT_NONE) { j(C_GE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jl  (Label* L, HINT hint = HINT_NONE) { j(C_L  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jle (Label* L, HINT hint = HINT_NONE) { j(C_LE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jna (Label* L, HINT hint = HINT_NONE) { j(C_NA , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnae(Label* L, HINT hint = HINT_NONE) { j(C_NAE, L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnb (Label* L, HINT hint = HINT_NONE) { j(C_NB , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnbe(Label* L, HINT hint = HINT_NONE) { j(C_NBE, L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnc (Label* L, HINT hint = HINT_NONE) { j(C_NC , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jne (Label* L, HINT hint = HINT_NONE) { j(C_NE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jng (Label* L, HINT hint = HINT_NONE) { j(C_NG , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnge(Label* L, HINT hint = HINT_NONE) { j(C_NGE, L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnl (Label* L, HINT hint = HINT_NONE) { j(C_NL , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnle(Label* L, HINT hint = HINT_NONE) { j(C_NLE, L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jno (Label* L, HINT hint = HINT_NONE) { j(C_NO , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnp (Label* L, HINT hint = HINT_NONE) { j(C_NP , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jns (Label* L, HINT hint = HINT_NONE) { j(C_NS , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jnz (Label* L, HINT hint = HINT_NONE) { j(C_NZ , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jo  (Label* L, HINT hint = HINT_NONE) { j(C_O  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jp  (Label* L, HINT hint = HINT_NONE) { j(C_P  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jpe (Label* L, HINT hint = HINT_NONE) { j(C_PE , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jpo (Label* L, HINT hint = HINT_NONE) { j(C_PO , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void js  (Label* L, HINT hint = HINT_NONE) { j(C_S  , L, hint); }
-  //! @brief Jump to label @a L if condition is met.
-  inline void jz  (Label* L, HINT hint = HINT_NONE) { j(C_Z  , L, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void ja  (Label* label, HINT hint = HINT_NONE) { j(C_A  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jae (Label* label, HINT hint = HINT_NONE) { j(C_AE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jb  (Label* label, HINT hint = HINT_NONE) { j(C_B  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jbe (Label* label, HINT hint = HINT_NONE) { j(C_BE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jc  (Label* label, HINT hint = HINT_NONE) { j(C_C  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void je  (Label* label, HINT hint = HINT_NONE) { j(C_E  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jg  (Label* label, HINT hint = HINT_NONE) { j(C_G  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jge (Label* label, HINT hint = HINT_NONE) { j(C_GE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jl  (Label* label, HINT hint = HINT_NONE) { j(C_L  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jle (Label* label, HINT hint = HINT_NONE) { j(C_LE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jna (Label* label, HINT hint = HINT_NONE) { j(C_NA , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnae(Label* label, HINT hint = HINT_NONE) { j(C_NAE, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnb (Label* label, HINT hint = HINT_NONE) { j(C_NB , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnbe(Label* label, HINT hint = HINT_NONE) { j(C_NBE, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnc (Label* label, HINT hint = HINT_NONE) { j(C_NC , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jne (Label* label, HINT hint = HINT_NONE) { j(C_NE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jng (Label* label, HINT hint = HINT_NONE) { j(C_NG , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnge(Label* label, HINT hint = HINT_NONE) { j(C_NGE, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnl (Label* label, HINT hint = HINT_NONE) { j(C_NL , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnle(Label* label, HINT hint = HINT_NONE) { j(C_NLE, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jno (Label* label, HINT hint = HINT_NONE) { j(C_NO , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnp (Label* label, HINT hint = HINT_NONE) { j(C_NP , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jns (Label* label, HINT hint = HINT_NONE) { j(C_NS , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnz (Label* label, HINT hint = HINT_NONE) { j(C_NZ , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jo  (Label* label, HINT hint = HINT_NONE) { j(C_O  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jp  (Label* label, HINT hint = HINT_NONE) { j(C_P  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jpe (Label* label, HINT hint = HINT_NONE) { j(C_PE , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jpo (Label* label, HINT hint = HINT_NONE) { j(C_PO , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void js  (Label* label, HINT hint = HINT_NONE) { j(C_S  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jz  (Label* label, HINT hint = HINT_NONE) { j(C_Z  , label, hint); }
 
   //! @brief Jump.
   //!
@@ -738,9 +735,9 @@ struct Serializer : public _Serializer
   //! in the instruction stream without recording return information. 
   //! The destination (target) operand specifies the address of the
   //! instruction being jumped to.
-  inline void jmp(Label* L)
+  inline void jmp(Label* label)
   {
-    __emitX86(INST_JMP, L);
+    __emitX86(INST_JMP, label);
   }
 
   //! @overload
@@ -2853,6 +2850,262 @@ struct Serializer : public _Serializer
   inline void pxor(const MMRegister& dst, const Mem& src)
   {
     __emitX86(INST_PXOR, &dst, &src);
+  }
+
+  // -------------------------------------------------------------------------
+  // [3dNow]
+  // -------------------------------------------------------------------------
+
+  //! @brief Faster EMMS (3dNow!).
+  //!
+  //! @note Use only for early AMD processors where is only 3dNow! or SSE. If
+  //! CPU contains SSE2, it's better to use @c emms() ( @c femms() is mapped 
+  //! to @c emms() ).
+  inline void femms()
+  {
+    __emitX86(INST_FEMMS);
+  }
+
+  //! @brief Packed SP-FP to Integer Convert (3dNow!).
+  inline void pf2id(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PF2ID, &dst, &src);
+  }
+  //! @brief Packed SP-FP to Integer Convert (3dNow!).
+  inline void pf2id(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PF2ID, &dst, &src);
+  }
+
+  //! @brief  Packed SP-FP to Integer Word Convert (3dNow!).
+  inline void pf2iw(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PF2IW, &dst, &src);
+  }
+  //! @brief  Packed SP-FP to Integer Word Convert (3dNow!).
+  inline void pf2iw(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PF2IW, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Accumulate (3dNow!).
+  inline void pfacc(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFACC, &dst, &src);
+  }
+  //! @brief Packed SP-FP Accumulate (3dNow!).
+  inline void pfacc(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFACC, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Addition (3dNow!).
+  inline void pfadd(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFADD, &dst, &src);
+  }
+  //! @brief Packed SP-FP Addition (3dNow!).
+  inline void pfadd(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFADD, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Compare - dst == src (3dNow!).
+  inline void pfcmpeq(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFCMPEQ, &dst, &src);
+  }
+  //! @brief Packed SP-FP Compare - dst == src (3dNow!).
+  inline void pfcmpeq(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFCMPEQ, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Compare - dst >= src (3dNow!).
+  inline void pfcmpge(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFCMPGE, &dst, &src);
+  }
+  //! @brief Packed SP-FP Compare - dst >= src (3dNow!).
+  inline void pfcmpge(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFCMPGE, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Compare - dst > src (3dNow!).
+  inline void pfcmpgt(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFCMPGT, &dst, &src);
+  }
+  //! @brief Packed SP-FP Compare - dst > src (3dNow!).
+  inline void pfcmpgt(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFCMPGT, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Maximum (3dNow!).
+  inline void pfmax(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFMAX, &dst, &src);
+  }
+  //! @brief Packed SP-FP Maximum (3dNow!).
+  inline void pfmax(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFMAX, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Minimum (3dNow!).
+  inline void pfmin(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFMIN, &dst, &src);
+  }
+  //! @brief Packed SP-FP Minimum (3dNow!).
+  inline void pfmin(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFMIN, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Multiply (3dNow!).
+  inline void pfmul(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFMUL, &dst, &src);
+  }
+  //! @brief Packed SP-FP Multiply (3dNow!).
+  inline void pfmul(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFMUL, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Negative Accumulate (3dNow!).
+  inline void pfnacc(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFNACC, &dst, &src);
+  }
+  //! @brief Packed SP-FP Negative Accumulate (3dNow!).
+  inline void pfnacc(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFNACC, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Mixed Accumulate (3dNow!).
+  inline void pfpnaxx(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFPNACC, &dst, &src);
+  }
+  //! @brief Packed SP-FP Mixed Accumulate (3dNow!).
+  inline void pfpnacc(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFPNACC, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reciprocal Approximation (3dNow!).
+  inline void pfrcp(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFRCP, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reciprocal Approximation (3dNow!).
+  inline void pfrcp(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFRCP, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reciprocal, First Iteration Step (3dNow!).
+  inline void pfrcpit1(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFRCPIT1, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reciprocal, First Iteration Step (3dNow!).
+  inline void pfrcpit1(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFRCPIT1, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reciprocal, Second Iteration Step (3dNow!).
+  inline void pfrcpit2(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFRCPIT2, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reciprocal, Second Iteration Step (3dNow!).
+  inline void pfrcpit2(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFRCPIT2, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reciprocal Square Root, First Iteration Step (3dNow!).
+  inline void pfrsqit1(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFRSQIT1, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reciprocal Square Root, First Iteration Step (3dNow!).
+  inline void pfrsqit1(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFRSQIT1, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reciprocal Square Root Approximation (3dNow!).
+  inline void pfrsqrt(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFRSQRT, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reciprocal Square Root Approximation (3dNow!).
+  inline void pfrsqrt(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFRSQRT, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Subtract (3dNow!).
+  inline void pfsub(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFSUB, &dst, &src);
+  }
+  //! @brief Packed SP-FP Subtract (3dNow!).
+  inline void pfsub(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFSUB, &dst, &src);
+  }
+
+  //! @brief Packed SP-FP Reverse Subtract (3dNow!).
+  inline void pfsubr(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PFSUBR, &dst, &src);
+  }
+  //! @brief Packed SP-FP Reverse Subtract (3dNow!).
+  inline void pfsubr(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PFSUBR, &dst, &src);
+  }
+
+  //! @brief Packed DWords to SP-FP (3dNow!).
+  inline void pi2fd(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PI2FD, &dst, &src);
+  }
+  //! @brief Packed DWords to SP-FP (3dNow!).
+  inline void pi2fd(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PI2FD, &dst, &src);
+  }
+
+  //! @brief Packed Words to SP-FP (3dNow!).
+  inline void pi2fw(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PI2FW, &dst, &src);
+  }
+  //! @brief Packed Words to SP-FP (3dNow!).
+  inline void pi2fw(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PI2FW, &dst, &src);
+  }
+
+  //! @brief Packed swap DWord (3dNow!)
+  inline void pswapd(const MMRegister& dst, const MMRegister& src)
+  {
+    __emitX86(INST_PSWAPD, &dst, &src);
+  }
+  //! @brief Packed swap DWord (3dNow!)
+  inline void pswapd(const MMRegister& dst, const Mem& src)
+  {
+    __emitX86(INST_PSWAPD, &dst, &src);
   }
 
   // -------------------------------------------------------------------------

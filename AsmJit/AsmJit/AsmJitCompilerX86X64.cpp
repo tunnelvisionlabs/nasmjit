@@ -45,7 +45,7 @@ static void delAll(EmittableList& buf)
 {
   Emittable** emitters = buf.data();
   SysUInt i, len = buf.length();
-  for (i = 0; i < len; i++) delete emitters[i];
+  for (i = 0; i < len; i++) emitters[i]->~Emittable();
 }
 
 static void memset32(UInt32* p, UInt32 c, SysUInt len)
@@ -94,6 +94,24 @@ void Emittable::postEmit(Assembler& a)
 }
 
 // ----------------------------------------------------------------------------
+// [AsmJit::Align]
+// ----------------------------------------------------------------------------
+
+Align::Align(Compiler* c, SysInt size) : 
+  Emittable(c, EMITTABLE_ALIGN), _size(size) 
+{
+}
+
+Align::~Align()
+{
+}
+
+void Align::emit(Assembler& a)
+{
+  a.align(size());
+}
+
+// ----------------------------------------------------------------------------
 // [AsmJit::Instruction]
 // ----------------------------------------------------------------------------
 
@@ -102,8 +120,22 @@ Instruction::Instruction(Compiler* c) :
 {
 }
 
+Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) :
+  Emittable(c, EMITTABLE_INSTRUCTION)
+{
+  _code = code;
+  _o[0] = *o1;
+  _o[1] = *o2;
+  _o[2] = *o3;
+}
+
 Instruction::~Instruction()
 {
+}
+
+void Instruction::emit(Assembler& a)
+{
+  a._emitX86(code(), &_o[0], &_o[1], &_o[2]);
 }
 
 // ----------------------------------------------------------------------------
@@ -492,12 +524,64 @@ Variable::~Variable()
 }
 
 // ----------------------------------------------------------------------------
+// [AsmJit::Zone]
+// ----------------------------------------------------------------------------
+
+Zone::Zone(SysUInt chunkSize)
+{
+  _chunks = NULL;
+  _total = 0;
+  _chunkSize = chunkSize;
+}
+
+Zone::~Zone()
+{
+  freeAll();
+}
+
+void* Zone::alloc(SysUInt size)
+{
+  Chunk* cur = _chunks;
+
+  if (!cur || cur->remain() < size)
+  {
+    cur = (Chunk*)ASMJIT_MALLOC(sizeof(Chunk) - (sizeof(UInt8)*4) + _chunkSize);
+    if (!cur) return NULL;
+
+    cur->prev = _chunks;
+    cur->pos = 0;
+    cur->size = _chunkSize;
+    _chunks = cur;
+  }
+
+  UInt8* p = cur->data + cur->pos;
+  cur->pos += size;
+  return (void*)p;
+}
+
+void Zone::freeAll()
+{
+  Chunk* cur = _chunks;
+
+  while (cur)
+  {
+    Chunk* prev = cur->prev;
+    ASMJIT_FREE(cur);
+    cur = prev;
+  }
+
+  _chunks = NULL;
+  _total = 0;
+}
+
+// ----------------------------------------------------------------------------
 // [AsmJit::Compiler - Construction / Destruction]
 // ----------------------------------------------------------------------------
 
 Compiler::Compiler() :
   _currentPosition(0),
-  _currentFunction(NULL)
+  _currentFunction(NULL),
+  _zone(65536 - sizeof(Zone::Chunk) - 32)
 {
 }
 
@@ -515,6 +599,7 @@ void Compiler::clear()
   delAll(_buffer);
   _buffer.clear();
   _currentPosition = 0;
+  _zone.freeAll();
 }
 
 void Compiler::free()
@@ -522,6 +607,7 @@ void Compiler::free()
   delAll(_buffer);
   _buffer.free();
   _currentPosition = 0;
+  _zone.freeAll();
 }
 
 // ----------------------------------------------------------------------------
@@ -532,7 +618,7 @@ Function* Compiler::beginFunction(UInt32 callingConvention)
 {
   ASMJIT_ASSERT(_currentFunction == NULL);
 
-  Function* f = _currentFunction = new Function(this);
+  Function* f = _currentFunction = newObject<Function>();
   f->setCallingConvention(callingConvention);
 
   emit(f);
@@ -550,14 +636,14 @@ Function* Compiler::endFunction()
 
 Prologue* Compiler::prologue()
 {
-  Prologue* block = new Prologue(this, currentFunction());
+  Prologue* block = newObject<Prologue>(currentFunction());
   emit(block);
   return block;
 }
 
 Epilogue* Compiler::epilogue()
 {
-  Epilogue* block = new Epilogue(this, currentFunction());
+  Epilogue* block = newObject<Epilogue>(currentFunction());
   emit(block);
   return block;
 }
@@ -587,6 +673,39 @@ void Compiler::build(Assembler& a)
   len = _buffer.length();
   for (i = 0; i < len; i++) emitters[i]->emit(a);
   for (i = 0; i < len; i++) emitters[i]->postEmit(a);
+}
+
+// -------------------------------------------------------------------------
+// [AsmJit::Compiler - EmitX86]
+// -------------------------------------------------------------------------
+
+void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+{
+  if (o1->isLabel())
+  {
+    // TODO
+  }
+  else
+  {
+    emit(newObject<Instruction>(code, o1, o2, o3));
+  }
+}
+
+// -------------------------------------------------------------------------
+// [AsmJit::Compiler - Align]
+// -------------------------------------------------------------------------
+
+void Compiler::align(SysInt m)
+{
+  emit(newObject<Align>(m));
+}
+
+// -------------------------------------------------------------------------
+// [AsmJit::Compiler - Bind]
+// -------------------------------------------------------------------------
+
+void Compiler::bind(Label* label)
+{
 }
 
 } // AsmJit namespace
