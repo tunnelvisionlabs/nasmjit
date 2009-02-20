@@ -297,8 +297,8 @@ void Assembler::_emitDisplacement(Label* label)
 {
   ASMJIT_ASSERT(!label->isBound());
 
-  Int32 o = (Int32)offset();
-  Int32 p = label->isLinked() ? (Int32)label->position() - o : 0;
+  SysInt o = offset();
+  SysInt p = label->isLinked() ? label->position() - o : 0;
 
   label->set(LABEL_LINKED, o);
   _emitInt32(p);
@@ -343,10 +343,10 @@ void Assembler::relocCode(void* _dst) const
         SysUInt jmpFrom = ((SysUInt)dst) + jmpStart;
         SysUInt jmpTo = *reinterpret_cast<SysUInt *>(dst + jmpAddress);
 
-        const int rel8_size = 2;
-        const int rel32_size = 5;
+        const SysInt rel8_size = 2;
+        const SysInt rel32_size = 5;
 
-        Int32 displacement = 0;
+        SysInt displacement = 0;
 
         // Calculate displacement, but very safe!
         if (jmpTo > jmpFrom)
@@ -1384,8 +1384,8 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (label->isBound())
         {
-          const int rel8_size = 2;
-          const int rel32_size = 6;
+          const SysInt rel8_size = 2;
+          const SysInt rel32_size = 6;
           SysInt offs = label->position() - offset();
 
           ASMJIT_ASSERT(offs <= 0);
@@ -1432,8 +1432,8 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (label->isBound())
         {
-          const int rel8_size = 2;
-          const int rel32_size = 5;
+          const SysInt rel8_size = 2;
+          const SysInt rel32_size = 5;
           SysInt offs = label->position() - offset();
 
           ASMJIT_ASSERT(offs <= 0);
