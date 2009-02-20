@@ -568,6 +568,9 @@ struct ASMJIT_API Function : public Emittable
   //! function execution (for generating optimized prologue / epilogue).
   inline UInt32 changedSseRegisters() const { return _changedSseRegisters; }
 
+  //! @brief Return exit label.
+  inline Label* exitLabel() const { return _exitLabel; }
+
   //! @brief Size of alignment (on the stack).
   SysInt _alignmentSize;
   //! @brief Size of variables (on the stack).
@@ -626,6 +629,7 @@ struct ASMJIT_API Function : public Emittable
   UInt32 _changedSseRegisters;
 
   PodVector<Variable*> _variables;
+  Label* _exitLabel;
 };
 
 //! @brief Prologue emittable.

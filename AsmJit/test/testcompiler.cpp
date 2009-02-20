@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     c.pfmul(mm0, ptr(nbx));
     c.movq(ptr(nax), mm0);
     c.femms();
+
     Label* L = c.newLabel();
     c.jz(L);
     c.bind(L);

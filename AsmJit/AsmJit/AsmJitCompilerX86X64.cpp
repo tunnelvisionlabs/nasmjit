@@ -184,7 +184,8 @@ Function::Function(Compiler* c) :
   _changedMmxRegisters(0),
   _changedSseRegisters(0),
   _preserveGpnRegisters(0),
-  _preserveSseRegisters(0)
+  _preserveSseRegisters(0),
+  _exitLabel(c->newLabel())
 {
   memset32(_argumentsGpnRegisters, 0xFFFFFFFF, 16);
   memset32(_argumentsSseRegisters, 0xFFFFFFFF, 16);
@@ -712,9 +713,14 @@ Label* Compiler::newLabel()
 void Compiler::emit(Emittable* emittable, bool endblock)
 {
   if (endblock)
+  {
     _buffer.append(emittable);
+  }
   else
-    _buffer.insert(_currentPosition++, emittable);
+  {
+    _buffer.insert(_currentPosition, emittable);
+    _currentPosition++;
+  }
 }
 
 void Compiler::build(Assembler& a)
