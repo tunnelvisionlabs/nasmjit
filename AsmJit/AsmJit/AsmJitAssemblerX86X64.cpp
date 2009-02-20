@@ -421,7 +421,7 @@ void Assembler::overwrite(const Relocable& relocable)
 // [AsmJit::Assembler - Abstract Emitters]
 // ----------------------------------------------------------------------------
 
-#define ASMJIT_DEBUG_INSTRUCTION_MAP
+// #define ASMJIT_DEBUG_INSTRUCTION_MAP
 
 // Instruction description
 struct InstructionDescription
