@@ -421,7 +421,7 @@ void Assembler::overwrite(const Relocable& relocable)
 // [AsmJit::Assembler - Abstract Emitters]
 // ----------------------------------------------------------------------------
 
-// #define ASMJIT_DEBUG_INSTRUCTION_MAP
+#define ASMJIT_DEBUG_INSTRUCTION_MAP
 
 // Instruction description
 struct InstructionDescription
@@ -1376,9 +1376,9 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         Label* label = (Label*)(o1);
 
-        if (o2->isImm() && operand_cast<const Immediate&>(*o1).value() != HINT_NONE)
+        if (o2->isImm() && operand_cast<const Immediate&>(*o2).value() != HINT_NONE)
         {
-          UInt8 hint = operand_cast<const Immediate&>(*o1).value() & 0xFF;
+          UInt8 hint = operand_cast<const Immediate&>(*o2).value() & 0xFF;
           _emitByte(hint);
         }
 

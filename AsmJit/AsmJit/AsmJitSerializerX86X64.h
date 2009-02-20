@@ -96,6 +96,11 @@ protected:
   void __emitX86(UInt32 code, const Operand* o1, const Operand* o2);
   void __emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
+  //! @brief Private method for emitting jcc.
+  void _emitJcc(CONDITION cc, Label* label, UInt32 hint);
+  //! @brief Private method for emitting jcc.
+  void _emitJ(UInt32 code, Label* label, UInt32 hint);
+
 private:
   // disable copy
   inline _Serializer(const _Serializer& other);
@@ -661,73 +666,71 @@ struct Serializer : public _Serializer
   //! with each instruction to indicate the condition being tested for. If the 
   //! condition is not satisfied, the jump is not performed and execution 
   //! continues with the instruction following the Jcc instruction.
-  inline void j(CONDITION cc, Label* label, HINT hint = HINT_NONE)
+  inline void j(CONDITION cc, Label* label, UInt32 hint = HINT_NONE)
   {
-    ASMJIT_ASSERT((SysUInt)cc <= 0xF);
-    Immediate imm(hint);
-    __emitX86(INST_J + cc, label, &imm);
+    _emitJcc(cc, label, hint);
   }
 
   //! @brief Jump to label @a label if condition is met.
-  inline void ja  (Label* label, HINT hint = HINT_NONE) { j(C_A  , label, hint); }
+  inline void ja  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JA  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jae (Label* label, HINT hint = HINT_NONE) { j(C_AE , label, hint); }
+  inline void jae (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JAE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jb  (Label* label, HINT hint = HINT_NONE) { j(C_B  , label, hint); }
+  inline void jb  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JB  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jbe (Label* label, HINT hint = HINT_NONE) { j(C_BE , label, hint); }
+  inline void jbe (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JBE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jc  (Label* label, HINT hint = HINT_NONE) { j(C_C  , label, hint); }
+  inline void jc  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JC  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void je  (Label* label, HINT hint = HINT_NONE) { j(C_E  , label, hint); }
+  inline void je  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JE  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jg  (Label* label, HINT hint = HINT_NONE) { j(C_G  , label, hint); }
+  inline void jg  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JG  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jge (Label* label, HINT hint = HINT_NONE) { j(C_GE , label, hint); }
+  inline void jge (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JGE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jl  (Label* label, HINT hint = HINT_NONE) { j(C_L  , label, hint); }
+  inline void jl  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JL  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jle (Label* label, HINT hint = HINT_NONE) { j(C_LE , label, hint); }
+  inline void jle (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JLE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jna (Label* label, HINT hint = HINT_NONE) { j(C_NA , label, hint); }
+  inline void jna (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNA , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnae(Label* label, HINT hint = HINT_NONE) { j(C_NAE, label, hint); }
+  inline void jnae(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNAE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnb (Label* label, HINT hint = HINT_NONE) { j(C_NB , label, hint); }
+  inline void jnb (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNB , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnbe(Label* label, HINT hint = HINT_NONE) { j(C_NBE, label, hint); }
+  inline void jnbe(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNBE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnc (Label* label, HINT hint = HINT_NONE) { j(C_NC , label, hint); }
+  inline void jnc (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNC , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jne (Label* label, HINT hint = HINT_NONE) { j(C_NE , label, hint); }
+  inline void jne (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jng (Label* label, HINT hint = HINT_NONE) { j(C_NG , label, hint); }
+  inline void jng (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNG , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnge(Label* label, HINT hint = HINT_NONE) { j(C_NGE, label, hint); }
+  inline void jnge(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNGE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnl (Label* label, HINT hint = HINT_NONE) { j(C_NL , label, hint); }
+  inline void jnl (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNL , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnle(Label* label, HINT hint = HINT_NONE) { j(C_NLE, label, hint); }
+  inline void jnle(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNLE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jno (Label* label, HINT hint = HINT_NONE) { j(C_NO , label, hint); }
+  inline void jno (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNO , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnp (Label* label, HINT hint = HINT_NONE) { j(C_NP , label, hint); }
+  inline void jnp (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNP , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jns (Label* label, HINT hint = HINT_NONE) { j(C_NS , label, hint); }
+  inline void jns (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNS , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnz (Label* label, HINT hint = HINT_NONE) { j(C_NZ , label, hint); }
+  inline void jnz (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNZ , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jo  (Label* label, HINT hint = HINT_NONE) { j(C_O  , label, hint); }
+  inline void jo  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JO  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jp  (Label* label, HINT hint = HINT_NONE) { j(C_P  , label, hint); }
+  inline void jp  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JP  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jpe (Label* label, HINT hint = HINT_NONE) { j(C_PE , label, hint); }
+  inline void jpe (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JPE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jpo (Label* label, HINT hint = HINT_NONE) { j(C_PO , label, hint); }
+  inline void jpo (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JPO , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void js  (Label* label, HINT hint = HINT_NONE) { j(C_S  , label, hint); }
+  inline void js  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JS  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jz  (Label* label, HINT hint = HINT_NONE) { j(C_Z  , label, hint); }
+  inline void jz  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JZ  , label, hint); }
 
   //! @brief Jump.
   //!

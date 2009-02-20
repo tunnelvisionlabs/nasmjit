@@ -4,10 +4,9 @@ AsmJit - Complete JIT Assembler for C++ Language
 http://code.google.com/p/asmjit/
 
 AsmJit is complete JIT assembly compiler for X86/X64 platform. It can compile 
-nearly complete (most useful) instruction set with very friendly way. AsmJit
-was designed to be embeddable to any project and this is the reason for MIT
-licence that allows to do everything what you want with source code. For 
-complete licence look to COPYING.txt file.
+nearly complete (most useful) instruction set by very friendly way. AsmJit
+was designed to be embeddable to any project (static linking), but it's also
+possible to compile AsmJit as dynamic linked library.
 
 Directory structure
 ===================
@@ -49,6 +48,12 @@ Examples can be found on these places:
 - AsmJit home page <http://code.google.com/p/asmjit/>
 - AsmJit wiki <http://code.google.com/p/asmjit/w/list>
 - AsmJit test directory
+
+Licence
+=======
+
+AsmJit can be distributed under MIT licence:
+<http://www.opensource.org/licenses/mit-license.php>
 
 Contact Author
 ==============

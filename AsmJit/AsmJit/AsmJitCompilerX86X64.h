@@ -47,12 +47,9 @@ struct Emittable;
 struct Epilogue;
 struct Function;
 struct Instruction;
+struct Jump;
 struct Prologue;
 struct Variable;
-
-// typedefs
-typedef PodVector<Emittable*> EmittableList;
-typedef PodVector<Variable*> VariableList;
 
 //! @addtogroup AsmJit_Compiler
 //! @{
@@ -66,6 +63,8 @@ enum EMITTABLE_TYPE
   EMITTABLE_ALIGN,
   //! @brief Emittable is single instruction.
   EMITTABLE_INSTRUCTION,
+  //! @brief Emittable is jump instruction (jcc, jmp, call).
+  EMITTABLE_JUMP,
   //! @brief Emittable is block of instructions.
   EMITTABLE_BLOCK,
   //! @brief Emittable is function declaration.
@@ -73,7 +72,9 @@ enum EMITTABLE_TYPE
   //! @brief Emittable is function prologue.
   EMITTABLE_PROLOGUE,
   //! @brief Emittable is function epilogue.
-  EMITTABLE_EPILOGUE
+  EMITTABLE_EPILOGUE,
+  //! @brief Emittable is target (bound label).
+  EMITTABLE_TARGET
 };
 
 //! @brief Calling convention type.
@@ -385,6 +386,11 @@ struct ASMJIT_API Instruction : public Emittable
   //! @brief Return third instruction operand.
   inline const Operand& o3() const { return _o[2]; }
 
+  inline void setCode(UInt32 code)
+  {
+    _code = code;
+  }
+
   inline void setInst(UInt32 code)
   {
     _code = code;
@@ -419,6 +425,42 @@ private:
   UInt32 _code;
   //! @brief Instruction operands.
   Operand _o[3];
+};
+
+//! @brief Jump instruction (jcc, jmp, call)
+struct ASMJIT_API Jump : public Emittable
+{
+  Jump(Compiler* c);
+  Jump(Compiler* c, UInt32 code, Label* label, const Operand* o2, const Operand* o3);
+  virtual ~Jump();
+
+  virtual void emit(Assembler& a);
+
+  //! @brief Return instruction code, see @c INST_CODE.
+  inline UInt32 code() const { return _code; }
+
+  //! @brief Return first instruction operand.
+  inline Label* label() { return _label; }
+  //! @brief Return first instruction operand.
+  inline const Label* label() const { return _label; }
+
+  //! @brief Return second instruction operand.
+  inline Operand& o2() { return _o[0]; }
+  //! @brief Return second instruction operand.
+  inline const Operand& o2() const { return _o[0]; }
+
+  //! @brief Return third instruction operand.
+  inline Operand& o3() { return _o[1]; }
+  //! @brief Return third instruction operand.s
+  inline const Operand& o3() const { return _o[1]; }
+
+private:
+  //! @brief Instruction code, see @c INST_CODE.
+  UInt32 _code;
+  //! @brief Label.
+  Label* _label;
+  //! @brief Instruction operands.
+  Operand _o[2];
 };
 
 //! @brief Function emittable.
@@ -614,6 +656,23 @@ private:
   Function* _function;
 };
 
+//! @brief Target.
+//!
+//! Target is bound label location.
+struct ASMJIT_API Target : public Emittable
+{
+  Target(Compiler* c, Label* l);
+  virtual ~Target();
+
+  virtual void emit(Assembler& a);
+
+  //! @brief Return label bound to this target.
+  inline Label* label() const { return _label; }
+
+private:
+  Label* _label;
+};
+
 //! @brief Variable.
 struct ASMJIT_API Variable
 {
@@ -702,13 +761,18 @@ private:
 //! it on the fly. It uses different concept than @c AsmJit::Assembler class
 //! and in fact @c AsmJit::Assembler is only used as a backend.
 //!
-//! Using of this class will generate slower code than using 
+//! Using of this class will generate slower code (means slower generation of
+//! assembler, generated assembler is not slower) than using 
 //! @c AsmJit::Assembler, but in some situations it can be more powerful and 
 //! it can result in more readable code, because @c AsmJit::Compiler contains 
 //! also register allocator and you can use variables instead of hardcoding 
 //! registers.
 struct ASMJIT_API Compiler : public Serializer
 {
+  typedef PodVector<Emittable*> EmittableList;
+  typedef PodVector<Variable*> VariableList;
+  typedef PodVector<Label*> LabelList;
+
   // -------------------------------------------------------------------------
   // [Construction / Destruction]
   // -------------------------------------------------------------------------
@@ -717,7 +781,7 @@ struct ASMJIT_API Compiler : public Serializer
   virtual ~Compiler();
 
   // -------------------------------------------------------------------------
-  // [Internal Buffer]
+  // [Buffer]
   // -------------------------------------------------------------------------
 
   //! @brief Clear everything, but not deallocate buffers.
@@ -743,7 +807,7 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Begins a new function.
   //!
   //! @note To get current function use @c currentFunction() method.
-  Function* beginFunction(UInt32 callingConvention);
+  Function* newFunction(UInt32 callingConvention);
 
   //! @brief Ends current function.
   Function* endFunction();
@@ -757,6 +821,12 @@ struct ASMJIT_API Compiler : public Serializer
   //!
   //! @note Compiler can optimize prologues and epilogues.
   Epilogue* epilogue();
+
+  // -------------------------------------------------------------------------
+  // [Labels]
+  // -------------------------------------------------------------------------
+
+  Label* newLabel();
 
   // -------------------------------------------------------------------------
   // [Emit]
@@ -847,16 +917,14 @@ private:
   //! @brief Position in @c _buffer.
   SysInt _currentPosition;
 
+  //! @brief List of labels.
+  LabelList _labels;
+
   //! @brief Current function.
   Function* _currentFunction;
 
   //! @brief Memory management.
   Zone _zone;
-
-private:
-  // disable copy
-  inline Compiler(const Compiler& other);
-  inline Compiler& operator=(const Compiler& other);
 };
 
 //! @}

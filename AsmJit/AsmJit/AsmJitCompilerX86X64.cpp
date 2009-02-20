@@ -41,7 +41,7 @@ namespace AsmJit {
 // [Helpers]
 // ----------------------------------------------------------------------------
 
-static void delAll(EmittableList& buf)
+static void delAll(Compiler::EmittableList& buf)
 {
   Emittable** emitters = buf.data();
   SysUInt i, len = buf.length();
@@ -136,6 +136,33 @@ Instruction::~Instruction()
 void Instruction::emit(Assembler& a)
 {
   a._emitX86(code(), &_o[0], &_o[1], &_o[2]);
+}
+
+// ----------------------------------------------------------------------------
+// [AsmJit::Jump]
+// ----------------------------------------------------------------------------
+
+Jump::Jump(Compiler* c) :
+  Emittable(c, EMITTABLE_JUMP)
+{
+}
+
+Jump::Jump(Compiler* c, UInt32 code, Label* label, const Operand* o2, const Operand* o3) :
+  Emittable(c, EMITTABLE_JUMP)
+{
+  _code = code;
+  _label = label;
+  _o[0] = *o2;
+  _o[1] = *o3;
+}
+
+Jump::~Jump()
+{
+}
+
+void Jump::emit(Assembler& a)
+{
+  a._emitX86(code(), _label, &_o[0], &_o[1]);
 }
 
 // ----------------------------------------------------------------------------
@@ -510,6 +537,25 @@ void Epilogue::emit(Assembler& a)
 }
 
 // ----------------------------------------------------------------------------
+// [AsmJit::Target]
+// ----------------------------------------------------------------------------
+
+Target::Target(Compiler* c, Label* l) : 
+  Emittable(c, EMITTABLE_TARGET), 
+  _label(l)
+{
+}
+
+Target::~Target()
+{
+}
+
+void Target::emit(Assembler& a)
+{
+  a.bind(_label);
+}
+
+// ----------------------------------------------------------------------------
 // [AsmJit::Variable]
 // ----------------------------------------------------------------------------
 
@@ -591,30 +637,30 @@ Compiler::~Compiler()
 }
 
 // ----------------------------------------------------------------------------
-// [AsmJit::Compiler - Internal Buffer]
+// [AsmJit::Compiler - Buffer]
 // ----------------------------------------------------------------------------
 
 void Compiler::clear()
 {
   delAll(_buffer);
   _buffer.clear();
+  _labels.clear();
   _currentPosition = 0;
   _zone.freeAll();
 }
 
 void Compiler::free()
 {
-  delAll(_buffer);
+  clear();
   _buffer.free();
-  _currentPosition = 0;
-  _zone.freeAll();
+  _labels.free();
 }
 
 // ----------------------------------------------------------------------------
 // [AsmJit::Compiler - Function Builder]
 // ----------------------------------------------------------------------------
 
-Function* Compiler::beginFunction(UInt32 callingConvention)
+Function* Compiler::newFunction(UInt32 callingConvention)
 {
   ASMJIT_ASSERT(_currentFunction == NULL);
 
@@ -646,6 +692,17 @@ Epilogue* Compiler::epilogue()
   Epilogue* block = newObject<Epilogue>(currentFunction());
   emit(block);
   return block;
+}
+
+// -------------------------------------------------------------------------
+// [AsmJit::Compiler - Labels]
+// -------------------------------------------------------------------------
+
+Label* Compiler::newLabel()
+{
+  Label* label = new(_allocObject(sizeof(Label))) Label();
+  _labels.append(label);
+  return label;
 }
 
 // ----------------------------------------------------------------------------
@@ -683,7 +740,7 @@ void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const
 {
   if (o1->isLabel())
   {
-    // TODO
+    emit(newObject<Jump>(code, (Label*)(o1), o2, o3));
   }
   else
   {
@@ -706,6 +763,7 @@ void Compiler::align(SysInt m)
 
 void Compiler::bind(Label* label)
 {
+  emit(newObject<Target>(label));
 }
 
 } // AsmJit namespace

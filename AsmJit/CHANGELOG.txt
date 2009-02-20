@@ -1,3 +1,10 @@
+2009-02-18:
+- Added 3dNow! and enchanced 3dNow! instructions
+
+2009-02-17:
+- Fixed few bugs
+- added few remaining instructions in basic x86 instruction set
+
 2009-02-15
 - Complete rewrite
 - Added Serializer
@@ -12,7 +19,7 @@
 
 2009-02-08
 - Released 0.5 (should be last stable release before Compiler support)
-- Fixed few GCC issued, fixed one broken opcode
+- Fixed few GCC issues, fixed one broken opcode
 - Code refactorization, X86 to Assembler, refactorized header files
 
 2009-02-08

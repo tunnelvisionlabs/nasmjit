@@ -1,9 +1,4 @@
 TODOs:
-
 [ ] Add AsmJit::Compiler class
 [ ] Add SSE4a instruction set (AMD).
-[ ] Add AMD 3dNow.
-[ ] Add AMD 3dNow extensions.
-[ ] Better AMD CpuInfo 
-
 [ ] Add support for ARM architecture

@@ -46,9 +46,11 @@ static const BitDescription cFeatures[] =
   { CpuInfo::Feature_CMOV                        , "CMOV" },
   { CpuInfo::Feature_CMPXCHG8B                   , "CMPXCHG8B" },
   { CpuInfo::Feature_CMPXCHG16B                  , "CMPXCHG16B" },
-  { CpuInfo::Feature_CLFSH                       , "CLFSH" },
+  { CpuInfo::Feature_CLFLUSH                     , "CLFLUSH" },
   { CpuInfo::Feature_PREFETCH                    , "PREFETCH" },
   { CpuInfo::Feature_LAHF_SAHF                   , "LAHF/SAHF" },
+  { CpuInfo::Feature_FXSR                        , "FXSAVE/FXRSTOR" },
+  { CpuInfo::Feature_FFXSR                       , "FXSAVE/FXRSTOR Optimizations" },
   { CpuInfo::Feature_MMX                         , "MMX" },
   { CpuInfo::Feature_MMXExt                      , "MMX Extensions" },
   { CpuInfo::Feature_3dNow                       , "3dNow!" },
@@ -61,32 +63,13 @@ static const BitDescription cFeatures[] =
   { CpuInfo::Feature_SSE4_A                      , "SSE4A" },
   { CpuInfo::Feature_SSE4_1                      , "SSE4.1" },
   { CpuInfo::Feature_SSE4_2                      , "SSE4.2" },
+  { CpuInfo::Feature_SSE5                        , "SSE5" },
   { CpuInfo::Feature_MotitorMWait                , "MONITOR/MWAIT" },
   { CpuInfo::Feature_POPCNT                      , "POPCNT" },
   { CpuInfo::Feature_LZCNT                       , "LZCNT" },
+  { CpuInfo::Feature_MultiThreading              , "MultiThreading" },
   { CpuInfo::Feature_ExecuteDisableBit           , "Execute Disable Bit" },
-  { 0, NULL }
-};
-
-static const BitDescription cFeaturesExt[] = 
-{
-  { CpuInfo::FeatureExt_CPLQualifiedDebugStore   , "CPL Qualified Debug Store" },
-  { CpuInfo::FeatureExt_EnhancedIntelSpeedStep   , "Enhanced Intel SpeedStep" },
-  { CpuInfo::FeatureExt_ThermalMonitor2          , "Thermal Monitor 2" },
-  { CpuInfo::FeatureExt_L1ContextId              , "L1ContextId" },
-  { CpuInfo::FeatureExt_XTPRUpdateControl        , "XTPRUpdateControl" },
-  { CpuInfo::FeatureExt_PerfDebugCapabilityMSR   , "PerfDebugCapabilityMSR" },
-  { CpuInfo::FeatureExt_CmpLegacy                , "Cmp Legacy" },
-  { CpuInfo::FeatureExt_SVM                      , "SVM" },
-  { CpuInfo::FeatureExt_ExtApicSpace             , "Ext Apic Space" },
-  { CpuInfo::FeatureExt_AltMovCr8                , "AltMovCr8" },
-  { CpuInfo::FeatureExt_SKINITandDEV             , "SKINIT/DEV" },
-  { CpuInfo::FeatureExt_SYSCALL_SYSRET           , "SYSCALL/SYSRET" },
-  { CpuInfo::FeatureExt_FFXSR                    , "FFXSR" },
-  { CpuInfo::FeatureExt_1GBSupport               , "1 GB Support" },
-  { CpuInfo::FeatureExt_64Available              , "64 Bits Available" },
-  { CpuInfo::FeatureExt_MultiThreading           , "MultiThreading" },
-  { CpuInfo::FeatureExt_VirtualMachineExtensions , "Virtual Machine Extensions" },
+  { CpuInfo::Feature_64Bit                       , "64 Bit Processor" },
   { 0, NULL }
 };
 
@@ -109,12 +92,11 @@ int main(int argc, char* argv[])
   printf("  Vendor              : %s\n", i->vendor);
   printf("  Family              : %u\n", i->family);
   printf("  Model               : %u\n", i->model);
+  printf("  Stepping            : %u\n", i->stepping);
   printf("  Number of Processors: %u\n", i->numberOfProcessors);
   printf("  Features            : %0.8X\n", i->features);
-  printf("  Features (Extended) : %0.8X\n", i->featuresExt);
   printf("  Bugs                : %0.8X\n", i->bugs);
   printf("\nX86 Extended Info:\n");
-  printf("  Stepping ID         : %u\n", i->x86ExtendedInfo.steppingId);
   printf("  Processor Type      : %u\n", i->x86ExtendedInfo.processorType);
   printf("  Brand Index         : %u\n", i->x86ExtendedInfo.brandIndex);
   printf("  CL Flush Cache Line : %u\n", i->x86ExtendedInfo.clFlushCacheLineSize);
@@ -124,7 +106,5 @@ int main(int argc, char* argv[])
   printf("\nCpu Features:\n");
   printBits("  ", i->features, cFeatures);
 
-  printf("\nCpu Features (extended):\n");
-  printBits("  ", i->featuresExt, cFeaturesExt);
   return 0;
 }

@@ -34,7 +34,7 @@
 #include "../AsmJit/AsmJitVM.h"
 
 // This is type of function we will generate
-typedef int (*MyFn)();
+typedef void (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -44,12 +44,26 @@ int main(int argc, char* argv[])
   // STEP 1: Create function.
   Assembler a;
 
+  float x[] = { -1, -1 };
+  float y[] = {  5,  5 };
+
   // Use compiler to make a function
   {
     Compiler c;
 
-    c.beginFunction(CALL_CONV_PREFERRED);
+    c.newFunction(CALL_CONV_PREFERRED);
     c.prologue();
+
+    c.mov(nax, (SysInt)(void*)x);
+    c.mov(nbx, (SysInt)(void*)y);
+    c.movq(mm0, ptr(nax));
+    c.pfmul(mm0, ptr(nbx));
+    c.movq(ptr(nax), mm0);
+    c.femms();
+    Label* L = c.newLabel();
+    c.jz(L);
+    c.bind(L);
+
     c.epilogue();
     c.currentFunction()->_changedGpnRegisters |= 0xFF;
     c.endFunction();
@@ -72,8 +86,8 @@ int main(int argc, char* argv[])
   a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
-  int result = function_cast<MyFn>(vmem)();
-  printf("Result from jit function: %d\n", result);
+  function_cast<MyFn>(vmem)();
+  printf("%g %g\n", x[0], x[1]);
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);
