@@ -124,13 +124,13 @@ void cpuid(UInt32 in, CpuId* out)
 struct VendorInfo
 {
   UInt32 id;
-  char text[16];
+  char text[12];
 };
 
 static const VendorInfo vendorInfo[] = 
 {
   { CpuInfo::Vendor_INTEL, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
-  { CpuInfo::Vendor_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 't', '!' } },
+  { CpuInfo::Vendor_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
   { CpuInfo::Vendor_AMD  , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
 };
 
@@ -207,6 +207,8 @@ void detectCpuInfo(CpuInfo* i)
     if (i->numberOfProcessors == 1) i->numberOfProcessors = 2;
   }
 
+  // This comment comes from V8 and I think that its important:
+  //
   // Opteron Rev E has a bug in which on very rare occasions a locked
   // instruction doesn't act as a read-acquire barrier if followed by a
   // non-locked read-modify-write instruction.  Rev F has this bug in 

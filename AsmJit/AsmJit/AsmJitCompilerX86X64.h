@@ -629,6 +629,7 @@ struct ASMJIT_API Function : public Emittable
   UInt32 _changedSseRegisters;
 
   PodVector<Variable*> _variables;
+  Label* _prologueLabel;
   Label* _exitLabel;
 };
 
@@ -644,6 +645,10 @@ struct ASMJIT_API Prologue : public Emittable
 
 private:
   Function* _function;
+  Label* _label;
+
+  friend struct Compiler;
+  friend struct Function;
 };
 
 //! @brief Epilogue emittable.
@@ -658,6 +663,10 @@ struct ASMJIT_API Epilogue : public Emittable
 
 private:
   Function* _function;
+  Label* _label;
+
+  friend struct Compiler;
+  friend struct Function;
 };
 
 //! @brief Target.

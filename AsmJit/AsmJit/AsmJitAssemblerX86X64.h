@@ -421,6 +421,31 @@ struct ASMJIT_API Assembler : public Serializer
   void bindTo(Label* label, SysInt pos);
 
   // -------------------------------------------------------------------------
+  // [Logging]
+  // -------------------------------------------------------------------------
+
+  //! @brief Logger
+  struct ASMJIT_API Logger
+  {
+    //! @brief Destroy logger.
+    virtual ~Logger();
+    //! @brief Abstract method to instruction with operands, should call 
+    //! @c log().
+    virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
+    //! @brief Abstract method to log .align directive.
+    virtual void logAlign(SysInt m) = 0;
+    //! @brief Abstract method to log label.
+    virtual void logLabel(const Label* label) = 0;
+    //! @brief Abstract method to log output.
+    virtual void log(const char* buf) = 0;
+  };
+
+  //! @brief Return logger or @c NULL (if none).
+  inline Logger* logger() const { return _logger; }
+  //! @brief Set logger to @a logger.
+  inline void setLogger(Logger* logger) { _logger = logger; }
+
+  // -------------------------------------------------------------------------
   // [Variables]
   // -------------------------------------------------------------------------
 
@@ -429,6 +454,9 @@ struct ASMJIT_API Assembler : public Serializer
 
   //! @brief List of relocations.
   PodVector<RelocInfo> _relocations;
+
+  //! @brief Logger.
+  Logger* _logger;
 };
 
 //! @}

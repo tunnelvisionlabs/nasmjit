@@ -1001,10 +1001,8 @@ struct Operand
     UInt8 op;
     //! @brief State of label, see @c LABEL_STATE.
     UInt8 state;
-    //! @brief Not used.
-    UInt8 unused2;
-    //! @brief Not used.
-    UInt8 unused3;
+    //! @brief Label Id (0 means unknown).
+    UInt16 id;
     //! @brief Position (always positive, information depends to @c state).
     SysInt position;
   };
@@ -1550,8 +1548,13 @@ static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 struct Label : public Operand
 {
   //! @brief Create new unused label.
-  inline Label() 
-  { _initAll(OP_LABEL, LABEL_UNUSED, 0, 0, -1); }
+  inline Label(UInt16 id = 0) 
+  {
+    _lbl.op = OP_LABEL;
+    _lbl.state = LABEL_UNUSED;
+    _lbl.id = id;
+    _lbl.position = -1;
+  }
 
   //! @brief Destroy label. If label is linked to some location (not bound), 
   //! assertion is raised (because generated code is invalid in this case).
@@ -1563,6 +1566,8 @@ struct Label : public Operand
 
   //! @brief Return label state, see @c LABEL_STATE. */
   inline UInt8 state() const { return _lbl.state; }
+  //! @brief Return label Id.
+  inline UInt16 id() const { return _lbl.id; }
   //! @brief Returns @c true if label is unused (not bound or linked).
   inline bool isUnused() const { return _lbl.state == LABEL_UNUSED; }
   //! @brief Returns @c true if label is linked.
@@ -1574,8 +1579,14 @@ struct Label : public Operand
   //! is unused.
   inline SysInt position() const { return _lbl.position; }
 
+  //! @brief Set label Id.
+  inline void setId(UInt16 id) 
+  {
+    _lbl.id = id;
+  }
+
   //! @brief Set state and position
-  inline void set(UInt8 state, SysInt position)
+  inline void setStatePos(UInt8 state, SysInt position)
   {
     _lbl.state = state; 
     _lbl.position = position;

@@ -28,7 +28,7 @@
 #include "AsmJitCompiler.h"
 #include "AsmJitUtil.h"
 
-
+// [Count of registers is different in 32 bit or 64 bit mode]
 #if defined(ASMJIT_X86)
 # define NUM_REGS 8
 #else
@@ -185,6 +185,7 @@ Function::Function(Compiler* c) :
   _changedSseRegisters(0),
   _preserveGpnRegisters(0),
   _preserveSseRegisters(0),
+  _prologueLabel(c->newLabel()),
   _exitLabel(c->newLabel())
 {
   memset32(_argumentsGpnRegisters, 0xFFFFFFFF, 16);
@@ -471,12 +472,14 @@ void Prologue::emit(Assembler& a)
 
   int i;
 
+  // Emit prolog if needed
   if (f->hasPrologEpilog())
   {
     a.push(nbp);
     a.mov(nbp, nsp);
   }
 
+  // Save registers if needed
   for (i = 0; i < NUM_REGS; i++)
   {
     if ((f->changedGpnRegisters () & (1U << i)) && 
@@ -487,6 +490,9 @@ void Prologue::emit(Assembler& a)
       a.push(mk_gpn(i));
     }
   }
+
+  // After prolog, bind label
+  if (_label) a.bind(_label);
 }
 
 // ----------------------------------------------------------------------------
@@ -508,8 +514,11 @@ void Epilogue::emit(Assembler& a)
   Function* f = function();
   ASMJIT_ASSERT(f);
 
-  int i;
+  // First bind label (Function::_exitLabel) before the epilog
+  if (_label) a.bind(_label);
 
+  // Add variables and register cleanup code
+  int i;
   for (i = NUM_REGS-1; i >= 0; i--)
   {
     if ((f->changedGpnRegisters () & (1U << i)) && 
@@ -521,12 +530,14 @@ void Epilogue::emit(Assembler& a)
     }
   }
 
+  // Use epilog code (if needed)
   if (f->hasPrologEpilog())
   {
     a.mov(nsp, nbp);
     a.pop(nbp);
   }
 
+  // Return using correct instruction
   if (f->calleePopsStack())
   {
     a.ret((Int16)f->argumentsStackSize());
@@ -669,14 +680,21 @@ Function* Compiler::newFunction(UInt32 callingConvention)
   f->setCallingConvention(callingConvention);
 
   emit(f);
+
+  Prologue* e = prologue();
+  e->_label = f->_prologueLabel;
+
   return f;
 }
 
 Function* Compiler::endFunction()
 {
   ASMJIT_ASSERT(_currentFunction != NULL);
-
   Function* f = _currentFunction;
+
+  Epilogue* e = epilogue();
+  e->_label = f->_exitLabel;
+
   _currentFunction = NULL;
   return f;
 }
@@ -701,7 +719,7 @@ Epilogue* Compiler::epilogue()
 
 Label* Compiler::newLabel()
 {
-  Label* label = new(_allocObject(sizeof(Label))) Label();
+  Label* label = new(_allocObject(sizeof(Label))) Label((UInt16)_labels.length() + 1);
   _labels.append(label);
   return label;
 }

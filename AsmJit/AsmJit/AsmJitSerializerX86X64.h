@@ -45,8 +45,7 @@ namespace AsmJit {
 //! decrease code size when exporting AsmJit library symbols. Some compilers
 //! (for example MSVC) are exporting inline symbols when class is declared 
 //! to export them and @c Serializer class contains really huge count of 
-//! inline methods.
-//! 
+//! them.
 struct ASMJIT_API _Serializer
 {
   // -------------------------------------------------------------------------

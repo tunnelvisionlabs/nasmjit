@@ -23,6 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// [Dependencies]
 #include "AsmJitAssemblerX86X64.h"
 #include "AsmJitVM.h"
 
@@ -33,7 +34,8 @@ namespace AsmJit {
 // ----------------------------------------------------------------------------
 
 Assembler::Assembler() :
-  _buffer(16)
+  _buffer(16),
+  _logger(NULL)
 {
 }
 
@@ -124,7 +126,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     {
       _emitMod(0, opReg, 4);
       _emitSib(shift, indexReg, 5);
-      _emitDWord(static_cast<UInt32>((Int32)disp));
+      _emitInt32(disp);
     }
     else if (disp == 0 && baseReg != RID_EBP)
     {
@@ -141,7 +143,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     {
       _emitMod(2, opReg, 4);
       _emitSib(shift, indexReg, 5);
-      _emitDWord(static_cast<UInt32>((Int32)disp));
+      _emitInt32(disp);
     }
   }
   // [base + displacement]
@@ -167,7 +169,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
       {
         _emitMod(2, opReg, RID_ESP);
         _emitSib(0, RID_ESP, RID_ESP);
-        _emitDWord(static_cast<UInt32>((Int32)disp));
+        _emitInt32(disp);
       }
     }
     else if (baseReg != RID_EBP && disp == 0)
@@ -182,7 +184,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     else
     {
       _emitMod(2, opReg, baseReg);
-      _emitDWord(static_cast<UInt32>((Int32)disp));
+      _emitInt32(disp);
     }
   }
 }
@@ -300,8 +302,8 @@ void Assembler::_emitDisplacement(Label* label)
   SysInt o = offset();
   SysInt p = label->isLinked() ? label->position() - o : 0;
 
-  label->set(LABEL_LINKED, o);
-  _emitInt32(p);
+  label->setStatePos(LABEL_LINKED, o);
+  _emitInt32((Int32)p);
 }
 
 /*
@@ -1102,6 +1104,8 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 #if defined(ASMJIT_DEBUG_INSTRUCTION_MAP)
   ASMJIT_ASSERT(id.instruction == code);
 #endif // ASMJIT_DEBUG_INSTRUCTION_MAP
+
+  if (_logger) _logger->logInstruction(code, o1, o2, o3);
 
   switch (id.group)
   {
@@ -2372,8 +2376,9 @@ void Assembler::align(SysInt m)
 {
   if (!ensureSpace()) return;
   if (!m) return;
-
   ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16 || m == 32);
+
+  if (_logger) _logger->logAlign(m);
   while ((offset() & (m - 1)) != 0) _emitByte(0x90);
 }
 
@@ -2385,6 +2390,7 @@ void Assembler::bind(Label* label)
 {
   // label can only be bound once
   ASMJIT_ASSERT(!label->isBound());
+  if (_logger) _logger->logLabel(label);
   bindTo(label, offset());
 }
 
@@ -2404,7 +2410,13 @@ void Assembler::bindTo(Label* label, SysInt pos)
     }
   }
 
-  label->set(LABEL_BOUND, pos);
+  label->setStatePos(LABEL_BOUND, pos);
 }
+
+// ----------------------------------------------------------------------------
+// [AsmJit::Assembler - Logging]
+// ----------------------------------------------------------------------------
+
+Assembler::Logger::~Logger() {}
 
 } // AsmJit namespace

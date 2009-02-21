@@ -32,6 +32,7 @@
 #include "../AsmJit/AsmJitAssembler.h"
 #include "../AsmJit/AsmJitCompiler.h"
 #include "../AsmJit/AsmJitVM.h"
+#include "../AsmJit/AsmJitPrettyPrinter.h"
 
 // This is type of function we will generate
 typedef void (*MyFn)();
@@ -43,6 +44,9 @@ int main(int argc, char* argv[])
   // ==========================================================================
   // STEP 1: Create function.
   Assembler a;
+  
+  PrettyPrinter logger;
+  a.setLogger(&logger);
 
   float x[] = { -1, -1 };
   float y[] = {  5,  5 };
@@ -50,9 +54,7 @@ int main(int argc, char* argv[])
   // Use compiler to make a function
   {
     Compiler c;
-
     c.newFunction(CALL_CONV_PREFERRED);
-    c.prologue();
 
     c.mov(nax, (SysInt)(void*)x);
     c.mov(nbx, (SysInt)(void*)y);
@@ -63,12 +65,13 @@ int main(int argc, char* argv[])
 
     Label* L = c.newLabel();
     c.jz(L);
+
+    c.align(16);
     c.bind(L);
 
-    c.epilogue();
     c.currentFunction()->_changedGpnRegisters |= 0xFF;
-    c.endFunction();
 
+    c.endFunction();
     c.build(a);
   }
   // ==========================================================================
