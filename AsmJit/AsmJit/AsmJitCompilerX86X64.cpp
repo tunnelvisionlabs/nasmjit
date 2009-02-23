@@ -63,13 +63,8 @@ static void memset32(UInt32* p, UInt32 c, SysUInt len)
 static bool isIntegerArgument(UInt32 arg)
 {
   return 
-    arg == VARIABLE_TYPE_INT32   ||
-    arg == VARIABLE_TYPE_UINT32  ||
-#if defined(ASMJIT_X64)
-    arg == VARIABLE_TYPE_SYSINT  ||
-    arg == VARIABLE_TYPE_SYSUINT ||
-#endif
-    arg == VARIABLE_TYPE_PTR ;
+    arg == VARIABLE_TYPE_INT32 ||
+    arg == VARIABLE_TYPE_INT64 ;
 }
 
 static bool isFloatArgument(UInt32 arg)
@@ -521,6 +516,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     _variables.append(v);
   }
 
+  _argumentsCount = count;
+
   if (!_args) return;
 
 #if defined(ASMJIT_X86)
@@ -575,18 +572,18 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   {
     SysInt max = count < 4 ? count : 4;
 
-    // Register arguments (Integer / FP)
+    // Register arguments (Integer / FP), always left to right
     for (i = 0; i != max; i++)
     {
       UInt32 a = args[i];
       if (isIntegerArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, _cconvArgumentsGp[i] | REG_GPN, NO_REG, 0);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsGp[i] | REG_GPN, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, _cconvArgumentsXmm[i] | REG_XMM, NO_REG, 0);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsXmm[i] | REG_XMM, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -597,7 +594,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isIntegerArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, NO_REG, NO_REG, stackOffset);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -605,6 +602,38 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   // All others
   else
   {
+    // Register arguments (Integer), always left to right
+    for (i = 0; i != count; i++)
+    {
+      UInt32 a = args[i];
+      if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
+      {
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsGp[gpnPos++] | REG_GPN, NO_REG, 0);
+        args[i] = VARIABLE_TYPE_NONE;
+      }
+    }
+
+    // Register arguments (FP), always left to right
+    for (i = 0; i != count; i++)
+    {
+      UInt32 a = args[i];
+      if (isFloatArgument(a))
+      {
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsXmm[xmmPos++] | REG_XMM, NO_REG, 0);
+        args[i] = VARIABLE_TYPE_NONE;
+      }
+    }
+
+    // Stack arguments
+    for (i = count-1; i != -1; i--)
+    {
+      UInt32 a = args[i];
+      if (isIntegerArgument(a))
+      {
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        args[i] = VARIABLE_TYPE_NONE;
+      }
+    }
   }
   // ==========================================================================
 #endif // ASMJIT_X86, ASMJIT_X64
