@@ -264,9 +264,11 @@ void Function::prepare()
 
     for (v = 0; v < _variables.length(); v++)
     {
+      Variable* var = _variables[v];
+
       // Use only variable with size 'size' and variable not mapped to the 
       // function arguments
-      if (_variables[v]->size() == size && _variables[v]->_stackOffset <= 0)
+      if (var->size() == size && var->_stackOffset <= 0 && var->_memoryAccessCount > 0)
       {
         // X86 stack is aligned to 32 bits (4 bytes). For MMX and SSE 
         // programming we need 8 or 16 bytes alignment. For MMX memory
@@ -317,7 +319,7 @@ void Function::prepare()
     argDisp = pe;
 
     varMemBase = RID_ESP | 0x10;
-    varDisp = -pe + (Int32)sizeof(SysInt) /* first push */;
+    varDisp = 0;
   }
 
   // Patch all variables to point to correct address in memory
@@ -703,7 +705,7 @@ void Function::alloc(Variable& v)
     }
 
     // If not found, try EAX/RAX
-    if (code == NO_REG && (_usedGpRegisters & 1) != 0) 
+    if (code == NO_REG && (_usedGpRegisters & 1) == 0) 
     {
       if (v.type() == VARIABLE_TYPE_INT32)
         code = RID_EAX | REG_GPD;
@@ -752,6 +754,7 @@ void Function::alloc(Variable& v)
   if (copy)
   {
     compiler()->mov(mk_gpn(v._registerCode), *v._memoryOperand);
+    v._memoryAccessCount++;
   }
 
   _lastUsedRegister = &v;
@@ -767,6 +770,7 @@ void Function::spill(Variable& v)
   {
     // FIXME: Dependent, Incorrect
     compiler()->mov(*v._memoryOperand, mk_gpd(v.registerCode()));
+    v._memoryAccessCount++;
 
     _freeReg(v.registerCode());
     v._registerCode = NO_REG;
@@ -795,8 +799,13 @@ static UInt32 getSpillScore(Variable* v)
 {
   if (v->priority() == 0) return 0;
 
+  // Priority is main factor.
   UInt32 p = ((UInt32)v->priority() << 24) - ((1U << 24) / 2);
+
+  // Each register access means lower probability of spilling
   p -= (UInt32)v->registerAccessCount();
+
+  // Each memory access means higher probability of spilling
   p += (UInt32)v->memoryAccessCount();
 
   return p;

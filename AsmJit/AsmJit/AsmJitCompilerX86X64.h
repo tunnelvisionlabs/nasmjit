@@ -468,6 +468,9 @@ struct VariableRef
   inline void spill() { ASMJIT_ASSERT(_v); _v->spill(); }
   inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
 
+  inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
+  inline void setPriority(UInt8 priority) { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
+
   inline Register r() const { ASMJIT_ASSERT(_v); _v->alloc(); return mk_gpd(_v->_registerCode); }
   inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
 

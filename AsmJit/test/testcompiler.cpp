@@ -57,6 +57,8 @@ int main(int argc, char* argv[])
     Compiler c;
     Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction2<int*, int*>());
 
+    f.setNaked(true);
+
     VariableRef a1(f.argument(0));
     VariableRef a2(f.argument(1));
 
