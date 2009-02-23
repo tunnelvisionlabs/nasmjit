@@ -29,6 +29,10 @@
 // helpers
 namespace AsmJit {
 
+// ============================================================================
+// [AsmJit::Helpers]
+// ============================================================================
+
 static bool isAligned(SysUInt base, SysUInt alignment)
 {
   return base % alignment == 0;
@@ -62,7 +66,7 @@ static SysUInt roundUpToPowerOf2(SysUInt base)
 } // AsmJit namespace
 
 // ============================================================================
-// [Windows]
+// [AsmJit::VM::Windows]
 // ============================================================================
 
 #if (ASMJIT_OS == ASMJIT_WINDOWS)
@@ -128,7 +132,7 @@ SysUInt VM::pageSize()
 #endif // ASMJIT_WINDOWS
 
 // ============================================================================
-// [Posix]
+// [AsmJit::VM::Posix]
 // ============================================================================
 
 #if ASMJIT_OS == ASMJIT_POSIX

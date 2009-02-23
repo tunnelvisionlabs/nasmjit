@@ -35,6 +35,10 @@ namespace AsmJit {
 //! @addtogroup AsmJit_CpuInfo
 //! @{
 
+// ============================================================================
+// [AsmJit::CpuId]
+// ============================================================================
+
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
 //! @brief Structure used by cpuid() function.
 union CpuId
@@ -52,6 +56,10 @@ union CpuId
 //! @brief Calls CPUID instruction with eax == @a in and returns result to @a out.
 ASMJIT_API void cpuid(UInt32 in, CpuId* out);
 #endif // ASMJIT_X86 || ASMJIT_X64
+
+// ============================================================================
+// [AsmJit::CpuInfo]
+// ============================================================================
 
 //! @brief Informations about host cpu.
 struct CpuInfo
@@ -156,11 +164,12 @@ struct CpuInfo
 #endif // ASMJIT_X86 || ASMJIT_X64
 };
 
-//! @brief Detects CPU features to CpuInfo structure @a i.
+//! @brief Detect CPU features to CpuInfo structure @a i.
 //!
 //! @sa @c CpuInfo
 ASMJIT_API void detectCpuInfo(CpuInfo* i);
 
+//! @brief Return CpuInfo (detection is done only once).
 ASMJIT_API CpuInfo* cpuInfo();
 
 //! @}

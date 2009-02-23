@@ -38,10 +38,18 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Util
 //! @{
 
+// ============================================================================
+// [AsmJit::function_cast<>]
+// ============================================================================
+
 //! @brief Cast used to cast pointer to function. It's like reinterpret_cast<>, 
 //! but uses internally C style cast to work in MinGW.
 template<typename T, typename Z>
 static inline T function_cast(Z* p) { return (T)p; }
+
+// ============================================================================
+// [AsmJit::isIntX]
+// ============================================================================
 
 //! @brief Returns @c true if a given integer @a x is signed 8 bit integer
 static inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
@@ -71,6 +79,10 @@ static inline bool isUInt32(SysInt x)
   return x >= 0 && x <= ASMJIT_INT64_C(4294967295);
 #endif
 }
+
+// ============================================================================
+// [AsmJit::floatAsInt32, int32AsFloat]
+// ============================================================================
 
 //! @brief used to cast float to 32 bit integer and vica versa.
 //!
@@ -121,6 +133,10 @@ static inline Int64 doubleAsInt64(double f)
   u.f = f;
   return u.i;
 }
+
+// ============================================================================
+// [AsmJit::Buffer]
+// ============================================================================
 
 //! @Brief Buffer used to store instruction stream in AsmJit.
 //! 
@@ -318,6 +334,10 @@ struct ASMJIT_API Buffer
   SysInt _growThreshold;
 };
 
+// ============================================================================
+// [AsmJit::PodVector<>]
+// ============================================================================
+
 //! @brief Template used to store array of POD data structures.
 //!
 //! This template has these adventages over other vector<> templates:
@@ -402,6 +422,11 @@ struct PodVector
     _length++;
     return true;
   }
+
+  //! @brief Return item at @a i position.
+  inline T& operator[](SysUInt i) { ASMJIT_ASSERT(i < _length); return _data[i]; }
+  //! @brief Return item at @a i position.
+  inline const T& operator[](SysUInt i) const { ASMJIT_ASSERT(i < _length); return _data[i]; }
 
 private:
   //! @brief Called to grow internal array.

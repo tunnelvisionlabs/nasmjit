@@ -36,6 +36,10 @@
 
 namespace AsmJit {
 
+// ============================================================================
+// [Constants]
+// ============================================================================
+
 //! @brief Operand types that can be encoded in @c Op operand.
 enum OP
 {
@@ -357,6 +361,10 @@ enum LABEL_STATE
   LABEL_LINKED = 1,
   LABEL_BOUND = 2
 };
+
+// ============================================================================
+// [AsmJit::INST_CODE]
+// ============================================================================
 
 //! @brief Instruction codes (AsmJit specific)
 enum INST_CODE
@@ -881,6 +889,10 @@ enum INST_CODE
   _INST_COUNT
 };
 
+// ============================================================================
+// [AsmJit::RelocInfo]
+// ============================================================================
+
 //! @brief Structure used internally for relocations.
 struct RelocInfo
 {
@@ -889,6 +901,10 @@ struct RelocInfo
   UInt8 mode;
   UInt16 data;
 };
+
+// ============================================================================
+// [AsmJit::Operand]
+// ============================================================================
 
 struct _DontInitialize {};
 struct _Initialize {};
@@ -900,25 +916,40 @@ struct Operand
   inline Operand() { memset(this, 0, sizeof(Operand)); }
   inline Operand(const Operand& other) { _init(other); }
 
-  inline Operand(const _DontInitialize&) {}
+  inline Operand(const _DontInitialize&) : _operandId(0) {}
 
   //! @brief Return type of operand, see @c OP.
   inline UInt8 op() const { return _op.op; }
   //! @brief Return size of operand in bytes.
   inline UInt8 size() const { return _op.size; }
 
+  //! @brief Return @c true if operand is none (@c OP_NONE).
   inline UInt8 isNone() const { return _op.op == OP_NONE; }
+  //! @brief Return @c true if operand is any (general purpose, mmx or sse) register (@c OP_REG).
   inline UInt8 isReg() const { return _op.op == OP_REG; }
+  //! @brief Return @c true if operand is memory address (@c OP_MEM).
   inline UInt8 isMem() const { return _op.op == OP_MEM; }
+  //! @brief Return @c true if operand is immediate (@c OP_IMM).
   inline UInt8 isImm() const { return _op.op == OP_IMM; }
+  //! @brief Return @c true if operand is label (@c OP_LABEL).
   inline UInt8 isLabel() const { return _op.op == OP_LABEL; }
 
+  //! @brief Return @c true if operand is register and type of register is @a regType.
   inline UInt8 isRegType(UInt8 regType) const { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
+  //! @brief Return @c true if operand is register and code of register is @a regCode.
   inline UInt8 isRegCode(UInt8 regCode) const { return isReg() & (_reg.code == regCode); }
+  //! @brief Return @c true if operand is register and index of register is @a regIndex.
   inline UInt8 isRegIndex(UInt8 regIndex) const { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
 
+  //! @brief Return @c true if operand is any register or memory.
   inline UInt8 isRegMem() const { return isMem() | isReg(); }
+  //! @brief Return @c true if operand is register of @a regType type or memory.
   inline UInt8 isRegMem(UInt8 regType) const { return isMem() | isRegType(regType); }
+
+  //! @brief Return operand Id (Operand Id's are for @c Compiler class).
+  inline UInt32 operandId() const { return _operandId; }
+  //! @brief Return clears operand Id (@c Compiler will not recognize it after clearing).
+  inline void clearId() { _operandId = 0; }
 
   //! @brief Generic operand data shared between all operands.
   struct GenData
@@ -1021,6 +1052,9 @@ struct Operand
     LblData _lbl;
   };
 
+  //! @brief Compiler operand id (do not modify manually).
+  UInt32 _operandId;
+
   inline void _init(const Operand& other)
   {
     memcpy(this, &other, sizeof(Operand));
@@ -1045,7 +1079,13 @@ struct Operand
       ((SysUInt)i8_3 << 24) ;
     *reinterpret_cast<SysInt*>(&this->_op.unused4) = i32_64;
   }
+
+  friend struct Compiler;
 };
+
+// ============================================================================
+// [AsmJit::BaseRegMem]
+// ============================================================================
 
 //! @brief Base class for registers and memory location.
 //!
@@ -1057,6 +1097,10 @@ struct BaseRegMem : public Operand
   inline BaseRegMem(const BaseRegMem& other) : Operand(other) {}
   inline BaseRegMem& operator=(const BaseRegMem& other) { _copy(other); }
 };
+
+// ============================================================================
+// [AsmJit::BaseReg]
+// ============================================================================
 
 //! @brief Base class for all registers.
 struct BaseReg : public BaseRegMem
@@ -1090,6 +1134,10 @@ struct BaseReg : public BaseRegMem
   inline void setCode(UInt8 code) { _reg.code = code; }
 };
 
+// ============================================================================
+// [AsmJit::Register]
+// ============================================================================
+
 //! @brief General purpose register.
 //!
 //! This class is for all general purpose registers (64, 32, 16 and 8 bit).
@@ -1109,6 +1157,10 @@ struct Register : public BaseReg
   inline bool operator==(const Register& other) const { return code() == other.code(); }
   inline bool operator!=(const Register& other) const { return code() != other.code(); }
 };
+
+// ============================================================================
+// [AsmJit::X87Register]
+// ============================================================================
 
 //! @brief 80-bit x87 floating point register.
 //!
@@ -1130,6 +1182,10 @@ struct X87Register : public BaseReg
   inline bool operator!=(const X87Register& other) const { return code() != other.code(); }
 };
 
+// ============================================================================
+// [AsmJit::MMRegister]
+// ============================================================================
+
 //! @brief 64 bit MMX register.
 struct MMRegister : public BaseReg
 {
@@ -1147,6 +1203,10 @@ struct MMRegister : public BaseReg
   inline bool operator==(const MMRegister& other) const { return code() == other.code(); }
   inline bool operator!=(const MMRegister& other) const { return code() != other.code(); }
 };
+
+// ============================================================================
+// [AsmJit::XMMRegister]
+// ============================================================================
 
 //! @brief 128 bit SSE register.
 struct XMMRegister : public BaseReg
@@ -1167,6 +1227,10 @@ struct XMMRegister : public BaseReg
   inline bool operator==(const XMMRegister& other) const { return code() == other.code(); }
   inline bool operator!=(const XMMRegister& other) const { return code() != other.code(); }
 };
+
+// ============================================================================
+// [AsmJit::Registers]
+// ============================================================================
 
 //! @brief 8 bit General purpose register.
 static const Register al(_Initialize(), REG_AL);
@@ -1380,6 +1444,10 @@ static inline X87Register st(int i)
   return X87Register(_Initialize(), static_cast<UInt8>(i));
 }
 
+// ============================================================================
+// [AsmJit::Mem]
+// ============================================================================
+
 //! @brief Memory location operand.
 struct Mem : public BaseRegMem
 {
@@ -1422,6 +1490,9 @@ struct Mem : public BaseRegMem
 
   //! @brief Address relative displacement.
   inline SysInt displacement() const { return _mem.displacement; }
+
+  //! @brief Set address relative displacement.
+  inline void setDisplacement(SysInt displacement) { _mem.displacement = displacement; }
 };
 
 // [base + displacement]
@@ -1482,6 +1553,10 @@ static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt3
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
 static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, sizeof(SysInt)); }
 
+// ============================================================================
+// [AsmJit::Immediate]
+// ============================================================================
+
 //! @brief Immediate operand.
 //!
 //! Immediate operand is value that is inlined in binary instruction stream.
@@ -1541,6 +1616,10 @@ static inline Immediate imm(SysInt i) { return Immediate(i, false); }
 //! @brief Create unsigned immediate value operand.
 static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 
+// ============================================================================
+// [AsmJit::Label]
+// ============================================================================
+
 //! @brief Label.
 //!
 //! Label represents locations typically used as jump targets, but may be also
@@ -1567,7 +1646,7 @@ struct Label : public Operand
   //! @brief Return label state, see @c LABEL_STATE. */
   inline UInt8 state() const { return _lbl.state; }
   //! @brief Return label Id.
-  inline UInt16 id() const { return _lbl.id; }
+  inline UInt16 labelId() const { return _lbl.id; }
   //! @brief Returns @c true if label is unused (not bound or linked).
   inline bool isUnused() const { return _lbl.state == LABEL_UNUSED; }
   //! @brief Returns @c true if label is linked.
@@ -1593,6 +1672,10 @@ struct Label : public Operand
   }
 };
 
+// ============================================================================
+// [AsmJit::Relocable]
+// ============================================================================
+
 //! @brief Relocable immediate operand.
 struct Relocable : public Immediate
 {
@@ -1613,6 +1696,10 @@ struct Relocable : public Immediate
 
   mutable PodVector<RelocInfo> _relocations;
 };
+
+// ============================================================================
+// [AsmJit::operand_cast<>]
+// ============================================================================
 
 // operand cast
 template<typename To> static inline To operand_cast(Operand& op) { return reinterpret_cast<To>(op); }
@@ -1642,6 +1729,10 @@ MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
 MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immediate&>(op).relocMode() != RELOC_NONE));
 
 #undef MAKE_OPERAND_CAST
+
+// ============================================================================
+// [AsmJit::mm_shuffle]
+// ============================================================================
 
 //! @brief Create Shuffle Constant for SSE shuffle instrutions.
 static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)

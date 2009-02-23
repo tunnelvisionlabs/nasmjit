@@ -32,6 +32,10 @@
 
 namespace AsmJit {
 
+// ============================================================================
+// [AsmJit::PrettyPrinter]
+// ============================================================================
+
 //! @brief Logger that pretty prints instruction with operands.
 struct PrettyPrinter : Assembler::Logger
 {

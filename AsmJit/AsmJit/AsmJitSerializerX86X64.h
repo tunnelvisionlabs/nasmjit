@@ -39,6 +39,10 @@
 
 namespace AsmJit {
 
+// ============================================================================
+// [AsmJit::_Serializer]
+// ============================================================================
+
 //! @brief Assembler instruction seralizer base.
 //!
 //! @note Use always @c Serializer class, this class is only designed to 
@@ -105,6 +109,10 @@ private:
   inline _Serializer(const _Serializer& other);
   inline _Serializer& operator=(const _Serializer& other);
 };
+
+// ============================================================================
+// [AsmJit::Serializer]
+// ============================================================================
 
 //! @brief Assembler instruction serializer.
 struct Serializer : public _Serializer

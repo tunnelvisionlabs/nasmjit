@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test AsmJit compiler.
+// This file is used to test AsmJit compiler. 
+// COMPILER CLASS IS NOT READY YET, SO USE AT YOUR OWN RISK.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +36,7 @@
 #include "../AsmJit/AsmJitPrettyPrinter.h"
 
 // This is type of function we will generate
-typedef void (*MyFn)();
+typedef void (*MyFn)(int*, int*);
 
 int main(int argc, char* argv[])
 {
@@ -44,32 +45,45 @@ int main(int argc, char* argv[])
   // ==========================================================================
   // STEP 1: Create function.
   Assembler a;
-  
+
   PrettyPrinter logger;
   a.setLogger(&logger);
 
-  float x[] = { -1, -1 };
-  float y[] = {  5,  5 };
+  int x[] = { -1, -1 };
+  int y[] = {  5,  5 };
 
   // Use compiler to make a function
   {
     Compiler c;
-    c.newFunction(CALL_CONV_PREFERRED);
+    Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction2<int*, int*>());
 
-    c.mov(nax, (SysInt)(void*)x);
-    c.mov(nbx, (SysInt)(void*)y);
-    c.movq(mm0, ptr(nax));
-    c.pfmul(mm0, ptr(nbx));
-    c.movq(ptr(nax), mm0);
-    c.femms();
+    VariableRef a1(f.argument(0));
+    VariableRef a2(f.argument(1));
 
-    Label* L = c.newLabel();
-    c.jz(L);
+    VariableRef v1(f.newVariable(VARIABLE_TYPE_PTR));
+    VariableRef v2(f.newVariable(VARIABLE_TYPE_PTR));
 
-    c.align(16);
-    c.bind(L);
+    //c.mov(v1.m(), 1);
+    //c.mov(v2.m(), 2);
 
-    c.currentFunction()->_changedGpnRegisters |= 0xFF;
+    a1.alloc();
+    a2.alloc();
+
+    //v1.alloc();
+    //v2.alloc();
+
+    //c.mov(a1.r(), v1.r());
+    //c.mov(a2.r(), v2.r());
+
+    //c.mov(nax, a1.m());
+    //c.mov(ncx, a2.m());
+
+    c.movq(mm0, ptr(a1.r()));
+    c.paddd(mm0, ptr(a2.r()));
+    c.movq(ptr(a1.r()), mm0);
+    c.emms();
+
+    //f.modifyGpRegisters(1 << RID_EBX);
 
     c.endFunction();
     c.build(a);
@@ -90,8 +104,8 @@ int main(int argc, char* argv[])
   a.relocCode(vmem);
 
   // Cast vmem to our function and call the code.
-  function_cast<MyFn>(vmem)();
-  printf("%g %g\n", x[0], x[1]);
+  function_cast<MyFn>(vmem)(x, y);
+  printf("%d %d\n", x[0], x[1]);
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);
