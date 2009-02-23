@@ -48,7 +48,7 @@ bool Buffer::realloc(SysInt to)
 
     _data = newdata;
     _cur = newdata + len;
-    _max = _data + to;
+    _max = newdata + to;
     _max -= (to >= _growThreshold) ? _growThreshold : to;
 
     _capacity = to;

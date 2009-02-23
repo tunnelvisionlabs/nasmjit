@@ -317,6 +317,7 @@ enum VARIABLE_TYPE
   //! @brief Variable is XMM register / memory location.
   VARIABLE_TYPE_XMM = 6,
 
+  //! @brief Count of variable types.
   _VARIABLE_TYPE_COUNT
 };
 
@@ -329,6 +330,14 @@ enum VARIABLE_STATE
   VARIABLE_STATE_REGISTER = 1,
   //! @brief Variable is in memory location or spilled.
   VARIABLE_STATE_MEMORY = 2
+};
+
+//! @brief Variable alloc mode.
+enum VARIABLE_ALLOC
+{
+  VARIABLE_ALLOC_READ = 0x1,
+  VARIABLE_ALLOC_WRITE = 0x2,
+  VARIABLE_ALLOC_READWRITE = 0x3
 };
 
 // ============================================================================
@@ -368,16 +377,27 @@ struct ASMJIT_API Variable
   //! Variable priority is used for spilling. Lower number means less chance
   //! to spill. Zero means that variable can't be never spilled.
   inline UInt8 priority() const { return _priority; }
-
+  //! @brief Return variable register code (where it now lives), or NO_REG if
+  //! it's only in memory (spilled).
   inline UInt8 registerCode() const { return _registerCode; }
+  //! @brief Return variable preferred register.
   inline UInt8 prefferedRegister() const { return _preferredRegister; }
 
+  //! @brief Return variable changed state.
+  inline UInt8 changed() const { return _changed; }
+  
+  //! @brief Return variable stack offset.
+  //!
+  //! @note Stack offsets can be changed by Compiler, don't use this 
+  //! to generate memory operands.
   inline SysInt stackOffset() const { return _stackOffset; }
 
   //! @brief Set variable priority.
   inline void setPriority(UInt8 priority) { _priority = priority; }
-  //! @brief Set preferred register code.
+  //! @brief Set varialbe preferred register.
   inline void setPreferredRegister(UInt8 code) { _preferredRegister = code; }
+  //! @brief Set variable changed state.
+  inline void setChanged(UInt8 changed) { _changed = changed; }
 
   //! @brief Memory operand that will be always pointed to variable memory address. */
   inline const Mem& memoryOperand() const { return *_memoryOperand; }
@@ -387,7 +407,7 @@ struct ASMJIT_API Variable
   void deref();
 
   // code generation
-  inline void alloc();
+  inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE);
   inline void spill();
   inline void unuse();
 
@@ -441,6 +461,13 @@ private:
   //! @brief Default register where to alloc variable.
   UInt8 _preferredRegister;
 
+  //! @brief true if variable in register was changed and when spilling it 
+  //! needs to be copied into memory location.
+  UInt8 _changed;
+
+  //! @brief Reserved for future use.
+  UInt8 _reserved;
+
   //! @brief Stack location.
   SysInt _stackOffset;
 
@@ -457,27 +484,144 @@ private:
   friend struct VariableRef;
 };
 
+// ============================================================================
+// [AsmJit::VariableXXXRef]
+// ============================================================================
+
+//! @brief Base class for variable references.
+//!
+//! @c VariableRef class is designed to manage @c Variable instances. It's 
+//! based on reference counting and if reference gets to zero (in destructor), 
+//! variable is freed by compiler.
+//!
+//! @note Compiler can reuse existing variables.
 struct VariableRef
 {
-  VariableRef() : _v(NULL) {}
-  VariableRef(Variable* v) : _v(v->ref()) {}
-  ~VariableRef() { if (_v) _v->deref(); }
-
-  // code generation
-  inline void alloc() { ASMJIT_ASSERT(_v); _v->alloc(); }
-  inline void spill() { ASMJIT_ASSERT(_v); _v->spill(); }
-  inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
-
-  inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
-  inline void setPriority(UInt8 priority) { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
-
-  inline Register r() const { ASMJIT_ASSERT(_v); _v->alloc(); return mk_gpd(_v->_registerCode); }
-  inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
+  inline VariableRef() : _v(NULL) {}
+  inline VariableRef(Variable* v) : _v(v->ref()) {}
+  inline ~VariableRef() { if (_v) _v->deref(); }
 
   inline Variable* v() { return _v; }
-private:
+
+  //! @brief Allocate variable to register.
+  inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE)
+  { ASMJIT_ASSERT(_v); _v->alloc(mode); }
+  
+  //! @brief Spill variable from register (or do nothing).
+  inline void spill() { ASMJIT_ASSERT(_v); _v->spill(); }
+  
+  //! @brief Unuse variable (all changes lost).
+  inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
+
+  //! @brief Destroy variable (@c VariableRef can't be used anymore after destroy).
+  inline void destroy() { ASMJIT_ASSERT(_v); _v->deref(); _v = NULL; }
+
+  //! @brief Return variable priority.
+  inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
+  //! @brief Set variable priority.
+  inline void setPriority(UInt8 priority) { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
+
+  //! @brief Return if variable changed state.
+  inline UInt8 changed() const { ASMJIT_ASSERT(_v); return _v->changed(); }
+  //! @brief Set variable changed state.
+  inline void setChanged(UInt8 changed) { ASMJIT_ASSERT(_v); _v->setChanged(changed); }
+
+  //! @brief Return memory address operand.
+  //!
+  //! @note Getting memory address operand will always call @c spill().
+  inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
+
+protected:
   Variable* _v;
 };
+
+//! @brief 32 bit integer reference.
+struct Int32Ref : public VariableRef
+{
+  inline Int32Ref() : VariableRef() {}
+  inline Int32Ref(Variable* v) : VariableRef(v) {}
+
+  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register r16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register r32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+#if defined(ASMJIT_X64)
+  inline Register r64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+#endif // ASMJIT_X64
+
+  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register c8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register c16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register c32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+#if defined(ASMJIT_X64)
+  inline Register c64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+#endif // ASMJIT_X64
+
+  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register x8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register x16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register x32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+#if defined(ASMJIT_X64)
+  inline Register x64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+#endif // ASMJIT_X64
+};
+
+#if defined(ASMJIT_X64)
+//! @brief 64 bit integer reference.
+struct Int64Ref : public VariableRef
+{
+  inline Int64Ref() : VariableRef() {}
+  inline Int64Ref(Variable* v) : VariableRef(v) {}
+
+  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register r16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register r32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register r64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+
+  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register c8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register c16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register c32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register c64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+
+  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register x8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
+  inline Register x16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
+  inline Register x32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register x64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+};
+#endif // ASMJIT_X64
+
+//! @brief MM reference.
+struct MMRef : public VariableRef
+{
+  inline MMRef() : VariableRef() {}
+  inline MMRef(Variable* v) : VariableRef(v) {}
+
+  inline MMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_mm(_v->registerCode()); }
+  inline MMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_mm(_v->registerCode()); }
+  inline MMRegister x() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_mm(_v->registerCode()); }
+};
+
+//! @brief XMM reference.
+struct XMMRef : public VariableRef
+{
+  inline XMMRef() : VariableRef() {}
+  inline XMMRef(Variable* v) : VariableRef(v) {}
+
+  inline XMMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_xmm(_v->registerCode()); }
+  inline XMMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_xmm(_v->registerCode()); }
+  inline XMMRegister x() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_xmm(_v->registerCode()); }
+};
+
+#if defined(ASMJIT_X86)
+typedef Int32Ref SysIntRef;
+#else
+typedef Int64Ref SysIntRef;
+#endif
+
+typedef SysIntRef PtrRef;
 
 // ============================================================================
 // [AsmJit::Emittable]
@@ -578,24 +722,24 @@ private:
 };
 
 // ============================================================================
-// [AsmJit::VariableAsId]
+// [AsmJit::TypeAsId]
 // ============================================================================
 
 template<typename T>
-struct VariableAsId {};
+struct TypeAsId {};
 
 template<typename T>
-struct VariableAsId<T*> { enum { Id = VARIABLE_TYPE_PTR }; };
+struct TypeAsId<T*> { enum { Id = VARIABLE_TYPE_PTR }; };
 
 #define __DECLARE_TYPE_AS_ID(__T__, __Id__) \
 template<> \
-struct VariableAsId<__T__> { enum { Id = __Id__ }; }
+struct TypeAsId<__T__> { enum { Id = __Id__ }; }
 
 __DECLARE_TYPE_AS_ID(Int32, VARIABLE_TYPE_INT32);
 __DECLARE_TYPE_AS_ID(UInt32, VARIABLE_TYPE_UINT32);
 #if defined(ASMJIT_X64)
-__DECLARE_TYPE_AS_ID(Int64, VARIABLE_TYPE_SYSINT);
-__DECLARE_TYPE_AS_ID(UInt64, VARIABLE_TYPE_SYSUINT);
+__DECLARE_TYPE_AS_ID(Int64, VARIABLE_TYPE_INT64);
+__DECLARE_TYPE_AS_ID(UInt64, VARIABLE_TYPE_UINT64);
 #endif // ASMJIT_X64
 __DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
 __DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
@@ -615,42 +759,42 @@ struct BuildFunction0
 template<typename P0>
 struct BuildFunction1
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id }; return data; }
   inline SysUInt count() const { return 1; }
 };
 
 template<typename P0, typename P1>
 struct BuildFunction2
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id, VariableAsId<P1>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id }; return data; }
   inline SysUInt count() const { return 2; }
 };
 
 template<typename P0, typename P1, typename P2>
 struct BuildFunction3
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id, VariableAsId<P1>::Id, VariableAsId<P2>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id }; return data; }
   inline SysUInt count() const { return 3; }
 };
 
 template<typename P0, typename P1, typename P2, typename P3>
 struct BuildFunction4
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id, VariableAsId<P1>::Id, VariableAsId<P2>::Id, VariableAsId<P3>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id }; return data; }
   inline SysUInt count() const { return 4; }
 };
 
 template<typename P0, typename P1, typename P2, typename P3, typename P4>
 struct BuildFunction5
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id, VariableAsId<P1>::Id, VariableAsId<P2>::Id, VariableAsId<P3>::Id, VariableAsId<P4>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id }; return data; }
   inline SysUInt count() const { return 5; }
 };
 
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct BuildFunction6
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { VariableAsId<P0>::Id, VariableAsId<P1>::Id, VariableAsId<P2>::Id, VariableAsId<P3>::Id, VariableAsId<P4>::Id, VariableAsId<P5>::Id }; return data; }
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id }; return data; }
   inline SysUInt count() const { return 6; }
 };
 
@@ -742,7 +886,7 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Create new variable
   Variable* newVariable(UInt8 type);
 
-  void alloc(Variable& v);
+  void alloc(Variable& v, UInt8 mode = VARIABLE_ALLOC_READWRITE);
   void spill(Variable& v);
   void unuse(Variable& v);
 
@@ -888,7 +1032,7 @@ private:
 };
 
 // Inlines that uses AsmJit::Function
-inline void Variable::alloc() { function()->alloc(*this); }
+inline void Variable::alloc(UInt8 mode) { function()->alloc(*this, mode); }
 inline void Variable::spill() { function()->spill(*this); }
 inline void Variable::unuse() { function()->unuse(*this); }
 
@@ -1083,12 +1227,12 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Create function prolog (begins a function).
   //!
   //! @note Compiler can optimize prologues and epilogues.
-  Prolog* prolog();
+  Prolog* prolog(Function* f);
 
   //! @brief Create function epilog (ends a function).
   //!
   //! @note Compiler can optimize prologues and epilogues.
-  Epilog* epilog();
+  Epilog* epilog(Function* f);
 
   // -------------------------------------------------------------------------
   // [Labels]

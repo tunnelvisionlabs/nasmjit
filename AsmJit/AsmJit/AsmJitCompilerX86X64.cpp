@@ -108,6 +108,7 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _priority(10),
   _registerCode(NO_REG),
   _preferredRegister(0xFF),
+  _changed(false),
   _stackOffset(0)
 {
   ASMJIT_ASSERT(f != NULL);
@@ -129,7 +130,10 @@ Variable* Variable::ref()
 void Variable::deref()
 {
   _refCount--;
-  if (_refCount == 0) unuse();
+  if (_refCount == 0) 
+  {
+    unuse();
+  }
 }
 
 // ============================================================================
@@ -659,8 +663,15 @@ Variable* Function::newVariable(UInt8 type)
     v = _variables[i];
     if (v->refCount() == 0 && v->type() == type) 
     {
+      v->_spillCount = 0;
+      v->_reuseCount++;
       v->_registerAccessCount = 0;
       v->_memoryAccessCount = 0;
+
+      v->_preferredRegister = NO_REG;
+      v->_priority = 10;
+      v->_changed = 0;
+
       return v;
     }
   }
@@ -671,7 +682,7 @@ Variable* Function::newVariable(UInt8 type)
   return v;
 }
 
-void Function::alloc(Variable& v)
+void Function::alloc(Variable& v, UInt8 mode)
 {
   ASMJIT_ASSERT(compiler() == v.compiler());
   if (v.state() == VARIABLE_STATE_REGISTER) { _lastUsedRegister = &v; return; }
@@ -682,7 +693,9 @@ void Function::alloc(Variable& v)
   UInt8 code = NO_REG;
 
   // true if we must copy content from memory to register before we can use it
-  bool copy = v.state() == VARIABLE_STATE_MEMORY;
+  bool copy = (v.state() == VARIABLE_STATE_MEMORY) && 
+              ((mode & VARIABLE_ALLOC_READ) != 0);
+  bool forWrite = (mode & VARIABLE_ALLOC_WRITE) != 0;
 
   // TODO:
   // if (v._preferredRegister != NO_REG)
@@ -757,6 +770,11 @@ void Function::alloc(Variable& v)
     v._memoryAccessCount++;
   }
 
+  if (forWrite)
+  {
+    v._changed = true;
+  }
+
   _lastUsedRegister = &v;
 }
 
@@ -768,9 +786,13 @@ void Function::spill(Variable& v)
 
   if (v.state() == VARIABLE_STATE_REGISTER)
   {
-    // FIXME: Dependent, Incorrect
-    compiler()->mov(*v._memoryOperand, mk_gpd(v.registerCode()));
-    v._memoryAccessCount++;
+    if (v.changed())
+    {
+      // FIXME: Dependent, Incorrect
+      compiler()->mov(*v._memoryOperand, mk_gpd(v.registerCode()));
+      v.setChanged(false);
+      v._memoryAccessCount++;
+    }
 
     _freeReg(v.registerCode());
     v._registerCode = NO_REG;
@@ -1119,7 +1141,7 @@ Function* Compiler::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count
 
   emit(f);
 
-  Prolog* e = prolog();
+  Prolog* e = prolog(f);
   e->_label = f->_prologLabel;
 
   return f;
@@ -1130,25 +1152,25 @@ Function* Compiler::endFunction()
   ASMJIT_ASSERT(_currentFunction != NULL);
   Function* f = _currentFunction;
 
-  Epilog* e = epilog();
+  Epilog* e = epilog(f);
   e->_label = f->_exitLabel;
 
   _currentFunction = NULL;
   return f;
 }
 
-Prolog* Compiler::prolog()
+Prolog* Compiler::prolog(Function* f)
 {
-  Prolog* block = newObject<Prolog>(currentFunction());
-  emit(block);
-  return block;
+  Prolog* e = newObject<Prolog>(f);
+  emit(e);
+  return e;
 }
 
-Epilog* Compiler::epilog()
+Epilog* Compiler::epilog(Function* f)
 {
-  Epilog* block = newObject<Epilog>(currentFunction());
-  emit(block);
-  return block;
+  Epilog* e = newObject<Epilog>(f);
+  emit(e);
+  return e;
 }
 
 // -------------------------------------------------------------------------
