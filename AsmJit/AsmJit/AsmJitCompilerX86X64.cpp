@@ -254,8 +254,10 @@ void Function::prepare()
   SysInt sp = 0;       // Stack offset
   SysInt pe = 0;       // Prolog / epilog size
 
-  SysInt disp = 0;     // Displacement (based on prolog / epilog size)
-  UInt8 membase;       // Address base register for variables
+  UInt8 argMemBase;    // Address base register for function arguments
+  UInt8 varMemBase;    // Address base register for function variables
+  SysInt argDisp = 0;  // Displacement for arguments
+  SysInt varDisp = 0;  // Displacement for variables
 
   UInt32 maxAlign = 0; // Maximum alignment stack size
 
@@ -297,7 +299,7 @@ void Function::prepare()
     }
   }
 
-  if (sp) pe += sizeof(SysInt); // push/pop ebp/rpb
+  if (!naked() || maxAlign) pe += sizeof(SysInt); // push/pop ebp/rpb
 
   _prologEpilogStackSize = pe;
   _variablesStackSize = -sp;
@@ -306,15 +308,21 @@ void Function::prepare()
   // Calculate displacement
   if (!naked() || maxAlign)
   {
-    // Functions with prolog/epilog are using ebp/rbp
-    membase = RID_EBP | 0x10;
-    disp = -pe + (Int32)sizeof(SysInt);
+    // Functions with prolog/epilog are using ebp/rbp for variables
+    argMemBase = RID_ESP | 0x10;
+    argDisp = pe;
+
+    varMemBase = RID_EBP | 0x10;
+    varDisp = -pe + (Int32)sizeof(SysInt);
   }
   else
   {
-    // Naked functions are using esp/rsp
-    membase = RID_ESP | 0x10;
-    disp = -pe + (Int32)sizeof(SysInt) /* first push */;
+    // Naked functions are using always esp/rsp
+    argMemBase = RID_ESP | 0x10;
+    argDisp = pe;
+
+    varMemBase = RID_ESP | 0x10;
+    varDisp = -pe + (Int32)sizeof(SysInt) /* first push */;
   }
 
   // Patch all variables to point to correct address in memory
@@ -325,13 +333,15 @@ void Function::prepare()
 
     if (var->stackOffset() > 0)
     {
-      memop->_mem.base = RID_ESP | 0x10;
-      memop->_mem.displacement = var->stackOffset() + sizeof(SysInt);
+      // Arguments
+      memop->_mem.base = argMemBase;
+      memop->_mem.displacement = var->stackOffset() + argDisp;
     }
     else
     {
-      memop->_mem.base = membase;
-      memop->_mem.displacement = var->stackOffset() + disp;
+      // Variables
+      memop->_mem.base = varMemBase;
+      memop->_mem.displacement = var->stackOffset() + varDisp;
     }
   }
 }
