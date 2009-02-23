@@ -69,6 +69,7 @@ dout += \
 // [Dependencies]
 #include "AsmJitPrettyPrinter.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -117,9 +118,7 @@ void PrettyPrinter::logInstruction(UInt32 code, const Operand* o1, const Operand
 
 void PrettyPrinter::logAlign(SysInt m)
 {
-  char buf[1024];
-  sprintf(buf, ".align %d", (Int32)m);
-  log(buf);
+  logFormat(".align %d", (Int32)m);
 }
 
 void PrettyPrinter::logLabel(const Label* label)
@@ -128,6 +127,18 @@ void PrettyPrinter::logLabel(const Label* label)
   char* p = buf + dumpLabel(buf, label);
   *p++ = ':';
   *p = '\\0';
+  log(buf);
+}
+
+void PrettyPrinter::logFormat(const char* fmt, ...)
+{
+  char buf[1024];
+
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, 1024, fmt, ap);
+  va_end(ap);
+  
   log(buf);
 }
 
@@ -184,7 +195,10 @@ SysInt PrettyPrinter::dumpOperand(char* buf, const Operand* op)
 
     if (mem.displacement())
     {
-      buf += sprintf(buf, " + %d", (Int32)mem.displacement());
+      Int32 d = (Int32)mem.displacement();
+      buf += sprintf(buf, " %c %d",
+        d > 0 ? '+' : '-',
+        d > 0 ? d : -d);
     }
 
     *buf++ = ']';
@@ -247,8 +261,8 @@ SysInt PrettyPrinter::dumpLabel(char* buf, const Label* label)
   char* beg = buf;
   *buf++ = 'L';
   
-  if (label->id())
-    buf += sprintf(buf, "%d", (Int32)label->id());
+  if (label->labelId())
+    buf += sprintf(buf, "%d", (Int32)label->labelId());
   else
     *buf++ = 'x';
 

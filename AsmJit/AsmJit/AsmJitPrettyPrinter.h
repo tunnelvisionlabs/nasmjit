@@ -30,6 +30,10 @@
 // [Dependencies]
 #include "AsmJitAssembler.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
 namespace AsmJit {
 
 // ============================================================================
@@ -45,6 +49,7 @@ struct PrettyPrinter : Assembler::Logger
   virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
   virtual void logAlign(SysInt m);
   virtual void logLabel(const Label* label);
+  virtual void logFormat(const char* fmt, ...);
 
   virtual void log(const char* buf);
 

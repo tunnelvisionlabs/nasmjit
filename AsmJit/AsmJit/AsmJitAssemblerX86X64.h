@@ -429,13 +429,14 @@ struct ASMJIT_API Assembler : public Serializer
   {
     //! @brief Destroy logger.
     virtual ~Logger();
-    //! @brief Abstract method to instruction with operands, should call 
-    //! @c log().
+    //! @brief Log instruction with operands.
     virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
-    //! @brief Abstract method to log .align directive.
+    //! @brief Log .align directive.
     virtual void logAlign(SysInt m) = 0;
-    //! @brief Abstract method to log label.
+    //! @brief Log label.
     virtual void logLabel(const Label* label) = 0;
+    //! @brief Log printf like message.
+    virtual void logFormat(const char* fmt, ...) = 0;
     //! @brief Abstract method to log output.
     virtual void log(const char* buf) = 0;
   };

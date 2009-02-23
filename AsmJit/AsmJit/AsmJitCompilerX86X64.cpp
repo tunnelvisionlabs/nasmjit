@@ -348,6 +348,12 @@ void Function::prepare()
 
 void Function::emit(Assembler& a)
 {
+  // Log function prototype
+  if (a.logger())
+  {
+    // TODO
+  }
+
   a.bind(_entryLabel);
 }
 
