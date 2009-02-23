@@ -96,8 +96,6 @@ int main(int argc, char* argv[])
       c.add(x1.r(), x8.r());
     }
 
-    //f.modifyGpRegisters(1 << RID_EBX);
-
     c.endFunction();
     c.build(a);
   }

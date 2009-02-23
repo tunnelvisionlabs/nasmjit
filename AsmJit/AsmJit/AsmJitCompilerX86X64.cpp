@@ -231,6 +231,7 @@ Function::Function(Compiler* c) :
   _modifiedXmmRegisters(0),
   _cconvPreservedGp(0),
   _cconvPreservedXmm(0),
+  _lastUsedRegister(NULL),
   _entryLabel(c->newLabel()),
   _prologLabel(c->newLabel()),
   _exitLabel(c->newLabel())
@@ -626,7 +627,7 @@ Variable* Function::newVariable(UInt8 type)
 void Function::alloc(Variable& v)
 {
   ASMJIT_ASSERT(compiler() == v.compiler());
-  if (v.state() == VARIABLE_STATE_REGISTER) return;
+  if (v.state() == VARIABLE_STATE_REGISTER) { _lastUsedRegister = &v; return; }
 
   UInt32 i;
 
@@ -707,6 +708,8 @@ void Function::alloc(Variable& v)
   {
     compiler()->mov(mk_gpn(v._registerCode), *v._memoryOperand);
   }
+
+  _lastUsedRegister = &v;
 }
 
 void Function::spill(Variable& v)
@@ -769,7 +772,8 @@ Variable* Function::_getSpillCandidate(UInt8 type)
     {
       v = _variables[i];
       if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
-        v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0)
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (v != _lastUsedRegister))
       {
         variableScore = getSpillScore(v);
         if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }

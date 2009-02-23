@@ -391,9 +391,6 @@ struct ASMJIT_API Variable
   inline void spill();
   inline void unuse();
 
-  inline BaseReg r() { alloc(); return BaseReg(_registerCode, _size); }
-  inline const Mem& m() { spill(); return *_memoryOperand; }
-
 private:
   //! @brief Set variable stack offset.
   //! @internal
@@ -472,7 +469,7 @@ struct VariableRef
   inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
 
   inline Register r() const { ASMJIT_ASSERT(_v); _v->alloc(); return mk_gpd(_v->_registerCode); }
-  inline const Mem& m() const { ASMJIT_ASSERT(_v); return _v->m(); }
+  inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
 
   inline Variable* v() { return _v; }
 private:
@@ -874,6 +871,7 @@ private:
   UInt32 _modifiedXmmRegisters;
 
   PodVector<Variable*> _variables;
+  Variable* _lastUsedRegister;
 
   // --------------------------------------------------------------------------
   // [Labels]
