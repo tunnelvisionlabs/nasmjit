@@ -105,6 +105,8 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _refCount(0),
   _spillCount(0),
   _reuseCount(0),
+  _registerAccessCount(0),
+  _memoryAccessCount(0),
   _type(type),
   _size(getVariableSize(type)),
   _state(VARIABLE_STATE_UNUSED),
@@ -607,7 +609,12 @@ Variable* Function::newVariable(UInt8 type)
   for (i = 0; i < _variables.length(); i++)
   {
     v = _variables[i];
-    if (v->refCount() == 0 && v->type() == type) return v;
+    if (v->refCount() == 0 && v->type() == type) 
+    {
+      v->_registerAccessCount = 0;
+      v->_memoryAccessCount = 0;
+      return v;
+    }
   }
 
   // If variable can't be reused, create new one.
@@ -738,7 +745,13 @@ void Function::unuse(Variable& v)
 
 static UInt32 getSpillScore(Variable* v)
 {
-  return v->priority();
+  if (v->priority() == 0) return 0;
+
+  UInt32 p = ((UInt32)v->priority() << 24) - ((1U << 24) / 2);
+  p -= (UInt32)v->registerAccessCount();
+  p += (UInt32)v->memoryAccessCount();
+
+  return p;
 }
 
 Variable* Function::_getSpillCandidate(UInt8 type)

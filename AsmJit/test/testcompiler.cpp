@@ -86,6 +86,14 @@ int main(int argc, char* argv[])
       c.mov(x6.r(), 5);
       c.mov(x7.r(), 6);
       c.mov(x8.r(), 7);
+
+      c.add(x1.r(), x2.r());
+      c.add(x1.r(), x3.r());
+      c.add(x1.r(), x4.r());
+      c.add(x1.r(), x5.r());
+      c.add(x1.r(), x6.r());
+      c.add(x1.r(), x7.r());
+      c.add(x1.r(), x8.r());
     }
 
     //f.modifyGpRegisters(1 << RID_EBX);

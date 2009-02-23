@@ -352,6 +352,10 @@ struct ASMJIT_API Variable
   inline SysUInt spillCount() const { return _spillCount; }
   //! @brief Return reuse count.
   inline SysUInt reuseCount() const { return _reuseCount; }
+  //! @brief Return register access statistics.
+  inline SysUInt registerAccessCount() const { return _registerAccessCount; }
+  //! @brief Return memory access statistics.
+  inline SysUInt memoryAccessCount() const { return _memoryAccessCount; }
 
   //! @brief Return variable type, see @c VARIABLE_TYPE.
   inline UInt8 type() const { return _type; }
@@ -369,6 +373,11 @@ struct ASMJIT_API Variable
   inline UInt8 prefferedRegister() const { return _preferredRegister; }
 
   inline SysInt stackOffset() const { return _stackOffset; }
+
+  //! @brief Set variable priority.
+  inline setPriority(UInt8 priority) { _priority = priority; }
+  //! @brief Set preferred register code.
+  inline setPreferredRegister(UInt8 code) { _preferredRegister = code; }
 
   //! @brief Memory operand that will be always pointed to variable memory address. */
   inline const Mem& memoryOperand() const { return *_memoryOperand; }
