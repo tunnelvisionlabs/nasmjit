@@ -375,9 +375,9 @@ struct ASMJIT_API Variable
   inline SysInt stackOffset() const { return _stackOffset; }
 
   //! @brief Set variable priority.
-  inline setPriority(UInt8 priority) { _priority = priority; }
+  inline void setPriority(UInt8 priority) { _priority = priority; }
   //! @brief Set preferred register code.
-  inline setPreferredRegister(UInt8 code) { _preferredRegister = code; }
+  inline void setPreferredRegister(UInt8 code) { _preferredRegister = code; }
 
   //! @brief Memory operand that will be always pointed to variable memory address. */
   inline const Mem& memoryOperand() const { return *_memoryOperand; }
