@@ -194,9 +194,9 @@ Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Oper
   _code = code;
 
   UInt32 oid;
-  if ((oid = o1->operandId()) != 0) { ASMJIT_ASSERT(oid < _operands.length()); _o[0] = c->_operands[oid]; } else { _o[0] = &_ocache[0]; _ocache[0] = *o1; }
-  if ((oid = o2->operandId()) != 0) { ASMJIT_ASSERT(oid < _operands.length()); _o[1] = c->_operands[oid]; } else { _o[1] = &_ocache[1]; _ocache[1] = *o2; }
-  if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < _operands.length()); _o[2] = c->_operands[oid]; } else { _o[2] = &_ocache[2]; _ocache[2] = *o3; }
+  if ((oid = o1->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[0] = c->_operands[oid]; } else { _o[0] = &_ocache[0]; _ocache[0] = *o1; }
+  if ((oid = o2->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[1] = c->_operands[oid]; } else { _o[1] = &_ocache[1]; _ocache[1] = *o2; }
+  if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[2] = c->_operands[oid]; } else { _o[2] = &_ocache[2]; _ocache[2] = *o3; }
 }
 
 Instruction::~Instruction()
@@ -747,7 +747,7 @@ Variable* Function::_getSpillCandidate(UInt8 type)
   Variable* v;
   SysUInt i, len = _variables.length();
 
-  UInt32 candidateScore = 65536;
+  UInt32 candidateScore = 0;
   UInt32 variableScore;
 
   if (type == VARIABLE_TYPE_INT32 || type == VARIABLE_TYPE_INT64)
@@ -756,10 +756,10 @@ Variable* Function::_getSpillCandidate(UInt8 type)
     {
       v = _variables[i];
       if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
-        v->state() == VARIABLE_STATE_MEMORY && v->priority() > 0)
+        v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0)
       {
         variableScore = getSpillScore(v);
-        if (variableScore < candidateScore) { candidateScore = variableScore; candidate = v; }
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
       }
     }
   }

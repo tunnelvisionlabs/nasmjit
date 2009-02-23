@@ -60,28 +60,33 @@ int main(int argc, char* argv[])
     VariableRef a1(f.argument(0));
     VariableRef a2(f.argument(1));
 
-    VariableRef v1(f.newVariable(VARIABLE_TYPE_PTR));
-    VariableRef v2(f.newVariable(VARIABLE_TYPE_PTR));
-
-    //c.mov(v1.m(), 1);
-    //c.mov(v2.m(), 2);
-
     a1.alloc();
     a2.alloc();
-
-    //v1.alloc();
-    //v2.alloc();
-
-    //c.mov(a1.r(), v1.r());
-    //c.mov(a2.r(), v2.r());
-
-    //c.mov(nax, a1.m());
-    //c.mov(ncx, a2.m());
 
     c.movq(mm0, ptr(a1.r()));
     c.paddd(mm0, ptr(a2.r()));
     c.movq(ptr(a1.r()), mm0);
     c.emms();
+
+    {
+      VariableRef x1(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x2(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x3(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x4(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x5(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x6(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x7(f.newVariable(VARIABLE_TYPE_INT32));
+      VariableRef x8(f.newVariable(VARIABLE_TYPE_INT32));
+
+      c.mov(x1.r(), 0);
+      c.mov(x2.r(), 1);
+      c.mov(x3.r(), 2);
+      c.mov(x4.r(), 3);
+      c.mov(x5.r(), 4);
+      c.mov(x6.r(), 5);
+      c.mov(x7.r(), 6);
+      c.mov(x8.r(), 7);
+    }
 
     //f.modifyGpRegisters(1 << RID_EBX);
 

@@ -726,7 +726,7 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Return argument at @a i.
   inline Variable* argument(SysInt i)
   {
-    ASMJIT_ASSERT(i < _argumentsCount);
+    ASMJIT_ASSERT((SysUInt)i < _argumentsCount);
     return _variables[i];
   }
 
