@@ -2410,7 +2410,7 @@ void Assembler::bindTo(Label* label, SysInt pos)
       Int32 chain = getInt32At(prev);
       setInt32At(prev, _pos - (prev + 4));
       if (chain == 0) break;
-      prev -= chain;
+      prev += chain;
     }
   }
 
