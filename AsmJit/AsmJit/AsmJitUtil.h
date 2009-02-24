@@ -135,6 +135,108 @@ static inline Int64 doubleAsInt64(double f)
 }
 
 // ============================================================================
+// [AsmJit::(X)MMData]
+// ============================================================================
+
+//! @brief Structure used for MMX specific data (64 bits).
+union MMData
+{
+  Int8   sb[8];
+  UInt8  ub[8];
+  Int16  sw[4];
+  UInt16 uw[4];
+  Int32  sd[2];
+  UInt32 ud[2];
+  Int64  sq[1];
+  UInt64 uq[1];
+
+  float  sf[2];
+
+  inline void set_sb(Int8 x0, Int8 x1, Int8 x2, Int8 x3, Int8 x4, Int8 x5, Int8 x6, Int8 x7)
+  { sb[0] = x0; sb[1] = x1; sb[2] = x2; sb[3] = x3; sb[4] = x4; sb[5] = x5; sb[6] = x6; sb[7] = x7; }
+
+  inline void set_ub(UInt8 x0, UInt8 x1, UInt8 x2, UInt8 x3, UInt8 x4, UInt8 x5, UInt8 x6, UInt8 x7)
+  { ub[0] = x0; ub[1] = x1; ub[2] = x2; ub[3] = x3; ub[4] = x4; ub[5] = x5; ub[6] = x6; ub[7] = x7; }
+
+  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3)
+  { sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; }
+
+  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3)
+  { uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; }
+
+  inline void set_sd(Int32 x0, Int32 x1)
+  { sd[0] = x0; sd[1] = x1; }
+
+  inline void set_ud(UInt32 x0, UInt32 x1)
+  { ud[0] = x0; ud[1] = x1; }
+
+  inline void set_sd(Int64 x0)
+  { sq[0] = x0; }
+
+  inline void set_ud(UInt64 x0)
+  { uq[0] = x0; }
+
+  inline void set_sf(float x0, float x1)
+  { sf[0] = x0; sf[1] = x1; }
+};
+
+//! @brief Structure used for SSE specific data (128 bits).
+union XMMData
+{
+  Int8   sb[16];
+  UInt8  ub[16];
+  Int16  sw[8];
+  UInt16 uw[8];
+  Int32  sd[4];
+  UInt32 ud[4];
+  Int64  sq[2];
+  UInt64 uq[2];
+
+  float  sf[4];
+  double df[2];
+
+  inline void set_sb(
+    Int8 x0, Int8 x1, Int8 x2 , Int8 x3 , Int8 x4 , Int8 x5 , Int8 x6 , Int8 x7 ,
+    Int8 x8, Int8 x9, Int8 x10, Int8 x11, Int8 x12, Int8 x13, Int8 x14, Int8 x15)
+  {
+    sb[0] = x0; sb[1] = x1; sb[ 2] = x2 ; sb[3 ] = x3 ; sb[4 ] = x4 ; sb[5 ] = x5 ; sb[6 ] = x6 ; sb[7 ] = x7 ;
+    sb[8] = x8; sb[9] = x9; sb[10] = x10; sb[11] = x11; sb[12] = x12; sb[13] = x13; sb[14] = x14; sb[15] = x15; 
+  }
+
+  inline void set_ub(
+    UInt8 x0, UInt8 x1, UInt8 x2 , UInt8 x3 , UInt8 x4 , UInt8 x5 , UInt8 x6 , UInt8 x7 ,
+    UInt8 x8, UInt8 x9, UInt8 x10, UInt8 x11, UInt8 x12, UInt8 x13, UInt8 x14, UInt8 x15)
+  {
+    ub[0] = x0; ub[1] = x1; ub[ 2] = x2 ; ub[3 ] = x3 ; ub[4 ] = x4 ; ub[5 ] = x5 ; ub[6 ] = x6 ; ub[7 ] = x7 ;
+    ub[8] = x8; ub[9] = x9; ub[10] = x10; ub[11] = x11; ub[12] = x12; ub[13] = x13; ub[14] = x14; ub[15] = x15; 
+  }
+
+  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3, Int16 x4, Int16 x5, Int16 x6, Int16 x7)
+  { sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; sw[4] = x4; sw[5] = x5; sw[6] = x6; sw[7] = x7; }
+
+  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3, UInt16 x4, UInt16 x5, UInt16 x6, UInt16 x7)
+  { uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; uw[4] = x4; uw[5] = x5; uw[6] = x6; uw[7] = x7; }
+
+  inline void set_sd(Int32 x0, Int32 x1, Int32 x2, Int32 x3)
+  { sd[0] = x0; sd[1] = x1; sd[2] = x2; sd[3] = x3; }
+
+  inline void set_ud(UInt32 x0, UInt32 x1, UInt32 x2, UInt32 x3)
+  { ud[0] = x0; ud[1] = x1; ud[2] = x2; ud[3] = x3; }
+
+  inline void set_sd(Int64 x0, Int64 x1)
+  { sq[0] = x0; sq[1] = x1; }
+
+  inline void set_ud(UInt64 x0, UInt64 x1)
+  { uq[0] = x0; uq[1] = x1; }
+
+  inline void set_sf(float x0, float x1, float x2, float x3)
+  { sf[0] = x0; sf[1] = x1; sf[2] = x2; sf[3] = x3; }
+
+  inline void set_df(double x0, double x1)
+  { df[0] = x0; df[1] = x1; }
+};
+
+// ============================================================================
 // [AsmJit::Buffer]
 // ============================================================================
 
