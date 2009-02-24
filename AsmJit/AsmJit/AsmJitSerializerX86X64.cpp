@@ -79,32 +79,6 @@ void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, c
     o3);
 }
 
-void _Serializer::_emitJcc(CONDITION cc, Label* label, UInt32 hint)
-{
-  ASMJIT_ASSERT((SysUInt)cc <= 0xF);
-
-  static const UInt32 jinst[] = 
-  {
-    INST_JO,
-    INST_JNO,
-    INST_JB,
-    INST_JAE,
-    INST_JE,
-    INST_JNE,
-    INST_JBE,
-    INST_JA,
-    INST_JS,
-    INST_JNS,
-    INST_JPE,
-    INST_JPO,
-    INST_JL,
-    INST_JGE,
-    INST_JLE,
-    INST_JG
-  };
-  _emitJ(jinst[cc], label, hint);
-}
-
 //! @brief Private method for emitting jcc.
 void _Serializer::_emitJ(UInt32 code, Label* label, UInt32 hint)
 {
@@ -118,5 +92,45 @@ void _Serializer::_emitJ(UInt32 code, Label* label, UInt32 hint)
     __emitX86(code, label, &imm);
   }
 }
+
+const UInt32 _Serializer::_jcctable[16] = 
+{
+  INST_JO,
+  INST_JNO,
+  INST_JB,
+  INST_JAE,
+  INST_JE,
+  INST_JNE,
+  INST_JBE,
+  INST_JA,
+  INST_JS,
+  INST_JNS,
+  INST_JPE,
+  INST_JPO,
+  INST_JL,
+  INST_JGE,
+  INST_JLE,
+  INST_JG
+};
+
+const UInt32 _Serializer::_cmovcctable[16] = 
+{
+  INST_CMOVO,
+  INST_CMOVNO,
+  INST_CMOVB,
+  INST_CMOVAE,
+  INST_CMOVE,
+  INST_CMOVNE,
+  INST_CMOVBE,
+  INST_CMOVA,
+  INST_CMOVS,
+  INST_CMOVNS,
+  INST_CMOVPE,
+  INST_CMOVPO,
+  INST_CMOVL,
+  INST_CMOVGE,
+  INST_CMOVLE,
+  INST_CMOVG
+};
 
 } // AsmJit namespace

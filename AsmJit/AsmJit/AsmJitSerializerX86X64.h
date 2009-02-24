@@ -104,6 +104,9 @@ protected:
   //! @brief Private method for emitting jcc.
   void _emitJ(UInt32 code, Label* label, UInt32 hint);
 
+  static const UInt32 _jcctable[16];
+  static const UInt32 _cmovcctable[16];
+
 private:
   // disable copy
   inline _Serializer(const _Serializer& other);
@@ -387,7 +390,8 @@ struct Serializer : public _Serializer
   //! @brief Conditional Move.
   inline void cmov(CONDITION cc, const Register& dst, const BaseRegMem& src)
   {
-    __emitX86(INST_CMOV + static_cast<UInt32>(cc), &dst, &src);
+    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
+    __emitX86(_cmovcctable[cc], &dst, &src);
   }
 
   //! @brief Conditional Move.
@@ -675,7 +679,8 @@ struct Serializer : public _Serializer
   //! continues with the instruction following the Jcc instruction.
   inline void j(CONDITION cc, Label* label, UInt32 hint = HINT_NONE)
   {
-    _emitJcc(cc, label, hint);
+    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
+    _emitJ(_jcctable[cc], label, hint);
   }
 
   //! @brief Jump to label @a label if condition is met.
@@ -767,7 +772,8 @@ struct Serializer : public _Serializer
   //! reasons, there is second parameter (temporary register) that can be used
   //! if relative addressing fails.
   //!
-  //! So, jmp_rel will always reserve some space for failure cases.
+  //! So, jmp_rel will always reserve some space for failure cases and can
+  //! overwrite @a temporary register.
   inline void jmp_ptr(void* ptr, const Register& temporary)
   {
     Immediate i((SysInt)ptr);
