@@ -4856,25 +4856,25 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Shuffle Packed High Words (SSE2).
-  inline void pshuhw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void pshufhw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
   {
-    __emitX86(INST_PSHUHW, &dst, &src, &imm8);
+    __emitX86(INST_PSHUFHW, &dst, &src, &imm8);
   }
   //! @brief Shuffle Packed High Words (SSE2).
-  inline void pshuhw(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  inline void pshufhw(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
   {
-    __emitX86(INST_PSHUHW, &dst, &src, &imm8);
+    __emitX86(INST_PSHUFHW, &dst, &src, &imm8);
   }
 
   //! @brief Shuffle Packed Low Words (SSE2).
-  inline void pshulw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void pshuflw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
   {
-    __emitX86(INST_PSHULW, &dst, &src, &imm8);
+    __emitX86(INST_PSHUFLW, &dst, &src, &imm8);
   }
   //! @brief Shuffle Packed Low Words (SSE2).
-  inline void pshulw(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  inline void pshuflw(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
   {
-    __emitX86(INST_PSHULW, &dst, &src, &imm8);
+    __emitX86(INST_PSHUFLW, &dst, &src, &imm8);
   }
 
   //! @brief Packed Shift Right Logical (SSE2).

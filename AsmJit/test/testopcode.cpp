@@ -708,10 +708,10 @@ int main(int argc, char* argv[])
   a.pmaddwd(xmm0,ptr(nax));
   a.pshufd(xmm0,xmm0,0);
   a.pshufd(xmm0,ptr(nax),0);
-  a.pshuhw(xmm0,xmm0,0);
-  a.pshuhw(xmm0,ptr(nax),0);
-  a.pshulw(xmm0,xmm0,0);
-  a.pshulw(xmm0,ptr(nax),0);
+  a.pshufhw(xmm0,xmm0,0);
+  a.pshufhw(xmm0,ptr(nax),0);
+  a.pshuflw(xmm0,xmm0,0);
+  a.pshuflw(xmm0,ptr(nax),0);
   a.psrld(xmm0,xmm0);
   a.psrld(xmm0,ptr(nax));
   a.psrld(xmm0,0);
