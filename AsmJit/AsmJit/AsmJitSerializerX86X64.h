@@ -997,16 +997,16 @@ struct Serializer : public _Serializer
   //! specified with the destination operand and then increments the stack pointer.
   //! The destination operand can be a general purpose register, memory location, 
   //! or segment register.
-  inline void pop(const Register& src)
+  inline void pop(const Register& dst)
   {
-    ASMJIT_ASSERT(src.isRegType(REG_GPW) || src.isRegType(REG_GPN));
-    __emitX86(INST_POP, &src);
+    ASMJIT_ASSERT(dst.isRegType(REG_GPW) || dst.isRegType(REG_GPN));
+    __emitX86(INST_POP, &dst);
   }
 
-  inline void pop(const Mem& src)
+  inline void pop(const Mem& dst)
   {
-    ASMJIT_ASSERT(src.size() == 2 || src.size() == 4);
-    __emitX86(INST_POP, &src);
+    ASMJIT_ASSERT(dst.size() == 2 || dst.size() == sizeof(SysInt));
+    __emitX86(INST_POP, &dst);
   }
 
 #if defined(ASMJIT_X86)
@@ -1042,19 +1042,21 @@ struct Serializer : public _Serializer
   //! @note 32 bit architecture pushed DWORD while 64 bit 
   //! pushes QWORD. 64 bit mode not provides instruction to
   //! push 32 bit register/memory.
-  inline void push(const Register& op)
+  inline void push(const Register& src)
   {
-    __emitX86(INST_PUSH, &op);
+    ASMJIT_ASSERT(src.isRegType(REG_GPW) || src.isRegType(REG_GPN));
+    __emitX86(INST_PUSH, &src);
   }
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
-  inline void push(const Mem& op)
+  inline void push(const Mem& src)
   {
-    __emitX86(INST_PUSH, &op);
+    ASMJIT_ASSERT(src.size() == 2 || src.size() == sizeof(SysInt));
+    __emitX86(INST_PUSH, &src);
   }
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
-  inline void push(const Immediate& op)
+  inline void push(const Immediate& src)
   {
-    __emitX86(INST_PUSH, &op);
+    __emitX86(INST_PUSH, &src);
   }
 
 #if defined(ASMJIT_X86)

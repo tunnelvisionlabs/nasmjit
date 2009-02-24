@@ -536,7 +536,9 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     UInt32 a = args[i];
     if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
     {
-      _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, _cconvArgumentsGp[gpnPos++] | REG_GPN, NO_REG, 0);
+      UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
+      _allocReg(reg);
+      _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -584,12 +586,16 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isIntegerArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsGp[i] | REG_GPN, NO_REG, 0);
+        UInt8 reg = _cconvArgumentsGp[i] | REG_GPN;
+        _allocReg(reg);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsXmm[i] | REG_XMM, NO_REG, 0);
+        UInt8 reg = _cconvArgumentsXmm[i] | REG_XMM;
+        _allocReg(reg);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -614,7 +620,9 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsGp[gpnPos++] | REG_GPN, NO_REG, 0);
+        UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
+        _allocReg(reg);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -625,7 +633,9 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isFloatArgument(a))
       {
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, _cconvArgumentsXmm[xmmPos++] | REG_XMM, NO_REG, 0);
+        UInt8 reg = _cconvArgumentsXmm[xmmPos++] | REG_XMM;
+        _allocReg(reg);
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -693,9 +703,7 @@ void Function::alloc(Variable& v, UInt8 mode)
   UInt8 code = NO_REG;
 
   // true if we must copy content from memory to register before we can use it
-  bool copy = (v.state() == VARIABLE_STATE_MEMORY) && 
-              ((mode & VARIABLE_ALLOC_READ) != 0);
-  bool forWrite = (mode & VARIABLE_ALLOC_WRITE) != 0;
+  bool copy = (v.state() == VARIABLE_STATE_MEMORY);
 
   // TODO:
   // if (v._preferredRegister != NO_REG)
@@ -764,13 +772,13 @@ void Function::alloc(Variable& v, UInt8 mode)
   v._state = VARIABLE_STATE_REGISTER;
   v._registerCode = code;
 
-  if (copy)
+  if (copy && mode != VARIABLE_ALLOC_WRITE)
   {
     compiler()->mov(mk_gpn(v._registerCode), *v._memoryOperand);
     v._memoryAccessCount++;
   }
 
-  if (forWrite)
+  if ((mode & VARIABLE_ALLOC_WRITE) != 0)
   {
     v._changed = true;
   }

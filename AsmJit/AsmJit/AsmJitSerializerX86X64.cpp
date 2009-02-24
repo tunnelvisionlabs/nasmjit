@@ -45,14 +45,14 @@ _Serializer::~_Serializer()
 // ============================================================================
 
 // Used for NULL operands in _emitX86() function
-static const Operand::GenData none = { OP_NONE, 0, 0, 0, 0 };
+static const UInt8 none[sizeof(Operand)] = { 0 };
 
 void _Serializer::__emitX86(UInt32 code)
 {
   _emitX86(code, 
-    reinterpret_cast<const Operand*>(&none), 
-    reinterpret_cast<const Operand*>(&none), 
-    reinterpret_cast<const Operand*>(&none));
+    reinterpret_cast<const Operand*>(none), 
+    reinterpret_cast<const Operand*>(none), 
+    reinterpret_cast<const Operand*>(none));
 }
 
 void _Serializer::__emitX86(UInt32 code, const Operand* o1)

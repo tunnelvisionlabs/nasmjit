@@ -1073,10 +1073,10 @@ struct Operand
   inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64)
   {
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
-      ((SysUInt)i8_0      ) |
-      ((SysUInt)i8_1 <<  8) |
-      ((SysUInt)i8_2 << 16) |
-      ((SysUInt)i8_3 << 24) ;
+      ((UInt32)i8_0      ) |
+      ((UInt32)i8_1 <<  8) |
+      ((UInt32)i8_2 << 16) |
+      ((UInt32)i8_3 << 24) ;
     *reinterpret_cast<SysInt*>(&this->_op.unused4) = i32_64;
   }
 

@@ -229,28 +229,28 @@ SysInt PrettyPrinter::dumpRegister(char* buf, UInt8 type, UInt8 index)
       if (index < 8)
         return sprintf(buf, "%s", &regs1[index*3]);
       else
-        return sprintf(buf, "r%b", (Int32)index);
+        return sprintf(buf, "r%ub", (UInt32)index);
     case REG_GPW:
       if (index < 8)
         return sprintf(buf, "%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%w", (Int32)index);
+        return sprintf(buf, "r%uw", (UInt32)index);
     case REG_GPD:
       if (index < 8)
         return sprintf(buf, "e%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%d", (Int32)index);
+        return sprintf(buf, "r%ud", (UInt32)index);
     case REG_GPQ:
       if (index < 8)
         return sprintf(buf, "r%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%", (Int32)index);
+        return sprintf(buf, "r%u", (UInt32)index);
     case REG_X87:
-      return sprintf(buf, "st(%d)", (Int32)index);
+      return sprintf(buf, "st(%d)", (UInt32)index);
     case REG_MM:
-      return sprintf(buf, "mm%d", (Int32)index);
+      return sprintf(buf, "mm%u", (UInt32)index);
     case REG_XMM:
-      return sprintf(buf, "xmm%d", (Int32)index);
+      return sprintf(buf, "xmm%u", (UInt32)index);
     default:
       return 0;
   }

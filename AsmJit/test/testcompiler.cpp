@@ -23,8 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test AsmJit compiler. 
-// COMPILER CLASS IS NOT READY YET, SO USE AT YOUR OWN RISK.
+// This file is used to test AsmJit compiler.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,8 +56,8 @@ int main(int argc, char* argv[])
 
     f.setNaked(true);
 
-    Int32Ref a1(f.argument(0));
-    Int32Ref a2(f.argument(1));
+    PtrRef a1(f.argument(0));
+    PtrRef a2(f.argument(1));
 
     // Create some variables, default variable priority is 10.
     Int32Ref x1(f.newVariable(VARIABLE_TYPE_INT32));
@@ -128,7 +127,7 @@ int main(int argc, char* argv[])
   // STEP 2: Alloc execution-enabled memory
   SysUInt vsize;
   void *vmem = VM::alloc(a.codeSize(), &vsize, true);
-  if (!vmem) 
+  if (!vmem)
   {
     printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
     return 1;

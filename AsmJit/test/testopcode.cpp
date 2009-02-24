@@ -438,9 +438,10 @@ int main(int argc, char* argv[])
   a.movaps(xmm0,ptr(nax));
   a.movaps(ptr(nax),xmm0);
   a.movd(ptr(nax),xmm0);
-  a.movd(nax,xmm0);
+  a.movd(eax,xmm0);
   a.movd(xmm0,ptr(nax));
-  a.movd(xmm0,nax);
+  a.movd(xmm0,eax);
+  a.movq(mm0, mm0);
   a.movq(xmm0,xmm0);
   a.movq(ptr(nax),xmm0);
   a.movq(xmm0,ptr(nax));
