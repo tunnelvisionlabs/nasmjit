@@ -31,8 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../AsmJit/AsmJitAssembler.h"
-#include "../AsmJit/AsmJitVM.h"
+#include <AsmJit/AsmJitAssembler.h>
+#include <AsmJit/AsmJitVM.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)();
@@ -612,12 +612,12 @@ int main(int argc, char* argv[])
   a.mulsd(xmm0,ptr(nax));
   a.orpd(xmm0,xmm0);
   a.orpd(xmm0,ptr(nax));
-  a.packsswb(xmm0,xmm0,0);
-  a.packsswb(xmm0,ptr(nax),0);
-  a.packssdw(xmm0,xmm0,0);
-  a.packssdw(xmm0,ptr(nax),0);
-  a.packuswb(xmm0,xmm0,0);
-  a.packuswb(xmm0,ptr(nax),0);
+  a.packsswb(xmm0,xmm0);
+  a.packsswb(xmm0,ptr(nax));
+  a.packssdw(xmm0,xmm0);
+  a.packssdw(xmm0,ptr(nax));
+  a.packuswb(xmm0,xmm0);
+  a.packuswb(xmm0,ptr(nax));
   a.paddb(xmm0,xmm0);
   a.paddb(xmm0,ptr(nax));
   a.paddw(xmm0,xmm0);

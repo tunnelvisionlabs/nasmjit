@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../AsmJit/AsmJitAssembler.h"
-#include "../AsmJit/AsmJitVM.h"
+#include <AsmJit/AsmJitAssembler.h>
+#include <AsmJit/AsmJitVM.h>
 
 // This is type of function we will generate
 typedef int (*MyFn)();

@@ -2256,9 +2256,9 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         goto illegalInstruction;
       }
 
-      UInt8 prefix = ((id.o1Flags & O_MM_XMM) == O_MM_XMM && o1->isRegType(REG_XMM)) 
-        ? 0x00000000 
-        : 0x66000000;
+      UInt32 prefix = ((id.o1Flags & O_MM_XMM) == O_MM_XMM && o1->isRegType(REG_XMM)) 
+        ? 0x66000000 
+        : 0x00000000;
       UInt8 rexw = ((id.o1Flags|id.o2Flags) & O_NOREX) 
         ? 0 
         : o1->isRegType(REG_GPQ) | o1->isRegType(REG_GPQ);
@@ -2317,9 +2317,9 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         goto illegalInstruction;
       }
 
-      UInt8 prefix = ((id.o1Flags & O_MM_XMM) == O_MM_XMM && o1->isRegType(REG_XMM)) 
-        ? 0x00000000 
-        : 0x66000000;
+      UInt32 prefix = ((id.o1Flags & O_MM_XMM) == O_MM_XMM && o1->isRegType(REG_XMM)) 
+        ? 0x66000000 
+        : 0x00000000;
       UInt8 rexw = ((id.o1Flags|id.o2Flags) & O_NOREX) 
         ? 0 
         : o1->isRegType(REG_GPQ) | o1->isRegType(REG_GPQ);

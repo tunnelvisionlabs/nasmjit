@@ -4329,36 +4329,36 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Pack with Signed Saturation (SSE2).
-  inline void packsswb(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void packsswb(const XMMRegister& dst, const XMMRegister& src)
   {
-    __emitX86(INST_PACKSSWB, &dst, &src, &imm8);
+    __emitX86(INST_PACKSSWB, &dst, &src);
   }
   //! @brief Pack with Signed Saturation (SSE2).
-  inline void packsswb(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  inline void packsswb(const XMMRegister& dst, const Mem& src)
   {
-    __emitX86(INST_PACKSSWB, &dst, &src, &imm8);
+    __emitX86(INST_PACKSSWB, &dst, &src);
   }
 
   //! @brief Pack with Signed Saturation (SSE2).
-  inline void packssdw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void packssdw(const XMMRegister& dst, const XMMRegister& src)
   {
-    __emitX86(INST_PACKSSDW, &dst, &src, &imm8);
+    __emitX86(INST_PACKSSDW, &dst, &src);
   }
   //! @brief Pack with Signed Saturation (SSE2).
-  inline void packssdw(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  inline void packssdw(const XMMRegister& dst, const Mem& src)
   {
-    __emitX86(INST_PACKSSDW, &dst, &src, &imm8);
+    __emitX86(INST_PACKSSDW, &dst, &src);
   }
 
   //! @brief Pack with Unsigned Saturation (SSE2).
-  inline void packuswb(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void packuswb(const XMMRegister& dst, const XMMRegister& src)
   {
-    __emitX86(INST_PACKUSWB, &dst, &src, &imm8);
+    __emitX86(INST_PACKUSWB, &dst, &src);
   }
   //! @brief Pack with Unsigned Saturation (SSE2).
-  inline void packuswb(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  inline void packuswb(const XMMRegister& dst, const Mem& src)
   {
-    __emitX86(INST_PACKUSWB, &dst, &src, &imm8);
+    __emitX86(INST_PACKUSWB, &dst, &src);
   }
 
   //! @brief Packed BYTE Add (SSE2).

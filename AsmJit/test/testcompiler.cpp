@@ -29,10 +29,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../AsmJit/AsmJitAssembler.h"
-#include "../AsmJit/AsmJitCompiler.h"
-#include "../AsmJit/AsmJitVM.h"
-#include "../AsmJit/AsmJitPrettyPrinter.h"
+#include <AsmJit/AsmJitAssembler.h>
+#include <AsmJit/AsmJitCompiler.h>
+#include <AsmJit/AsmJitVM.h>
+#include <AsmJit/AsmJitPrettyPrinter.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)(int*, int*);

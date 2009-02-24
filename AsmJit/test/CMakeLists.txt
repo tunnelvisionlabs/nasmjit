@@ -43,6 +43,8 @@ Set(ASMJIT_PRETTYPRINTER_HEADERS
   ${ASMJIT_DIR}/AsmJit/AsmJitPrettyPrinter.h
 )
 
+Include_Directories(${ASMJIT_DIR})
+
 Add_Definitions(-DDEBUG)
 
 Add_Executable(testcompiler testcompiler.cpp ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS} 

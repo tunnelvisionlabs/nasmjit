@@ -660,9 +660,11 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   {
     _variables[i]->_stackOffset += sizeof(SysInt) - stackOffset;
   }
+
+  _argumentsStackSize = (UInt32)(-stackOffset);
 }
 
-Variable* Function::newVariable(UInt8 type)
+Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegister)
 {
   Variable* v;
 
@@ -678,8 +680,8 @@ Variable* Function::newVariable(UInt8 type)
       v->_registerAccessCount = 0;
       v->_memoryAccessCount = 0;
 
-      v->_preferredRegister = NO_REG;
-      v->_priority = 10;
+      v->_preferredRegister = preferredRegister;
+      v->_priority = priority;
       v->_changed = 0;
 
       return v;
@@ -688,6 +690,8 @@ Variable* Function::newVariable(UInt8 type)
 
   // If variable can't be reused, create new one.
   v = compiler()->newObject<Variable>(this, type);
+  v->_preferredRegister = preferredRegister;
+  v->_priority = priority;
   _variables.append(v);
   return v;
 }
@@ -866,11 +870,31 @@ Variable* Function::_getSpillCandidate(UInt8 type)
   }
   else if (type == VARIABLE_TYPE_MM)
   {
-    // TODO
+    for (i = 0; i < len; i++)
+    {
+      v = _variables[i];
+      if ((v->type() == VARIABLE_TYPE_MM) &&
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (v != _lastUsedRegister))
+      {
+        variableScore = getSpillScore(v);
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+      }
+    }
   }
   else if (type == VARIABLE_TYPE_XMM)
   {
-    // TODO
+    for (i = 0; i < len; i++)
+    {
+      v = _variables[i];
+      if ((v->type() == VARIABLE_TYPE_XMM) &&
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (v != _lastUsedRegister))
+      {
+        variableScore = getSpillScore(v);
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+      }
+    }
   }
 
   return candidate;
@@ -1232,18 +1256,6 @@ void Compiler::_registerOperand(Operand* op)
 {
   op->_operandId = _operands.length();
   _operands.append(op);
-}
-
-// -------------------------------------------------------------------------
-// [AsmJit::Compiler - Variables Management / Register Allocation]
-// -------------------------------------------------------------------------
-
-Variable* Compiler::newVariable(UInt8 type)
-{
-  Function* f = currentFunction();
-  ASMJIT_ASSERT(f != NULL);
-
-  return f->newVariable(type);
 }
 
 // -------------------------------------------------------------------------

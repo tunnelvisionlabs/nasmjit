@@ -381,7 +381,7 @@ struct ASMJIT_API Variable
   //! it's only in memory (spilled).
   inline UInt8 registerCode() const { return _registerCode; }
   //! @brief Return variable preferred register.
-  inline UInt8 prefferedRegister() const { return _preferredRegister; }
+  inline UInt8 preferredRegister() const { return _preferredRegister; }
 
   //! @brief Return variable changed state.
   inline UInt8 changed() const { return _changed; }
@@ -515,6 +515,9 @@ struct VariableRef
 
   //! @brief Destroy variable (@c VariableRef can't be used anymore after destroy).
   inline void destroy() { ASMJIT_ASSERT(_v); _v->deref(); _v = NULL; }
+
+  inline UInt8 preferredRegister() const { ASMJIT_ASSERT(_v); return _v->preferredRegister(); }
+  inline void setPreferredRegister(UInt8 code) { ASMJIT_ASSERT(_v); _v->setPreferredRegister(code); }
 
   //! @brief Return variable priority.
   inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
@@ -884,7 +887,7 @@ struct ASMJIT_API Function : public Emittable
   }
 
   //! @brief Create new variable
-  Variable* newVariable(UInt8 type);
+  Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
 
   void alloc(Variable& v, UInt8 mode = VARIABLE_ALLOC_READWRITE);
   void spill(Variable& v);
@@ -1300,15 +1303,6 @@ struct ASMJIT_API Compiler : public Serializer
   { return _zone.alloc(size); }
 
   void _registerOperand(Operand* op);
-
-  // -------------------------------------------------------------------------
-  // [Variables Management / Register Allocation]
-  // -------------------------------------------------------------------------
-
-  Variable* newVariable(UInt8 type);
-
-  inline void spill(Variable& v) { currentFunction()->spill(v); }
-  inline void unuse(Variable& v) { currentFunction()->unuse(v); }
 
   // -------------------------------------------------------------------------
   // [EmitX86]
