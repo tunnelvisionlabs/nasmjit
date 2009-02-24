@@ -2081,7 +2081,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       if ((o1->isRegType(REG_GPD) || o1->isMem()) && (o2->isRegType(REG_MM) || o2->isRegType(REG_XMM)))
       {
-        _emitMmu(o1->isRegType(REG_XMM) ? 0x66000F7E : 0x00000F7E, 0,
+        _emitMmu(o2->isRegType(REG_XMM) ? 0x66000F7E : 0x00000F7E, 0,
           operand_cast<const BaseReg&>(*o2).code(), 
           operand_cast<const BaseRegMem&>(*o1));
         return;
