@@ -1122,9 +1122,9 @@ void PrettyPrinter::logFormat(const char* fmt, ...)
 
   va_list ap;
   va_start(ap, fmt);
-  vsnprintf(buf, 1024, fmt, ap);
+  vsnprintf(buf, 1023, fmt, ap);
   va_end(ap);
-  
+
   log(buf);
 }
 

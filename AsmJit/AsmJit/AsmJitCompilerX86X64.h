@@ -42,6 +42,7 @@
 namespace AsmJit {
 
 // forward declarations
+struct Comment;
 struct Compiler;
 struct Emittable;
 struct Epilog;
@@ -62,6 +63,8 @@ enum EMITTABLE_TYPE
 {
   //! @brief Emittable is invalid (can't be used).
   EMITTABLE_NONE = 0,
+  //! @brief Emittable is comment (no code).
+  EMITTABLE_COMMENT,
   //! @brief Emittable is .align directive.
   EMITTABLE_ALIGN,
   //! @brief Emittable is single instruction.
@@ -503,6 +506,8 @@ struct VariableRef
 
   inline Variable* v() { return _v; }
 
+  inline void use(Variable* v) { ASMJIT_ASSERT(_v == NULL); _v = v->ref(); }
+
   //! @brief Allocate variable to register.
   inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE)
   { ASMJIT_ASSERT(_v); _v->alloc(mode); }
@@ -576,19 +581,19 @@ struct Int64Ref : public VariableRef
   inline Int64Ref() : VariableRef() {}
   inline Int64Ref(Variable* v) : VariableRef(v) {}
 
-  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
   inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
   inline Register r16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
   inline Register r32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
   inline Register r64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
 
-  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
   inline Register c8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
   inline Register c16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
   inline Register c32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
   inline Register c64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
 
-  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
   inline Register x8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
   inline Register x16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
   inline Register x32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
@@ -661,6 +666,23 @@ private:
   // disable copy
   inline Emittable(const Emittable& other);
   inline Emittable& operator=(const Emittable& other);
+};
+
+// ============================================================================
+// [AsmJit::Comment]
+// ============================================================================
+
+struct ASMJIT_API Comment : public Emittable
+{
+  Comment(Compiler* c, const char* str);
+  virtual ~Comment();
+
+  virtual void emit(Assembler& a);
+
+  inline const char* str() const { return _str; }
+
+private:
+  const char* _str;
 };
 
 // ============================================================================
@@ -824,13 +846,16 @@ struct ASMJIT_API Function : public Emittable
   void setPrototype(UInt32 cconv, const UInt32* args, SysUInt count);
 
   //! @brief Set naked function to true or false (naked means no prolog / epilog code).
-  void setNaked(UInt32 naked);
+  void setNaked(UInt8 naked);
+
+  //! @brief Enable or disable emms instruction in epilog.
+  inline void setAllocableEbp(UInt8 aebp) { _allocableEbp = aebp; }
+
+  //! @brief Enable or disable emms instruction in epilog.
+  inline void setEmms(UInt8 emms) { _emms = emms; }
 
   //! @brief Return function calling convention, see @c CALL_CONV.
   inline UInt32 cconv() const { return _cconv; }
-
-  //! @brief Return @c true if function is naked (no prolog / epilog code).
-  inline UInt32 naked() const { return _naked; }
 
   //! @brief Return @c true if callee pops the stack by ret() instruction.
   //!
@@ -839,7 +864,16 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline UInt32 calleePopsStack() const { return _calleePopsStack; }
+  inline UInt8 calleePopsStack() const { return _calleePopsStack; }
+
+  //! @brief Return @c true if function is naked (no prolog / epilog code).
+  inline UInt8 naked() const { return _naked; }
+
+  //! @brief Return @c true if EBP/RBP register can be allocated by register allocator.
+  inline UInt8 allocableEbp() const { return _allocableEbp; }
+
+  //! @brief Return @c true if function epilog contains emms instruction.
+  inline UInt8 emms() const { return _emms; }
 
   //! @brief Return direction of arguments passed on the stack.
   //!
@@ -976,11 +1010,17 @@ private:
   //! @brief Calling convention, see @c CALL_CONV.
   UInt32 _cconv;
 
-  //! @brief Generate naked function?
-  UInt32 _naked;
-
   //! @brief Callee pops stack;
-  UInt32 _calleePopsStack;
+  UInt8 _calleePopsStack;
+
+  //! @brief Generate naked function?
+  UInt8 _naked;
+
+  //! @brief Whether EBP/RBP register can be used by register allocator.
+  UInt8 _allocableEbp;
+
+  //! @brief Generate emms instruction at the end of function.
+  UInt8 _emms;
 
   //! @brief Direction for arguments passed on stack, see @c ARGUMENT_DIR.
   UInt32 _cconvArgumentsDirection;
@@ -1207,6 +1247,12 @@ struct ASMJIT_API Compiler : public Serializer
   //! function block. Each function must be also started by @c prolog()
   //! and ended by @c epilog() calls.
   inline Function* currentFunction() { return _currentFunction; }
+
+  // -------------------------------------------------------------------------
+  // [Logging]
+  // -------------------------------------------------------------------------
+
+  void comment(const char* fmt, ...);
 
   // -------------------------------------------------------------------------
   // [Function Builder]

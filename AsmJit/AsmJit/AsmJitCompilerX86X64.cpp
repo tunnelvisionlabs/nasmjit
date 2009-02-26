@@ -28,6 +28,10 @@
 #include "AsmJitCompiler.h"
 #include "AsmJitUtil.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 // [Count of registers is different in 32 bit or 64 bit mode]
 #if defined(ASMJIT_X86)
 # define NUM_REGS 8
@@ -159,6 +163,28 @@ void Emittable::postEmit(Assembler& a)
 }
 
 // ============================================================================
+// [AsmJit::Comment]
+// ============================================================================
+
+Comment::Comment(Compiler* c, const char* str) : Emittable(c, EMITTABLE_COMMENT)
+{
+  SysUInt len = strlen(str);
+
+  // Alloc string, but round it up
+  _str = (char*)c->_allocObject((len + sizeof(SysInt)) & ~(sizeof(SysInt)-1));
+  memcpy((char*)_str, str, len + 1);
+}
+
+Comment::~Comment()
+{
+}
+
+void Comment::emit(Assembler& a)
+{
+  if (a.logger()) a.logger()->log(str());
+}
+
+// ============================================================================
 // [AsmJit::Align]
 // ============================================================================
 
@@ -218,8 +244,10 @@ Function::Function(Compiler* c) :
   _maxAlignmentStackSize(0),
   _variablesStackSize(0),
   _cconv(CALL_CONV_NONE),
-  _naked(false),
   _calleePopsStack(false),
+  _naked(false),
+  _allocableEbp(false),
+  _emms(false),
   _cconvArgumentsDirection(ARGUMENT_DIR_RIGHT_TO_LEFT),
   _argumentsStackSize(0),
   _usedGpRegisters(0),
@@ -293,7 +321,6 @@ void Function::prepare()
   {
     if ((modifiedGpRegisters () & (1U << i)) && 
         (cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NBP & REGCODE_MASK)) &&
         (i != (REG_NSP & REGCODE_MASK)) )
     {
       pe += sizeof(SysInt);
@@ -364,7 +391,7 @@ void Function::setPrototype(UInt32 cconv, const UInt32* args, SysUInt count)
   _setArguments(args, count);
 }
 
-void Function::setNaked(UInt32 naked)
+void Function::setNaked(UInt8 naked)
 {
   if (_naked == naked) return;
 
@@ -719,7 +746,7 @@ void Function::alloc(Variable& v, UInt8 mode)
     // needed
     for (i = 1; i < NUM_REGS; i++)
     {
-      if ((_usedGpRegisters & (1U << i)) == 0 && i != RID_EBP && i != RID_ESP) 
+      if ((_usedGpRegisters & (1U << i)) == 0 && (i != RID_EBP || allocableEbp()) && i != RID_ESP) 
       {
         if (v.type() == VARIABLE_TYPE_INT32)
           code = i | REG_GPD;
@@ -989,7 +1016,6 @@ void Prolog::emit(Assembler& a)
   {
     if ((f->modifiedGpRegisters () & (1U << i)) && 
         (f->cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NBP & REGCODE_MASK)) &&
         (i != (REG_NSP & REGCODE_MASK)) )
     {
       a.push(mk_gpn(i));
@@ -1028,7 +1054,6 @@ void Epilog::emit(Assembler& a)
   {
     if ((f->modifiedGpRegisters() & (1U << i)) && 
         (f->cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NBP & REGCODE_MASK)) &&
         (i != (REG_NSP & REGCODE_MASK)) )
     {
       a.pop(mk_gpn(i));
@@ -1040,6 +1065,11 @@ void Epilog::emit(Assembler& a)
   {
     a.mov(nsp, nbp);
     a.pop(nbp);
+  }
+
+  if (f->emms())
+  {
+    a.emms();
   }
 
   // Return using correct instruction
@@ -1158,6 +1188,33 @@ void Compiler::free()
   clear();
   _buffer.free();
   _operands.free();
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Logging]
+// ============================================================================
+
+void Compiler::comment(const char* fmt, ...)
+{
+  char buf[1024];
+
+  if (fmt)
+  {
+    buf[0] = ';';
+    buf[1] = ' ';
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf + 2, 1021, fmt, ap);
+    va_end(ap);
+  }
+  else
+  {
+    buf[0] = '\n';
+    buf[1] = '\0';
+  }
+
+  emit(newObject<Comment>(buf));
 }
 
 // ============================================================================

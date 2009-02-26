@@ -1,3 +1,10 @@
+2009-02-26:
+- Released 0.6-alpha
+- Fixed many bugs related to assembler and compiler parts. Tested MMX and 
+  SSE2 code generation.
+- Finished basic parts of compiler and register allocation, but there are
+  still space for improvements
+
 2009-02-18:
 - Added 3dNow! and enchanced 3dNow! instructions
 
