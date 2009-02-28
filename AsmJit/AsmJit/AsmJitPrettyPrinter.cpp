@@ -1175,7 +1175,7 @@ SysInt PrettyPrinter::dumpOperand(char* buf, const Operand* op)
         *buf++ = ' ';
         *buf++ = '*';
         *buf++ = ' ';
-        *buf++ = "1248"[mem.shift()];
+        *buf++ = ("1248"[mem.shift()]);
       }
     }
 

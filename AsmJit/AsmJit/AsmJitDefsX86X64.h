@@ -1719,10 +1719,10 @@ template<> static inline const To& operand_cast(const Operand& op) \
 }
 
 MAKE_OPERAND_CAST(BaseReg, (op.op() == OP_REG));
-MAKE_OPERAND_CAST(Register, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() <= REG_GPQ));
-MAKE_OPERAND_CAST(X87Register, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_X87));
-MAKE_OPERAND_CAST(MMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_MM));
-MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const Register&>(op).type() == REG_XMM));
+MAKE_OPERAND_CAST(Register, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() <= REG_GPQ));
+MAKE_OPERAND_CAST(X87Register, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_X87));
+MAKE_OPERAND_CAST(MMRegister, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_MM));
+MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_XMM));
 MAKE_OPERAND_CAST(Mem, (op.op() == OP_MEM));
 MAKE_OPERAND_CAST(BaseRegMem, (op.op() == OP_MEM || op.op() == OP_REG));
 MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));

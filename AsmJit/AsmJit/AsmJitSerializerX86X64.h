@@ -3701,9 +3701,9 @@ struct Serializer : public _Serializer
   }
 
   //! @brief Store fence (SSE).
-  inline void sfence(const Mem& mem)
+  inline void sfence()
   {
-    __emitX86(INST_SFENCE, &mem);
+    __emitX86(INST_SFENCE);
   }
 
   //! @brief Shuffle SP-FP (SSE).

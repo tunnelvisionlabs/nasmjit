@@ -506,15 +506,22 @@ struct VariableRef
 
   inline Variable* v() { return _v; }
 
+  //! @brief Return variable type, see @c VARIABLE_TYPE.
+  inline UInt8 type() const { ASMJIT_ASSERT(_v); return _v->type(); }
+  //! @brief Return variable size (in bytes).
+  inline UInt8 size() const { ASMJIT_ASSERT(_v); return _v->size(); }
+  //! @brief Return variable state, see @c VARIABLE_STATE.
+  inline UInt8 state() const { ASMJIT_ASSERT(_v); return _v->state(); }
+
   inline void use(Variable* v) { ASMJIT_ASSERT(_v == NULL); _v = v->ref(); }
 
   //! @brief Allocate variable to register.
   inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE)
   { ASMJIT_ASSERT(_v); _v->alloc(mode); }
-  
+
   //! @brief Spill variable from register (or do nothing).
   inline void spill() { ASMJIT_ASSERT(_v); _v->spill(); }
-  
+
   //! @brief Unuse variable (all changes lost).
   inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
 
@@ -1349,6 +1356,182 @@ struct ASMJIT_API Compiler : public Serializer
   { return _zone.alloc(size); }
 
   void _registerOperand(Operand* op);
+
+  // -------------------------------------------------------------------------
+  // [Intrinsics]
+  // -------------------------------------------------------------------------
+
+  void op_var32(UInt32 code, const Int32Ref& a)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r32());
+    else
+      __emitX86(code, &a.m());
+  }
+
+#if defined(ASMJIT_X64)
+  void op_var64(UInt32 code, const Int64Ref& a)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r64());
+    else
+      __emitX86(code, &a.m());
+  }
+#endif // ASMJIT_X64
+
+  void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
+  {
+    if (b.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a, &b.r32());
+    else
+      __emitX86(code, &a, &b.m());
+  }
+
+#if defined(ASMJIT_X64)
+  void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
+  {
+    if (b.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a, &b.r64());
+    else
+      __emitX86(code, &a, &b.m());
+  }
+#endif // ASMJIT_X64
+
+  void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r32(), &b);
+    else
+      __emitX86(code, &a.m(), &b);
+  }
+
+  void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r32(), &b);
+    else
+      __emitX86(code, &a.m(), &b);
+  }
+
+#if defined(ASMJIT_X64)
+  void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r64(), &b);
+    else
+      __emitX86(code, &a.m(), &b);
+  }
+
+  void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
+  {
+    if (a.state() == VARIABLE_STATE_REGISTER)
+      __emitX86(code, &a.r64(), &b);
+    else
+      __emitX86(code, &a.m(), &b);
+  }
+#endif // ASMJIT_X64
+
+  using Serializer::adc;
+  using Serializer::add;
+  using Serializer::and_;
+  using Serializer::cmp;
+  using Serializer::dec;
+  using Serializer::inc;
+  using Serializer::mov;
+  using Serializer::neg;
+  using Serializer::not_;
+  using Serializer::or_;
+  using Serializer::sbb;
+  using Serializer::sub;
+  using Serializer::xor_;
+
+  inline void adc(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_ADC, dst, src); }
+  inline void adc(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_ADC, dst, src); }
+  inline void adc(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_ADC, dst, src); }
+
+  inline void add(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_ADD, dst, src); }
+  inline void add(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_ADD, dst, src); }
+  inline void add(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_ADD, dst, src); }
+
+  inline void and_(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_AND, dst, src); }
+  inline void and_(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_AND, dst, src); }
+  inline void and_(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_AND, dst, src); }
+
+  inline void cmp(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_CMP, dst, src); }
+  inline void cmp(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_CMP, dst, src); }
+  inline void cmp(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_CMP, dst, src); }
+
+  inline void dec(const Int32Ref& dst) { op_var32(INST_DEC, dst); }
+  inline void inc(const Int32Ref& dst) { op_var32(INST_INC, dst); }
+  inline void neg(const Int32Ref& dst) { op_var32(INST_NEG, dst); }
+  inline void not_(const Int32Ref& dst) { op_var32(INST_NOT, dst); }
+
+  inline void mov(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_MOV, dst, src); }
+  inline void mov(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_MOV, dst, src); }
+  inline void mov(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_MOV, dst, src); }
+
+  inline void or_(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_OR, dst, src); }
+  inline void or_(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_OR, dst, src); }
+  inline void or_(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_OR, dst, src); }
+
+  inline void sbb(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_SBB, dst, src); }
+  inline void sbb(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_SBB, dst, src); }
+  inline void sbb(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_SBB, dst, src); }
+
+  inline void sub(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_SUB, dst, src); }
+  inline void sub(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_SUB, dst, src); }
+  inline void sub(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_SUB, dst, src); }
+
+  inline void xor_(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_XOR, dst, src); }
+  inline void xor_(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_XOR, dst, src); }
+  inline void xor_(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_XOR, dst, src); }
+
+#if defined(ASMJIT_X64)
+  inline void adc(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_ADC, dst, src); }
+  inline void adc(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_ADC, dst, src); }
+  inline void adc(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_ADC, dst, src); }
+
+  inline void add(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_ADD, dst, src); }
+  inline void add(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_ADD, dst, src); }
+  inline void add(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_ADD, dst, src); }
+
+  inline void and_(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_AND, dst, src); }
+  inline void and_(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_AND, dst, src); }
+  inline void and_(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_AND, dst, src); }
+
+  inline void and_(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_AND, dst, src); }
+  inline void and_(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_AND, dst, src); }
+  inline void and_(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_AND, dst, src); }
+
+  inline void cmp(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_CMP, dst, src); }
+  inline void cmp(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_CMP, dst, src); }
+  inline void cmp(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_CMP, dst, src); }
+
+  inline void dec(const Int64Ref& dst) { op_var64(INST_DEC, dst); }
+  inline void inc(const Int64Ref& dst) { op_var64(INST_INC, dst); }
+  inline void neg(const Int64Ref& dst) { op_var64(INST_NEG, dst); }
+  inline void not_(const Int64Ref& dst) { op_var64(INST_NOT, dst); }
+
+  inline void mov(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_MOV, dst, src); }
+  inline void mov(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_MOV, dst, src); }
+  inline void mov(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_MOV, dst, src); }
+
+  inline void or_(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_OR, dst, src); }
+  inline void or_(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_OR, dst, src); }
+  inline void or_(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_OR, dst, src); }
+
+  inline void sbb(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_SBB, dst, src); }
+  inline void sbb(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_SBB, dst, src); }
+  inline void sbb(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_SBB, dst, src); }
+
+  inline void sub(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_SUB, dst, src); }
+  inline void sub(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_SUB, dst, src); }
+  inline void sub(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_SUB, dst, src); }
+
+  inline void xor_(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_XOR, dst, src); }
+  inline void xor_(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_XOR, dst, src); }
+  inline void xor_(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_XOR, dst, src); }
+#endif // ASMJIT_X64
 
   // -------------------------------------------------------------------------
   // [EmitX86]

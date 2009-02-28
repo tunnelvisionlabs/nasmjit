@@ -1055,7 +1055,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_SAL              , "sal"              , I_ROT           , 0               , 0               , 4, 0         , 0),
   MAKE_INST(INST_SAR              , "sar"              , I_ROT           , 0               , 0               , 7, 0         , 0),
   MAKE_INST(INST_SBB              , "sbb"              , I_ALU           , 0               , 0               , 3, 0x00000018, 0x00000080),
-  MAKE_INST(INST_SFENCE           , "sfence"           , I_M             , O_MEM           , 0               , 7, 0x00000FAE, 0),
+  MAKE_INST(INST_SFENCE           , "sfence"           , I_EMIT          , 0               , 0               , 0, 0x000FAEF8, 0),
   MAKE_INST(INST_SHL              , "shl"              , I_ROT           , 0               , 0               , 4, 0         , 0),
   MAKE_INST(INST_SHLD             , "shld"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FA4, 0),
   MAKE_INST(INST_SHR              , "shr"              , I_ROT           , 0               , 0               , 5, 0         , 0),

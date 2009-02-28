@@ -9,12 +9,12 @@ Introduction
 AsmJit is complete JIT assembler for X86/X64 platform. It contains complete
 x86/x64 intrinsics (included is FPU, MMX, 3dNow, SSE, SSE2, SSE3, SSE4) and 
 powerful compiler that helps to write portable functions for 32 bit (x86) and
-64 bit (x64) architectures. AsmJit can be used to compile functions in dynamic
-way that can be called from C/C++ code.
+64 bit (x64) architectures. AsmJit can be used to compile functions at runtime
+that can be called from C/C++ code.
 
 AsmJit can be compiled as a static or dynamically linked library. If you are 
 building dynamically linked library, go to AsmJitConfig.h file and setup 
-exporting stuff (see wiki in AsmJit homepage).
+exporting macros (see wiki in AsmJit homepage).
 
 Assembler / Compiler
 ====================
