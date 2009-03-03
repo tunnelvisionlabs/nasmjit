@@ -49,6 +49,7 @@ struct Epilog;
 struct Function;
 struct Instruction;
 struct Prolog;
+struct State;
 struct Variable;
 
 //! @addtogroup AsmJit_Compiler
@@ -350,8 +351,17 @@ enum VARIABLE_ALLOC
 //! @brief Variable.
 struct ASMJIT_API Variable
 {
+  // [Typedefs]
+
+  typedef void (*SpillFn)(Variable* v);
+  typedef void (*RestoreFn)(Variable* v);
+
+  // [Construction / Destruction]
+
   Variable(Compiler* c, Function* f, UInt8 type);
   virtual ~Variable();
+
+  // [Methods]
 
   //! @brief Return compiler that owns this variable.
   inline Compiler* compiler() const { return _compiler; }
@@ -405,11 +415,13 @@ struct ASMJIT_API Variable
   //! @brief Memory operand that will be always pointed to variable memory address. */
   inline const Mem& memoryOperand() const { return *_memoryOperand; }
 
-  // reference counting
+  // [Reference counting]
+
   Variable* ref();
   void deref();
 
-  // code generation
+  // [Code Generation]
+
   inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE);
   inline void spill();
   inline void unuse();
@@ -477,6 +489,15 @@ private:
   //! @brief Variable memory operand.
   Mem* _memoryOperand;
 
+  //! @brief Custom spill function (or built-in spill function).
+  SpillFn _spillFn;
+
+  //! @brief Custom restore function (or built-in restore function).
+  RestoreFn _restoreFn;
+
+  //! @brief Custom data that can be used by custom spill and restore functions.
+  void* _data;
+
   friend struct Compiler;
   friend struct Function;
 
@@ -484,6 +505,7 @@ private:
   inline Variable(const Variable& other);
   inline Variable& operator=(const Variable& other);
 
+  friend struct Function;
   friend struct VariableRef;
 };
 
@@ -637,6 +659,39 @@ typedef Int64Ref SysIntRef;
 #endif
 
 typedef SysIntRef PtrRef;
+
+// ============================================================================
+// [AsmJit::State]
+// ============================================================================
+
+//! @brief Contains informations about current register state.
+struct ASMJIT_API State
+{
+  State(Compiler* c);
+  virtual ~State();
+
+private:
+  //! @brief Clear state.
+  void _clear();
+
+  //! @brief Set state to function state.
+  void _set(Function* f);
+
+  //! @brief Get (Save) state from function state.
+  void _save(Function* f);
+  //! @brief Restore function state, can spill and alloc registers.
+  void _restore(Function* f);
+
+  //! @brief Regeral purpose registers.
+  Variable* _gp[16];
+  //! @brief MMX registers.
+  Variable* _mm[8];
+  //! @brief XMM registers.
+  Variable* _xmm[16];
+
+  friend struct Compiler;
+  friend struct Function;
+};
 
 // ============================================================================
 // [AsmJit::Emittable]
@@ -930,13 +985,13 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Create new variable
   Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
 
-  void alloc(Variable& v, UInt8 mode = VARIABLE_ALLOC_READWRITE);
-  void spill(Variable& v);
-  void unuse(Variable& v);
+  void alloc(Variable* v, UInt8 mode = VARIABLE_ALLOC_READWRITE);
+  void spill(Variable* v);
+  void unuse(Variable* v);
 
   Variable* _getSpillCandidate(UInt8 type);
 
-  void _allocReg(UInt8 code);
+  void _allocReg(UInt8 code, Variable* v);
   void _freeReg(UInt8 code);
 
   //! @brief Return size of alignment on the stack.
@@ -944,8 +999,9 @@ struct ASMJIT_API Function : public Emittable
   //! Stack is aligned to 16 bytes by default. For X64 platforms there is 
   //! no extra code needed to align stack to 16 bytes, because it's default
   //! stack alignment.
-  inline SysInt maxAlignmentStackSize() const { return _maxAlignmentStackSize; }
+  inline SysInt stackAlignmentSize() const { return _stackAlignmentSize; }
 
+  //! @brief Size needed to save registers in prolog / epilog.
   inline SysInt prologEpilogStackSize() const { return _prologEpilogStackSize; }
 
   //! @brief Return size of variables on the stack.
@@ -1053,7 +1109,7 @@ private:
   // --------------------------------------------------------------------------
 
   //! @brief Size of maximum alignment size on the stack.
-  SysInt _maxAlignmentStackSize;
+  SysInt _stackAlignmentSize;
   //! @brief Size of prolog/epilog on the stack.
   SysInt _prologEpilogStackSize;
   //! @brief Size of all variables on the stack.
@@ -1068,6 +1124,8 @@ private:
   UInt32 _modifiedXmmRegisters;
 
   PodVector<Variable*> _variables;
+  State _state;
+
   Variable* _lastUsedRegister;
 
   // --------------------------------------------------------------------------
@@ -1079,12 +1137,14 @@ private:
   Label* _exitLabel;
 
   friend struct Compiler;
+  friend struct Function;
+  friend struct State;
 };
 
 // Inlines that uses AsmJit::Function
-inline void Variable::alloc(UInt8 mode) { function()->alloc(*this, mode); }
-inline void Variable::spill() { function()->spill(*this); }
-inline void Variable::unuse() { function()->unuse(*this); }
+inline void Variable::alloc(UInt8 mode) { function()->alloc(this, mode); }
+inline void Variable::spill() { function()->spill(this); }
+inline void Variable::unuse() { function()->unuse(this); }
 
 // ============================================================================
 // [AsmJit::Prolog]

@@ -113,7 +113,10 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _registerCode(NO_REG),
   _preferredRegister(0xFF),
   _changed(false),
-  _stackOffset(0)
+  _stackOffset(0),
+  _spillFn(NULL),
+  _restoreFn(NULL),
+  _data(NULL)
 {
   ASMJIT_ASSERT(f != NULL);
 
@@ -133,11 +136,104 @@ Variable* Variable::ref()
 
 void Variable::deref()
 {
-  _refCount--;
-  if (_refCount == 0) 
+  if (--_refCount == 0) unuse();
+}
+
+// ============================================================================
+// [AsmJit::State]
+// ============================================================================
+
+State::State(Compiler* c)
+{
+  _clear();
+}
+
+State::~State()
+{
+}
+
+void State::_clear()
+{
+  memset(_gp , 0, sizeof(_gp ));
+  memset(_mm , 0, sizeof(_mm ));
+  memset(_xmm, 0, sizeof(_xmm));
+}
+
+void State::_set(Function* f)
+{
+  memcpy(_gp , f->_state._gp , sizeof(_gp ));
+  memcpy(_mm , f->_state._mm , sizeof(_mm ));
+  memcpy(_xmm, f->_state._xmm, sizeof(_xmm));
+}
+
+void State::_save(Function* f)
+{
+  _clear();
+
+  // Get state of all variables
+  PodVector<Variable *>& variables = f->_variables;
+  SysUInt i, len = variables.length();
+
+  for (i = 0; i < len; i++)
   {
-    unuse();
+    Variable* v = variables[i];
+
+    if (v->state() == VARIABLE_STATE_REGISTER)
+    {
+      switch (v->type())
+      {
+        case VARIABLE_TYPE_INT32:
+        case VARIABLE_TYPE_INT64:
+          _gp[v->registerCode() & 0x0F] = v;
+          break;
+        case VARIABLE_TYPE_FLOAT:
+        case VARIABLE_TYPE_DOUBLE:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_MM:
+          _mm[v->registerCode() & 0x0F] = v;
+          break;
+        case VARIABLE_TYPE_XMM:
+          _xmm[v->registerCode() & 0x0F] = v;
+          break;
+      }
+    }
   }
+}
+
+void State::_restore(Function* f)
+{
+#if 0
+  // Set state of all variables
+  PodVector<Variable *>& variables = f->_variables;
+  SysUInt i, len = variables.length();
+
+  for (i = 0; i < len; i++)
+  {
+    Variable* v = variables[i];
+
+    if (v->state() == VARIABLE_STATE_REGISTER)
+    {
+      switch (v->type())
+      {
+        case VARIABLE_TYPE_INT32:
+        case VARIABLE_TYPE_INT64:
+          _gp[v->registerCode() & 0x0F] = v;
+          break;
+        case VARIABLE_TYPE_FLOAT:
+        case VARIABLE_TYPE_DOUBLE:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_MM:
+          _mm[v->registerCode() & 0x0F] = v;
+          break;
+        case VARIABLE_TYPE_XMM:
+          _xmm[v->registerCode() & 0x0F] = v;
+          break;
+      }
+    }
+  }
+#endif
 }
 
 // ============================================================================
@@ -241,7 +337,7 @@ void Instruction::emit(Assembler& a)
 
 Function::Function(Compiler* c) : 
   Emittable(c, EMITTABLE_FUNCTION),
-  _maxAlignmentStackSize(0),
+  _stackAlignmentSize(0),
   _variablesStackSize(0),
   _cconv(CALL_CONV_NONE),
   _calleePopsStack(false),
@@ -261,7 +357,8 @@ Function::Function(Compiler* c) :
   _lastUsedRegister(NULL),
   _entryLabel(c->newLabel()),
   _prologLabel(c->newLabel()),
-  _exitLabel(c->newLabel())
+  _exitLabel(c->newLabel()),
+  _state(c)
 {
   memset32(_cconvArgumentsGp, 0xFFFFFFFF, 16);
   memset32(_cconvArgumentsXmm, 0xFFFFFFFF, 16);
@@ -286,7 +383,7 @@ void Function::prepare()
   SysInt argDisp = 0;  // Displacement for arguments
   SysInt varDisp = 0;  // Displacement for variables
 
-  UInt32 maxAlign = 0; // Maximum alignment stack size
+  UInt32 alignSize = 0;// Maximum alignment stack size
 
   // This is simple optimization to do 16 byte aligned variables first and
   // all others next.
@@ -306,15 +403,18 @@ void Function::prepare()
         // programming we need 8 or 16 bytes alignment. For MMX memory
         // operands we can use 4 bytes and for SSE 12 bytes.
 #if defined(ASMJIT_X86)
-        if (size == 8  && maxAlign < 4) maxAlign = 4;
-        if (size == 16 && maxAlign < 12) maxAlign = 12;
+        if (size ==  8 && alignSize <  8) alignSize =  8;
+        if (size == 16 && alignSize < 16) alignSize = 16;
 #endif // ASMJIT_X86
 
-        sp -= size;
+        sp += size;
         _variables[v]->_stackOffset = sp;
       }
     }
   }
+
+  // Align to 16 bytes
+  sp = (sp + 15) & ~15;
 
   // Get prolog/epilog push/pop size on the stack
   for (i = 0; i < NUM_REGS; i++)
@@ -327,21 +427,23 @@ void Function::prepare()
     }
   }
 
-  if (!naked() || maxAlign) pe += sizeof(SysInt); // push/pop ebp/rpb
+  // push/pop ebp/rpb
+  // if (!naked()) pe += sizeof(SysInt);
 
   _prologEpilogStackSize = pe;
-  _variablesStackSize = -sp;
-  _maxAlignmentStackSize = maxAlign;
+  _variablesStackSize = sp;
+  _stackAlignmentSize = alignSize;
 
   // Calculate displacement
-  if (!naked() || maxAlign)
+  if (!naked())
   {
     // Functions with prolog/epilog are using ebp/rbp for variables
-    argMemBase = RID_ESP | 0x10;
-    argDisp = pe;
+    argMemBase = RID_EBP | 0x10;
+    // push ebp/rpb size (return address is already in arguments stack offset)
+    argDisp = sizeof(SysInt);
 
-    varMemBase = RID_EBP | 0x10;
-    varDisp = -pe + (Int32)sizeof(SysInt);
+    varMemBase = RID_ESP | 0x10;
+    varDisp = pe;
   }
   else
   {
@@ -350,7 +452,7 @@ void Function::prepare()
     argDisp = pe;
 
     varMemBase = RID_ESP | 0x10;
-    varDisp = 0;
+    varDisp = -sp;
   }
 
   // Patch all variables to point to correct address in memory
@@ -359,7 +461,7 @@ void Function::prepare()
     Variable* var = _variables[v];
     Mem* memop = var->_memoryOperand;
 
-    if (var->stackOffset() > 0)
+    if (v < argumentsCount())
     {
       // Arguments
       memop->_mem.base = argMemBase;
@@ -542,6 +644,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   memcpy(args, _args, count * sizeof(UInt32));
 
   _variables.clear();
+  _state._clear();
+
   for (i = 0; i < (SysInt)count; i++)
   {
     Variable* v = _compiler->newObject<Variable>(this, args[i]);
@@ -550,7 +654,6 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   }
 
   _argumentsCount = count;
-
   if (!_args) return;
 
 #if defined(ASMJIT_X86)
@@ -564,8 +667,12 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
     {
       UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
-      _allocReg(reg);
-      _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
+      Variable* v = _variables[i];
+
+      v->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
+      _allocReg(reg, v);
+
+      _state._gp[reg & 0x0F] = v;
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -614,15 +721,23 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isIntegerArgument(a))
       {
         UInt8 reg = _cconvArgumentsGp[i] | REG_GPN;
-        _allocReg(reg);
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        Variable* v = _variables[i];
+
+        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        _allocReg(reg, v);
+
+        _state._gp[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
         UInt8 reg = _cconvArgumentsXmm[i] | REG_XMM;
-        _allocReg(reg);
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        Variable* v = _variables[i];
+
+        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        _allocReg(reg, v);
+
+        _state._xmm[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -648,8 +763,12 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
       {
         UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
-        _allocReg(reg);
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        Variable* v = _variables[i];
+
+        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        _allocReg(reg, v);
+
+        _state._gp[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -661,8 +780,12 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isFloatArgument(a))
       {
         UInt8 reg = _cconvArgumentsXmm[xmmPos++] | REG_XMM;
-        _allocReg(reg);
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        Variable* v = _variables[i];
+
+        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        _allocReg(reg, v);
+
+        _state._xmm[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -723,10 +846,10 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
   return v;
 }
 
-void Function::alloc(Variable& v, UInt8 mode)
+void Function::alloc(Variable* v, UInt8 mode)
 {
-  ASMJIT_ASSERT(compiler() == v.compiler());
-  if (v.state() == VARIABLE_STATE_REGISTER) { _lastUsedRegister = &v; return; }
+  ASMJIT_ASSERT(compiler() == v->compiler());
+  if (v->state() == VARIABLE_STATE_REGISTER) { _lastUsedRegister = v; return; }
 
   UInt32 i;
 
@@ -734,13 +857,13 @@ void Function::alloc(Variable& v, UInt8 mode)
   UInt8 code = NO_REG;
 
   // true if we must copy content from memory to register before we can use it
-  bool copy = (v.state() == VARIABLE_STATE_MEMORY);
+  bool copy = (v->state() == VARIABLE_STATE_MEMORY);
 
   // TODO:
-  // if (v._preferredRegister != NO_REG)
+  // if (v->_preferredRegister != NO_REG)
 
   // First try to find unused registers
-  if (v.type() == VARIABLE_TYPE_INT32 || v.type() == VARIABLE_TYPE_INT64)
+  if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
   {
     // We start from 1, because EAX/RAX registers are sometimes explicitly 
     // needed
@@ -748,7 +871,7 @@ void Function::alloc(Variable& v, UInt8 mode)
     {
       if ((_usedGpRegisters & (1U << i)) == 0 && (i != RID_EBP || allocableEbp()) && i != RID_ESP) 
       {
-        if (v.type() == VARIABLE_TYPE_INT32)
+        if (v->type() == VARIABLE_TYPE_INT32)
           code = i | REG_GPD;
         else
           code = i | REG_GPQ;
@@ -759,13 +882,13 @@ void Function::alloc(Variable& v, UInt8 mode)
     // If not found, try EAX/RAX
     if (code == NO_REG && (_usedGpRegisters & 1) == 0) 
     {
-      if (v.type() == VARIABLE_TYPE_INT32)
+      if (v->type() == VARIABLE_TYPE_INT32)
         code = RID_EAX | REG_GPD;
       else
         code = RID_EAX | REG_GPQ;
     }
   }
-  else if (v.type() == VARIABLE_TYPE_MM)
+  else if (v->type() == VARIABLE_TYPE_MM)
   {
     for (i = 0; i < 8; i++)
     {
@@ -776,7 +899,7 @@ void Function::alloc(Variable& v, UInt8 mode)
       }
     }
   }
-  else if (v.type() == VARIABLE_TYPE_XMM)
+  else if (v->type() == VARIABLE_TYPE_XMM)
   {
     for (i = 0; i < NUM_REGS; i++)
     {
@@ -791,69 +914,135 @@ void Function::alloc(Variable& v, UInt8 mode)
   // If register is still not found, spill some variable
   if (code == NO_REG)
   {
-    Variable* candidate = _getSpillCandidate(v.type());
+    Variable* candidate = _getSpillCandidate(v->type());
     ASMJIT_ASSERT(candidate);
 
     code = candidate->_registerCode;
-    spill(*candidate);
+    spill(candidate);
   }
 
-  _allocReg(code);
+  v->_state = VARIABLE_STATE_REGISTER;
+  v->_registerCode = code;
 
-  v._state = VARIABLE_STATE_REGISTER;
-  v._registerCode = code;
+  _allocReg(code, v);
 
   if (copy && mode != VARIABLE_ALLOC_WRITE)
   {
-    compiler()->mov(mk_gpn(v._registerCode), *v._memoryOperand);
-    v._memoryAccessCount++;
+    if (v->_restoreFn)
+    {
+      v->_restoreFn(v);
+    }
+    else
+    {
+      switch (v->type())
+      {
+        case VARIABLE_TYPE_INT32:
+          compiler()->mov(mk_gpd(v->_registerCode), *v->_memoryOperand);
+          break;
+#if defined(ASMJIT_X64)
+        case VARIABLE_TYPE_INT64:
+          compiler()->mov(mk_gpq(v->_registerCode), *v->_memoryOperand);
+          break;
+#endif // ASMJIT_X64
+        case VARIABLE_TYPE_FLOAT:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_DOUBLE:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_MM:
+          compiler()->movq(mk_mm(v->_registerCode), *v->_memoryOperand);
+          break;
+        case VARIABLE_TYPE_XMM:
+          // Alignment is not guaranted for naked functions in 32 bit mode
+          if (naked())
+            compiler()->movdqu(mk_xmm(v->_registerCode), *v->_memoryOperand);
+          else
+            compiler()->movdqa(mk_xmm(v->_registerCode), *v->_memoryOperand);
+          break;
+      }
+      v->_memoryAccessCount++;
+    }
   }
 
   if ((mode & VARIABLE_ALLOC_WRITE) != 0)
   {
-    v._changed = true;
+    v->_changed = true;
   }
 
-  _lastUsedRegister = &v;
+  _lastUsedRegister = v;
 }
 
-void Function::spill(Variable& v)
+void Function::spill(Variable* v)
 {
-  ASMJIT_ASSERT(compiler() == v.compiler());
-  if (v.state() == VARIABLE_STATE_UNUSED) return;
-  if (v.state() == VARIABLE_STATE_MEMORY) return;
+  ASMJIT_ASSERT(compiler() == v->compiler());
+  if (v->state() == VARIABLE_STATE_UNUSED) return;
+  if (v->state() == VARIABLE_STATE_MEMORY) return;
 
-  if (v.state() == VARIABLE_STATE_REGISTER)
+  if (v->state() == VARIABLE_STATE_REGISTER)
   {
-    if (v.changed())
+    if (v->changed())
     {
-      // FIXME: Dependent, Incorrect
-      compiler()->mov(*v._memoryOperand, mk_gpd(v.registerCode()));
-      v.setChanged(false);
-      v._memoryAccessCount++;
+      if (v->_spillFn)
+      {
+        v->_spillFn(v);
+      }
+      else
+      {
+        switch (v->type())
+        {
+          case VARIABLE_TYPE_INT32:
+            compiler()->mov(*v->_memoryOperand, mk_gpd(v->registerCode()));
+            break;
+#if defined(ASMJIT_X64)
+          case VARIABLE_TYPE_INT64:
+            compiler()->mov(*v->_memoryOperand, mk_gpq(v->registerCode()));
+            break;
+#endif // ASMJIT_X64
+          case VARIABLE_TYPE_FLOAT:
+            // TODO: NOT IMPLEMENTED
+            break;
+          case VARIABLE_TYPE_DOUBLE:
+            // TODO: NOT IMPLEMENTED
+            break;
+          case VARIABLE_TYPE_MM:
+            compiler()->movq(*v->_memoryOperand, mk_mm(v->registerCode()));
+            break;
+          case VARIABLE_TYPE_XMM:
+            // Alignment is not guaranted for naked functions in 32 bit mode
+            if (naked())
+              compiler()->movdqu(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            else
+              compiler()->movdqa(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            break;
+        }
+        v->_memoryAccessCount++;
+      }
+
+      v->setChanged(false);
     }
 
-    _freeReg(v.registerCode());
-    v._registerCode = NO_REG;
+    _freeReg(v->registerCode());
+    v->_registerCode = NO_REG;
 
-    v._state = VARIABLE_STATE_MEMORY;
-    v._spillCount++;
+    v->_state = VARIABLE_STATE_MEMORY;
+    v->_spillCount++;
   }
 }
 
-void Function::unuse(Variable& v)
+void Function::unuse(Variable* v)
 {
-  ASMJIT_ASSERT(compiler() == v.compiler());
-  if (v.state() == VARIABLE_STATE_UNUSED) return;
+  ASMJIT_ASSERT(compiler() == v->compiler());
+  if (v->state() == VARIABLE_STATE_UNUSED) return;
 
-  if (v.state() == VARIABLE_STATE_REGISTER)
+  if (v->state() == VARIABLE_STATE_REGISTER)
   {
-    _freeReg(v.registerCode());
-    v._registerCode = NO_REG;
+    _freeReg(v->registerCode());
+    v->_registerCode = NO_REG;
   }
 
-  v._state = VARIABLE_STATE_UNUSED;
-  v._reuseCount++;
+  v->_state = VARIABLE_STATE_UNUSED;
+  v->_reuseCount++;
 }
 
 static UInt32 getSpillScore(Variable* v)
@@ -881,53 +1070,60 @@ Variable* Function::_getSpillCandidate(UInt8 type)
   UInt32 candidateScore = 0;
   UInt32 variableScore;
 
-  if (type == VARIABLE_TYPE_INT32 || type == VARIABLE_TYPE_INT64)
+  switch (type)
   {
-    for (i = 0; i < len; i++)
-    {
-      v = _variables[i];
-      if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
-          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-          (v != _lastUsedRegister))
+    case VARIABLE_TYPE_INT32:
+    case VARIABLE_TYPE_INT64:
+      for (i = 0; i < len; i++)
       {
-        variableScore = getSpillScore(v);
-        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        v = _variables[i];
+        if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
+            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+            (v != _lastUsedRegister))
+        {
+          variableScore = getSpillScore(v);
+          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        }
       }
-    }
-  }
-  else if (type == VARIABLE_TYPE_MM)
-  {
-    for (i = 0; i < len; i++)
-    {
-      v = _variables[i];
-      if ((v->type() == VARIABLE_TYPE_MM) &&
-          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-          (v != _lastUsedRegister))
+      break;
+    case VARIABLE_TYPE_FLOAT:
+      // TODO: NOT IMPLEMENTED
+      break;
+    case VARIABLE_TYPE_DOUBLE:
+      // TODO: NOT IMPLEMENTED
+      break;
+    case VARIABLE_TYPE_MM:
+      for (i = 0; i < len; i++)
       {
-        variableScore = getSpillScore(v);
-        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        v = _variables[i];
+        if ((v->type() == VARIABLE_TYPE_MM) &&
+            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+            (v != _lastUsedRegister))
+        {
+          variableScore = getSpillScore(v);
+          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        }
       }
-    }
-  }
-  else if (type == VARIABLE_TYPE_XMM)
-  {
-    for (i = 0; i < len; i++)
-    {
-      v = _variables[i];
-      if ((v->type() == VARIABLE_TYPE_XMM) &&
-          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-          (v != _lastUsedRegister))
+      break;
+    case VARIABLE_TYPE_XMM:
+      for (i = 0; i < len; i++)
       {
-        variableScore = getSpillScore(v);
-        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        v = _variables[i];
+        if ((v->type() == VARIABLE_TYPE_XMM) &&
+            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+            (v != _lastUsedRegister))
+        {
+          variableScore = getSpillScore(v);
+          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
+        }
       }
-    }
+      break;
   }
 
   return candidate;
 }
 
-void Function::_allocReg(UInt8 code)
+void Function::_allocReg(UInt8 code, Variable* v)
 {
   UInt32 type = code & REGTYPE_MASK;
   UInt32 mask = 1U << (code & REGCODE_MASK);
@@ -940,14 +1136,17 @@ void Function::_allocReg(UInt8 code)
     case REG_GPQ:
       useGpRegisters(mask);
       modifyGpRegisters(mask);
+      _state._gp[code & 0x0F] = v;
       break;
     case REG_MM:
       useMmRegisters(mask);
       modifyMmRegisters(mask);
+      _state._mm[code & 0x0F] = v;
       break;
     case REG_XMM:
       useXmmRegisters(mask);
       modifyXmmRegisters(mask);
+      _state._xmm[code & 0x0F] = v;
       break;
   }
 }
@@ -964,12 +1163,15 @@ void Function::_freeReg(UInt8 code)
     case REG_GPD:
     case REG_GPQ:
       unuseGpRegisters(mask);
+      _state._gp[code & 0x0F] = NULL;
       break;
     case REG_MM:
       unuseMmRegisters(mask);
+      _state._mm[code & 0x0F] = NULL;
       break;
     case REG_XMM:
       unuseXmmRegisters(mask);
+      _state._xmm[code & 0x0F] = NULL;
       break;
   }
 }
@@ -995,20 +1197,31 @@ void Prolog::emit(Assembler& a)
 
   int i;
 
-  // Emit prolog if needed (prolog is not emitted for pure naked functions
-  if (!f->naked() || f->maxAlignmentStackSize())
+  // Emit prolog if needed (prolog is not emitted for pure naked functions)
+  if (!f->naked())
   {
     a.push(nbp);
     a.mov(nbp, nsp);
 
-#if defined(ASMJIT_X86)
-    // Alignment
-    if (f->maxAlignmentStackSize())
+    // Arguments size
+    if (f->variablesStackSize())
     {
-      // maxAlignmentStackSize can be 4 or 12, we build 8 or 16 from it.
-      a.and_(nbp, -((Int32)(f->maxAlignmentStackSize() + 4)));
-    }
+      SysInt ss = (
+        f->variablesStackSize() + 
+        f->prologEpilogStackSize() + 
+        f->stackAlignmentSize() + 
+        sizeof(SysInt)) & ~(f->stackAlignmentSize()-1);
+      a.sub(nsp, ss);
+
+#if defined(ASMJIT_X86)
+      // Alignment
+      if (f->stackAlignmentSize())
+      {
+        // stackAlignmentSize can be 8 or 16
+        a.and_(nsp, -((Int32)f->stackAlignmentSize()));
+      }
 #endif // ASMJIT_X86
+    }
   }
 
   // Save registers if needed
@@ -1048,6 +1261,11 @@ void Epilog::emit(Assembler& a)
   // First bind label (Function::_exitLabel) before the epilog
   if (_label) a.bind(_label);
 
+  if (f->emms())
+  {
+    a.emms();
+  }
+
   // Add variables and register cleanup code
   int i;
   for (i = NUM_REGS-1; i >= 0; i--)
@@ -1061,15 +1279,10 @@ void Epilog::emit(Assembler& a)
   }
 
   // Use epilog code (if needed)
-  if (!f->naked() || f->maxAlignmentStackSize())
+  if (!f->naked())
   {
     a.mov(nsp, nbp);
     a.pop(nbp);
-  }
-
-  if (f->emms())
-  {
-    a.emms();
   }
 
   // Return using correct instruction

@@ -8,7 +8,7 @@ TODO (Compiler):
 [ ] Add pluggable spill and reload of variables (mainly for MM/XMM registers)
 [ ] Add spill/restore for MM/XMM registers
 [ ] Add instruction reordering plugin (and design plugin architecture for asm)
-[ ] Add jump table builder (probably only for compiler, this is complex think)
+[ ] Add jump table builder (probably only for compiler, this is complex thing)
 
 TODO (Architecture)
 [ ] Add support for ARM architecture

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     Compiler c;
     Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction2<int*, int*>());
 
-    f.setNaked(true);
+    //f.setNaked(true);
 
     PtrRef a1(f.argument(0));
     PtrRef a2(f.argument(1));
@@ -116,6 +116,30 @@ int main(int argc, char* argv[])
 
     // Store result to a given pointer in second argument
     c.mov(dword_ptr(a2.c()), t.c());
+
+    {
+      XMMRef x1(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x2(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x3(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x4(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x5(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x6(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x7(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x8(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x9(f.newVariable(VARIABLE_TYPE_XMM));
+      XMMRef x10(f.newVariable(VARIABLE_TYPE_XMM));
+
+      c.pxor(x1.r(), x1.r());
+      c.pxor(x2.r(), x2.r());
+      c.pxor(x3.r(), x3.r());
+      c.pxor(x4.r(), x4.r());
+      c.pxor(x5.r(), x5.r());
+      c.pxor(x6.r(), x6.r());
+      c.pxor(x7.r(), x7.r());
+      c.pxor(x8.r(), x8.r());
+      c.pxor(x9.r(), x9.r());
+      c.pxor(x10.r(), x10.r());
+    }
 
     // Finish
     c.endFunction();

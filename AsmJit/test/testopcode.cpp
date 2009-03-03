@@ -497,7 +497,7 @@ int main(int argc, char* argv[])
   a.rsqrtps(xmm0,ptr(nax));
   a.rsqrtss(xmm0,xmm0);
   a.rsqrtss(xmm0,ptr(nax));
-  a.sfence(ptr(nax));
+  a.sfence();
   a.shufps(xmm0,xmm0,0);
   a.shufps(xmm0,ptr(nax),0);
   a.sqrtps(xmm0,xmm0);
