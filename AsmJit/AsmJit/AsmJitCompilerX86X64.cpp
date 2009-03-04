@@ -139,6 +139,14 @@ Variable::~Variable()
 {
 }
 
+void Variable::setPriority(UInt8 priority)
+{
+  _priority = priority;
+  
+  // Alloc if priority is set to 0
+  if (priority == 0) _function->alloc(this);
+}
+
 Variable* Variable::ref()
 {
   _refCount++;
@@ -790,6 +798,10 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
   v->_preferredRegister = preferredRegister;
   v->_priority = priority;
   _variables.append(v);
+
+  // Alloc register if priority is zero
+  if (priority == 0) alloc(v);
+
   return v;
 }
 
@@ -1495,9 +1507,9 @@ Epilog* Compiler::epilog(Function* f)
   return e;
 }
 
-// -------------------------------------------------------------------------
+// ============================================================================
 // [AsmJit::Compiler - Labels]
-// -------------------------------------------------------------------------
+// ============================================================================
 
 Label* Compiler::newLabel()
 {
@@ -1538,9 +1550,9 @@ void Compiler::build(Assembler& a)
   for (i = 0; i < len; i++) emitters[i]->postEmit(a);
 }
 
-// -------------------------------------------------------------------------
+// ============================================================================
 // [AsmJit::Compiler - Memory Management]
-// -------------------------------------------------------------------------
+// ============================================================================
 
 void Compiler::_registerOperand(Operand* op)
 {
@@ -1548,27 +1560,137 @@ void Compiler::_registerOperand(Operand* op)
   _operands.append(op);
 }
 
-// -------------------------------------------------------------------------
+// ============================================================================
+// [AsmJit::Compiler - Intrinsics]
+// ============================================================================
+
+void Compiler::op_var32(UInt32 code, const Int32Ref& a)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r32();
+    __emitX86(code, &ar);
+  }
+  else
+  {
+    __emitX86(code, &a.m());
+  }
+}
+
+void Compiler::op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
+{
+  if (b.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register br = b.r32();
+    __emitX86(code, &a, &br);
+  }
+  else
+  {
+    __emitX86(code, &a, &b.m());
+  }
+}
+
+void Compiler::op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r32();
+    __emitX86(code, &ar, &b);
+  }
+  else
+  {
+    __emitX86(code, &a.m(), &b);
+  }
+}
+
+void Compiler::op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r32();
+    __emitX86(code, &ar, &b);
+  }
+  else
+  {
+    __emitX86(code, &a.m(), &b);
+  }
+}
+
+#if defined(ASMJIT_X64)
+void Compiler::op_var64(UInt32 code, const Int64Ref& a)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r64();
+    __emitX86(code, &ar);
+  }
+  else
+  {
+    __emitX86(code, &a.m());
+  }
+}
+
+void Compiler::op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
+{
+  if (b.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register br = b.r64();
+    __emitX86(code, &a, &br);
+  }
+  else
+  {
+    __emitX86(code, &a, &b.m());
+  }
+}
+
+void Compiler::op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r64();
+    __emitX86(code, &ar, &b);
+  }
+  else
+  {
+    __emitX86(code, &a.m(), &b);
+  }
+}
+
+void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
+{
+  if (a.state() == VARIABLE_STATE_REGISTER)
+  {
+    Register ar = a.r64();
+    __emitX86(code, &ar, &b);
+  }
+  else
+  {
+    __emitX86(code, &a.m(), &b);
+  }
+}
+#endif // ASMJIT_X64
+
+// ============================================================================
 // [AsmJit::Compiler - EmitX86]
-// -------------------------------------------------------------------------
+// ============================================================================
 
 void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
   emit(newObject<Instruction>(code, o1, o2, o3));
 }
 
-// -------------------------------------------------------------------------
+// ============================================================================
 // [AsmJit::Compiler - Align]
-// -------------------------------------------------------------------------
+// ============================================================================
 
 void Compiler::align(SysInt m)
 {
   emit(newObject<Align>(m));
 }
 
-// -------------------------------------------------------------------------
+// ============================================================================
 // [AsmJit::Compiler - Bind]
-// -------------------------------------------------------------------------
+// ============================================================================
 
 void Compiler::bind(Label* label)
 {

@@ -408,7 +408,7 @@ struct ASMJIT_API Variable
   inline SysInt stackOffset() const { return _stackOffset; }
 
   //! @brief Set variable priority.
-  inline void setPriority(UInt8 priority) { _priority = priority; }
+  void setPriority(UInt8 priority);
   //! @brief Set varialbe preferred register.
   inline void setPreferredRegister(UInt8 code) { _preferredRegister = code; }
   //! @brief Set variable changed state.
@@ -525,9 +525,6 @@ private:
 
   //! @brief Custom data that can be used by custom spill and restore functions.
   void* _data;
-
-  friend struct Compiler;
-  friend struct Function;
 
   // disable copy
   inline Variable(const Variable& other);
@@ -1295,7 +1292,6 @@ private:
   Label* _exitLabel;
 
   friend struct Compiler;
-  friend struct Function;
   friend struct State;
 };
 
@@ -1604,74 +1600,16 @@ struct ASMJIT_API Compiler : public Serializer
   // [Intrinsics]
   // -------------------------------------------------------------------------
 
-  void op_var32(UInt32 code, const Int32Ref& a)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r32());
-    else
-      __emitX86(code, &a.m());
-  }
+  void op_var32(UInt32 code, const Int32Ref& a);
+  void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b);
+  void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b);
+  void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b);
 
 #if defined(ASMJIT_X64)
-  void op_var64(UInt32 code, const Int64Ref& a)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r64());
-    else
-      __emitX86(code, &a.m());
-  }
-#endif // ASMJIT_X64
-
-  void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
-  {
-    if (b.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a, &b.r32());
-    else
-      __emitX86(code, &a, &b.m());
-  }
-
-#if defined(ASMJIT_X64)
-  void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
-  {
-    if (b.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a, &b.r64());
-    else
-      __emitX86(code, &a, &b.m());
-  }
-#endif // ASMJIT_X64
-
-  void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r32(), &b);
-    else
-      __emitX86(code, &a.m(), &b);
-  }
-
-  void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r32(), &b);
-    else
-      __emitX86(code, &a.m(), &b);
-  }
-
-#if defined(ASMJIT_X64)
-  void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r64(), &b);
-    else
-      __emitX86(code, &a.m(), &b);
-  }
-
-  void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
-  {
-    if (a.state() == VARIABLE_STATE_REGISTER)
-      __emitX86(code, &a.r64(), &b);
-    else
-      __emitX86(code, &a.m(), &b);
-  }
+  void op_var64(UInt32 code, const Int64Ref& a);
+  void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b);
+  void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b);
+  void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b);
 #endif // ASMJIT_X64
 
   using Serializer::adc;
@@ -1737,10 +1675,6 @@ struct ASMJIT_API Compiler : public Serializer
   inline void add(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_ADD, dst, src); }
   inline void add(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_ADD, dst, src); }
   inline void add(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_ADD, dst, src); }
-
-  inline void and_(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_AND, dst, src); }
-  inline void and_(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_AND, dst, src); }
-  inline void and_(const Int32Ref& dst, const Immediate& src) { op_var32_imm(INST_AND, dst, src); }
 
   inline void and_(const Register& dst, const Int64Ref& src) { op_reg64_var64(INST_AND, dst, src); }
   inline void and_(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_AND, dst, src); }
