@@ -47,11 +47,18 @@ Include_Directories(${ASMJIT_DIR})
 
 Add_Definitions(-DDEBUG)
 
-Add_Executable(testcompiler testcompiler.cpp ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS} 
-                                             ${ASMJIT_COMPILER_SOURCES} ${ASMJIT_COMPILER_HEADERS} 
-                                             ${ASMJIT_PRETTYPRINTER_SOURCES} ${ASMJIT_PRETTYPRINTER_HEADERS})
-Add_Executable(testcpu      testcpu.cpp      ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
-Add_Executable(testjit      testjit.cpp      ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
-Add_Executable(testopcode   testopcode.cpp   ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
-Add_Executable(testreloc    testreloc.cpp    ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
-Add_Executable(testrewrite  testrewrite.cpp  ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+Add_Executable(testcpu       testcpu.cpp       ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+Add_Executable(testjit       testjit.cpp       ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+Add_Executable(testopcode    testopcode.cpp    ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+Add_Executable(testreloc     testreloc.cpp     ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+Add_Executable(testrewrite   testrewrite.cpp   ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS})
+
+Add_Executable(testcompiler  testcompiler.cpp
+  ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS} 
+  ${ASMJIT_COMPILER_SOURCES} ${ASMJIT_COMPILER_HEADERS} 
+  ${ASMJIT_PRETTYPRINTER_SOURCES} ${ASMJIT_PRETTYPRINTER_HEADERS})
+
+Add_Executable(testvariables testvariables.cpp
+  ${ASMJIT_BASE_SOURCES} ${ASMJIT_BASE_HEADERS}
+  ${ASMJIT_COMPILER_SOURCES} ${ASMJIT_COMPILER_HEADERS} 
+  ${ASMJIT_PRETTYPRINTER_SOURCES} ${ASMJIT_PRETTYPRINTER_HEADERS})

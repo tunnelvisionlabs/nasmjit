@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test AsmJit compiler.
+// This file is used to test AsmJit compiler, variables and states.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@
 #include <AsmJit/AsmJitPrettyPrinter.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)(int*, int*);
+typedef void (*MyFn)(int*);
 
 int main(int argc, char* argv[])
 {
@@ -52,14 +52,13 @@ int main(int argc, char* argv[])
   // Use compiler to make a function
   {
     Compiler c;
-    Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction2<int*, int*>());
+    Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<int*>());
 
     // Possibilities to improve code:
     //   f.setNaked(true);
     //   f.setAllocableEbp(true);
 
     PtrRef a1(f.argument(0));
-    PtrRef a2(f.argument(1));
 
     // Create some variables, default variable priority is 10.
     Int32Ref x1(f.newVariable(VARIABLE_TYPE_INT32));
@@ -83,17 +82,41 @@ int main(int argc, char* argv[])
     c.mov(x7.x(), 7);
     c.mov(x8.x(), 8);
 
+    Label* L = c.newLabel();
+    c.jmp(L);
+
+    // Now we use new block
+    c.comment("Begin of block");
+    {
+      // StateRef is convenience class that will restore state in destructor.
+      StateRef state(f.saveState());
+
+      // Create temporary variable
+      Int32Ref t0(f.newVariable(VARIABLE_TYPE_INT32, 0));
+      Int32Ref t1(f.newVariable(VARIABLE_TYPE_INT32, 0));
+      Int32Ref t2(f.newVariable(VARIABLE_TYPE_INT32, 0));
+
+      c.mov(t0.r(), 1000);
+      c.mov(t1.r(), 2000);
+      c.mov(t2.r(), 3000);
+
+      c.add(x1.r(), t0.r());
+      c.add(x2.r(), t1.r());
+      c.add(x3.r(), t2.r());
+
+      // Now we can do spilling / allocation here and in end of this block
+      // everything will be restored. So it's possible for example to jump
+      // to next section from previous without corrupting variables state.
+    }
+    c.comment("End of block");
+
+    c.bind(L);
+
     // Create temporary variable
     Int32Ref t(f.newVariable(VARIABLE_TYPE_INT32));
     // Set priority to 5 (lower probability to spill)
     t.setPriority(5);
 
-    // Make sum (addition)
-    // r() means that we can read or write to register, c() means that register
-    // is used only for read (compiler can use informations collected by these
-    // functions to optimize register allocation and spilling).
-    //
-    // If you are not sure about .c(), .x() and .r(), use always .r().
     c.xor_(t.r(), t.r());
     c.add(t.r(), x1.c());
     c.add(t.r(), x2.c());
@@ -106,20 +129,6 @@ int main(int argc, char* argv[])
 
     // Store result to a given pointer in first argument
     c.mov(dword_ptr(a1.c()), t.c());
-
-    // Make sum (subtraction)
-    c.xor_(t.r(), t.r());
-    c.sub(t.r(), x1.c());
-    c.sub(t.r(), x2.c());
-    c.sub(t.r(), x3.c());
-    c.sub(t.r(), x4.c());
-    c.sub(t.r(), x5.c());
-    c.sub(t.r(), x6.c());
-    c.sub(t.r(), x7.c());
-    c.sub(t.r(), x8.c());
-
-    // Store result to a given pointer in second argument
-    c.mov(dword_ptr(a2.c()), t.c());
 
     // Finish
     c.endFunction();
@@ -142,9 +151,8 @@ int main(int argc, char* argv[])
 
   // Cast vmem to our function and call the code.
   int x;
-  int y;
-  function_cast<MyFn>(vmem)(&x, &y);
-  printf("\nResults from JIT function: %d %d\n", x, y);
+  function_cast<MyFn>(vmem)(&x);
+  printf("\nResults from JIT function: %d\n", x);
 
   // Memory should be freed, but use VM::free() to do that.
   VM::free(vmem, vsize);

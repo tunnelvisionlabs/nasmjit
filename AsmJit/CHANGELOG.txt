@@ -1,3 +1,13 @@
+2009-03-04
+- Improved Compiler
+- Fixed alloc/spill of MM and XMM registers
+- Added better prolog / epilog code
+- Added support for custom spill / restore functions (to bypass default 
+  ones - this is mainly for MMX/SSE programming)
+- Added first implementation of State (state of current variables that can
+  be saved or restored)
+- Fixed wrong sfence() data in instruction map
+
 2009-02-26:
 - Released 0.6-alpha
 - Fixed many bugs related to assembler and compiler parts. Tested MMX and 

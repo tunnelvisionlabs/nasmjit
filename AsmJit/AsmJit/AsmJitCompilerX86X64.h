@@ -353,8 +353,10 @@ struct ASMJIT_API Variable
 {
   // [Typedefs]
 
+  //! @Brief Custom alloc function type.
+  typedef void (*AllocFn)(Variable* v);
+  //! @Brief Custom spill function type.
   typedef void (*SpillFn)(Variable* v);
-  typedef void (*RestoreFn)(Variable* v);
 
   // [Construction / Destruction]
 
@@ -426,6 +428,32 @@ struct ASMJIT_API Variable
   inline void spill();
   inline void unuse();
 
+  // [Custom Spill / Restore]
+
+  //! @brief Return @c true if this variable uses custom alloc or spill 
+  //! functions (this means bypassing built-in functions).
+  //!
+  //! @note If alloc or spill function is set, variable is marked as custom
+  //! and there is no chance to move it to / from stack. For example mmx zero
+  //! register can be implemented in allocFn() that will emit pxor(mm, mm).
+  //! Variable will never spill into stack in this case.
+  inline bool isCustom() const
+  { return _allocFn != NULL || _spillFn != NULL; }
+
+  //! @brief Get custom alloc function.
+  inline AllocFn allocFn() const { return _allocFn; }
+  //! @brief Get custom spill function.
+  inline SpillFn spillFn() const { return _spillFn; }
+  //! @brief Get custom data pointer.
+  inline void* data() const { return _data; }
+
+  //! @brief Set custom alloc function.
+  inline void setAllocFn(AllocFn fn) { _allocFn = fn; }
+  //! @brief Set custom spill function.
+  inline void setSpillFn(SpillFn fn) { _spillFn = fn; }
+  //! @brief Set custom data.
+  inline void setData(void* data) { _data = data; }
+
 private:
   //! @brief Set variable stack offset.
   //! @internal
@@ -489,11 +517,11 @@ private:
   //! @brief Variable memory operand.
   Mem* _memoryOperand;
 
-  //! @brief Custom spill function (or built-in spill function).
-  SpillFn _spillFn;
+  //! @brief Custom alloc function (or NULL).
+  AllocFn _allocFn;
 
-  //! @brief Custom restore function (or built-in restore function).
-  RestoreFn _restoreFn;
+  //! @brief Custom spill function (or NULL).
+  SpillFn _spillFn;
 
   //! @brief Custom data that can be used by custom spill and restore functions.
   void* _data;
@@ -505,6 +533,7 @@ private:
   inline Variable(const Variable& other);
   inline Variable& operator=(const Variable& other);
 
+  friend struct Compiler;
   friend struct Function;
   friend struct VariableRef;
 };
@@ -522,11 +551,20 @@ private:
 //! @note Compiler can reuse existing variables.
 struct VariableRef
 {
+  // [Typedefs]
+
+  typedef Variable::AllocFn AllocFn;
+  typedef Variable::SpillFn SpillFn;
+
+  // [Construction / Destruction]
+
   inline VariableRef() : _v(NULL) {}
   inline VariableRef(Variable* v) : _v(v->ref()) {}
   inline ~VariableRef() { if (_v) _v->deref(); }
 
   inline Variable* v() { return _v; }
+
+  // [Methods]
 
   //! @brief Return variable type, see @c VARIABLE_TYPE.
   inline UInt8 type() const { ASMJIT_ASSERT(_v); return _v->type(); }
@@ -568,6 +606,27 @@ struct VariableRef
   //! @note Getting memory address operand will always call @c spill().
   inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
 
+  // [Custom Spill / Restore]
+
+  //! @brief Return @c true if variable uses custom alloc / spill functions.
+  //!
+  //! @sa @c AsmJit::Variable::isCustom() method.
+  inline bool isCustom() const { ASMJIT_ASSERT(_v); return _v->isCustom(); }
+
+  //! @brief Get custom restore function.
+  inline AllocFn allocFn() const { ASMJIT_ASSERT(_v); return _v->allocFn(); }
+  //! @brief Get custom spill function.
+  inline SpillFn spillFn() const { ASMJIT_ASSERT(_v); return _v->spillFn(); }
+  //! @brief Get custom data pointer.
+  inline void* data() const { ASMJIT_ASSERT(_v); return _v->data(); }
+
+  //! @brief Set custom restore function.
+  inline void setAllocFn(AllocFn fn) { ASMJIT_ASSERT(_v); _v->setAllocFn(fn); }
+  //! @brief Set custom spill function.
+  inline void setSpillFn(SpillFn fn) { ASMJIT_ASSERT(_v); _v->setSpillFn(fn); }
+  //! @brief Set custom data.
+  inline void setData(void* data) { ASMJIT_ASSERT(_v); _v->setData(data); }
+
 protected:
   Variable* _v;
 };
@@ -575,8 +634,12 @@ protected:
 //! @brief 32 bit integer reference.
 struct Int32Ref : public VariableRef
 {
+  // [Construction / Destruction]
+
   inline Int32Ref() : VariableRef() {}
   inline Int32Ref(Variable* v) : VariableRef(v) {}
+
+  // [Registers]
 
   inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
   inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
@@ -607,8 +670,12 @@ struct Int32Ref : public VariableRef
 //! @brief 64 bit integer reference.
 struct Int64Ref : public VariableRef
 {
+  // [Construction / Destruction]
+
   inline Int64Ref() : VariableRef() {}
   inline Int64Ref(Variable* v) : VariableRef(v) {}
+
+  // [Registers]
 
   inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
   inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
@@ -633,8 +700,12 @@ struct Int64Ref : public VariableRef
 //! @brief MM reference.
 struct MMRef : public VariableRef
 {
+  // [Construction / Destruction]
+
   inline MMRef() : VariableRef() {}
   inline MMRef(Variable* v) : VariableRef(v) {}
+
+  // [Registers]
 
   inline MMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_mm(_v->registerCode()); }
   inline MMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_mm(_v->registerCode()); }
@@ -644,8 +715,12 @@ struct MMRef : public VariableRef
 //! @brief XMM reference.
 struct XMMRef : public VariableRef
 {
+  // [Construction / Destruction]
+
   inline XMMRef() : VariableRef() {}
   inline XMMRef(Variable* v) : VariableRef(v) {}
+
+  // [Registers]
 
   inline XMMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_xmm(_v->registerCode()); }
   inline XMMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_xmm(_v->registerCode()); }
@@ -667,30 +742,80 @@ typedef SysIntRef PtrRef;
 //! @brief Contains informations about current register state.
 struct ASMJIT_API State
 {
-  State(Compiler* c);
+  // [Construction / Destruction]
+
+  State(Compiler* c, Function* f);
   virtual ~State();
+
+  union Data 
+  {
+    //! @brief All variables in one array.
+    Variable* _v[16+8+16];
+
+    struct {
+      //! @brief Regeral purpose registers.
+      Variable* _gp[16];
+      //! @brief MMX registers.
+      Variable* _mm[8];
+      //! @brief XMM registers.
+      Variable* _xmm[16];
+    };
+  };
 
 private:
   //! @brief Clear state.
   void _clear();
 
-  //! @brief Set state to function state.
-  void _set(Function* f);
-
-  //! @brief Get (Save) state from function state.
-  void _save(Function* f);
+  //! @brief Save function state (there is no code generated when saving state).
+  void _save();
   //! @brief Restore function state, can spill and alloc registers.
-  void _restore(Function* f);
+  void _restore();
 
-  //! @brief Regeral purpose registers.
-  Variable* _gp[16];
-  //! @brief MMX registers.
-  Variable* _mm[8];
-  //! @brief XMM registers.
-  Variable* _xmm[16];
+  //! @brief Set function state to current state.
+  //!
+  //! @note This method is similar to @c _restore(), but it will not alloc or 
+  //! spill registers.
+  void _set();
+
+  //! @brief Compiler this state is related to.
+  Compiler* _compiler;
+
+  //! @brief Function this state is related to.
+  Function* _function;
+
+  //! @brief State data.
+  Data _data;
+
+  // disable copy
+  inline State(const State& other);
+  inline State& operator=(const State& other);
 
   friend struct Compiler;
   friend struct Function;
+  friend struct StateRef;
+};
+
+// ============================================================================
+// [AsmJit::StateRef]
+// ============================================================================
+
+struct StateRef
+{
+  inline StateRef(State* state) :
+    _state(state)
+  {
+  }
+
+  inline ~StateRef();
+
+  inline State* state() const { return _state; }
+
+private:
+  State* _state;
+
+  // disable copy
+  inline StateRef(const StateRef& other);
+  inline StateRef& operator=(const StateRef& other);
 };
 
 // ============================================================================
@@ -703,8 +828,12 @@ private:
 //! createyour interface it's needed to override virtual method @c emit().
 struct ASMJIT_API Emittable
 {
+  // [Construction / Destruction]
+
   Emittable(Compiler* c, UInt32 type);
   virtual ~Emittable();
+
+  // [Methods]
 
   //! @brief Prepare for emitting (optional).
   virtual void prepare();
@@ -736,8 +865,12 @@ private:
 
 struct ASMJIT_API Comment : public Emittable
 {
+  // [Construction / Destruction]
+
   Comment(Compiler* c, const char* str);
   virtual ~Comment();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -753,8 +886,12 @@ private:
 
 struct ASMJIT_API Align : public Emittable
 {
+  // [Construction / Destruction]
+
   Align(Compiler* c, SysInt size = 0);
   virtual ~Align();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -772,9 +909,13 @@ private:
 //! @brief Instruction emittable.
 struct ASMJIT_API Instruction : public Emittable
 {
+  // [Construction / Destruction]
+
   Instruction(Compiler* c);
   Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
   virtual ~Instruction();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -892,8 +1033,12 @@ struct BuildFunction6
 //! @brief Function emittable.
 struct ASMJIT_API Function : public Emittable
 {
+  // [Construction / Destruction]
+
   Function(Compiler* c);
   virtual ~Function();
+
+  // [Methods]
 
   virtual void prepare();
   virtual void emit(Assembler& a);
@@ -991,6 +1136,7 @@ struct ASMJIT_API Function : public Emittable
 
   Variable* _getSpillCandidate(UInt8 type);
 
+  void _allocAs(Variable* v, UInt8 mode, UInt32 code);
   void _allocReg(UInt8 code, Variable* v);
   void _freeReg(UInt8 code);
 
@@ -1044,6 +1190,14 @@ struct ASMJIT_API Function : public Emittable
   inline void modifyGpRegisters(UInt32 mask) { _modifiedGpRegisters |= mask; }
   inline void modifyMmRegisters(UInt32 mask) { _modifiedMmRegisters |= mask; }
   inline void modifyXmmRegisters(UInt32 mask) { _modifiedXmmRegisters |= mask; }
+
+  // --------------------------------------------------------------------------
+  // [State]
+  // --------------------------------------------------------------------------
+
+  State *saveState();
+  void restoreState(State* state);
+  void setState(State* state);
 
   // --------------------------------------------------------------------------
   // [Labels]
@@ -1124,9 +1278,13 @@ private:
   UInt32 _modifiedXmmRegisters;
 
   PodVector<Variable*> _variables;
-  State _state;
-
   Variable* _lastUsedRegister;
+
+  // --------------------------------------------------------------------------
+  // [State]
+  // --------------------------------------------------------------------------
+
+  State _state;
 
   // --------------------------------------------------------------------------
   // [Labels]
@@ -1146,6 +1304,9 @@ inline void Variable::alloc(UInt8 mode) { function()->alloc(this, mode); }
 inline void Variable::spill() { function()->spill(this); }
 inline void Variable::unuse() { function()->unuse(this); }
 
+inline StateRef::~StateRef()
+{ if (_state) _state->_function->restoreState(_state); }
+
 // ============================================================================
 // [AsmJit::Prolog]
 // ============================================================================
@@ -1153,8 +1314,12 @@ inline void Variable::unuse() { function()->unuse(this); }
 //! @brief Prolog emittable.
 struct ASMJIT_API Prolog : public Emittable
 {
+  // [Construction / Destruction]
+
   Prolog(Compiler* c, Function* f);
   virtual ~Prolog();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -1175,8 +1340,12 @@ private:
 //! @brief Epilog emittable.
 struct ASMJIT_API Epilog : public Emittable
 {
+  // [Construction / Destruction]
+
   Epilog(Compiler* c, Function* f);
   virtual ~Epilog();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -1199,8 +1368,12 @@ private:
 //! Target is bound label location.
 struct ASMJIT_API Target : public Emittable
 {
+  // [Construction / Destruction]
+
   Target(Compiler* c, Label* l);
   virtual ~Target();
+
+  // [Methods]
 
   virtual void emit(Assembler& a);
 
@@ -1225,10 +1398,14 @@ private:
 //! All emittables are allocated by @c Compiler by this way.
 struct ASMJIT_API Zone
 {
+  // [Construction / Destruction]
+
   //! @brief Create new instance of @c Zone.
   Zone(SysUInt chunkSize);
   //! @brief Destroy zone instance.
   ~Zone();
+
+  // [Methods]
 
   //! @brief Allocate @c size bytes of memory and return pointer to it.
   void* alloc(SysUInt size);
@@ -1239,6 +1416,8 @@ struct ASMJIT_API Zone
   inline SysUInt total() const { return _total; }
   //! @brief Return (default) chunk size.
   inline SysUInt chunkSize() const { return _chunkSize; }
+
+  // [Chunk]
 
   //! @brief One allocated chunk of memory.
   struct Chunk
@@ -1284,6 +1463,10 @@ private:
 //! registers.
 struct ASMJIT_API Compiler : public Serializer
 {
+  // -------------------------------------------------------------------------
+  // [Typedefs]
+  // -------------------------------------------------------------------------
+
   typedef PodVector<Emittable*> EmittableList;
   typedef PodVector<Variable*> VariableList;
   typedef PodVector<Operand*> OperandList;

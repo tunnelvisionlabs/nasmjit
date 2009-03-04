@@ -86,6 +86,17 @@ static const UInt32 variableSizeData[] = {
   16               // VARIABLE_TYPE_XMM
 };
 
+static const UInt8 variableRegCodeData[] = 
+{
+  NO_REG,
+  REG_GPD,
+  REG_GPQ,
+  REG_X87,
+  REG_X87,
+  REG_MM,
+  REG_XMM
+};
+
 #define ASMJIT_ARRAY_SIZE(A) (sizeof(A) / sizeof(*A))
 
 static UInt32 getVariableSize(UInt32 type)
@@ -114,8 +125,8 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _preferredRegister(0xFF),
   _changed(false),
   _stackOffset(0),
+  _allocFn(NULL),
   _spillFn(NULL),
-  _restoreFn(NULL),
   _data(NULL)
 {
   ASMJIT_ASSERT(f != NULL);
@@ -143,7 +154,9 @@ void Variable::deref()
 // [AsmJit::State]
 // ============================================================================
 
-State::State(Compiler* c)
+State::State(Compiler* c, Function* f) :
+  _compiler(c),
+  _function(f)
 {
   _clear();
 }
@@ -154,86 +167,7 @@ State::~State()
 
 void State::_clear()
 {
-  memset(_gp , 0, sizeof(_gp ));
-  memset(_mm , 0, sizeof(_mm ));
-  memset(_xmm, 0, sizeof(_xmm));
-}
-
-void State::_set(Function* f)
-{
-  memcpy(_gp , f->_state._gp , sizeof(_gp ));
-  memcpy(_mm , f->_state._mm , sizeof(_mm ));
-  memcpy(_xmm, f->_state._xmm, sizeof(_xmm));
-}
-
-void State::_save(Function* f)
-{
-  _clear();
-
-  // Get state of all variables
-  PodVector<Variable *>& variables = f->_variables;
-  SysUInt i, len = variables.length();
-
-  for (i = 0; i < len; i++)
-  {
-    Variable* v = variables[i];
-
-    if (v->state() == VARIABLE_STATE_REGISTER)
-    {
-      switch (v->type())
-      {
-        case VARIABLE_TYPE_INT32:
-        case VARIABLE_TYPE_INT64:
-          _gp[v->registerCode() & 0x0F] = v;
-          break;
-        case VARIABLE_TYPE_FLOAT:
-        case VARIABLE_TYPE_DOUBLE:
-          // TODO: NOT IMPLEMENTED
-          break;
-        case VARIABLE_TYPE_MM:
-          _mm[v->registerCode() & 0x0F] = v;
-          break;
-        case VARIABLE_TYPE_XMM:
-          _xmm[v->registerCode() & 0x0F] = v;
-          break;
-      }
-    }
-  }
-}
-
-void State::_restore(Function* f)
-{
-#if 0
-  // Set state of all variables
-  PodVector<Variable *>& variables = f->_variables;
-  SysUInt i, len = variables.length();
-
-  for (i = 0; i < len; i++)
-  {
-    Variable* v = variables[i];
-
-    if (v->state() == VARIABLE_STATE_REGISTER)
-    {
-      switch (v->type())
-      {
-        case VARIABLE_TYPE_INT32:
-        case VARIABLE_TYPE_INT64:
-          _gp[v->registerCode() & 0x0F] = v;
-          break;
-        case VARIABLE_TYPE_FLOAT:
-        case VARIABLE_TYPE_DOUBLE:
-          // TODO: NOT IMPLEMENTED
-          break;
-        case VARIABLE_TYPE_MM:
-          _mm[v->registerCode() & 0x0F] = v;
-          break;
-        case VARIABLE_TYPE_XMM:
-          _xmm[v->registerCode() & 0x0F] = v;
-          break;
-      }
-    }
-  }
-#endif
+  memset(&_data, 0, sizeof(_data));
 }
 
 // ============================================================================
@@ -335,6 +269,11 @@ void Instruction::emit(Assembler& a)
 // [AsmJit::Function]
 // ============================================================================
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4355) // this used in base member initializer list
+#endif // _MSC_VER
+
 Function::Function(Compiler* c) : 
   Emittable(c, EMITTABLE_FUNCTION),
   _stackAlignmentSize(0),
@@ -358,11 +297,15 @@ Function::Function(Compiler* c) :
   _entryLabel(c->newLabel()),
   _prologLabel(c->newLabel()),
   _exitLabel(c->newLabel()),
-  _state(c)
+  _state(c, this)
 {
   memset32(_cconvArgumentsGp, 0xFFFFFFFF, 16);
   memset32(_cconvArgumentsXmm, 0xFFFFFFFF, 16);
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif // _MSC_VER
 
 Function::~Function()
 {
@@ -672,7 +615,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       v->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
       _allocReg(reg, v);
 
-      _state._gp[reg & 0x0F] = v;
+      _state._data._gp[reg & 0x0F] = v;
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -726,7 +669,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._gp[reg & 0x0F] = v;
+        _state._data._gp[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
@@ -737,7 +680,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._xmm[reg & 0x0F] = v;
+        _state._data._xmm[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -768,7 +711,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._gp[reg & 0x0F] = v;
+        _state._data._gp[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -785,7 +728,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._xmm[reg & 0x0F] = v;
+        _state._data._xmm[reg & 0x0F] = v;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -834,6 +777,10 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
       v->_priority = priority;
       v->_changed = 0;
 
+      v->_allocFn = NULL;
+      v->_spillFn = NULL;
+      v->_data = NULL;
+
       return v;
     }
   }
@@ -855,9 +802,6 @@ void Function::alloc(Variable* v, UInt8 mode)
 
   // New register code.
   UInt8 code = NO_REG;
-
-  // true if we must copy content from memory to register before we can use it
-  bool copy = (v->state() == VARIABLE_STATE_MEMORY);
 
   // TODO:
   // if (v->_preferredRegister != NO_REG)
@@ -921,56 +865,7 @@ void Function::alloc(Variable* v, UInt8 mode)
     spill(candidate);
   }
 
-  v->_state = VARIABLE_STATE_REGISTER;
-  v->_registerCode = code;
-
-  _allocReg(code, v);
-
-  if (copy && mode != VARIABLE_ALLOC_WRITE)
-  {
-    if (v->_restoreFn)
-    {
-      v->_restoreFn(v);
-    }
-    else
-    {
-      switch (v->type())
-      {
-        case VARIABLE_TYPE_INT32:
-          compiler()->mov(mk_gpd(v->_registerCode), *v->_memoryOperand);
-          break;
-#if defined(ASMJIT_X64)
-        case VARIABLE_TYPE_INT64:
-          compiler()->mov(mk_gpq(v->_registerCode), *v->_memoryOperand);
-          break;
-#endif // ASMJIT_X64
-        case VARIABLE_TYPE_FLOAT:
-          // TODO: NOT IMPLEMENTED
-          break;
-        case VARIABLE_TYPE_DOUBLE:
-          // TODO: NOT IMPLEMENTED
-          break;
-        case VARIABLE_TYPE_MM:
-          compiler()->movq(mk_mm(v->_registerCode), *v->_memoryOperand);
-          break;
-        case VARIABLE_TYPE_XMM:
-          // Alignment is not guaranted for naked functions in 32 bit mode
-          if (naked())
-            compiler()->movdqu(mk_xmm(v->_registerCode), *v->_memoryOperand);
-          else
-            compiler()->movdqa(mk_xmm(v->_registerCode), *v->_memoryOperand);
-          break;
-      }
-      v->_memoryAccessCount++;
-    }
-  }
-
-  if ((mode & VARIABLE_ALLOC_WRITE) != 0)
-  {
-    v->_changed = true;
-  }
-
-  _lastUsedRegister = v;
+  _allocAs(v, mode, code);
 }
 
 void Function::spill(Variable* v)
@@ -983,9 +878,9 @@ void Function::spill(Variable* v)
   {
     if (v->changed())
     {
-      if (v->_spillFn)
+      if (v->isCustom())
       {
-        v->_spillFn(v);
+        if (v->_spillFn) v->_spillFn(v);
       }
       else
       {
@@ -1123,6 +1018,63 @@ Variable* Function::_getSpillCandidate(UInt8 type)
   return candidate;
 }
 
+void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
+{
+  // true if we must copy content from memory to register before we can use it
+  bool copy = (v->state() == VARIABLE_STATE_MEMORY);
+
+  v->_state = VARIABLE_STATE_REGISTER;
+  v->_registerCode = code;
+
+  _allocReg(code, v);
+
+  if (copy && mode != VARIABLE_ALLOC_WRITE)
+  {
+    if (v->isCustom())
+    {
+      if (v->_allocFn) v->_allocFn(v);
+    }
+    else
+    {
+      switch (v->type())
+      {
+        case VARIABLE_TYPE_INT32:
+          compiler()->mov(mk_gpd(v->_registerCode), *v->_memoryOperand);
+          break;
+#if defined(ASMJIT_X64)
+        case VARIABLE_TYPE_INT64:
+          compiler()->mov(mk_gpq(v->_registerCode), *v->_memoryOperand);
+          break;
+#endif // ASMJIT_X64
+        case VARIABLE_TYPE_FLOAT:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_DOUBLE:
+          // TODO: NOT IMPLEMENTED
+          break;
+        case VARIABLE_TYPE_MM:
+          compiler()->movq(mk_mm(v->_registerCode), *v->_memoryOperand);
+          break;
+        case VARIABLE_TYPE_XMM:
+          // Alignment is not guaranted for naked functions in 32 bit mode
+          if (naked())
+            compiler()->movdqu(mk_xmm(v->_registerCode), *v->_memoryOperand);
+          else
+            compiler()->movdqa(mk_xmm(v->_registerCode), *v->_memoryOperand);
+          break;
+      }
+      v->_memoryAccessCount++;
+    }
+  }
+
+  if ((mode & VARIABLE_ALLOC_WRITE) != 0)
+  {
+    v->_changed = true;
+  }
+
+  _lastUsedRegister = v;
+}
+
 void Function::_allocReg(UInt8 code, Variable* v)
 {
   UInt32 type = code & REGTYPE_MASK;
@@ -1136,17 +1088,17 @@ void Function::_allocReg(UInt8 code, Variable* v)
     case REG_GPQ:
       useGpRegisters(mask);
       modifyGpRegisters(mask);
-      _state._gp[code & 0x0F] = v;
+      _state._data._gp[code & 0x0F] = v;
       break;
     case REG_MM:
       useMmRegisters(mask);
       modifyMmRegisters(mask);
-      _state._mm[code & 0x0F] = v;
+      _state._data._mm[code & 0x0F] = v;
       break;
     case REG_XMM:
       useXmmRegisters(mask);
       modifyXmmRegisters(mask);
-      _state._xmm[code & 0x0F] = v;
+      _state._data._xmm[code & 0x0F] = v;
       break;
   }
 }
@@ -1163,17 +1115,85 @@ void Function::_freeReg(UInt8 code)
     case REG_GPD:
     case REG_GPQ:
       unuseGpRegisters(mask);
-      _state._gp[code & 0x0F] = NULL;
+      _state._data._gp[code & 0x0F] = NULL;
       break;
     case REG_MM:
       unuseMmRegisters(mask);
-      _state._mm[code & 0x0F] = NULL;
+      _state._data._mm[code & 0x0F] = NULL;
       break;
     case REG_XMM:
       unuseXmmRegisters(mask);
-      _state._xmm[code & 0x0F] = NULL;
+      _state._data._xmm[code & 0x0F] = NULL;
       break;
   }
+}
+
+State *Function::saveState()
+{
+  State* s = compiler()->newObject<State>(this);
+  memcpy(&s->_data, &_state._data, sizeof(State::Data));
+  return s;
+}
+
+void Function::restoreState(State* s)
+{
+  ASMJIT_ASSERT(s->_function == this);
+
+  // make local copy of function state
+  State::Data f_d;
+  State::Data& s_d = s->_data;
+
+  memcpy(&f_d, &_state._data, sizeof(State::Data));
+
+  SysInt base;
+  SysInt i;
+
+  // Spill registers
+  for (base = 0, i = 0; i < 16+8+16; i++)
+  {
+    if (i == 16 || i == 24) base = i;
+
+    Variable* from = f_d._v[i];
+    Variable* to   = s_d._v[i];
+
+    if (from != to)
+    {
+      UInt8 regIndex = (UInt8)(i - base);
+
+      // Spill register
+      if (from != NULL) 
+      {
+        spill(from);
+      }
+    }
+  }
+
+  // Alloc registers
+  for (base = 0, i = 0; i < 16+8+16; i++)
+  {
+    if (i == 16 || i == 24) base = i;
+
+    Variable* from = f_d._v[i];
+    Variable* to   = s_d._v[i];
+
+    if (from != to)
+    {
+      UInt8 regIndex = (UInt8)(i - base);
+
+      // Alloc register
+      if (to != NULL) 
+      {
+        UInt8 code = regIndex | variableRegCodeData[to->type()];
+        _allocAs(to, VARIABLE_ALLOC_READWRITE, code);
+      }
+    }
+  }
+}
+
+void Function::setState(State* s)
+{
+  ASMJIT_ASSERT(s->_function == this);
+  memcpy(&_state._data, &s->_data, sizeof(State::Data));
 }
 
 // ============================================================================
@@ -1210,7 +1230,7 @@ void Prolog::emit(Assembler& a)
         f->variablesStackSize() + 
         f->prologEpilogStackSize() + 
         f->stackAlignmentSize() + 
-        sizeof(SysInt)) & ~(f->stackAlignmentSize()-1);
+        sizeof(SysInt) + 15) & ~15;
       a.sub(nsp, ss);
 
 #if defined(ASMJIT_X86)
