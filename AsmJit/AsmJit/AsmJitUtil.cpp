@@ -24,7 +24,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 #include "AsmJitUtil.h"
 
 namespace AsmJit {

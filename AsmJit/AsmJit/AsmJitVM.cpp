@@ -69,7 +69,7 @@ static SysUInt roundUpToPowerOf2(SysUInt base)
 // [AsmJit::VM::Windows]
 // ============================================================================
 
-#if (ASMJIT_OS == ASMJIT_WINDOWS)
+#if defined(ASMJIT_WINDOWS)
 
 #include <windows.h>
 
@@ -135,7 +135,7 @@ SysUInt VM::pageSize()
 // [AsmJit::VM::Posix]
 // ============================================================================
 
-#if ASMJIT_OS == ASMJIT_POSIX
+#if defined(ASMJIT_POSIX)
 
 #include <sys/types.h>
 #include <sys/mman.h>

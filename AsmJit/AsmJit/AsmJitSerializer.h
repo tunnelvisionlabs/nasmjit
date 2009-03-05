@@ -28,7 +28,7 @@
 #define _ASMJITSERIZALIZER_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 
 // [X86 / X64]
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)

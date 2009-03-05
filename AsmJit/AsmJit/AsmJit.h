@@ -69,32 +69,16 @@
 //! @addtogroup AsmJit_Config
 //! @{
 
-//! @def ASMJIT_OS
-//! @brief Macro that contains information about operating system.
-//!
-//! Supported values are @c ASMJIT_WINDOWS (1) for Windows or 
-//! @c ASMJIT_POSIX (2) for Posix operating systems (Linux, BSD, MacOS).
-
 //! @def ASMJIT_WINDOWS
-//! @brief Used in @c ASMJIT_OS macro.
-//!
-//! Value is 1.
+//! @brief Macro that is declared if AsmJit is compiler for Windows.
 
 //! @def ASMJIT_POSIX
-//! @brief Used in @c ASMJIT_OS macro.
-//!
-//! Value is 2.
+//! @brief Macro that is declared if AsmJit is compiler for unix like 
+//! operating system.
 
 //! @def ASMJIT_API
 //! @brief Attribute that's added to classes that can be exported if AsmJit
 //! is compiled as a dll library.
-
-//! @def ASMJIT_VAR
-//! @brief Attribute that's added to variables that can be exported if AsmJit
-//! is compiled as a dll library.
-//!
-//! @note Default value is extern, because registers are declared in .cpp file
-//! and not in headers.
 
 //! @def ASMJIT_MALLOC
 //! @brief Function to call to allocate dynamic memory.
@@ -118,11 +102,13 @@
 //! @brief Main AsmJit library namespace.
 
 // [Includes]
-#include "AsmJitConfig.h"
-
+#include "AsmJitBuild.h"
 #include "AsmJitAssembler.h"
 #include "AsmJitCompiler.h"
 #include "AsmJitCpuInfo.h"
+#include "AsmJitDefs.h"
+#include "AsmJitPrettyPrinter.h"
+#include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 #include "AsmJitVM.h"
 

@@ -28,7 +28,7 @@
 #define _ASMJITUTIL_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 
 #include <stdlib.h>
 #include <string.h>

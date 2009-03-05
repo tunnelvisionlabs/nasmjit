@@ -26,7 +26,7 @@
 // [Dependencies]
 #include "AsmJitCpuInfo.h"
 
-#if ASMJIT_OS == ASMJIT_WINDOWS
+#if defined(ASMJIT_WINDOWS)
 # include <windows.h>
 #endif // ASMJIT_WINDOWS
 
@@ -39,7 +39,7 @@
 # endif // _MSC_VER >= 1400 (>= VS2005)
 #endif // _MSC_VER
 
-#if ASMJIT_OS == ASMJIT_POSIX
+#if defined(ASMJIT_POSIX)
 #include <errno.h>
 #include <string.h>
 #include <sys/statvfs.h>
@@ -52,11 +52,11 @@ namespace AsmJit {
 
 static UInt32 detectNumberOfProcessors(void)
 {
-#if ASMJIT_OS == ASMJIT_WINDOWS
+#if defined(ASMJIT_WINDOWS)
   SYSTEM_INFO info;
   GetSystemInfo(&info);
   return info.dwNumberOfProcessors;
-#elif ASMJIT_OS == ASMJIT_POSIX && defined(_SC_NPROCESSORS_ONLN)
+#elif defined(ASMJIT_POSIX) && defined(_SC_NPROCESSORS_ONLN)
   // It seems that sysconf returns the number of "logical" processors on both
   // mac and linux.  So we get the number of "online logical" processors.
   long res = sysconf(_SC_NPROCESSORS_ONLN);

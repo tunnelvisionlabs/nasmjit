@@ -28,7 +28,7 @@
 #define _ASMJITSERIALIZERX86X64_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 #include "AsmJitDefs.h"
 #include "AsmJitUtil.h"
 

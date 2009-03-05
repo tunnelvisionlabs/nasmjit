@@ -28,7 +28,7 @@
 #define _ASMJITCPUINFO_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 
 namespace AsmJit {
 

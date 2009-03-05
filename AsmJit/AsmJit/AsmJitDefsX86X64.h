@@ -28,7 +28,7 @@
 #define _ASMJITDEFSX86X64_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 #include "AsmJitUtil.h"
 
 #include <stdlib.h>

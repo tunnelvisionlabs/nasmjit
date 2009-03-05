@@ -28,7 +28,7 @@
 #define _ASMJITVM_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
+#include "AsmJitBuild.h"
 
 namespace AsmJit {
 

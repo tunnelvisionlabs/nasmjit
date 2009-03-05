@@ -28,8 +28,7 @@
 #define _ASMJITCOMPILERX86X64_H
 
 // [Dependencies]
-#include "AsmJitConfig.h"
-
+#include "AsmJitBuild.h"
 #include "AsmJitAssembler.h"
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
