@@ -40,12 +40,12 @@ namespace AsmJit {
 
 //! @brief X86/X64 Assembler.
 //!
-//! This class is the main class in AsmJit for generating X86/X64 binary. It
-//! creates internal buffer, where opcodes are stored (don't worry about it,
-//! it's auto growing buffer) and contains methods for generating opcodes
-//! with compile time and runtime time (DEBUG) checks. Buffer is allocated 
-//! first time you emit instruction. Newly constructed instance never allocates
-//! any memory (in constructor).
+//! This class is the main class in AsmJit for generating low level X86/X64 
+//! binary. It creates internal buffer, where opcodes are stored (don't worry
+//! about it, it's auto growing buffer) and contains methods for generating 
+//! opcodes with compile time and runtime time (DEBUG) checks. Buffer is 
+//! allocated first time you emit instruction. Newly constructed instance 
+//! never allocates any memory (in constructor).
 //!
 //! Buffer is allocated by @c ASMJIT_MALLOC, @c ASMJIT_REALLOC and 
 //! freed by @c ASMJIT_FREE macros. It's designed to fit your memory 
@@ -112,14 +112,15 @@ namespace AsmJit {
 //!
 //! While generating assembler code, you will usually need to create complex
 //! code with labels. Labels are fully supported and you can call @c jmp or 
-//! @c jcc instructions to yet uninitialized label. Each label expects to be 
-//! bound into offset. To bind label to specific offset, use @c bind() method.
+//! @c jcc instructions to initialized or yet uninitialized label. Each label
+//! expects to be bound into offset. To bind label to specific offset, use
+//! @c bind() method.
 //!
 //! @verbatim
 //! // Example: Usage of Label (32 bit code)
 //! //
 //! // Create simple DWORD memory copy function:
-//! // ASMJIT_STDCALL void copy32(void* DST, const void* SRC, sysuint_t COUNT);
+//! // ASMJIT_STDCALL void copy32(UInt32* dst, const UInt32* src, sysuint_t count);
 //! using namespace AsmJit;
 //!
 //! // X86/X64 assembler
@@ -139,17 +140,22 @@ namespace AsmJit {
 //! a.push(edi);
 //! 
 //! // Fetch arguments
-//! a.mov(esi, dword_ptr(ebp, arg_offset + 0)); // get DST
-//! a.mov(edi, dword_ptr(ebp, arg_offset + 4)); // get SRC
-//! a.mov(ecx, dword_ptr(ebp, arg_offset + 8)); // get COUNT
+//! a.mov(esi, dword_ptr(ebp, arg_offset + 0)); // get dst
+//! a.mov(edi, dword_ptr(ebp, arg_offset + 4)); // get src
+//! a.mov(ecx, dword_ptr(ebp, arg_offset + 8)); // get count
 //! 
 //! // Bind L_Loop label to here
 //! a.bind(&L_Loop);
 //! 
-//! a.mov(eax, dword_ptr(edi));
-//! a.mov(dword_ptr(esi), eax);
+//! Copy 4 bytes
+//! a.mov(eax, dword_ptr(esi));
+//! a.mov(dword_ptr(edi), eax);
+//!
+//! // Increment pointers
+//! a.add(esi, 4);
+//! a.add(edi, 4);
 //! 
-//! // Repeat loop until ecx == 0
+//! // Repeat loop until ecx != 0
 //! a.dec(ecx);
 //! a.jz(&L_Loop);
 //! 
@@ -162,6 +168,13 @@ namespace AsmJit {
 //! // Return: STDCALL convention is to pop stack in called function
 //! a.ret(arg_size);
 //! @endverbatim
+//!
+//! If you need more abstraction for generating assembler code and you want
+//! to hide calling conventions between 32 bit and 64 bit operating systems,
+//! look at @c Compiler class that is designed for higher level code 
+//! generation.
+//!
+//! @sa @c Compiler.
 struct ASMJIT_API Assembler : public Serializer
 {
   // -------------------------------------------------------------------------

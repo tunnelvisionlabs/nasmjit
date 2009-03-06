@@ -43,7 +43,7 @@ namespace AsmJit {
 // ============================================================================
 
 //! @brief Cast used to cast pointer to function. It's like reinterpret_cast<>, 
-//! but uses internally C style cast to work in MinGW.
+//! but uses internally C style cast to work with MinGW.
 template<typename T, typename Z>
 static inline T function_cast(Z* p) { return (T)p; }
 
@@ -440,7 +440,7 @@ struct ASMJIT_API Buffer
 // [AsmJit::PodVector<>]
 // ============================================================================
 
-//! @brief Template used to store array of POD data structures.
+//! @brief Template used to store array of POD data.
 //!
 //! This template has these adventages over other vector<> templates:
 //! - Non-copyable (designed to be non-copyable, we want it)

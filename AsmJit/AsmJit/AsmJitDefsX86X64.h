@@ -36,6 +36,9 @@
 
 namespace AsmJit {
 
+//! @addtogroup AsmJit_Serializer
+//! @{
+
 // ============================================================================
 // [Constants]
 // ============================================================================
@@ -1737,6 +1740,8 @@ MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immedi
 //! @brief Create Shuffle Constant for SSE shuffle instrutions.
 static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)
 { return (z << 6) | (y << 4) | (x << 2) | w; }
+
+//! @}
 
 } // AsmJit namespace
 

@@ -36,14 +36,33 @@
 
 namespace AsmJit {
 
+//! @addtogroup AsmJit_Logging
+//! @{
+
 // ============================================================================
 // [AsmJit::PrettyPrinter]
 // ============================================================================
 
-//! @brief Logger that pretty prints instruction with operands.
+//! @brief Logger that prints assembler output as instruction with its operands
+//! in Intel syntax.
+//!
+//! To use PrettyPrinter, use:
+//!
+//! @verbatim
+//! using namespace AsmJit;
+//!
+//! // Create Assembler instance
+//! Assembler a;
+//!
+//! // Create PrettyPrinter instance and attach it to the Assembler
+//! PrettyPrinter logger;
+//! a.setLogger(&logger);
+//! @endverbatim
 struct PrettyPrinter : Assembler::Logger
 {
+  //! @brief Create new PrettyPrinter instance.
   PrettyPrinter();
+  //! @brief Destroy PrettyPrinter instance.
   virtual ~PrettyPrinter();
 
   virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
@@ -53,11 +72,28 @@ struct PrettyPrinter : Assembler::Logger
 
   virtual void log(const char* buf);
 
+  //! @brief Logs instruction @a code to @a buf and returns it's size.
+  //!
+  //! @note Output is not @c NULL terminated.
   static SysInt dumpInstruction(char* buf, UInt32 code);
+
+  //! @brief Logs operand @a op to @a buf and returns it's size.
+  //!
+  //! @note Output is not @c NULL terminated.
   static SysInt dumpOperand(char* buf, const Operand* op);
+
+  //! @brief Logs register to @a buf and returns it's size.
+  //!
+  //! @note Output is not @c NULL terminated.
   static SysInt dumpRegister(char* buf, UInt8 type, UInt8 index);
+
+  //! @brief Logs label @a label to @a buf and returns it's size.
+  //!
+  //! @note Output is not @c NULL terminated.
   static SysInt dumpLabel(char* buf, const Label* label);
 };
+
+//! @}
 
 } // AsmJit namespace
 

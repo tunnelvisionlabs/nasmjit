@@ -31,16 +31,15 @@
 
 //! @mainpage
 //!
-//! AsmJit is complete JIT assembler compiler for X86/X64 platform. It can 
-//! compile nearly complete (most useful) X86/X64 instruction set with very 
-//! friendly way. AsmJit was designed to be embeddable to any C++ project
-//! and this is the reason for MIT licence.
-//!
-//! First versions of AsmJit was based on Google's V8 code, but now the code
-//! is totally different and V8 generation code or concepts are not used anymore.
-//! Main reasons for developers to choose AsmJit? is very clean C++ design (but 
-//! no stl or exceptions are used) that allows to write code by very similar 
-//! way that most assembler developers do. 
+//! AsmJit is complete JIT assembler for X86/X64 platform. It contains complete
+//! x86/x64 intrinsics (included is FPU, MMX, 3dNow, SSE, SSE2, SSE3, SSE4) and 
+//! powerful compiler that helps to write portable functions for 32 bit (x86) and
+//! 64 bit (x64) architectures. AsmJit can be used to compile functions at runtime
+//! that can be called from C/C++ code.
+//! 
+//! AsmJit can be compiled as a static or dynamically linked library. If you are 
+//! building dynamically linked library, go to AsmJitConfig.h file and setup 
+//! exporting macros (see wiki in AsmJit homepage).
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
@@ -54,26 +53,40 @@
 
 //! @defgroup AsmJit_Assembler Assembler - low level code generation.
 //!
-//! Contains classes that's directly used to generate binary code stream.
+//! Contains classes related to AsmJit::Assembler. It's directly used 
+//! to generate binary code stream.
 
-//! @defgroup AsmJit_VM Virtual AsmJit virtual memory.
+//! @defgroup AsmJit_Compiler Compiler - high level code generation.
 //!
-//! Contains virtual memory management functions internally implemented
-//! by OS dependent way.
+//! Contains classes related to AsmJit::Compiler.
 
 //! @defgroup AsmJit_CpuInfo Get informations about host CPU.
 //!
 //! Contains structures and functions to call cpuid() and get advanced CPU
-//! informations
+//! informations.
+
+//! @defgroup AsmJit_Logging Logging - logging and error handling.
+//!
+//! Contains classes related to loging assembler output.
+
+//! @defgroup AsmJit_Serializer Serializer - code generation abstraction.
+//!
+//! Serializer implements assembler intrinsics that's used by @c Assembler
+//! and @c Compiler classes.
+
+//! @defgroup AsmJit_VM Virtual memory alloc / free.
+//!
+//! Contains virtual memory management functions internally implemented
+//! by OS dependent way.
 
 //! @addtogroup AsmJit_Config
 //! @{
 
 //! @def ASMJIT_WINDOWS
-//! @brief Macro that is declared if AsmJit is compiler for Windows.
+//! @brief Macro that is declared if AsmJit is compiled for Windows.
 
 //! @def ASMJIT_POSIX
-//! @brief Macro that is declared if AsmJit is compiler for unix like 
+//! @brief Macro that is declared if AsmJit is compiled for unix like 
 //! operating system.
 
 //! @def ASMJIT_API
@@ -100,6 +113,8 @@
 
 //! @namespace AsmJit
 //! @brief Main AsmJit library namespace.
+//!
+//! There are not other namespaces used in AsmJit library.
 
 // [Includes]
 #include "AsmJitBuild.h"

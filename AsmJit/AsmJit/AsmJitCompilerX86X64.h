@@ -59,6 +59,11 @@ struct Variable;
 // ============================================================================
 
 //! @brief Emmitable type.
+//!
+//! For each emittable that is used by @c Compiler must be defined it's type.
+//! Compiler can optimize instruction stream by analyzing emittables and each
+//! type is hint for it. The most used emittables are instructions 
+//! (@c EMITTABLE_INSTRUCTION).
 enum EMITTABLE_TYPE
 {
   //! @brief Emittable is invalid (can't be used).
@@ -82,6 +87,9 @@ enum EMITTABLE_TYPE
 };
 
 //! @brief Calling convention type.
+//!
+//! These types are used together with @c AsmJit::Compiler::newFunction() 
+//! method.
 enum CALL_CONV
 {
   //! @brief Calling convention is invalid (can't be used).
@@ -216,7 +224,20 @@ enum CALL_CONV
 
   //! @brief X64 calling convention for Windows platform.
   //!
-  //! TODOC
+  //! For first four arguments are used these registers:
+  //! - 1. 32/64 bit integer or floating point argument - rcx/xmm0
+  //! - 2. 32/64 bit integer or floating point argument - rdx/xmm1
+  //! - 3. 32/64 bit integer or floating point argument - r8/xmm2
+  //! - 4. 32/64 bit integer or floating point argument - r9/xmm3
+  //!
+  //! Note first four arguments here means arguments at positions from 1 to 4
+  //! (included). For example if second argument is not passed by register then
+  //! rdx/xmm1 register is unused.
+  //!
+  //! All other arguments are pushed on the stack in right-to-left direction.
+  //! Stack is aligned by 16 bytes. There is 32 bytes shadow space on the stack
+  //! that can be used to save up to four 64 bit registers (probably designed to
+  //! be used to save first four arguments passed in registers).
   //!
   //! Arguments direction:
   //! - Right to Left (except for first 4 parameters that's in registers)
@@ -234,12 +255,18 @@ enum CALL_CONV
   //! http://msdn.microsoft.com/en-us/library/9b372w95.aspx .
   CALL_CONV_X64W = 16,
 
-  //! @brief X64 calling convention for Unix platforms.
+  //! @brief X64 calling convention for Unix platforms (AMD64 ABI).
   //!
-  //! TODOC
+  //! First six 32 or 64 bit integer arguments are passed in rdi, rsi, rdx, 
+  //! rcx, r8, r9 registers. First eight floating point or XMM arguments 
+  //! are passed in xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 registers.
+  //! This means that in registers can be transferred up to 14 arguments total.
   //!
+  //! There is also RED ZONE below the stack pointer that can be used for 
+  //! temporary storage. The red zone is the space from [rsp-128] to [rsp-8].
+  //! 
   //! Arguments direction:
-  //! - Right to Left
+  //! - Right to Left (Except for arguments passed in registers).
   //!
   //! Stack is cleaned by:
   //! - Caller.
@@ -282,7 +309,10 @@ enum ARGUMENT_DIR
   ARGUMENT_DIR_RIGHT_TO_LEFT = 1
 };
 
-//! @brief Argument type.
+//! @brief Variable type.
+//!
+//! Variable type is used by @c AsmJit::Function::newVariable() method and can
+//! be also retrieved by @c AsmJit::VariableRef::type().
 enum VARIABLE_TYPE
 {
   //! @brief Invalid variable type (don't use).
@@ -311,8 +341,12 @@ enum VARIABLE_TYPE
   VARIABLE_TYPE_PTR = VARIABLE_TYPE_SYSUINT,
 
   //! @brief Variable is SP-FP number (float).
+  //!
+  //! TODO: Float registers allocation is not supported.
   VARIABLE_TYPE_FLOAT = 3,
   //! @brief Variable is DP-FP number (double).
+  //!
+  //! TODO: Double registers allocation  is not supported.
   VARIABLE_TYPE_DOUBLE = 4,
 
   //! @brief Variable is MM register / memory location.
@@ -325,21 +359,53 @@ enum VARIABLE_TYPE
 };
 
 //! @brief State of variable.
+//!
+//! Variable state can be retrieved by @c AsmJit::VariableRef::state().
 enum VARIABLE_STATE
 {
   //! @brief Variable is currently not used.
+  //!
+  //! Variables of this state are not used or they are currently not 
+  //! initialized (short time after @c AsmJit::VariableRef::alloc() call).
   VARIABLE_STATE_UNUSED = 0,
+
   //! @brief Variable is in register.
+  //!
+  //! Variable is currently allocated in register.
   VARIABLE_STATE_REGISTER = 1,
+
   //! @brief Variable is in memory location or spilled.
+  //!
+  //! Variable was spilled from register to memory or variable is used for 
+  //! memory only storage.
   VARIABLE_STATE_MEMORY = 2
 };
 
 //! @brief Variable alloc mode.
+//! @internal
 enum VARIABLE_ALLOC
 {
+  //! @brief Allocating variable to read only.
+  //!
+  //! Read only variables are used to optimize variable spilling. If variable
+  //! is some time ago deallocated and it's not marked as changed (so it was
+  //! all the life time read only) then spill is simply NOP (no mov instruction
+  //! is generated to move it to it's home memory location).
   VARIABLE_ALLOC_READ = 0x1,
+
+  //! @brief Allocating variable to write only (overwrite).
+  //!
+  //! Overwriting means that if variable is in memory, there is no generated
+  //! instruction to move variable from memory to register, because that 
+  //! register will be overwritten by next instruction. This is used as a
+  //! simple optimization to improve generated code by @c Compiler.
   VARIABLE_ALLOC_WRITE = 0x2,
+
+  //! @brief Allocating variable to read / write.
+  //!
+  //! Variable allocated for read / write is marked as changed. This means that
+  //! if variable must be later spilled into memory, mov (or similar) 
+  //! instruction will be generated.
   VARIABLE_ALLOC_READWRITE = 0x3
 };
 
@@ -348,6 +414,33 @@ enum VARIABLE_ALLOC
 // ============================================================================
 
 //! @brief Variable.
+//!
+//! Variables reresents registers or memory locations that can be allocated by
+//! @c Function. Each function arguments are also allocated as variables, so
+//! accessing function arguments is similar to accessing function variables.
+//!
+//! Variables can be declared by @c AsmJit::Function::newVariable() or by 
+//! declaring function arguments by AsmJit::Compiler::newFunction(). Compiler
+//! always returns variables as pointers to @c Variable instance.
+//!
+//! Variable instances are never accessed directly, instead there are wrappers.
+//! Wrappers are designed to simplify variables management and it's lifetime.
+//! Because variables are based on reference counting, each variable that is
+//! returned from @c Compiler needs to be wrapped in @c VariableRef or similar
+//! (@c Int32Ref, @c Int64Ref, @c SysIntRef, @c PtrRef, @c MMRef, @c XMMRef)
+//! classes. Each wrapper class is designed to wrap specific variable type. For
+//! example integer should be always wrapped into @c Int32Ref or @c Int64Ref,
+//! MMX register to @c MMRef, etc...
+//!
+//! Variable wrapping is also needed, because it's lifetime is based on 
+//! reference counting. Each variable returned from compiler has reference 
+//! count equal to zero! So wrapper class increases it to one (or more that
+//! depends how much you wrapped it) and destroying wrapper means decreasing
+//! reference count. If reference count is decreased to zero, variable life
+//! ends, it's marked as unused and compiler can reuse it later.
+//!
+//! @sa @c VariableRef, @c Int32Ref, @c Int64Ref, @c SysIntRef, @c PtrRef, 
+//! @c MMRef, @c XMMRef.
 struct ASMJIT_API Variable
 {
   // [Typedefs]
@@ -418,7 +511,10 @@ struct ASMJIT_API Variable
 
   // [Reference counting]
 
+  //! @brief Increase reference count and return itself.
   Variable* ref();
+  //! @brief Decrease reference count. If reference is decreased to zero, 
+  //! variable is marked as unused and deallocated.
   void deref();
 
   // [Code Generation]
@@ -538,13 +634,17 @@ private:
 // [AsmJit::VariableXXXRef]
 // ============================================================================
 
-//! @brief Base class for variable references.
+//! @brief Base class for variable wrappers.
 //!
 //! @c VariableRef class is designed to manage @c Variable instances. It's 
 //! based on reference counting and if reference gets to zero (in destructor), 
-//! variable is freed by compiler.
+//! variable is freed by compiler. This helps with scoping variables and 
+//! minimizes mistakes that can be done with manual allocation / freeing.
 //!
-//! @note Compiler can reuse existing variables.
+//! @note Compiler can reuse existing variables if reference gets zero.
+//!
+//! @sa @c Variable,
+//!     @c Int32Ref, @c Int64Ref, @c SysIntRef, @c PtrRef, @c MMRef, @c XMMRef.
 struct VariableRef
 {
   // [Typedefs]
@@ -627,7 +727,7 @@ protected:
   Variable* _v;
 };
 
-//! @brief 32 bit integer reference.
+//! @brief 32 bit integer variable wrapper.
 struct Int32Ref : public VariableRef
 {
   // [Construction / Destruction]
@@ -663,7 +763,7 @@ struct Int32Ref : public VariableRef
 };
 
 #if defined(ASMJIT_X64)
-//! @brief 64 bit integer reference.
+//! @brief 64 bit integer variable wrapper.
 struct Int64Ref : public VariableRef
 {
   // [Construction / Destruction]
@@ -693,7 +793,7 @@ struct Int64Ref : public VariableRef
 };
 #endif // ASMJIT_X64
 
-//! @brief MM reference.
+//! @brief MMX variable wrapper.
 struct MMRef : public VariableRef
 {
   // [Construction / Destruction]
@@ -708,7 +808,7 @@ struct MMRef : public VariableRef
   inline MMRegister x() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_mm(_v->registerCode()); }
 };
 
-//! @brief XMM reference.
+//! @brief SSE variable wrapper.
 struct XMMRef : public VariableRef
 {
   // [Construction / Destruction]
@@ -729,6 +829,7 @@ typedef Int32Ref SysIntRef;
 typedef Int64Ref SysIntRef;
 #endif
 
+//! @brief Pointer variable wrapper (same as system integer).
 typedef SysIntRef PtrRef;
 
 // ============================================================================
@@ -736,6 +837,10 @@ typedef SysIntRef PtrRef;
 // ============================================================================
 
 //! @brief Contains informations about current register state.
+//!
+//! @note Always use StateRef to manage register states and don't create State
+//! directly. Instead use @c AsmJit::Function::saveState() and 
+//! @c AsmJit::Function::restoreState() methods.
 struct ASMJIT_API State
 {
   // [Construction / Destruction]
@@ -795,6 +900,7 @@ private:
 // [AsmJit::StateRef]
 // ============================================================================
 
+//! @brief State wrapper used to manage @c State's.
 struct StateRef
 {
   inline StateRef(State* state) :
@@ -804,6 +910,7 @@ struct StateRef
 
   inline ~StateRef();
 
+  //! @brief Return managed @c State instance.
   inline State* state() const { return _state; }
 
 private:
@@ -859,6 +966,7 @@ private:
 // [AsmJit::Comment]
 // ============================================================================
 
+//! @brief Emittable used to emit comment into @c Assembler logger.
 struct ASMJIT_API Comment : public Emittable
 {
   // [Construction / Destruction]
@@ -880,6 +988,7 @@ private:
 // [AsmJit::Align]
 // ============================================================================
 
+//! @brief Emittable used to align assembler code.
 struct ASMJIT_API Align : public Emittable
 {
   // [Construction / Destruction]
@@ -902,7 +1011,7 @@ private:
 // [AsmJit::Instruction]
 // ============================================================================
 
-//! @brief Instruction emittable.
+//! @brief Emittable that represents single instruction and its operands.
 struct ASMJIT_API Instruction : public Emittable
 {
   // [Construction / Destruction]
@@ -949,6 +1058,7 @@ private:
 // [AsmJit::TypeAsId]
 // ============================================================================
 
+//! @brief Template based type to variable ID converter.
 template<typename T>
 struct TypeAsId {};
 
@@ -974,12 +1084,14 @@ __DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 // [AsmJit::Function Builder]
 // ============================================================================
 
+//! @brief Class used to build function without arguments.
 struct BuildFunction0
 {
   inline const UInt32* args() const { return NULL; }
   inline SysUInt count() const { return 0; }
 };
 
+//! @brief Class used to build function with 1 argument.
 template<typename P0>
 struct BuildFunction1
 {
@@ -987,6 +1099,7 @@ struct BuildFunction1
   inline SysUInt count() const { return 1; }
 };
 
+//! @brief Class used to build function with 2 arguments.
 template<typename P0, typename P1>
 struct BuildFunction2
 {
@@ -994,6 +1107,7 @@ struct BuildFunction2
   inline SysUInt count() const { return 2; }
 };
 
+//! @brief Class used to build function with 3 arguments.
 template<typename P0, typename P1, typename P2>
 struct BuildFunction3
 {
@@ -1001,6 +1115,7 @@ struct BuildFunction3
   inline SysUInt count() const { return 3; }
 };
 
+//! @brief Class used to build function with 4 arguments.
 template<typename P0, typename P1, typename P2, typename P3>
 struct BuildFunction4
 {
@@ -1008,6 +1123,7 @@ struct BuildFunction4
   inline SysUInt count() const { return 4; }
 };
 
+//! @brief Class used to build function with 5 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4>
 struct BuildFunction5
 {
@@ -1015,6 +1131,7 @@ struct BuildFunction5
   inline SysUInt count() const { return 5; }
 };
 
+//! @brief Class used to build function with 6 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct BuildFunction6
 {
@@ -1191,8 +1308,32 @@ struct ASMJIT_API Function : public Emittable
   // [State]
   // --------------------------------------------------------------------------
 
+  //! @brief Save function current register state.
+  //!
+  //! To save function state always wrap returned value into @c StateRef:
+  //!
+  //! @verbatim
+  //! // Your function
+  //! Function &f = ...;
+  //!
+  //! // Block
+  //! {
+  //!   // Save state
+  //!   StateRef state(f.saveState());
+  //!
+  //!   // Your code ...
+  //!
+  //!   // Restore state (automatic by @c StateRef destructor).
+  //! }
+  //!
+  //! @endverbatim
   State *saveState();
+
+  //! @brief Restore function register state to @a state.
+  //! @sa saveState().
   void restoreState(State* state);
+
+  //! @brief Set function register state to @a state.
   void setState(State* state);
 
   // --------------------------------------------------------------------------
@@ -1200,12 +1341,17 @@ struct ASMJIT_API Function : public Emittable
   // --------------------------------------------------------------------------
 
   //! @brief Return function entry label.
+  //!
+  //! Entry label can be used to call this function from another code that's
+  //! being generated.
   inline Label* entryLabel() const { return _entryLabel; }
 
   //! @brief Return prolog label (label after function prolog)
   inline Label* prologLabel() const { return _prologLabel; }
 
   //! @brief Return exit label.
+  //!
+  //! Use exit label to jump to function epilog.
   inline Label* exitLabel() const { return _exitLabel; }
 
 private:
@@ -1390,7 +1536,8 @@ private:
 //! by @c Compiler are manager by compiler. This means that lifetime of 
 //! these objects are same as compiler lifetime (that's short).
 //!
-//! All emittables are allocated by @c Compiler by this way.
+//! All emittables, variables, labels and states are allocated by @c Compiler 
+//! by this way.
 struct ASMJIT_API Zone
 {
   // [Construction / Destruction]

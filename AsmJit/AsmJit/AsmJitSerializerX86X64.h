@@ -39,17 +39,25 @@
 
 namespace AsmJit {
 
+//! @addtogroup AsmJit_Serializer
+//! @{
+
 // ============================================================================
 // [AsmJit::_Serializer]
 // ============================================================================
 
-//! @brief Assembler instruction seralizer base.
+//! @brief Assembler intrinsics seralizer.
+//!
+//! Serializer is abstract class that is used by @c Assembler and @a Compiler.
+//! You probably never use this class directly, instead you use it to serialize
+//! intrinsics to @c Assembler or @c Compiler. Serializer implements all
+//! intruction intrinsics thats used 
 //!
 //! @note Use always @c Serializer class, this class is only designed to 
 //! decrease code size when exporting AsmJit library symbols. Some compilers
 //! (for example MSVC) are exporting inline symbols when class is declared 
 //! to export them and @c Serializer class contains really huge count of 
-//! them.
+//! symbols that will be never used (everything is inlined).
 struct ASMJIT_API _Serializer
 {
   // -------------------------------------------------------------------------
@@ -94,17 +102,26 @@ struct ASMJIT_API _Serializer
 
 protected:
   // helpers to decrease binary code size
+
+  //! @brief Emits instruction with no operand.
+  //! @internal
   void __emitX86(UInt32 code);
+  //! @brief Emits instruction with one operand.
+  //! @internal
   void __emitX86(UInt32 code, const Operand* o1);
+  //! @brief Emits instruction with two operands.
+  //! @internal
   void __emitX86(UInt32 code, const Operand* o1, const Operand* o2);
+  //! @brief Emits instruction with three operands.
+  //! @internal
   void __emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   //! @brief Private method for emitting jcc.
-  void _emitJcc(CONDITION cc, Label* label, UInt32 hint);
-  //! @brief Private method for emitting jcc.
   void _emitJ(UInt32 code, Label* label, UInt32 hint);
 
+  //! @brief Map used for jcc instructions.
   static const UInt32 _jcctable[16];
+  //! @brief Map used for cmovcc instructions.
   static const UInt32 _cmovcctable[16];
 
 private:
@@ -6310,6 +6327,8 @@ struct Serializer : public _Serializer
     __emitX86(INST_MOVBE, &dst, &src);
   }
 };
+
+//! @}
 
 } // AsmJit namespace
 
