@@ -1159,7 +1159,18 @@ private:
 
 //! @brief Template based type to variable ID converter.
 template<typename T>
-struct TypeAsId {};
+struct TypeAsId 
+{
+#if defined(ASMJIT_NODOC)
+  enum { 
+    //! @brief Variable id, see @c VARIABLE_TYPE enum
+    Id = X
+  };
+#endif
+};
+
+// Skip documenting this
+#if !defined(ASMJIT_NODOC)
 
 template<typename T>
 struct TypeAsId<T*> { enum { Id = VARIABLE_TYPE_PTR }; };
@@ -1178,6 +1189,8 @@ __DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
 __DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 
 #undef __DECLARE_TYPE_AS_ID
+
+#endif // !ASMJIT_NODOC
 
 // ============================================================================
 // [AsmJit::Function Builder]
@@ -1260,7 +1273,12 @@ struct ASMJIT_API Function : public Emittable
 {
   // [Construction / Destruction]
 
+  //! @brief Create new @c Function instance.
+  //!
+  //! @note Always use @c AsmJit::Compiler::newFunction() to create @c Function
+  //! instance.
   Function(Compiler* c);
+  //! @brief Destroy @c Function instance.
   virtual ~Function();
 
   // [Methods]
@@ -1396,12 +1414,18 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Return bitmask of all used (for actual context) sse registers.
   inline UInt32 usedXmmRegisters() const { return _usedXmmRegisters; }
 
+  //! @brief Mark general purpose registers in the given @a mask as used.
   inline void useGpRegisters(UInt32 mask) { _usedGpRegisters |= mask; }
+  //! @brief Mark mmx registers in the given @a mask as used.
   inline void useMmRegisters(UInt32 mask) { _usedMmRegisters |= mask; }
+  //! @brief Mark sse registers in the given @a mask as used.
   inline void useXmmRegisters(UInt32 mask) { _usedXmmRegisters |= mask; }
 
+  //! @brief Mark general purpose registers in the given @a mask as unused.
   inline void unuseGpRegisters(UInt32 mask) { _usedGpRegisters &= ~mask; }
+  //! @brief Mark mmx registers in the given @a mask as unused.
   inline void unuseMmRegisters(UInt32 mask) { _usedMmRegisters &= ~mask; }
+  //! @brief Mark sse registers in the given @a mask as unused.
   inline void unuseXmmRegisters(UInt32 mask) { _usedXmmRegisters &= ~mask; }
 
   //! @brief Return bitmask of all changed general purpose registers during
@@ -1414,8 +1438,11 @@ struct ASMJIT_API Function : public Emittable
   //! function execution (for generating optimized prolog / epilog).
   inline UInt32 modifiedXmmRegisters() const { return _modifiedXmmRegisters; }
 
+  //! @brief Mark general purpose registers in the given @a mask as modified.
   inline void modifyGpRegisters(UInt32 mask) { _modifiedGpRegisters |= mask; }
+  //! @brief Mark mmx registers in the given @a mask as modified.
   inline void modifyMmRegisters(UInt32 mask) { _modifiedMmRegisters |= mask; }
+  //! @brief Mark sse registers in the given @a mask as modified.
   inline void modifyXmmRegisters(UInt32 mask) { _modifiedXmmRegisters |= mask; }
 
   // --------------------------------------------------------------------------
