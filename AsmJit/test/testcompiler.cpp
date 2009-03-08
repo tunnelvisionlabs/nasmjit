@@ -83,10 +83,9 @@ int main(int argc, char* argv[])
     c.mov(x7.x(), 7);
     c.mov(x8.x(), 8);
 
-    // Create temporary variable
-    Int32Ref t(f.newVariable(VARIABLE_TYPE_INT32));
-    // Set priority to 5 (lower probability to spill)
-    t.setPriority(5);
+    // Create temporary variable, type int32 and priority 5
+    // (lower probability to spill)
+    Int32Ref t(f.newVariable(VARIABLE_TYPE_INT32, 5));
 
     // Make sum (addition)
     // r() means that we can read or write to register, c() means that register

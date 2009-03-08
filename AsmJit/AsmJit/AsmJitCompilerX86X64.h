@@ -519,7 +519,9 @@ struct ASMJIT_API Variable
 
   // [Code Generation]
 
-  inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE);
+  inline void alloc(
+    UInt8 mode = VARIABLE_ALLOC_READWRITE, 
+    UInt8 preferredRegister = NO_REG);
   inline void spill();
   inline void unuse();
 
@@ -686,17 +688,35 @@ struct VariableRef
   inline void use(Variable* v) { ASMJIT_ASSERT(_v == NULL); _v = v->ref(); }
 
   //! @brief Allocate variable to register.
-  inline void alloc(UInt8 mode = VARIABLE_ALLOC_READWRITE)
-  { ASMJIT_ASSERT(_v); _v->alloc(mode); }
+  inline void alloc(
+    UInt8 mode = VARIABLE_ALLOC_READWRITE, 
+    UInt8 preferredRegister = NO_REG)
+  {
+    ASMJIT_ASSERT(_v);
+    _v->alloc(mode, preferredRegister);
+  }
 
   //! @brief Spill variable from register (or do nothing).
-  inline void spill() { ASMJIT_ASSERT(_v); _v->spill(); }
+  inline void spill()
+  {
+    ASMJIT_ASSERT(_v);
+    _v->spill();
+  }
 
   //! @brief Unuse variable (all changes lost).
-  inline void unuse() { ASMJIT_ASSERT(_v); _v->unuse(); }
+  inline void unuse()
+  {
+    ASMJIT_ASSERT(_v);
+    _v->unuse();
+  }
 
   //! @brief Destroy variable (@c VariableRef can't be used anymore after destroy).
-  inline void destroy() { ASMJIT_ASSERT(_v); _v->deref(); _v = NULL; }
+  inline void destroy()
+  {
+    ASMJIT_ASSERT(_v);
+    _v->deref();
+    _v = NULL;
+  }
 
   inline UInt8 preferredRegister() const { ASMJIT_ASSERT(_v); return _v->preferredRegister(); }
   inline void setPreferredRegister(UInt8 code) { ASMJIT_ASSERT(_v); _v->setPreferredRegister(code); }
@@ -1266,7 +1286,9 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Create new variable
   Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
 
-  void alloc(Variable* v, UInt8 mode = VARIABLE_ALLOC_READWRITE);
+  void alloc(Variable* v, 
+    UInt8 mode = VARIABLE_ALLOC_READWRITE, 
+    UInt8 preferredRegister = NO_REG);
   void spill(Variable* v);
   void unuse(Variable* v);
 
@@ -1464,9 +1486,14 @@ private:
 };
 
 // Inlines that uses AsmJit::Function
-inline void Variable::alloc(UInt8 mode) { function()->alloc(this, mode); }
-inline void Variable::spill() { function()->spill(this); }
-inline void Variable::unuse() { function()->unuse(this); }
+inline void Variable::alloc(UInt8 mode, UInt8 preferredRegister) 
+{ function()->alloc(this, mode, preferredRegister); }
+
+inline void Variable::spill()
+{ function()->spill(this); }
+
+inline void Variable::unuse()
+{ function()->unuse(this); }
 
 inline StateRef::~StateRef()
 { if (_state) _state->_function->restoreState(_state); }

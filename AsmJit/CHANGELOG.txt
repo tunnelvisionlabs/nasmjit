@@ -1,3 +1,8 @@
+2009-03-09
+- Released 0.6-rc1
+- Implemented preferred registers allocation
+- Documentation updates
+
 2009-03-04
 - Improved Compiler
 - Fixed alloc/spill of MM and XMM registers
