@@ -44,6 +44,11 @@ namespace AsmJit {
 
 //! @brief Cast used to cast pointer to function. It's like reinterpret_cast<>, 
 //! but uses internally C style cast to work with MinGW.
+//!
+//! If you are using single compiler and @c reinterpret_cast<> works for you,
+//! there is no reason to use @c AsmJit::function_cast<>. If you are writing
+//! crossplatform software with various compiler support, consider using
+//! @c AsmJit::function_cast<> instead of @c @c reinterpret_cast<>.
 template<typename T, typename Z>
 static inline T function_cast(Z* p) { return (T)p; }
 
@@ -89,7 +94,9 @@ static inline bool isUInt32(SysInt x)
 //! @internal
 union I32FPUnion
 {
+  //! @brief 32 bit signed integer value.
   Int32 i;
+  //! @brief 32 bit SP-FP value.
   float f;
 };
 
@@ -98,11 +105,13 @@ union I32FPUnion
 //! @internal
 union I64FPUnion
 {
+  //! @brief 64 bit signed integer value.
   Int64 i;
+  //! @brief 64 bit DP-FP value.
   double f;
 };
 
-//! @brief Binary casts 32 bit integer to float.
+//! @brief Binary cast 32 bit integer to SP-FP value (@c float).
 static inline float int32AsFloat(Int32 i)
 {
   I32FPUnion u;
@@ -110,7 +119,7 @@ static inline float int32AsFloat(Int32 i)
   return u.f;
 }
 
-//! @brief Binary casts float to 32 bit integer.
+//! @brief Binary cast SP-FP value (@c float) to 32 bit integer.
 static inline Int32 floatAsInt32(float f)
 {
   I32FPUnion u;
@@ -118,7 +127,7 @@ static inline Int32 floatAsInt32(float f)
   return u.i;
 }
 
-//! @brief Binary casts 64 bit integer to double.
+//! @brief Binary cast 64 bit integer to DP-FP value (@c double).
 static inline double int64AsDouble(Int64 i)
 {
   I64FPUnion u;
@@ -126,7 +135,7 @@ static inline double int64AsDouble(Int64 i)
   return u.f;
 }
 
-//! @brief Binary casts double to 64 bit integer.
+//! @brief Binary cast DP-FP value (@c double) to 64 bit integer.
 static inline Int64 doubleAsInt64(double f)
 {
   I64FPUnion u;
@@ -139,60 +148,94 @@ static inline Int64 doubleAsInt64(double f)
 // ============================================================================
 
 //! @brief Structure used for MMX specific data (64 bits).
+//!
+//! This structure can be used to load / store data from / to MMX register.
 union MMData
 {
+  //! @brief Array of eight signed 8 bit integers.
   Int8   sb[8];
+  //! @brief Array of eight unsigned 8 bit integers.
   UInt8  ub[8];
+  //! @brief Array of four signed 16 bit integers.
   Int16  sw[4];
+  //! @brief Array of four unsigned 16 bit integers.
   UInt16 uw[4];
+  //! @brief Array of two signed 32 bit integers.
   Int32  sd[2];
+  //! @brief Array of two unsigned 32 bit integers.
   UInt32 ud[2];
+  //! @brief Array of one signed 64 bit integer.
   Int64  sq[1];
+  //! @brief Array of one unsigned 64 bit integer.
   UInt64 uq[1];
 
+  //! @brief Array of two SP-FP values.
   float  sf[2];
 
+  //! @brief Set all eight signed 8 bit integers.
   inline void set_sb(Int8 x0, Int8 x1, Int8 x2, Int8 x3, Int8 x4, Int8 x5, Int8 x6, Int8 x7)
   { sb[0] = x0; sb[1] = x1; sb[2] = x2; sb[3] = x3; sb[4] = x4; sb[5] = x5; sb[6] = x6; sb[7] = x7; }
 
+  //! @brief Set all eight unsigned 8 bit integers.
   inline void set_ub(UInt8 x0, UInt8 x1, UInt8 x2, UInt8 x3, UInt8 x4, UInt8 x5, UInt8 x6, UInt8 x7)
   { ub[0] = x0; ub[1] = x1; ub[2] = x2; ub[3] = x3; ub[4] = x4; ub[5] = x5; ub[6] = x6; ub[7] = x7; }
 
+  //! @brief Set all four signed 16 bit integers.
   inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3)
   { sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; }
 
+  //! @brief Set all four unsigned 16 bit integers.
   inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3)
   { uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; }
 
+  //! @brief Set all two signed 32 bit integers.
   inline void set_sd(Int32 x0, Int32 x1)
   { sd[0] = x0; sd[1] = x1; }
 
+  //! @brief Set all two unsigned 32 bit integers.
   inline void set_ud(UInt32 x0, UInt32 x1)
   { ud[0] = x0; ud[1] = x1; }
 
+  //! @brief Set signed 64 bit integer.
   inline void set_sd(Int64 x0)
   { sq[0] = x0; }
 
+  //! @brief Set unsigned 64 bit integer.
   inline void set_ud(UInt64 x0)
   { uq[0] = x0; }
 
+  //! @brief Set all two SP-FP values.
   inline void set_sf(float x0, float x1)
   { sf[0] = x0; sf[1] = x1; }
 };
 
 //! @brief Structure used for SSE specific data (128 bits).
+//!
+//! This structure can be used to load / store data from / to SSE register.
+//!
+//! @note Always align SSE data to 16 bytes.
 union XMMData
 {
+  //! @brief Array of sixteen signed 8 bit integers.
   Int8   sb[16];
+  //! @brief Array of sixteen unsigned 8 bit integers.
   UInt8  ub[16];
+  //! @brief Array of eight signed 16 bit integers.
   Int16  sw[8];
+  //! @brief Array of eight unsigned 16 bit integers.
   UInt16 uw[8];
+  //! @brief Array of four signed 32 bit integers.
   Int32  sd[4];
+  //! @brief Array of four unsigned 32 bit integers.
   UInt32 ud[4];
+  //! @brief Array of two signed 64 bit integers.
   Int64  sq[2];
+  //! @brief Array of two unsigned 64 bit integers.
   UInt64 uq[2];
 
+  //! @brief Array of four SP-FP values.
   float  sf[4];
+  //! @brief Array of two DP-FP values.
   double df[2];
 
   inline void set_sb(
@@ -240,7 +283,7 @@ union XMMData
 // [AsmJit::Buffer]
 // ============================================================================
 
-//! @Brief Buffer used to store instruction stream in AsmJit.
+//! @brief Buffer used to store instruction stream in AsmJit.
 //! 
 //! This class can be dangerous, if you don't know how it workd. Assembler
 //! instruction stream is usually constructed by multiple calling emit
@@ -419,7 +462,7 @@ struct ASMJIT_API Buffer
     *reinterpret_cast<UInt64*>(_data + pos) = x;
   }
 
-  // All members are public, because they are accessed and modified by 
+  // All members are public, because they can be accessed and modified by 
   // Assembler/Compiler directly.
 
   //! @brief Beginning position of buffer.
@@ -440,7 +483,7 @@ struct ASMJIT_API Buffer
 // [AsmJit::PodVector<>]
 // ============================================================================
 
-//! @brief Template used to store array of POD data.
+//! @brief Template used to store and manage array of POD data.
 //!
 //! This template has these adventages over other vector<> templates:
 //! - Non-copyable (designed to be non-copyable, we want it)
@@ -552,8 +595,11 @@ private:
     return true;
   }
 
+  //! @brief Items.
   T* _data;
+  //! @brief Length of buffer (count of items in array).
   SysUInt _length;
+  //! @brief Capacity of buffer (maximum items that can fit to current array).
   SysUInt _capacity;
 
   // disable copy

@@ -31,25 +31,28 @@
 
 //! @mainpage
 //!
-//! AsmJit is complete JIT assembler for X86/X64 platform. It contains complete
-//! x86/x64 intrinsics (included is FPU, MMX, 3dNow, SSE, SSE2, SSE3, SSE4) and 
-//! powerful compiler that helps to write portable functions for 32 bit (x86) and
-//! 64 bit (x64) architectures. AsmJit can be used to compile functions at runtime
-//! that can be called from C/C++ code.
-//! 
+//! @brief AsmJit is complete JIT assembler for X86/X64 platform.
+//!
+//! It contains complete x86/x64 intrinsics (included is FPU, MMX, 3dNow, SSE, 
+//! SSE2, SSE3, SSE4) and powerful compiler that helps to write portable 
+//! functions for 32 bit (x86) and 64 bit (x64) architectures. AsmJit can be 
+//! used to compile functions at runtime that can be called from C/C++ code.
+//!
 //! AsmJit can be compiled as a static or dynamically linked library. If you are 
 //! building dynamically linked library, go to AsmJitConfig.h file and setup 
 //! exporting macros (see wiki in AsmJit homepage).
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
+//! 
+//!
+//! AsmJit homepage
+//! - http://code.google.com/p/asmjit/
+//!
 //! Useful links:
 //! - http://www.mark.masmcode.com/ (Tips)
+//! - http://avisynth.org/mediawiki/Filter_SDK/Assembler_optimizing (Optimizing)
 //! - http://www.ragestorm.net/distorm/ (BSD licenced disassembler)
-
-//! @defgroup AsmJit_Config AsmJit configuration.
-//!
-//! Contains macros that can be redefined to fit to any project.
 
 //! @defgroup AsmJit_Assembler Assembler - low level code generation.
 //!
@@ -60,7 +63,12 @@
 //!
 //! Contains classes related to AsmJit::Compiler.
 
-//! @defgroup AsmJit_CpuInfo Get informations about host CPU.
+//! @defgroup AsmJit_Config Configuration - macros used to configure AsmJit.
+//! library.
+//!
+//! Contains macros that can be redefined to fit to any project.
+
+//! @defgroup AsmJit_CpuInfo Cpuid - Get informations about host processor.
 //!
 //! Contains structures and functions to call cpuid() and get advanced CPU
 //! informations.
@@ -69,12 +77,16 @@
 //!
 //! Contains classes related to loging assembler output.
 
-//! @defgroup AsmJit_Serializer Serializer - code generation abstraction.
+//! @defgroup AsmJit_Serializer Serializer - code generation intrinsics.
 //!
 //! Serializer implements assembler intrinsics that's used by @c Assembler
 //! and @c Compiler classes.
 
-//! @defgroup AsmJit_VM Virtual memory alloc / free.
+//! @defgroup AsmJit_Util Utilities - Utilities and helper classes.
+//!
+//! Contains some helper classes that's used by AsmJit library.
+
+//! @defgroup AsmJit_VM Virtual Memory - Allocation and deallocation.
 //!
 //! Contains virtual memory management functions internally implemented
 //! by OS dependent way.

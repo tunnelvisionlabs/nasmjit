@@ -88,6 +88,31 @@ enum EMITTABLE_TYPE
 
 //! @brief Calling convention type.
 //!
+//! Calling convention is scheme how function arguments are passed into 
+//! function and how functions returns values. In assembler programming
+//! it's needed to always comply with function calling conventions, because
+//! even small inconsistency can cause undefined behavior or crash.
+//!
+//! List of calling conventions for 32 bit x86 mode:
+//! - @c CALL_CONV_CDECL - Calling convention for C runtime.
+//! - @c CALL_CONV_STDCALL - Calling convention for WinAPI functions.
+//! - @c CALL_CONV_MSTHISCALL - Calling convention for C++ members under 
+//!      Windows (produced by MSVC and all MSVC compatible compilers).
+//! - @c CALL_CONV_MSFASTCALL - Fastest calling convention that can be used
+//!      by MSVC compiler.
+//! - @c CALL_CONV_BORNANDFASTCALL - Borland fastcall convention.
+//! - @c CALL_CONV_GCCFASTCALL_2 - GCC fastcall convention with 2 register
+//!      arguments.
+//! - @c CALL_CONV_GCCFASTCALL_3 - GCC fastcall convention with 3 register
+//!      arguments.
+//!
+//! List of calling conventions for 64 bit x86 mode (x64):
+//! - @c CALL_CONV_X64W - Windows 64 bit calling convention (WIN64 ABI).
+//! - @c CALL_CONV_X64U - Unix 64 bit calling convention (AMD64 ABI).
+//!
+//! There is also @c CALL_CONV_DEFAULT that is defined to fit best to your 
+//! compiler.
+//!
 //! These types are used together with @c AsmJit::Compiler::newFunction() 
 //! method.
 enum CALL_CONV
@@ -318,15 +343,23 @@ enum VARIABLE_TYPE
   //! @brief Invalid variable type (don't use).
   VARIABLE_TYPE_NONE = 0,
 
-  //! @brief Variable is integer (Int32).
+  //! @brief Variable is 32 bit integer (@c Int32).
   VARIABLE_TYPE_INT32 = 1,
-  //! @brief Variable is unsigned integer (UInt32).
+  //! @brief Variable is 32 bit unsigned integer (@c UInt32).
   VARIABLE_TYPE_UINT32 = 1,
 
-  //! @def VARIABLE_TYPE_SYSINT
-  //! @brief Variable is system wide integer (Int32 or Int64).
-  //! @def VARIABLE_TYPE_SYSUINT
-  //! @brief Variable is system wide unsigned integer (UInt32 or UInt64).
+  //! @var VARIABLE_TYPE_INT64
+  //! @brief Variable is 64 bit signed integer (@c Int64).
+  //! @note Can be used only in 64 bit mode.
+
+  //! @var VARIABLE_TYPE_UINT64
+  //! @brief Variable is 64 bit unsigned integer (@c UInt64).
+  //! @note Can be used only in 64 bit mode.
+
+  //! @var VARIABLE_TYPE_SYSINT
+  //! @brief Variable is system wide integer (@c Int32 or @c Int64).
+  //! @var VARIABLE_TYPE_SYSUINT
+  //! @brief Variable is system wide unsigned integer (@c UInt32 or @c UInt64).
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_SYSINT = VARIABLE_TYPE_INT32,
   VARIABLE_TYPE_SYSUINT = VARIABLE_TYPE_UINT32,
@@ -445,14 +478,21 @@ struct ASMJIT_API Variable
 {
   // [Typedefs]
 
-  //! @Brief Custom alloc function type.
+  //! @brief Custom alloc function type.
   typedef void (*AllocFn)(Variable* v);
-  //! @Brief Custom spill function type.
+  //! @brief Custom spill function type.
   typedef void (*SpillFn)(Variable* v);
 
   // [Construction / Destruction]
 
+  //! @brief Create a new @v Variable instance.
+  //!
+  //! Always use @c AsmJit::Function::newVariable() method to create 
+  //! @c Variable.
   Variable(Compiler* c, Function* f, UInt8 type);
+  //! @brief Destroy variable instance.
+  //!
+  //! Never destroy @c Variable instance created by @c Compiler.
   virtual ~Variable();
 
   // [Methods]
@@ -519,10 +559,18 @@ struct ASMJIT_API Variable
 
   // [Code Generation]
 
+  //! @brief Allocate variable to register.
+  //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
+  //! @param prefferedRegister Preffered register to use (see @c AsmJit::REG enum).
   inline void alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG);
+  //! @brief Spill variable (move to memory).
   inline void spill();
+  //! @brief Unuse variable
+  //!
+  //! This will completely destroy variable. After @c unuse() you can use
+  //! @c alloc() to allocate it again.
   inline void unuse();
 
   // [Custom Spill / Restore]
@@ -688,6 +736,8 @@ struct VariableRef
   inline void use(Variable* v) { ASMJIT_ASSERT(_v == NULL); _v = v->ref(); }
 
   //! @brief Allocate variable to register.
+  //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
+  //! @param prefferedRegister Preffered register to use (see @c REG enum).
   inline void alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG)
@@ -696,14 +746,17 @@ struct VariableRef
     _v->alloc(mode, preferredRegister);
   }
 
-  //! @brief Spill variable from register (or do nothing).
+  //! @brief Spill variable (move to memory).
   inline void spill()
   {
     ASMJIT_ASSERT(_v);
     _v->spill();
   }
 
-  //! @brief Unuse variable (all changes lost).
+  //! @brief Unuse variable
+  //!
+  //! This will completely destroy variable. After @c unuse() you can use
+  //! @c alloc() to allocate it again.
   inline void unuse()
   {
     ASMJIT_ASSERT(_v);
@@ -718,10 +771,13 @@ struct VariableRef
     _v = NULL;
   }
 
+  //! @brief Get variable preffered register.
   inline UInt8 preferredRegister() const { ASMJIT_ASSERT(_v); return _v->preferredRegister(); }
+  //! @brief Set variable preffered register to @a code.
+  //! @param code Preffered register code (see @c AsmJit::REG enum).
   inline void setPreferredRegister(UInt8 code) { ASMJIT_ASSERT(_v); _v->setPreferredRegister(code); }
 
-  //! @brief Return variable priority.
+  //! @brief Get variable priority.
   inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
   //! @brief Set variable priority.
   inline void setPriority(UInt8 priority) { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
@@ -1186,7 +1242,20 @@ struct BuildFunction6
 // [AsmJit::Function]
 // ============================================================================
 
-//! @brief Function emittable.
+//! @brief Function emittable used to generate C/C++ functions.
+//!
+//! Functions are base blocks for generating assembler output. Each generated
+//! assembler stream needs standard entry and leave sequences thats compatible 
+//! to operating system conventions (ABI).
+//!
+//! Function class can be used to generate entry (prolog) and leave (epilog)
+//! sequences that is compatible to a given calling convention and to allocate
+//! and manage variables that can be allocated to registers or spilled.
+//!
+//! @note To create function use @c AsmJit::Compiler::newFunction() method, do
+//! not create @c Function instances by different ways.
+//!
+//! @sa @c State, @c StateRef, @c Variable, @c VariableRef.
 struct ASMJIT_API Function : public Emittable
 {
   // [Construction / Destruction]
@@ -1641,7 +1710,7 @@ private:
 // [AsmJit::Compiler]
 // ============================================================================
 
-//! @brief Compiler.
+//! @brief Compiler - high level code generation.
 //!
 //! This class is used to store instruction stream and allows to modify
 //! it on the fly. It uses different concept than @c AsmJit::Assembler class
@@ -1667,7 +1736,9 @@ struct ASMJIT_API Compiler : public Serializer
   // [Construction / Destruction]
   // -------------------------------------------------------------------------
 
+  //! @brief Create new (empty) instance of @c Compiler.
   Compiler();
+  //! @brief Destroy @c Compiler instance.
   virtual ~Compiler();
 
   // -------------------------------------------------------------------------
@@ -1680,20 +1751,22 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Free internal buffer, all emitters and NULL all pointers.
   void free();
 
+  //! @brief Return list of emmitables (@c Emittable).
   inline EmittableList& buffer() { return _buffer; }
+  //! @overload.
   inline const EmittableList& buffer() const { return _buffer; }
 
   //! @brief Return current function.
   //!
-  //! Use @c beginFunction() and @c endFunction() methods to begin / end
-  //! function block. Each function must be also started by @c prolog()
-  //! and ended by @c epilog() calls.
+  //! This method can be called within @c newFunction() and @c endFunction()
+  //! block.
   inline Function* currentFunction() { return _currentFunction; }
 
   // -------------------------------------------------------------------------
   // [Logging]
   // -------------------------------------------------------------------------
 
+  //! @brief Emit a single comment line into @c Assembler logger.
   void comment(const char* fmt, ...);
 
   // -------------------------------------------------------------------------
@@ -1701,8 +1774,39 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Create a new function.
+  //! @param cconv Calling convention to use (see @c CALL_CONV enum)
+  //! @param params Function arguments prototype.
+  //!
+  //! This method is usually used as a first step when generating functions
+  //! by @c Compiler. First parameter @a cconv specifies function calling
+  //! convention to use. Second parameter @a params specifies function
+  //! arguments. To create function arguments are used templates 
+  //! @c BuildFunction0<>, @c BuildFunction1<...>, @c BuildFunction2<...>, 
+  //! etc...
+  //!
+  //! Templates with BuildFunction prefix are used to generate argument IDs
+  //! based on real C++ types. See next example how to generate function with
+  //! two 32 bit integer arguments.
+  //!
+  //! @verbatim
+  //! // Compiler instance
+  //! Compiler c;
+  //!
+  //! // Begin of function (also emits function @c Prolog)
+  //! Function& f = *c.newFunction(
+  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   CALL_CONV_DEFAULT,
+  //!   // Using function builder to generate arguments list
+  //!   BuildFunction2<int, int>());
+  //!
+  //! // End of function (also emits function @c Epilog)
+  //! c.endFunction();
+  //! @endvarbatim
+  //! 
   //!
   //! @note To get current function use @c currentFunction() method.
+  //!
+  //! @sa @c BuildFunction0, @c BuildFunction1, ...
   template<typename T>
   Function* newFunction(UInt32 cconv, const T& params)
   { return newFunction_(cconv, params.args(), params.count()); }
@@ -1715,20 +1819,42 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Ends current function.
   Function* endFunction();
 
-  //! @brief Create function prolog (begins a function).
+  //! @brief Create function prolog (function begin section).
   //!
-  //! @note Compiler can optimize prologues and epilogues.
+  //! Function prologs and epilogs are standardized sequences of instructions
+  //! thats used to build functions. If you are using @c Function and 
+  //! @c AsmJit::Compiler::newFunction() to make a function, keep in mind that
+  //! it creates prolog (by @c newFunction()) and epilog (by @c endFunction())
+  //! for you.
+  //!
+  //! @note Compiler can optimize prologs and epilogs.
+  //!
+  //! @sa @c Prolog, @c Function.
   Prolog* prolog(Function* f);
 
-  //! @brief Create function epilog (ends a function).
+  //! @brief Create function epilog (function leave section).
   //!
-  //! @note Compiler can optimize prologues and epilogues.
+  //! Function prologs and epilogs are standardized sequences of instructions
+  //! thats used to build functions. If you are using @c Function and 
+  //! @c AsmJit::Compiler::newFunction() to make a function, keep in mind that
+  //! it creates prolog (by @c newFunction()) and epilog (by @c endFunction())
+  //! for you.
+  //!
+  //! @note Compiler can optimize prologs and epilogs.
+  //!
+  //! @sa @c Epilog, @c Function.
   Epilog* epilog(Function* f);
 
   // -------------------------------------------------------------------------
   // [Labels]
   // -------------------------------------------------------------------------
 
+  //! @brief Create and return new @a Label managed by compiler.
+  //!
+  //! Labels created by compiler are same objects as labels created for 
+  //! @c Assembler. There is only one limitation that if you are using 
+  //! @c Compiler each label must be created by @c AsmJit::Compiler::newLabel()
+  //! method.
   Label* newLabel();
 
   // -------------------------------------------------------------------------
@@ -1752,6 +1878,7 @@ struct ASMJIT_API Compiler : public Serializer
   //   destroying compiler instance. Destructors of abadonded compiler
   //   objects are called immediately after abadonding it.
 
+  //! @brief Create object managed by compiler internal memory manager.
   template<typename T>
   inline T* newObject()
   {
@@ -1759,6 +1886,7 @@ struct ASMJIT_API Compiler : public Serializer
     return new(addr) T(this);
   }
 
+  //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1>
   inline T* newObject(P1 p1)
   {
@@ -1766,6 +1894,7 @@ struct ASMJIT_API Compiler : public Serializer
     return new(addr) T(this, p1);
   }
 
+  //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2>
   inline T* newObject(P1 p1, P2 p2)
   {
@@ -1773,6 +1902,7 @@ struct ASMJIT_API Compiler : public Serializer
     return new(addr) T(this, p1, p2);
   }
 
+  //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2, typename P3>
   inline T* newObject(P1 p1, P2 p2, P3 p3)
   {
@@ -1780,6 +1910,7 @@ struct ASMJIT_API Compiler : public Serializer
     return new(addr) T(this, p1, p2, p3);
   }
 
+  //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2, typename P3, typename P4>
   inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4)
   {
@@ -1787,9 +1918,14 @@ struct ASMJIT_API Compiler : public Serializer
     return new(addr) T(this, p1, p2, p3, p4);
   }
 
+  //! @brief Allocate memory using compiler internal memory manager.
   inline void* _allocObject(SysUInt size)
   { return _zone.alloc(size); }
 
+  //! @brief Internal function that registers operand @a op in compiler.
+  //!
+  //! Operand registration means adding @a op to internal operands list and 
+  //! setting operand id.
   void _registerOperand(Operand* op);
 
   // -------------------------------------------------------------------------

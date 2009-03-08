@@ -38,9 +38,9 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Assembler
 //! @{
 
-//! @brief X86/X64 Assembler.
+//! @brief Assembler - low level code generation.
 //!
-//! This class is the main class in AsmJit for generating low level X86/X64 
+//! @c Assembler is the main class in AsmJit for generating low level X86/X64 
 //! binary. It creates internal buffer, where opcodes are stored (don't worry
 //! about it, it's auto growing buffer) and contains methods for generating 
 //! opcodes with compile time and runtime time (DEBUG) checks. Buffer is 

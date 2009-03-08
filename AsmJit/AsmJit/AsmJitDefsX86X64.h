@@ -81,15 +81,28 @@ enum SIZE
 //! values if you are not writing @c AsmJit::Serializer backend.
 enum RID
 {
+  //! @brief ID for AX/EAX/RAX registers.
   RID_EAX = 0,
+  //! @brief ID for CX/ECX/RCX registers.
   RID_ECX = 1,
+  //! @brief ID for DX/EDX/RDX registers.
   RID_EDX = 2,
+  //! @brief ID for BX/EBX/RBX registers.
   RID_EBX = 3,
+  //! @brief ID for SP/ESP/RSP registers.
   RID_ESP = 4,
+  //! @brief ID for BP/EBP/RBP registers.
   RID_EBP = 5,
+  //! @brief ID for SI/ESI/RSI registers.
   RID_ESI = 6,
+  //! @brief ID for DI/EDI/RDI registers.
   RID_EDI = 7,
-  // to check if register is invalid, use reg >= R_INVALID
+  //! @brief Invalid register.
+  //!
+  //! To check if register is invalid, use reg >= R_INVALID. But be careful,
+  //! these checks are used by @c Assembler, because x86 decodes register into
+  //! 3 bits (8 registers). 64 bit architecture contain additional 8 registers
+  //! encoded differently, so be sure you know what you are doing!
   RID_INVALID = 8
 };
 
@@ -172,7 +185,9 @@ enum REG
   NO_REG = 0xFF
 };
 
-// Count of registers is different in 32 bit or 64 bit mode
+//! @var NUM_REGS
+//! @brief Count of General purpose registers and SSE registers.
+
 #if defined(ASMJIT_X86)
 enum { NUM_REGS = 8 };
 #else
@@ -182,9 +197,13 @@ enum { NUM_REGS = 16 };
 //! @brief Prefetch hints.
 enum PREFETCH_HINT
 {
+  //! @brief Prefetch to L0 cache.
   PREFETCH_T0  = 1,
+  //! @brief Prefetch to L1 cache.
   PREFETCH_T1  = 2,
+  //! @brief Prefetch to L2 cache.
   PREFETCH_T2  = 3,
+  //! @brief Prefetch using NT hint.
   PREFETCH_NTA = 0
 };
 
@@ -306,7 +325,7 @@ enum SCALE
   TIMES_8 = 3
 };
 
-//! @brief Condition hint.
+//! @brief Condition hint, see @c AsmJit::Serializer::jz() and others.
 enum HINT
 {
   //! @brief No hint.
@@ -365,10 +384,14 @@ enum RELOC_MODE
   RELOC_JMP_RELATIVE = 10
 };
 
+//! @brief Label state.
 enum LABEL_STATE
 {
+  //! @brief Label is unused.
   LABEL_UNUSED = 0,
+  //! @brief Label is linked (waiting to be bound)
   LABEL_LINKED = 1,
+  //! @brief Label is bound
   LABEL_BOUND = 2
 };
 
@@ -1437,14 +1460,21 @@ static const XMMRegister xmm14(_Initialize(), REG_XMM14);
 static const XMMRegister xmm15(_Initialize(), REG_XMM15);
 #endif // ASMJIT_X64
 
+//! @brief Return general purpose register of byte size.
 static inline Register mk_gpb(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPB)); }
+//! @brief Return general purpose register of word size.
 static inline Register mk_gpw(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPW)); }
+//! @brief Return general purpose register of dword size.
 static inline Register mk_gpd(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPD)); }
 #if defined(ASMJIT_X64)
+//! @brief Return general purpose register of qword size.
 static inline Register mk_gpq(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPQ)); }
 #endif
+//! @brief Return general purpose dword/qword register (depending to architecture).
 static inline Register mk_gpn(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPN)); }
+//! @brief Return MMX (MM) register .
 static inline MMRegister mk_mm(UInt8 index) { return MMRegister(_Initialize(), static_cast<UInt8>(index | REG_MM)); }
+//! @brief Return SSE (XMM) register.
 static inline XMMRegister mk_xmm(UInt8 index) { return XMMRegister(_Initialize(), static_cast<UInt8>(index | REG_XMM)); }
 
 //! @brief returns x87 register with index @a i.
@@ -1630,10 +1660,55 @@ static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 // [AsmJit::Label]
 // ============================================================================
 
-//! @brief Label.
+//! @brief Label (jump target or data location).
 //!
 //! Label represents locations typically used as jump targets, but may be also
-//! used as position where are stored constants or static variables.
+//! used as position where are stored constants or static variables. There are
+//! different rules to use labels by @c Assembler and @c Compiler.
+//!
+//! If you are using low level @c Assembler class to generate machine code, you
+//! are probably creating labels statically while @c Compiler needs to create
+//! label dynamically by @c AsmJit::Compiler::newLabel() method. Never use
+//! statically created labels with @c Compiler or you get to unexpected 
+//! behavior.
+//!
+//! Example of using labels with @c Assembler:
+//! @verbatim
+//! // Assembler instance
+//! Assembler a;
+//! 
+//! // Your label (there is no problem to allocate it on the stack).
+//! Label L_1;
+//!
+//! // ... your code ...
+//!
+//! // Using label, see @c AsmJit::Serializer instrinsics.
+//! a.jump(&L_1);
+//!
+//! // ... your code ...
+//!
+//! // Bind label to current position, see @c AsmJit::Serializer::bind().
+//! a.bind(&L_1);
+//! @endverbatim
+//!
+//! Example of using labels with @c Compiler:
+//! @verbatim
+//! // Compiler instance
+//! Compiler a;
+//! 
+//! // Your label (must be created by @c Compiler).
+//! Label* L_1 = c.newLabel();
+//!
+//! // ... your code ...
+//!
+//! // Using label, see @c AsmJit::Serializer instrinsics.
+//! a.jump(L_1);
+//!
+//! // ... your code ...
+//!
+//! // Bind label to current position, see @c AsmJit::Serializer::bind().
+//! a.bind(L_1);
+//! @endverbatim
 struct Label : public Operand
 {
   //! @brief Create new unused label.
@@ -1687,23 +1762,32 @@ struct Label : public Operand
 // ============================================================================
 
 //! @brief Relocable immediate operand.
+//!
+//! Relocable can be used only together with @c Assembler. Using relocables in
+//! @c Compiler will currently not work.
 struct Relocable : public Immediate
 {
+  //! @brief Create new relocable and initialize its value to @a i.
   inline Relocable(SysInt i, UInt8 isUnsigned = false) : Immediate(i, isUnsigned)
   { _imm.relocMode = RELOC_OVERWRITE; }
 
+  //! @brief Create new relocable and initialize its value to @a other.
   inline Relocable(const Relocable& other) : Immediate(other)
   { _imm.relocMode = RELOC_OVERWRITE; }
 
+  //! @brief Set @c Relocable value to @a i.
   inline Relocable& operator=(const SysInt i)
   { setValue(i); return *this; }
 
+  //! @brief Set @c Relocable value to @a other.
   inline Relocable& operator=(const Relocable& other)
   { _copy(other); }
 
+  //! @brief Discard all recorded relocations.
   inline void discard()
   { _relocations.clear(); }
 
+  //! @brief List of recorded relocations.
   mutable PodVector<RelocInfo> _relocations;
 };
 
@@ -1712,16 +1796,23 @@ struct Relocable : public Immediate
 // ============================================================================
 
 // operand cast
+
+//! @brief Operand cast is used internally to cast @c Operand into higher type.
 template<typename To> static inline To operand_cast(Operand& op) { return reinterpret_cast<To>(op); }
+//! @overload
 template<typename To> static inline To operand_cast(const Operand& op) { return reinterpret_cast<To>(op); }
 
+#if defined(DEBUG)
+
 #define MAKE_OPERAND_CAST(To, Expect) \
+/*! @overload */ \
 template<> static inline To& operand_cast(Operand& op) \
 { \
   ASMJIT_ASSERT(Expect); \
   return reinterpret_cast<To&>(op); \
 } \
 \
+/*! @overload */ \
 template<> static inline const To& operand_cast(const Operand& op) \
 { \
   ASMJIT_ASSERT(Expect); \
@@ -1740,11 +1831,24 @@ MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immedi
 
 #undef MAKE_OPERAND_CAST
 
+#endif // DEBUG
+
 // ============================================================================
 // [AsmJit::mm_shuffle]
 // ============================================================================
 
-//! @brief Create Shuffle Constant for SSE shuffle instrutions.
+//! @brief Create Shuffle Constant for MMX/SSE shuffle instrutions.
+//! @param z First component position, number at interval [0, 3].
+//! @param x Second component position, number at interval [0, 3].
+//! @param y Third component position, number at interval [0, 3].
+//! @param w Fourth component position, number at interval [0, 3].
+//!
+//! Shiffle constants are used in these instructions:
+//! - @c AsmJit::Serializer::pshufw()
+//! - @c AsmJit::Serializer::pshufd()
+//! - @c AsmJit::Serializer::pshufhw()
+//! - @c AsmJit::Serializer::pshuflw()
+//! - @c AsmJit::Serializer::shufps()
 static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)
 { return (z << 6) | (y << 4) | (x << 2) | w; }
 
