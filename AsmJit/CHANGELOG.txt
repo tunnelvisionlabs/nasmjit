@@ -1,4 +1,7 @@
 2009-03-09
+- Released 0.6
+
+2009-03-08
 - Released 0.6-rc1
 - Implemented preferred registers allocation
 - Documentation updates
