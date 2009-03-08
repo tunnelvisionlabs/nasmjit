@@ -95,131 +95,6 @@ enum CALL_CONV
   //! @brief Calling convention is invalid (can't be used).
   CALL_CONV_NONE = 0,
 
-  // [X86 Calling Conventions]
-
-  //! @brief Cdecl calling convention (used by C runtime).
-  //!
-  //! Compatible across MSVC and GCC.
-  //!
-  //! Arguments direction:
-  //! - Right to Left
-  //!
-  //! Stack is cleaned by:
-  //! - Caller.
-  CALL_CONV_CDECL = 1,
-
-  //! @brief Stdcall calling convention (used by WinAPI).
-  //!
-  //! Compatible across MSVC and GCC.
-  //!
-  //! Arguments direction:
-  //! - Right to Left
-  //!
-  //! Stack is cleaned by:
-  //! - Callee.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  CALL_CONV_STDCALL = 2,
-
-  //! @brief MSVC specific calling convention used by MSVC/Intel compilers
-  //! for struct/class methods.
-  //!
-  //! This is MSVC (and Intel) only calling convention used in Windows
-  //! world for C++ class methods. Implicit 'this' pointer is stored in
-  //! ECX register instead of storing it on the stack.
-  //!
-  //! Arguments direction:
-  //! - Right to Left (except this pointer in ECX)
-  //!
-  //! Stack is cleaned by:
-  //! - Callee.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  //!
-  //! C++ class methods that have variable count of arguments uses different
-  //! calling convention called cdecl.
-  //!
-  //! @note This calling convention is always used by MSVC for class methods,
-  //! it's implicit and there is no way how to override it.
-  CALL_CONV_MSTHISCALL = 3,
-
-  //! @brief MSVC specific fastcall.
-  //!
-  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
-  //! registers, all others on the stack in right-to-left order.
-  //!
-  //! Arguments direction:
-  //! - Right to Left (except to first two integer arguments in ECX:EDX)
-  //!
-  //! Stack is cleaned by:
-  //! - Callee.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  //!
-  //! @note This calling convention differs to GCC one in stack cleaning
-  //! mechanism.
-  CALL_CONV_MSFASTCALL = 4,
-
-  //! @brief Borland specific fastcall with 2 parameters in registers.
-  //!
-  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
-  //! registers, all others on the stack in left-to-right order.
-  //!
-  //! Arguments direction:
-  //! - Left to Right (except to first two integer arguments in ECX:EDX)
-  //!
-  //! Stack is cleaned by:
-  //! - Callee.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  //!
-  //! @note Arguments on the stack are in left-to-right order that differs
-  //! to other fastcall conventions used in different compilers.
-  CALL_CONV_BORLANDFASTCALL = 5,
-
-  //! @brief GCC specific fastcall with 2 parameters in registers.
-  //!
-  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
-  //! registers, all others on the stack in right-to-left order.
-  //!
-  //! Arguments direction:
-  //! - Right to Left (except to first two integer arguments in ECX:EDX)
-  //!
-  //! Stack is cleaned by:
-  //! - Caller.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  //!
-  //! @note This calling convention differs to MSVC one in stack cleaning
-  //! mechanism.
-  CALL_CONV_GCCFASTCALL_2 = 6,
-
-  //! @brief GCC specific fastcall with 3 parameters in registers.
-  //!
-  //! Three first parameters (evaluated from left-to-right) are in 
-  //! ECX:EDX:EAX registers, all others on the stack in right-to-left order.
-  //!
-  //! Arguments direction:
-  //! - Right to Left (except to first three integer arguments in ECX:EDX:EAX)
-  //!
-  //! Stack is cleaned by:
-  //! - Caller.
-  //!
-  //! Return value:
-  //! - Integer types - EAX:EDX registers.
-  //! - Floating points - st(0) register.
-  CALL_CONV_GCCFASTCALL_3 = 7,
-
   // [X64 Calling Conventions]
 
   //! @brief X64 calling convention for Windows platform.
@@ -253,7 +128,7 @@ enum CALL_CONV
   //!
   //! More informations about this calling convention can be found on MSDN:
   //! http://msdn.microsoft.com/en-us/library/9b372w95.aspx .
-  CALL_CONV_X64W = 16,
+  CALL_CONV_X64W = 1,
 
   //! @brief X64 calling convention for Unix platforms (AMD64 ABI).
   //!
@@ -276,7 +151,132 @@ enum CALL_CONV
   //! - Floating points - XMM0 register.
   //!
   //! Stack is always aligned by 16 bytes.
-  CALL_CONV_X64U = 17,
+  CALL_CONV_X64U = 2,
+
+  // [X86 Calling Conventions]
+
+  //! @brief Cdecl calling convention (used by C runtime).
+  //!
+  //! Compatible across MSVC and GCC.
+  //!
+  //! Arguments direction:
+  //! - Right to Left
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  CALL_CONV_CDECL = 3,
+
+  //! @brief Stdcall calling convention (used by WinAPI).
+  //!
+  //! Compatible across MSVC and GCC.
+  //!
+  //! Arguments direction:
+  //! - Right to Left
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  CALL_CONV_STDCALL = 4,
+
+  //! @brief MSVC specific calling convention used by MSVC/Intel compilers
+  //! for struct/class methods.
+  //!
+  //! This is MSVC (and Intel) only calling convention used in Windows
+  //! world for C++ class methods. Implicit 'this' pointer is stored in
+  //! ECX register instead of storing it on the stack.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except this pointer in ECX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  //!
+  //! C++ class methods that have variable count of arguments uses different
+  //! calling convention called cdecl.
+  //!
+  //! @note This calling convention is always used by MSVC for class methods,
+  //! it's implicit and there is no way how to override it.
+  CALL_CONV_MSTHISCALL = 5,
+
+  //! @brief MSVC specific fastcall.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  //!
+  //! @note This calling convention differs to GCC one in stack cleaning
+  //! mechanism.
+  CALL_CONV_MSFASTCALL = 6,
+
+  //! @brief Borland specific fastcall with 2 parameters in registers.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
+  //! registers, all others on the stack in left-to-right order.
+  //!
+  //! Arguments direction:
+  //! - Left to Right (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  //!
+  //! @note Arguments on the stack are in left-to-right order that differs
+  //! to other fastcall conventions used in different compilers.
+  CALL_CONV_BORLANDFASTCALL = 7,
+
+  //! @brief GCC specific fastcall with 2 parameters in registers.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  //!
+  //! @note This calling convention differs to MSVC one in stack cleaning
+  //! mechanism.
+  CALL_CONV_GCCFASTCALL_2 = 8,
+
+  //! @brief GCC specific fastcall with 3 parameters in registers.
+  //!
+  //! Three first parameters (evaluated from left-to-right) are in 
+  //! ECX:EDX:EAX registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first three integer arguments in ECX:EDX:EAX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  CALL_CONV_GCCFASTCALL_3 = 9,
 
   // [Preferred Calling Convention]
 
@@ -631,7 +631,7 @@ private:
 };
 
 // ============================================================================
-// [AsmJit::VariableXXXRef]
+// [AsmJit::XXXRef]
 // ============================================================================
 
 //! @brief Base class for variable wrappers.
@@ -654,10 +654,24 @@ struct VariableRef
 
   // [Construction / Destruction]
 
+  //! @brief Create new uninitialized variable reference.
+  //!
+  //! Using uninitialized variable reference is forbidden.
   inline VariableRef() : _v(NULL) {}
+
+  //! @brief Reference variable @a v (@a v can't be @c NULL).
   inline VariableRef(Variable* v) : _v(v->ref()) {}
+
+  //! @brief Dereference variable if it's wrapped.
   inline ~VariableRef() { if (_v) _v->deref(); }
 
+  inline VariableRef& operator=(Variable* v)
+  {
+    if (_v) _v->deref();
+    _v = v->ref();
+  }
+
+  //! @brief Return @c Variable instance.
   inline Variable* v() { return _v; }
 
   // [Methods]
@@ -702,6 +716,11 @@ struct VariableRef
   //! @note Getting memory address operand will always call @c spill().
   inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
 
+  // [Reference counting]
+
+  //! @brief Increase reference count and return @c Variable instance.
+  inline Variable* ref() { ASMJIT_ASSERT(_v); return _v->ref(); }
+
   // [Custom Spill / Restore]
 
   //! @brief Return @c true if variable uses custom alloc / spill functions.
@@ -725,6 +744,10 @@ struct VariableRef
 
 protected:
   Variable* _v;
+
+  // disable copy
+  inline VariableRef(const VariableRef& other);
+  inline VariableRef& operator=(const VariableRef& other);
 };
 
 //! @brief 32 bit integer variable wrapper.

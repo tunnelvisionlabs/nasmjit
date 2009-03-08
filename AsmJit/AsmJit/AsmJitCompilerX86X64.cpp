@@ -32,13 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// [Count of registers is different in 32 bit or 64 bit mode]
-#if defined(ASMJIT_X86)
-# define NUM_REGS 8
-#else
-# define NUM_REGS 16
-#endif // ASMJIT
-
 // VARIABLE_TYPE_INT64 not declared in 32 bit mode, in future this should 
 // change
 #if defined(ASMJIT_X86)
@@ -1326,6 +1319,9 @@ void Epilog::emit(Assembler& a)
   {
     a.ret();
   }
+
+  // Add end of line after epilog
+  if (a.logger()) a.logger()->log("");
 }
 
 // ============================================================================

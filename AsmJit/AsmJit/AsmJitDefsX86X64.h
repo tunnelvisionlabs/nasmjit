@@ -172,6 +172,13 @@ enum REG
   NO_REG = 0xFF
 };
 
+// Count of registers is different in 32 bit or 64 bit mode
+#if defined(ASMJIT_X86)
+enum { NUM_REGS = 8 };
+#else
+enum { NUM_REGS = 16 };
+#endif // ASMJIT
+
 //! @brief Prefetch hints.
 enum PREFETCH_HINT
 {
