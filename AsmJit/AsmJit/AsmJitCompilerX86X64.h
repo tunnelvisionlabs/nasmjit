@@ -485,7 +485,7 @@ struct ASMJIT_API Variable
 
   // [Construction / Destruction]
 
-  //! @brief Create a new @v Variable instance.
+  //! @brief Create a new @a Variable instance.
   //!
   //! Always use @c AsmJit::Function::newVariable() method to create 
   //! @c Variable.
@@ -1741,14 +1741,281 @@ private:
 //!
 //! This class is used to store instruction stream and allows to modify
 //! it on the fly. It uses different concept than @c AsmJit::Assembler class
-//! and in fact @c AsmJit::Assembler is only used as a backend.
+//! and in fact @c AsmJit::Assembler is only used as a backend. Compiler never
+//! emits machine code and each instruction you use is stored to instruction
+//! array instead. This allows to modify instruction stream later and for 
+//! example to reorder instructions to make better performance.
 //!
-//! Using of this class will generate slower code (means slower generation of
-//! assembler, generated assembler is not slower) than using 
-//! @c AsmJit::Assembler, but in some situations it can be more powerful and 
-//! it can result in more readable code, because @c AsmJit::Compiler contains 
-//! also register allocator and you can use variables instead of hardcoding 
-//! registers.
+//! Using @c AsmJit::Compiler means that instruction streams is more high 
+//! level, all these higher level constructs needs to create more dynamic 
+//! objects compared to @c AsmJit::Assembler, but this method allows to write
+//! more portable and in some cases faster code. Because @c AsmJit::Compiler
+//! needs to create many objects and lifetime of these objects is small (same
+//! as @c AsmJit::Compiler lifetime itself) it uses very fast memory management
+//! model. This model allows to create object instances in nearly zero time
+//! (compared to @c malloc() or @c new() operators) so overhead by creating
+//! assembler stream by @c AsmJit::Compiler is minimized.
+//!
+//! <b>Code Generation</b>
+//! 
+//! First that is needed to know about compiler is that compiler never emits
+//! machine code. It's used as a middleware between @c Assembler and your code.
+//!
+//! Example how to generate machine code:
+//! 
+//! @verbatim
+//! // Assembler instance is low level code generation class that emits 
+//! // machine code.
+//! Assembler a;
+//!
+//! // Compiler instance is high level code generation class that stores all
+//! // instructions in internal representation.
+//! Compiler c;
+//!
+//! // ... put your code using Compiler instance ...
+//!
+//! // Final step - generate code. AsmJit::Compiler::build() will serialize 
+//! // all instructions into Assembler and this ensures generating real machine
+//! // code.
+//! c.build(a);
+//! @endverbatim
+//!
+//! You can see that there is @c AsmJit::Compiler::build() function that emits
+//! instruction into @c AsmJit::Assembler(). This layered architecture means 
+//! that each class is used for something different and there is no code
+//! duplication. You need @c AsmJit::Assembler in all cases, @c AsmJit::Compiler
+//! is only comfortable way how to create more portable code in shorter time.
+//!
+//! <b>Functions</b>
+//!
+//! To build functions with @c Compiler, see AsmJit::Compiler::newFunction()
+//! method.
+//!
+//! <b>Variables</b>
+//!
+//! Compiler also manages your variables and function arguments. Using manual
+//! register allocation is not recommended way and it must be done carefully.
+//! See @c AsmJit::VariableRef and related classes how to work with variables
+//! and next example how to use AsmJit API to create function and manage them:
+//!
+//! @verbatim
+//! // Assembler instance
+//! Assembler a;
+//!
+//! // Compiler and function declaration - void f(int*);
+//! Compiler c;
+//! Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<int*>());
+//!
+//! // Get argument variable (it's pointer)
+//! PtrRef a1(f.argument(0));
+//!
+//! // Create your variables
+//! Int32Ref x1(f.newVariable(VARIABLE_TYPE_INT32));
+//! Int32Ref x2(f.newVariable(VARIABLE_TYPE_INT32));
+//!
+//! // Init your variables
+//! c.mov(x1.r(), 1);
+//! c.mov(x2.r(), 2);
+//!
+//! // ... your code ...
+//! c.add(x1.r(), x2.r());
+//! // ... your code ...
+//!
+//! // Store result to a given pointer in first argument
+//! c.mov(dword_ptr(a1.c()), x1.c());
+//!
+//! // Finish
+//! c.endFunction();
+//! c.build(a);
+//! @endverbatim
+//!
+//! There was presented small code snippet with variables, but it's needed to 
+//! explain it more. You can see that there are more variable types that can 
+//! be used. Most useful variables that can be allocated to general purpose 
+//! registers are variables wrapped to @c Int32Ref, @c Int64Ref, @c SysIntRef 
+//! and @c PtrRef. Only @c Int64Ref is limited to 64 bit architecture. 
+//! @c SysIntRef and @c PtrRef variables are equal and it's size depends to 
+//! architecture (32 or 64 bits).
+//!
+//! Compiler is not using variables directly, instead you need to create the
+//! function and create variables through @c AsmJit::Function. In code it's
+//! usually working with @c AsmJit::Compiler and @c AsmJit::Function together.
+//!
+//! Each variable contains state that describes where it is currently allocated
+//! and if it's used. Life of variables is based on reference counting and if
+//! variable is dereferenced to zero its life ends.
+//!
+//! Variable states:
+//!
+//! - Unused (@c AsmJit::VARIABLE_STATE_UNUSED) - State that is assigned to
+//!   newly created variables or to not used variables (dereferenced to zero).
+//! - In register (@c AsmJit::VARIABLE_STATE_REGISTER) - State that means that
+//!   variable is currently allocated in register.
+//! - In memory (@c AsmJit::VARIABLE_STATE_MEMORY) - State that means that
+//!   variable is currently only in memory location.
+//! 
+//! When you create new variable, its state is always @c VARIABLE_STATE_UNUSED,
+//! allocating it to register or spilling to memory changes this state to 
+//! @c VARIABLE_STATE_REGISTER or @c VARIABLE_STATE_MEMORY, respectively. 
+//! During variable lifetime it's usualy that it states is changed multiple
+//! times. To generate better code, you can control allocating and spilling
+//! by using up to four types of methods that allows it (see next list).
+//!
+//! Explicit variable allocating / spilling methods:
+//!
+//! - @c VariableRef::alloc() - Explicit method to alloc variable into 
+//!      register. You can use this before loops or code blocks.
+//!
+//! - @c VariableRef::spill() - Explicit method to spill variable. If variable
+//!      is in register and you call this method, it's moved to its home memory
+//!      location. If variable is not in register no operation is performed.
+//!
+//! Implicit variable allocating / spilling methods:
+//!
+//! - @c VariableRef::r() - Method used to allocate (if it's not previously
+//!      allocated) variable to register for read / write. In most cases
+//!      this is the right method to use in your code. If variable is in
+//!      memory and you use this method it's allocated and moved to register.
+//!      If variable is already in register or it's marked as unused this 
+//!      method does nothing.
+//! 
+//! - @c VariableRef::x() - Method used to allocate variable for write only.
+//!      In AsmJit this means completely overwrite it without using it's value.
+//!      This method is helpful when you want to prevent from copying variable
+//!      from memory to register to save one mov() instruction. If you want
+//!      to clear or set your variable to something it's recommended to use
+//!      @c VariableRef::x().
+//!
+//! - @c VariableRef::c() - Method used to use variable as a constant. 
+//!      Constants means that you will not change that variable or you don't
+//!      want to mark variable as changed. If variable is not marked as changed
+//!      and spill happens you will save one mov() instruction that is needed
+//!      to copy variable from register to its home address.
+//!
+//! - @c VariableRef::m() - Method used to access variable memory address. If
+//!      variable is allocated in register and you call this method, it's 
+//!      spilled, in all other cases it does nothing.
+//!
+//! Next example shows how allocating and spilling works:
+//!
+//! @verbatim
+//! // Small example to show how variable allocating and spilling works
+//!
+//! // Your compiler
+//! Compiler c;
+//!
+//! // Your variable
+//! Int32Ref var = ...;
+//! 
+//! // Make sure variable is spilled
+//! var.spill();
+//! 
+//! // 1. Example: using var.r()
+//! c.mov(var.r(), imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    mov var.reg, [var.home]
+//! //    mov var.reg, 0
+//! //    mov [var.home], var.reg
+//! 
+//! // 2. Example: using var.x()
+//! c.mov(var.x(), imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    --- no alloc, .x() inhibits it.
+//! //    mov var.reg, 0
+//! //    mov [var.home], var.reg
+//! 
+//! // 3. Example: using var.c()
+//! c.mov(var.c(), imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    mov var.reg, [var.home]
+//! //    mov var.reg, 0
+//! //    --- no spill, .c() means that you are not changing it, it's 'c'onstant
+//! 
+//! // 4. Example: using var.m()
+//! c.mov(var.m(), imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    --- no alloc, because we are not allocating it
+//! //    mov [var.home], 0
+//! //    --- no spill, because variable is not allocated
+//!
+//! // 5. Example: using var.x(), setChanged()
+//! c.mov(var.x(),imm(0));
+//! var.setChanged(false);
+//! var.spill();
+//! // Generated code:
+//! //    --- no alloc, .x() inhibits it.
+//! //    mov var.reg, 0
+//! //    --- no spill, setChanged(false) marked variable as unmodified
+//! @endverbatim
+//!
+//! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for 
+//! more complete examples.
+//!
+//! <b>Intrinsics Extensions</b>
+//!
+//! Compiler supports extensions to intrinsics implemented in 
+//! @c AsmJit::Serializer that enables to use variables in instructions without
+//! specifying to use it as register or as memory operand. Sometimes is better
+//! not to alloc variable for each read or write. There is limitation that you
+//! can use variable without specifying if it's in register or in memory 
+//! location only for one operand. This is because x86/x64 architecture not
+//! allows to use two memory operands in one instruction and this could 
+//! happen without this restriction (two variables in memory).
+//!
+//! @verbatim
+//! // Small example to show how intrinsics extensions
+//!
+//! // Your compiler
+//! Compiler c;
+//!
+//! // Your variable
+//! Int32Ref var = ...;
+//! 
+//! // Make sure variable is spilled
+//! var.spill();
+//! 
+//! // 1. Example: Allocated variable
+//! c.alloc()
+//! c.mov(var, imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    mov var.reg, [var.home]
+//! //    mov var.reg, 0
+//! //    mov [var.home], var.reg
+//! 
+//! // 2. Example: Memory variable
+//! c.mov(var, imm(0));
+//! var.spill();
+//! // Generated code:
+//! //    --- no alloc, we want variable in memory
+//! //    mov [var.home], 0
+//! //    --- no spill, becuase variable in not allocated
+//! @endverbatim
+//!
+//! <b>Memory Management</b>
+//!
+//! @c Compiler Memory management follows these rules:
+//! - Everything created by @c Compiler is always freed by @c Compiler.
+//! - To get decent performance, compiler always uses larger buffer for 
+//!   objects to allocate and when compiler instance is destroyed, this 
+//!   buffer is freed. Destructors of active objects are called when 
+//!   destroying compiler instance. Destructors of abadonded compiler
+//!   objects are called immediately after abadonding it.
+//!
+//! This means that you can't use any @c Compiler object after destructing it,
+//! it also means that each object like @c Label, @c Variable nad others are
+//! created and managed by @c Compiler itself.
+//!
+//! <b>Differences summary to @c AsmJit::Assembler</b>
+//!
+//! - Instructions are not translated to machine code immediately.
+//! - Each @c Label must be allocated by @c AsmJit::Compiler::newLabel().
+//! - Contains function builder.
+//! - Contains register allocator / variables management.
 struct ASMJIT_API Compiler : public Serializer
 {
   // -------------------------------------------------------------------------
@@ -1828,8 +2095,7 @@ struct ASMJIT_API Compiler : public Serializer
   //!
   //! // End of function (also emits function @c Epilog)
   //! c.endFunction();
-  //! @endvarbatim
-  //! 
+  //! @endverbatim
   //!
   //! @note To get current function use @c currentFunction() method.
   //!
@@ -1896,14 +2162,6 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
   // [Memory Management]
   // -------------------------------------------------------------------------
-
-  // Memory management in compiler has these rules:
-  // - Everything created by compiler is freed by compiler.
-  // - To get decent performance, compiler always uses larger buffer for 
-  //   objects to allocate and when compiler instance is destroyed, this 
-  //   buffer is freed. Destructors of active objects are called when 
-  //   destroying compiler instance. Destructors of abadonded compiler
-  //   objects are called immediately after abadonding it.
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T>

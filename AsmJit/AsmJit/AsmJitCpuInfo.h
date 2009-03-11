@@ -40,20 +40,30 @@ namespace AsmJit {
 // ============================================================================
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-//! @brief Structure used by cpuid() function.
+//! @brief Structure (union) used by cpuid() function.
 union CpuId
 {
+  //! @brief cpuid results array(eax, ebx, ecx and edx registers).
   UInt32 i[4];
+
   struct
   {
+    //! @brief cpuid result in eax register.
     UInt32 eax;
+    //! @brief cpuid result in ebx register.
     UInt32 ebx;
+    //! @brief cpuid result in ecx register.
     UInt32 ecx;
+    //! @brief cpuid result in edx register.
     UInt32 edx;
   };
 };
 
 //! @brief Calls CPUID instruction with eax == @a in and returns result to @a out.
+//!
+//! @c cpuid() function has one input parameter that is passed to cpuid through 
+//! eax register and results in four output values representing result of cpuid 
+//! instruction (eax, ebx, ecx and edx registers).
 ASMJIT_API void cpuid(UInt32 in, CpuId* out);
 #endif // ASMJIT_X86 || ASMJIT_X64
 
@@ -64,24 +74,41 @@ ASMJIT_API void cpuid(UInt32 in, CpuId* out);
 //! @brief Informations about host cpu.
 struct CpuInfo
 {
+  //! @brief Cpu short vendor string.
   char vendor[16];
+  //! @brief Cpu vendor id (see @c AsmJit::CpuInfo::VendorId enum).
   UInt32 vendorId;
+  //! @brief Cpu family ID.
   UInt32 family;
+  //! @brief Cpu model ID.
   UInt32 model;
+  //! @brief Cpu stepping.
   UInt32 stepping;
+  //! @brief Number of processors or cores.
   UInt32 numberOfProcessors;
+  //! @brief Cpu features bitfield, see @c AsmJit::CpuInfo::Feature enum).
   UInt32 features;
+  //! @brief Cpu bugs bitfield, see @c AsmJit::CpuInfo::Bug enum).
   UInt32 bugs;
 
+  //! @brief Cpu vendor IDs.
+  //!
+  //! Cpu vendor IDs are specific for AsmJit library. Vendor ID is not directly
+  //! read from cpuid result, instead it's based on CPU vendor string.
   enum VendorId
   {
+    //! @brief Unknown vendor.
     Vendor_Unknown = 0,
+    //! @brief Intel vendor (GenuineIntel vendor string).
     Vendor_INTEL = 1,
+    //! @brief AMD vendor (AuthenticAMD or alternatively AMDisbetter! vendor strings).
     Vendor_AMD = 2,
+    //! @brief VIA vendor (VIA VIA VIA vendor string).
     Vendor_VIA = 3
   };
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
+  //! @brief Extended informations for x86/x64 compatible processors.
   struct X86ExtendedInfo
   {
     UInt32 processorType;
@@ -156,6 +183,7 @@ struct CpuInfo
     Feature_64Bit = 1U << 31
   };
 
+  //! @brief X86/X64 CPU bugs.
   enum Bug
   {
     Bug_AmdLockMB = 1U << 0
@@ -166,10 +194,12 @@ struct CpuInfo
 
 //! @brief Detect CPU features to CpuInfo structure @a i.
 //!
-//! @sa @c CpuInfo
+//! @sa @c CpuInfo.
 ASMJIT_API void detectCpuInfo(CpuInfo* i);
 
 //! @brief Return CpuInfo (detection is done only once).
+//!
+//! @sa @c CpuInfo.
 ASMJIT_API CpuInfo* cpuInfo();
 
 //! @}

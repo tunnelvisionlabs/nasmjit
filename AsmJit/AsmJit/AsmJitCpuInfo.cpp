@@ -132,6 +132,7 @@ static const VendorInfo vendorInfo[] =
   { CpuInfo::Vendor_INTEL, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
   { CpuInfo::Vendor_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
   { CpuInfo::Vendor_AMD  , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
+  { CpuInfo::Vendor_VIA  , { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} }
 };
 
 void detectCpuInfo(CpuInfo* i)
