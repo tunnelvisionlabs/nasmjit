@@ -62,7 +62,7 @@ namespace AsmJit {
 //! To generate code is only needed to create instance of @c AsmJit::Assembler
 //! and to use intrinsics. See example how to do that:
 //! 
-//! @verbatim
+//! @code
 //! // Use AsmJit namespace
 //! using namespace AsmJit;
 //!
@@ -80,7 +80,7 @@ namespace AsmJit {
 //! a.mov(esp, ebp);
 //! a.pop(ebp);
 //! a.ret();
-//! @endverbatim
+//! @endcode
 //!
 //! You can see that syntax is very close to Intel one. Only difference is that
 //! you are calling functions that emits the binary code for you. All registers
@@ -95,14 +95,14 @@ namespace AsmJit {
 //!
 //! for example (a is @c AsmJit::Assembler instance):
 //!
-//! @verbatim
+//! @code
 //! a.mov(ptr(eax), imm(0));                   // mov ptr [eax], 0
 //! a.mov(ptr(eax), edx);                      // mov ptr [eax], edx
-//! @endverbatim
+//! @endcode
 //!
 //! But it's also possible to create complex addresses: 
 //!
-//! @verbatim
+//! @code
 //! // eax + ecx*x addresses
 //! a.mov(ptr(eax, ecx, TIMES_1), imm(0));     // mov ptr [eax + ecx], 0
 //! a.mov(ptr(eax, ecx, TIMES_2), imm(0));     // mov ptr [eax + ecx * 2], 0
@@ -113,7 +113,7 @@ namespace AsmJit {
 //! a.mov(ptr(eax, ecx, TIMES_2,  8), imm(0)); // mov ptr [eax + ecx * 2 +  8], 0
 //! a.mov(ptr(eax, ecx, TIMES_3, 12), imm(0)); // mov ptr [eax + ecx * 4 + 12], 0
 //! a.mov(ptr(eax, ecx, TIMES_4, 16), imm(0)); // mov ptr [eax + ecx * 8 + 16], 0
-//! @endverbatim
+//! @endcode
 //!
 //! All addresses shown are using @c AsmJit::ptr() to make memory operand.
 //! Some assembler instructions (single operand ones) needs to specify memory
@@ -122,7 +122,7 @@ namespace AsmJit {
 //! instructions can't be serialized without specifying how bytes they are
 //! operating on. See next code how assembler works:
 //!
-//! @verbatim
+//! @code
 //! // [byte] address
 //! a.inc(byte_ptr(eax));                      // inc byte ptr [eax]
 //! a.dec(byte_ptr(eax));                      // dec byte ptr [eax]
@@ -132,7 +132,7 @@ namespace AsmJit {
 //! // [dword] address
 //! a.inc(dword_ptr(eax));                     // inc dword ptr [eax]
 //! a.dec(dword_ptr(eax));                     // dec dword ptr [eax]
-//! @endverbatim
+//! @endcode
 //!
 //! <b>Calling Code</b>
 //!
@@ -149,7 +149,7 @@ namespace AsmJit {
 //! See next example how to allocate memory where you can execute code created
 //! by @c AsmJit::Assembler:
 //!
-//! @verbatim
+//! @code
 //! using namespace AsmJit;
 //!
 //! Assembler a;
@@ -170,7 +170,7 @@ namespace AsmJit {
 //!
 //! // Memory should be freed, but use VM::free() to do that.
 //! VM::free(vmem, vsize);
-//! @endverbatim
+//! @endcode
 //!
 //! @c note This was very primitive example how to call generated code.
 //! In real production code you will never alloc and free code for one run,
@@ -188,7 +188,7 @@ namespace AsmJit {
 //! See next example that contains complete code that creates simple memory
 //! copy function (in DWORD entities).
 //!
-//! @verbatim
+//! @code
 //! // Example: Usage of Label (32 bit code)
 //! //
 //! // Create simple DWORD memory copy function:
@@ -239,7 +239,7 @@ namespace AsmJit {
 //! 
 //! // Return: STDCALL convention is to pop stack in called function
 //! a.ret(arg_size);
-//! @endverbatim
+//! @endcode
 //!
 //! If you need more abstraction for generating assembler code and you want
 //! to hide calling conventions between 32 bit and 64 bit operating systems,

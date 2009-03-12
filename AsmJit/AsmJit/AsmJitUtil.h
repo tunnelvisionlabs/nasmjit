@@ -300,7 +300,7 @@ union XMMData
 //!
 //! Example using Buffer:
 //!
-//! @verbatim
+//! @code
 //! // Buffer instance, growThreshold == 16
 //! // (no memory allocated in constructor).
 //! AsmJit::Buffer buf(16);
@@ -315,7 +315,7 @@ union XMMData
 //!   buf.emitByte(0x03);
 //!   ...
 //! }
-//! @endverbatim
+//! @endcode
 struct ASMJIT_API Buffer
 {
   inline Buffer(SysInt growThreshold = 16) :

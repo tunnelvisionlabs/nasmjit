@@ -1453,7 +1453,7 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! To save function state always wrap returned value into @c StateRef:
   //!
-  //! @verbatim
+  //! @code
   //! // Your function
   //! Function &f = ...;
   //!
@@ -1467,7 +1467,7 @@ struct ASMJIT_API Function : public Emittable
   //!   // Restore state (automatic by @c StateRef destructor).
   //! }
   //!
-  //! @endverbatim
+  //! @endcode
   State *saveState();
 
   //! @brief Restore function register state to @a state.
@@ -1746,15 +1746,15 @@ private:
 //! array instead. This allows to modify instruction stream later and for 
 //! example to reorder instructions to make better performance.
 //!
-//! Using @c AsmJit::Compiler means that instruction streams is more high 
-//! level, all these higher level constructs needs to create more dynamic 
-//! objects compared to @c AsmJit::Assembler, but this method allows to write
-//! more portable and in some cases faster code. Because @c AsmJit::Compiler
-//! needs to create many objects and lifetime of these objects is small (same
-//! as @c AsmJit::Compiler lifetime itself) it uses very fast memory management
-//! model. This model allows to create object instances in nearly zero time
-//! (compared to @c malloc() or @c new() operators) so overhead by creating
-//! assembler stream by @c AsmJit::Compiler is minimized.
+//! Using @c AsmJit::Compiler moves code generation to higher level. Higher 
+//! level constructs allows to write more abstract and extensible code that
+//! is not possible with pure @c AsmJit::Assembler class. Because 
+//! @c AsmJit::Compiler needs to create many objects and lifetime of these 
+//! objects is small (same as @c AsmJit::Compiler lifetime itself) it uses 
+//! very fast memory management model. This model allows to create object 
+//! instances in nearly zero time (compared to @c malloc() or @c new() 
+//! operators) so overhead by creating assembler stream by 
+//! @c AsmJit::Compiler is minimized.
 //!
 //! <b>Code Generation</b>
 //! 
@@ -1763,7 +1763,7 @@ private:
 //!
 //! Example how to generate machine code:
 //! 
-//! @verbatim
+//! @code
 //! // Assembler instance is low level code generation class that emits 
 //! // machine code.
 //! Assembler a;
@@ -1778,7 +1778,7 @@ private:
 //! // all instructions into Assembler and this ensures generating real machine
 //! // code.
 //! c.build(a);
-//! @endverbatim
+//! @endcode
 //!
 //! You can see that there is @c AsmJit::Compiler::build() function that emits
 //! instruction into @c AsmJit::Assembler(). This layered architecture means 
@@ -1798,7 +1798,7 @@ private:
 //! See @c AsmJit::VariableRef and related classes how to work with variables
 //! and next example how to use AsmJit API to create function and manage them:
 //!
-//! @verbatim
+//! @code
 //! // Assembler instance
 //! Assembler a;
 //!
@@ -1827,7 +1827,7 @@ private:
 //! // Finish
 //! c.endFunction();
 //! c.build(a);
-//! @endverbatim
+//! @endcode
 //!
 //! There was presented small code snippet with variables, but it's needed to 
 //! explain it more. You can see that there are more variable types that can 
@@ -1898,7 +1898,7 @@ private:
 //!
 //! Next example shows how allocating and spilling works:
 //!
-//! @verbatim
+//! @code
 //! // Small example to show how variable allocating and spilling works
 //!
 //! // Your compiler
@@ -1950,7 +1950,7 @@ private:
 //! //    --- no alloc, .x() inhibits it.
 //! //    mov var.reg, 0
 //! //    --- no spill, setChanged(false) marked variable as unmodified
-//! @endverbatim
+//! @endcode
 //!
 //! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for 
 //! more complete examples.
@@ -1966,7 +1966,7 @@ private:
 //! allows to use two memory operands in one instruction and this could 
 //! happen without this restriction (two variables in memory).
 //!
-//! @verbatim
+//! @code
 //! // Small example to show how intrinsics extensions
 //!
 //! // Your compiler
@@ -1994,7 +1994,7 @@ private:
 //! //    --- no alloc, we want variable in memory
 //! //    mov [var.home], 0
 //! //    --- no spill, becuase variable in not allocated
-//! @endverbatim
+//! @endcode
 //!
 //! <b>Memory Management</b>
 //!
@@ -2082,7 +2082,7 @@ struct ASMJIT_API Compiler : public Serializer
   //! based on real C++ types. See next example how to generate function with
   //! two 32 bit integer arguments.
   //!
-  //! @verbatim
+  //! @code
   //! // Compiler instance
   //! Compiler c;
   //!
@@ -2095,7 +2095,7 @@ struct ASMJIT_API Compiler : public Serializer
   //!
   //! // End of function (also emits function @c Epilog)
   //! c.endFunction();
-  //! @endverbatim
+  //! @endcode
   //!
   //! @note To get current function use @c currentFunction() method.
   //!

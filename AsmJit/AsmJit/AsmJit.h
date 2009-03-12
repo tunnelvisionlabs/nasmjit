@@ -36,9 +36,19 @@
 //! functions for 32 bit (x86) and 64 bit (x64) architectures. AsmJit can be 
 //! used to compile functions at runtime that can be called from C/C++ code.
 //!
-//! AsmJit can be compiled as a static or dynamically linked library. If you are 
-//! building dynamically linked library, go to AsmJitConfig.h file and setup 
-//! exporting macros (see wiki in AsmJit homepage).
+//! <b>Introduction</b>
+//!
+//! AsmJit library contains low level and high level code generation classes.
+//! If you are looking for low level code generation that means that you
+//! perfectly understand calling conventions and you don't need automatic
+//! registers allocation or portable code between 32 bit operating systems
+//! and 64 bit ones, look at @ref AsmJit_Serializer and @ref AsmJit_Assembler
+//! sections.
+//!
+//! For high level code generation look at @ref AsmJit_Compiler section. 
+//! Please read also @ref AsmJit_Serializer and @ref AsmJit_Assembler even
+//! if you want to use pure @c AsmJit::Compiler solution. It's needed to
+//! understand how AsmJit library works and how you should use its API.
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
@@ -121,7 +131,7 @@
 //!
 //! Example how to use AsmJit::cpuid():
 //!
-//! @verbatim
+//! @code
 //! // All functions and structures are in AsmJit namesapce.
 //! using namespace AsmJit;
 //!
@@ -141,7 +151,7 @@
 //! 
 //! // Print vendor
 //! puts(vendor);
-//! @endverbatim
+//! @endcode
 //!
 //! If you want to use AsmJit::cpuid() function instead of higher level 
 //! @c AsmJit::cpuInfo(), please read processor manuals provided by Intel, 
@@ -149,7 +159,7 @@
 //!
 //! Example of using @c AsmJit::cpuInfo():
 //!
-//! @verbatim
+//! @code
 //! // All functions and structures are in AsmJit namesapce.
 //! using namespace AsmJit;
 //!
@@ -174,7 +184,7 @@
 //! {
 //!   // your code...
 //! }
-//! @endverbatim
+//! @endcode
 //!
 //! Better example is in AsmJit/test/testcpu.cpp file.
 //!
@@ -191,18 +201,24 @@
 //! Contains classes related to loging assembler output. Currently logging
 //! is only implemented in @c AsmJit::Assembler class, but it follows design
 //! that it can be customized by overriding @c AsmJit::Assembler::Logger.
-//! @c AsmJit::PrettyPrinter is optional logging class that prints emited
+//! @c AsmJit::PrettyPrinter is optional logging class that prints emitted
 //! instructions into @c stderr or your customized stream.
 //!
 //! To log your assembler output use this code:
-//! @verbatim
+//! @code
 //! // Create assembler
 //! Assembler a;
 //!
 //! // Create and set logger
 //! PrettyPrinter logger;
 //! a.setLogger(&logger);
-//! @endverbatim
+//! @endcode
+//!
+//! You can see that logging goes through @c AsmJit::Assembler. If you are
+//! using @c AsmJit::Compiler and you want to log messages you should look
+//! at @c AsmJit::Compiler::comment() method. It allows you to insert text
+//! message into @c AsmJit::Emittable list and @c AsmJit::Compiler will send
+//! your message to @c AsmJit::Assembler in correct order.
 //!
 //! @sa @c AsmJit::Assembler::Logger, @c AsmJit::PrettyPrinter.
 
@@ -259,7 +275,9 @@
 //!
 //! <b>Immediates</b>
 //!
-//! TODOC
+//! Immediate values are constants thats passed directly after instruction 
+//! opcode. To create such value use @c AsmJit::imm() or @c AsmJit::uimm()
+//! methods to create signed or unsigned immediate value.
 //!
 //! @sa @c AsmJit::Serializer.
 

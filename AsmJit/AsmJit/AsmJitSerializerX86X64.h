@@ -800,7 +800,7 @@ static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 //! behavior.
 //!
 //! Example of using labels with @c Assembler:
-//! @verbatim
+//! @code
 //! // Assembler instance
 //! Assembler a;
 //! 
@@ -816,10 +816,10 @@ static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 //!
 //! // Bind label to current position, see @c AsmJit::Serializer::bind().
 //! a.bind(&L_1);
-//! @endverbatim
+//! @endcode
 //!
 //! Example of using labels with @c Compiler:
-//! @verbatim
+//! @code
 //! // Compiler instance
 //! Compiler a;
 //! 
@@ -835,7 +835,7 @@ static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 //!
 //! // Bind label to current position, see @c AsmJit::Serializer::bind().
 //! a.bind(L_1);
-//! @endverbatim
+//! @endcode
 struct Label : public Operand
 {
   //! @brief Create new unused label.

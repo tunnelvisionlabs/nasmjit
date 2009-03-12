@@ -48,7 +48,7 @@ namespace AsmJit {
 //!
 //! To use PrettyPrinter, use:
 //!
-//! @verbatim
+//! @code
 //! using namespace AsmJit;
 //!
 //! // Create Assembler instance
@@ -57,7 +57,7 @@ namespace AsmJit {
 //! // Create PrettyPrinter instance and attach it to the Assembler
 //! PrettyPrinter logger;
 //! a.setLogger(&logger);
-//! @endverbatim
+//! @endcode
 struct PrettyPrinter : Assembler::Logger
 {
   //! @brief Create new PrettyPrinter instance.
