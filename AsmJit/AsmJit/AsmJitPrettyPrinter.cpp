@@ -43,6 +43,8 @@
 
 namespace AsmJit {
 
+// [Constants]
+
 static const char prettyNames[] =
   "adc\0"
   "add\0"
@@ -1077,6 +1079,40 @@ static const UInt16 prettyIndex[] =
   3408
 };
 
+static const char* prettySize[] = 
+{
+  NULL,
+  "byte ptr ",
+  "word ptr ",
+  NULL,
+  "dword ptr ",
+  NULL,
+  NULL,
+  NULL,
+  "qword ptr ",
+  NULL,
+  "tword ptr ",
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  "dqword ptr "
+};
+
+// [Helpers]
+
+char* mycpy(char* dst, const char* src)
+{
+  if (src == NULL) return dst;
+
+  SysInt len = (SysInt)strlen(src);
+  memcpy(dst, src, len);
+  return dst + len;
+}
+
+// [AsmJit::PrettyPrinter]
+
 PrettyPrinter::PrettyPrinter()
 {
 }
@@ -1124,7 +1160,7 @@ void PrettyPrinter::logFormat(const char* fmt, ...)
   va_start(ap, fmt);
   vsnprintf(buf, 1023, fmt, ap);
   va_end(ap);
-
+  
   log(buf);
 }
 
@@ -1137,7 +1173,7 @@ SysInt PrettyPrinter::dumpInstruction(char* buf, UInt32 code)
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
   const char *name = &prettyNames[prettyIndex[code]];
-  SysInt len = (SysInt)strlen(name);
+  SysUInt len = (SysUInt)strlen(name);
 
   memcpy(buf, name, len);
   return len;
@@ -1156,6 +1192,11 @@ SysInt PrettyPrinter::dumpOperand(char* buf, const Operand* op)
     const char* beg = buf;
     const Mem& mem = operand_cast<const Mem&>(*op);
 
+    if (op->size() <= 16) 
+    {
+      buf = mycpy(buf, prettySize[op->size()]);
+    }
+    
     *buf++ = '[';
 
     if (mem.hasBase())
@@ -1175,7 +1216,7 @@ SysInt PrettyPrinter::dumpOperand(char* buf, const Operand* op)
         *buf++ = ' ';
         *buf++ = '*';
         *buf++ = ' ';
-        *buf++ = ("1248"[mem.shift()]);
+        *buf++ = "1248"[mem.shift()];
       }
     }
 

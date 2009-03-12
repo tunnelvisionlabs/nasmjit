@@ -1682,21 +1682,59 @@ private:
 //! by @c Compiler are manager by compiler. This means that lifetime of 
 //! these objects are same as compiler lifetime (that's short).
 //!
-//! All emittables, variables, labels and states are allocated by @c Compiler 
-//! by this way.
+//! All emittables, variables, labels and states allocated by @c Compiler are
+//! allocated through @c Zone object.
 struct ASMJIT_API Zone
 {
   // [Construction / Destruction]
 
   //! @brief Create new instance of @c Zone.
+  //! @param chunkSize Default size for one zone chunk.
   Zone(SysUInt chunkSize);
+
   //! @brief Destroy zone instance.
   ~Zone();
 
   // [Methods]
 
   //! @brief Allocate @c size bytes of memory and return pointer to it.
+  //!
+  //! Pointer allocated by this way will be valid until @c Zone object is
+  //! destroyed. To create class by this way use placement @c new and 
+  //! @c delete operators:
+  //!
+  //! @code
+  //! // Example of allocating simple class
+  //!
+  //! // Your class
+  //! class Object
+  //! {
+  //!   // members...
+  //! };
+  //!
+  //! // Your function
+  //! void f()
+  //! {
+  //!   // We are using AsmJit namespace
+  //!   using namespace AsmJit
+  //!
+  //!   // Create zone object with chunk size of 65536 bytes.
+  //!   Zone zone(65536);
+  //!
+  //!   // Create your objects using zone object allocating, for example:
+  //!   Object* obj = new(zone.alloc(sizeof(YourClass))) Object();
+  //! 
+  //!   // ... lifetime of your objects ...
+  //! 
+  //!   // Destroy your objects:
+  //!   obj->~Object();
+  //!
+  //!   // Zone destructor will free all memory allocated through it, 
+  //!   // alternative is to call @c zone.freeAll().
+  //! }
+  //! @endcode
   void* alloc(SysUInt size);
+
   //! @brief Free all allocated memory at once.
   void freeAll();
 
@@ -1838,8 +1876,8 @@ private:
 //! architecture (32 or 64 bits).
 //!
 //! Compiler is not using variables directly, instead you need to create the
-//! function and create variables through @c AsmJit::Function. In code it's
-//! usually working with @c AsmJit::Compiler and @c AsmJit::Function together.
+//! function and create variables through @c AsmJit::Function. In code you will
+//! always work with @c AsmJit::Compiler and @c AsmJit::Function together.
 //!
 //! Each variable contains state that describes where it is currently allocated
 //! and if it's used. Life of variables is based on reference counting and if
@@ -1857,7 +1895,7 @@ private:
 //! When you create new variable, its state is always @c VARIABLE_STATE_UNUSED,
 //! allocating it to register or spilling to memory changes this state to 
 //! @c VARIABLE_STATE_REGISTER or @c VARIABLE_STATE_MEMORY, respectively. 
-//! During variable lifetime it's usualy that it states is changed multiple
+//! During variable lifetime it's usual that its state is changed multiple
 //! times. To generate better code, you can control allocating and spilling
 //! by using up to four types of methods that allows it (see next list).
 //!
@@ -1967,7 +2005,7 @@ private:
 //! happen without this restriction (two variables in memory).
 //!
 //! @code
-//! // Small example to show how intrinsics extensions
+//! // Small example to show how intrinsics extensions works
 //!
 //! // Your compiler
 //! Compiler c;
@@ -1979,7 +2017,7 @@ private:
 //! var.spill();
 //! 
 //! // 1. Example: Allocated variable
-//! c.alloc()
+//! var.alloc()
 //! c.mov(var, imm(0));
 //! var.spill();
 //! // Generated code:
@@ -2022,8 +2060,11 @@ struct ASMJIT_API Compiler : public Serializer
   // [Typedefs]
   // -------------------------------------------------------------------------
 
+  //! @brief List of emittables used in @c Compiler.
   typedef PodVector<Emittable*> EmittableList;
+  //! @brief List of variables used in @c Compiler.
   typedef PodVector<Variable*> VariableList;
+  //! @brief List of operands used in @c Compiler.
   typedef PodVector<Operand*> OperandList;
 
   // -------------------------------------------------------------------------
@@ -2040,12 +2081,26 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Clear everything, but not deallocate buffers.
+  //!
+  //! @note This method will destroy your code.
   void clear();
 
   //! @brief Free internal buffer, all emitters and NULL all pointers.
+  //!
+  //! @note This method will destroy your code.
   void free();
 
   //! @brief Return list of emmitables (@c Emittable).
+  //!
+  //! This list contains all emittables that will be emitted throught 
+  //! @c build() method into @c AsmJit::Assembler. Emittables are stored
+  //! in FIFO order, so first stored emittable is emitted first. See
+  //! @c AsmJit::Emittable inheritance diagram for available emittables.
+  //!
+  //! You will probably never use list of emittables yourself, but it's
+  //! public to allow manipulations that is not available in 
+  //! @c AsmJit::Assembler class. It's also used in @c build() method to emit
+  //! them all in correct order.
   inline EmittableList& buffer() { return _buffer; }
   //! @overload.
   inline const EmittableList& buffer() const { return _buffer; }
@@ -2053,7 +2108,10 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Return current function.
   //!
   //! This method can be called within @c newFunction() and @c endFunction()
-  //! block.
+  //! block to get current function you are working with. It's recommended
+  //! to store @c AsmJit::Function pointer returned by @c newFunction<> method,
+  //! because this allows you in future implement function sections outside of
+  //! function itself (yeah, this is possible!).
   inline Function* currentFunction() { return _currentFunction; }
 
   // -------------------------------------------------------------------------
@@ -2061,6 +2119,14 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Emit a single comment line into @c Assembler logger.
+  //!
+  //! Emitting comments are useful to log something. Because assembler can be
+  //! generated from AST or other data structures, you may sometimes need to
+  //! log data characteristics or statistics.
+  //!
+  //! @note Emitting comment is not directly sent to logger, but instead it's
+  //! stored in @c AsmJit::Compiler and emitted when @c build() method is
+  //! called with all instructions together in correct order.
   void comment(const char* fmt, ...);
 
   // -------------------------------------------------------------------------
@@ -2068,6 +2134,7 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Create a new function.
+  //!
   //! @param cconv Calling convention to use (see @c CALL_CONV enum)
   //! @param params Function arguments prototype.
   //!
@@ -2083,6 +2150,8 @@ struct ASMJIT_API Compiler : public Serializer
   //! two 32 bit integer arguments.
   //!
   //! @code
+  //! // Building function using AsmJit::Compiler example.
+  //!
   //! // Compiler instance
   //! Compiler c;
   //!
@@ -2097,14 +2166,58 @@ struct ASMJIT_API Compiler : public Serializer
   //! c.endFunction();
   //! @endcode
   //!
-  //! @note To get current function use @c currentFunction() method.
+  //! You can see that building functions is really easy. Previous code snipped
+  //! will generate code for function with two 32 bit integer arguments. You 
+  //! can access arguments by @c AsmJit::Function::argument() method. Arguments
+  //! are indexed from 0 (like everything in C).
   //!
-  //! @sa @c BuildFunction0, @c BuildFunction1, ...
+  //! @code
+  //! // Accessing function arguments through AsmJit::Function example.
+  //!
+  //! // Compiler instance
+  //! Compiler c;
+  //!
+  //! // Begin of function (also emits function @c Prolog)
+  //! Function& f = *c.newFunction(
+  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   CALL_CONV_DEFAULT,
+  //!   // Using function builder to generate arguments list
+  //!   BuildFunction2<int, int>());
+  //!
+  //! // Arguments are like other variables, you need to reference them by
+  //! // VariableRef types:
+  //! Int32Ref a0 = f.argument(0);
+  //! Int32Ref a1 = f.argument(1);
+  //!
+  //! // To allocate them to registers just use .alloc(), .r(), .x() or .c() 
+  //! // variable methods:
+  //! c.add(a0.r(), a1.r());
+  //!
+  //! // End of function (also emits function @c Epilog)
+  //! c.endFunction();
+  //! @endcode
+  //!
+  //! Arguments are like variables. How to manipulate with variables is
+  //! documented in @c AsmJit::Compiler detail and @c AsmJit::VariableRef 
+  //! class.
+  //!
+  //! @note To get current function use @c currentFunction() method or save
+  //! pointer to @c AsmJit::Function returned by @c AsmJit::Compiler::newFunction<>
+  //! method. Recommended is to save the pointer.
+  //!
+  //! @sa @c BuildFunction0, @c BuildFunction1, @c BuildFunction2, ...
   template<typename T>
   Function* newFunction(UInt32 cconv, const T& params)
   { return newFunction_(cconv, params.args(), params.count()); }
 
-  //! @brief Create a new function.
+  //! @brief Create a new function (low level version).
+  //!
+  //! @param cconv Function calling convention (see @c AsmJit::CALL_CONV).
+  //! @param args Function arguments (see @c AsmJit::VARIABLE_TYPE).
+  //! @param count Arguments count.
+  //!
+  //! This method is internally called from @c newFunction() method and 
+  //! contains arguments thats used internally by @c AsmJit::Compiler.
   //!
   //! @note To get current function use @c currentFunction() method.
   Function* newFunction_(UInt32 cconv, const UInt32* args, SysUInt count);
@@ -2120,6 +2233,9 @@ struct ASMJIT_API Compiler : public Serializer
   //! it creates prolog (by @c newFunction()) and epilog (by @c endFunction())
   //! for you.
   //!
+  //! @note Never use prolog after @c newFunction() method. It will create
+  //! prolog for you!
+  //!
   //! @note Compiler can optimize prologs and epilogs.
   //!
   //! @sa @c Prolog, @c Function.
@@ -2132,6 +2248,9 @@ struct ASMJIT_API Compiler : public Serializer
   //! @c AsmJit::Compiler::newFunction() to make a function, keep in mind that
   //! it creates prolog (by @c newFunction()) and epilog (by @c endFunction())
   //! for you.
+  //!
+  //! @note Never use epilog before @c endFunction() method. It will create
+  //! epilog for you!
   //!
   //! @note Compiler can optimize prologs and epilogs.
   //!
@@ -2211,21 +2330,46 @@ struct ASMJIT_API Compiler : public Serializer
   //!
   //! Operand registration means adding @a op to internal operands list and 
   //! setting operand id.
+  //!
+  //! @note Operand @a op should by allocated by @c Compiler or you must
+  //! guarantee that it will be not destroyed before @c Compiler is destroyed.
   void _registerOperand(Operand* op);
 
   // -------------------------------------------------------------------------
   // [Intrinsics]
   // -------------------------------------------------------------------------
 
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var32(UInt32 code, const Int32Ref& a);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b);
 
 #if defined(ASMJIT_X64)
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var64(UInt32 code, const Int64Ref& a);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b);
+
+  //! @brief Intrinsics helper method.
+  //! @internal
   void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b);
 #endif // ASMJIT_X64
 

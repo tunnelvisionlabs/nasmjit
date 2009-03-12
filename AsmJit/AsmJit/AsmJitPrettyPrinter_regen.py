@@ -75,6 +75,8 @@ dout += \
 
 namespace AsmJit {
 
+// [Constants]
+
 """
 
 dout += "static const char prettyNames[] =\n"
@@ -91,6 +93,40 @@ dout += "};\n"
 
 dout += \
 """
+static const char* prettySize[] = 
+{
+  NULL,
+  "byte ptr ",
+  "word ptr ",
+  NULL,
+  "dword ptr ",
+  NULL,
+  NULL,
+  NULL,
+  "qword ptr ",
+  NULL,
+  "tword ptr ",
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  "dqword ptr "
+};
+
+// [Helpers]
+
+char* mycpy(char* dst, const char* src)
+{
+  if (src == NULL) return dst;
+
+  SysInt len = (SysInt)strlen(src);
+  memcpy(dst, src, len);
+  return dst + len;
+}
+
+// [AsmJit::PrettyPrinter]
+
 PrettyPrinter::PrettyPrinter()
 {
 }
@@ -151,7 +187,7 @@ SysInt PrettyPrinter::dumpInstruction(char* buf, UInt32 code)
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
   const char *name = &prettyNames[prettyIndex[code]];
-  SysInt len = (SysInt)strlen(name);
+  SysUInt len = (SysUInt)strlen(name);
 
   memcpy(buf, name, len);
   return len;
@@ -170,6 +206,11 @@ SysInt PrettyPrinter::dumpOperand(char* buf, const Operand* op)
     const char* beg = buf;
     const Mem& mem = operand_cast<const Mem&>(*op);
 
+    if (op->size() <= 16) 
+    {
+      buf = mycpy(buf, prettySize[op->size()]);
+    }
+    
     *buf++ = '[';
 
     if (mem.hasBase())
