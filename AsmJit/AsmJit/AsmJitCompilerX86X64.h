@@ -671,13 +671,12 @@ private:
   //! @brief Custom data that can be used by custom spill and restore functions.
   void* _data;
 
-  // disable copy
-  inline Variable(const Variable& other);
-  inline Variable& operator=(const Variable& other);
-
   friend struct Compiler;
   friend struct Function;
   friend struct VariableRef;
+
+  // disable copy
+  ASMJIT_DISABLE_COPY(Variable);
 };
 
 // ============================================================================
@@ -822,8 +821,7 @@ protected:
   Variable* _v;
 
   // disable copy
-  inline VariableRef(const VariableRef& other);
-  inline VariableRef& operator=(const VariableRef& other);
+  ASMJIT_DISABLE_COPY(VariableRef);
 };
 
 //! @brief 32 bit integer variable wrapper.
@@ -986,13 +984,12 @@ private:
   //! @brief State data.
   Data _data;
 
-  // disable copy
-  inline State(const State& other);
-  inline State& operator=(const State& other);
-
   friend struct Compiler;
   friend struct Function;
   friend struct StateRef;
+
+  // disable copy
+  ASMJIT_DISABLE_COPY(State);
 };
 
 // ============================================================================
@@ -1016,8 +1013,7 @@ private:
   State* _state;
 
   // disable copy
-  inline StateRef(const StateRef& other);
-  inline StateRef& operator=(const StateRef& other);
+  ASMJIT_DISABLE_COPY(StateRef);
 };
 
 // ============================================================================
@@ -1057,8 +1053,7 @@ protected:
 
 private:
   // disable copy
-  inline Emittable(const Emittable& other);
-  inline Emittable& operator=(const Emittable& other);
+  ASMJIT_DISABLE_COPY(Emittable);
 };
 
 // ============================================================================
@@ -1249,6 +1244,38 @@ struct BuildFunction6
 {
   inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id }; return data; }
   inline SysUInt count() const { return 6; }
+};
+
+//! @brief Class used to build function with 7 arguments.
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+struct BuildFunction7
+{
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id }; return data; }
+  inline SysUInt count() const { return 7; }
+};
+
+//! @brief Class used to build function with 8 arguments.
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+struct BuildFunction8
+{
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id }; return data; }
+  inline SysUInt count() const { return 8; }
+};
+
+//! @brief Class used to build function with 9 arguments.
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
+struct BuildFunction9
+{
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id }; return data; }
+  inline SysUInt count() const { return 9; }
+};
+
+//! @brief Class used to build function with 9 arguments.
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
+struct BuildFunction10
+{
+  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id, TypeAsId<P9>::Id }; return data; }
+  inline SysUInt count() const { return 10; }
 };
 
 // ============================================================================
@@ -2505,7 +2532,7 @@ private:
   //! @brief Current function.
   Function* _currentFunction;
 
-  //! @brief Memory management.
+  //! @brief Zone memory management.
   Zone _zone;
 
   //! @brief Label id counter (starts from 1).

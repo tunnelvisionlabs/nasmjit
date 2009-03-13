@@ -148,6 +148,12 @@ namespace AsmJit
 # define ASMJIT_UINT64_C(num) num##ULL
 #endif
 
+// [AsmJit - C++ Macros]
+#define ASMJIT_DISABLE_COPY(__type__) \
+private: \
+  inline __type__(const __type__& other); \
+  inline __type__& operator=(const __type__& other)
+
 // [AsmJit - Debug]
 #if defined(DEBUG)
 # if !defined(ASMJIT_CRASH)

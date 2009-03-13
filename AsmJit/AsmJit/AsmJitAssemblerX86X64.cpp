@@ -24,7 +24,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitAssemblerX86X64.h"
+#include "AsmJitAssembler.h"
+#include "AsmJitLogger.h"
 #include "AsmJitVM.h"
 
 namespace AsmJit {
@@ -35,6 +36,7 @@ namespace AsmJit {
 
 Assembler::Assembler() :
   _buffer(16),
+  _error(0),
   _logger(NULL)
 {
 }
@@ -87,6 +89,11 @@ void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
 // ============================================================================
 // [AsmJit::Assembler - Assembler Emitters]
 // ============================================================================
+
+bool Assembler::canEmit()
+{
+  return ensureSpace() && !error();
+}
 
 void Assembler::_emitImmediate(const Immediate& imm, UInt32 size)
 {
@@ -1096,7 +1103,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
   ASMJIT_ASSERT(o1 && o2 && o3);
 
   // Check for buffer space (and grow if needed).
-  if (!ensureSpace()) return;
+  if (!canEmit()) return;
 
   if (code >= _INST_COUNT) return;
   const InstructionDescription& id = x86instructions[code];
@@ -2378,7 +2385,7 @@ illegalInstruction:
 
 void Assembler::align(SysInt m)
 {
-  if (!ensureSpace()) return;
+  if (!canEmit()) return;
   if (!m) return;
   ASMJIT_ASSERT(m == 1 || m == 2 || m == 4 || m == 8 || m == 16 || m == 32);
 
@@ -2394,6 +2401,7 @@ void Assembler::bind(Label* label)
 {
   // label can only be bound once
   ASMJIT_ASSERT(!label->isBound());
+
   if (_logger) _logger->logLabel(label);
   bindTo(label, offset());
 }
@@ -2416,11 +2424,5 @@ void Assembler::bindTo(Label* label, SysInt pos)
 
   label->setStatePos(LABEL_BOUND, pos);
 }
-
-// ============================================================================
-// [AsmJit::Assembler - Logging]
-// ============================================================================
-
-Assembler::Logger::~Logger() {}
 
 } // AsmJit namespace

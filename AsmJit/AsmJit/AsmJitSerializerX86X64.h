@@ -59,6 +59,7 @@ struct RelocInfo
 // [AsmJit::Operand]
 // ============================================================================
 
+// Skip documenting this
 #if !defined(ASMJIT_NODOC)
 
 struct _DontInitialize {};
@@ -67,7 +68,7 @@ struct _Initialize {};
 #endif // !ASMJIT_NODOC
 
 //! @brief Operand, abstract class for register, memory location and immediate 
-//! value.
+//! value operands.
 struct Operand
 {
   inline Operand() { memset(this, 0, sizeof(Operand)); }
@@ -1063,8 +1064,7 @@ protected:
 
 private:
   // disable copy
-  inline _Serializer(const _Serializer& other);
-  inline _Serializer& operator=(const _Serializer& other);
+  ASMJIT_DISABLE_COPY(_Serializer);
 };
 
 // ============================================================================

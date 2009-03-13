@@ -603,8 +603,7 @@ private:
   SysUInt _capacity;
 
   // disable copy
-  inline PodVector(const PodVector<T>& other);
-  inline PodVector<T>& operator=(const PodVector<T>& other);
+  ASMJIT_DISABLE_COPY(PodVector<T>);
 };
 
 //! @}

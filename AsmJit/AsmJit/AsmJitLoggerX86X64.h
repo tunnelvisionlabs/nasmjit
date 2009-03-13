@@ -24,11 +24,12 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITPRETTYPRINTER_H
-#define _ASMJITPRETTYPRINTER_H
+#ifndef _ASMJITLOGGERX86X64_H
+#define _ASMJITLOGGERX86X64_H
 
 // [Dependencies]
-#include "AsmJitAssembler.h"
+#include "AsmJitDefs.h"
+#include "AsmJitSerializer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,58 +40,94 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Logging
 //! @{
 
-// ============================================================================
-// [AsmJit::PrettyPrinter]
-// ============================================================================
-
-//! @brief Logger that prints assembler output as instruction with its operands
-//! in Intel syntax.
-//!
-//! To use PrettyPrinter, use:
-//!
-//! @code
-//! using namespace AsmJit;
-//!
-//! // Create Assembler instance
-//! Assembler a;
-//!
-//! // Create PrettyPrinter instance and attach it to the Assembler
-//! PrettyPrinter logger;
-//! a.setLogger(&logger);
-//! @endcode
-struct PrettyPrinter : Assembler::Logger
+//! @brief Abstract logging class.
+struct ASMJIT_API Logger
 {
-  //! @brief Create new PrettyPrinter instance.
-  PrettyPrinter();
-  //! @brief Destroy PrettyPrinter instance.
-  virtual ~PrettyPrinter();
+  // [Construction / Destruction]
 
-  virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
-  virtual void logAlign(SysInt m);
-  virtual void logLabel(const Label* label);
-  virtual void logFormat(const char* fmt, ...);
+  //! @brief Create logger.
+  Logger();
+  //! @brief Destroy logger.
+  virtual ~Logger();
 
+  // [Methods]
+
+  //! @brief Abstract method to log output.
+  //!
+  //! Default implementation that is in @c AsmJit::Logger is to do nothing. 
+  //! It's virtual to fit to your logging system.
   virtual void log(const char* buf);
 
-  //! @brief Logs instruction @a code to @a buf and returns it's size.
+  //! @brief Log instruction with operands.
+  virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+  //! @brief Log .align directive.
+  virtual void logAlign(SysInt m);
+  //! @brief Log label.
+  virtual void logLabel(const Label* label);
+  //! @brief Log printf like message.
+  virtual void logFormat(const char* fmt, ...);
+
+  inline bool enabled() const { return _enabled; }
+
+  // [Statics]
+
+  //! @brief Dump instruction @a code to @a buf and return destination size.
   //!
   //! @note Output is not @c NULL terminated.
   static SysInt dumpInstruction(char* buf, UInt32 code);
 
-  //! @brief Logs operand @a op to @a buf and returns it's size.
+  //! @brief Dump operand @a op to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
   static SysInt dumpOperand(char* buf, const Operand* op);
 
-  //! @brief Logs register to @a buf and returns it's size.
+  //! @brief Dump register to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
   static SysInt dumpRegister(char* buf, UInt8 type, UInt8 index);
 
-  //! @brief Logs label @a label to @a buf and returns it's size.
+  //! @brief Dump label @a label to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
   static SysInt dumpLabel(char* buf, const Label* label);
+
+  // [Variables]
+
+protected:
+  bool _enabled;
+
+private:
+  // disable copy
+  ASMJIT_DISABLE_COPY(Logger);
+};
+
+//! @brief Logger that can log to standard C @c FILE* stream.
+struct ASMJIT_API FileLogger : public Logger
+{
+  // [Construction / Destruction]
+
+  //! @brief Create new @c FileLogger.
+  //! @param stream FILE stream where logging will be sent (can be @c NULL 
+  //! to disable logging).
+  FileLogger(FILE* stream);
+
+  // [Methods]
+
+  virtual void log(const char* buf);
+
+  //! @brief Get file stream.
+  //! @note Return value can be @c NULL.
+  inline FILE* stream() const { return _stream; }
+
+  //! @brief Set file stream.
+  //! @param stream FILE stream where logging will be sent (can be @c NULL 
+  //! to disable logging).
+  void setStream(FILE* stream);
+
+  // [Variables]
+
+private:
+  FILE* _stream;
 };
 
 //! @}
@@ -98,4 +135,4 @@ struct PrettyPrinter : Assembler::Logger
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJITPRETTYPRINTER_H
+#endif // _ASMJITLOGGERX86X64_H

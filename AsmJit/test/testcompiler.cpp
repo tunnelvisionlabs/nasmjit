@@ -31,8 +31,8 @@
 
 #include <AsmJit/AsmJitAssembler.h>
 #include <AsmJit/AsmJitCompiler.h>
+#include <AsmJit/AsmJitLogger.h>
 #include <AsmJit/AsmJitVM.h>
-#include <AsmJit/AsmJitPrettyPrinter.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)(int*, int*);
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
   Assembler a;
 
   // Log assembler output
-  PrettyPrinter logger;
+  FileLogger logger(stderr);
   a.setLogger(&logger);
 
   // Use compiler to make a function

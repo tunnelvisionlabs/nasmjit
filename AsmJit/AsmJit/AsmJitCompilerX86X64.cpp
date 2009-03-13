@@ -23,9 +23,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// We are using sprintf() here.
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif // _MSC_VER
+
 // [Dependencies]
 #include "AsmJitAssembler.h"
 #include "AsmJitCompiler.h"
+#include "AsmJitLogger.h"
 #include "AsmJitUtil.h"
 
 #include <stdarg.h>

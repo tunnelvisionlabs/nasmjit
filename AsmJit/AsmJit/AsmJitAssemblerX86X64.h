@@ -35,6 +35,9 @@
 // [AsmJit::]
 namespace AsmJit {
 
+// forward declarations
+struct Logger;
+
 //! @addtogroup AsmJit_Assembler
 //! @{
 
@@ -341,21 +344,35 @@ struct ASMJIT_API Assembler : public Serializer
   //
   // These emitters are not protecting buffer from overrun, this must be 
   // done is _emitX86() methods by:
-  //   if (!ensureSpace()) return;
+  //   if (!canEmit()) return;
   // -------------------------------------------------------------------------
+
+  //! @brief Return @c true if next instruction can be emitted.
+  //!
+  //! This function behaves like @c ensureSpace(), but it also checks if
+  //! assembler is in error state and in that case returns @c false.
+  //! Assembler must internally always use this function.
+  //!
+  //! It's implemented like:
+  //!   <code>return ensureSpace() && !error();</code>
+  bool canEmit();
 
   //! @brief Emit Byte to internal buffer.
   inline void _emitByte(UInt8 x) { _buffer.emitByte(x); }
+
   //! @brief Emit Word (2 bytes) to internal buffer.
   inline void _emitWord(UInt16 x) { _buffer.emitWord(x); }
+
   //! @brief Emit DWord (4 bytes) to internal buffer.
   inline void _emitDWord(UInt32 x) { _buffer.emitDWord(x); }
+
   //! @brief Emit QWord (8 bytes) to internal buffer.
   inline void _emitQWord(UInt64 x) { _buffer.emitQWord(x); }
 
   //! @brief Emit Int32 (4 bytes) to internal buffer.
   inline void _emitInt32(Int32 x) { _buffer.emitDWord((UInt32)x); }
 
+  //! @brief Emit immediate value of specified @a size.
   void _emitImmediate(const Immediate& imm, UInt32 size);
 
   //! @brief Emit single @a opCode without operands.
@@ -371,6 +388,7 @@ struct ASMJIT_API Assembler : public Serializer
   }
 
   //! @brief Emit MODR/M byte.
+  //! @internal
   inline void _emitMod(UInt8 m, UInt8 o, UInt8 r)
   { _emitByte(((m & 0x03) << 6) | ((o & 0x07) << 3) | (r & 0x07)); }
 
@@ -457,15 +475,25 @@ struct ASMJIT_API Assembler : public Serializer
   //! have specific format and in that cases @a opReg is part of opcode.
   void _emitModRM(UInt8 opReg, const BaseRegMem& op);
 
+  //! @brief Emit instruction where register is inlined to opcode.
   void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg);
+
+  //! @brief Emit instruction with reg/memory operand.
   void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const BaseRegMem& op);
 
+  //! @brief Emit FPU instruction with no operands.
   void _emitFpu(UInt32 opCode);
+
+  //! @brief Emit FPU instruction with one operand @a sti (index of FPU register).
   void _emitFpuSTI(UInt32 opCode, UInt32 sti);
+
+  //! @brief Emit FPU instruction with one operand @a opReg and memory operand @a mem.
   void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem);
 
+  //! @brief Emit MMX/SSE instruction.
   void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src);
 
+  //! @brief Emit displacement.
   void _emitDisplacement(Label* label);
 
   // -------------------------------------------------------------------------
@@ -509,27 +537,23 @@ struct ASMJIT_API Assembler : public Serializer
   // [Logging]
   // -------------------------------------------------------------------------
 
-  //! @brief Logger
-  struct ASMJIT_API Logger
-  {
-    //! @brief Destroy logger.
-    virtual ~Logger();
-    //! @brief Log instruction with operands.
-    virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
-    //! @brief Log .align directive.
-    virtual void logAlign(SysInt m) = 0;
-    //! @brief Log label.
-    virtual void logLabel(const Label* label) = 0;
-    //! @brief Log printf like message.
-    virtual void logFormat(const char* fmt, ...) = 0;
-    //! @brief Abstract method to log output.
-    virtual void log(const char* buf) = 0;
-  };
-
   //! @brief Return logger or @c NULL (if none).
   inline Logger* logger() const { return _logger; }
   //! @brief Set logger to @a logger.
   inline void setLogger(Logger* logger) { _logger = logger; }
+
+  // -------------------------------------------------------------------------
+  // [Error Handling]
+  // -------------------------------------------------------------------------
+
+  //! @brief Return last assembler error code.
+  inline UInt32 error() const { return _error; }
+
+  //! @brief Set assembler error code.
+  inline void setError(UInt32 error) { _error = error; }
+
+  //! @brief Clear assembler error code.
+  inline void clearError() { _error = 0; }
 
   // -------------------------------------------------------------------------
   // [Variables]
@@ -540,6 +564,9 @@ struct ASMJIT_API Assembler : public Serializer
 
   //! @brief List of relocations.
   PodVector<RelocInfo> _relocations;
+
+  //! @brief Assembler error
+  UInt32 _error;
 
   //! @brief Logger.
   Logger* _logger;
