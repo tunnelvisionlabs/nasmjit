@@ -32,7 +32,8 @@ namespace AsmJit {
 // [AsmJit::_Serializer - Construction / Destruction]
 // ============================================================================
 
-_Serializer::_Serializer()
+_Serializer::_Serializer() :
+  _logger(NULL)
 {
 }
 

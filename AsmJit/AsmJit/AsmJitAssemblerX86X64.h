@@ -35,9 +35,6 @@
 // [AsmJit::]
 namespace AsmJit {
 
-// forward declarations
-struct Logger;
-
 //! @addtogroup AsmJit_Assembler
 //! @{
 
@@ -534,15 +531,6 @@ struct ASMJIT_API Assembler : public Serializer
   void bindTo(Label* label, SysInt pos);
 
   // -------------------------------------------------------------------------
-  // [Logging]
-  // -------------------------------------------------------------------------
-
-  //! @brief Return logger or @c NULL (if none).
-  inline Logger* logger() const { return _logger; }
-  //! @brief Set logger to @a logger.
-  inline void setLogger(Logger* logger) { _logger = logger; }
-
-  // -------------------------------------------------------------------------
   // [Error Handling]
   // -------------------------------------------------------------------------
 
@@ -567,9 +555,6 @@ struct ASMJIT_API Assembler : public Serializer
 
   //! @brief Assembler error
   UInt32 _error;
-
-  //! @brief Logger.
-  Logger* _logger;
 };
 
 //! @}

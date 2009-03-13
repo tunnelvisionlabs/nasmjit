@@ -39,6 +39,9 @@
 
 namespace AsmJit {
 
+// forward declarations
+struct Logger;
+
 //! @addtogroup AsmJit_Serializer
 //! @{
 
@@ -1008,6 +1011,15 @@ struct ASMJIT_API _Serializer
   virtual ~_Serializer();
 
   // -------------------------------------------------------------------------
+  // [Logging]
+  // -------------------------------------------------------------------------
+
+  //! @brief Return logger or @c NULL (if none).
+  inline Logger* logger() const { return _logger; }
+  //! @brief Set logger to @a logger.
+  inline void setLogger(Logger* logger) { _logger = logger; }
+
+  // -------------------------------------------------------------------------
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
@@ -1061,6 +1073,14 @@ protected:
   static const UInt32 _jcctable[16];
   //! @brief Map used for cmovcc instructions.
   static const UInt32 _cmovcctable[16];
+
+  // -------------------------------------------------------------------------
+  // [Variables]
+  // -------------------------------------------------------------------------
+
+protected:
+  //! @brief Logger.
+  Logger* _logger;
 
 private:
   // disable copy

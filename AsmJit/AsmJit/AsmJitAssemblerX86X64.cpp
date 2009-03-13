@@ -36,8 +36,7 @@ namespace AsmJit {
 
 Assembler::Assembler() :
   _buffer(16),
-  _error(0),
-  _logger(NULL)
+  _error(0)
 {
 }
 
@@ -75,15 +74,17 @@ void Assembler::clear()
 void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
 {
   if (size == 1 && !isUnsigned) setByteAt (pos, (Int8  )i);
-  if (size == 1 &&  isUnsigned) setByteAt (pos, (UInt8 )i);
-  if (size == 2 && !isUnsigned) setWordAt (pos, (Int16 )i);
-  if (size == 2 &&  isUnsigned) setWordAt (pos, (UInt16)i);
-  if (size == 4 && !isUnsigned) setDWordAt(pos, (Int32 )i);
-  if (size == 4 &&  isUnsigned) setDWordAt(pos, (UInt32)i);
+  else if (size == 1 &&  isUnsigned) setByteAt (pos, (UInt8 )i);
+  else if (size == 2 && !isUnsigned) setWordAt (pos, (Int16 )i);
+  else if (size == 2 &&  isUnsigned) setWordAt (pos, (UInt16)i);
+  else if (size == 4 && !isUnsigned) setDWordAt(pos, (Int32 )i);
+  else if (size == 4 &&  isUnsigned) setDWordAt(pos, (UInt32)i);
 #if defined(ASMJIT_X64)
-  if (size == 8 && !isUnsigned) setQWordAt(pos, (Int64 )i);
-  if (size == 8 &&  isUnsigned) setQWordAt(pos, (UInt64)i);
+  else if (size == 8 && !isUnsigned) setQWordAt(pos, (Int64 )i);
+  else if (size == 8 &&  isUnsigned) setQWordAt(pos, (UInt64)i);
 #endif // ASMJIT_X64
+  else
+    ASMJIT_ASSERT(0);
 }
 
 // ============================================================================
@@ -106,15 +107,17 @@ void Assembler::_emitImmediate(const Immediate& imm, UInt32 size)
   }
 
   if (size == 1 && !isUnsigned) _emitByte ((Int8  )i);
-  if (size == 1 &&  isUnsigned) _emitByte ((UInt8 )i);
-  if (size == 2 && !isUnsigned) _emitWord ((Int16 )i);
-  if (size == 2 &&  isUnsigned) _emitWord ((UInt16)i);
-  if (size == 4 && !isUnsigned) _emitDWord((Int32 )i);
-  if (size == 4 &&  isUnsigned) _emitDWord((UInt32)i);
+  else if (size == 1 &&  isUnsigned) _emitByte ((UInt8 )i);
+  else if (size == 2 && !isUnsigned) _emitWord ((Int16 )i);
+  else if (size == 2 &&  isUnsigned) _emitWord ((UInt16)i);
+  else if (size == 4 && !isUnsigned) _emitDWord((Int32 )i);
+  else if (size == 4 &&  isUnsigned) _emitDWord((UInt32)i);
 #if defined(ASMJIT_X64)
-  if (size == 8 && !isUnsigned) _emitQWord((Int64 )i);
-  if (size == 8 &&  isUnsigned) _emitQWord((UInt64)i);
+  else if (size == 8 && !isUnsigned) _emitQWord((Int64 )i);
+  else if (size == 8 &&  isUnsigned) _emitQWord((UInt64)i);
 #endif // ASMJIT_X64
+  else
+    ASMJIT_ASSERT(0);
 }
 
 void Assembler::_emitModM(UInt8 opReg, const Mem& mem)

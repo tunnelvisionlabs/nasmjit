@@ -1630,6 +1630,27 @@ Label* Compiler::newLabel()
 // [AsmJit::Compiler - Emit]
 // ============================================================================
 
+// logger switcher used in Compiler::build().
+struct LoggerSwitcher
+{
+  LoggerSwitcher(Assembler* a, Compiler* c) :
+    a(a),
+    logger(a->logger())
+  {
+    // Set compiler logger
+    if (!logger && c->logger()) a->setLogger(c->logger());
+  }
+
+  ~LoggerSwitcher()
+  {
+    // Restore logger
+    a->setLogger(logger);
+  }
+
+  Assembler* a;
+  Logger* logger;
+};
+
 void Compiler::emit(Emittable* emittable, bool endblock)
 {
   if (endblock)
@@ -1645,6 +1666,8 @@ void Compiler::emit(Emittable* emittable, bool endblock)
 
 void Compiler::build(Assembler& a)
 {
+  LoggerSwitcher loggerSwitcher(&a, this);
+
   Emittable** emitters = _buffer.data();
   SysUInt i, len;
 

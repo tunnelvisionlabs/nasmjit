@@ -109,7 +109,7 @@ struct ASMJIT_API FileLogger : public Logger
   //! @brief Create new @c FileLogger.
   //! @param stream FILE stream where logging will be sent (can be @c NULL 
   //! to disable logging).
-  FileLogger(FILE* stream);
+  FileLogger(FILE* stream = NULL);
 
   // [Methods]
 
