@@ -42,7 +42,8 @@ namespace AsmJit {
 // ============================================================================
 
 Logger::Logger() :
-  _enabled(false)
+  _enabled(true),
+  _haveStream(true)
 {
 }
 
@@ -52,7 +53,7 @@ Logger::~Logger()
 
 void Logger::logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
-  if (!_enabled) return;
+  if (!_enabled || !_haveStream) return;
 
   char buf[1024];
   char* p = buf;
@@ -72,14 +73,14 @@ void Logger::logInstruction(UInt32 code, const Operand* o1, const Operand* o2, c
 
 void Logger::logAlign(SysInt m)
 {
-  if (!_enabled) return;
+  if (!_enabled || !_haveStream) return;
 
   logFormat(".align %d\n", (Int32)m);
 }
 
 void Logger::logLabel(const Label* label)
 {
-  if (!_enabled) return;
+  if (!_enabled || !_haveStream) return;
 
   char buf[1024];
   char* p = buf + dumpLabel(buf, label);
@@ -91,7 +92,7 @@ void Logger::logLabel(const Label* label)
 
 void Logger::logFormat(const char* fmt, ...)
 {
-  if (!_enabled) return;
+  if (!_enabled || !_haveStream) return;
 
   char buf[1024];
 
@@ -119,14 +120,16 @@ FileLogger::FileLogger(FILE* stream)
 
 void FileLogger::log(const char* buf)
 {
-  if (_stream) fputs(buf, _stream);
+  if (!_enabled || !_haveStream) return;
+
+  fputs(buf, _stream);
 }
 
 //! @brief Set file stream.
 void FileLogger::setStream(FILE* stream)
 {
   _stream = stream;
-  _enabled = stream != NULL;
+  _haveStream = (stream != NULL);
 }
 
 } // AsmJit namespace

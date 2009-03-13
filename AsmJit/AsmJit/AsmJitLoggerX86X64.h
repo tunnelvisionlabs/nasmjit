@@ -41,6 +41,13 @@ namespace AsmJit {
 //! @{
 
 //! @brief Abstract logging class.
+//!
+//! This class can be inherited and reimplemented to fit into your logging
+//! subsystem. When reimplementing use @c AsmJit::Logger::log() method to
+//! log into your stream.
+//!
+//! This class also contain @c _enabled member that can be used to enable 
+//! or disable logging.
 struct ASMJIT_API Logger
 {
   // [Construction / Destruction]
@@ -67,7 +74,10 @@ struct ASMJIT_API Logger
   //! @brief Log printf like message.
   virtual void logFormat(const char* fmt, ...);
 
+  //! @brief Return @c true if logging is enabled.
   inline bool enabled() const { return _enabled; }
+  //! @brief Set logging to enabled or disabled.
+  inline void setEnabled(bool enabled) { _enabled = enabled; }
 
   // [Statics]
 
@@ -94,7 +104,23 @@ struct ASMJIT_API Logger
   // [Variables]
 
 protected:
+  //! @brief Whether logger is enabled or disabled.
+  //!
+  //! Default @c true.
   bool _enabled;
+
+  //! @brief Whether logger have logging stream.
+  //!
+  //! This value can be set by inherited classes to inform @c Logger that
+  //! assigned stream is invalid. If @c _haveStream is false it means that
+  //! logging messages from helper functions (@c logInstruction, @c logAlign,
+  //! @c logLabel and @c logFormat) are not sent to main @c log() method.
+  //!
+  //! This is designed only to optimize cases that logger exists, but its
+  //! stream not.
+  //!
+  //! Default @c true.
+  bool _haveStream;
 
 private:
   // disable copy
