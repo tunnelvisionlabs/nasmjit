@@ -40,6 +40,7 @@
 namespace AsmJit {
 
 // forward declarations
+struct Label;
 struct Logger;
 
 //! @addtogroup AsmJit_Serializer
@@ -125,6 +126,8 @@ struct Operand
     UInt8 unused3;
     //! @brief Not used.
     SysInt unused4;
+    //! @brief Not used.
+    void* unusedPtr;
   };
 
   //! @brief Register data.
@@ -139,7 +142,9 @@ struct Operand
     //! @brief Not used.
     UInt8 unused3;
     //! @brief Not used.
-    SysInt unused5;
+    SysInt unused4;
+    //! @brief Not used.
+    void* unusedPtr;
   };
 
   //! @brief Memory address data.
@@ -172,6 +177,8 @@ struct Operand
     UInt8 index;
     //! @brief Displacement.
     SysInt displacement;
+    //! @brief Not used.
+    Label* label;
   };
 
   //! @brief Immediate value data.
@@ -187,6 +194,8 @@ struct Operand
     UInt8 relocMode;
     //! @brief Immediate value.
     SysInt value;
+    //! @brief Not used.
+    void* unusedPtr;
   };
 
   //! @brief Label data.
@@ -200,6 +209,8 @@ struct Operand
     UInt16 id;
     //! @brief Position (always positive, information depends to @c state).
     SysInt position;
+    //! @brief Not used.
+    void* unusedPtr;
   };
 
   union
@@ -234,14 +245,15 @@ struct Operand
   //! If all parameters are constants then compiler can generate very small 
   //! code (3 instructions) that's much better that code that generates for
   //! each operand normally.
-  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64)
+  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64, void* ptr)
   {
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
       ((UInt32)i8_0      ) |
       ((UInt32)i8_1 <<  8) |
       ((UInt32)i8_2 << 16) |
       ((UInt32)i8_3 << 24) ;
-    *reinterpret_cast<SysInt*>(&this->_op.unused4) = i32_64;
+    _op.unused4 = i32_64;
+    _op.unusedPtr = ptr;
   }
 
   friend struct Compiler;
@@ -270,7 +282,7 @@ struct BaseRegMem : public Operand
 struct BaseReg : public BaseRegMem
 {
   BaseReg(UInt8 code, UInt8 size) : BaseRegMem(_DontInitialize())
-  { _initAll(OP_REG, size, code, 0, 0); }
+  { _initAll(OP_REG, size, code, 0, 0, NULL); }
 
   inline BaseReg(const BaseReg& other) : BaseRegMem(other)
   {}
@@ -395,6 +407,9 @@ struct XMMRegister : public BaseReg
 // ============================================================================
 // [AsmJit::Registers]
 // ============================================================================
+
+//! @brief No register, can be used only in @c Mem operand.
+static const Register no_reg(_Initialize(), NO_REG);
 
 //! @brief 8 bit General purpose register.
 static const Register al(_Initialize(), REG_AL);
@@ -625,14 +640,14 @@ struct Mem : public BaseRegMem
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, size, base.index() | 0x10, 0x00, displacement);
+    _initAll(OP_MEM, size, base.index() | 0x10, 0x00, displacement, NULL);
   }
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
     ASMJIT_ASSERT(shift <= 3);
-    _initAll(OP_MEM, size, base.index() | 0x10, (shift << 5) | 0x10 | index.index(), displacement);
+    _initAll(OP_MEM, size, base.code() == 0xFF ? 0 : base.index() | 0x10, (shift << 5) | 0x10 | index.index(), displacement, NULL);
   }
 
   inline Mem(const Mem& other) :
@@ -646,8 +661,6 @@ struct Mem : public BaseRegMem
   inline bool hasBase() const { return (_mem.base & 0x10) != 0; }
 
   //! @brief Return if address has index register.
-  //!
-  //! @note It's illegal to have index register and not base one.
   inline bool hasIndex() const { return (_mem.index & 0x10) != 0; }
 
   //! @brief Address base register or @c NO_REG.
@@ -668,61 +681,98 @@ struct Mem : public BaseRegMem
 
 // [base + displacement]
 
+ASMJIT_API Mem ptr_build(const Register& base, SysInt disp, UInt8 ptr_size);
+
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(const Register& base, SysInt disp = 0){ return Mem(base, disp, 0); }
+static inline Mem ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, 0); }
+
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(const Register& base, SysInt disp = 0){ return Mem(base, disp, SIZE_BYTE); }
+static inline Mem byte_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_BYTE); }
+
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_WORD); }
+static inline Mem word_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_WORD); }
+
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DWORD); }
+static inline Mem dword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_DWORD); }
+
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_QWORD); }
+static inline Mem qword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_QWORD); }
+
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_TWORD); }
+static inline Mem tword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_TWORD); }
+
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
+static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_QWORD); }
+static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_QWORD); }
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, SIZE_DQWORD); }
+static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) { return Mem(base, disp, sizeof(SysInt)); }
+static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) 
+{ return ptr_build(base, disp, sizeof(SysInt)); }
 
 // [base + (index << shift) + displacement]
 
+ASMJIT_API Mem ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size);
+
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, 0); }
+static inline Mem ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, 0); }
+
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_BYTE); }
+static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_BYTE); }
+
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_WORD); }
+static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_WORD); }
+
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DWORD); }
+static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_DWORD); }
+
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_QWORD); }
+static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_QWORD); }
+
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_TWORD); }
+static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_TWORD); }
+
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
+static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 Bytes) pointer operand).
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_QWORD); }
+static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_QWORD); }
+
 //! @brief Create xmmword (16 Bytes) pointer operand.
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, SIZE_DQWORD); }
+static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) { return Mem(base, index, shift, disp, sizeof(SysInt)); }
+static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return ptr_build(base, index, shift, disp, sizeof(SysInt)); }
 
 // ============================================================================
 // [AsmJit::Immediate]
@@ -738,12 +788,12 @@ struct Immediate : public Operand
 {
   Immediate(SysInt i) : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, 0, RELOC_NONE, i);
+    _initAll(OP_IMM, 0, 0, RELOC_NONE, i, NULL);
   }
   
   Immediate(SysInt i, UInt8 isUnsigned) : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, i);
+    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, i, NULL);
   }
   
   inline Immediate(const Immediate& other) : Operand(other) {}
@@ -857,7 +907,7 @@ struct Label : public Operand
 
   //! @brief Unuse label (unbound or unlink) - Use with caution.
   inline void unuse()
-  { _initAll(OP_LABEL, LABEL_UNUSED, 0, 0, -1); }
+  { _initAll(OP_LABEL, LABEL_UNUSED, 0, 0, -1, NULL); }
 
   //! @brief Return label state, see @c LABEL_STATE. */
   inline UInt8 state() const { return _lbl.state; }
@@ -933,7 +983,8 @@ template<typename To> static inline To operand_cast(Operand& op) { return reinte
 //! @overload
 template<typename To> static inline To operand_cast(const Operand& op) { return reinterpret_cast<To>(op); }
 
-#if defined(DEBUG)
+// I think that this code is no longer needed
+#if 0
 
 #define MAKE_OPERAND_CAST(To, Expect) \
 /*! @overload */ \

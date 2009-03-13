@@ -124,21 +124,17 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
 {
   ASMJIT_ASSERT(mem.op() == OP_MEM);
 
-  // [base + index*scale + displacement]
-  if (mem.hasIndex())
-  {
-    UInt8 baseReg = mem.base() & 0x7;
-    UInt8 indexReg = mem.index() & 0x7;
-    Int32 disp = (Int32)mem.displacement();
-    UInt32 shift = mem.shift();
+  UInt8 baseReg = mem.base() & 0x7;
+  UInt8 indexReg = mem.index() & 0x7;
+  Int32 disp = (Int32)mem.displacement();
+  UInt32 shift = mem.shift();
 
-    if (baseReg >= RID_INVALID)
-    {
-      _emitMod(0, opReg, 4);
-      _emitSib(shift, indexReg, 5);
-      _emitInt32(disp);
-    }
-    else if (disp == 0 && baseReg != RID_EBP)
+  // [base + index * scale + displacemnt]
+  if (mem.hasBase() && mem.hasIndex())
+  {
+    // ASMJIT_ASSERT(indexReg != RID_ESP);
+
+    if (baseReg != RID_EBP && disp == 0)
     {
       _emitMod(0, opReg, 4);
       _emitSib(shift, indexReg, baseReg);
@@ -156,12 +152,9 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
       _emitInt32(disp);
     }
   }
-  // [base + displacement]
-  else
+  // [base + displacemnt]
+  else if (mem.hasBase() && !mem.hasIndex())
   {
-    UInt8 baseReg = mem.base() & 0x7;
-    Int32 disp = (Int32)mem.displacement();
-
     if (baseReg == RID_ESP)
     {
       if (disp == 0)
@@ -173,7 +166,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
       {
         _emitMod(1, opReg, RID_ESP);
         _emitSib(0, RID_ESP, RID_ESP);
-        _emitByte(static_cast<UInt8>((Int8)disp));
+        _emitByte((Int8)disp);
       }
       else
       {
@@ -189,13 +182,26 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem)
     else if (isInt8(disp))
     {
       _emitMod(1, opReg, baseReg);
-      _emitByte(static_cast<UInt8>((Int8)disp));
+      _emitByte((Int8)disp);
     }
     else
     {
       _emitMod(2, opReg, baseReg);
       _emitInt32(disp);
     }
+  }
+  // [index * scale + displacemnt]
+  else if (!mem.hasBase() && mem.hasIndex())
+  {
+    // ASMJIT_ASSERT(indexReg != RID_ESP);
+
+    _emitMod(0, opReg, 4);
+    _emitSib(shift, indexReg, 5);
+    _emitInt32(disp);
+  }
+  // [displacement]
+  else // if (!mem.hasBase() && !mem.hasIndex())
+  {
   }
 }
 

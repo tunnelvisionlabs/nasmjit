@@ -271,7 +271,7 @@ struct CpuInfoStatic
   CpuInfo i;
 };
 
-ASMJIT_API CpuInfo* cpuInfo()
+CpuInfo* cpuInfo()
 {
   static CpuInfoStatic i;
   return &i.i;

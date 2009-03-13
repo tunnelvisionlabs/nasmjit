@@ -29,6 +29,20 @@
 namespace AsmJit {
 
 // ============================================================================
+// [AsmJit::Operand - helpers]
+// ============================================================================
+
+Mem ptr_build(const Register& base, SysInt disp, UInt8 ptr_size)
+{
+  return Mem(base, disp, ptr_size);
+}
+
+Mem ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size)
+{
+  return Mem(base, index, shift, disp, ptr_size);
+}
+
+// ============================================================================
 // [AsmJit::_Serializer - Construction / Destruction]
 // ============================================================================
 

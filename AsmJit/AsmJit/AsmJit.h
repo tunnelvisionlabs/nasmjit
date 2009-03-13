@@ -199,28 +199,29 @@
 //! @defgroup AsmJit_Logging Logging - logging and error handling.
 //!
 //! Contains classes related to loging assembler output. Currently logging
-//! is only implemented in @c AsmJit::Assembler class, but it follows design
-//! that it can be customized by overriding @c AsmJit::Assembler::Logger.
-//! @c AsmJit::PrettyPrinter is optional logging class that prints emitted
-//! instructions into @c stderr or your customized stream.
+//! is implemented in @c AsmJit::Logger class.You can override
+//! @c AsmJit::Logger::log() to log messages into your stream. There is also
+//! @c FILE based logger implemented in @c AsmJit::FileLogger class.
 //!
-//! To log your assembler output use this code:
+//! To log your assembler output to FILE stream use this code:
+//!
 //! @code
 //! // Create assembler
 //! Assembler a;
 //!
-//! // Create and set logger
-//! PrettyPrinter logger;
+//! // Create and set file based logger
+//! FileLogger logger(stderr);
 //! a.setLogger(&logger);
 //! @endcode
 //!
 //! You can see that logging goes through @c AsmJit::Assembler. If you are
-//! using @c AsmJit::Compiler and you want to log messages you should look
-//! at @c AsmJit::Compiler::comment() method. It allows you to insert text
-//! message into @c AsmJit::Emittable list and @c AsmJit::Compiler will send
-//! your message to @c AsmJit::Assembler in correct order.
+//! using @c AsmJit::Compiler and you want to log messages in correct assembler
+//! order, you should look at @c AsmJit::Compiler::comment() method. It allows 
+//! you to insert text message into @c AsmJit::Emittable list and 
+//! @c AsmJit::Compiler will send your message to @c AsmJit::Assembler in 
+//! correct order.
 //!
-//! @sa @c AsmJit::Assembler::Logger, @c AsmJit::PrettyPrinter.
+//! @sa @c AsmJit::Logger, @c AsmJit::FileLogger.
 
 
 //! @defgroup AsmJit_Serializer Serializer - code generation intrinsics.
@@ -352,7 +353,7 @@
 #include "AsmJitCompiler.h"
 #include "AsmJitCpuInfo.h"
 #include "AsmJitDefs.h"
-#include "AsmJitPrettyPrinter.h"
+#include "AsmJitLogger.h"
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 #include "AsmJitVM.h"
