@@ -130,7 +130,7 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
 {
   ASMJIT_ASSERT(f != NULL);
 
-  _memoryOperand = new(c->_allocObject(sizeof(Mem))) Mem(ebp, 0, 0);
+  _memoryOperand = new(c->_zoneAlloc(sizeof(Mem))) Mem(ebp, 0, 0);
   c->_registerOperand(_memoryOperand);
 }
 
@@ -208,7 +208,7 @@ Comment::Comment(Compiler* c, const char* str) : Emittable(c, EMITTABLE_COMMENT)
   SysUInt len = strlen(str);
 
   // Alloc string, but round it up
-  _str = (char*)c->_allocObject((len + sizeof(SysInt)) & ~(sizeof(SysInt)-1));
+  _str = (char*)c->_zoneAlloc((len + sizeof(SysInt)) & ~(sizeof(SysInt)-1));
   memcpy((char*)_str, str, len + 1);
 }
 
@@ -1456,64 +1456,12 @@ void Target::emit(Assembler& a)
 }
 
 // ============================================================================
-// [AsmJit::Zone]
-// ============================================================================
-
-Zone::Zone(SysUInt chunkSize)
-{
-  _chunks = NULL;
-  _total = 0;
-  _chunkSize = chunkSize;
-}
-
-Zone::~Zone()
-{
-  freeAll();
-}
-
-void* Zone::alloc(SysUInt size)
-{
-  Chunk* cur = _chunks;
-
-  if (!cur || cur->remain() < size)
-  {
-    cur = (Chunk*)ASMJIT_MALLOC(sizeof(Chunk) - (sizeof(UInt8)*4) + _chunkSize);
-    if (!cur) return NULL;
-
-    cur->prev = _chunks;
-    cur->pos = 0;
-    cur->size = _chunkSize;
-    _chunks = cur;
-  }
-
-  UInt8* p = cur->data + cur->pos;
-  cur->pos += size;
-  return (void*)p;
-}
-
-void Zone::freeAll()
-{
-  Chunk* cur = _chunks;
-
-  while (cur)
-  {
-    Chunk* prev = cur->prev;
-    ASMJIT_FREE(cur);
-    cur = prev;
-  }
-
-  _chunks = NULL;
-  _total = 0;
-}
-
-// ============================================================================
 // [AsmJit::Compiler - Construction / Destruction]
 // ============================================================================
 
 Compiler::Compiler() :
   _currentPosition(0),
   _currentFunction(NULL),
-  _zone(65536 - sizeof(Zone::Chunk) - 32),
   _labelIdCounter(1)
 {
 }
@@ -1621,7 +1569,7 @@ Epilog* Compiler::epilog(Function* f)
 
 Label* Compiler::newLabel()
 {
-  Label* label = new(_allocObject(sizeof(Label))) Label((UInt16)(_labelIdCounter++));
+  Label* label = new(_zoneAlloc(sizeof(Label))) Label((UInt16)(_labelIdCounter++));
   _registerOperand(label);
   return label;
 }

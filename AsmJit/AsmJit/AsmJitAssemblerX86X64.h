@@ -106,13 +106,13 @@ namespace AsmJit {
 //! // eax + ecx*x addresses
 //! a.mov(ptr(eax, ecx, TIMES_1), imm(0));     // mov ptr [eax + ecx], 0
 //! a.mov(ptr(eax, ecx, TIMES_2), imm(0));     // mov ptr [eax + ecx * 2], 0
-//! a.mov(ptr(eax, ecx, TIMES_3), imm(0));     // mov ptr [eax + ecx * 4], 0
-//! a.mov(ptr(eax, ecx, TIMES_4), imm(0));     // mov ptr [eax + ecx * 8], 0
+//! a.mov(ptr(eax, ecx, TIMES_4), imm(0));     // mov ptr [eax + ecx * 4], 0
+//! a.mov(ptr(eax, ecx, TIMES_8), imm(0));     // mov ptr [eax + ecx * 8], 0
 //! // eax + ecx*x + disp addresses
 //! a.mov(ptr(eax, ecx, TIMES_1,  4), imm(0)); // mov ptr [eax + ecx     +  4], 0
 //! a.mov(ptr(eax, ecx, TIMES_2,  8), imm(0)); // mov ptr [eax + ecx * 2 +  8], 0
-//! a.mov(ptr(eax, ecx, TIMES_3, 12), imm(0)); // mov ptr [eax + ecx * 4 + 12], 0
-//! a.mov(ptr(eax, ecx, TIMES_4, 16), imm(0)); // mov ptr [eax + ecx * 8 + 16], 0
+//! a.mov(ptr(eax, ecx, TIMES_4, 12), imm(0)); // mov ptr [eax + ecx * 4 + 12], 0
+//! a.mov(ptr(eax, ecx, TIMES_8, 16), imm(0)); // mov ptr [eax + ecx * 8 + 16], 0
 //! @endcode
 //!
 //! All addresses shown are using @c AsmJit::ptr() to make memory operand.
@@ -250,6 +250,46 @@ namespace AsmJit {
 struct ASMJIT_API Assembler : public Serializer
 {
   // -------------------------------------------------------------------------
+  // [Structures]
+  // -------------------------------------------------------------------------
+
+  //! @brief Data structure used to link linked-labels.
+  struct LinkData
+  {
+    //! @brief Previous link.
+    LinkData* prev;
+    //! @brief Offset.
+    SysInt offset;
+    //! @brief Inlined displacement.
+    SysInt displacement;
+    //! @brief RelocId if link must be absolute when relocated.
+    SysInt relocId;
+  };
+
+  // 32 bit x86 architecture uses absolute addressing model in memory operands
+  // while 64 bit mode uses relative addressing model (RIP + displacement). In
+  // code we are always using relative addressing model for referencing labels
+  // and embedded data. In 32 bit mode we must patch all references to absolute
+  // address before we can call generated function. We are patching only memory 
+  // operands.
+
+  //! @brief Reloc to absolute address data
+  struct RelocData
+  {
+    enum Type
+    {
+      RELATIVE_TO_ABSOLUTE = 0
+    };
+
+    //! @brief Type of relocation.
+    UInt32 type;
+    //! @brief Offset from code begin address.
+    SysInt offset;
+    //! @brief Relative displacement from code begin address (not to @c offset).
+    SysInt destination;
+  };
+
+  // -------------------------------------------------------------------------
   // [Construction / Destruction]
   // -------------------------------------------------------------------------
 
@@ -384,6 +424,16 @@ struct ASMJIT_API Assembler : public Serializer
     _emitByte((UInt8)(opCode & 0x000000FF));
   }
 
+  //! @brief Emit CS (code segmend) prefix.
+  //!
+  //! Behavior of this function is to emit code prefix only if memory operand
+  //! address uses code segment. Code segment is used through memory operand
+  //! with attached @c AsmJit::Label.
+  inline void _emitCS(const BaseRegMem& rm)
+  {
+    // if (rm.isMem() && rm._mem.label) _emitByte(0x2E);
+  }
+
   //! @brief Emit MODR/M byte.
   //! @internal
   inline void _emitMod(UInt8 m, UInt8 o, UInt8 r)
@@ -460,7 +510,7 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! This method can hangle addresses from simple to complex ones with
   //! index and displacement.
-  void _emitModM(UInt8 opReg, const Mem& mem);
+  void _emitModM(UInt8 opReg, const Mem& mem, SysInt immSize);
 
   //! @brief Emit Reg<-Reg or Reg<-Reg|Mem ModRM (can be followed by SIB 
   //! and displacement) to buffer.
@@ -470,13 +520,13 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! @note @a opReg is usually real register ID (see @c R) but some instructions
   //! have specific format and in that cases @a opReg is part of opcode.
-  void _emitModRM(UInt8 opReg, const BaseRegMem& op);
+  void _emitModRM(UInt8 opReg, const BaseRegMem& op, SysInt immSize);
 
   //! @brief Emit instruction where register is inlined to opcode.
   void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg);
 
   //! @brief Emit instruction with reg/memory operand.
-  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const BaseRegMem& op);
+  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const BaseRegMem& op, SysInt immSize);
 
   //! @brief Emit FPU instruction with no operands.
   void _emitFpu(UInt32 opCode);
@@ -488,10 +538,10 @@ struct ASMJIT_API Assembler : public Serializer
   void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem);
 
   //! @brief Emit MMX/SSE instruction.
-  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src);
+  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src, SysInt immSize);
 
   //! @brief Emit displacement.
-  void _emitDisplacement(Label* label);
+  LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement);
 
   // -------------------------------------------------------------------------
   // [Relocation helpers]
@@ -544,6 +594,13 @@ struct ASMJIT_API Assembler : public Serializer
   inline void clearError() { _error = 0; }
 
   // -------------------------------------------------------------------------
+  // [Links]
+  // -------------------------------------------------------------------------
+
+  LinkData* _newLinkData();
+  void _freeLinkData(LinkData* link);
+
+  // -------------------------------------------------------------------------
   // [Variables]
   // -------------------------------------------------------------------------
 
@@ -553,8 +610,55 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief List of relocations.
   PodVector<RelocInfo> _relocations;
 
-  //! @brief Assembler error
+  //! @brief Last assembler error.
   UInt32 _error;
+
+  //! @brief Linked list of unused links (@c LinkData* structures)
+  LinkData* _unusedLinks;
+
+  PodVector<RelocData> _relocData;
+
+#if 0
+  //! @brief Relocation data structure.
+  //!
+  //! @note This structure is always allocated by zone allocator.
+  struct RelocData
+  {
+    //! @brief Offset from start of buffer where this value is.
+    SysUInt offset;
+
+    //! @brief Size of value: 1, 2, 4 (usual) or 8 (64 bit, limited to 
+    //! few instructions).
+    UInt8 size;
+
+    //! @brief Reloc type.
+    UInt8 type;
+
+    //! @brief True if relocation is linked (means that displacement is not 
+    //! known at this time).
+    UInt8 linked;
+
+    //! @brief Instruction displacement (value that must be added to delta).
+    Int8 idisp;
+
+    //! @brief Union where is stored relative (@c delta) displacement or absolute 
+    //! address (@c target).
+    union {
+      //! @brief Reloc delta (relative displacement).
+      SysUInt delta;
+      //! @brief Reloc target (absolute address).
+      void *target;
+    };
+
+    //! @brief Link to previous data.
+    //!
+    //! Links are used together with linked labels to ensure that @c RelocData
+    //! structure is bounded to correct @c offset.
+    RelocData* link;
+  };
+
+  PodVector<RelocData*> _rdata;
+#endif
 };
 
 //! @}

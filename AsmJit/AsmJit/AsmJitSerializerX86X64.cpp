@@ -29,30 +29,56 @@
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::Operand - helpers]
+// [AsmJit::Mem - ptr[]]
 // ============================================================================
 
-Mem ptr_build(const Register& base, SysInt disp, UInt8 ptr_size)
+Mem _ptr_build(Label* label, SysInt disp, UInt8 ptr_size)
+{
+  return Mem(label, disp, ptr_size);
+}
+
+Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptr_size)
 {
   return Mem(base, disp, ptr_size);
 }
 
-Mem ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size)
+Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size)
 {
   return Mem(base, index, shift, disp, ptr_size);
 }
+
+// ============================================================================
+// [AsmJit::Immediate]
+// ============================================================================
+
+//! @brief Create signed immediate value operand.
+Immediate imm(SysInt i) { return Immediate(i, false); }
+
+//! @brief Create unsigned immediate value operand.
+Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 
 // ============================================================================
 // [AsmJit::_Serializer - Construction / Destruction]
 // ============================================================================
 
 _Serializer::_Serializer() :
-  _logger(NULL)
+  _logger(NULL),
+  _zone(65536 - sizeof(Zone::Chunk) - 32)
 {
 }
 
 _Serializer::~_Serializer()
 {
+}
+
+// ============================================================================
+// [AsmJit::_Serializer - Memory Management]
+// ============================================================================
+
+//! @brief Allocate memory using compiler internal memory manager.
+void* _Serializer::_zoneAlloc(SysUInt size)
+{
+  return _zone.alloc(size);
 }
 
 // ============================================================================

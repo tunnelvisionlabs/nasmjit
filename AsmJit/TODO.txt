@@ -1,7 +1,9 @@
 TODO (Assembler):
-[ ] Add absolute addressing to pointer for x86 32 bit mode (in 64 mode this 
-    will be never possible).
 [ ] Add SSE4a instruction set (AMD) - What is missing ?
+[x] Add Enter/Leave instructions
+[ ] Add absolute addressing possibilities for jmp and call instructions
+    (x86 and x64)
+[x] Add relative addressing possibilities to Label* for memory operands
 
 TODO (Compiler):
 [ ] Add instruction reordering possibility in compiler (complex)

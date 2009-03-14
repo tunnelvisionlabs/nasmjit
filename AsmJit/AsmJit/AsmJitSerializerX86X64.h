@@ -175,8 +175,15 @@ struct Operand
     //!
     //! See @c Mem implementation for details
     UInt8 index;
-    //! @brief Displacement.
-    SysInt displacement;
+
+    //! @brief Displacement or target absolute address.
+    union {
+      //! @brief Displacement.
+      SysInt displacement;
+      //! @brief Target (for 32 bit, absolute address).
+      void* target;
+    };
+    
     //! @brief Not used.
     Label* label;
   };
@@ -209,8 +216,8 @@ struct Operand
     UInt16 id;
     //! @brief Position (always positive, information depends to @c state).
     SysInt position;
-    //! @brief Not used.
-    void* unusedPtr;
+    //! @brief Previous link (used by @c AsmJit::Assembler).
+    void* link;
   };
 
   union
@@ -613,7 +620,7 @@ static inline Register mk_gpw(UInt8 index) { return Register(_Initialize(), stat
 //! @brief Return general purpose register of dword size.
 static inline Register mk_gpd(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPD)); }
 #if defined(ASMJIT_X64)
-//! @brief Return general purpose register of qword size.
+//! @brief Return general purpose register of qword size (64 bit only).
 static inline Register mk_gpq(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPQ)); }
 #endif
 //! @brief Return general purpose dword/qword register (depending to architecture).
@@ -637,6 +644,12 @@ static inline X87Register st(int i)
 //! @brief Memory location operand.
 struct Mem : public BaseRegMem
 {
+  inline Mem(Label* label, SysInt displacement, UInt8 size = 0) : 
+    BaseRegMem(_DontInitialize())
+  {
+    _initAll(OP_MEM, size, 0x00, 0x00, displacement, label);
+  }
+
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
@@ -677,102 +690,158 @@ struct Mem : public BaseRegMem
 
   //! @brief Set address relative displacement.
   inline void setDisplacement(SysInt displacement) { _mem.displacement = displacement; }
+
+  //! @brief Return label associated with this operand.
+  inline Label* label() const { return _mem.label; }
 };
 
-// [base + displacement]
+// ============================================================================
+// [AsmJit::Mem - ptr[displacement]]
+// ============================================================================
 
-ASMJIT_API Mem ptr_build(const Register& base, SysInt disp, UInt8 ptr_size);
+ASMJIT_API Mem _ptr_build(Label* label, SysInt disp, UInt8 ptr_size);
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, 0); }
+
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_BYTE); }
+
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_WORD); }
+
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_DWORD); }
+
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_QWORD); }
+
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_TWORD); }
+
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_DQWORD); }
+
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_QWORD); }
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr(Label* label, SysInt disp = 0) 
+{ return _ptr_build(label, disp, sizeof(SysInt)); }
+
+// ============================================================================
+// [AsmJit::Mem - ptr[base + displacement]]
+// ============================================================================
+
+ASMJIT_API Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptr_size);
 
 //! @brief Create pointer operand with not specified size.
 static inline Mem ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, 0); }
+{ return _ptr_build(base, disp, 0); }
 
 //! @brief Create byte pointer operand.
 static inline Mem byte_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_BYTE); }
+{ return _ptr_build(base, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
 static inline Mem word_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_WORD); }
+{ return _ptr_build(base, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
 static inline Mem dword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_DWORD); }
+{ return _ptr_build(base, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
 static inline Mem qword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_QWORD); }
+{ return _ptr_build(base, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
 static inline Mem tword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_TWORD); }
+{ return _ptr_build(base, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
 static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_DQWORD); }
+{ return _ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
 static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_QWORD); }
+{ return _ptr_build(base, disp, SIZE_QWORD); }
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
 static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, SIZE_DQWORD); }
+{ return _ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
 static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) 
-{ return ptr_build(base, disp, sizeof(SysInt)); }
+{ return _ptr_build(base, disp, sizeof(SysInt)); }
 
-// [base + (index << shift) + displacement]
+// ============================================================================
+// [AsmJit::Mem - ptr[base + (index << shift) + displacement]]
+// ============================================================================
 
-ASMJIT_API Mem ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size);
+ASMJIT_API Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size);
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, 0); }
+static inline Mem ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_BYTE); }
+static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_WORD); }
+static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_DWORD); }
+static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_QWORD); }
+static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_TWORD); }
+static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_DQWORD); }
+static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 Bytes) pointer operand).
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_QWORD); }
+static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 Bytes) pointer operand.
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, SIZE_DQWORD); }
+static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift, SysInt disp = 0) 
-{ return ptr_build(base, index, shift, disp, sizeof(SysInt)); }
+static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+{ return _ptr_build(base, index, shift, disp, sizeof(SysInt)); }
 
 // ============================================================================
 // [AsmJit::Immediate]
@@ -832,10 +901,10 @@ struct Immediate : public Operand
 };
 
 //! @brief Create signed immediate value operand.
-static inline Immediate imm(SysInt i) { return Immediate(i, false); }
+ASMJIT_API Immediate imm(SysInt i);
 
 //! @brief Create unsigned immediate value operand.
-static inline Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
+ASMJIT_API Immediate uimm(SysUInt i);
 
 // ============================================================================
 // [AsmJit::Label]
@@ -899,6 +968,7 @@ struct Label : public Operand
     _lbl.state = LABEL_UNUSED;
     _lbl.id = id;
     _lbl.position = -1;
+    _lbl.link = NULL;
   }
 
   //! @brief Destroy label. If label is linked to some location (not bound), 
@@ -1101,6 +1171,17 @@ struct ASMJIT_API _Serializer
   //! @note Label can be bound only once!
   virtual void bind(Label* label) = 0;
 
+  // -------------------------------------------------------------------------
+  // [Memory Management]
+  // -------------------------------------------------------------------------
+
+  //! @brief Allocate memory using compiler internal memory manager.
+  void* _zoneAlloc(SysUInt size);
+
+  // -------------------------------------------------------------------------
+  // [Emit helpers]
+  // -------------------------------------------------------------------------
+
 protected:
   // helpers to decrease binary code size
 
@@ -1129,9 +1210,11 @@ protected:
   // [Variables]
   // -------------------------------------------------------------------------
 
-protected:
   //! @brief Logger.
   Logger* _logger;
+
+  //! @brief Zone memory management.
+  Zone _zone;
 
 private:
   // disable copy
@@ -1602,6 +1685,12 @@ struct Serializer : public _Serializer
     __emitX86(INST_DIV, &src);
   }
 
+  //! @brief Make Stack Frame for Procedure Parameters.
+  inline void enter(const Immediate& imm16, const Immediate& imm8)
+  {
+    __emitX86(INST_ENTER, &imm16, &imm8);
+  }
+
   //! @brief Signed divide.
   //!
   //! This instruction divides (signed) the value in the AL, AX, or EAX 
@@ -1780,8 +1869,16 @@ struct Serializer : public _Serializer
     __emitX86(INST_JMP, label);
   }
 
+  //! @brief Jump.
   //! @overload
-  inline void jmp(const BaseRegMem& dst)
+  inline void jmp(const Register& dst)
+  {
+    __emitX86(INST_JMP, &dst);
+  }
+
+  //! @brief Jump.
+  //! @overload
+  inline void jmp(const Mem& dst)
   {
     __emitX86(INST_JMP, &dst);
   }
@@ -1816,6 +1913,12 @@ struct Serializer : public _Serializer
   inline void lea(const Register& dst, const Mem& src)
   {
     __emitX86(INST_LEA, &dst, &src);
+  }
+
+  //! @brief High Level Procedure Exit.
+  inline void leave()
+  {
+    __emitX86(INST_LEAVE);
   }
 
   //! @brief Assert LOCK# Signal Prefix.

@@ -1699,106 +1699,6 @@ private:
 };
 
 // ============================================================================
-// [AsmJit::Zone]
-// ============================================================================
-
-//! @brief Memory allocator designed to fast alloc memory that will be freed
-//! in one step.
-//!
-//! @note This is hackery for performance. Concept is that objects created
-//! by @c Compiler are manager by compiler. This means that lifetime of 
-//! these objects are same as compiler lifetime (that's short).
-//!
-//! All emittables, variables, labels and states allocated by @c Compiler are
-//! allocated through @c Zone object.
-struct ASMJIT_API Zone
-{
-  // [Construction / Destruction]
-
-  //! @brief Create new instance of @c Zone.
-  //! @param chunkSize Default size for one zone chunk.
-  Zone(SysUInt chunkSize);
-
-  //! @brief Destroy zone instance.
-  ~Zone();
-
-  // [Methods]
-
-  //! @brief Allocate @c size bytes of memory and return pointer to it.
-  //!
-  //! Pointer allocated by this way will be valid until @c Zone object is
-  //! destroyed. To create class by this way use placement @c new and 
-  //! @c delete operators:
-  //!
-  //! @code
-  //! // Example of allocating simple class
-  //!
-  //! // Your class
-  //! class Object
-  //! {
-  //!   // members...
-  //! };
-  //!
-  //! // Your function
-  //! void f()
-  //! {
-  //!   // We are using AsmJit namespace
-  //!   using namespace AsmJit
-  //!
-  //!   // Create zone object with chunk size of 65536 bytes.
-  //!   Zone zone(65536);
-  //!
-  //!   // Create your objects using zone object allocating, for example:
-  //!   Object* obj = new(zone.alloc(sizeof(YourClass))) Object();
-  //! 
-  //!   // ... lifetime of your objects ...
-  //! 
-  //!   // Destroy your objects:
-  //!   obj->~Object();
-  //!
-  //!   // Zone destructor will free all memory allocated through it, 
-  //!   // alternative is to call @c zone.freeAll().
-  //! }
-  //! @endcode
-  void* alloc(SysUInt size);
-
-  //! @brief Free all allocated memory at once.
-  void freeAll();
-
-  //! @brief Return total size of allocated objects - by @c alloc().
-  inline SysUInt total() const { return _total; }
-  //! @brief Return (default) chunk size.
-  inline SysUInt chunkSize() const { return _chunkSize; }
-
-  // [Chunk]
-
-  //! @brief One allocated chunk of memory.
-  struct Chunk
-  {
-    //! @brief Link to previous chunk.
-    Chunk* prev;
-    //! @brief Position in this chunk.
-    SysUInt pos;
-    //! @brief Size of this chunk (in bytes).
-    SysUInt size;
-
-    //! @brief Data.
-    UInt8 data[4];
-
-    //! @brief Return count of remaining (unused) bytes in chunk.
-    inline SysUInt remain() const { return size - pos; }
-  };
-
-private:
-  //! @brief Last allocated chunk of memory.
-  Chunk* _chunks;
-  //! @brief Total size of allocated objects - by @c alloc() method.
-  SysUInt _total;
-  //! @brief One chunk size.
-  SysUInt _chunkSize;
-};
-
-// ============================================================================
 // [AsmJit::Compiler]
 // ============================================================================
 
@@ -2313,7 +2213,7 @@ struct ASMJIT_API Compiler : public Serializer
   template<typename T>
   inline T* newObject()
   {
-    void* addr = _allocObject(sizeof(T));
+    void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(this);
   }
 
@@ -2321,7 +2221,7 @@ struct ASMJIT_API Compiler : public Serializer
   template<typename T, typename P1>
   inline T* newObject(P1 p1)
   {
-    void* addr = _allocObject(sizeof(T));
+    void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(this, p1);
   }
 
@@ -2329,7 +2229,7 @@ struct ASMJIT_API Compiler : public Serializer
   template<typename T, typename P1, typename P2>
   inline T* newObject(P1 p1, P2 p2)
   {
-    void* addr = _allocObject(sizeof(T));
+    void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(this, p1, p2);
   }
 
@@ -2337,7 +2237,7 @@ struct ASMJIT_API Compiler : public Serializer
   template<typename T, typename P1, typename P2, typename P3>
   inline T* newObject(P1 p1, P2 p2, P3 p3)
   {
-    void* addr = _allocObject(sizeof(T));
+    void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(this, p1, p2, p3);
   }
 
@@ -2345,13 +2245,9 @@ struct ASMJIT_API Compiler : public Serializer
   template<typename T, typename P1, typename P2, typename P3, typename P4>
   inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4)
   {
-    void* addr = _allocObject(sizeof(T));
+    void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(this, p1, p2, p3, p4);
   }
-
-  //! @brief Allocate memory using compiler internal memory manager.
-  inline void* _allocObject(SysUInt size)
-  { return _zone.alloc(size); }
 
   //! @brief Internal function that registers operand @a op in compiler.
   //!
@@ -2531,9 +2427,6 @@ private:
 
   //! @brief Current function.
   Function* _currentFunction;
-
-  //! @brief Zone memory management.
-  Zone _zone;
 
   //! @brief Label id counter (starts from 1).
   UInt32 _labelIdCounter;

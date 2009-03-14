@@ -96,14 +96,7 @@ enum RID
   //! @brief ID for SI/ESI/RSI registers.
   RID_ESI = 6,
   //! @brief ID for DI/EDI/RDI registers.
-  RID_EDI = 7,
-  //! @brief Invalid register.
-  //!
-  //! To check if register is invalid, use reg >= R_INVALID. But be careful,
-  //! these checks are used by @c Assembler, because x86 decodes register into
-  //! 3 bits (8 registers). 64 bit architecture contain additional 8 registers
-  //! encoded differently, so be sure you know what you are doing!
-  RID_INVALID = 8
+  RID_EDI = 7
 };
 
 //! @brief Pseudo (not real X86) register codes used for generating opcodes.
@@ -520,7 +513,8 @@ enum INST_CODE
   INST_DIVSS,
   INST_DPPD,
   INST_DPPS,
-  INST_EMMS,
+  INST_EMMS,          // MMX
+  INST_ENTER,         // X86/X64
   INST_EXTRACTPS,
   INST_F2XM1,         // X87
   INST_FABS,          // X87
@@ -662,6 +656,7 @@ enum INST_CODE
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LEA,           // X86/X64
+  INST_LEAVE,         // X86/X64
   INST_LFENCE,
   INST_LOCK,          // X86/X64
   INST_MASKMOVDQU,

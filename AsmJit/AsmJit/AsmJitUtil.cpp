@@ -99,4 +99,55 @@ UInt8* Buffer::take()
   return data;
 }
 
+// ============================================================================
+// [AsmJit::Zone]
+// ============================================================================
+
+Zone::Zone(SysUInt chunkSize)
+{
+  _chunks = NULL;
+  _total = 0;
+  _chunkSize = chunkSize;
+}
+
+Zone::~Zone()
+{
+  freeAll();
+}
+
+void* Zone::alloc(SysUInt size)
+{
+  Chunk* cur = _chunks;
+
+  if (!cur || cur->remain() < size)
+  {
+    cur = (Chunk*)ASMJIT_MALLOC(sizeof(Chunk) - (sizeof(UInt8)*4) + _chunkSize);
+    if (!cur) return NULL;
+
+    cur->prev = _chunks;
+    cur->pos = 0;
+    cur->size = _chunkSize;
+    _chunks = cur;
+  }
+
+  UInt8* p = cur->data + cur->pos;
+  cur->pos += size;
+  return (void*)p;
+}
+
+void Zone::freeAll()
+{
+  Chunk* cur = _chunks;
+
+  while (cur)
+  {
+    Chunk* prev = cur->prev;
+    ASMJIT_FREE(cur);
+    cur = prev;
+  }
+
+  _chunks = NULL;
+  _total = 0;
+}
+
 } // AsmJit namespace
