@@ -149,6 +149,8 @@ namespace AsmJit
 #endif
 
 // [AsmJit - C++ Macros]
+#define ASMJIT_ARRAY_SIZE(A) (sizeof(A) / sizeof(*A))
+
 #define ASMJIT_DISABLE_COPY(__type__) \
 private: \
   inline __type__(const __type__& other); \

@@ -96,8 +96,6 @@ static const UInt8 variableRegCodeData[] =
   REG_XMM
 };
 
-#define ASMJIT_ARRAY_SIZE(A) (sizeof(A) / sizeof(*A))
-
 static UInt32 getVariableSize(UInt32 type)
 {
   ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableSizeData));
@@ -219,6 +217,27 @@ Comment::~Comment()
 void Comment::emit(Assembler& a)
 {
   if (a.logger()) a.logger()->log(str());
+}
+
+// ============================================================================
+// [AsmJit::EmbeddedData]
+// ============================================================================
+
+EmbeddedData::EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size) :
+  Emittable(c, EMITTABLE_EMBEDDED_DATA)
+{
+  _size = size;
+  _capacity = capacity;
+  memcpy(_data, data, size);
+}
+
+EmbeddedData::~EmbeddedData()
+{
+}
+
+void EmbeddedData::emit(Assembler& a)
+{
+  a._embed(data(), size());
 }
 
 // ============================================================================
@@ -1464,6 +1483,7 @@ Compiler::Compiler() :
   _currentFunction(NULL),
   _labelIdCounter(1)
 {
+  _jumpTableLabel = newLabel();
 }
 
 Compiler::~Compiler()
@@ -1478,10 +1498,13 @@ Compiler::~Compiler()
 void Compiler::clear()
 {
   delAll(_buffer);
+  _zone.freeAll();
+
   _buffer.clear();
   _operands.clear();
   _currentPosition = 0;
-  _zone.freeAll();
+  _jumpTableLabel = newLabel();
+  _jumpTableData.clear();
 }
 
 void Compiler::free()
@@ -1489,6 +1512,7 @@ void Compiler::free()
   clear();
   _buffer.free();
   _operands.free();
+  _jumpTableData.free();
 }
 
 // ============================================================================
@@ -1627,6 +1651,15 @@ void Compiler::build(Assembler& a)
   len = _buffer.length();
   for (i = 0; i < len; i++) emitters[i]->emit(a);
   for (i = 0; i < len; i++) emitters[i]->postEmit(a);
+
+  // Jump table
+  a.bind(_jumpTableLabel);
+
+  len = _jumpTableData.length();
+  for (i = 0; i < len; i++)
+  {
+    a.dptr(_jumpTableData[i]);
+  }
 }
 
 // ============================================================================
@@ -1637,6 +1670,27 @@ void Compiler::_registerOperand(Operand* op)
 {
   op->_operandId = _operands.length();
   _operands.append(op);
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Absolute Jumps / Calls]
+// ============================================================================
+
+void Compiler::jmp(void* target)
+{
+  jmp(ptr(_jumpTableLabel, _addTarget(target)));
+}
+
+void Compiler::call(void* target)
+{
+  call(ptr(_jumpTableLabel, _addTarget(target)));
+}
+
+SysInt Compiler::_addTarget(void* target)
+{
+  SysInt id = _jumpTableData.length() * sizeof(SysInt);
+  _jumpTableData.append(target);
+  return id;
 }
 
 // ============================================================================
@@ -1756,6 +1810,21 @@ void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
 void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
   emit(newObject<Instruction>(code, o1, o2, o3));
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Embed]
+// ============================================================================
+
+void Compiler::_embed(const void* data, SysUInt size)
+{
+  // Align capacity to 16 bytes
+  SysUInt capacity = (size + 15) & ~15;
+
+  EmbeddedData* e = 
+    new(_zoneAlloc(sizeof(EmbeddedData) - sizeof(void*) + capacity)) 
+      EmbeddedData(this, capacity, data, size);
+  emit(e);
 }
 
 // ============================================================================

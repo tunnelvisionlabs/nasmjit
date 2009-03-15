@@ -380,10 +380,7 @@ enum RELOC_MODE
   RELOC_NONE = 0,
 
   //! @brief Overwrite relocation (immediates as constants).
-  RELOC_OVERWRITE = 1,
-
-  //! @brief Internal, used by @c AsmJit::Assembler::jmp_ptr().
-  RELOC_JMP_RELATIVE = 10
+  RELOC_OVERWRITE = 1
 };
 
 //! @brief Label state.
@@ -652,7 +649,6 @@ enum INST_CODE
   INST_JS,            // X86/X64 (jcc)
   INST_JZ,            // X86/X64 (jcc)
   INST_JMP,           // X86/X64 (jmp)
-  INST_JMP_PTR,       // X86/X64 (jmp)
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LEA,           // X86/X64

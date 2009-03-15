@@ -278,15 +278,28 @@ struct ASMJIT_API Assembler : public Serializer
   {
     enum Type
     {
-      RELATIVE_TO_ABSOLUTE = 0
+      ABSOLUTE_TO_ABSOLUTE = 0,
+      RELATIVE_TO_ABSOLUTE = 1,
+      ABSOLUTE_TO_RELATIVE = 2
     };
 
     //! @brief Type of relocation.
     UInt32 type;
+
+    //! @brief Size of relocation (4 or 8 bytes).
+    UInt32 size;
+
     //! @brief Offset from code begin address.
     SysInt offset;
-    //! @brief Relative displacement from code begin address (not to @c offset).
-    SysInt destination;
+
+    //! @brief Relative displacement or absolute address.
+    union
+    {
+      //! @brief Relative displacement from code begin address (not to @c offset).
+      SysInt destination;
+      //! @brief Absolute address where to jump;
+      void* address;
+    };
   };
 
   // -------------------------------------------------------------------------
@@ -431,7 +444,8 @@ struct ASMJIT_API Assembler : public Serializer
   //! with attached @c AsmJit::Label.
   inline void _emitCS(const BaseRegMem& rm)
   {
-    // if (rm.isMem() && rm._mem.label) _emitByte(0x2E);
+    ASMJIT_USE(rm);
+    // _emitByte(0x2E);
   }
 
   //! @brief Emit MODR/M byte.
@@ -566,6 +580,12 @@ struct ASMJIT_API Assembler : public Serializer
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   // -------------------------------------------------------------------------
+  // [Embed]
+  // -------------------------------------------------------------------------
+
+  virtual void _embed(const void* dataPtr, SysUInt dataLen);
+
+  // -------------------------------------------------------------------------
   // [Align]
   // -------------------------------------------------------------------------
 
@@ -607,58 +627,14 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief Binary code buffer.
   Buffer _buffer;
 
-  //! @brief List of relocations.
-  PodVector<RelocInfo> _relocations;
-
   //! @brief Last assembler error.
   UInt32 _error;
 
   //! @brief Linked list of unused links (@c LinkData* structures)
   LinkData* _unusedLinks;
 
+  //! @brief Relocations data.
   PodVector<RelocData> _relocData;
-
-#if 0
-  //! @brief Relocation data structure.
-  //!
-  //! @note This structure is always allocated by zone allocator.
-  struct RelocData
-  {
-    //! @brief Offset from start of buffer where this value is.
-    SysUInt offset;
-
-    //! @brief Size of value: 1, 2, 4 (usual) or 8 (64 bit, limited to 
-    //! few instructions).
-    UInt8 size;
-
-    //! @brief Reloc type.
-    UInt8 type;
-
-    //! @brief True if relocation is linked (means that displacement is not 
-    //! known at this time).
-    UInt8 linked;
-
-    //! @brief Instruction displacement (value that must be added to delta).
-    Int8 idisp;
-
-    //! @brief Union where is stored relative (@c delta) displacement or absolute 
-    //! address (@c target).
-    union {
-      //! @brief Reloc delta (relative displacement).
-      SysUInt delta;
-      //! @brief Reloc target (absolute address).
-      void *target;
-    };
-
-    //! @brief Link to previous data.
-    //!
-    //! Links are used together with linked labels to ensure that @c RelocData
-    //! structure is bounded to correct @c offset.
-    RelocData* link;
-  };
-
-  PodVector<RelocData*> _rdata;
-#endif
 };
 
 //! @}

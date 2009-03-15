@@ -644,6 +644,12 @@ static inline X87Register st(int i)
 //! @brief Memory location operand.
 struct Mem : public BaseRegMem
 {
+  inline Mem() : 
+    BaseRegMem(_DontInitialize())
+  {
+    _initAll(OP_MEM, 0, 0x00, 0x00, 0, NULL);
+  }
+
   inline Mem(Label* label, SysInt displacement, UInt8 size = 0) : 
     BaseRegMem(_DontInitialize())
   {
@@ -743,6 +749,54 @@ static inline Mem xmmword_ptr(Label* label, SysInt disp = 0)
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
 static inline Mem sysint_ptr(Label* label, SysInt disp = 0) 
 { return _ptr_build(label, disp, sizeof(SysInt)); }
+
+// --- 32 bit absolute addressing ---
+#if defined(ASMJIT_X86)
+ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt8 ptr_size);
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, 0); }
+
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_BYTE); }
+
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_WORD); }
+
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_DWORD); }
+
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_QWORD); }
+
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_TWORD); }
+
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_DQWORD); }
+
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_QWORD); }
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr_abs(void* target, SysInt disp = 0) 
+{ return _ptr_build_abs(target, disp, sizeof(SysInt)); }
+#endif // ASMJIT_X86
 
 // ============================================================================
 // [AsmJit::Mem - ptr[base + displacement]]
@@ -1152,6 +1206,13 @@ struct ASMJIT_API _Serializer
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
 
   // -------------------------------------------------------------------------
+  // [Embed]
+  // -------------------------------------------------------------------------
+
+  //! @brief Embed data into instruction stream.
+  virtual void _embed(const void* dataPtr, SysUInt dataLen) = 0;
+
+  // -------------------------------------------------------------------------
   // [Align]
   // -------------------------------------------------------------------------
 
@@ -1228,6 +1289,32 @@ private:
 //! @brief Assembler instruction serializer.
 struct Serializer : public _Serializer
 {
+  // -------------------------------------------------------------------------
+  // [Embed]
+  // -------------------------------------------------------------------------
+
+  inline void db(UInt8  x) { _embed(&x, 1); }
+  inline void dw(UInt16 x) { _embed(&x, 2); }
+  inline void dd(UInt32 x) { _embed(&x, 4); }
+  inline void dq(UInt64 x) { _embed(&x, 8); }
+
+  inline void dint8(Int8 x) { _embed(&x, sizeof(Int8)); }
+  inline void duint8(UInt8 x) { _embed(&x, sizeof(UInt8)); }
+  inline void dint16(Int16 x) { _embed(&x, sizeof(Int16)); }
+  inline void duint16(UInt16 x) { _embed(&x, sizeof(UInt16)); }
+  inline void dint32(Int32 x) { _embed(&x, sizeof(Int32)); }
+  inline void duint32(UInt32 x) { _embed(&x, sizeof(UInt32)); }
+  inline void dsysint(SysInt x) { _embed(&x, sizeof(SysInt)); }
+  inline void dsysuint(SysUInt x) { _embed(&x, sizeof(SysUInt)); }
+  inline void dptr(void* x) { _embed(&x, sizeof(void*)); }
+
+  inline void dmm(const MMData& x) { _embed(&x, sizeof(MMData)); }
+  inline void dxmm(const XMMData& x) { _embed(&x, sizeof(XMMData)); }
+  inline void data(const void* data, SysUInt size) { _embed(data, size); }
+
+  template<typename T>
+  inline void dstruct(const T& x) { _embed(x, sizeof(T)); }
+
   // -------------------------------------------------------------------------
   // [X86 Instructions]
   // -------------------------------------------------------------------------
@@ -1881,26 +1968,6 @@ struct Serializer : public _Serializer
   inline void jmp(const Mem& dst)
   {
     __emitX86(INST_JMP, &dst);
-  }
-
-  //! @brief Same instruction as @c jmp(), but target is given as a pointer
-  //! to memory location that will be patched by relocCode() to real relative
-  //! address.
-  //!
-  //! This function are introduced here for performance, but it can be danger
-  //! to use it, because relative address is always 32 bit displacement (on
-  //! 64 bit platforms too!). So if the difference between target address and
-  //! current address is larger than 31 bits, jmp() can't be created. For that
-  //! reasons, there is second parameter (temporary register) that can be used
-  //! if relative addressing fails.
-  //!
-  //! So, jmp_ptr will always reserve some space for failure cases and can
-  //! overwrite @a temporary register.
-  inline void jmp_ptr(void* ptr, const Register& temporary)
-  {
-    Immediate i((SysInt)ptr);
-    // FIXME: I don't know why I need cast to Operand*
-    __emitX86(INST_JMP_PTR, (const Operand*)(&i), &temporary);
   }
 
   //! @brief Load Effective Address

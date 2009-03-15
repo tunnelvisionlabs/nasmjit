@@ -1,9 +1,7 @@
 TODO (Assembler):
 [ ] Add SSE4a instruction set (AMD) - What is missing ?
-[x] Add Enter/Leave instructions
-[ ] Add absolute addressing possibilities for jmp and call instructions
-    (x86 and x64)
-[x] Add relative addressing possibilities to Label* for memory operands
+[ ] Add build to a given memory location with size that can fail. This can be
+    used together with continuous memory allocator.
 
 TODO (Compiler):
 [ ] Add instruction reordering possibility in compiler (complex)

@@ -33,6 +33,15 @@ namespace AsmJit {
 // [AsmJit::Buffer]
 // ============================================================================
 
+void Buffer::emitData(const void* dataPtr, SysUInt dataLen)
+{
+  SysInt max = capacity() - offset();
+  if ((SysUInt)max < dataLen) realloc(offset() + dataLen);
+
+  memcpy(_cur, dataPtr, dataLen);
+  _cur += dataLen;
+}
+
 bool Buffer::realloc(SysInt to)
 {
   if (capacity() < to)

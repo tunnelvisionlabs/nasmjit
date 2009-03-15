@@ -414,6 +414,9 @@ struct ASMJIT_API Buffer
     _cur += 8;
   }
 
+  //! @brief Emit custom data. 
+  void emitData(const void* ptr, SysUInt len);
+
   //! @brief Set byte at position @a pos.
   inline UInt8 getByteAt(SysInt pos) const
   {

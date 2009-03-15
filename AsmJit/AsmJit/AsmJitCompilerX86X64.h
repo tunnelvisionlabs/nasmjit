@@ -70,6 +70,8 @@ enum EMITTABLE_TYPE
   EMITTABLE_NONE = 0,
   //! @brief Emittable is comment (no code).
   EMITTABLE_COMMENT,
+  //! @brief Emittable is embedded data.
+  EMITTABLE_EMBEDDED_DATA,
   //! @brief Emittable is .align directive.
   EMITTABLE_ALIGN,
   //! @brief Emittable is single instruction.
@@ -1076,6 +1078,36 @@ struct ASMJIT_API Comment : public Emittable
 
 private:
   const char* _str;
+};
+
+// ============================================================================
+// [AsmJit::EmbeddedData]
+// ============================================================================
+
+//! @brief Emittable used to emit comment into @c Assembler logger.
+//! 
+//! @note This class is always allocated by @c AsmJit::Compiler.
+struct ASMJIT_API EmbeddedData : public Emittable
+{
+  // [Construction / Destruction]
+
+  EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size);
+  virtual ~EmbeddedData();
+
+  // [Methods]
+
+  virtual void emit(Assembler& a);
+
+  SysUInt size() const { return _size; }
+  SysUInt capacity() const { return _size; }
+  UInt8* data() const { return (UInt8*)_data; }
+
+private:
+  SysUInt _size;
+  SysUInt _capacity;
+  UInt8 _data[sizeof(void*)];
+
+  friend struct Compiler;
 };
 
 // ============================================================================
@@ -2259,6 +2291,18 @@ struct ASMJIT_API Compiler : public Serializer
   void _registerOperand(Operand* op);
 
   // -------------------------------------------------------------------------
+  // [Absolute Jumps / Calls]
+  // -------------------------------------------------------------------------
+
+  using Serializer::jmp;
+  using Serializer::call;
+
+  void jmp(void* target);
+  void call(void* target);
+
+  SysInt _addTarget(void* target);
+
+  // -------------------------------------------------------------------------
   // [Intrinsics]
   // -------------------------------------------------------------------------
 
@@ -2401,6 +2445,12 @@ struct ASMJIT_API Compiler : public Serializer
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   // -------------------------------------------------------------------------
+  // [Embed]
+  // -------------------------------------------------------------------------
+
+  virtual void _embed(const void* dataPtr, SysUInt dataSize);
+
+  // -------------------------------------------------------------------------
   // [Align]
   // -------------------------------------------------------------------------
 
@@ -2430,6 +2480,12 @@ private:
 
   //! @brief Label id counter (starts from 1).
   UInt32 _labelIdCounter;
+
+  //! @brief Jump table label.
+  Label* _jumpTableLabel;
+
+  //! @brief Jump table entities.
+  PodVector<void*> _jumpTableData;
 
   friend struct Instruction;
   friend struct Variable;

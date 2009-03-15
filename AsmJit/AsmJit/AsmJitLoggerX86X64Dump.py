@@ -161,6 +161,10 @@ SysInt Logger::dumpOperand(char* buf, const Operand* op)
     {
       buf += dumpRegister(buf, REG_GPN, mem.base());
     }
+    else if (mem.label())
+    {
+      buf += dumpLabel(buf, mem.label());
+    }
 
     if (mem.hasIndex())
     {

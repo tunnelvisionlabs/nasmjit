@@ -37,6 +37,17 @@ Mem _ptr_build(Label* label, SysInt disp, UInt8 ptr_size)
   return Mem(label, disp, ptr_size);
 }
 
+#if defined(ASMJIT_X86)
+ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt8 ptr_size)
+{
+  Mem m;
+  m._mem.size = ptr_size;
+  m._mem.displacement = disp;
+  m._mem.target = target;
+  return m;
+}
+#endif // ASMJIT_X86
+
 Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptr_size)
 {
   return Mem(base, disp, ptr_size);
