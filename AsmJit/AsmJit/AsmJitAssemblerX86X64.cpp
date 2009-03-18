@@ -31,6 +31,7 @@
 // [Dependencies]
 #include "AsmJitAssembler.h"
 #include "AsmJitLogger.h"
+#include "AsmJitMemoryManager.h"
 #include "AsmJitVM.h"
 
 namespace AsmJit {
@@ -41,7 +42,6 @@ namespace AsmJit {
 
 Assembler::Assembler() :
   _buffer(16),
-  _error(0),
   _unusedLinks(NULL)
 {
 }
@@ -100,6 +100,17 @@ void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
 bool Assembler::canEmit()
 {
   return ensureSpace() && !error();
+}
+
+void Assembler::_emitSegmentPrefix(const BaseRegMem& rm)
+{
+  static const UInt8 prefixes[] = { 0x00, 0x2E, 0x36, 0x3E, 0x26, 0x64, 0x65 };
+
+  if (rm.isMem())
+  {
+    SysUInt segmentPrefix = operand_cast<const Mem&>(rm).segmentPrefix();
+    if (segmentPrefix) _emitByte(prefixes[segmentPrefix]);
+  }
 }
 
 void Assembler::_emitImmediate(const Immediate& imm, UInt32 size)
@@ -214,11 +225,12 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
 
 #if defined(ASMJIT_X86)
     // X86 uses absolute addressing model
-    if (label)
+    if ((SysUInt)label >= _SEGMENT_END)
     {
       UInt32 relocId = _relocData.length();
       RelocData reloc;
 
+      // Relative addressing will be relocated to absolute address.
       reloc.type = RelocData::RELATIVE_TO_ABSOLUTE;
       reloc.size = 4;
       reloc.offset = offset();
@@ -245,7 +257,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
 
 #if defined(ASMJIT_X64)
     // X64 uses relative addressing model
-    if (label)
+    if ((SysUInt)label >= _SEGMENT_END)
     {
       if (label->isBound())
       {
@@ -301,7 +313,7 @@ void Assembler::_emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, con
   if (i16bit) _emitByte(0x66);
 
   // cs prefix
-  _emitCS(op);
+  _emitSegmentPrefix(op);
 
   // instruction prefix
   if (opCode & 0xFF000000) _emitByte((UInt8)((opCode & 0xFF000000) >> 24));
@@ -336,7 +348,7 @@ void Assembler::_emitFpuSTI(UInt32 opCode, UInt32 sti)
 void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem)
 {
   // cs prefix
-  _emitCS(mem);
+  _emitSegmentPrefix(mem);
 
   // instruction prefix
   if (opCode & 0xFF000000) _emitByte((UInt8)((opCode & 0xFF000000) >> 24));
@@ -357,7 +369,7 @@ void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem)
 void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src, SysInt immSize)
 {
   // cs prefix
-  _emitCS(src);
+  _emitSegmentPrefix(src);
 
   // instruction prefix
   if (opCode & 0xFF000000) _emitByte((UInt8)((opCode & 0xFF000000) >> 24));
@@ -391,7 +403,7 @@ Assembler::LinkData* Assembler::_emitDisplacement(Label* label, SysInt inlinedDi
   link->displacement = inlinedDisplacement;
 
   label->_lbl.link = link;
-  label->_lbl.state = LABEL_LINKED;
+  label->_lbl.state = LABEL_STATE_LINKED;
 
   // Emit dummy DWORD
   _emitInt32(0);
@@ -1990,7 +2002,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         Int32 immSize = o1->size() <= 4 ? o1->size() : 4;
 
         if (o1->size() == 2) _emitByte(0x66); // 16 bit
-        _emitCS(operand_cast<const BaseRegMem&>(*o1)); // cs prefix
+        _emitSegmentPrefix(operand_cast<const BaseRegMem&>(*o1)); // cs prefix
 #if defined(ASMJIT_X64)
         _emitRexRM(o1->size() == 8, 0, operand_cast<const BaseRegMem&>(*o1));
 #endif // ASMJIT_X64
@@ -2011,7 +2023,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         const Register& src = operand_cast<const Register&>(*o2);
 
         if (src.isRegType(REG_GPW)) _emitByte(0x66); // 16 bit
-        _emitCS(dst); // cs prefix
+        _emitSegmentPrefix(dst); // cs prefix
 #if defined(ASMJIT_X64)
         _emitRexRM(src.isRegType(REG_GPQ), src.code(), dst);
 #endif // ASMJIT_X64
@@ -2092,7 +2104,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         const Mem& m = operand_cast<const Mem&>(*o1);
 
         // cs prefix
-        _emitCS(m);
+        _emitSegmentPrefix(m);
 
         _emitByte(o1->size() == 4 
           ? ((id.opCode1 & 0xFF000000) >> 24) 
@@ -2173,7 +2185,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       if (opCode)
       {
-        _emitCS(m);
+        _emitSegmentPrefix(m);
         _emitByte(opCode);
         _emitModM(mod, m, 0);
         return;
@@ -2660,7 +2672,24 @@ void Assembler::bindTo(Label* label, SysInt pos)
     label->_lbl.link = NULL;
   }
 
-  label->setStatePos(LABEL_BOUND, pos);
+  label->setStatePos(LABEL_STATE_BOUND, pos);
+}
+
+// ============================================================================
+// [AsmJit::Assembler - Make]
+// ============================================================================
+
+void* Assembler::make(UInt32 allocType)
+{
+  if (codeSize() == 0) return NULL;
+
+  MemoryManager* memmgr = MemoryManager::global();
+
+  void* p = memmgr->alloc(codeSize(), allocType);
+  if (p == NULL) return NULL;
+
+  relocCode(p);
+  return p;
 }
 
 // ============================================================================

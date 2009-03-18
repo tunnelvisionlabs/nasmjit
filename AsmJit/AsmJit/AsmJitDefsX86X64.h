@@ -40,7 +40,7 @@ namespace AsmJit {
 //! @{
 
 // ============================================================================
-// [Constants]
+// [AsmJit::OP]
 // ============================================================================
 
 //! @brief Operand types that can be encoded in @c Op operand.
@@ -58,6 +58,10 @@ enum OP
   OP_LABEL = 4,
 };
 
+// ============================================================================
+// [AsmJit::SIZE]
+// ============================================================================
+
 //! @brief Size of registers and pointers.
 enum SIZE
 {
@@ -74,6 +78,10 @@ enum SIZE
   //! @brief 16 bytes size.
   SIZE_DQWORD = 16
 };
+
+// ============================================================================
+// [AsmJit::RID]
+// ============================================================================
 
 //! @brief Valid X86 register IDs.
 //!
@@ -98,6 +106,10 @@ enum RID
   //! @brief ID for DI/EDI/RDI registers.
   RID_EDI = 7
 };
+
+// ============================================================================
+// [AsmJit::REG]
+// ============================================================================
 
 //! @brief Pseudo (not real X86) register codes used for generating opcodes.
 //!
@@ -169,7 +181,7 @@ enum REG
 #endif // ASMJIT_X64
 
   // MMX registers 
-  REG_MM0  = REG_MM , REG_MM1  , REG_MM2  , REG_MM3  , REG_MM4  , REG_MM5  , REG_MM6  , REG_MM7  ,
+  REG_MM0  = REG_MM  , REG_MM1  , REG_MM2  , REG_MM3  , REG_MM4  , REG_MM5  , REG_MM6  , REG_MM7  ,
 
   // SSE registers
   REG_XMM0 = REG_XMM , REG_XMM1 , REG_XMM2 , REG_XMM3 , REG_XMM4 , REG_XMM5 , REG_XMM6 , REG_XMM7 ,
@@ -197,6 +209,37 @@ enum { NUM_REGS = 8 };
 enum { NUM_REGS = 16 };
 #endif // ASMJIT
 
+// ============================================================================
+// [AsmJit::SEGMENT]
+// ============================================================================
+
+//! @brief Segment override prefixes.
+enum SEGMENT
+{
+  // DO NOT MODIFY INDEX CODES - They are used by logger in this order.
+
+  //! @brief No segment override prefix.
+  SEGMENT_NONE = 0,
+  //! @brief Use 'cs' segment override prefix.
+  SEGMENT_CS = 1,
+  //! @brief Use 'ss' segment override prefix.
+  SEGMENT_SS = 2,
+  //! @brief Use 'ds' segment override prefix.
+  SEGMENT_DS = 3,
+  //! @brief Use 'es' segment override prefix.
+  SEGMENT_ES = 4,
+  //! @brief Use 'fs' segment override prefix.
+  SEGMENT_FS = 5,
+  //! @brief Use 'gs' segment override prefix.
+  SEGMENT_GS = 6,
+  //! @brief End of prefix codes
+  _SEGMENT_END
+};
+
+// ============================================================================
+// [AsmJit::PREFETCH_HINT]
+// ============================================================================
+
 //! @brief Prefetch hints.
 enum PREFETCH_HINT
 {
@@ -209,6 +252,10 @@ enum PREFETCH_HINT
   //! @brief Prefetch using NT hint.
   PREFETCH_NTA = 0
 };
+
+// ============================================================================
+// [AsmJit::CONDITION]
+// ============================================================================
 
 //! @brief Condition codes.
 enum CONDITION
@@ -312,6 +359,10 @@ static inline CONDITION reverseCondition(CONDITION cc)
   };
 }
 
+// ============================================================================
+// [AsmJit::SCALE]
+// ============================================================================
+
 //! @brief Scale, can be used for addressing.
 //!
 //! See @c Op and addressing methods like @c byte_ptr(), @c word_ptr(),
@@ -328,6 +379,10 @@ enum SCALE
   TIMES_8 = 3
 };
 
+// ============================================================================
+// [AsmJit::HINT]
+// ============================================================================
+
 //! @brief Condition hint, see @c AsmJit::Serializer::jz() and others.
 enum HINT
 {
@@ -339,6 +394,10 @@ enum HINT
   HINT_NOT_TAKEN = 0x2E
 };
 
+// ============================================================================
+// [AsmJit::FP_STATUS]
+// ============================================================================
+
 //! @brief Floating point status.
 enum FP_STATUS
 {
@@ -348,6 +407,10 @@ enum FP_STATUS
   FP_C3 = 0x4000,
   FP_CC_MASK = 0x4500
 };
+
+// ============================================================================
+// [AsmJit::FP_CW]
+// ============================================================================
 
 //! @brief Floating point control word.
 enum FP_CW
@@ -373,6 +436,10 @@ enum FP_CW
   FP_CW_ROUND_TOZERO  = 0xC00
 };
 
+// ============================================================================
+// [AsmJit::RELOC_MODE]
+// ============================================================================
+
 //! @brief Relocation info.
 enum RELOC_MODE
 {
@@ -383,15 +450,19 @@ enum RELOC_MODE
   RELOC_OVERWRITE = 1
 };
 
+// ============================================================================
+// [AsmJit::LABEL_STATE]
+// ============================================================================
+
 //! @brief Label state.
 enum LABEL_STATE
 {
   //! @brief Label is unused.
-  LABEL_UNUSED = 0,
+  LABEL_STATE_UNUSED = 0,
   //! @brief Label is linked (waiting to be bound)
-  LABEL_LINKED = 1,
+  LABEL_STATE_LINKED = 1,
   //! @brief Label is bound
-  LABEL_BOUND = 2
+  LABEL_STATE_BOUND = 2
 };
 
 // ============================================================================

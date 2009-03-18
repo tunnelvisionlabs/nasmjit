@@ -1602,27 +1602,6 @@ Label* Compiler::newLabel()
 // [AsmJit::Compiler - Emit]
 // ============================================================================
 
-// logger switcher used in Compiler::build().
-struct LoggerSwitcher
-{
-  LoggerSwitcher(Assembler* a, Compiler* c) :
-    a(a),
-    logger(a->logger())
-  {
-    // Set compiler logger
-    if (!logger && c->logger()) a->setLogger(c->logger());
-  }
-
-  ~LoggerSwitcher()
-  {
-    // Restore logger
-    a->setLogger(logger);
-  }
-
-  Assembler* a;
-  Logger* logger;
-};
-
 void Compiler::emit(Emittable* emittable, bool endblock)
 {
   if (endblock)
@@ -1633,32 +1612,6 @@ void Compiler::emit(Emittable* emittable, bool endblock)
   {
     _buffer.insert(_currentPosition, emittable);
     _currentPosition++;
-  }
-}
-
-void Compiler::build(Assembler& a)
-{
-  LoggerSwitcher loggerSwitcher(&a, this);
-
-  Emittable** emitters = _buffer.data();
-  SysUInt i, len;
-
-  // Prepare (prepare action can append emittable)
-  len = _buffer.length();
-  for (i = 0; i < len; i++) emitters[i]->prepare();
-
-  // Emit and postEmit
-  len = _buffer.length();
-  for (i = 0; i < len; i++) emitters[i]->emit(a);
-  for (i = 0; i < len; i++) emitters[i]->postEmit(a);
-
-  // Jump table
-  a.bind(_jumpTableLabel);
-
-  len = _jumpTableData.length();
-  for (i = 0; i < len; i++)
-  {
-    a.dptr(_jumpTableData[i]);
   }
 }
 
@@ -1843,6 +1796,73 @@ void Compiler::align(SysInt m)
 void Compiler::bind(Label* label)
 {
   emit(newObject<Target>(label));
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Make]
+// ============================================================================
+
+void* Compiler::make(UInt32 allocType)
+{
+  Assembler a;
+  build(a);
+
+  if (a.error())
+  {
+    setError(a.error());
+    return NULL;
+  }
+  else
+  {
+    return a.make(allocType);
+  }
+}
+
+// logger switcher used in Compiler::build().
+struct LoggerSwitcher
+{
+  LoggerSwitcher(Assembler* a, Compiler* c) :
+    a(a),
+    logger(a->logger())
+  {
+    // Set compiler logger
+    if (!logger && c->logger()) a->setLogger(c->logger());
+  }
+
+  ~LoggerSwitcher()
+  {
+    // Restore logger
+    a->setLogger(logger);
+  }
+
+  Assembler* a;
+  Logger* logger;
+};
+
+void Compiler::build(Assembler& a)
+{
+  LoggerSwitcher loggerSwitcher(&a, this);
+
+  Emittable** emitters = _buffer.data();
+  SysUInt i, len;
+
+  // Prepare (prepare action can append emittable)
+  len = _buffer.length();
+  for (i = 0; i < len; i++) emitters[i]->prepare();
+
+  // Emit and postEmit
+  len = _buffer.length();
+  for (i = 0; i < len; i++) emitters[i]->emit(a);
+  for (i = 0; i < len; i++) emitters[i]->postEmit(a);
+
+  // Jump table
+  a.bind(_jumpTableLabel);
+
+  len = _jumpTableData.length();
+  for (i = 0; i < len; i++)
+  {
+    a.dptr(_jumpTableData[i]);
+  }
 }
 
 } // AsmJit namespace

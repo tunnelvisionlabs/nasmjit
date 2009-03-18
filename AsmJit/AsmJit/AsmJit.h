@@ -354,6 +354,7 @@
 #include "AsmJitCpuInfo.h"
 #include "AsmJitDefs.h"
 #include "AsmJitLogger.h"
+#include "AsmJitMemoryManager.h"
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 #include "AsmJitVM.h"

@@ -40,14 +40,14 @@ int main(int argc, char* argv[])
   using namespace AsmJit;
 
   // ==========================================================================
-  // STEP 1: Create function.
+  // Create assembler.
   Assembler a;
 
   // Prolog.
   a.push(nbp);
   a.mov(nbp, nsp);
 
-  // mark this offset
+  // Mark this offset.
   SysInt mark = a.offset();
 
   // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
@@ -63,9 +63,9 @@ int main(int argc, char* argv[])
   // ==========================================================================
 
   // ==========================================================================
-  // STEP 2: Patch code at 'mark' position. End variable is needed to remember 
-  // current offset (offset where we want to go back), because we must go back 
-  // to set correct code size (offset is also used as code size).
+  // Patch code at 'mark' position. End variable is needed to remember  current
+  // offset (offset where we want to go back), because we must go back  to set
+  // correct code size (offset is also used as code size).
   SysInt end = a.toOffset(mark);
 
   // Patch
@@ -76,24 +76,15 @@ int main(int argc, char* argv[])
   // ==========================================================================
 
   // ==========================================================================
-  // STEP 3: Alloc execute enabled memory
-  SysUInt vsize;
-  void *vmem = VM::alloc(a.codeSize(), &vsize, true);
-  if (!vmem) 
-  {
-    printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
-    return 1;
-  }
+  // Make function
+  MyFn fn = function_cast<MyFn>(a.make());
 
-  // Relocate generated code to vmem.
-  a.relocCode(vmem);
-
-  // Cast vmem to our function and call the code.
-  int result = function_cast<MyFn>(vmem)();
+  // Call it.
+  int result = fn();
   printf("Result from jit function: %d\n", result);
 
-  // Memory should be freed, but use VM::free() to do that.
-  VM::free(vmem, vsize);
+  // If function is not needed again it should be freed.
+  MemoryManager::global()->free(fn);
   // ==========================================================================
 
   return 0;

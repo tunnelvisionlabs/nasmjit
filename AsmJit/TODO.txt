@@ -1,11 +1,6 @@
-TODO (Assembler):
-[ ] Add SSE4a instruction set (AMD) - What is missing ?
-[ ] Add build to a given memory location with size that can fail. This can be
-    used together with continuous memory allocator.
-
 TODO (Compiler):
-[ ] Add instruction reordering possibility in compiler (complex)
 [ ] Add jump table builder (complex)
+[ ] Add instruction reordering possibility in compiler (complex)
 [ ] What about float and double in compiler ?
     Current implementation can reserve memory for these types, but can't
     alloc registers for them (because x87 is stack based).

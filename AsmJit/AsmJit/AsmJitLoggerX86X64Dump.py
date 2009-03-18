@@ -79,13 +79,13 @@ namespace AsmJit {
 
 """
 
-dout += "static const char prettyNames[] =\n"
+dout += "static const char instructionName[] =\n"
 dout +=   "".join(["  " + str(a) + "\n" for a in dinst[0:len(dinst)-1]])
 dout +=   "  " + str(dinst[-1]) + ";\n"
 
 dout += "\n"
-  
-dout += "static const UInt16 prettyIndex[] =\n"
+
+dout += "static const UInt16 instructionIndex[] =\n"
 dout += "{\n"
 dout +=   "".join(["  " + str(a) + ", \n" for a in daddr[0:len(daddr)-1]])
 dout +=   "  " + str(daddr[-1]) + "\n"
@@ -93,7 +93,7 @@ dout += "};\n"
 
 dout += \
 """
-static const char* prettySize[] = 
+static const char* operandSize[] =
 {
   NULL,
   "byte ptr ",
@@ -114,15 +114,22 @@ static const char* prettySize[] =
   "dqword ptr "
 };
 
+static const char segmentName[] =
+  "\\0\\0\\0\\0"
+  "cs:\\0"
+  "ss:\\0"
+  "ds:\\0"
+  "es:\\0"
+  "fs:\\0"
+  "gs:\\0";
+
 // [Helpers]
 
 static char* mycpy(char* dst, const char* src)
 {
   if (src == NULL) return dst;
-
-  SysInt len = (SysInt)strlen(src);
-  memcpy(dst, src, len);
-  return dst + len;
+  while (*src) *dst++ = *src++;
+  return dst;
 }
 
 // [AsmJit::Logger]
@@ -130,7 +137,7 @@ static char* mycpy(char* dst, const char* src)
 SysInt Logger::dumpInstruction(char* buf, UInt32 code)
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
-  const char *name = &prettyNames[prettyIndex[code]];
+  const char *name = &instructionName[instructionIndex[code]];
   SysUInt len = (SysUInt)strlen(name);
 
   memcpy(buf, name, len);
@@ -152,18 +159,27 @@ SysInt Logger::dumpOperand(char* buf, const Operand* op)
 
     if (op->size() <= 16) 
     {
-      buf = mycpy(buf, prettySize[op->size()]);
+      buf = mycpy(buf, operandSize[op->size()]);
     }
+    
+    buf = mycpy(buf, &segmentName[mem.segmentPrefix() * 4]);
     
     *buf++ = '[';
 
+    // [base + index*scale + displacement]
     if (mem.hasBase())
     {
       buf += dumpRegister(buf, REG_GPN, mem.base());
     }
+    // [label + index*scale + displacement]
     else if (mem.label())
     {
       buf += dumpLabel(buf, mem.label());
+    }
+    // [absolute]
+    else
+    {
+      buf += sprintf(buf, "0x%p", mem._mem.target);
     }
 
     if (mem.hasIndex())
@@ -197,7 +213,7 @@ SysInt Logger::dumpOperand(char* buf, const Operand* op)
   {
     const Immediate& i = operand_cast<const Immediate&>(*op);
 
-    return sprintf(buf, "0x%llX", (Int64)i.value());
+    return sprintf(buf, "0x%p", (SysInt)i.value());
   }
   else if (op->isLabel())
   {

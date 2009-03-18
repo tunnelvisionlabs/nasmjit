@@ -32,30 +32,31 @@ namespace AsmJit {
 // [AsmJit::Mem - ptr[]]
 // ============================================================================
 
-Mem _ptr_build(Label* label, SysInt disp, UInt8 ptr_size)
+Mem _ptr_build(Label* label, SysInt disp, UInt8 ptrSize)
 {
-  return Mem(label, disp, ptr_size);
+  return Mem(label, disp, ptrSize);
 }
 
 #if defined(ASMJIT_X86)
-ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt8 ptr_size)
+ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, UInt8 ptrSize)
 {
   Mem m;
-  m._mem.size = ptr_size;
+  m._mem.size = ptrSize;
   m._mem.displacement = disp;
   m._mem.target = target;
+  m._mem.segmentPrefix = (SysInt)segmentPrefix;
   return m;
 }
 #endif // ASMJIT_X86
 
-Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptr_size)
+Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptrSize)
 {
-  return Mem(base, disp, ptr_size);
+  return Mem(base, disp, ptrSize);
 }
 
-Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptr_size)
+Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
 {
-  return Mem(base, index, shift, disp, ptr_size);
+  return Mem(base, index, shift, disp, ptrSize);
 }
 
 // ============================================================================
@@ -74,7 +75,8 @@ Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 
 _Serializer::_Serializer() :
   _logger(NULL),
-  _zone(65536 - sizeof(Zone::Chunk) - 32)
+  _zone(65536 - sizeof(Zone::Chunk) - 32),
+  _error(0)
 {
 }
 

@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include <AsmJit/AsmJitAssembler.h>
+#include <AsmJit/AsmJitLogger.h>
 #include <AsmJit/AsmJitVM.h>
 
 // This is type of function we will generate
@@ -52,8 +53,12 @@ int main(int argc, char* argv[])
   using namespace AsmJit;
 
   // ==========================================================================
-  // STEP 1: Create function.
+  // Create assembler.
   Assembler a;
+
+  // Log assembler output.
+  FileLogger logger(stderr);
+  a.setLogger(&logger);
 
   // We don't want to crash :)
   a.ret();
@@ -967,27 +972,18 @@ int main(int argc, char* argv[])
   // ==========================================================================
 
   // ==========================================================================
-  // STEP 2: Alloc execution-enabled memory
-  SysUInt vsize;
-  void *vmem = VM::alloc(a.codeSize(), &vsize, true);
-  if (!vmem) 
-  {
-    printf("AsmJit::VM::alloc() - Failed to allocate execution-enabled memory.\n");
-    return 1;
-  }
+  // Make function
+  MyFn fn = function_cast<MyFn>(a.make());
 
   // Dump instruction stream
-  dump(a.code(), a.codeSize());
+  dump((UInt8*)fn, a.codeSize());
 
-  // Relocate generated code to vmem.
-  a.relocCode(vmem);
+  // Call function.
+  // (This is convenience for IDEs to go directly to disassembly)
+  fn();
 
-  // Cast vmem to our function and call the code.
-  // (This is convenience for IDEs to go directly to instruction stream)
-  function_cast<MyFn>(vmem)();
-
-  // Memory should be freed, but use VM::free() to do that.
-  VM::free(vmem, vsize);
+  // If function is not needed again it should be freed.
+  MemoryManager::global()->free(fn);
   // ==========================================================================
 
   return 0;

@@ -442,11 +442,7 @@ struct ASMJIT_API Assembler : public Serializer
   //! Behavior of this function is to emit code prefix only if memory operand
   //! address uses code segment. Code segment is used through memory operand
   //! with attached @c AsmJit::Label.
-  inline void _emitCS(const BaseRegMem& rm)
-  {
-    ASMJIT_USE(rm);
-    // _emitByte(0x2E);
-  }
+  void _emitSegmentPrefix(const BaseRegMem& rm);
 
   //! @brief Emit MODR/M byte.
   //! @internal
@@ -601,17 +597,10 @@ struct ASMJIT_API Assembler : public Serializer
   void bindTo(Label* label, SysInt pos);
 
   // -------------------------------------------------------------------------
-  // [Error Handling]
+  // [Make]
   // -------------------------------------------------------------------------
 
-  //! @brief Return last assembler error code.
-  inline UInt32 error() const { return _error; }
-
-  //! @brief Set assembler error code.
-  inline void setError(UInt32 error) { _error = error; }
-
-  //! @brief Clear assembler error code.
-  inline void clearError() { _error = 0; }
+  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
 
   // -------------------------------------------------------------------------
   // [Links]
@@ -621,14 +610,11 @@ struct ASMJIT_API Assembler : public Serializer
   void _freeLinkData(LinkData* link);
 
   // -------------------------------------------------------------------------
-  // [Variables]
+  // [Members]
   // -------------------------------------------------------------------------
 
   //! @brief Binary code buffer.
   Buffer _buffer;
-
-  //! @brief Last assembler error.
-  UInt32 _error;
 
   //! @brief Linked list of unused links (@c LinkData* structures)
   LinkData* _unusedLinks;

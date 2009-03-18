@@ -1,3 +1,15 @@
+2009-03-18:
+- Added segment override prefixes
+- Added absolute addressing for x86 (32 bit mode)
+- Added memory operand addresses possibility to point to Labels
+- Added absolute jumps to Compiler - jmp(), call() instructions
+- Added MemoryManager
+- Added Lock (used by MemoryManager)
+- Updated logger
+- Removed jump_ptr
+- Added embedding data in code possibility + basic methods
+  (db, dw, dd, dq, dptr, ...)
+
 2009-03-09
 - Released 0.6
 

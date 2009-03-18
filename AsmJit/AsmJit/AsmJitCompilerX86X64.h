@@ -718,8 +718,9 @@ struct VariableRef
 
   inline VariableRef& operator=(Variable* v)
   {
+    Variable* tmp = v->ref();
     if (_v) _v->deref();
-    _v = v->ref();
+    _v = tmp;
   }
 
   //! @brief Return @c Variable instance.
@@ -767,9 +768,11 @@ struct VariableRef
   //! @brief Destroy variable (@c VariableRef can't be used anymore after destroy).
   inline void destroy()
   {
-    ASMJIT_ASSERT(_v);
-    _v->deref();
-    _v = NULL;
+    if (_v)
+    {
+      _v->deref();
+      _v = NULL;
+    }
   }
 
   //! @brief Get variable preffered register.
@@ -820,8 +823,17 @@ struct VariableRef
   inline void setData(void* data) { ASMJIT_ASSERT(_v); _v->setData(data); }
 
 protected:
+  void _assign(const VariableRef& other)
+  {
+    Variable* tmp = other._v ? other._v->ref() : NULL;
+    if (_v) _v->deref();
+    _v = tmp;
+  }
+
+  //! @brief @c Variable instance.
   Variable* _v;
 
+private:
   // disable copy
   ASMJIT_DISABLE_COPY(VariableRef);
 };
@@ -832,7 +844,10 @@ struct Int32Ref : public VariableRef
   // [Construction / Destruction]
 
   inline Int32Ref() : VariableRef() {}
+  inline Int32Ref(const Int32Ref& other) : VariableRef(other._v) {}
   inline Int32Ref(Variable* v) : VariableRef(v) {}
+
+  inline Int32Ref& operator=(const Int32Ref& other) { _assign(other); }
 
   // [Registers]
 
@@ -868,7 +883,10 @@ struct Int64Ref : public VariableRef
   // [Construction / Destruction]
 
   inline Int64Ref() : VariableRef() {}
+  inline Int64Ref(const Int64Ref& other) : VariableRef(other._v) {}
   inline Int64Ref(Variable* v) : VariableRef(v) {}
+
+  inline Int64Ref& operator=(const Int64Ref& other) { _assign(other); }
 
   // [Registers]
 
@@ -898,7 +916,10 @@ struct MMRef : public VariableRef
   // [Construction / Destruction]
 
   inline MMRef() : VariableRef() {}
+  inline MMRef(const MMRef& other) : VariableRef(other._v) {}
   inline MMRef(Variable* v) : VariableRef(v) {}
+
+  inline MMRef& operator=(const MMRef& other) { _assign(other); }
 
   // [Registers]
 
@@ -913,7 +934,10 @@ struct XMMRef : public VariableRef
   // [Construction / Destruction]
 
   inline XMMRef() : VariableRef() {}
+  inline XMMRef(const XMMRef& other) : VariableRef(other._v) {}
   inline XMMRef(Variable* v) : VariableRef(v) {}
+
+  inline XMMRef& operator=(const XMMRef& other) { _assign(other); }
 
   // [Registers]
 
@@ -2234,9 +2258,6 @@ struct ASMJIT_API Compiler : public Serializer
 
   void emit(Emittable* emittable, bool endblock = false);
 
-  //! @brief Method that will emit everything to @c Assembler instance @a a.
-  void build(Assembler& a);
-
   // -------------------------------------------------------------------------
   // [Memory Management]
   // -------------------------------------------------------------------------
@@ -2461,6 +2482,15 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   virtual void bind(Label* label);
+
+  // -------------------------------------------------------------------------
+  // [Make]
+  // -------------------------------------------------------------------------
+
+  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+
+  //! @brief Method that will emit everything to @c Assembler instance @a a.
+  void build(Assembler& a);
 
   // -------------------------------------------------------------------------
   // [Variables]
