@@ -24,7 +24,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitVM.h"
+#include "AsmJitVirtualMemory.h"
 
 // helpers
 namespace AsmJit {
@@ -66,7 +66,7 @@ static SysUInt roundUpToPowerOf2(SysUInt base)
 } // AsmJit namespace
 
 // ============================================================================
-// [AsmJit::VM::Windows]
+// [AsmJit::VirtualMemory::Windows]
 // ============================================================================
 
 #if defined(ASMJIT_WINDOWS)
@@ -75,9 +75,9 @@ static SysUInt roundUpToPowerOf2(SysUInt base)
 
 namespace AsmJit {
 
-struct VMLocal
+struct VirtualMemoryLocal
 {
-  VMLocal()
+  VirtualMemoryLocal()
   {
     SYSTEM_INFO info;
     GetSystemInfo(&info);
@@ -90,13 +90,13 @@ struct VMLocal
   SysUInt pageSize;
 };
 
-static VMLocal& vm()
+static VirtualMemoryLocal& vm()
 {
-  static VMLocal vm;
+  static VirtualMemoryLocal vm;
   return vm;
 };
 
-void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
+void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 {
   // VirtualAlloc rounds allocated size to page size automatically.
   SysUInt msize = roundUp(length, vm().pageSize);
@@ -112,17 +112,17 @@ void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
   return mbase;
 }
 
-void VM::free(void* addr, SysUInt /* length */)
+void VirtualMemory::free(void* addr, SysUInt /* length */)
 {
   VirtualFree(addr, 0, MEM_RELEASE);
 }
 
-SysUInt VM::alignment()
+SysUInt VirtualMemory::alignment()
 {
   return vm().alignment;
 }
 
-SysUInt VM::pageSize()
+SysUInt VirtualMemory::pageSize()
 {
   return vm().pageSize;
 }
@@ -132,7 +132,7 @@ SysUInt VM::pageSize()
 #endif // ASMJIT_WINDOWS
 
 // ============================================================================
-// [AsmJit::VM::Posix]
+// [AsmJit::VirtualMemory::Posix]
 // ============================================================================
 
 #if defined(ASMJIT_POSIX)
@@ -148,9 +148,9 @@ SysUInt VM::pageSize()
 
 namespace AsmJit {
 
-struct VMLocal
+struct VirtualMemoryLocal
 {
-  VMLocal()
+  VirtualMemoryLocal()
   {
     alignment = pageSize = getpagesize();
   }
@@ -159,13 +159,13 @@ struct VMLocal
   SysUInt pageSize;
 };
 
-static VMLocal& vm()
+static VirtualMemoryLocal& vm()
 {
-  static VMLocal vm;
+  static VirtualMemoryLocal vm;
   return vm;
 }
 
-void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
+void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 {
   SysUInt msize = roundUp(length, vm().pageSize);
   int protection = PROT_READ | PROT_WRITE | (canExecute ? PROT_EXEC : 0);
@@ -175,17 +175,17 @@ void* VM::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
   return mbase;
 }
 
-void VM::free(void* addr, SysUInt length)
+void VirtualMemory::free(void* addr, SysUInt length)
 {
   munmap(addr, length);
 }
 
-SysUInt VM::alignment()
+SysUInt VirtualMemory::alignment()
 {
   return vm().alignment;
 }
 
-SysUInt VM::pageSize()
+SysUInt VirtualMemory::pageSize()
 {
   return vm().pageSize;
 }

@@ -32,7 +32,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_MemMgr
+//! @addtogroup AsmJit_MemoryManagement
 //! @{
 
 // ============================================================================

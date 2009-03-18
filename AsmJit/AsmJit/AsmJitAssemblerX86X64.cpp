@@ -32,7 +32,7 @@
 #include "AsmJitAssembler.h"
 #include "AsmJitLogger.h"
 #include "AsmJitMemoryManager.h"
-#include "AsmJitVM.h"
+#include "AsmJitVirtualMemory.h"
 
 namespace AsmJit {
 

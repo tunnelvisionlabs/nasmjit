@@ -54,17 +54,17 @@
 //!
 //! <b>Code generation sections:</b>
 //!
-//! - @ref AsmJit_Serializer "Serializer" - intrinsics, operands and labels.
-//! - @ref AsmJit_Assembler "Assembler" - low level code generation.
-//! - @ref AsmJit_Compiler "Compiler" - high level code generation.
+//! - @ref AsmJit_Serializer "Serializer" - Intrinsics, operands and labels.
+//! - @ref AsmJit_Assembler "Assembler" - Low level code generation.
+//! - @ref AsmJit_Compiler "Compiler" - High level code generation.
 //! - @ref AsmJit_CpuInfo "Cpu Informations" - Get informations about host processor.
-//! - @ref AsmJit_Logging "Logging" - logging and error handling.
-//! - @ref AsmJit_VM "Virtual Memory" - virtual memory management.
+//! - @ref AsmJit_Logging "Logging" - Logging and error handling.
+//! - @ref AsmJit_MemoryManagement "Memory Management" - Virtual memory management.
 //!
 //! <b>Configuration, definitions and utilities:</b>
 //!
-//! - @ref AsmJit_Config "Configuration" - macros used to configure AsmJit.
-//! - @ref AsmJit_Defs "Definitions" - constants and macros.
+//! - @ref AsmJit_Config "Configuration" - Macros used to configure AsmJit.
+//! - @ref AsmJit_Defs "Definitions" - Constants and macros.
 //! - @ref AsmJit_Util "Utilities" - Utilities and helper classes.
 //!
 //! <b>AsmJit homepage:</b>
@@ -288,24 +288,35 @@
 //! Contains some helper classes that's used by AsmJit library.
 
 
-//! @defgroup AsmJit_VM Virtual Memory - Allocation and deallocation.
-//!
-//! Contains virtual memory management functions internally implemented
-//! by OS dependent way.
+//! @defgroup AsmJit_MemoryManagement Virtual memory management.
 //!
 //! Using @c AsmJit::Assembler or @c AsmJit::Compiler to generate machine 
 //! code is not final step. Each generated code needs to run in memory 
 //! that is not protected against code execution. To alloc this code it's
 //! needed to use operating system functions provided to enable execution
 //! code in specified memory block or to allocate memory that is not
-//! protected.
+//! protected. The solution is always to use @c See AsmJit::Assembler::make() 
+//! and @c AsmJit::Compiler::make() functions that can allocate memory and
+//! relocate code for you. But AsmJit also contains classes for manual memory
+//! management thats internally used by AsmJit but can be used by programmers
+//! too.
 //!
-//! Using @c AsmJit::VM::alloc() is crossplatform way how to allocate this
-//! kind of memory without worrying about operating system and it's API.
-//! Each memory block that is no longer needed should be freed by 
-//! @c AsmJit::VM::free() method.
+//! Memory management contains low level and high level classes related to
+//! allocating and freeing virtual memory. Low level class is 
+//! @c AsmJit::VirtualMemory that can allocate and free full pages of
+//! virtual memory provided by operating system. Higher level class is
+//! @c AsmJit::MemoryManager that is able to manage complete allocation and
+//! free mechanism. It internally uses larger chunks of memory to make
+//! allocation fast and effective.
 //!
-//! @sa AsmJit::VM
+//! Using @c AsmJit::VirtualMemory::alloc() is crossplatform way how to 
+//! allocate this kind of memory without worrying about operating system 
+//! and it's API. Each memory block that is no longer needed should be 
+//! freed by @c AsmJit::VirtualMemory::free() method. If you want better
+//! comfort and malloc()/free() interface, look at the 
+//! @c AsmJit::MemoryManager class.
+//!
+//! @sa @c AsmJit::VirtualMemory, @ AsmJit::MemoryManager.
 
 
 //! @addtogroup AsmJit_Config
@@ -357,7 +368,7 @@
 #include "AsmJitMemoryManager.h"
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
-#include "AsmJitVM.h"
+#include "AsmJitVirtualMemory.h"
 
 
 // [Guard]

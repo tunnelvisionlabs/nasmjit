@@ -14,7 +14,7 @@ Set(ASMJIT_BASE_SOURCES
   ${ASMJIT_DIR}/AsmJit/AsmJitMemoryManager.cpp
   ${ASMJIT_DIR}/AsmJit/AsmJitSerializerX86X64.cpp
   ${ASMJIT_DIR}/AsmJit/AsmJitUtil.cpp
-  ${ASMJIT_DIR}/AsmJit/AsmJitVM.cpp
+  ${ASMJIT_DIR}/AsmJit/AsmJitVirtualMemory.cpp
 )
 
 Set(ASMJIT_BASE_HEADERS
@@ -33,7 +33,7 @@ Set(ASMJIT_BASE_HEADERS
   ${ASMJIT_DIR}/AsmJit/AsmJitSerializer.h
   ${ASMJIT_DIR}/AsmJit/AsmJitSerializerX86X64.h
   ${ASMJIT_DIR}/AsmJit/AsmJitUtil.h
-  ${ASMJIT_DIR}/AsmJit/AsmJitVM.h
+  ${ASMJIT_DIR}/AsmJit/AsmJitVirtualMemory.h
 )
 
 Set(ASMJIT_COMPILER_SOURCES

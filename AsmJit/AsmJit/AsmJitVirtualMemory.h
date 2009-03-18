@@ -24,19 +24,19 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITVM_H
-#define _ASMJITVM_H
+#ifndef _ASMJITVIRTUALMEMORY_H
+#define _ASMJITVIRTUALMEMORY_H
 
 // [Dependencies]
 #include "AsmJitBuild.h"
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_VM
+//! @addtogroup AsmJit_MemoryManagement
 //! @{
 
 // ============================================================================
-// [AsmJit::VM]
+// [AsmJit::VirtualMemory]
 // ============================================================================
 
 //! @brief Class that helps with allocating memory for executing code
@@ -54,7 +54,7 @@ namespace AsmJit {
 //!
 //! Under posix operating systems is also useable mprotect() function, that
 //! can enable execution protection to malloc()'ed memory block.
-struct ASMJIT_API VM
+struct ASMJIT_API VirtualMemory
 {
   //! @brief Allocate virtual memory. 
   //!
@@ -78,4 +78,4 @@ struct ASMJIT_API VM
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJITVM_H
+#endif // _ASMJITVIRTUALMEMORY_H

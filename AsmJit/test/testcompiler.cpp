@@ -33,7 +33,6 @@
 #include <AsmJit/AsmJitCompiler.h>
 #include <AsmJit/AsmJitLogger.h>
 #include <AsmJit/AsmJitMemoryManager.h>
-#include <AsmJit/AsmJitVM.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)(int*, int*);

@@ -53,9 +53,15 @@ namespace AsmJit {
 //!
 //! @c AsmJit::Assembler contains internal buffer where all emitted 
 //! instructions are stored. Look at @c AsmJit::Buffer for buffer 
-//! implementation. You should always use @c relocCode() method to relocate
-//! emitted code into location allocated by AsmJit::VM::alloc(), but you can
-//! also use @c AsmJit::Assembler::take() method to take this code.
+//! implementation. To generate and allocate memory for function use
+//! @c AsmJit::Assembler::make() method that will allocate memory using 
+//! global memory manager ( see @c AsmJit::MemoryManager::global() ) and
+//! relocates code to provided address. If you want to create your function
+//! manually, you should look at @c AsmJit::VirtualMemory and use 
+//! @c AsmJit::Assembler::relocCode() method to relocate emitted code into 
+//! provided memory location. You can also take emitted buffer by @c take()
+//! method to do something else with it. If you take buffer, you must free it
+//! manually by @c ASMJIT_FREE() macro.
 //!
 //! <b>Code Generation</b>
 //!
@@ -136,15 +142,22 @@ namespace AsmJit {
 //!
 //! <b>Calling Code</b>
 //!
-//! While you are over from emitting instructions, you can get size of code
-//! by @c codeSize() or @c offset() methods. These methods returns you code
-//! size (or more precisely current code offset) in bytes. Use takeCode() to
-//! take internal buffer (all pointers in @c AsmJit::Assembler instance will
-//! be zeroed and current buffer returned) to use it. If you don't take it, 
-//! @c AsmKit::Assembler destructor will free it. To run code, don't use 
-//! @c malloc()'ed memory, but instead use @c AsmJit::VM::alloc() to get 
-//! memory for executing (specify @c canExecute to @c true). Code generated 
-//! by @c AsmJit::Assembler can be relocated to that buffer and called.
+//! While you are over from emitting instructions, you can make your function
+//! using @c AsmJit::Assembler::make() method. This method will allocate 
+//! virtual memory and relocates generated code to it. For memory allocation
+//! is used global memory manager by default and memory is freeable. If you
+//! want to do with code something else, there are methods that allows it.
+//!
+//! You can get size of generated code by @c codeSize() or @c offset() methods.
+//! These methods returns you code size (or more precisely current code offset)
+//! in bytes. Use takeCode() to take internal buffer (all pointers in 
+//! @c AsmJit::Assembler instance will be zeroed and current buffer returned)
+//! to use it. If you don't take it,  @c AsmKit::Assembler destructor will
+//! free it automatically. To alloc and run code manually don't use
+//! @c malloc()'ed memory, but instead use @c AsmJit::VirtualMemory::alloc()
+//! to get memory for executing (specify @c canExecute to @c true) or
+//! @c AsmJit::MemoryManager that provides more effective and comfortable way
+//! to allocate virtual memory.
 //!
 //! See next example how to allocate memory where you can execute code created
 //! by @c AsmJit::Assembler:
@@ -156,26 +169,49 @@ namespace AsmJit {
 //!
 //! // ... your code generation 
 //!
-//! // Alloc execute enabled memory and call generated function, vsize will
-//! // contain size of allocated virtual memory block.
-//! SysInt vsize;
-//! void *vmem = VM::alloc(a.codeSize(), &vsize, true /* canExecute */);
+//! // your function prototype
+//! typedef void (*MyFn)();
 //!
-//! // Relocate code to vmem.
-//! a.relocCode(vmem);
+//! // make your function
+//! MyFn fn = function_cast<MyFn>(a.make());
 //!
-//! // Cast vmem to void() function and call it. If you have different function
-//! // type, you must use it instead
-//! function_cast<void (*)()>(vmem)();
+//! // call your function
+//! fn();
 //!
-//! // Memory should be freed, but use VM::free() to do that.
-//! VM::free(vmem, vsize);
+//! // If you don't need your function again, free it.
+//! MemoryManager::global()->free(fn);
+//! @endcode
+//!
+//! There is also low level alternative how to allocate virtual memory and 
+//! relocate code to it:
+//!
+//! @code
+//! using namespace AsmJit;
+//!
+//! Assembler a;
+//!
+//! // ... your code generation 
+//!
+//! // your function prototype
+//! typedef void (*MyFn)();
+//!
+//! // alloc memory for your function
+//! MyFn fn = function_cast<MyFn>(
+//!   MemoryManager::global()->alloc(a.codeSize());
+//!
+//! // relocate code (will make the function)
+//! a.relocCode(fn);
+//!
+//! // call your function
+//! fn();
+//!
+//! // If you don't need your function again, free it.
+//! MemoryManager::global()->free(fn);
 //! @endcode
 //!
 //! @c note This was very primitive example how to call generated code.
 //! In real production code you will never alloc and free code for one run,
-//! you will alloc memory, where you copy generated code, and you will run
-//! it many times from that place.
+//! you will usually use generated code many times.
 //!
 //! <b>Using labels</b>
 //!

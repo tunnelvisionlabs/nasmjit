@@ -27,7 +27,7 @@
 #include "AsmJitBuild.h"
 #include "AsmJitLock.h"
 #include "AsmJitMemoryManager.h"
-#include "AsmJitVM.h"
+#include "AsmJitVirtualMemory.h"
 
 #include <string.h>
 
@@ -109,6 +109,22 @@ struct M_Node
 
 #define M_DIV(x, y) ((x) / (y))
 #define M_MOD(x, y) ((x) % (y))
+
+// ============================================================================
+// [M_Pernament]
+// ============================================================================
+
+//! @brief Pernament node.
+struct M_PernamentNode
+{
+  UInt8* mem;            // Base pointer (virtual memory address).
+  SysUInt size;          // Count of bytes allocated.
+  SysUInt used;          // Count of bytes used.
+  M_PernamentNode* prev; // Pointer to prev chunk or NULL
+
+  // Return available space.
+  inline SysUInt available() const { return size - used; }
+};
 
 // ============================================================================
 // [Bits Manipulation]
@@ -256,6 +272,9 @@ struct MemoryManagerPrivate
 
   // Memory nodes tree
   M_Node* _root;
+
+  // Pernament memory
+  M_PernamentNode* _pernament;
 };
 
 // ============================================================================
@@ -270,7 +289,8 @@ MemoryManagerPrivate::MemoryManagerPrivate() :
   _root(NULL),
   _first(NULL),
   _last(NULL),
-  _optimal(NULL)
+  _optimal(NULL),
+  _pernament(NULL)
 {
 }
 
@@ -288,7 +308,7 @@ MemoryManagerPrivate::~MemoryManagerPrivate()
 M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density)
 {
   SysUInt vsize;
-  UInt8* vmem = (UInt8*)VM::alloc(size, &vsize, true);
+  UInt8* vmem = (UInt8*)VirtualMemory::alloc(size, &vsize, true);
 
   // Out of memory
   if (vmem == NULL) return NULL;
@@ -297,12 +317,12 @@ M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density)
   SysUInt basize = (((blocks + 7) >> 3) + sizeof(SysUInt) - 1) & ~(SysUInt)(sizeof(SysUInt)-1);
   SysUInt memSize = sizeof(M_Node) + (basize * 2);
 
-  M_Node* node = (M_Node*)malloc(memSize);
+  M_Node* node = (M_Node*)ASMJIT_MALLOC(memSize);
 
   // Out of memory
   if (node == NULL)
   {
-    VM::free(vmem, vsize);
+    VirtualMemory::free(vmem, vsize);
     return NULL;
   }
 
@@ -323,7 +343,52 @@ M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density)
 
 void* MemoryManagerPrivate::allocPernament(SysUInt vsize)
 {
-  return NULL;
+  static const SysUInt pernamentAlignment = 32;
+  static const SysUInt pernamentNodeSize  = 32768;
+
+  SysUInt over = vsize % pernamentAlignment;
+  if (over) over = pernamentAlignment - over;
+  SysUInt alignedSize = vsize + over;
+
+  AutoLock locked(_lock);
+
+  M_PernamentNode* node = _pernament;
+
+  // Try to find space in allocated chunks
+  while (node && alignedSize > node->available()) node = node->prev;
+
+  // Or allocate new node
+  if (!node)
+  {
+    SysUInt nodeSize = pernamentNodeSize;
+    if (vsize > nodeSize) nodeSize = vsize;
+
+    node = (M_PernamentNode*)ASMJIT_MALLOC(sizeof(M_PernamentNode));
+    // Out of memory
+    if (node == NULL) return NULL;
+
+    node->mem = (UInt8*)VirtualMemory::alloc(nodeSize, &node->size, true);
+    // Out of memory
+    if (node->mem == NULL) 
+    {
+      ASMJIT_FREE(node);
+      return NULL;
+    }
+
+    node->used = 0;
+    node->prev = _pernament;
+    _pernament = node;
+  }
+
+  // Finally, copy function code to our space we reserved for.
+  UInt8* result = node->mem + node->used;
+
+  // Update Statistics
+  node->used += alignedSize;
+  _used += alignedSize;
+
+  // Code can be null to only reserve space for code.
+  return (void*)result;
 }
 
 void* MemoryManagerPrivate::allocFreeable(SysUInt vsize)
@@ -524,13 +589,13 @@ bool MemoryManagerPrivate::free(void* address)
   {
     _allocated -= node->size;
     nlRemoveNode(node);
-    VM::free(node->mem, node->size);
+    VirtualMemory::free(node->mem, node->size);
 
     if (_first == node) _first = node->next;
     if (_last == node) _last = node->prev;
     if (_optimal == node) _optimal = _first;
 
-    free(node);
+    ASMJIT_FREE(node);
   }
 
   return true;
