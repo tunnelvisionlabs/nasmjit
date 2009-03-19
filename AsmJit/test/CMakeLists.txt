@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-Project(test CXX)
+Project(test C CXX)
 
 Set(ASMJIT_DIR "..")
 
@@ -45,6 +45,10 @@ Set(ASMJIT_COMPILER_HEADERS
   ${ASMJIT_DIR}/AsmJit/AsmJitCompilerX86X64.h
 )
 
+Include(FindThreads)
+If(CMAKE_THREAD_LIBS_INIT)
+  Link_Libraries(${CMAKE_THREAD_LIBS_INIT})
+EndIf(CMAKE_THREAD_LIBS_INIT)
 
 Include_Directories(${ASMJIT_DIR})
 

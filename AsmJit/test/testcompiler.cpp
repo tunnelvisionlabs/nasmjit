@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
   printf("\nResults from JIT function: %d %d\n", x, y);
 
   // If function is not needed again it should be freed.
-  MemoryManager::global()->free(fn);
+  MemoryManager::global()->free((void*)fn);
   // ==========================================================================
 
   return 0;

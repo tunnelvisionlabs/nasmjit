@@ -1774,15 +1774,18 @@ private:
 //! objects is small (same as @c AsmJit::Compiler lifetime itself) it uses 
 //! very fast memory management model. This model allows to create object 
 //! instances in nearly zero time (compared to @c malloc() or @c new() 
-//! operators) so overhead by creating assembler stream by 
-//! @c AsmJit::Compiler is minimized.
+//! operators) so overhead by creating machine code by @c AsmJit::Compiler
+//! is minimized.
 //!
 //! <b>Code Generation</b>
 //! 
 //! First that is needed to know about compiler is that compiler never emits
-//! machine code. It's used as a middleware between @c Assembler and your code.
+//! machine code. It's used as a middleware between @c AsmJit::Assembler and
+//! your code. There is also convenience method @c make() that allows to
+//! generate machine code directly without creating @c AsmJit::Assembler
+//! instance.
 //!
-//! Example how to generate machine code:
+//! Example how to generate machine code using @c Assembler:
 //! 
 //! @code
 //! // Assembler instance is low level code generation class that emits 
@@ -1795,17 +1798,50 @@ private:
 //!
 //! // ... put your code using Compiler instance ...
 //!
-//! // Final step - generate code. AsmJit::Compiler::build() will serialize 
+//! // Final step - generate code. AsmJit::Compiler::serialize() will serialize
 //! // all instructions into Assembler and this ensures generating real machine
 //! // code.
-//! c.build(a);
+//! c.serialize(a);
+//!
+//! // Your function
+//! void* fn = a.make();
 //! @endcode
 //!
-//! You can see that there is @c AsmJit::Compiler::build() function that emits
-//! instruction into @c AsmJit::Assembler(). This layered architecture means 
-//! that each class is used for something different and there is no code
-//! duplication. You need @c AsmJit::Assembler in all cases, @c AsmJit::Compiler
-//! is only comfortable way how to create more portable code in shorter time.
+//! Example how to generate machine code using only @c Compiler (preffered):
+//!
+//! @code
+//! // Compiler instance is enough.
+//! Compiler c;
+//!
+//! // ... put your code using Compiler instance ...
+//!
+//! // Your function
+//! void* fn = c.make();
+//! @endcode
+//!
+//! You can see that there is @c AsmJit::Compiler::serialize() function that
+//! emits instruction into @c AsmJit::Assembler(). This layered architecture
+//! means that each class is used for something different and there is no code
+//! duplication. For convenience there is also @c AsmJit::Compiler::make()
+//! method that can create your function using @c AsmJit::Assembler internally.
+//!
+//! @c make() allocates memory using global memory manager instance, if your
+//! function lifetime is over, you should free that memory by
+//! @c AsmJit::MemoryManager::free() method.
+//!
+//! @code
+//! // Compiler instance is enough.
+//! Compiler c;
+//!
+//! // ... put your code using Compiler instance ...
+//!
+//! // Your function
+//! void* fn = c.make();
+//!
+//! // Free it if you don't want it anymore
+//! // (using global memory manager instance)
+//! MemoryManager::global()->free(fn);
+//! @endcode
 //!
 //! <b>Functions</b>
 //!
@@ -1820,9 +1856,6 @@ private:
 //! and next example how to use AsmJit API to create function and manage them:
 //!
 //! @code
-//! // Assembler instance
-//! Assembler a;
-//!
 //! // Compiler and function declaration - void f(int*);
 //! Compiler c;
 //! Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<int*>());
@@ -1845,9 +1878,9 @@ private:
 //! // Store result to a given pointer in first argument
 //! c.mov(dword_ptr(a1.c()), x1.c());
 //!
-//! // Finish
-//! c.endFunction();
-//! c.build(a);
+//! // Make function
+//! typedef void (*MyFn)(int*);
+//! MyFn fn = function_cast<MyFn>(c.make());
 //! @endcode
 //!
 //! There was presented small code snippet with variables, but it's needed to 
@@ -2076,14 +2109,14 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Return list of emmitables (@c Emittable).
   //!
   //! This list contains all emittables that will be emitted throught 
-  //! @c build() method into @c AsmJit::Assembler. Emittables are stored
+  //! @c serialize() method into @c AsmJit::Assembler. Emittables are stored
   //! in FIFO order, so first stored emittable is emitted first. See
   //! @c AsmJit::Emittable inheritance diagram for available emittables.
   //!
   //! You will probably never use list of emittables yourself, but it's
   //! public to allow manipulations that is not available in 
-  //! @c AsmJit::Assembler class. It's also used in @c build() method to emit
-  //! them all in correct order.
+  //! @c AsmJit::Assembler class. It's also used in @c serialize() method to
+  //! emit them all in correct order.
   inline EmittableList& buffer() { return _buffer; }
   //! @overload.
   inline const EmittableList& buffer() const { return _buffer; }
@@ -2108,7 +2141,7 @@ struct ASMJIT_API Compiler : public Serializer
   //! log data characteristics or statistics.
   //!
   //! @note Emitting comment is not directly sent to logger, but instead it's
-  //! stored in @c AsmJit::Compiler and emitted when @c build() method is
+  //! stored in @c AsmJit::Compiler and emitted when @c serialize() method is
   //! called with all instructions together in correct order.
   void comment(const char* fmt, ...);
 
@@ -2490,7 +2523,7 @@ struct ASMJIT_API Compiler : public Serializer
   virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
 
   //! @brief Method that will emit everything to @c Assembler instance @a a.
-  void build(Assembler& a);
+  void serialize(Assembler& a);
 
   // -------------------------------------------------------------------------
   // [Variables]

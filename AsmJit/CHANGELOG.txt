@@ -1,3 +1,9 @@
+2009-03-19:
+- Fixed problems with new memory allocator
+- Enchanced mov(reg, imm) instruction in 64 bit mode to use only 4 byte immediate
+  if it's possible
+- Changed Compiler::build() to Compiler::serialize()
+
 2009-03-18:
 - Added segment override prefixes
 - Added absolute addressing for x86 (32 bit mode)

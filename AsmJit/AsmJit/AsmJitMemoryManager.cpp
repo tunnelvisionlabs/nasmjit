@@ -29,6 +29,7 @@
 #include "AsmJitMemoryManager.h"
 #include "AsmJitVirtualMemory.h"
 
+#include <stdio.h>
 #include <string.h>
 
 // This file contains implementation of virtual memory management for AsmJit
@@ -482,10 +483,19 @@ void* MemoryManagerPrivate::allocFreeable(SysUInt vsize)
 
     // link with others
     node->prev = _last;
-    if (_first   == NULL) _first = node;
-    if (_optimal == NULL) _optimal = node;
-    if (_last    != NULL) _last->next = node;
-    _last = node;
+
+    if (_first == NULL)
+    {
+      _first = node;
+      _last = node;
+      _optimal = node;
+    }
+    else
+    {
+      node->prev = _last;
+      _last->next = node;
+      _last = node;
+    }
 
     // Update binary tree
     nlInsertNode(node);
@@ -591,9 +601,12 @@ bool MemoryManagerPrivate::free(void* address)
     nlRemoveNode(node);
     VirtualMemory::free(node->mem, node->size);
 
-    if (_first == node) _first = node->next;
-    if (_last == node) _last = node->prev;
-    if (_optimal == node) _optimal = _first;
+    M_Node* next = node->next;
+    M_Node* prev = node->prev;
+
+    if (prev) { prev->next = next; } else { _first = next; }
+    if (next) { next->prev = prev; } else { _last  = prev; }
+    if (_optimal == node) { _optimal = prev ? prev : next; }
 
     ASMJIT_FREE(node);
   }
@@ -679,25 +692,60 @@ inline void MemoryManagerPrivate::nlInsertNode(M_Node* n)
 
 M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n)
 {
-	if (h == NULL) return n;
+  if (h == NULL) return n;
 
-	if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight)) nlFlipColor(h);
+  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight)) nlFlipColor(h);
 
-	if (h->mem > n->mem)
+  if (n->mem < h->mem)
     h->nlLeft = nlInsertNode_(h->nlLeft, n);
-	else 
+  else
     h->nlRight = nlInsertNode_(h->nlRight, n);
 
-	if (nlIsRed(h->nlRight) && !nlIsRed(h->nlLeft)) h = nlRotateLeft(h);
-	if (nlIsRed(h->nlLeft) && nlIsRed(h->nlLeft->nlLeft)) h = nlRotateRight(h);
+  if (nlIsRed(h->nlRight) && !nlIsRed(h->nlLeft)) h = nlRotateLeft(h);
+  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlLeft->nlLeft)) h = nlRotateRight(h);
 
-	return h;
+  return h;
 }
 
 void MemoryManagerPrivate::nlRemoveNode(M_Node* n)
 {
   _root = nlRemoveNode_(_root, n);
   if (_root) _root->nlColor = M_Node::NODE_BLACK;
+
+  ASMJIT_ASSERT(nlFindPtr(n->mem) == NULL);
+}
+
+static M_Node* findParent(M_Node* root, M_Node* n)
+{
+  M_Node* parent = NULL;
+  M_Node* cur = root;
+  UInt8* mem = n->mem;
+  UInt8* curMem;
+  UInt8* curEnd;
+
+  while (cur)
+  {
+    curMem = cur->mem;
+    if (mem < curMem)
+    {
+      parent = cur;
+      cur = cur->nlLeft;
+      continue;
+    }
+    else
+    {
+      curEnd = curMem + cur->size;
+      if (mem >= curEnd)
+      {
+        parent = cur;
+        cur = cur->nlRight;
+        continue;
+      }
+      return parent;
+    }
+  }
+
+  return NULL;
 }
 
 M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n)
@@ -718,16 +766,15 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n)
       h = nlMoveRedRight(h);
     if (h == n)
     {
-      //h.val = get(h->nlRight, min(h->nlRight).key);
-      //h.key = min(h->nlRight).key;
-      //h->nlRight = nlRemoveMin(h->nlRight);
-
       // Get minimum node
-      h = h->nlRight;
+      h = n->nlRight;
       while (h->nlLeft) h = h->nlLeft;
 
-      h->nlRight = nlRemoveMin(n->nlRight);
-      h->nlLeft = n->nlLeft;
+      M_Node* _l = n->nlLeft;
+      M_Node* _r = nlRemoveMin(n->nlRight);
+
+      h->nlLeft = _l;
+      h->nlRight = _r;
       h->nlColor = n->nlColor;
     }
     else

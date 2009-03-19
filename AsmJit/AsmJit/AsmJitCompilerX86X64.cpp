@@ -65,9 +65,8 @@ static void memset32(UInt32* p, UInt32 c, SysUInt len)
 
 static bool isIntegerArgument(UInt32 arg)
 {
-  return 
-    arg == VARIABLE_TYPE_INT32 ||
-    arg == VARIABLE_TYPE_INT64 ;
+  return arg == VARIABLE_TYPE_INT32 ||
+         arg == VARIABLE_TYPE_INT64 ;
 }
 
 static bool isFloatArgument(UInt32 arg)
@@ -1805,7 +1804,7 @@ void Compiler::bind(Label* label)
 void* Compiler::make(UInt32 allocType)
 {
   Assembler a;
-  build(a);
+  serialize(a);
 
   if (a.error())
   {
@@ -1818,7 +1817,7 @@ void* Compiler::make(UInt32 allocType)
   }
 }
 
-// logger switcher used in Compiler::build().
+// logger switcher used in Compiler::serialize().
 struct LoggerSwitcher
 {
   LoggerSwitcher(Assembler* a, Compiler* c) :
@@ -1839,7 +1838,7 @@ struct LoggerSwitcher
   Logger* logger;
 };
 
-void Compiler::build(Assembler& a)
+void Compiler::serialize(Assembler& a)
 {
   LoggerSwitcher loggerSwitcher(&a, this);
 

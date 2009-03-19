@@ -1691,16 +1691,37 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         // Reg <- Imm
         case (OP_REG << 4) | OP_IMM:
         {
-          Int32 immSize = operand_cast<const Register&>(dst).size();
-          if (immSize > 4) immSize = 4;
+          const Register& dst = operand_cast<const Register&>(*o1);
+          const Immediate& src = operand_cast<const Immediate&>(*o2);
 
-          _emitX86Inl((dst.size() == 1 ? 0xB0 : 0xB8), 
-            dst.isRegType(REG_GPW), 
-            dst.isRegType(REG_GPQ), 
-            operand_cast<const Register&>(dst).code());
-          _emitImmediate(
-            operand_cast<const Immediate&>(src), 
-            (UInt32)immSize);
+          // in 64 bit mode immediate can be 8 byte long!
+          Int32 immSize = dst.size();
+
+#if defined(ASMJIT_X64)
+          // Optimize instruction size by using 32 bit immediate if value can
+          // fit to it
+          if (immSize == 8 && isInt32(src.value()) && src.relocMode() == RELOC_NONE)
+          {
+            _emitX86RM(0xC7,
+              dst.isRegType(REG_GPW),
+              dst.isRegType(REG_GPQ),
+              0,
+              dst,
+              0);
+            immSize = 4;
+          }
+          else
+          {
+#endif // ASMJIT_X64
+            _emitX86Inl((dst.size() == 1 ? 0xB0 : 0xB8),
+              dst.isRegType(REG_GPW),
+              dst.isRegType(REG_GPQ),
+              dst.code());
+#if defined(ASMJIT_X64)
+          }
+#endif // ASMJIT_X64
+
+          _emitImmediate(src, (UInt32)immSize);
           return;
         }
 

@@ -32,7 +32,7 @@
 
 #include <AsmJit/AsmJitAssembler.h>
 #include <AsmJit/AsmJitLogger.h>
-#include <AsmJit/AsmJitVM.h>
+#include <AsmJit/AsmJitMemoryManager.h>
 
 // This is type of function we will generate
 typedef int (*MyFn)();
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
   printf("Result from jit function: %d\n", result);
 
   // If function is not needed again it should be freed.
-  MemoryManager::global()->free(fn);
+  MemoryManager::global()->free((void*)fn);
   // ==========================================================================
 
   return 0;

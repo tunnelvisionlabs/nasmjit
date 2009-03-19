@@ -32,7 +32,7 @@
 #include <AsmJit/AsmJitAssembler.h>
 #include <AsmJit/AsmJitCompiler.h>
 #include <AsmJit/AsmJitLogger.h>
-#include <AsmJit/AsmJitVM.h>
+#include <AsmJit/AsmJitMemoryManager.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)(int*);
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
   c.jmp(L);
 
   // Now we use new block
-  c.comment("Begin of block");
+  c.comment("Begin of block\n");
   {
     // StateRef is convenience class that will restore state in destructor.
     StateRef state(f.saveState());
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     // everything will be restored. So it's possible for example to jump
     // to next section from previous without corrupting variables state.
   }
-  c.comment("End of block");
+  c.comment("End of block\n");
 
   c.bind(L);
 
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
   printf("Result from JIT function: %d\n", x);
 
   // If function is not needed again it should be freed.
-  MemoryManager::global()->free(fn);
+  MemoryManager::global()->free((void*)fn);
   // ==========================================================================
 
   return 0;
