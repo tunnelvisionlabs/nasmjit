@@ -65,6 +65,9 @@ int main(int argc, char* argv[])
   //       return 30;
   //   }
   // }
+  //
+  // Note: To get similar performance, C compiler must that function compile
+  // using jump table (the way we used in assembler below)
 
   Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<int>());
 
