@@ -208,37 +208,38 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
     }
   }
   // [index * scale + displacemnt]
-  else if (!mem.hasBase() && mem.hasIndex())
-  {
-    // ASMJIT_ASSERT(indexReg != RID_ESP);
-
-    _emitMod(0, opReg, 4);
-    _emitSib(shift, indexReg, 5);
-    _emitInt32((Int32)disp);
-  }
   // [displacement]
-  else // if (!mem.hasBase() && !mem.hasIndex())
+  else
   {
-    Label* label = mem._mem.label;
+    if (mem.hasIndex())
+    {
+      // ASMJIT_ASSERT(indexReg != RID_ESP);
+      _emitMod(0, opReg, 4);
+      _emitSib(shift, indexReg, 5);
+    }
+    else
+    {
+      _emitMod(0, opReg, 5);
+    }
 
-    _emitMod(0, opReg, 5);
+    Label* label = mem._mem.label;
 
 #if defined(ASMJIT_X86)
     // X86 uses absolute addressing model
     if ((SysUInt)label >= _SEGMENT_END)
     {
       UInt32 relocId = _relocData.length();
-      RelocData reloc;
+      RelocData rd;
 
       // Relative addressing will be relocated to absolute address.
-      reloc.type = RelocData::RELATIVE_TO_ABSOLUTE;
-      reloc.size = 4;
-      reloc.offset = offset();
-      reloc.destination = 0;
+      rd.type = RelocData::RELATIVE_TO_ABSOLUTE;
+      rd.size = 4;
+      rd.offset = offset();
+      rd.destination = 0;
 
       if (label->isBound())
       {
-        reloc.destination = label->position() + disp;
+        rd.destination = label->position() + disp;
         // Dummy DWORD
         _emitInt32(0);
       }
@@ -247,7 +248,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
         _emitDisplacement(label, disp - 4 - immSize)->relocId = relocId;
       }
 
-      _relocData.append(reloc);
+      _relocData.append(rd);
     }
     else
     {
@@ -2596,7 +2597,9 @@ illegalInstruction:
 
 void Assembler::_embed(const void* data, SysUInt size)
 {
-  if (_logger)
+  if (!canEmit()) return;
+
+  if (_logger && _logger->enabled())
   {
     SysUInt i, j;
     SysUInt max;
@@ -2622,6 +2625,49 @@ void Assembler::_embed(const void* data, SysUInt size)
   }
 
   _buffer.emitData(data, size);
+}
+
+void Assembler::_embedLabel(Label* label)
+{
+  if (!canEmit()) return;
+
+  if (_logger && _logger->enabled())
+  {
+    char buf[1024];
+    char* p = buf;
+    memcpy(p, ".data ", 6);
+    p = Logger::dumpLabel(p + 6, label);
+    *p++ = '\n';
+    *p = '\0';
+    _logger->log(buf);
+  }
+
+  RelocData rd;
+  rd.type = RelocData::RELATIVE_TO_ABSOLUTE;
+  rd.size = sizeof(void*);
+  rd.offset = offset();
+  rd.destination = 0;
+
+  if (label->isBound())
+  {
+    rd.destination = label->position();
+  }
+  else
+  {
+    // Chain with label
+    LinkData* link = _newLinkData();
+    link->prev = (LinkData*)label->_lbl.link;
+    link->offset = offset();
+    link->displacement = 0;
+
+    label->_lbl.link = link;
+    label->_lbl.state = LABEL_STATE_LINKED;
+  }
+
+  _relocData.append(rd);
+
+  // Emit dummy sysint (4 or 8 bytes that depends to address size).
+  _emitSysInt(0);
 }
 
 // ============================================================================

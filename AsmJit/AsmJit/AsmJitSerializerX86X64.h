@@ -728,6 +728,7 @@ static inline Mem dqword_ptr(Label* label, SysInt disp = 0)
 //! @note This constructor is provided only for convenience for mmx programming.
 static inline Mem mmword_ptr(Label* label, SysInt disp = 0) 
 { return _ptr_build(label, disp, SIZE_QWORD); }
+
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
@@ -737,6 +738,52 @@ static inline Mem xmmword_ptr(Label* label, SysInt disp = 0)
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
 static inline Mem sysint_ptr(Label* label, SysInt disp = 0) 
 { return _ptr_build(label, disp, sizeof(SysInt)); }
+
+ASMJIT_API Mem _ptr_build(Label* label, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize);
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, 0); }
+
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_BYTE); }
+
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_WORD); }
+
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_DWORD); }
+
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_QWORD); }
+
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_TWORD); }
+
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_DQWORD); }
+
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_QWORD); }
+
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+{ return _ptr_build(label, index, shift, disp, sizeof(SysInt)); }
 
 // --- 32 bit absolute addressing ---
 #if defined(ASMJIT_X86)
@@ -776,6 +823,7 @@ static inline Mem dqword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPr
 //! @note This constructor is provided only for convenience for mmx programming.
 static inline Mem mmword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_QWORD); }
+
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
@@ -828,6 +876,7 @@ static inline Mem dqword_ptr(const Register& base, SysInt disp = 0)
 //! @note This constructor is provided only for convenience for mmx programming.
 static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) 
 { return _ptr_build(base, disp, SIZE_QWORD); }
+
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
@@ -1275,7 +1324,8 @@ protected:
   void __emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   //! @brief Private method for emitting jcc.
-  void _emitJ(UInt32 code, Label* label, UInt32 hint);
+  //! @internal
+  void _emitJcc(UInt32 code, Label* label, UInt32 hint);
 
   //! @brief Map used for jcc instructions.
   static const UInt32 _jcctable[16];
@@ -1899,69 +1949,69 @@ struct Serializer : public _Serializer
   inline void j(CONDITION cc, Label* label, UInt32 hint = HINT_NONE)
   {
     ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
-    _emitJ(_jcctable[cc], label, hint);
+    _emitJcc(_jcctable[cc], label, hint);
   }
 
   //! @brief Jump to label @a label if condition is met.
-  inline void ja  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JA  , label, hint); }
+  inline void ja  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JA  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jae (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JAE , label, hint); }
+  inline void jae (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JAE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jb  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JB  , label, hint); }
+  inline void jb  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JB  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jbe (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JBE , label, hint); }
+  inline void jbe (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JBE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jc  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JC  , label, hint); }
+  inline void jc  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JC  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void je  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JE  , label, hint); }
+  inline void je  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JE  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jg  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JG  , label, hint); }
+  inline void jg  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JG  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jge (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JGE , label, hint); }
+  inline void jge (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JGE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jl  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JL  , label, hint); }
+  inline void jl  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JL  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jle (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JLE , label, hint); }
+  inline void jle (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JLE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jna (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNA , label, hint); }
+  inline void jna (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNA , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnae(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNAE, label, hint); }
+  inline void jnae(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNAE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnb (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNB , label, hint); }
+  inline void jnb (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNB , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnbe(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNBE, label, hint); }
+  inline void jnbe(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNBE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnc (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNC , label, hint); }
+  inline void jnc (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNC , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jne (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNE , label, hint); }
+  inline void jne (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jng (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNG , label, hint); }
+  inline void jng (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNG , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnge(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNGE, label, hint); }
+  inline void jnge(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNGE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnl (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNL , label, hint); }
+  inline void jnl (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNL , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnle(Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNLE, label, hint); }
+  inline void jnle(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNLE, label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jno (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNO , label, hint); }
+  inline void jno (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNO , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnp (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNP , label, hint); }
+  inline void jnp (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNP , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jns (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNS , label, hint); }
+  inline void jns (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNS , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jnz (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JNZ , label, hint); }
+  inline void jnz (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNZ , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jo  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JO  , label, hint); }
+  inline void jo  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JO  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jp  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JP  , label, hint); }
+  inline void jp  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JP  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jpe (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JPE , label, hint); }
+  inline void jpe (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JPE , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jpo (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JPO , label, hint); }
+  inline void jpo (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JPO , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void js  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JS  , label, hint); }
+  inline void js  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JS  , label, hint); }
   //! @brief Jump to label @a label if condition is met.
-  inline void jz  (Label* label, UInt32 hint = HINT_NONE) { _emitJ(INST_JZ  , label, hint); }
+  inline void jz  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JZ  , label, hint); }
 
   //! @brief Jump.
   //!

@@ -198,7 +198,7 @@ static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len)
   // offset
   buf += i;
 
-  if (c > len) 
+  if (c > len)
   {
     *buf &= ~((((SysUInt)-1) >> (BITS_PER_ENTITY - len)) << j);
     return;

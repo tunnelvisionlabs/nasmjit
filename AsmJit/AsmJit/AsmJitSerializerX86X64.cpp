@@ -37,6 +37,13 @@ Mem _ptr_build(Label* label, SysInt disp, UInt8 ptrSize)
   return Mem(label, disp, ptrSize);
 }
 
+Mem _ptr_build(Label* label, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
+{
+  Mem m(no_reg, index, shift, disp, ptrSize);
+  m._mem.label = label;
+  return m;
+}
+
 #if defined(ASMJIT_X86)
 ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, UInt8 ptrSize)
 {
@@ -134,7 +141,7 @@ void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, c
 }
 
 //! @brief Private method for emitting jcc.
-void _Serializer::_emitJ(UInt32 code, Label* label, UInt32 hint)
+void _Serializer::_emitJcc(UInt32 code, Label* label, UInt32 hint)
 {
   if (!hint)
   {

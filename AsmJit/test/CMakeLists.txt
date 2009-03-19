@@ -64,6 +64,10 @@ Add_Executable(testcompiler       testcompiler.cpp
   ${ASMJIT_BASE_SOURCES}          ${ASMJIT_BASE_HEADERS} 
   ${ASMJIT_COMPILER_SOURCES}      ${ASMJIT_COMPILER_HEADERS})
 
+Add_Executable(testjumptable      testjumptable.cpp
+  ${ASMJIT_BASE_SOURCES}          ${ASMJIT_BASE_HEADERS} 
+  ${ASMJIT_COMPILER_SOURCES}      ${ASMJIT_COMPILER_HEADERS})
+
 Add_Executable(testvariables      testvariables.cpp
   ${ASMJIT_BASE_SOURCES}          ${ASMJIT_BASE_HEADERS}
   ${ASMJIT_COMPILER_SOURCES}      ${ASMJIT_COMPILER_HEADERS})

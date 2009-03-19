@@ -85,7 +85,9 @@ enum EMITTABLE_TYPE
   //! @brief Emittable is function epilog.
   EMITTABLE_EPILOGUE,
   //! @brief Emittable is target (bound label).
-  EMITTABLE_TARGET
+  EMITTABLE_TARGET,
+  //! @brief Emittable is jump table.
+  EMITTABLE_JUMP_TABLE
 };
 
 //! @brief Calling convention type.
@@ -1058,7 +1060,7 @@ struct ASMJIT_API Emittable
   Emittable(Compiler* c, UInt32 type);
   virtual ~Emittable();
 
-  // [Methods]
+  // [Emit]
 
   //! @brief Prepare for emitting (optional).
   virtual void prepare();
@@ -1066,6 +1068,8 @@ struct ASMJIT_API Emittable
   virtual void emit(Assembler& a) = 0;
   //! @brief Post emit (optional).
   virtual void postEmit(Assembler& a);
+
+  // [Methods]
 
   //! @brief Return compiler instance where this emittable is connected to.
   inline Compiler* compiler() const { return _compiler; }
@@ -1075,6 +1079,8 @@ struct ASMJIT_API Emittable
   inline Emittable* next() const { return _next; }
   //! @brief Return emittable type, see @c EMITTABLE_TYPE.
   inline UInt32 type() const { return _type; }
+
+  // [Members]
 
 protected:
   //! @brief Compiler where this emittable is connected to.
@@ -1105,11 +1111,15 @@ struct ASMJIT_API Comment : public Emittable
   Comment(Compiler* c, const char* str);
   virtual ~Comment();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
 
+  // [Methods]
+
   inline const char* str() const { return _str; }
+
+  // [Members]
 
 private:
   const char* _str;
@@ -1129,13 +1139,17 @@ struct ASMJIT_API EmbeddedData : public Emittable
   EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size);
   virtual ~EmbeddedData();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
+
+  // [Methods]
 
   SysUInt size() const { return _size; }
   SysUInt capacity() const { return _size; }
   UInt8* data() const { return (UInt8*)_data; }
+
+  // [Members]
 
 private:
   SysUInt _size;
@@ -1181,9 +1195,11 @@ struct ASMJIT_API Instruction : public Emittable
   Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
   virtual ~Instruction();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
+
+  // [Methods]
 
   //! @brief Return instruction code, see @c INST_CODE.
   inline UInt32 code() const { return _code; }
@@ -1205,6 +1221,8 @@ struct ASMJIT_API Instruction : public Emittable
   //! Please do not modify instruction code if you are not know what you are 
   //! doing. Incorrect instruction code or operands can assert() in runtime.
   inline void setCode(UInt32 code) { _code = code; }
+
+  // [Members]
 
 private:
   //! @brief Instruction code, see @c INST_CODE.
@@ -1365,7 +1383,9 @@ struct BuildFunction10
 //! @sa @c State, @c StateRef, @c Variable, @c VariableRef.
 struct ASMJIT_API Function : public Emittable
 {
+  // --------------------------------------------------------------------------
   // [Construction / Destruction]
+  // --------------------------------------------------------------------------
 
   //! @brief Create new @c Function instance.
   //!
@@ -1375,7 +1395,9 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Destroy @c Function instance.
   virtual ~Function();
 
-  // [Methods]
+  // --------------------------------------------------------------------------
+  // [Emit]
+  // --------------------------------------------------------------------------
 
   virtual void prepare();
   virtual void emit(Assembler& a);
@@ -1700,11 +1722,15 @@ struct ASMJIT_API Prolog : public Emittable
   Prolog(Compiler* c, Function* f);
   virtual ~Prolog();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
 
+  // [Methods]
+
   inline Function* function() const { return _function; }
+
+  // [Members]
 
 private:
   Function* _function;
@@ -1726,11 +1752,15 @@ struct ASMJIT_API Epilog : public Emittable
   Epilog(Compiler* c, Function* f);
   virtual ~Epilog();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
 
+  // [Methods]
+
   inline Function* function() const { return _function; }
+
+  // [Members]
 
 private:
   Function* _function;
@@ -1751,18 +1781,60 @@ struct ASMJIT_API Target : public Emittable
 {
   // [Construction / Destruction]
 
-  Target(Compiler* c, Label* l);
+  Target(Compiler* c, Label* target);
   virtual ~Target();
 
-  // [Methods]
+  // [Emit]
 
   virtual void emit(Assembler& a);
 
+  // [Methods]
+
   //! @brief Return label bound to this target.
-  inline Label* label() const { return _label; }
+  inline Label* target() const { return _target; }
+
+  // [Members]
 
 private:
-  Label* _label;
+  Label* _target;
+};
+
+// ============================================================================
+// [AsmJit::JumpTable]
+// ============================================================================
+
+//! @brief Jump table.
+struct ASMJIT_API JumpTable : public Emittable
+{
+  // [Construction / Destruction]
+
+  JumpTable(Compiler* c);
+  virtual ~JumpTable();
+
+  // [Emit]
+
+  virtual void emit(Assembler& a);
+  virtual void postEmit(Assembler& a);
+
+  // [Methods]
+
+  //! @brief Return target label where are informations about jump adresses.
+  inline Label* target() const { return _target; }
+
+  //! @brief Return labels list.
+  PodVector<Label*>& labels() { return _labels; }
+
+  //! @brief Return labels list.
+  const PodVector<Label*>& labels() const { return _labels; }
+
+  //! @brief Add new @c Label.
+  Label* addLabel();
+
+  // [Members]
+
+private:
+  Label* _target;
+  PodVector<Label*> _labels;
 };
 
 // ============================================================================
@@ -2291,6 +2363,12 @@ struct ASMJIT_API Compiler : public Serializer
   //! @c Compiler each label must be created by @c AsmJit::Compiler::newLabel()
   //! method.
   Label* newLabel();
+
+  // -------------------------------------------------------------------------
+  // [Jump Table]
+  // -------------------------------------------------------------------------
+
+  JumpTable* newJumpTable();
 
   // -------------------------------------------------------------------------
   // [Memory Management]

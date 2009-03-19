@@ -458,6 +458,12 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief Emit Int32 (4 bytes) to internal buffer.
   inline void _emitInt32(Int32 x) { _buffer.emitDWord((UInt32)x); }
 
+  //! @brief Emit system signed integer (4 or 8 bytes) to internal buffer.
+  inline void _emitSysInt(SysInt x) { _buffer.emitSysInt(x); }
+
+  //! @brief Emit system unsigned integer (4 or 8 bytes) to internal buffer.
+  inline void _emitSysUInt(SysUInt x) { _buffer.emitSysUInt(x); }
+
   //! @brief Emit immediate value of specified @a size.
   void _emitImmediate(const Immediate& imm, UInt32 size);
 
@@ -616,6 +622,7 @@ struct ASMJIT_API Assembler : public Serializer
   // -------------------------------------------------------------------------
 
   virtual void _embed(const void* dataPtr, SysUInt dataLen);
+  virtual void _embedLabel(Label* label);
 
   // -------------------------------------------------------------------------
   // [Align]

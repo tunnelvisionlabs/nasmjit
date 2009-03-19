@@ -1470,9 +1470,9 @@ void Epilog::emit(Assembler& a)
 // [AsmJit::Target]
 // ============================================================================
 
-Target::Target(Compiler* c, Label* l) : 
+Target::Target(Compiler* c, Label* target) : 
   Emittable(c, EMITTABLE_TARGET), 
-  _label(l)
+  _target(target)
 {
 }
 
@@ -1482,7 +1482,43 @@ Target::~Target()
 
 void Target::emit(Assembler& a)
 {
-  a.bind(_label);
+  a.bind(_target);
+}
+
+// ============================================================================
+// [AsmJit::JumpTable]
+// ============================================================================
+
+JumpTable::JumpTable(Compiler* c) :
+  Emittable(c, EMITTABLE_TARGET),
+  _target(c->newLabel())
+{
+}
+
+JumpTable::~JumpTable()
+{
+}
+
+void JumpTable::emit(Assembler& a)
+{
+}
+
+void JumpTable::postEmit(Assembler& a)
+{
+  a.bind(_target);
+
+  SysUInt i, len = _labels.length();
+  for (i = 0; i < len; i++)
+  {
+    a._embedLabel(_labels[i]);
+  }
+}
+
+Label* JumpTable::addLabel()
+{
+  Label* target = compiler()->newLabel();
+  _labels.append(target);
+  return target;
 }
 
 // ============================================================================
@@ -1639,6 +1675,17 @@ Label* Compiler::newLabel()
   Label* label = new(_zoneAlloc(sizeof(Label))) Label((UInt16)(_labelIdCounter++));
   _registerOperand(label);
   return label;
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Jump Table]
+// ============================================================================
+
+JumpTable* Compiler::newJumpTable()
+{
+  JumpTable* e = newObject<JumpTable>();
+  addEmittable(e);
+  return e;
 }
 
 // ============================================================================

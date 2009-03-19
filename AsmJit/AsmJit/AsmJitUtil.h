@@ -414,6 +414,20 @@ struct ASMJIT_API Buffer
     _cur += 8;
   }
 
+  //! @brief Emit system signed integer (4 or 8 bytes).
+  inline void emitSysInt(SysInt x)
+  {
+    *(SysInt *)_cur = x;
+    _cur += sizeof(SysInt);
+  }
+
+  //! @brief Emit system unsigned integer (4 or 8 bytes).
+  inline void emitSysUInt(SysUInt x)
+  {
+    *(SysUInt *)_cur = x;
+    _cur += sizeof(SysUInt);
+  }
+
   //! @brief Emit custom data. 
   void emitData(const void* ptr, SysUInt len);
 
