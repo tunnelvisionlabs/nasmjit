@@ -49,12 +49,19 @@ namespace AsmJit {
 // ============================================================================
 // [Helpers]
 // ============================================================================
-
+/*
 static void delAll(Compiler::EmittableList& buf)
 {
   Emittable** emitters = buf.data();
   SysUInt i, len = buf.length();
   for (i = 0; i < len; i++) emitters[i]->~Emittable();
+}
+*/
+
+static void delAll(Emittable* first)
+{
+  Emittable* cur;
+  for (cur = first; cur; cur = cur->next()) cur->~Emittable();
 }
 
 static void memset32(UInt32* p, UInt32 c, SysUInt len)
@@ -71,7 +78,8 @@ static bool isIntegerArgument(UInt32 arg)
 
 static bool isFloatArgument(UInt32 arg)
 {
-  return arg == VARIABLE_TYPE_FLOAT || arg == VARIABLE_TYPE_DOUBLE;
+  return arg == VARIABLE_TYPE_FLOAT || 
+         arg == VARIABLE_TYPE_DOUBLE;
 }
 
 static const UInt32 variableSizeData[] = {
@@ -178,7 +186,11 @@ void State::_clear()
 // [AsmJit::Emittable]
 // ============================================================================
 
-Emittable::Emittable(Compiler* c, UInt32 type) : _compiler(c), _type(type)
+Emittable::Emittable(Compiler* c, UInt32 type) : 
+  _compiler(c),
+  _next(NULL),
+  _prev(NULL),
+  _type(type)
 {
 }
 
@@ -1478,7 +1490,8 @@ void Target::emit(Assembler& a)
 // ============================================================================
 
 Compiler::Compiler() :
-  _currentPosition(0),
+  _first(NULL),
+  _last(NULL),
   _currentFunction(NULL),
   _labelIdCounter(1)
 {
@@ -1487,7 +1500,7 @@ Compiler::Compiler() :
 
 Compiler::~Compiler()
 {
-  delAll(_buffer);
+  delAll(_first);
 }
 
 // ============================================================================
@@ -1496,12 +1509,13 @@ Compiler::~Compiler()
 
 void Compiler::clear()
 {
-  delAll(_buffer);
+  delAll(_first);
+  _first = NULL;
+  _last = NULL;
+
   _zone.freeAll();
 
-  _buffer.clear();
   _operands.clear();
-  _currentPosition = 0;
   _jumpTableLabel = newLabel();
   _jumpTableData.clear();
 }
@@ -1509,9 +1523,39 @@ void Compiler::clear()
 void Compiler::free()
 {
   clear();
-  _buffer.free();
   _operands.free();
   _jumpTableData.free();
+}
+
+// ============================================================================
+// [AsmJit::Compiler - Emittables]
+// ============================================================================
+
+void Compiler::addEmittable(Emittable* emittable)
+{
+  if (!_first)
+  {
+    _first = emittable;
+    _last = emittable;
+  }
+  else
+  {
+    emittable->_prev = _last;
+    _last->_next = emittable;
+    _last = emittable;
+  }
+}
+
+void Compiler::removeEmittable(Emittable* emittable)
+{
+  Emittable* prev = emittable->_prev;
+  Emittable* next = emittable->_next;
+
+  if (_first == emittable) { _first = next; } else { prev->_next = next; }
+  if (_last  == emittable) { _last  = prev; } else { next->_prev = prev; }
+
+  emittable->_prev = NULL;
+  emittable->_next = NULL;
 }
 
 // ============================================================================
@@ -1538,7 +1582,7 @@ void Compiler::comment(const char* fmt, ...)
     buf[1] = '\0';
   }
 
-  emit(newObject<Comment>(buf));
+  addEmittable(newObject<Comment>(buf));
 }
 
 // ============================================================================
@@ -1552,7 +1596,7 @@ Function* Compiler::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count
   Function* f = _currentFunction = newObject<Function>();
   f->setPrototype(cconv, args, count);
 
-  emit(f);
+  addEmittable(f);
 
   Prolog* e = prolog(f);
   e->_label = f->_prologLabel;
@@ -1575,14 +1619,14 @@ Function* Compiler::endFunction()
 Prolog* Compiler::prolog(Function* f)
 {
   Prolog* e = newObject<Prolog>(f);
-  emit(e);
+  addEmittable(e);
   return e;
 }
 
 Epilog* Compiler::epilog(Function* f)
 {
   Epilog* e = newObject<Epilog>(f);
-  emit(e);
+  addEmittable(e);
   return e;
 }
 
@@ -1595,23 +1639,6 @@ Label* Compiler::newLabel()
   Label* label = new(_zoneAlloc(sizeof(Label))) Label((UInt16)(_labelIdCounter++));
   _registerOperand(label);
   return label;
-}
-
-// ============================================================================
-// [AsmJit::Compiler - Emit]
-// ============================================================================
-
-void Compiler::emit(Emittable* emittable, bool endblock)
-{
-  if (endblock)
-  {
-    _buffer.append(emittable);
-  }
-  else
-  {
-    _buffer.insert(_currentPosition, emittable);
-    _currentPosition++;
-  }
 }
 
 // ============================================================================
@@ -1761,7 +1788,7 @@ void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
 
 void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
-  emit(newObject<Instruction>(code, o1, o2, o3));
+  addEmittable(newObject<Instruction>(code, o1, o2, o3));
 }
 
 // ============================================================================
@@ -1776,7 +1803,7 @@ void Compiler::_embed(const void* data, SysUInt size)
   EmbeddedData* e = 
     new(_zoneAlloc(sizeof(EmbeddedData) - sizeof(void*) + capacity)) 
       EmbeddedData(this, capacity, data, size);
-  emit(e);
+  addEmittable(e);
 }
 
 // ============================================================================
@@ -1785,7 +1812,7 @@ void Compiler::_embed(const void* data, SysUInt size)
 
 void Compiler::align(SysInt m)
 {
-  emit(newObject<Align>(m));
+  addEmittable(newObject<Align>(m));
 }
 
 // ============================================================================
@@ -1794,7 +1821,7 @@ void Compiler::align(SysInt m)
 
 void Compiler::bind(Label* label)
 {
-  emit(newObject<Target>(label));
+  addEmittable(newObject<Target>(label));
 }
 
 // ============================================================================
@@ -1841,20 +1868,17 @@ struct LoggerSwitcher
 void Compiler::serialize(Assembler& a)
 {
   LoggerSwitcher loggerSwitcher(&a, this);
-
-  Emittable** emitters = _buffer.data();
-  SysUInt i, len;
+  Emittable* cur;
 
   // Prepare (prepare action can append emittable)
-  len = _buffer.length();
-  for (i = 0; i < len; i++) emitters[i]->prepare();
+  for (cur = _first; cur; cur = cur->next()) cur->prepare();
 
   // Emit and postEmit
-  len = _buffer.length();
-  for (i = 0; i < len; i++) emitters[i]->emit(a);
-  for (i = 0; i < len; i++) emitters[i]->postEmit(a);
+  for (cur = _first; cur; cur = cur->next()) cur->emit(a);
+  for (cur = _first; cur; cur = cur->next()) cur->postEmit(a);
 
   // Jump table
+  SysUInt i, len;
   a.bind(_jumpTableLabel);
 
   len = _jumpTableData.length();

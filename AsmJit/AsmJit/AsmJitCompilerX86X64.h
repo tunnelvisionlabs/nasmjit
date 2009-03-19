@@ -1049,7 +1049,8 @@ private:
 //! @brief Emmitable.
 //!
 //! Emittable is object that can emit single or more instructions. To
-//! createyour interface it's needed to override virtual method @c emit().
+//! create your custom emittable it's needed to override virtual method 
+//! @c emit().
 struct ASMJIT_API Emittable
 {
   // [Construction / Destruction]
@@ -1068,16 +1069,26 @@ struct ASMJIT_API Emittable
 
   //! @brief Return compiler instance where this emittable is connected to.
   inline Compiler* compiler() const { return _compiler; }
+  //! @brief Return previsou emittable in list.
+  inline Emittable* prev() const { return _prev; }
+  //! @brief Return next emittable in list.
+  inline Emittable* next() const { return _next; }
   //! @brief Return emittable type, see @c EMITTABLE_TYPE.
   inline UInt32 type() const { return _type; }
 
 protected:
   //! @brief Compiler where this emittable is connected to.
   Compiler* _compiler;
+  //! @brief Previous emittable.
+  Emittable* _prev;
+  //! @brief Next emittable.
+  Emittable* _next;
   //! @brief Type of emittable, see @c EMITTABLE_TYPE.
   UInt32 _type;
 
 private:
+  friend struct Compiler;
+
   // disable copy
   ASMJIT_DISABLE_COPY(Emittable);
 };
@@ -2076,8 +2087,6 @@ struct ASMJIT_API Compiler : public Serializer
   // [Typedefs]
   // -------------------------------------------------------------------------
 
-  //! @brief List of emittables used in @c Compiler.
-  typedef PodVector<Emittable*> EmittableList;
   //! @brief List of variables used in @c Compiler.
   typedef PodVector<Variable*> VariableList;
   //! @brief List of operands used in @c Compiler.
@@ -2093,7 +2102,7 @@ struct ASMJIT_API Compiler : public Serializer
   virtual ~Compiler();
 
   // -------------------------------------------------------------------------
-  // [Buffer]
+  // [Compiler]
   // -------------------------------------------------------------------------
 
   //! @brief Clear everything, but not deallocate buffers.
@@ -2106,29 +2115,18 @@ struct ASMJIT_API Compiler : public Serializer
   //! @note This method will destroy your code.
   void free();
 
-  //! @brief Return list of emmitables (@c Emittable).
-  //!
-  //! This list contains all emittables that will be emitted throught 
-  //! @c serialize() method into @c AsmJit::Assembler. Emittables are stored
-  //! in FIFO order, so first stored emittable is emitted first. See
-  //! @c AsmJit::Emittable inheritance diagram for available emittables.
-  //!
-  //! You will probably never use list of emittables yourself, but it's
-  //! public to allow manipulations that is not available in 
-  //! @c AsmJit::Assembler class. It's also used in @c serialize() method to
-  //! emit them all in correct order.
-  inline EmittableList& buffer() { return _buffer; }
-  //! @overload.
-  inline const EmittableList& buffer() const { return _buffer; }
+  // -------------------------------------------------------------------------
+  // [Emittables]
+  // -------------------------------------------------------------------------
 
-  //! @brief Return current function.
-  //!
-  //! This method can be called within @c newFunction() and @c endFunction()
-  //! block to get current function you are working with. It's recommended
-  //! to store @c AsmJit::Function pointer returned by @c newFunction<> method,
-  //! because this allows you in future implement function sections outside of
-  //! function itself (yeah, this is possible!).
-  inline Function* currentFunction() { return _currentFunction; }
+  //! @brief Return first emittables in double linked list.
+  inline Emittable* firstEmittable() { return _first; }
+
+  //! @brief Return last emittable in double linked list.
+  inline Emittable* lastEmittable() { return _first; }
+
+  void addEmittable(Emittable* emittable);
+  void removeEmittable(Emittable* emittable);
 
   // -------------------------------------------------------------------------
   // [Logging]
@@ -2241,6 +2239,15 @@ struct ASMJIT_API Compiler : public Serializer
   //! @brief Ends current function.
   Function* endFunction();
 
+  //! @brief Return current function.
+  //!
+  //! This method can be called within @c newFunction() and @c endFunction()
+  //! block to get current function you are working with. It's recommended
+  //! to store @c AsmJit::Function pointer returned by @c newFunction<> method,
+  //! because this allows you in future implement function sections outside of
+  //! function itself (yeah, this is possible!).
+  inline Function* currentFunction() { return _currentFunction; }
+
   //! @brief Create function prolog (function begin section).
   //!
   //! Function prologs and epilogs are standardized sequences of instructions
@@ -2284,12 +2291,6 @@ struct ASMJIT_API Compiler : public Serializer
   //! @c Compiler each label must be created by @c AsmJit::Compiler::newLabel()
   //! method.
   Label* newLabel();
-
-  // -------------------------------------------------------------------------
-  // [Emit]
-  // -------------------------------------------------------------------------
-
-  void emit(Emittable* emittable, bool endblock = false);
 
   // -------------------------------------------------------------------------
   // [Memory Management]
@@ -2529,11 +2530,10 @@ struct ASMJIT_API Compiler : public Serializer
   // [Variables]
   // -------------------------------------------------------------------------
 private:
-  //! @brief List of emittables.
-  EmittableList _buffer;
-
-  //! @brief Position in @c _buffer.
-  SysInt _currentPosition;
+  //! @brief First emittable.
+  Emittable* _first;
+  //! @brief Last emittable.
+  Emittable* _last;
 
   //! @brief Operands list (operand id is index in this list, id 0 is not valid).
   OperandList _operands;
