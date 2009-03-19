@@ -59,12 +59,12 @@ void Logger::logInstruction(UInt32 code, const Operand* o1, const Operand* o2, c
   char* p = buf;
 
   // dump instruction
-  p += dumpInstruction(p, code);
+  p = dumpInstruction(p, code);
   
   // dump operands
-  if (!o1->isNone()) { *p++ = ' '; p += dumpOperand(p, o1); }
-  if (!o2->isNone()) { *p++ = ','; *p++ = ' '; p += dumpOperand(p, o2); }
-  if (!o3->isNone()) { *p++ = ','; *p++ = ' '; p += dumpOperand(p, o3); }
+  if (!o1->isNone()) { *p++ = ' '; p = dumpOperand(p, o1); }
+  if (!o2->isNone()) { *p++ = ','; *p++ = ' '; p = dumpOperand(p, o2); }
+  if (!o3->isNone()) { *p++ = ','; *p++ = ' '; p = dumpOperand(p, o3); }
   
   *p++ = '\n';
   *p = '\0';
@@ -83,7 +83,7 @@ void Logger::logLabel(const Label* label)
   if (!_enabled || !_haveStream) return;
 
   char buf[1024];
-  char* p = buf + dumpLabel(buf, label);
+  char* p = dumpLabel(buf, label);
   *p++ = ':';
   *p++ = '\n';
   *p = '\0';

@@ -176,6 +176,7 @@ static void _SetBits(SysUInt* buf, SysUInt index, SysUInt len)
   while (len >= BITS_PER_ENTITY)
   {
     *buf++ = (SysUInt)-1;
+    len -= BITS_PER_ENTITY;
   }
 
   if (len)
@@ -211,6 +212,7 @@ static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len)
   while (len >= BITS_PER_ENTITY)
   {
     *buf++ = 0;
+    len -= BITS_PER_ENTITY;
   }
 
   if (len)

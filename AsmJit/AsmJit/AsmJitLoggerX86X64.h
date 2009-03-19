@@ -84,22 +84,22 @@ struct ASMJIT_API Logger
   //! @brief Dump instruction @a code to @a buf and return destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static SysInt dumpInstruction(char* buf, UInt32 code);
+  static char* dumpInstruction(char* buf, UInt32 code);
 
   //! @brief Dump operand @a op to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static SysInt dumpOperand(char* buf, const Operand* op);
+  static char* dumpOperand(char* buf, const Operand* op);
 
   //! @brief Dump register to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static SysInt dumpRegister(char* buf, UInt8 type, UInt8 index);
+  static char* dumpRegister(char* buf, UInt8 type, UInt8 index);
 
   //! @brief Dump label @a label to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static SysInt dumpLabel(char* buf, const Label* label);
+  static char* dumpLabel(char* buf, const Label* label);
 
   // [Variables]
 

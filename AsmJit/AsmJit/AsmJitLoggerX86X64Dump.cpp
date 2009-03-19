@@ -1111,107 +1111,133 @@ static const char segmentName[] =
   "fs:\0"
   "gs:\0";
 
-// [Helpers]
+// [String Functions]
 
-static char* mycpy(char* dst, const char* src)
+static char* mycpy(char* dst, const char* src, SysUInt len = (SysUInt)-1)
 {
   if (src == NULL) return dst;
-  while (*src) *dst++ = *src++;
+
+  if (len == (SysUInt)-1)
+  {
+    while (*src) *dst++ = *src++;
+  }
+  else
+  {
+    memcpy(dst, src, len);
+    dst += len;
+  }
+ 
   return dst;
+}
+
+// not too effective, but this is debug logger:)
+static char* myutoa(char* dst, SysUInt i, SysUInt base = 10)
+{
+  static const char letters[] = "0123456789ABCDEF";
+
+  char buf[128];
+  char* p = buf + 128;
+
+  do {
+    SysInt b = i % base;
+    *--p = letters[(Int8)b];
+    i /= base;
+  } while (i);
+
+  return mycpy(dst, p, (SysUInt)(buf + 128 - p));
+}
+
+static char* myitoa(char* dst, SysInt i, SysUInt base = 10)
+{
+  if (i < 0)
+  {
+    *dst++ = '-';
+    i = -i;
+  }
+
+  return myutoa(dst, (SysUInt)i, base);
 }
 
 // [AsmJit::Logger]
 
-SysInt Logger::dumpInstruction(char* buf, UInt32 code)
+char* Logger::dumpInstruction(char* buf, UInt32 code)
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
-  const char *name = &instructionName[instructionIndex[code]];
-  SysUInt len = (SysUInt)strlen(name);
-
-  memcpy(buf, name, len);
-  return len;
+  return mycpy(buf, &instructionName[instructionIndex[code]]);
 }
 
-SysInt Logger::dumpOperand(char* buf, const Operand* op)
+char* Logger::dumpOperand(char* buf, const Operand* op)
 {
   if (op->isReg())
   {
     const BaseReg& reg = operand_cast<const BaseReg&>(*op);
-
     return dumpRegister(buf, reg.type(), reg.index());
   }
   else if (op->isMem())
   {
-    const char* beg = buf;
     const Mem& mem = operand_cast<const Mem&>(*op);
 
     if (op->size() <= 16) 
     {
       buf = mycpy(buf, operandSize[op->size()]);
     }
-    
+
     buf = mycpy(buf, &segmentName[mem.segmentPrefix() * 4]);
-    
+
     *buf++ = '[';
 
     // [base + index*scale + displacement]
     if (mem.hasBase())
     {
-      buf += dumpRegister(buf, REG_GPN, mem.base());
+      buf = dumpRegister(buf, REG_GPN, mem.base());
     }
     // [label + index*scale + displacement]
     else if (mem.label())
     {
-      buf += dumpLabel(buf, mem.label());
+      buf = dumpLabel(buf, mem.label());
     }
     // [absolute]
     else
     {
-      buf += sprintf(buf, "0x%p", mem._mem.target);
+      buf = myutoa(buf, (SysUInt)mem._mem.target, 16);
     }
 
     if (mem.hasIndex())
     {
-      *buf++ = ' ';
-      *buf++ = '+';
-      *buf++ = ' ';
-      buf += dumpRegister(buf, REG_GPN, mem.index());
+      buf = mycpy(buf, " + ");
+      buf = dumpRegister(buf, REG_GPN, mem.index());
 
       if (mem.shift())
       {
-        *buf++ = ' ';
-        *buf++ = '*';
-        *buf++ = ' ';
-        *buf++ = "1248"[mem.shift()];
+        buf = mycpy(buf, " * ");
+        *buf++ = "1248"[mem.shift() & 3];
       }
     }
 
     if (mem.displacement())
     {
-      Int32 d = (Int32)mem.displacement();
-      buf += sprintf(buf, " %c %d",
-        d > 0 ? '+' : '-',
-        d > 0 ? d : -d);
+      SysInt d = mem.displacement();
+      *buf++ = (d < 0) ? '-' : '+';
+      buf = myitoa(buf, d);
     }
 
     *buf++ = ']';
-    return (SysInt)(buf - beg);
+    return buf;
   }
   else if (op->isImm())
   {
     const Immediate& i = operand_cast<const Immediate&>(*op);
-
-    return sprintf(buf, "0x%p", (SysInt)i.value());
+    return myitoa(buf, (SysInt)i.value());
   }
   else if (op->isLabel())
   {
     return dumpLabel(buf, (const Label*)op);
   }
   else
-    return 0;
+    return buf;
 }
 
-SysInt Logger::dumpRegister(char* buf, UInt8 type, UInt8 index)
+char* Logger::dumpRegister(char* buf, UInt8 type, UInt8 index)
 {
   const char regs1[] = "al\0" "cl\0" "dl\0" "bl\0" "ah\0" "ch\0" "dh\0" "bh\0";
   const char regs2[] = "ax\0" "cx\0" "dx\0" "bx\0" "sp\0" "bp\0" "si\0" "di\0";
@@ -1220,46 +1246,46 @@ SysInt Logger::dumpRegister(char* buf, UInt8 type, UInt8 index)
   {
     case REG_GPB:
       if (index < 8)
-        return sprintf(buf, "%s", &regs1[index*3]);
+        return buf + sprintf(buf, "%s", &regs1[index*3]);
       else
-        return sprintf(buf, "r%ub", (UInt32)index);
+        return buf + sprintf(buf, "r%ub", (UInt32)index);
     case REG_GPW:
       if (index < 8)
-        return sprintf(buf, "%s", &regs2[index*3]);
+        return buf + sprintf(buf, "%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%uw", (UInt32)index);
+        return buf + sprintf(buf, "r%uw", (UInt32)index);
     case REG_GPD:
       if (index < 8)
-        return sprintf(buf, "e%s", &regs2[index*3]);
+        return buf + sprintf(buf, "e%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%ud", (UInt32)index);
+        return buf + sprintf(buf, "r%ud", (UInt32)index);
     case REG_GPQ:
       if (index < 8)
-        return sprintf(buf, "r%s", &regs2[index*3]);
+        return buf + sprintf(buf, "r%s", &regs2[index*3]);
       else
-        return sprintf(buf, "r%u", (UInt32)index);
+        return buf + sprintf(buf, "r%u", (UInt32)index);
     case REG_X87:
-      return sprintf(buf, "st%d", (UInt32)index);
+      return buf + sprintf(buf, "st%u", (UInt32)index);
     case REG_MM:
-      return sprintf(buf, "mm%u", (UInt32)index);
+      return buf + sprintf(buf, "mm%u", (UInt32)index);
     case REG_XMM:
-      return sprintf(buf, "xmm%u", (UInt32)index);
+      return buf + sprintf(buf, "xmm%u", (UInt32)index);
     default:
-      return 0;
+      return buf;
   }
 }
 
-SysInt Logger::dumpLabel(char* buf, const Label* label)
+char* Logger::dumpLabel(char* buf, const Label* label)
 {
   char* beg = buf;
   *buf++ = 'L';
   
   if (label->labelId())
-    buf += sprintf(buf, "%d", (Int32)label->labelId());
+    buf = myutoa(buf, label->labelId());
   else
     *buf++ = 'x';
 
-  return (SysInt)(buf - beg);
+  return buf;
 }
 
 } // AsmJit namespace
