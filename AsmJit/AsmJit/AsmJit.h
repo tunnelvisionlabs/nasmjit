@@ -71,6 +71,7 @@
 //! - http://code.google.com/p/asmjit/
 //!
 //! <b>External resources:</b>
+//! - http://www.agner.org/optimize/
 //! - http://www.mark.masmcode.com/ (Assembler Tips)
 //! - http://avisynth.org/mediawiki/Filter_SDK/Assembler_optimizing (Optimizing)
 //! - http://www.ragestorm.net/distorm/ (Disassembling)

@@ -1414,11 +1414,14 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Set naked function to true or false (naked means no prolog / epilog code).
   void setNaked(UInt8 naked);
 
-  //! @brief Enable or disable emms instruction in epilog.
-  inline void setAllocableEbp(UInt8 aebp) { _allocableEbp = aebp; }
+  //! @brief Enable or disable allocation of EBP/RBP register.
+  inline void setAllocableEbp(UInt8 val) { _allocableEbp = val; }
 
   //! @brief Enable or disable emms instruction in epilog.
-  inline void setEmms(UInt8 emms) { _emms = emms; }
+  inline void setEmms(UInt8 val) { _emms = val; }
+
+  //! @brief Enable or disable sfence instruction in epilog.
+  inline void setSfence(UInt8 val) { _sfence = val; }
 
   //! @brief Return function calling convention, see @c CALL_CONV.
   inline UInt32 cconv() const { return _cconv; }
@@ -1438,8 +1441,11 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Return @c true if EBP/RBP register can be allocated by register allocator.
   inline UInt8 allocableEbp() const { return _allocableEbp; }
 
-  //! @brief Return @c true if function epilog contains emms instruction.
+  //! @brief Return whether emms instruction is enabled or disabled in epilog.
   inline UInt8 emms() const { return _emms; }
+
+  //! @brief Return whether sfence instruction is enabled or disabled in epilog.
+  inline UInt8 sfence() const { return _sfence; }
 
   //! @brief Return direction of arguments passed on the stack.
   //!
@@ -1635,8 +1641,11 @@ private:
   //! @brief Whether EBP/RBP register can be used by register allocator.
   UInt8 _allocableEbp;
 
-  //! @brief Generate emms instruction at the end of function.
+  //! @brief Whether to generate emms instruction in epilog.
   UInt8 _emms;
+
+  //! @brief Whether to generate sfence instruction in epilog.
+  UInt8 _sfence;
 
   //! @brief Direction for arguments passed on stack, see @c ARGUMENT_DIR.
   UInt32 _cconvArgumentsDirection;

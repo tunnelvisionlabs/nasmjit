@@ -1,3 +1,15 @@
+2009-03-20:
+- Added possibility to set code generation flags in Serializer:
+  Assembler:
+   - OptimizeAlign - Use processor best way to align instruction stream
+   - EmitConditionHints - Emit condition hints HINT_TAKEN, HINT_NOT_TAKEN
+   - AlwaysEmitRex - Force rex prefix (for x64)
+  Compiler:
+   - OptimizePrologEpilog - Optimize prolog/epilog
+- Added sfence() cleanup to Function
+- Added JumpTable and Compiler::newJumpTable
+- Removed Relocable, same effect is to use Compiler::newImmediate()
+
 2009-03-19:
 - Fixed problems with new memory allocator
 - Enchanced mov(reg, imm) instruction in 64 bit mode to use only 4 byte immediate

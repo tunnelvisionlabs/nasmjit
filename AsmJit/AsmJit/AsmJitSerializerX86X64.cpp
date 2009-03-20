@@ -83,12 +83,48 @@ Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
 _Serializer::_Serializer() :
   _logger(NULL),
   _zone(65536 - sizeof(Zone::Chunk) - 32),
+  _properties(0),
   _error(0)
 {
+  // Set default properties for Assembler and Compiler
+  // (compiler can set other ones)
+  _properties |= (1 << PROPERTY_OPTIMIZE_ALIGN) |
+                 (1 << PROPERTY_JCC_HINTS     ) ;
 }
 
 _Serializer::~_Serializer()
 {
+}
+
+// ============================================================================
+// [AsmJit::_Serializer - Properties]
+// ============================================================================
+
+//! @brief Get property @a key from serializer.
+UInt32 _Serializer::getProperty(UInt32 key)
+{
+  if (key < 32)
+    return (_properties & (1 << key)) >> key;
+  else
+    return 0xFFFFFFFF;
+}
+
+//! @brief Set property @a key to @a value.
+UInt32 _Serializer::setProperty(UInt32 key, UInt32 value)
+{
+  if (key < 32)
+  {
+    UInt32 mask = (1 << key);
+    UInt32 result = (_properties & mask) >> key;
+
+    if (value)
+      _properties |= mask;
+    else
+      _properties &= ~mask;
+    return result;
+  }
+  else
+    return 0xFFFFFFFF;
 }
 
 // ============================================================================

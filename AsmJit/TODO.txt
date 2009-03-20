@@ -1,7 +1,6 @@
 TODO (Compiler):
-[ ] Add jump table builder (complex)
 [ ] Add instruction reordering possibility in compiler (complex)
-[ ] What about float and double in compiler ?
+[ ] What about float and double variables in compiler ?
     Current implementation can reserve memory for these types, but can't
     alloc registers for them (because x87 is stack based).
 

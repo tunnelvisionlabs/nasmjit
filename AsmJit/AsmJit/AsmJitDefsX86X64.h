@@ -993,6 +993,42 @@ enum INST_CODE
   _INST_COUNT
 };
 
+// ============================================================================
+// [AsmJit::PROPERTY]
+// ============================================================================
+
+enum PROPERTY
+{
+  // [Assembler properties (0-15)]
+
+  //! @brief Optimize align for current processor.
+  //!
+  //! Default: @c true.
+  PROPERTY_OPTIMIZE_ALIGN = 0,
+
+  //! @brief Force rex prefix emitting.
+  //!
+  //! Default: @c false.
+  PROPERTY_FORCE_REX = 1,
+
+  //! @brief Emit hints added to jcc() instructions.
+  //!
+  //! Default: @c true.
+  PROPERTY_JCC_HINTS = 2,
+
+  // [Compiler properties (16-31)]
+
+  //! @brief Optimize prolog and epilog sections for current processor.
+  //!
+  //! Default: @c true.
+  PROPERTY_OPTIMIZE_PROLOG_EPILOG = 16,
+
+  // [User properties]
+
+  //! @brief Start of used defined properties.
+  PROPERTY_USER = 32
+};
+
 //! @}
 
 } // AsmJit namespace

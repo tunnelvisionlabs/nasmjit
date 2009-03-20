@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
   // Call it.
   for (SysUInt i = 0; i < 4; i++)
   {
-    printf("Results from JIT function (%d): %d\n", i, fn(i));
+    printf("Result from JIT function (%d): %d\n", i, fn(i));
   }
 
   // If function is not needed again it should be freed.

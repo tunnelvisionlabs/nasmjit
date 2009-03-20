@@ -31,6 +31,7 @@
 // [Dependencies]
 #include "AsmJitAssembler.h"
 #include "AsmJitCompiler.h"
+#include "AsmJitCpuInfo.h"
 #include "AsmJitLogger.h"
 #include "AsmJitUtil.h"
 
@@ -320,6 +321,7 @@ Function::Function(Compiler* c) :
   _naked(false),
   _allocableEbp(false),
   _emms(false),
+  _sfence(false),
   _cconvArgumentsDirection(ARGUMENT_DIR_RIGHT_TO_LEFT),
   _argumentsStackSize(0),
   _usedGpRegisters(0),
@@ -1425,6 +1427,8 @@ void Epilog::emit(Assembler& a)
   Function* f = function();
   ASMJIT_ASSERT(f);
 
+  const CpuInfo* ci = cpuInfo();
+
   // First bind label (Function::_exitLabel) before the epilog
   if (_label) a.bind(_label);
 
@@ -1448,22 +1452,26 @@ void Epilog::emit(Assembler& a)
   // Use epilog code (if needed)
   if (!f->naked())
   {
-    a.mov(nsp, nbp);
-    a.pop(nbp);
+    bool emitLeave = (
+      compiler()->getProperty(PROPERTY_OPTIMIZE_PROLOG_EPILOG) && 
+      ci->vendorId == CpuInfo::Vendor_AMD);
+
+    if (emitLeave)
+    {
+      a.leave();
+    }
+    else
+    {
+      a.mov(nsp, nbp);
+      a.pop(nbp);
+    }
   }
 
   // Return using correct instruction
   if (f->calleePopsStack())
-  {
     a.ret((Int16)f->argumentsStackSize());
-  }
   else
-  {
     a.ret();
-  }
-
-  // Add end of line after epilog
-  if (a.logger()) a.logger()->log("");
 }
 
 // ============================================================================
@@ -1531,6 +1539,7 @@ Compiler::Compiler() :
   _currentFunction(NULL),
   _labelIdCounter(1)
 {
+  _properties |= (1 << PROPERTY_OPTIMIZE_PROLOG_EPILOG);
   _jumpTableLabel = newLabel();
 }
 
@@ -1878,6 +1887,7 @@ void Compiler::bind(Label* label)
 void* Compiler::make(UInt32 allocType)
 {
   Assembler a;
+  a._properties = _properties;
   serialize(a);
 
   if (a.error())

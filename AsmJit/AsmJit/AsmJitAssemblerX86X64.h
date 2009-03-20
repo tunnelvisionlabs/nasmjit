@@ -506,7 +506,7 @@ struct ASMJIT_API Assembler : public Serializer
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field not used in RexR
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-    if (w || r || b)
+    if (w || r || b || (_properties & (1 << PROPERTY_FORCE_REX)))
     {
       _emitByte(0x40 | (w << 3) | (r << 2) | b);
     }
@@ -539,7 +539,7 @@ struct ASMJIT_API Assembler : public Serializer
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field (1=high bit extension of the SIB Index field).
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-    if (w || r || x || b)
+    if (w || r || x || b || (_properties & (1 << PROPERTY_FORCE_REX)))
     {
       _emitByte(0x40 | (w << 3) | (r << 2) | (x << 1) | b);
     }
@@ -604,12 +604,6 @@ struct ASMJIT_API Assembler : public Serializer
   //! A given buffer will be overwritten, to get number of bytes required use
   //! @c codeSize() or @c offset() methods.
   void relocCode(void* dst) const;
-
-  //! @internal
-  bool writeRelocInfo(const Relocable& immediate, SysUInt relocOffset, UInt8 relocSize);
-
-  //! @brief Overwrites emitted immediate to a new value.
-  void overwrite(const Relocable& immediate);
 
   // -------------------------------------------------------------------------
   // [EmitX86]

@@ -43,22 +43,11 @@ namespace AsmJit {
 // forward declarations
 struct Label;
 struct Logger;
+struct Assembler;
+struct Compiler;
 
 //! @addtogroup AsmJit_Serializer
 //! @{
-
-// ============================================================================
-// [AsmJit::RelocInfo]
-// ============================================================================
-
-//! @brief Structure used internally for relocations.
-struct RelocInfo
-{
-  SysUInt offset;
-  UInt8 size;
-  UInt8 mode;
-  UInt16 data;
-};
 
 // ============================================================================
 // [AsmJit::Operand]
@@ -1108,40 +1097,6 @@ struct Label : public Operand
 };
 
 // ============================================================================
-// [AsmJit::Relocable]
-// ============================================================================
-
-//! @brief Relocable immediate operand.
-//!
-//! Relocable can be used only together with @c Assembler. Using relocables in
-//! @c Compiler will currently not work.
-struct Relocable : public Immediate
-{
-  //! @brief Create new relocable and initialize its value to @a i.
-  inline Relocable(SysInt i, UInt8 isUnsigned = false) : Immediate(i, isUnsigned)
-  { _imm.relocMode = RELOC_OVERWRITE; }
-
-  //! @brief Create new relocable and initialize its value to @a other.
-  inline Relocable(const Relocable& other) : Immediate(other)
-  { _imm.relocMode = RELOC_OVERWRITE; }
-
-  //! @brief Set @c Relocable value to @a i.
-  inline Relocable& operator=(const SysInt i)
-  { setValue(i); return *this; }
-
-  //! @brief Set @c Relocable value to @a other.
-  inline Relocable& operator=(const Relocable& other)
-  { _copy(other); }
-
-  //! @brief Discard all recorded relocations.
-  inline void discard()
-  { _relocations.clear(); }
-
-  //! @brief List of recorded relocations.
-  mutable PodVector<RelocInfo> _relocations;
-};
-
-// ============================================================================
 // [AsmJit::operand_cast<>]
 // ============================================================================
 
@@ -1178,7 +1133,6 @@ MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const Base
 MAKE_OPERAND_CAST(Mem, (op.op() == OP_MEM));
 MAKE_OPERAND_CAST(BaseRegMem, (op.op() == OP_MEM || op.op() == OP_REG));
 MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
-MAKE_OPERAND_CAST(Relocable, (op.op() == OP_IMM && reinterpret_cast<const Immediate&>(op).relocMode() != RELOC_NONE));
 
 #undef MAKE_OPERAND_CAST
 
@@ -1229,6 +1183,18 @@ struct ASMJIT_API _Serializer
   _Serializer();
   //! @brief Destroy _Serializer instance.
   virtual ~_Serializer();
+
+  // -------------------------------------------------------------------------
+  // [Properties]
+  // -------------------------------------------------------------------------
+
+  //! @brief Get property @a key from serializer.
+  //!
+  //! Method returns old property value on success, otherwise 0xFFFFFFFF.
+  virtual UInt32 getProperty(UInt32 key);
+
+  //! @brief Set property @a key to @a value.
+  virtual UInt32 setProperty(UInt32 key, UInt32 value);
 
   // -------------------------------------------------------------------------
   // [Logging]
@@ -1342,10 +1308,16 @@ protected:
   //! @brief Zone memory management.
   Zone _zone;
 
+  //! @brief Properties.
+  UInt32 _properties;
+
   //! @brief Last error code.
   UInt32 _error;
 
 private:
+  friend struct Assembler;
+  friend struct Compiler;
+
   // disable copy
   ASMJIT_DISABLE_COPY(_Serializer);
 };
