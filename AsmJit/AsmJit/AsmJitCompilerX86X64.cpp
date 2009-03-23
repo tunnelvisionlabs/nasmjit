@@ -1727,9 +1727,10 @@ void Compiler::jumpToTable(JumpTable* jt, const Register& index)
   // 64 bit mode: Complex address can't be used, because SIB byte not allows
   // to use RIP (relative addressing). SIB byte is always generated for 
   // complex addresses.
-  shl(index, 3);
-  add(index, ptr(jt->target()));
-  jmp(index);
+  // address form: [jumpTable + index * 8]
+  shl(index, imm(3));             // index *= 8
+  add(index, ptr(jt->target()));  // index += jumpTable
+  jmp(index);                     // jmp index
 #else
   // 32 bit mode: Straighforward implementation, we are using complex address
   // form: [jumpTable + index * 4]
