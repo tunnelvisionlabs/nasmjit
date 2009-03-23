@@ -248,17 +248,17 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       rd.type = RelocData::RELATIVE_TO_ABSOLUTE;
       rd.size = 4;
       rd.offset = offset();
-      rd.destination = 0;
+      rd.destination = disp;
 
       if (label->isBound())
       {
-        rd.destination = label->position() + disp;
+        rd.destination += label->position();
         // Dummy DWORD
         _emitInt32(0);
       }
       else
       {
-        _emitDisplacement(label, disp - 4 - immSize)->relocId = relocId;
+        _emitDisplacement(label, -4 - immSize)->relocId = relocId;
       }
 
       _relocData.append(rd);
@@ -1567,8 +1567,6 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           const SysInt rel32_size = 5;
           SysInt offs = label->position() - offset();
 
-          ASMJIT_ASSERT(offs <= 0);
-
           if (isInt8(offs - rel8_size))
           {
             _emitByte(0xEB);
@@ -1714,8 +1712,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         }
       }
 
-      ASMJIT_CRASH();
-      return; 
+      break;
     }
 
     case I_MOV_PTR:

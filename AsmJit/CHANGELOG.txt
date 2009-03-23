@@ -1,6 +1,7 @@
 2009-03-23
 - Fixed 64 bit jump table problems and 64 bit addressing again
 - Fixed fnstsw and fstsw instructions
+- Fixed ptr(Label*, displacement) operands to accept and use displacement
 - Log illegal instructions
 
 2009-03-22:
