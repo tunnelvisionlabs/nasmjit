@@ -2543,6 +2543,9 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
   }
 
 illegalInstruction:
+  // Log each illegal instruction
+  if (_logger) _logger->log("; Error: Last instruction was illegal.\n");
+
   // It's illegal to be here
   ASMJIT_CRASH();
 }
