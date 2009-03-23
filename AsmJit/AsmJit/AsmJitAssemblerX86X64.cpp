@@ -146,53 +146,32 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
   SysInt disp = mem.displacement();
   UInt32 shift = mem.shift();
 
-  // [base + index * scale + displacemnt]
-  if (mem.hasBase() && mem.hasIndex())
-  {
-    // ASMJIT_ASSERT(indexReg != RID_ESP);
-
-    if (baseReg != RID_EBP && disp == 0)
-    {
-      _emitMod(0, opReg, 4);
-      _emitSib(shift, indexReg, baseReg);
-    }
-    else if (isInt8(disp))
-    {
-      _emitMod(1, opReg, 4);
-      _emitSib(shift, indexReg, baseReg);
-      _emitByte(static_cast<UInt8>((Int8)disp));
-    }
-    else
-    {
-      _emitMod(2, opReg, 4);
-      _emitSib(shift, indexReg, 5);
-      _emitInt32((Int32)disp);
-    }
-  }
   // [base + displacemnt]
-  else if (mem.hasBase() && !mem.hasIndex())
+  if (mem.hasBase() && !mem.hasIndex())
   {
-    if (baseReg == RID_ESP)
+    // ESP/RSP/R12 == 4
+    if (baseReg == 4)
     {
-      if (disp == 0)
+      UInt8 mod = 0;
+
+      if (disp)
       {
-        _emitMod(0, opReg, RID_ESP);
-        _emitSib(0, RID_ESP, RID_ESP);
+        mod = isInt8(disp) ? 1 : 2;
       }
-      else if (isInt8(disp))
+
+      _emitMod(mod, opReg, 4);
+      _emitSib(0, 4, 4);
+
+      if (disp)
       {
-        _emitMod(1, opReg, RID_ESP);
-        _emitSib(0, RID_ESP, RID_ESP);
-        _emitByte((Int8)disp);
-      }
-      else
-      {
-        _emitMod(2, opReg, RID_ESP);
-        _emitSib(0, RID_ESP, RID_ESP);
-        _emitInt32((Int32)disp);
+        if (isInt8(disp))
+          _emitByte((Int8)disp);
+        else
+          _emitInt32((Int32)disp);
       }
     }
-    else if (baseReg != RID_EBP && disp == 0)
+    // EBP/RBP/R13 == 5
+    else if (baseReg != 5 && disp == 0)
     {
       _emitMod(0, opReg, baseReg);
     }
@@ -207,13 +186,49 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       _emitInt32((Int32)disp);
     }
   }
-  // [index * scale + displacemnt]
-  // [displacement]
+
+  // [base + index * scale + displacemnt]
+  else if (mem.hasBase() && mem.hasIndex())
+  {
+    // ASMJIT_ASSERT(indexReg != RID_ESP);
+
+    // EBP/RBP/R13 == 5
+    if (baseReg != 5 && disp == 0)
+    {
+      _emitMod(0, opReg, 4);
+      _emitSib(shift, indexReg, baseReg);
+    }
+    else if (isInt8(disp))
+    {
+      _emitMod(1, opReg, 4);
+      _emitSib(shift, indexReg, baseReg);
+      _emitByte((Int8)disp);
+    }
+    else
+    {
+      _emitMod(2, opReg, 4);
+      _emitSib(shift, indexReg, baseReg);
+      _emitInt32((Int32)disp);
+    }
+  }
+
+  // Address                       | 32-bit mode | 64-bit mode
+  // ------------------------------+-------------+---------------
+  // [displacement]                |   ABSOLUTE  | RELATIVE (RIP)
+  // [index * scale + displacemnt] |   ABSOLUTE  | ABSOLUTE (ZERO EXTENDED)
   else
   {
+    // In 32 bit mode is used absolute addressing model.
+    // In 64 bit mode is used relative addressing model together with absolute
+    // addressing one. Main problem is that if instruction contains SIB then
+    // relative addressing (RIP) is not possible.
+    Label* label = mem._mem.label;
+
+#if defined(ASMJIT_X86)
+
     if (mem.hasIndex())
     {
-      // ASMJIT_ASSERT(indexReg != RID_ESP);
+      // ASMJIT_ASSERT(mem.index() != 4); // ESP/RSP == 4
       _emitMod(0, opReg, 4);
       _emitSib(shift, indexReg, 5);
     }
@@ -222,11 +237,9 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       _emitMod(0, opReg, 5);
     }
 
-    Label* label = mem._mem.label;
-
-#if defined(ASMJIT_X86)
-    // X86 uses absolute addressing model
-    if ((SysUInt)label >= _SEGMENT_END)
+    // X86 uses absolute addressing model, all relative addresses will be
+    // relocated to absolute ones.
+    if ((SysUInt)label >= (SysUInt)_SEGMENT_END)
     {
       UInt32 relocId = _relocData.length();
       RelocData rd;
@@ -252,17 +265,27 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
     }
     else
     {
-      _emitInt32((Int32)mem._mem.target);
+      // Absolute address
+      _emitInt32( (Int32)((UInt8*)mem._mem.target + mem._mem.displacement) );
     }
-#endif // ASMJIT_X86
 
-#if defined(ASMJIT_X64)
+#else
+
     // X64 uses relative addressing model
-    if ((SysUInt)label >= _SEGMENT_END)
+    if ((SysUInt)label >= (SysUInt)_SEGMENT_END)
     {
+      if (mem.hasIndex())
+      {
+        // Indexing is not possible
+
+      }
+
+      // Relative address (RIP +/- displacement)
+      _emitMod(0, opReg, 5);
+
       if (label->isBound())
       {
-        if (label) disp += offset() - label->position() - 4 - immSize;
+        disp += offset() - label->position() - 4 - immSize;
         _emitInt32((Int32)disp);
       }
       else
@@ -272,9 +295,24 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
     }
     else
     {
-      _emitInt32(0);
+      // Absolute address (truncated to 32 bits)
+      _emitMod(0, opReg, 5);
+
+      if (mem.hasIndex())
+      {
+        // ASMJIT_ASSERT(mem.index() != 4); // ESP/RSP == 4
+        _emitSib(shift, indexReg, 5);
+      }
+      else
+      {
+        _smitSib(0, 4, 5);
+      }
+
+      _emitInt32((Int32)((UInt32)mem._mem.target));
     }
+
 #endif // ASMJIT_X64
+
   }
 }
 
@@ -455,6 +493,7 @@ void Assembler::relocCode(void* _dst) const
         break;
 
       case 8:
+        printf("RELOC %d %p: \n", (int)r.offset, (void*)val);
         *reinterpret_cast<Int64*>(dst + r.offset) = (Int64)val;
         break;
 
@@ -2522,7 +2561,6 @@ void Assembler::_embed(const void* data, SysUInt size)
 
       for (j = 0; j < max; j++)
       p += sprintf(p, "%0.2X", reinterpret_cast<const UInt8 *>(data)[i+j]);
-      
     }
     *p++ = '\n';
     *p = '\0';
@@ -2565,6 +2603,7 @@ void Assembler::_embedLabel(Label* label)
     link->prev = (LinkData*)label->_lbl.link;
     link->offset = offset();
     link->displacement = 0;
+    link->relocId = _relocData.length();
 
     label->_lbl.link = link;
     label->_lbl.state = LABEL_STATE_LINKED;

@@ -1721,6 +1721,22 @@ void Compiler::call(void* target)
   call(ptr(_jumpTableLabel, _addTarget(target)));
 }
 
+void Compiler::jumpToTable(JumpTable* jt, const Register& index)
+{
+#if defined(ASMJIT_X64)
+  // 64 bit mode: Complex address can't be used, because SIB byte not allows
+  // to use RIP (relative addressing). SIB byte is always generated for 
+  // complex addresses.
+  shl(index, 3);
+  add(index, ptr(jt->target()));
+  jmp(index);
+#else
+  // 32 bit mode: Straighforward implementation, we are using complex address
+  // form: [jumpTable + index * 4]
+  jmp(ptr(jt->target(), index, TIMES_4));
+#endif
+}
+
 SysInt Compiler::_addTarget(void* target)
 {
   SysInt id = _jumpTableData.length() * sizeof(SysInt);

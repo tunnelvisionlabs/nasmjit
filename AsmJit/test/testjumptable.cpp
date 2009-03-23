@@ -37,10 +37,10 @@
 // This is type of function we will generate
 typedef int (*MyFn)(int);
 
+using namespace AsmJit;
+
 int main(int argc, char* argv[])
 {
-  using namespace AsmJit;
-
   // ==========================================================================
   // Create compiler.
   Compiler c;
@@ -69,19 +69,21 @@ int main(int argc, char* argv[])
   // Note: To get similar performance, C compiler must that function compile
   // using jump table (the way we used in assembler below)
 
-  Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<int>());
+  Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction1<SysInt>());
 
   // Possibilities to improve code:
   //   f.setNaked(true);
   //   f.setAllocableEbp(true);
 
-  Int32Ref a0(f.argument(0));
+  SysIntRef a0(f.argument(0));
 
   JumpTable* jumpTable = c.newJumpTable();
   Label* end = c.newLabel();
 
+  // Check for overflow, make [0-3] value (inclusive) from a0.
   c.and_(a0.r(), 3);
-  c.jmp(ptr(jumpTable->target(), a0.r(), TIMES_4));
+  // Make jump, a0 will be destroyed in 64 bit mode.
+  c.jumpToTable(jumpTable, a0.r());
 
   // Jump #0
   c.bind(jumpTable->addLabel());
@@ -115,9 +117,9 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   // Call it.
-  for (SysUInt i = 0; i < 4; i++)
+  for (int i = 0; i < 4; i++)
   {
-    printf("Result from JIT function (%d): %d\n", i, fn(i));
+    printf("Result from JIT function (%d): %d\n", i, (int)fn(i));
   }
 
   // If function is not needed again it should be freed.

@@ -1,3 +1,8 @@
+2009-03-22:
+- Fixed x64 addressing
+- Added more embeddable types into Serializer (dfloat, ddouble)
+- Updated JumpTable and added Compiler::jumpToTable() method to invoking jump
+
 2009-03-20:
 - Added possibility to set code generation flags in Serializer:
   Assembler:

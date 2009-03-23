@@ -1340,16 +1340,27 @@ struct Serializer : public _Serializer
 
   inline void dint8(Int8 x) { _embed(&x, sizeof(Int8)); }
   inline void duint8(UInt8 x) { _embed(&x, sizeof(UInt8)); }
+
   inline void dint16(Int16 x) { _embed(&x, sizeof(Int16)); }
   inline void duint16(UInt16 x) { _embed(&x, sizeof(UInt16)); }
+
   inline void dint32(Int32 x) { _embed(&x, sizeof(Int32)); }
   inline void duint32(UInt32 x) { _embed(&x, sizeof(UInt32)); }
+
+  inline void dint64(Int64 x) { _embed(&x, sizeof(Int64)); }
+  inline void duint64(UInt64 x) { _embed(&x, sizeof(UInt64)); }
+
   inline void dsysint(SysInt x) { _embed(&x, sizeof(SysInt)); }
   inline void dsysuint(SysUInt x) { _embed(&x, sizeof(SysUInt)); }
+
+  inline void dfloat(float x) { _embed(&x, sizeof(float)); }
+  inline void ddouble(double x) { _embed(&x, sizeof(double)); }
+
   inline void dptr(void* x) { _embed(&x, sizeof(void*)); }
 
   inline void dmm(const MMData& x) { _embed(&x, sizeof(MMData)); }
   inline void dxmm(const XMMData& x) { _embed(&x, sizeof(XMMData)); }
+
   inline void data(const void* data, SysUInt size) { _embed(data, size); }
 
   template<typename T>

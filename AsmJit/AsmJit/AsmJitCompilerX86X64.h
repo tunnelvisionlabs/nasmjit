@@ -2442,6 +2442,8 @@ struct ASMJIT_API Compiler : public Serializer
   void jmp(void* target);
   void call(void* target);
 
+  void jumpToTable(JumpTable* jt, const Register& index);
+
   SysInt _addTarget(void* target);
 
   // -------------------------------------------------------------------------
