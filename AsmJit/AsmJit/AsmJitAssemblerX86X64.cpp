@@ -2110,7 +2110,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isReg() && 
           operand_cast<const BaseReg&>(*o1).type() <= REG_GPQ && 
-          operand_cast<const BaseReg&>(*o1).index())
+          operand_cast<const BaseReg&>(*o1).index() == 0)
       {
         _emitOpCode(id.opCode2);
         return;
