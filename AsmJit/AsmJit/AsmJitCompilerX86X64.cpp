@@ -1513,6 +1513,11 @@ void JumpTable::emit(Assembler& a)
 
 void JumpTable::postEmit(Assembler& a)
 {
+#if defined(ASMJIT_X64)
+  // help with RIP addressing
+  a._embedLabel(_target);
+#endif
+
   a.bind(_target);
 
   SysUInt i, len = _labels.length();
@@ -1728,9 +1733,9 @@ void Compiler::jumpToTable(JumpTable* jt, const Register& index)
   // to use RIP (relative addressing). SIB byte is always generated for 
   // complex addresses.
   // address form: [jumpTable + index * 8]
-  shl(index, imm(3));             // index *= 8
-  add(index, ptr(jt->target()));  // index += jumpTable
-  jmp(index);                     // jmp index
+  shl(index, imm(3));                // index *= 8
+  add(index, ptr(jt->target(), -8)); // index += jumpTable base address
+  jmp(ptr(index));                   // jmp [index]
 #else
   // 32 bit mode: Straighforward implementation, we are using complex address
   // form: [jumpTable + index * 4]

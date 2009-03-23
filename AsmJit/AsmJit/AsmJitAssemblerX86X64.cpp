@@ -266,7 +266,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
     else
     {
       // Absolute address
-      _emitInt32( (Int32)((UInt8*)mem._mem.target + mem._mem.displacement) );
+      _emitInt32( (Int32)((UInt8*)mem._mem.target + disp) );
     }
 
 #else
@@ -283,14 +283,16 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       // Relative address (RIP +/- displacement)
       _emitMod(0, opReg, 5);
 
+      disp -= (4 + immSize);
+
       if (label->isBound())
       {
-        disp += offset() - label->position() - 4 - immSize;
+        disp += offset() - label->position();
         _emitInt32((Int32)disp);
       }
       else
       {
-        _emitDisplacement(label, 0 - 4 - immSize);
+        _emitDisplacement(label, disp);
       }
     }
     else
@@ -305,10 +307,19 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       }
       else
       {
-        _smitSib(0, 4, 5);
+        _emitSib(0, 4, 5);
       }
 
-      _emitInt32((Int32)((UInt32)mem._mem.target));
+      // truncate to 32 bits
+      SysUInt target = (SysUInt)mem._mem.target + mem._mem.displacement;
+
+      if (target > (SysUInt)0xFFFFFFFF)
+      {
+        if (_logger)
+          _logger->log("; Warning: Absolute address truncated to 32 bits\n");
+      }
+
+      _emitInt32((Int32)((UInt32)target));
     }
 
 #endif // ASMJIT_X64

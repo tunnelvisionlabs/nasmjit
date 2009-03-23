@@ -1,3 +1,6 @@
+2009-03-23
+- Fixed 64 bit jump table problems and 64 bit addressing again
+
 2009-03-22:
 - Fixed x64 addressing
 - Added more embeddable types into Serializer (dfloat, ddouble)
