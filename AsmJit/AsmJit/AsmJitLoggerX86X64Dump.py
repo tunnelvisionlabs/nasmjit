@@ -187,6 +187,7 @@ char* Logger::dumpOperand(char* buf, const Operand* op)
   }
   else if (op->isMem())
   {
+    bool isAbsolute = false;
     const Mem& mem = operand_cast<const Mem&>(*op);
 
     if (op->size() <= 16) 
@@ -211,6 +212,7 @@ char* Logger::dumpOperand(char* buf, const Operand* op)
     // [absolute]
     else
     {
+      isAbsolute = true;
       buf = myutoa(buf, (SysUInt)mem._mem.target, 16);
     }
 
@@ -226,7 +228,7 @@ char* Logger::dumpOperand(char* buf, const Operand* op)
       }
     }
 
-    if (mem.displacement())
+    if (mem.displacement() && !isAbsolute)
     {
       SysInt d = mem.displacement();
       *buf++ = (d < 0) ? '-' : '+';

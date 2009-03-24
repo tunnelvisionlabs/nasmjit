@@ -266,7 +266,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
     else
     {
       // Absolute address
-      _emitInt32( (Int32)((UInt8*)mem._mem.target + disp) );
+      _emitInt32( (Int32)((UInt8*)mem._mem.target) );
     }
 
 #else
@@ -311,7 +311,7 @@ void Assembler::_emitModM(UInt8 opReg, const Mem& mem, SysInt immSize)
       }
 
       // truncate to 32 bits
-      SysUInt target = (SysUInt)mem._mem.target + mem._mem.displacement;
+      SysUInt target = (SysUInt)mem._mem.target;
 
       if (target > (SysUInt)0xFFFFFFFF)
       {

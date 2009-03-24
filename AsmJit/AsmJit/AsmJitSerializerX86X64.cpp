@@ -49,8 +49,7 @@ ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, U
 {
   Mem m;
   m._mem.size = ptrSize;
-  m._mem.displacement = disp;
-  m._mem.target = target;
+  m._mem.target = (void*)( (UInt8*)target + disp );
   m._mem.segmentPrefix = (SysInt)segmentPrefix;
   return m;
 }
