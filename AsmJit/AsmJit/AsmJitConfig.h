@@ -52,10 +52,17 @@
 // [AsmJit - API]
 //
 // If you are embedding AsmJit library into your project (statically), undef
-// ASMJIT_API macro.
+// ASMJIT_API macro. ASMJIT_HIDDEN macro can contain visibility (used by GCC)
+// to hide some AsmJit symbols that shouldn't be never exported.
+//
+// If you have problems with throw() in compilation time, undef ASMJIT_NOTHROW
+// to disable this feature. ASMJIT_NOTHROW marks functions that never throws
+// an exception.
 
 // #define ASMJIT_HIDDEN
 // #define ASMJIT_API
+// #define ASMJIT_NOTHROW
+
 
 // [AsmJit - Memory Management]
 // #define ASMJIT_MALLOC ::malloc
