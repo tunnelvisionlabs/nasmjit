@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_Defs
@@ -1032,6 +1035,9 @@ enum PROPERTY
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITDEFSX86X64_H

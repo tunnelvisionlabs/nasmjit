@@ -64,9 +64,51 @@
 #endif
 
 // [AsmJit - API]
+
+// Hide AsmJit symbols that we don't want to export (Serializer for example).
+#if !defined(ASMJIT_HIDDEN)
+# if defined(__GNUC__) && __GNUC__ >= 4
+#  define ASMJIT_HIDDEN __attribute__((visibility("hidden")))
+# endif // __GNUC__
+#endif // ASMJIT_HIDDEN
+
+// Make AsmJit as shared library by default.
+#if !defined(ASMJIT_API)
+# if defined(ASMJIT_WINDOWS)
+#  if defined(__GNUC__)
+#   if defined(AsmJit_EXPORTS)
+#    define ASMJIT_API __attribute__((dllexport))
+#   else
+#    define ASMJIT_API __attribute__((dllimport))
+#   endif
+#  else
+#   if defined(AsmJit_EXPORTS)
+#    define ASMJIT_API __declspec(dllexport)
+#   else
+#    define ASMJIT_API __declspec(dllimport)
+#   endif
+#  endif
+# else
+#  if defined(__GNUC__)
+#   if __GNUC__ >= 4
+#    define ASMJIT_API __attribute__((visibility("default")))
+#   endif
+#  endif
+# endif
+#endif // ASMJIT_API
+
+// If not detected, fallback to nothing
+#if !defined(ASMJIT_HIDDEN)
+# define ASMJIT_HIDDEN
+#endif // ASMJIT_HIDDEN
+
 #if !defined(ASMJIT_API)
 # define ASMJIT_API
 #endif // ASMJIT_API
+
+#if !defined(ASMJIT_NOTHROW)
+#define ASMJIT_NOTHROW throw()
+#endif // ASMJIT_NOTHROW
 
 // [AsmJit - Memory Management]
 #if !defined(ASMJIT_MALLOC)

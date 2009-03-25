@@ -1,4 +1,5 @@
 TODO (Compiler):
+[ ] Add ASMJIT_NOTHOW to all functions that can't throw exception
 [ ] Add instruction reordering possibility in compiler (complex)
 [ ] What about float and double variables in compiler ?
     Current implementation can reserve memory for these types, but can't

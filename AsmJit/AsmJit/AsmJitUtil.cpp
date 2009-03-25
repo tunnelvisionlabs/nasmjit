@@ -27,13 +27,17 @@
 #include "AsmJitBuild.h"
 #include "AsmJitUtil.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 // ============================================================================
 // [AsmJit::Buffer]
 // ============================================================================
 
-void Buffer::emitData(const void* dataPtr, SysUInt dataLen)
+void Buffer::emitData(const void* dataPtr, SysUInt dataLen) 
+  ASMJIT_NOTHROW
 {
   SysInt max = capacity() - offset();
   if ((SysUInt)max < dataLen) realloc(offset() + dataLen);
@@ -43,6 +47,7 @@ void Buffer::emitData(const void* dataPtr, SysUInt dataLen)
 }
 
 bool Buffer::realloc(SysInt to)
+  ASMJIT_NOTHROW
 {
   if (capacity() < to)
   {
@@ -67,6 +72,7 @@ bool Buffer::realloc(SysInt to)
 }
 
 bool Buffer::grow()
+  ASMJIT_NOTHROW
 {
   SysInt to = _capacity;
 
@@ -81,11 +87,13 @@ bool Buffer::grow()
 }
 
 void Buffer::clear()
+  ASMJIT_NOTHROW
 {
   _cur = _data;
 }
 
 void Buffer::free()
+  ASMJIT_NOTHROW
 {
   if (!_data) return;
   ASMJIT_FREE(_data);
@@ -97,6 +105,7 @@ void Buffer::free()
 }
 
 UInt8* Buffer::take()
+  ASMJIT_NOTHROW
 {
   UInt8* data = _data;
 
@@ -113,6 +122,7 @@ UInt8* Buffer::take()
 // ============================================================================
 
 Zone::Zone(SysUInt chunkSize)
+  ASMJIT_NOTHROW
 {
   _chunks = NULL;
   _total = 0;
@@ -120,11 +130,13 @@ Zone::Zone(SysUInt chunkSize)
 }
 
 Zone::~Zone()
+  ASMJIT_NOTHROW
 {
   freeAll();
 }
 
 void* Zone::alloc(SysUInt size)
+  ASMJIT_NOTHROW
 {
   Chunk* cur = _chunks;
 
@@ -145,6 +157,7 @@ void* Zone::alloc(SysUInt size)
 }
 
 void Zone::freeAll()
+  ASMJIT_NOTHROW
 {
   Chunk* cur = _chunks;
 
@@ -160,3 +173,6 @@ void Zone::freeAll()
 }
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

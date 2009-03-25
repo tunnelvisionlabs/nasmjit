@@ -57,17 +57,17 @@ static inline T function_cast(Z* p) { return (T)p; }
 // ============================================================================
 
 //! @brief Returns @c true if a given integer @a x is signed 8 bit integer
-static inline bool isInt8(SysInt x) { return x >= -128 && x <= 127; }
+static inline bool isInt8(SysInt x) ASMJIT_NOTHROW { return x >= -128 && x <= 127; }
 //! @brief Returns @c true if a given integer @a x is unsigned 8 bit integer
-static inline bool isUInt8(SysInt x) { return x >= 0 && x <= 255; }
+static inline bool isUInt8(SysInt x) ASMJIT_NOTHROW { return x >= 0 && x <= 255; }
 
 //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
-static inline bool isInt16(SysInt x) { return x >= -32768 && x <= 32767; }
+static inline bool isInt16(SysInt x) ASMJIT_NOTHROW { return x >= -32768 && x <= 32767; }
 //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
-static inline bool isUInt16(SysInt x) { return x >= 0 && x <= 65535; }
+static inline bool isUInt16(SysInt x) ASMJIT_NOTHROW { return x >= 0 && x <= 65535; }
 
 //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
-static inline bool isInt32(SysInt x)
+static inline bool isInt32(SysInt x) ASMJIT_NOTHROW
 {
 #if defined(ASMJIT_X86)
   return true;
@@ -76,7 +76,7 @@ static inline bool isInt32(SysInt x)
 #endif
 }
 //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
-static inline bool isUInt32(SysInt x)
+static inline bool isUInt32(SysInt x) ASMJIT_NOTHROW
 {
 #if defined(ASMJIT_X86)
   return x >= 0;
@@ -112,7 +112,7 @@ union I64FPUnion
 };
 
 //! @brief Binary cast 32 bit integer to SP-FP value (@c float).
-static inline float int32AsFloat(Int32 i)
+static inline float int32AsFloat(Int32 i) ASMJIT_NOTHROW
 {
   I32FPUnion u;
   u.i = i;
@@ -120,7 +120,7 @@ static inline float int32AsFloat(Int32 i)
 }
 
 //! @brief Binary cast SP-FP value (@c float) to 32 bit integer.
-static inline Int32 floatAsInt32(float f)
+static inline Int32 floatAsInt32(float f) ASMJIT_NOTHROW
 {
   I32FPUnion u;
   u.f = f;
@@ -128,7 +128,7 @@ static inline Int32 floatAsInt32(float f)
 }
 
 //! @brief Binary cast 64 bit integer to DP-FP value (@c double).
-static inline double int64AsDouble(Int64 i)
+static inline double int64AsDouble(Int64 i) ASMJIT_NOTHROW
 {
   I64FPUnion u;
   u.i = i;
@@ -136,7 +136,7 @@ static inline double int64AsDouble(Int64 i)
 }
 
 //! @brief Binary cast DP-FP value (@c double) to 64 bit integer.
-static inline Int64 doubleAsInt64(double f)
+static inline Int64 doubleAsInt64(double f) ASMJIT_NOTHROW
 {
   I64FPUnion u;
   u.f = f;
@@ -150,7 +150,7 @@ static inline Int64 doubleAsInt64(double f)
 //! @brief Structure used for MMX specific data (64 bits).
 //!
 //! This structure can be used to load / store data from / to MMX register.
-union MMData
+union ASMJIT_HIDDEN MMData
 {
   //! @brief Array of eight signed 8 bit integers.
   Int8   sb[8];
@@ -173,39 +173,39 @@ union MMData
   float  sf[2];
 
   //! @brief Set all eight signed 8 bit integers.
-  inline void set_sb(Int8 x0, Int8 x1, Int8 x2, Int8 x3, Int8 x4, Int8 x5, Int8 x6, Int8 x7)
+  inline void set_sb(Int8 x0, Int8 x1, Int8 x2, Int8 x3, Int8 x4, Int8 x5, Int8 x6, Int8 x7) ASMJIT_NOTHROW
   { sb[0] = x0; sb[1] = x1; sb[2] = x2; sb[3] = x3; sb[4] = x4; sb[5] = x5; sb[6] = x6; sb[7] = x7; }
 
   //! @brief Set all eight unsigned 8 bit integers.
-  inline void set_ub(UInt8 x0, UInt8 x1, UInt8 x2, UInt8 x3, UInt8 x4, UInt8 x5, UInt8 x6, UInt8 x7)
+  inline void set_ub(UInt8 x0, UInt8 x1, UInt8 x2, UInt8 x3, UInt8 x4, UInt8 x5, UInt8 x6, UInt8 x7) ASMJIT_NOTHROW
   { ub[0] = x0; ub[1] = x1; ub[2] = x2; ub[3] = x3; ub[4] = x4; ub[5] = x5; ub[6] = x6; ub[7] = x7; }
 
   //! @brief Set all four signed 16 bit integers.
-  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3)
+  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3) ASMJIT_NOTHROW
   { sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; }
 
   //! @brief Set all four unsigned 16 bit integers.
-  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3)
+  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3) ASMJIT_NOTHROW
   { uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; }
 
   //! @brief Set all two signed 32 bit integers.
-  inline void set_sd(Int32 x0, Int32 x1)
+  inline void set_sd(Int32 x0, Int32 x1) ASMJIT_NOTHROW
   { sd[0] = x0; sd[1] = x1; }
 
   //! @brief Set all two unsigned 32 bit integers.
-  inline void set_ud(UInt32 x0, UInt32 x1)
+  inline void set_ud(UInt32 x0, UInt32 x1) ASMJIT_NOTHROW
   { ud[0] = x0; ud[1] = x1; }
 
   //! @brief Set signed 64 bit integer.
-  inline void set_sd(Int64 x0)
+  inline void set_sd(Int64 x0) ASMJIT_NOTHROW
   { sq[0] = x0; }
 
   //! @brief Set unsigned 64 bit integer.
-  inline void set_ud(UInt64 x0)
+  inline void set_ud(UInt64 x0) ASMJIT_NOTHROW
   { uq[0] = x0; }
 
   //! @brief Set all two SP-FP values.
-  inline void set_sf(float x0, float x1)
+  inline void set_sf(float x0, float x1) ASMJIT_NOTHROW
   { sf[0] = x0; sf[1] = x1; }
 };
 
@@ -214,7 +214,7 @@ union MMData
 //! This structure can be used to load / store data from / to SSE register.
 //!
 //! @note Always align SSE data to 16 bytes.
-union XMMData
+union ASMJIT_HIDDEN XMMData
 {
   //! @brief Array of sixteen signed 8 bit integers.
   Int8   sb[16];
@@ -240,7 +240,7 @@ union XMMData
 
   inline void set_sb(
     Int8 x0, Int8 x1, Int8 x2 , Int8 x3 , Int8 x4 , Int8 x5 , Int8 x6 , Int8 x7 ,
-    Int8 x8, Int8 x9, Int8 x10, Int8 x11, Int8 x12, Int8 x13, Int8 x14, Int8 x15)
+    Int8 x8, Int8 x9, Int8 x10, Int8 x11, Int8 x12, Int8 x13, Int8 x14, Int8 x15) ASMJIT_NOTHROW
   {
     sb[0] = x0; sb[1] = x1; sb[ 2] = x2 ; sb[3 ] = x3 ; sb[4 ] = x4 ; sb[5 ] = x5 ; sb[6 ] = x6 ; sb[7 ] = x7 ;
     sb[8] = x8; sb[9] = x9; sb[10] = x10; sb[11] = x11; sb[12] = x12; sb[13] = x13; sb[14] = x14; sb[15] = x15; 
@@ -248,34 +248,34 @@ union XMMData
 
   inline void set_ub(
     UInt8 x0, UInt8 x1, UInt8 x2 , UInt8 x3 , UInt8 x4 , UInt8 x5 , UInt8 x6 , UInt8 x7 ,
-    UInt8 x8, UInt8 x9, UInt8 x10, UInt8 x11, UInt8 x12, UInt8 x13, UInt8 x14, UInt8 x15)
+    UInt8 x8, UInt8 x9, UInt8 x10, UInt8 x11, UInt8 x12, UInt8 x13, UInt8 x14, UInt8 x15) ASMJIT_NOTHROW
   {
     ub[0] = x0; ub[1] = x1; ub[ 2] = x2 ; ub[3 ] = x3 ; ub[4 ] = x4 ; ub[5 ] = x5 ; ub[6 ] = x6 ; ub[7 ] = x7 ;
     ub[8] = x8; ub[9] = x9; ub[10] = x10; ub[11] = x11; ub[12] = x12; ub[13] = x13; ub[14] = x14; ub[15] = x15; 
   }
 
-  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3, Int16 x4, Int16 x5, Int16 x6, Int16 x7)
+  inline void set_sw(Int16 x0, Int16 x1, Int16 x2, Int16 x3, Int16 x4, Int16 x5, Int16 x6, Int16 x7) ASMJIT_NOTHROW
   { sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; sw[4] = x4; sw[5] = x5; sw[6] = x6; sw[7] = x7; }
 
-  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3, UInt16 x4, UInt16 x5, UInt16 x6, UInt16 x7)
+  inline void set_uw(UInt16 x0, UInt16 x1, UInt16 x2, UInt16 x3, UInt16 x4, UInt16 x5, UInt16 x6, UInt16 x7) ASMJIT_NOTHROW
   { uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; uw[4] = x4; uw[5] = x5; uw[6] = x6; uw[7] = x7; }
 
-  inline void set_sd(Int32 x0, Int32 x1, Int32 x2, Int32 x3)
+  inline void set_sd(Int32 x0, Int32 x1, Int32 x2, Int32 x3) ASMJIT_NOTHROW
   { sd[0] = x0; sd[1] = x1; sd[2] = x2; sd[3] = x3; }
 
-  inline void set_ud(UInt32 x0, UInt32 x1, UInt32 x2, UInt32 x3)
+  inline void set_ud(UInt32 x0, UInt32 x1, UInt32 x2, UInt32 x3) ASMJIT_NOTHROW
   { ud[0] = x0; ud[1] = x1; ud[2] = x2; ud[3] = x3; }
 
-  inline void set_sd(Int64 x0, Int64 x1)
+  inline void set_sd(Int64 x0, Int64 x1) ASMJIT_NOTHROW
   { sq[0] = x0; sq[1] = x1; }
 
-  inline void set_ud(UInt64 x0, UInt64 x1)
+  inline void set_ud(UInt64 x0, UInt64 x1) ASMJIT_NOTHROW
   { uq[0] = x0; uq[1] = x1; }
 
-  inline void set_sf(float x0, float x1, float x2, float x3)
+  inline void set_sf(float x0, float x1, float x2, float x3) ASMJIT_NOTHROW
   { sf[0] = x0; sf[1] = x1; sf[2] = x2; sf[3] = x3; }
 
-  inline void set_df(double x0, double x1)
+  inline void set_df(double x0, double x1) ASMJIT_NOTHROW
   { df[0] = x0; df[1] = x1; }
 };
 
@@ -318,7 +318,7 @@ union XMMData
 //! @endcode
 struct ASMJIT_API Buffer
 {
-  inline Buffer(SysInt growThreshold = 16) :
+  inline Buffer(SysInt growThreshold = 16) ASMJIT_NOTHROW :
     _data(NULL),
     _cur(NULL),
     _max(NULL),
@@ -327,37 +327,37 @@ struct ASMJIT_API Buffer
   {
   }
 
-  inline ~Buffer()
+  inline ~Buffer() ASMJIT_NOTHROW
   {
     if (_data) ASMJIT_FREE(_data);
   }
 
   //! @brief Return start of buffer.
-  inline UInt8* data() const { return _data; }
+  inline UInt8* data() const ASMJIT_NOTHROW { return _data; }
 
   //! @brief Return current pointer in code buffer.
-  inline UInt8* cur() const { return _cur; }
+  inline UInt8* cur() const ASMJIT_NOTHROW { return _cur; }
 
   //! @brief Return maximum pointer in code buffer for growing.
-  inline UInt8* maximum() const { return _max; }
+  inline UInt8* maximum() const ASMJIT_NOTHROW { return _max; }
 
   //! @brief Return current offset in buffer (same as codeSize()).
-  inline SysInt offset() const { return (SysInt)(_cur - _data); }
+  inline SysInt offset() const ASMJIT_NOTHROW { return (SysInt)(_cur - _data); }
 
   //! @brief Return capacity of buffer.
-  inline SysInt capacity() const { return _capacity; }
+  inline SysInt capacity() const ASMJIT_NOTHROW { return _capacity; }
 
   //! @brief Return grow threshold.
-  inline SysInt growThreshold() const { return _growThreshold; }
+  inline SysInt growThreshold() const ASMJIT_NOTHROW { return _growThreshold; }
 
   //! @brief Ensure space for next instruction
-  inline bool ensureSpace() { return (_cur >= _max) ? grow() : true; }
+  inline bool ensureSpace() ASMJIT_NOTHROW { return (_cur >= _max) ? grow() : true; }
 
   //! @brief Sets offset to @a o and returns previous offset.
   //!
   //! This method can be used to truncate buffer or it's used to
   //! overwrite specific position in buffer by Assembler.
-  inline SysInt toOffset(SysInt o) 
+  inline SysInt toOffset(SysInt o) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(o < _capacity);
 
@@ -370,111 +370,111 @@ struct ASMJIT_API Buffer
   //!
   //! It's only used for growing, buffer is never reallocated to smaller 
   //! number than current capacity() is.
-  bool realloc(SysInt to);
+  bool realloc(SysInt to) ASMJIT_NOTHROW;
 
   //! @brief Used to grow the buffer.
   //!
   //! It will typically realloc to twice size of capacity(), but if capacity()
   //! is large, it will use smaller steps.
-  bool grow();
+  bool grow() ASMJIT_NOTHROW;
 
   //! @brief Clear everything, but not deallocate buffer.
-  void clear();
+  void clear() ASMJIT_NOTHROW;
 
   //! @brief Free buffer and NULL all pointers.
-  void free();
+  void free() ASMJIT_NOTHROW;
 
   //! @brief Return buffer and NULL all pointers.
-  UInt8* take();
+  UInt8* take() ASMJIT_NOTHROW;
 
   //! @brief Emit Byte.
-  inline void emitByte(UInt8 x)
+  inline void emitByte(UInt8 x) ASMJIT_NOTHROW
   {
     *_cur++ = x;
   }
 
   //! @brief Emit Word (2 bytes).
-  inline void emitWord(UInt16 x)
+  inline void emitWord(UInt16 x) ASMJIT_NOTHROW
   {
     *(UInt16 *)_cur = x;
     _cur += 2;
   }
 
   //! @brief Emit DWord (4 bytes).
-  inline void emitDWord(UInt32 x)
+  inline void emitDWord(UInt32 x) ASMJIT_NOTHROW
   {
     *(UInt32 *)_cur = x;
     _cur += 4;
   }
 
   //! @brief Emit QWord (8 bytes).
-  inline void emitQWord(UInt64 x)
+  inline void emitQWord(UInt64 x) ASMJIT_NOTHROW
   {
     *(UInt64 *)_cur = x;
     _cur += 8;
   }
 
   //! @brief Emit system signed integer (4 or 8 bytes).
-  inline void emitSysInt(SysInt x)
+  inline void emitSysInt(SysInt x) ASMJIT_NOTHROW
   {
     *(SysInt *)_cur = x;
     _cur += sizeof(SysInt);
   }
 
   //! @brief Emit system unsigned integer (4 or 8 bytes).
-  inline void emitSysUInt(SysUInt x)
+  inline void emitSysUInt(SysUInt x) ASMJIT_NOTHROW
   {
     *(SysUInt *)_cur = x;
     _cur += sizeof(SysUInt);
   }
 
   //! @brief Emit custom data. 
-  void emitData(const void* ptr, SysUInt len);
+  void emitData(const void* ptr, SysUInt len) ASMJIT_NOTHROW;
 
   //! @brief Set byte at position @a pos.
-  inline UInt8 getByteAt(SysInt pos) const
+  inline UInt8 getByteAt(SysInt pos) const ASMJIT_NOTHROW
   {
     return *reinterpret_cast<const UInt8*>(_data + pos);
   }
 
   //! @brief Set word at position @a pos.
-  inline UInt16 getWordAt(SysInt pos) const
+  inline UInt16 getWordAt(SysInt pos) const ASMJIT_NOTHROW
   {
     return *reinterpret_cast<const UInt16*>(_data + pos);
   }
 
   //! @brief Set word at position @a pos.
-  inline UInt32 getDWordAt(SysInt pos) const
+  inline UInt32 getDWordAt(SysInt pos) const ASMJIT_NOTHROW
   {
     return *reinterpret_cast<const UInt32*>(_data + pos);
   }
 
   //! @brief Set word at position @a pos.
-  inline UInt64 getQWordAt(SysInt pos) const
+  inline UInt64 getQWordAt(SysInt pos) const ASMJIT_NOTHROW
   {
     return *reinterpret_cast<const UInt64*>(_data + pos);
   }
 
   //! @brief Set byte at position @a pos.
-  inline void setByteAt(SysInt pos, UInt8 x)
+  inline void setByteAt(SysInt pos, UInt8 x) ASMJIT_NOTHROW
   {
     *reinterpret_cast<UInt8*>(_data + pos) = x;
   }
 
   //! @brief Set word at position @a pos.
-  inline void setWordAt(SysInt pos, UInt16 x)
+  inline void setWordAt(SysInt pos, UInt16 x) ASMJIT_NOTHROW
   {
     *reinterpret_cast<UInt16*>(_data + pos) = x;
   }
 
   //! @brief Set word at position @a pos.
-  inline void setDWordAt(SysInt pos, UInt32 x)
+  inline void setDWordAt(SysInt pos, UInt32 x) ASMJIT_NOTHROW
   {
     *reinterpret_cast<UInt32*>(_data + pos) = x;
   }
 
   //! @brief Set word at position @a pos.
-  inline void setQWordAt(SysInt pos, UInt64 x)
+  inline void setQWordAt(SysInt pos, UInt64 x) ASMJIT_NOTHROW
   {
     *reinterpret_cast<UInt64*>(_data + pos) = x;
   }
@@ -512,33 +512,33 @@ struct PodVector
 {
   //! @brief Create new instance of PodVector template. Data will not
   //! be allocated (will be NULL).
-  inline PodVector() : _data(NULL), _length(0), _capacity(0)
+  inline PodVector() ASMJIT_NOTHROW : _data(NULL), _length(0), _capacity(0)
   {
   }
   
   //! @brief Destroy PodVector and free all data.
-  inline ~PodVector()
+  inline ~PodVector() ASMJIT_NOTHROW
   {
     if (_data) ASMJIT_FREE(_data);
   }
 
   //! @brief Return vector data.
-  inline T* data() { return _data; }
+  inline T* data() ASMJIT_NOTHROW { return _data; }
   //! @overload
-  inline const T* data() const { return _data; }
+  inline const T* data() const ASMJIT_NOTHROW { return _data; }
   //! @brief Return vector length.
-  inline SysUInt length() const { return _length; }
+  inline SysUInt length() const ASMJIT_NOTHROW { return _length; }
   //! @brief Return vector capacity (allocation capacity).
-  inline SysUInt capacity() const { return _capacity; }
+  inline SysUInt capacity() const ASMJIT_NOTHROW { return _capacity; }
 
   //! @brief Clear vector data, but not free internal buffer.
-  void clear()
+  void clear() ASMJIT_NOTHROW
   {
     _length = 0;
   }
 
   //! @brief Clear vector data and free internal buffer.
-  void free()
+  void free() ASMJIT_NOTHROW
   {
     if (_data) 
     {
@@ -550,7 +550,7 @@ struct PodVector
   }
 
   //! @brief Prepend @a item to vector.
-  bool prepend(const T& item)
+  bool prepend(const T& item) ASMJIT_NOTHROW
   {
     if (_length == _capacity && !_grow()) return false;
 
@@ -561,7 +561,7 @@ struct PodVector
     return true;
   }
 
-  bool insert(SysUInt index, const T& item)
+  bool insert(SysUInt index, const T& item) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(index <= _length);
     if (_length == _capacity && !_grow()) return false;
@@ -575,7 +575,7 @@ struct PodVector
   }
 
   //! @brief Append @a item to vector.
-  bool append(const T& item)
+  bool append(const T& item) ASMJIT_NOTHROW
   {
     if (_length == _capacity && !_grow()) return false;
 
@@ -586,19 +586,19 @@ struct PodVector
   }
 
   //! @brief Return item at @a i position.
-  inline T& operator[](SysUInt i) { ASMJIT_ASSERT(i < _length); return _data[i]; }
+  inline T& operator[](SysUInt i) ASMJIT_NOTHROW { ASMJIT_ASSERT(i < _length); return _data[i]; }
   //! @brief Return item at @a i position.
-  inline const T& operator[](SysUInt i) const { ASMJIT_ASSERT(i < _length); return _data[i]; }
+  inline const T& operator[](SysUInt i) const ASMJIT_NOTHROW { ASMJIT_ASSERT(i < _length); return _data[i]; }
 
 private:
   //! @brief Called to grow internal array.
-  bool _grow()
+  bool _grow() ASMJIT_NOTHROW
   {
     return _realloc(_capacity < 16 ? 16 : _capacity << 1);
   }
 
   //! @brief Realloc internal array to fit @a to items.
-  bool _realloc(SysUInt to)
+  bool _realloc(SysUInt to) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(to >= _length);
 
@@ -642,10 +642,10 @@ struct ASMJIT_API Zone
 
   //! @brief Create new instance of @c Zone.
   //! @param chunkSize Default size for one zone chunk.
-  Zone(SysUInt chunkSize);
+  Zone(SysUInt chunkSize) ASMJIT_NOTHROW;
 
   //! @brief Destroy zone instance.
-  ~Zone();
+  ~Zone() ASMJIT_NOTHROW;
 
   // [Methods]
 
@@ -685,20 +685,20 @@ struct ASMJIT_API Zone
   //!   // alternative is to call @c zone.freeAll().
   //! }
   //! @endcode
-  void* alloc(SysUInt size);
+  void* alloc(SysUInt size) ASMJIT_NOTHROW;
 
   //! @brief Free all allocated memory at once.
-  void freeAll();
+  void freeAll() ASMJIT_NOTHROW;
 
   //! @brief Return total size of allocated objects - by @c alloc().
-  inline SysUInt total() const { return _total; }
+  inline SysUInt total() const ASMJIT_NOTHROW { return _total; }
   //! @brief Return (default) chunk size.
-  inline SysUInt chunkSize() const { return _chunkSize; }
+  inline SysUInt chunkSize() const ASMJIT_NOTHROW { return _chunkSize; }
 
   // [Chunk]
 
   //! @brief One allocated chunk of memory.
-  struct Chunk
+  struct ASMJIT_HIDDEN Chunk
   {
     //! @brief Link to previous chunk.
     Chunk* prev;
@@ -711,7 +711,7 @@ struct ASMJIT_API Zone
     UInt8 data[4];
 
     //! @brief Return count of remaining (unused) bytes in chunk.
-    inline SysUInt remain() const { return size - pos; }
+    inline SysUInt remain() const ASMJIT_NOTHROW { return size - pos; }
   };
 
 private:

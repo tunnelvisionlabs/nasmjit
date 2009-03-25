@@ -38,6 +38,9 @@
 // a little bit C++
 #include <new>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 // forward declarations
@@ -370,8 +373,8 @@ enum VARIABLE_TYPE
 #else
   VARIABLE_TYPE_INT64 = 2,
   VARIABLE_TYPE_UINT64 = 2,
-  VARIABLE_TYPE_SYSINT = VARIABLE_TYPE_INT32,
-  VARIABLE_TYPE_SYSUINT = VARIABLE_TYPE_UINT32,
+  VARIABLE_TYPE_SYSINT = VARIABLE_TYPE_INT64,
+  VARIABLE_TYPE_SYSUINT = VARIABLE_TYPE_UINT64,
 #endif
 
   //! @brief Variable is pointer or reference to memory (or any type).
@@ -502,61 +505,97 @@ struct ASMJIT_API Variable
   // [Methods]
 
   //! @brief Return compiler that owns this variable.
-  inline Compiler* compiler() const { return _compiler; }
+  inline Compiler* compiler() const ASMJIT_NOTHROW
+  { return _compiler; }
+
   //! @brief Return function that owns this variable.
-  inline Function* function() const { return _function; }
+  inline Function* function() const ASMJIT_NOTHROW
+  { return _function; }
 
   //! @brief Return reference count.
-  inline SysUInt refCount() const { return _refCount; }
+  inline SysUInt refCount() const ASMJIT_NOTHROW
+  { return _refCount; }
+  
   //! @brief Return spill count.
-  inline SysUInt spillCount() const { return _spillCount; }
+  inline SysUInt spillCount() const ASMJIT_NOTHROW
+  { return _spillCount; }
+  
   //! @brief Return reuse count.
-  inline SysUInt reuseCount() const { return _reuseCount; }
+  inline SysUInt reuseCount() const ASMJIT_NOTHROW
+  { return _reuseCount; }
+  
   //! @brief Return register access statistics.
-  inline SysUInt registerAccessCount() const { return _registerAccessCount; }
+  inline SysUInt registerAccessCount() const ASMJIT_NOTHROW
+  { return _registerAccessCount; }
+  
   //! @brief Return memory access statistics.
-  inline SysUInt memoryAccessCount() const { return _memoryAccessCount; }
+  inline SysUInt memoryAccessCount() const ASMJIT_NOTHROW
+  { return _memoryAccessCount; }
 
   //! @brief Return variable type, see @c VARIABLE_TYPE.
-  inline UInt8 type() const { return _type; }
+  inline UInt8 type() const ASMJIT_NOTHROW
+  { return _type; }
+
   //! @brief Return variable size (in bytes).
-  inline UInt8 size() const { return _size; }
+  inline UInt8 size() const ASMJIT_NOTHROW
+  { return _size; }
+
   //! @brief Return variable state, see @c VARIABLE_STATE.
-  inline UInt8 state() const { return _state; }
+  inline UInt8 state() const ASMJIT_NOTHROW
+  { return _state; }
+
   //! @brief Return variable priority.
   //!
   //! Variable priority is used for spilling. Lower number means less chance
   //! to spill. Zero means that variable can't be never spilled.
-  inline UInt8 priority() const { return _priority; }
+  inline UInt8 priority() const ASMJIT_NOTHROW
+  { return _priority; }
+
   //! @brief Return variable register code (where it now lives), or NO_REG if
   //! it's only in memory (spilled).
-  inline UInt8 registerCode() const { return _registerCode; }
+  inline UInt8 registerCode() const ASMJIT_NOTHROW
+  { return _registerCode; }
+
   //! @brief Return variable preferred register.
-  inline UInt8 preferredRegister() const { return _preferredRegister; }
+  inline UInt8 preferredRegisterCode() const ASMJIT_NOTHROW
+  { return _preferredRegisterCode; }
+
+  //! @brief Return variable home register code (this is usually last 
+  //! allocated register code).
+  inline UInt8 homeRegisterCode() const ASMJIT_NOTHROW
+  { return _homeRegisterCode; }
 
   //! @brief Return variable changed state.
-  inline UInt8 changed() const { return _changed; }
+  inline UInt8 changed() const ASMJIT_NOTHROW
+  { return _changed; }
   
   //! @brief Return variable stack offset.
   //!
   //! @note Stack offsets can be changed by Compiler, don't use this 
   //! to generate memory operands.
-  inline SysInt stackOffset() const { return _stackOffset; }
+  inline SysInt stackOffset() const ASMJIT_NOTHROW
+  { return _stackOffset; }
 
   //! @brief Set variable priority.
   void setPriority(UInt8 priority);
+
   //! @brief Set varialbe preferred register.
-  inline void setPreferredRegister(UInt8 code) { _preferredRegister = code; }
+  inline void setPreferredRegisterCode(UInt8 code) ASMJIT_NOTHROW
+  { _preferredRegisterCode = code; }
+
   //! @brief Set variable changed state.
-  inline void setChanged(UInt8 changed) { _changed = changed; }
+  inline void setChanged(UInt8 changed) ASMJIT_NOTHROW
+  { _changed = changed; }
 
   //! @brief Memory operand that will be always pointed to variable memory address. */
-  inline const Mem& memoryOperand() const { return *_memoryOperand; }
+  inline const Mem& memoryOperand() const ASMJIT_NOTHROW
+  { return *_memoryOperand; }
 
   // [Reference counting]
 
   //! @brief Increase reference count and return itself.
   Variable* ref();
+
   //! @brief Decrease reference count. If reference is decreased to zero, 
   //! variable is marked as unused and deallocated.
   void deref();
@@ -565,12 +604,22 @@ struct ASMJIT_API Variable
 
   //! @brief Allocate variable to register.
   //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
-  //! @param prefferedRegister Preffered register to use (see @c AsmJit::REG enum).
+  //! @param preferredRegister Preferred register to use (see @c AsmJit::REG enum).
   inline void alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG);
+
+  //! @brief Allocate variable to register and return it in @a dest.
+  //!
+  //! This function is similar to @c alloc(), but setups @a dest register. It's
+  //! convenience method for @c AsmJit::VariableRef register accesses.
+  void getReg(
+    UInt8 mode, UInt8 preferredRegister,
+    BaseReg* dest, UInt8 regType);
+
   //! @brief Spill variable (move to memory).
   inline void spill();
+
   //! @brief Unuse variable
   //!
   //! This will completely destroy variable. After @c unuse() you can use
@@ -586,40 +635,51 @@ struct ASMJIT_API Variable
   //! and there is no chance to move it to / from stack. For example mmx zero
   //! register can be implemented in allocFn() that will emit pxor(mm, mm).
   //! Variable will never spill into stack in this case.
-  inline bool isCustom() const
+  inline bool isCustom() const ASMJIT_NOTHROW
   { return _allocFn != NULL || _spillFn != NULL; }
 
   //! @brief Get custom alloc function.
-  inline AllocFn allocFn() const { return _allocFn; }
+  inline AllocFn allocFn() const ASMJIT_NOTHROW
+  { return _allocFn; }
+
   //! @brief Get custom spill function.
-  inline SpillFn spillFn() const { return _spillFn; }
+  inline SpillFn spillFn() const ASMJIT_NOTHROW
+  { return _spillFn; }
+
   //! @brief Get custom data pointer.
-  inline void* data() const { return _data; }
+  inline void* data() const ASMJIT_NOTHROW
+  { return _data; }
 
   //! @brief Set custom alloc function.
-  inline void setAllocFn(AllocFn fn) { _allocFn = fn; }
+  inline void setAllocFn(AllocFn fn) ASMJIT_NOTHROW
+  { _allocFn = fn; }
+
   //! @brief Set custom spill function.
-  inline void setSpillFn(SpillFn fn) { _spillFn = fn; }
+  inline void setSpillFn(SpillFn fn) ASMJIT_NOTHROW
+  { _spillFn = fn; }
+
   //! @brief Set custom data.
-  inline void setData(void* data) { _data = data; }
+  inline void setData(void* data) ASMJIT_NOTHROW
+  { _data = data; }
 
 private:
   //! @brief Set variable stack offset.
   //! @internal
-  inline void setStackOffset(SysInt stackOffset) { _stackOffset = stackOffset; }
+  inline void setStackOffset(SysInt stackOffset) ASMJIT_NOTHROW
+  { _stackOffset = stackOffset; }
 
   //! @brief Set most members by one shot.
   inline void setAll(
     UInt8 type, UInt8 size, UInt8 state, UInt8 priority, 
-    UInt8 registerCode, UInt8 preferredRegister,
-    SysInt stackOffset)
+    UInt8 registerCode, UInt8 preferredRegisterCode,
+    SysInt stackOffset) ASMJIT_NOTHROW
   {
     _type = type;
     _size = size;
     _state = state;
     _priority = priority;
     _registerCode = registerCode;
-    _preferredRegister = preferredRegister;
+    _preferredRegisterCode = preferredRegisterCode;
     _stackOffset = stackOffset;
   }
 
@@ -630,35 +690,48 @@ private:
 
   //! @brief Reference count.
   SysUInt _refCount;
-  //! @brief How many times was variable spilled.
+
+  //! @brief How many times was variable spilled (in current context).
   SysUInt _spillCount;
+  //! @brief Register access count (in current context).
+  SysUInt _registerAccessCount;
+  //! @brief Memory access count (in current context).
+  SysUInt _memoryAccessCount;
+
   //! @brief How many times was variable reused.
   SysUInt _reuseCount;
-  //! @brief Register access count.
-  SysUInt _registerAccessCount;
-  //! @brief Memory access count.
-  SysUInt _memoryAccessCount;
+
+  //! @brief How many times was variable spilled (in current context).
+  SysUInt _globalSpillCount;
+  //! @brief Register access count (in current context).
+  SysUInt _globalRegisterAccessCount;
+  //! @brief Memory access count (in current context).
+  SysUInt _globalMemoryAccessCount;
 
   //! @brief Variable type, see @c VARIABLE_TYPE.
   UInt8 _type;
+
   //! @brief Variable size (in bytes).
   UInt8 _size;
+
   //! @brief Variable state, see @c VARIABLE_STATE.
   UInt8 _state;
+
   //! @brief Variable priority.
   UInt8 _priority;
 
   //! @brief Register code if variable state is @c VARIABLE_STATE_REGISTER.
   UInt8 _registerCode;
+
   //! @brief Default register where to alloc variable.
-  UInt8 _preferredRegister;
+  UInt8 _preferredRegisterCode;
+
+  //! @brief Last allocated register code.
+  UInt8 _homeRegisterCode;
 
   //! @brief true if variable in register was changed and when spilling it 
   //! needs to be copied into memory location.
   UInt8 _changed;
-
-  //! @brief Reserved for future use.
-  UInt8 _reserved;
 
   //! @brief Stack location.
   SysInt _stackOffset;
@@ -698,7 +771,7 @@ private:
 //!
 //! @sa @c Variable,
 //!     @c Int32Ref, @c Int64Ref, @c SysIntRef, @c PtrRef, @c MMRef, @c XMMRef.
-struct VariableRef
+struct ASMJIT_HIDDEN VariableRef
 {
   // [Typedefs]
 
@@ -741,7 +814,7 @@ struct VariableRef
 
   //! @brief Allocate variable to register.
   //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
-  //! @param prefferedRegister Preffered register to use (see @c REG enum).
+  //! @param preferredRegister Preferred register to use (see @c REG enum).
   inline void alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG)
@@ -777,31 +850,46 @@ struct VariableRef
     }
   }
 
-  //! @brief Get variable preffered register.
-  inline UInt8 preferredRegister() const { ASMJIT_ASSERT(_v); return _v->preferredRegister(); }
-  //! @brief Set variable preffered register to @a code.
-  //! @param code Preffered register code (see @c AsmJit::REG enum).
-  inline void setPreferredRegister(UInt8 code) { ASMJIT_ASSERT(_v); _v->setPreferredRegister(code); }
+  //! @brief Get variable preferred register code.
+  inline UInt8 preferredRegisterCode() const
+  { ASMJIT_ASSERT(_v); return _v->preferredRegisterCode(); }
+
+  //! @brief Set variable preferred register code to @a code.
+  //! @param code Preferred register code (see @c AsmJit::REG enum).
+  inline void setPreferredRegisterCode(UInt8 code)
+  { ASMJIT_ASSERT(_v); _v->setPreferredRegisterCode(code); }
+
+  //! @brief Get variable home register code.
+  inline UInt8 homeRegisterCode() const
+  { ASMJIT_ASSERT(_v); return _v->homeRegisterCode(); }
 
   //! @brief Get variable priority.
-  inline UInt8 priority() const { ASMJIT_ASSERT(_v); return _v->priority(); }
+  inline UInt8 priority() const
+  { ASMJIT_ASSERT(_v); return _v->priority(); }
+
   //! @brief Set variable priority.
-  inline void setPriority(UInt8 priority) { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
+  inline void setPriority(UInt8 priority)
+  { ASMJIT_ASSERT(_v); _v->setPriority(priority); }
 
   //! @brief Return if variable changed state.
-  inline UInt8 changed() const { ASMJIT_ASSERT(_v); return _v->changed(); }
+  inline UInt8 changed() const
+  { ASMJIT_ASSERT(_v); return _v->changed(); }
+
   //! @brief Set variable changed state.
-  inline void setChanged(UInt8 changed) { ASMJIT_ASSERT(_v); _v->setChanged(changed); }
+  inline void setChanged(UInt8 changed)
+  { ASMJIT_ASSERT(_v); _v->setChanged(changed); }
 
   //! @brief Return memory address operand.
   //!
   //! @note Getting memory address operand will always call @c spill().
-  inline const Mem& m() const { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
+  inline const Mem& m() const
+  { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
 
   // [Reference counting]
 
   //! @brief Increase reference count and return @c Variable instance.
-  inline Variable* ref() { ASMJIT_ASSERT(_v); return _v->ref(); }
+  inline Variable* ref()
+  { ASMJIT_ASSERT(_v); return _v->ref(); }
 
   // [Custom Spill / Restore]
 
@@ -840,8 +928,15 @@ private:
   ASMJIT_DISABLE_COPY(VariableRef);
 };
 
+// Helper macro for VariableRef::... register access methods.
+#define __REG_ACCESS(__regClass__, __allocType__, __preferredRegCode__, __regType__) \
+  ASMJIT_ASSERT(_v); \
+  __regClass__ result; \
+  _v->getReg(__allocType__, __preferredRegCode__, &result, __regType__); \
+  return result
+
 //! @brief 32 bit integer variable wrapper.
-struct Int32Ref : public VariableRef
+struct ASMJIT_HIDDEN Int32Ref : public VariableRef
 {
   // [Construction / Destruction]
 
@@ -853,34 +948,34 @@ struct Int32Ref : public VariableRef
 
   // [Registers]
 
-  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register r16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register r32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register r  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPD); }
+  inline Register r8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPB); }
+  inline Register r16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPW); }
+  inline Register r32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPD); }
 #if defined(ASMJIT_X64)
-  inline Register r64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register r64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPQ); }
 #endif // ASMJIT_X64
 
-  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register c8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register c16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register c32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register c  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPD); }
+  inline Register c8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPB); }
+  inline Register c16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPW); }
+  inline Register c32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPD); }
 #if defined(ASMJIT_X64)
-  inline Register c64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register c64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPQ); }
 #endif // ASMJIT_X64
 
-  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register x8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register x16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register x32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
+  inline Register x  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPD); }
+  inline Register x8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPB); }
+  inline Register x16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPW); }
+  inline Register x32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPD); }
 #if defined(ASMJIT_X64)
-  inline Register x64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register x64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPQ); }
 #endif // ASMJIT_X64
 };
 
 #if defined(ASMJIT_X64)
 //! @brief 64 bit integer variable wrapper.
-struct Int64Ref : public VariableRef
+struct ASMJIT_HIDDEN Int64Ref : public VariableRef
 {
   // [Construction / Destruction]
 
@@ -892,28 +987,28 @@ struct Int64Ref : public VariableRef
 
   // [Registers]
 
-  inline Register r  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
-  inline Register r8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register r16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register r32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register r64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register r  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPQ); }
+  inline Register r8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPB); }
+  inline Register r16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPW); }
+  inline Register r32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPD); }
+  inline Register r64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READWRITE, pref, REG_GPQ); }
 
-  inline Register c  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
-  inline Register c8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register c16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register c32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register c64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register c  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPQ); }
+  inline Register c8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPB); }
+  inline Register c16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPW); }
+  inline Register c32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPD); }
+  inline Register c64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_READ     , pref, REG_GPQ); }
 
-  inline Register x  () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
-  inline Register x8 () const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpb(_v->registerCode() & REGCODE_MASK); }
-  inline Register x16() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpw(_v->registerCode() & REGCODE_MASK); }
-  inline Register x32() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpd(_v->registerCode() & REGCODE_MASK); }
-  inline Register x64() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_gpq(_v->registerCode() & REGCODE_MASK); }
+  inline Register x  (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPQ); }
+  inline Register x8 (UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPB); }
+  inline Register x16(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPW); }
+  inline Register x32(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPD); }
+  inline Register x64(UInt8 pref = NO_REG) const { __REG_ACCESS(Register, VARIABLE_ALLOC_WRITE    , pref, REG_GPQ); }
 };
 #endif // ASMJIT_X64
 
 //! @brief MMX variable wrapper.
-struct MMRef : public VariableRef
+struct ASMJIT_HIDDEN MMRef : public VariableRef
 {
   // [Construction / Destruction]
 
@@ -925,13 +1020,13 @@ struct MMRef : public VariableRef
 
   // [Registers]
 
-  inline MMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_mm(_v->registerCode()); }
-  inline MMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_mm(_v->registerCode()); }
-  inline MMRegister x() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_mm(_v->registerCode()); }
+  inline MMRegister r(UInt8 pref = NO_REG) const { __REG_ACCESS(MMRegister, VARIABLE_ALLOC_READWRITE, pref, REG_MM); }
+  inline MMRegister c(UInt8 pref = NO_REG) const { __REG_ACCESS(MMRegister, VARIABLE_ALLOC_READ     , pref, REG_MM); }
+  inline MMRegister x(UInt8 pref = NO_REG) const { __REG_ACCESS(MMRegister, VARIABLE_ALLOC_WRITE    , pref, REG_MM); }
 };
 
 //! @brief SSE variable wrapper.
-struct XMMRef : public VariableRef
+struct ASMJIT_HIDDEN XMMRef : public VariableRef
 {
   // [Construction / Destruction]
 
@@ -943,9 +1038,9 @@ struct XMMRef : public VariableRef
 
   // [Registers]
 
-  inline XMMRegister r() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READWRITE); return mk_xmm(_v->registerCode()); }
-  inline XMMRegister c() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_READ     ); return mk_xmm(_v->registerCode()); }
-  inline XMMRegister x() const { ASMJIT_ASSERT(_v); _v->alloc(VARIABLE_ALLOC_WRITE    ); return mk_xmm(_v->registerCode()); }
+  inline XMMRegister r(UInt8 pref = NO_REG) const { __REG_ACCESS(XMMRegister, VARIABLE_ALLOC_READWRITE, pref, REG_XMM); }
+  inline XMMRegister c(UInt8 pref = NO_REG) const { __REG_ACCESS(XMMRegister, VARIABLE_ALLOC_READ     , pref, REG_XMM); }
+  inline XMMRegister x(UInt8 pref = NO_REG) const { __REG_ACCESS(XMMRegister, VARIABLE_ALLOC_WRITE    , pref, REG_XMM); }
 };
 
 #if defined(ASMJIT_X86)
@@ -956,6 +1051,9 @@ typedef Int64Ref SysIntRef;
 
 //! @brief Pointer variable wrapper (same as system integer).
 typedef SysIntRef PtrRef;
+
+// Cleanup
+#undef __REG_ACCESS
 
 // ============================================================================
 // [AsmJit::State]
@@ -1025,7 +1123,7 @@ private:
 // ============================================================================
 
 //! @brief State wrapper used to manage @c State's.
-struct StateRef
+struct ASMJIT_HIDDEN StateRef
 {
   inline StateRef(State* state) :
     _state(state)
@@ -1899,7 +1997,7 @@ private:
 //! void* fn = a.make();
 //! @endcode
 //!
-//! Example how to generate machine code using only @c Compiler (preffered):
+//! Example how to generate machine code using only @c Compiler (preferred):
 //!
 //! @code
 //! // Compiler instance is enough.
@@ -2178,9 +2276,9 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Create new (empty) instance of @c Compiler.
-  Compiler();
+  Compiler() ASMJIT_NOTHROW;
   //! @brief Destroy @c Compiler instance.
-  virtual ~Compiler();
+  virtual ~Compiler() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Compiler]
@@ -2343,7 +2441,7 @@ struct ASMJIT_API Compiler : public Serializer
   //! @note Compiler can optimize prologs and epilogs.
   //!
   //! @sa @c Prolog, @c Function.
-  Prolog* prolog(Function* f);
+  Prolog* newProlog(Function* f);
 
   //! @brief Create function epilog (function leave section).
   //!
@@ -2359,7 +2457,7 @@ struct ASMJIT_API Compiler : public Serializer
   //! @note Compiler can optimize prologs and epilogs.
   //!
   //! @sa @c Epilog, @c Function.
-  Epilog* epilog(Function* f);
+  Epilog* newEpilog(Function* f);
 
   // -------------------------------------------------------------------------
   // [Labels]
@@ -2646,6 +2744,9 @@ private:
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITCOMPILERX86X64_H

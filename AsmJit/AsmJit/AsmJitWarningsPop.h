@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// [Dependencies]
-#include "AsmJitLogger.h"
-
-// no code
+// Pop disabled warnings by AsmJitWarningsPush.h
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif // _MSC_VER

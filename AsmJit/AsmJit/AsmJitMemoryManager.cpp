@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 // This file contains implementation of virtual memory management for AsmJit
 // library. The initial concept is to keep this implementation simple but 
 // effective. There are several goals I decided to write implementation myself.
@@ -70,7 +73,7 @@ namespace AsmJit {
 // [AsmJit::M_Node]
 // ============================================================================
 
-struct M_Node
+struct ASMJIT_HIDDEN M_Node
 {
   // Chunk double-linked list
   M_Node* prev;          // Prev node in list
@@ -116,7 +119,7 @@ struct M_Node
 // ============================================================================
 
 //! @brief Pernament node.
-struct M_PernamentNode
+struct ASMJIT_HIDDEN M_PernamentNode
 {
   UInt8* mem;            // Base pointer (virtual memory address).
   SysUInt size;          // Count of bytes allocated.
@@ -225,7 +228,7 @@ static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len)
 // [AsmJit::MemoryManagerPrivate]
 // ============================================================================
 
-struct MemoryManagerPrivate
+struct ASMJIT_HIDDEN MemoryManagerPrivate
 {
   // [Construction / Destruction]
 
@@ -828,19 +831,19 @@ M_Node* MemoryManagerPrivate::nlFindPtr(UInt8* mem)
 // [AsmJit::MemoryManager]
 // ============================================================================
 
-MemoryManager::MemoryManager()
+MemoryManager::MemoryManager() ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = new MemoryManagerPrivate();
   _d = (void*)d;
 }
 
-MemoryManager::~MemoryManager()
+MemoryManager::~MemoryManager() ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
   delete d;
 }
 
-void* MemoryManager::alloc(SysUInt size, UInt32 type)
+void* MemoryManager::alloc(SysUInt size, UInt32 type) ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
 
@@ -850,28 +853,31 @@ void* MemoryManager::alloc(SysUInt size, UInt32 type)
     return d->allocFreeable(size);
 }
 
-bool MemoryManager::free(void* address)
+bool MemoryManager::free(void* address) ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
   return d->free(address);
 }
 
-SysUInt MemoryManager::used()
+SysUInt MemoryManager::used() ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
   return d->_used;
 }
 
-SysUInt MemoryManager::allocated()
+SysUInt MemoryManager::allocated() ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
   return d->_allocated;
 }
 
-MemoryManager* MemoryManager::global()
+MemoryManager* MemoryManager::global() ASMJIT_NOTHROW
 {
   static MemoryManager memmgr;
   return &memmgr;
 }
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

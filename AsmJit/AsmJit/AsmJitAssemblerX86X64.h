@@ -32,6 +32,9 @@
 #include "AsmJitSerializer.h"
 #include "AsmJitUtil.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 // [AsmJit::]
 namespace AsmJit {
 
@@ -343,34 +346,40 @@ struct ASMJIT_API Assembler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Creates Assembler instance.
-  Assembler();
+  Assembler() ASMJIT_NOTHROW;
   //! @brief Destroys Assembler instance
-  virtual ~Assembler();
+  virtual ~Assembler() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Buffer Getters / Setters]
   // -------------------------------------------------------------------------
 
   //! @brief Return start of assembler code buffer.
-  inline UInt8* code() const { return _buffer.data(); }
+  inline UInt8* code() const ASMJIT_NOTHROW
+  { return _buffer.data(); }
 
   //! @brief Ensure space for next instruction
-  inline bool ensureSpace() { return _buffer.ensureSpace(); }
+  inline bool ensureSpace() ASMJIT_NOTHROW
+  { return _buffer.ensureSpace(); }
 
   //! @brief Return size of currently generated code.
-  inline SysInt codeSize() const { return _buffer.offset(); }
+  inline SysInt codeSize() const ASMJIT_NOTHROW
+  { return _buffer.offset(); }
 
   //! @brief Return current offset in buffer (same as codeSize()).
-  inline SysInt offset() const { return _buffer.offset(); }
+  inline SysInt offset() const ASMJIT_NOTHROW
+  { return _buffer.offset(); }
 
   //! @brief Sets offset to @a o and returns previous offset.
   //!
   //! This method can be used to truncate code (previous offset is not
   //! recorded) or to overwrite instruction stream at position @a o.
-  inline SysInt toOffset(SysInt o) { return _buffer.toOffset(o); }
+  inline SysInt toOffset(SysInt o) ASMJIT_NOTHROW
+  { return _buffer.toOffset(o); }
 
   //! @brief Return capacity of internal code buffer.
-  inline SysInt capacity() const { return _buffer.capacity(); }
+  inline SysInt capacity() const ASMJIT_NOTHROW 
+  { return _buffer.capacity(); }
 
   //! @brief Reallocate internal buffer.
   //!
@@ -398,27 +407,44 @@ struct ASMJIT_API Assembler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Set byte at position @a pos.
-  inline UInt8 getByteAt(SysInt pos) const { return _buffer.getByteAt(pos); }
+  inline UInt8 getByteAt(SysInt pos) const ASMJIT_NOTHROW
+  { return _buffer.getByteAt(pos); }
+  
   //! @brief Set word at position @a pos.
-  inline UInt16 getWordAt(SysInt pos) const { return _buffer.getWordAt(pos); }
+  inline UInt16 getWordAt(SysInt pos) const ASMJIT_NOTHROW
+  { return _buffer.getWordAt(pos); }
+  
   //! @brief Set word at position @a pos.
-  inline UInt32 getDWordAt(SysInt pos) const { return _buffer.getDWordAt(pos); }
+  inline UInt32 getDWordAt(SysInt pos) const ASMJIT_NOTHROW
+  { return _buffer.getDWordAt(pos); }
+  
   //! @brief Set word at position @a pos.
-  inline UInt64 getQWordAt(SysInt pos) const { return _buffer.getQWordAt(pos); }
+  inline UInt64 getQWordAt(SysInt pos) const ASMJIT_NOTHROW
+  { return _buffer.getQWordAt(pos); }
 
   //! @brief Set byte at position @a pos.
-  inline void setByteAt(SysInt pos, UInt8 x) { _buffer.setByteAt(pos, x); }
+  inline void setByteAt(SysInt pos, UInt8 x) ASMJIT_NOTHROW
+  { _buffer.setByteAt(pos, x); }
+  
   //! @brief Set word at position @a pos.
-  inline void setWordAt(SysInt pos, UInt16 x) { _buffer.setWordAt(pos, x); }
+  inline void setWordAt(SysInt pos, UInt16 x) ASMJIT_NOTHROW
+  { _buffer.setWordAt(pos, x); }
+  
   //! @brief Set word at position @a pos.
-  inline void setDWordAt(SysInt pos, UInt32 x) { _buffer.setDWordAt(pos, x); }
+  inline void setDWordAt(SysInt pos, UInt32 x) ASMJIT_NOTHROW
+  { _buffer.setDWordAt(pos, x); }
+  
   //! @brief Set word at position @a pos.
-  inline void setQWordAt(SysInt pos, UInt64 x) { _buffer.setQWordAt(pos, x); }
+  inline void setQWordAt(SysInt pos, UInt64 x) ASMJIT_NOTHROW
+  { _buffer.setQWordAt(pos, x); }
 
   //! @brief Set word at position @a pos.
-  inline Int32 getInt32At(SysInt pos) const { return (Int32)_buffer.getDWordAt(pos); }
+  inline Int32 getInt32At(SysInt pos) const ASMJIT_NOTHROW
+  { return (Int32)_buffer.getDWordAt(pos); }
+  
   //! @brief Set int32 at position @a pos.
-  inline void setInt32At(SysInt pos, Int32 x) { _buffer.setDWordAt(pos, (Int32)x); }
+  inline void setInt32At(SysInt pos, Int32 x) ASMJIT_NOTHROW
+  { _buffer.setDWordAt(pos, (Int32)x); }
 
   //! @brief Set custom variable @a imm at position @a pos.
   //!
@@ -444,31 +470,38 @@ struct ASMJIT_API Assembler : public Serializer
   bool canEmit();
 
   //! @brief Emit Byte to internal buffer.
-  inline void _emitByte(UInt8 x) { _buffer.emitByte(x); }
+  inline void _emitByte(UInt8 x) ASMJIT_NOTHROW
+  { _buffer.emitByte(x); }
 
   //! @brief Emit Word (2 bytes) to internal buffer.
-  inline void _emitWord(UInt16 x) { _buffer.emitWord(x); }
+  inline void _emitWord(UInt16 x) ASMJIT_NOTHROW
+  { _buffer.emitWord(x); }
 
   //! @brief Emit DWord (4 bytes) to internal buffer.
-  inline void _emitDWord(UInt32 x) { _buffer.emitDWord(x); }
+  inline void _emitDWord(UInt32 x) ASMJIT_NOTHROW
+  { _buffer.emitDWord(x); }
 
   //! @brief Emit QWord (8 bytes) to internal buffer.
-  inline void _emitQWord(UInt64 x) { _buffer.emitQWord(x); }
+  inline void _emitQWord(UInt64 x) ASMJIT_NOTHROW
+  { _buffer.emitQWord(x); }
 
   //! @brief Emit Int32 (4 bytes) to internal buffer.
-  inline void _emitInt32(Int32 x) { _buffer.emitDWord((UInt32)x); }
+  inline void _emitInt32(Int32 x) ASMJIT_NOTHROW
+  { _buffer.emitDWord((UInt32)x); }
 
   //! @brief Emit system signed integer (4 or 8 bytes) to internal buffer.
-  inline void _emitSysInt(SysInt x) { _buffer.emitSysInt(x); }
+  inline void _emitSysInt(SysInt x) ASMJIT_NOTHROW
+  { _buffer.emitSysInt(x); }
 
   //! @brief Emit system unsigned integer (4 or 8 bytes) to internal buffer.
-  inline void _emitSysUInt(SysUInt x) { _buffer.emitSysUInt(x); }
+  inline void _emitSysUInt(SysUInt x) ASMJIT_NOTHROW
+  { _buffer.emitSysUInt(x); }
 
   //! @brief Emit immediate value of specified @a size.
   void _emitImmediate(const Immediate& imm, UInt32 size);
 
   //! @brief Emit single @a opCode without operands.
-  inline void _emitOpCode(UInt32 opCode)
+  inline void _emitOpCode(UInt32 opCode) ASMJIT_NOTHROW
   {
     // instruction prefix
     if (opCode & 0xFF000000) _emitByte((UInt8)((opCode & 0xFF000000) >> 24));
@@ -484,19 +517,19 @@ struct ASMJIT_API Assembler : public Serializer
   //! Behavior of this function is to emit code prefix only if memory operand
   //! address uses code segment. Code segment is used through memory operand
   //! with attached @c AsmJit::Label.
-  void _emitSegmentPrefix(const BaseRegMem& rm);
+  void _emitSegmentPrefix(const BaseRegMem& rm) ASMJIT_NOTHROW;
 
   //! @brief Emit MODR/M byte.
   //! @internal
-  inline void _emitMod(UInt8 m, UInt8 o, UInt8 r)
+  inline void _emitMod(UInt8 m, UInt8 o, UInt8 r) ASMJIT_NOTHROW
   { _emitByte(((m & 0x03) << 6) | ((o & 0x07) << 3) | (r & 0x07)); }
 
   //! @brief Emit SIB byte.
-  inline void _emitSib(UInt8 s, UInt8 i, UInt8 b)
+  inline void _emitSib(UInt8 s, UInt8 i, UInt8 b) ASMJIT_NOTHROW
   { _emitByte(((s & 0x03) << 6) | ((i & 0x07) << 3) | (b & 0x07)); }
 
   //! @brief Emit REX prefix (64 bit mode only).
-  inline void _emitRexR(UInt8 w, UInt8 opReg, UInt8 regCode)
+  inline void _emitRexR(UInt8 w, UInt8 opReg, UInt8 regCode) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X64)
     UInt8 r = (opReg & 0x8) != 0;
@@ -518,7 +551,7 @@ struct ASMJIT_API Assembler : public Serializer
   }
 
   //! @brief Emit REX prefix (64 bit mode only).
-  inline void _emitRexRM(UInt8 w, UInt8 opReg, const BaseRegMem& rm)
+  inline void _emitRexRM(UInt8 w, UInt8 opReg, const BaseRegMem& rm) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X64)
     UInt8 r = (opReg & 0x8) != 0;
@@ -551,18 +584,18 @@ struct ASMJIT_API Assembler : public Serializer
   }
 
   //! @brief Emit Register / Register - calls _emitMod(3, opReg, r)
-  inline void _emitModR(UInt8 opReg, UInt8 r)
+  inline void _emitModR(UInt8 opReg, UInt8 r) ASMJIT_NOTHROW
   { _emitMod(3, opReg, r); }
 
   //! @brief Emit Register / Register - calls _emitMod(3, opReg, r.code())
-  inline void _emitModR(UInt8 opReg, const BaseReg& r)
+  inline void _emitModR(UInt8 opReg, const BaseReg& r) ASMJIT_NOTHROW
   { _emitMod(3, opReg, r.code()); }
 
   //! @brief Emit register / memory address combination to buffer.
   //!
   //! This method can hangle addresses from simple to complex ones with
   //! index and displacement.
-  void _emitModM(UInt8 opReg, const Mem& mem, SysInt immSize);
+  void _emitModM(UInt8 opReg, const Mem& mem, SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit Reg<-Reg or Reg<-Reg|Mem ModRM (can be followed by SIB 
   //! and displacement) to buffer.
@@ -572,28 +605,30 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! @note @a opReg is usually real register ID (see @c R) but some instructions
   //! have specific format and in that cases @a opReg is part of opcode.
-  void _emitModRM(UInt8 opReg, const BaseRegMem& op, SysInt immSize);
+  void _emitModRM(UInt8 opReg, const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit instruction where register is inlined to opcode.
-  void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg);
+  void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg) ASMJIT_NOTHROW;
 
   //! @brief Emit instruction with reg/memory operand.
-  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, const BaseRegMem& op, SysInt immSize);
+  void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, 
+    const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit FPU instruction with no operands.
-  void _emitFpu(UInt32 opCode);
+  void _emitFpu(UInt32 opCode) ASMJIT_NOTHROW;
 
   //! @brief Emit FPU instruction with one operand @a sti (index of FPU register).
-  void _emitFpuSTI(UInt32 opCode, UInt32 sti);
+  void _emitFpuSTI(UInt32 opCode, UInt32 sti) ASMJIT_NOTHROW;
 
   //! @brief Emit FPU instruction with one operand @a opReg and memory operand @a mem.
-  void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem);
+  void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_NOTHROW;
 
   //! @brief Emit MMX/SSE instruction.
-  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src, SysInt immSize);
+  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src, 
+    SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit displacement.
-  LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement);
+  LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Relocation helpers]
@@ -643,8 +678,8 @@ struct ASMJIT_API Assembler : public Serializer
   // [Links]
   // -------------------------------------------------------------------------
 
-  LinkData* _newLinkData();
-  void _freeLinkData(LinkData* link);
+  LinkData* _newLinkData() ASMJIT_NOTHROW;
+  void _freeLinkData(LinkData* link) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Members]
@@ -663,6 +698,9 @@ struct ASMJIT_API Assembler : public Serializer
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITASSEMBLERX86X64_H

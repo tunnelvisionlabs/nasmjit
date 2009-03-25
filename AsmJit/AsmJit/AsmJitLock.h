@@ -38,13 +38,16 @@
 #include <pthread.h>
 #endif // ASMJIT_POSIX
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_Platform
 //! @{
 
 //! @brief Lock.
-struct Lock
+struct ASMJIT_HIDDEN Lock
 {
 #if defined(ASMJIT_WINDOWS)
   typedef CRITICAL_SECTION Handle;
@@ -53,7 +56,7 @@ struct Lock
   typedef pthread_mutex_t Handle;
 #endif // ASMJIT_POSIX
 
-  inline Lock()
+  inline Lock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
     InitializeCriticalSection(&_handle);
@@ -64,7 +67,7 @@ struct Lock
 #endif // ASMJIT_POSIX
   }
 
-  inline ~Lock()
+  inline ~Lock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
     DeleteCriticalSection(&_handle);
@@ -74,17 +77,17 @@ struct Lock
 #endif // ASMJIT_POSIX
   }
 
-  inline Handle& handle()
+  inline Handle& handle() ASMJIT_NOTHROW
   {
     return _handle;
   }
 
-  inline const Handle& handle() const
+  inline const Handle& handle() const ASMJIT_NOTHROW
   {
     return _handle;
   }
 
-  inline void lock()
+  inline void lock() ASMJIT_NOTHROW
   { 
 #if defined(ASMJIT_WINDOWS)
     EnterCriticalSection(&_handle);
@@ -94,7 +97,7 @@ struct Lock
 #endif // ASMJIT_POSIX
   }
 
-  inline void unlock()
+  inline void unlock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
     LeaveCriticalSection(&_handle);
@@ -111,16 +114,16 @@ private:
   ASMJIT_DISABLE_COPY(Lock);
 };
 
-struct AutoLock
+struct ASMJIT_HIDDEN AutoLock
 {
   //! @brief Locks @a target.
-  inline AutoLock(Lock& target) : _target(target)
+  inline AutoLock(Lock& target) ASMJIT_NOTHROW : _target(target)
   {
     _target.lock();
   }
 
   //! @brief Unlocks target.
-  inline ~AutoLock()
+  inline ~AutoLock() ASMJIT_NOTHROW
   {
     _target.unlock();
   }

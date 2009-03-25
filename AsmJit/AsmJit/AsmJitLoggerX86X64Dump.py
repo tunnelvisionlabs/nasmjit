@@ -125,7 +125,8 @@ static const char segmentName[] =
 
 // [String Functions]
 
-static char* mycpy(char* dst, const char* src, SysUInt len = (SysUInt)-1)
+static char* mycpy(
+  char* dst, const char* src, SysUInt len = (SysUInt)-1) ASMJIT_NOTHROW
 {
   if (src == NULL) return dst;
 
@@ -143,7 +144,8 @@ static char* mycpy(char* dst, const char* src, SysUInt len = (SysUInt)-1)
 }
 
 // not too effective, but this is debug logger:)
-static char* myutoa(char* dst, SysUInt i, SysUInt base = 10)
+static char* myutoa(
+  char* dst, SysUInt i, SysUInt base = 10) ASMJIT_NOTHROW
 {
   static const char letters[] = "0123456789ABCDEF";
 
@@ -159,7 +161,8 @@ static char* myutoa(char* dst, SysUInt i, SysUInt base = 10)
   return mycpy(dst, p, (SysUInt)(buf + 128 - p));
 }
 
-static char* myitoa(char* dst, SysInt i, SysUInt base = 10)
+static char* myitoa(
+  char* dst, SysInt i, SysUInt base = 10) ASMJIT_NOTHROW
 {
   if (i < 0)
   {
@@ -172,23 +175,23 @@ static char* myitoa(char* dst, SysInt i, SysUInt base = 10)
 
 // [AsmJit::Logger]
 
-char* Logger::dumpInstruction(char* buf, UInt32 code)
+char* Logger::dumpInstruction(char* buf, UInt32 code) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
   return mycpy(buf, &instructionName[instructionIndex[code]]);
 }
 
-char* Logger::dumpOperand(char* buf, const Operand* op)
+char* Logger::dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
 {
   if (op->isReg())
   {
-    const BaseReg& reg = operand_cast<const BaseReg&>(*op);
+    const BaseReg& reg = reinterpret_cast<const BaseReg&>(*op);
     return dumpRegister(buf, reg.type(), reg.index());
   }
   else if (op->isMem())
   {
     bool isAbsolute = false;
-    const Mem& mem = operand_cast<const Mem&>(*op);
+    const Mem& mem = reinterpret_cast<const Mem&>(*op);
 
     if (op->size() <= 16) 
     {
@@ -240,7 +243,7 @@ char* Logger::dumpOperand(char* buf, const Operand* op)
   }
   else if (op->isImm())
   {
-    const Immediate& i = operand_cast<const Immediate&>(*op);
+    const Immediate& i = reinterpret_cast<const Immediate&>(*op);
     return myitoa(buf, (SysInt)i.value());
   }
   else if (op->isLabel())
@@ -248,10 +251,12 @@ char* Logger::dumpOperand(char* buf, const Operand* op)
     return dumpLabel(buf, (const Label*)op);
   }
   else
-    return buf;
+  {
+    return mycpy(buf, "None");
+  }
 }
 
-char* Logger::dumpRegister(char* buf, UInt8 type, UInt8 index)
+char* Logger::dumpRegister(char* buf, UInt8 type, UInt8 index) ASMJIT_NOTHROW
 {
   const char regs1[] = "al\\0" "cl\\0" "dl\\0" "bl\\0" "ah\\0" "ch\\0" "dh\\0" "bh\\0";
   const char regs2[] = "ax\\0" "cx\\0" "dx\\0" "bx\\0" "sp\\0" "bp\\0" "si\\0" "di\\0";
@@ -289,7 +294,7 @@ char* Logger::dumpRegister(char* buf, UInt8 type, UInt8 index)
   }
 }
 
-char* Logger::dumpLabel(char* buf, const Label* label)
+char* Logger::dumpLabel(char* buf, const Label* label) ASMJIT_NOTHROW
 {
   char* beg = buf;
   *buf++ = 'L';

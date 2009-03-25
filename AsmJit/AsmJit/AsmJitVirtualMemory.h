@@ -61,16 +61,16 @@ struct ASMJIT_API VirtualMemory
   //! Pages are readable/writeable, but they are not guaranteed to be 
   //! executable unless 'canExecute' is true. Returns the address of 
   //! allocated memory, or NULL if failed.
-  static void* alloc(SysUInt length, SysUInt* allocated, bool canExecute);
+  static void* alloc(SysUInt length, SysUInt* allocated, bool canExecute) ASMJIT_NOTHROW;
 
   //! @brief Free memory allocated by @c alloc()
-  static void free(void* addr, SysUInt length);
+  static void free(void* addr, SysUInt length) ASMJIT_NOTHROW;
 
   //! @brief Get the Alignment guaranteed by alloc().
-  static SysUInt alignment();
+  static SysUInt alignment() ASMJIT_NOTHROW;
 
   //! @brief Returns size of one page.
-  static SysUInt pageSize();
+  static SysUInt pageSize() ASMJIT_NOTHROW;
 };
 
 //! @}

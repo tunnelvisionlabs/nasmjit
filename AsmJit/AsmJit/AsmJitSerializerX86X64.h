@@ -33,10 +33,8 @@
 #include "AsmJitMemoryManager.h"
 #include "AsmJitUtil.h"
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4127) // conditional expression is constant
-#endif // _MSC_VER
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
 
 namespace AsmJit {
 
@@ -56,52 +54,52 @@ struct Compiler;
 // Skip documenting this
 #if !defined(ASMJIT_NODOC)
 
-struct _DontInitialize {};
-struct _Initialize {};
+struct ASMJIT_HIDDEN _DontInitialize {};
+struct ASMJIT_HIDDEN _Initialize {};
 
 #endif // !ASMJIT_NODOC
 
 //! @brief Operand, abstract class for register, memory location and immediate 
 //! value operands.
-struct Operand
+struct ASMJIT_HIDDEN Operand
 {
-  inline Operand() { memset(this, 0, sizeof(Operand)); }
-  inline Operand(const Operand& other) { _init(other); }
+  inline Operand() ASMJIT_NOTHROW { memset(this, 0, sizeof(Operand)); }
+  inline Operand(const Operand& other) ASMJIT_NOTHROW { _init(other); }
 
-  inline Operand(const _DontInitialize&) : _operandId(0) {}
+  inline Operand(const _DontInitialize&) ASMJIT_NOTHROW : _operandId(0) {}
 
   //! @brief Return type of operand, see @c OP.
-  inline UInt8 op() const { return _op.op; }
+  inline UInt8 op() const ASMJIT_NOTHROW { return _op.op; }
   //! @brief Return size of operand in bytes.
-  inline UInt8 size() const { return _op.size; }
+  inline UInt8 size() const ASMJIT_NOTHROW { return _op.size; }
 
   //! @brief Return @c true if operand is none (@c OP_NONE).
-  inline UInt8 isNone() const { return _op.op == OP_NONE; }
+  inline UInt8 isNone() const ASMJIT_NOTHROW { return _op.op == OP_NONE; }
   //! @brief Return @c true if operand is any (general purpose, mmx or sse) register (@c OP_REG).
-  inline UInt8 isReg() const { return _op.op == OP_REG; }
+  inline UInt8 isReg() const ASMJIT_NOTHROW { return _op.op == OP_REG; }
   //! @brief Return @c true if operand is memory address (@c OP_MEM).
-  inline UInt8 isMem() const { return _op.op == OP_MEM; }
+  inline UInt8 isMem() const ASMJIT_NOTHROW { return _op.op == OP_MEM; }
   //! @brief Return @c true if operand is immediate (@c OP_IMM).
-  inline UInt8 isImm() const { return _op.op == OP_IMM; }
+  inline UInt8 isImm() const ASMJIT_NOTHROW { return _op.op == OP_IMM; }
   //! @brief Return @c true if operand is label (@c OP_LABEL).
-  inline UInt8 isLabel() const { return _op.op == OP_LABEL; }
+  inline UInt8 isLabel() const ASMJIT_NOTHROW { return _op.op == OP_LABEL; }
 
   //! @brief Return @c true if operand is register and type of register is @a regType.
-  inline UInt8 isRegType(UInt8 regType) const { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
+  inline UInt8 isRegType(UInt8 regType) const ASMJIT_NOTHROW { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
   //! @brief Return @c true if operand is register and code of register is @a regCode.
-  inline UInt8 isRegCode(UInt8 regCode) const { return isReg() & (_reg.code == regCode); }
+  inline UInt8 isRegCode(UInt8 regCode) const ASMJIT_NOTHROW { return isReg() & (_reg.code == regCode); }
   //! @brief Return @c true if operand is register and index of register is @a regIndex.
-  inline UInt8 isRegIndex(UInt8 regIndex) const { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
+  inline UInt8 isRegIndex(UInt8 regIndex) const ASMJIT_NOTHROW { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
 
   //! @brief Return @c true if operand is any register or memory.
-  inline UInt8 isRegMem() const { return isMem() | isReg(); }
+  inline UInt8 isRegMem() const ASMJIT_NOTHROW { return isMem() | isReg(); }
   //! @brief Return @c true if operand is register of @a regType type or memory.
-  inline UInt8 isRegMem(UInt8 regType) const { return isMem() | isRegType(regType); }
+  inline UInt8 isRegMem(UInt8 regType) const ASMJIT_NOTHROW { return isMem() | isRegType(regType); }
 
   //! @brief Return operand Id (Operand Id's are for @c Compiler class).
-  inline UInt32 operandId() const { return _operandId; }
+  inline UInt32 operandId() const ASMJIT_NOTHROW { return _operandId; }
   //! @brief Return clears operand Id (@c Compiler will not recognize it after clearing).
-  inline void clearId() { _operandId = 0; }
+  inline void clearId() ASMJIT_NOTHROW { _operandId = 0; }
 
   //! @brief Generic operand data shared between all operands.
   struct GenData
@@ -236,12 +234,12 @@ struct Operand
   //! @brief Compiler operand id (do not modify manually).
   UInt32 _operandId;
 
-  inline void _init(const Operand& other)
+  inline void _init(const Operand& other) ASMJIT_NOTHROW
   {
     memcpy(this, &other, sizeof(Operand));
   }
 
-  inline void _copy(const Operand& other)
+  inline void _copy(const Operand& other) ASMJIT_NOTHROW
   {
     memcpy(this, &other, sizeof(Operand));
   }
@@ -251,7 +249,13 @@ struct Operand
   //! If all parameters are constants then compiler can generate very small 
   //! code (3 instructions) that's much better that code that generates for
   //! each operand normally.
-  inline void _initAll(UInt8 i8_0, UInt8 i8_1, UInt8 i8_2, UInt8 i8_3, SysInt i32_64, void* ptr)
+  inline void _initAll(
+    UInt8 i8_0, 
+    UInt8 i8_1, 
+    UInt8 i8_2, 
+    UInt8 i8_3, 
+    SysInt i32_64, 
+    void* ptr) ASMJIT_NOTHROW
   {
     *reinterpret_cast<UInt32*>((UInt8*)this) = 
       ((UInt32)i8_0      ) |
@@ -273,11 +277,18 @@ struct Operand
 //!
 //! Reason for this class is that internally most functions supports
 //! source or destination operands that can be registers or memory location.
-struct BaseRegMem : public Operand
+struct ASMJIT_HIDDEN BaseRegMem : public Operand
 {
-  inline BaseRegMem(const _DontInitialize& dontInitialize) : Operand(dontInitialize) {}
-  inline BaseRegMem(const BaseRegMem& other) : Operand(other) {}
-  inline BaseRegMem& operator=(const BaseRegMem& other) { _copy(other); }
+  inline BaseRegMem(const BaseRegMem& other) ASMJIT_NOTHROW : 
+    Operand(other)
+  {}
+  
+  inline BaseRegMem(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    Operand(dontInitialize)
+  {}
+
+  inline BaseRegMem& operator=(const BaseRegMem& other) ASMJIT_NOTHROW 
+  { _copy(other); }
 };
 
 // ============================================================================
@@ -285,36 +296,53 @@ struct BaseRegMem : public Operand
 // ============================================================================
 
 //! @brief Base class for all registers.
-struct BaseReg : public BaseRegMem
+struct ASMJIT_HIDDEN BaseReg : public BaseRegMem
 {
-  inline BaseReg(UInt8 code, UInt8 size) : BaseRegMem(_DontInitialize())
+  inline BaseReg(UInt8 code, UInt8 size) ASMJIT_NOTHROW : 
+    BaseRegMem(_DontInitialize())
   { _initAll(OP_REG, size, code, 0, 0, NULL); }
 
-  inline BaseReg(const BaseReg& other) : BaseRegMem(other)
+  inline BaseReg(const BaseReg& other) ASMJIT_NOTHROW : 
+    BaseRegMem(other)
+  {}
+
+  inline BaseReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    BaseRegMem(dontInitialize)
   {}
 
   //! @brief Return register type, see @c REG.
-  inline UInt8 type() const { return (UInt8)(_reg.code & REGTYPE_MASK); }
+  inline UInt8 type() const ASMJIT_NOTHROW
+  { return (UInt8)(_reg.code & REGTYPE_MASK); }
+  
   //! @brief Return register code, see @c REG.
-  inline UInt8 code() const { return (UInt8)(_reg.code); }
+  inline UInt8 code() const ASMJIT_NOTHROW
+  { return (UInt8)(_reg.code); }
+  
   //! @brief Return register index (value from 0 to 7/15).
-  inline UInt8 index() const { return (UInt8)(_reg.code & REGCODE_MASK); }
+  inline UInt8 index() const ASMJIT_NOTHROW
+  { return (UInt8)(_reg.code & REGCODE_MASK); }
 
-  inline UInt8 isRegCode(UInt8 code) const
+  inline UInt8 isRegCode(UInt8 code) const ASMJIT_NOTHROW
   { return _reg.code == code; }
 
-  inline UInt8 isRegType(UInt8 type) const 
+  inline UInt8 isRegType(UInt8 type) const ASMJIT_NOTHROW
   { return (_reg.code & REGTYPE_MASK) == type; }
 
-  inline UInt8 isRegIndex(UInt8 index) const
+  inline UInt8 isRegIndex(UInt8 index) const ASMJIT_NOTHROW
   { return (_reg.code & REGCODE_MASK) == index; }
 
   //! @brief Set register code.
-  inline void setCode(UInt8 code) { _reg.code = code; }
+  inline void setCode(UInt8 code) ASMJIT_NOTHROW
+  { _reg.code = code; }
 
-  inline BaseReg& operator=(const BaseReg& other) { _copy(other); return *this; }
-  inline bool operator==(const BaseReg& other) { return code() == other.code(); }
-  inline bool operator!=(const BaseReg& other) { return code() != other.code(); }
+  inline BaseReg& operator=(const BaseReg& other) ASMJIT_NOTHROW
+  { _copy(other); return *this; }
+  
+  inline bool operator==(const BaseReg& other) ASMJIT_NOTHROW
+  { return code() == other.code(); }
+  
+  inline bool operator!=(const BaseReg& other) ASMJIT_NOTHROW
+  { return code() != other.code(); }
 };
 
 // ============================================================================
@@ -324,11 +352,13 @@ struct BaseReg : public BaseRegMem
 //! @brief General purpose register.
 //!
 //! This class is for all general purpose registers (64, 32, 16 and 8 bit).
-struct Register : public BaseReg
+struct ASMJIT_HIDDEN Register : public BaseReg
 {
-  inline Register() : BaseReg(NO_REG, 0) {}
-  inline Register(const Register& other) : BaseReg(other) {}
-  inline Register(const _Initialize&, UInt8 code) :
+  inline Register() ASMJIT_NOTHROW : BaseReg(NO_REG, 0) {}
+  inline Register(const Register& other) ASMJIT_NOTHROW : BaseReg(other) {}
+  inline Register(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    BaseReg(dontInitialize) {}
+  inline Register(const _Initialize&, UInt8 code) ASMJIT_NOTHROW :
     BaseReg(code, static_cast<UInt8>(1U << ((code & REGTYPE_MASK) >> 4))) {}
 
   inline Register& operator=(const Register& other) { _copy(other); return *this; }
@@ -343,15 +373,17 @@ struct Register : public BaseReg
 //! @brief 80-bit x87 floating point register.
 //!
 //! To create instance of x87 register, use @c st() function.
-struct X87Register : public BaseReg
+struct ASMJIT_HIDDEN X87Register : public BaseReg
 {
-  inline X87Register() : BaseReg(NO_REG, 0) {}
-  inline X87Register(const X87Register& other) : BaseReg(other) {}
-  inline X87Register(const _Initialize&, UInt8 code) : BaseReg(code | REG_X87, 10) {}
+  inline X87Register() ASMJIT_NOTHROW : BaseReg(NO_REG, 0) {}
+  inline X87Register(const X87Register& other) ASMJIT_NOTHROW : BaseReg(other) {}
+  inline X87Register(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    BaseReg(dontInitialize) {}
+  inline X87Register(const _Initialize&, UInt8 code) ASMJIT_NOTHROW : BaseReg(code | REG_X87, 10) {}
 
-  inline X87Register& operator=(const X87Register& other) { _copy(other); return *this; }
-  inline bool operator==(const X87Register& other) const { return code() == other.code(); }
-  inline bool operator!=(const X87Register& other) const { return code() != other.code(); }
+  inline X87Register& operator=(const X87Register& other) ASMJIT_NOTHROW { _copy(other); return *this; }
+  inline bool operator==(const X87Register& other) const ASMJIT_NOTHROW { return code() == other.code(); }
+  inline bool operator!=(const X87Register& other) const ASMJIT_NOTHROW { return code() != other.code(); }
 };
 
 // ============================================================================
@@ -359,15 +391,17 @@ struct X87Register : public BaseReg
 // ============================================================================
 
 //! @brief 64 bit MMX register.
-struct MMRegister : public BaseReg
+struct ASMJIT_HIDDEN MMRegister : public BaseReg
 {
-  inline MMRegister() : BaseReg(NO_REG, 0) {}
-  inline MMRegister(const MMRegister& other) : BaseReg(other) {}
-  inline MMRegister(const _Initialize&, UInt8 code) : BaseReg(code, 8) {}
+  inline MMRegister() ASMJIT_NOTHROW : BaseReg(NO_REG, 0) {}
+  inline MMRegister(const MMRegister& other) ASMJIT_NOTHROW : BaseReg(other) {}
+  inline MMRegister(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    BaseReg(dontInitialize) {}
+  inline MMRegister(const _Initialize&, UInt8 code) ASMJIT_NOTHROW : BaseReg(code, 8) {}
 
-  inline MMRegister& operator=(const MMRegister& other) { _copy(other); return *this; }
-  inline bool operator==(const MMRegister& other) const { return code() == other.code(); }
-  inline bool operator!=(const MMRegister& other) const { return code() != other.code(); }
+  inline MMRegister& operator=(const MMRegister& other) ASMJIT_NOTHROW { _copy(other); return *this; }
+  inline bool operator==(const MMRegister& other) const ASMJIT_NOTHROW { return code() == other.code(); }
+  inline bool operator!=(const MMRegister& other) const ASMJIT_NOTHROW { return code() != other.code(); }
 };
 
 // ============================================================================
@@ -375,15 +409,17 @@ struct MMRegister : public BaseReg
 // ============================================================================
 
 //! @brief 128 bit SSE register.
-struct XMMRegister : public BaseReg
+struct ASMJIT_HIDDEN XMMRegister : public BaseReg
 {
-  inline XMMRegister() : BaseReg(NO_REG, 0) {}
-  inline XMMRegister(const _Initialize&, UInt8 code) : BaseReg(code, 16) {}
-  inline XMMRegister(const XMMRegister& other) : BaseReg(other) {}
+  inline XMMRegister() ASMJIT_NOTHROW : BaseReg(NO_REG, 0) {}
+  inline XMMRegister(const _Initialize&, UInt8 code) ASMJIT_NOTHROW : BaseReg(code, 16) {}
+  inline XMMRegister(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
+    BaseReg(dontInitialize) {}
+  inline XMMRegister(const XMMRegister& other) ASMJIT_NOTHROW : BaseReg(other) {}
 
-  inline XMMRegister& operator=(const XMMRegister& other) { _copy(other); return *this; }
-  inline bool operator==(const XMMRegister& other) const { return code() == other.code(); }
-  inline bool operator!=(const XMMRegister& other) const { return code() != other.code(); }
+  inline XMMRegister& operator=(const XMMRegister& other) ASMJIT_NOTHROW { _copy(other); return *this; }
+  inline bool operator==(const XMMRegister& other) const ASMJIT_NOTHROW { return code() == other.code(); }
+  inline bool operator!=(const XMMRegister& other) const ASMJIT_NOTHROW { return code() != other.code(); }
 };
 
 // ============================================================================
@@ -589,24 +625,37 @@ static const XMMRegister xmm15(_Initialize(), REG_XMM15);
 #endif // ASMJIT_X64
 
 //! @brief Return general purpose register of byte size.
-static inline Register mk_gpb(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPB)); }
+static inline Register mk_gpb(UInt8 index) ASMJIT_NOTHROW
+{ return Register(_Initialize(), static_cast<UInt8>(index | REG_GPB)); }
+
 //! @brief Return general purpose register of word size.
-static inline Register mk_gpw(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPW)); }
+static inline Register mk_gpw(UInt8 index) ASMJIT_NOTHROW
+{ return Register(_Initialize(), static_cast<UInt8>(index | REG_GPW)); }
+
 //! @brief Return general purpose register of dword size.
-static inline Register mk_gpd(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPD)); }
+static inline Register mk_gpd(UInt8 index) ASMJIT_NOTHROW
+{ return Register(_Initialize(), static_cast<UInt8>(index | REG_GPD)); }
+
 #if defined(ASMJIT_X64)
 //! @brief Return general purpose register of qword size (64 bit only).
-static inline Register mk_gpq(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPQ)); }
+static inline Register mk_gpq(UInt8 index) ASMJIT_NOTHROW
+{ return Register(_Initialize(), static_cast<UInt8>(index | REG_GPQ)); }
 #endif
+
 //! @brief Return general purpose dword/qword register (depending to architecture).
-static inline Register mk_gpn(UInt8 index) { return Register(_Initialize(), static_cast<UInt8>(index | REG_GPN)); }
+static inline Register mk_gpn(UInt8 index) ASMJIT_NOTHROW
+{ return Register(_Initialize(), static_cast<UInt8>(index | REG_GPN)); }
+
 //! @brief Return MMX (MM) register .
-static inline MMRegister mk_mm(UInt8 index) { return MMRegister(_Initialize(), static_cast<UInt8>(index | REG_MM)); }
+static inline MMRegister mk_mm(UInt8 index) ASMJIT_NOTHROW
+{ return MMRegister(_Initialize(), static_cast<UInt8>(index | REG_MM)); }
+
 //! @brief Return SSE (XMM) register.
-static inline XMMRegister mk_xmm(UInt8 index) { return XMMRegister(_Initialize(), static_cast<UInt8>(index | REG_XMM)); }
+static inline XMMRegister mk_xmm(UInt8 index) ASMJIT_NOTHROW
+{ return XMMRegister(_Initialize(), static_cast<UInt8>(index | REG_XMM)); }
 
 //! @brief returns x87 register with index @a i.
-static inline X87Register st(int i)
+static inline X87Register st(int i) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(i >= 0 && i < 8);
   return X87Register(_Initialize(), static_cast<UInt8>(i));
@@ -617,64 +666,84 @@ static inline X87Register st(int i)
 // ============================================================================
 
 //! @brief Memory location operand.
-struct Mem : public BaseRegMem
+struct ASMJIT_HIDDEN Mem : public BaseRegMem
 {
-  inline Mem() : 
+  inline Mem() ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
     _initAll(OP_MEM, 0, 0x00, 0x00, 0, NULL);
   }
 
-  inline Mem(Label* label, SysInt displacement, UInt8 size = 0) : 
+  inline Mem(Label* label, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
     _initAll(OP_MEM, size, 0x00, 0x00, displacement, label);
   }
 
-  inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) : 
+  inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, size, base.index() | 0x10, 0x00, displacement, NULL);
+    _initAll(
+      OP_MEM,
+      size,
+      base.index() | 0x10,
+      0x00,
+      displacement,
+      NULL);
   }
 
-  inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) : 
+  inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
     ASMJIT_ASSERT(shift <= 3);
-    _initAll(OP_MEM, size, base.code() == 0xFF ? 0 : base.index() | 0x10, (shift << 5) | 0x10 | index.index(), displacement, NULL);
+    _initAll(
+      OP_MEM,
+      size,
+      base.code() == 0xFF ? 0 : base.index() | 0x10,
+      (shift << 5) | 0x10 | index.index(),
+      displacement,
+      NULL);
   }
 
-  inline Mem(const Mem& other) :
+  inline Mem(const Mem& other) ASMJIT_NOTHROW :
     BaseRegMem(other)
   {}
 
-  inline Mem& operator=(const Mem& other) { _copy(other); return *this; }
+  inline Mem& operator=(const Mem& other) ASMJIT_NOTHROW { _copy(other); return *this; }
 
   //! @brief Return if address has base register. 
-  inline bool hasBase() const { return (_mem.base & 0x10) != 0; }
+  inline bool hasBase() const ASMJIT_NOTHROW
+  { return (_mem.base & 0x10) != 0; }
 
   //! @brief Return if address has index register.
-  inline bool hasIndex() const { return (_mem.index & 0x10) != 0; }
+  inline bool hasIndex() const ASMJIT_NOTHROW
+  { return (_mem.index & 0x10) != 0; }
 
   //! @brief Address base register or @c NO_REG.
-  inline UInt8 base() const { return _mem.base & 0xF; }
+  inline UInt8 base() const ASMJIT_NOTHROW
+  { return _mem.base & 0xF; }
 
   //! @brief Address index register or @c NO_REG.
-  inline UInt8 index() const { return _mem.index & 0xF; }
+  inline UInt8 index() const ASMJIT_NOTHROW
+  { return _mem.index & 0xF; }
 
   //! @brief Address index scale (0, 1, 2 or 3).
-  inline UInt32 shift() const { return _mem.index >> 5; }
+  inline UInt32 shift() const ASMJIT_NOTHROW
+  { return _mem.index >> 5; }
 
   //! @brief Address relative displacement.
-  inline SysInt displacement() const { return _mem.displacement; }
+  inline SysInt displacement() const ASMJIT_NOTHROW
+  { return _mem.displacement; }
 
   //! @brief Set address relative displacement.
-  inline void setDisplacement(SysInt displacement) { _mem.displacement = displacement; }
+  inline void setDisplacement(SysInt displacement) ASMJIT_NOTHROW
+  { _mem.displacement = displacement; }
 
   //! @brief Return label associated with this operand.
-  inline Label* label() const { return (SysUInt)_mem.label < _SEGMENT_END ? NULL : _mem.label; }
+  inline Label* label() const ASMJIT_NOTHROW
+  { return (SysUInt)_mem.label < _SEGMENT_END ? NULL : _mem.label; }
 
-  inline SysUInt segmentPrefix() const 
+  inline SysUInt segmentPrefix() const  ASMJIT_NOTHROW
   { return (SysUInt)_mem.label < _SEGMENT_END ? (SysUInt)_mem.label : 0; }
 };
 
@@ -682,248 +751,298 @@ struct Mem : public BaseRegMem
 // [AsmJit::Mem - ptr[displacement]]
 // ============================================================================
 
-ASMJIT_API Mem _ptr_build(Label* label, SysInt disp, UInt8 ptrSize);
+ASMJIT_API Mem _ptr_build(Label* label, SysInt disp, UInt8 ptrSize) ASMJIT_NOTHROW;
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(Label* label, SysInt disp = 0) 
+static inline Mem ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(Label* label, SysInt disp = 0) 
+static inline Mem byte_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(Label* label, SysInt disp = 0) 
+static inline Mem word_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem dword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem qword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem tword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem dqword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem mmword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(Label* label, SysInt disp = 0) 
+static inline Mem xmmword_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(Label* label, SysInt disp = 0) 
+static inline Mem sysint_ptr(Label* label, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, disp, sizeof(SysInt)); }
 
-ASMJIT_API Mem _ptr_build(Label* label, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize);
+ASMJIT_API Mem _ptr_build(Label* label, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize) ASMJIT_NOTHROW;
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem byte_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem word_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem dword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem qword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem tword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem dqword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem mmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem xmmword_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) 
+static inline Mem sysint_ptr(Label* label, const Register& index, UInt32 shift, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(label, index, shift, disp, sizeof(SysInt)); }
 
-// --- 32 bit absolute addressing ---
-#if defined(ASMJIT_X86)
 
-ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, UInt8 ptrSize);
+// --- absolute addressing ---
+ASMJIT_API Mem _ptr_build_abs(
+  void* target, 
+  SysInt disp, 
+  UInt32 segmentPrefix, UInt8 ptrSize) ASMJIT_NOTHROW;
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) 
+static inline Mem ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem byte_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem word_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem dword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem qword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem tword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem dqword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem mmword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem xmmword_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE)
+static inline Mem sysint_ptr_abs(void* target, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _ptr_build_abs(target, disp, segmentPrefix, sizeof(SysInt)); }
 
-#endif // ASMJIT_X86
-// --- 32 bit absolute addressing ---
+ASMJIT_API Mem _ptr_build_abs(
+  void* target,
+  const Register& index, UInt32 shift, SysInt disp,
+  UInt32 segmentPrefix, UInt8 ptrSize) ASMJIT_NOTHROW;
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, 0); }
+
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_BYTE); }
+
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_WORD); }
+
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_DWORD); }
+
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_QWORD); }
+
+//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+static inline Mem tword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_TWORD); }
+
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_DQWORD); }
+
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_QWORD); }
+
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+static inline Mem sysint_ptr_abs(void* target, const Register& index, UInt32 shift, SysInt disp = 0, UInt32 segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _ptr_build_abs(target, index, shift, disp, segmentPrefix, sizeof(SysInt)); }
+// --- absolute addressing ---
+
 
 // ============================================================================
 // [AsmJit::Mem - ptr[base + displacement]]
 // ============================================================================
 
-ASMJIT_API Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptrSize);
+ASMJIT_API Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptrSize) ASMJIT_NOTHROW;
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(const Register& base, SysInt disp = 0) 
+static inline Mem ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem byte_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem word_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem dword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem qword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem tword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem dqword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem mmword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 bytes) pointer operand
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem xmmword_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) 
+static inline Mem sysint_ptr(const Register& base, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, disp, sizeof(SysInt)); }
 
 // ============================================================================
 // [AsmJit::Mem - ptr[base + (index << shift) + displacement]]
 // ============================================================================
 
-ASMJIT_API Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize);
+ASMJIT_API Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize) ASMJIT_NOTHROW;
 
 //! @brief Create pointer operand with not specified size.
-static inline Mem ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, 0); }
 
 //! @brief Create byte pointer operand.
-static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem byte_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_BYTE); }
 
 //! @brief Create word (2 Bytes) pointer operand.
-static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem word_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_WORD); }
 
 //! @brief Create dword (4 Bytes) pointer operand.
-static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem dword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_DWORD); }
 
 //! @brief Create qword (8 Bytes) pointer operand.
-static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem qword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
-static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem tword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_TWORD); }
 
 //! @brief Create dqword (16 Bytes) pointer operand.
-static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem dqword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create mmword (8 Bytes) pointer operand).
 //!
 //! @note This constructor is provided only for convenience for mmx programming.
-static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem mmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_QWORD); }
 
 //! @brief Create xmmword (16 Bytes) pointer operand.
 //!
 //! @note This constructor is provided only for convenience for sse programming.
-static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem xmmword_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, SIZE_DQWORD); }
 
 //! @brief Create system dependent pointer operand (32 bit or 64 bit).
-static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) 
+static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32 shift = 0, SysInt disp = 0) ASMJIT_NOTHROW
 { return _ptr_build(base, index, shift, disp, sizeof(SysInt)); }
 
 // ============================================================================
@@ -936,52 +1055,52 @@ static inline Mem sysint_ptr(const Register& base, const Register& index, UInt32
 //!
 //! To create immediate operand, use @c imm() and @c uimm() constructors 
 //! or constructors provided by @c Immediate class itself.
-struct Immediate : public Operand
+struct ASMJIT_HIDDEN Immediate : public Operand
 {
-  Immediate() : Operand(_DontInitialize())
+  Immediate() ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
     _initAll(OP_IMM, 0, 0, RELOC_NONE, 0, NULL);
   }
 
-  Immediate(SysInt i) : Operand(_DontInitialize())
+  Immediate(SysInt i) ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
     _initAll(OP_IMM, 0, 0, RELOC_NONE, i, NULL);
   }
   
-  Immediate(SysInt i, UInt8 isUnsigned) : Operand(_DontInitialize())
+  Immediate(SysInt i, UInt8 isUnsigned) ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
     _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, i, NULL);
   }
   
-  inline Immediate(const Immediate& other) : Operand(other) {}
+  inline Immediate(const Immediate& other) ASMJIT_NOTHROW : Operand(other) {}
 
-  inline Immediate& operator=(SysInt val)
+  inline Immediate& operator=(SysInt val) ASMJIT_NOTHROW
   { setValue(val); return *this; }
 
-  inline Immediate& operator=(const Immediate& other)
+  inline Immediate& operator=(const Immediate& other) ASMJIT_NOTHROW
   { _copy(other); }
 
   //! @brief Return true if immediate is unsigned value.
-  inline UInt8 isUnsigned() const { return _imm.isUnsigned; }
+  inline UInt8 isUnsigned() const ASMJIT_NOTHROW { return _imm.isUnsigned; }
 
   //! @brief Return relocation mode.
-  inline UInt8 relocMode() const { return _imm.relocMode; }
+  inline UInt8 relocMode() const ASMJIT_NOTHROW { return _imm.relocMode; }
 
   //! @brief Return signed immediate value.
-  inline SysInt value() const { return _imm.value; }
+  inline SysInt value() const ASMJIT_NOTHROW { return _imm.value; }
 
   //! @brief Return unsigned immediate value.
-  inline SysUInt uvalue() const { return (SysUInt)_imm.value; }
+  inline SysUInt uvalue() const ASMJIT_NOTHROW { return (SysUInt)_imm.value; }
 
   //! @brief Set immediate value as signed type to @a val.
-  inline void setValue(SysInt val, UInt8 isUnsigned = false)
+  inline void setValue(SysInt val, UInt8 isUnsigned = false) ASMJIT_NOTHROW
   {
     _imm.value = val; 
     _imm.isUnsigned = isUnsigned;
   }
 
   //! @brief Set immediate value as unsigned type to @a val.
-  inline void setUValue(SysUInt val)
+  inline void setUValue(SysUInt val) ASMJIT_NOTHROW
   {
     _imm.value = (SysInt)val;
     _imm.isUnsigned = true;
@@ -989,10 +1108,10 @@ struct Immediate : public Operand
 };
 
 //! @brief Create signed immediate value operand.
-ASMJIT_API Immediate imm(SysInt i);
+ASMJIT_API Immediate imm(SysInt i) ASMJIT_NOTHROW;
 
 //! @brief Create unsigned immediate value operand.
-ASMJIT_API Immediate uimm(SysUInt i);
+ASMJIT_API Immediate uimm(SysUInt i) ASMJIT_NOTHROW;
 
 // ============================================================================
 // [AsmJit::Label]
@@ -1047,10 +1166,10 @@ ASMJIT_API Immediate uimm(SysUInt i);
 //! // Bind label to current position, see @c AsmJit::Serializer::bind().
 //! a.bind(L_1);
 //! @endcode
-struct Label : public Operand
+struct ASMJIT_HIDDEN Label : public Operand
 {
   //! @brief Create new unused label.
-  inline Label(UInt16 id = 0) 
+  inline Label(UInt16 id = 0) ASMJIT_NOTHROW
   {
     _lbl.op = OP_LABEL;
     _lbl.state = LABEL_STATE_UNUSED;
@@ -1061,82 +1180,51 @@ struct Label : public Operand
 
   //! @brief Destroy label. If label is linked to some location (not bound), 
   //! assertion is raised (because generated code is invalid in this case).
-  inline ~Label() { ASMJIT_ASSERT(!isLinked()); }
+  inline ~Label() ASMJIT_NOTHROW
+  { ASMJIT_ASSERT(!isLinked()); }
 
   //! @brief Unuse label (unbound or unlink) - Use with caution.
-  inline void unuse()
+  inline void unuse() ASMJIT_NOTHROW
   { _initAll(OP_LABEL, LABEL_STATE_UNUSED, 0, 0, -1, NULL); }
 
   //! @brief Return label state, see @c LABEL_STATE. */
-  inline UInt8 state() const { return _lbl.state; }
+  inline UInt8 state() const ASMJIT_NOTHROW
+  { return _lbl.state; }
+
   //! @brief Return label Id.
-  inline UInt16 labelId() const { return _lbl.id; }
+  inline UInt16 labelId() const ASMJIT_NOTHROW
+  { return _lbl.id; }
+
   //! @brief Returns @c true if label is unused (not bound or linked).
-  inline bool isUnused() const { return _lbl.state == LABEL_STATE_UNUSED; }
+  inline bool isUnused() const ASMJIT_NOTHROW
+  { return _lbl.state == LABEL_STATE_UNUSED; }
+
   //! @brief Returns @c true if label is linked.
-  inline bool isLinked() const { return _lbl.state == LABEL_STATE_LINKED; }
+  inline bool isLinked() const ASMJIT_NOTHROW
+  { return _lbl.state == LABEL_STATE_LINKED; }
+
   //! @brief Returns @c true if label is bound.
-  inline bool isBound()  const { return _lbl.state == LABEL_STATE_BOUND; }
+  inline bool isBound()  const ASMJIT_NOTHROW
+  { return _lbl.state == LABEL_STATE_BOUND; }
 
   //! @brief Returns the position of bound or linked labels, -1 if label 
   //! is unused.
-  inline SysInt position() const { return _lbl.position; }
+  inline SysInt position() const ASMJIT_NOTHROW
+  { return _lbl.position; }
 
   //! @brief Set label Id.
-  inline void setId(UInt16 id) 
+  inline void setId(UInt16 id) ASMJIT_NOTHROW
   {
     _lbl.id = id;
   }
 
   //! @brief Set state and position
-  inline void setStatePos(UInt8 state, SysInt position)
+  inline void setStatePos(UInt8 state, SysInt position) ASMJIT_NOTHROW
   {
     _lbl.state = state; 
     _lbl.position = position;
   }
 };
-
-// ============================================================================
-// [AsmJit::operand_cast<>]
-// ============================================================================
-
-// operand cast
-
-//! @brief Operand cast is used internally to cast @c Operand into higher type.
-template<typename To> static inline To operand_cast(Operand& op) { return reinterpret_cast<To>(op); }
-//! @overload
-template<typename To> static inline To operand_cast(const Operand& op) { return reinterpret_cast<To>(op); }
-
-// I think that this code is no longer needed
-#if 0
-
-#define MAKE_OPERAND_CAST(To, Expect) \
-/*! @overload */ \
-template<> static inline To& operand_cast(Operand& op) \
-{ \
-  ASMJIT_ASSERT(Expect); \
-  return reinterpret_cast<To&>(op); \
-} \
-\
-/*! @overload */ \
-template<> static inline const To& operand_cast(const Operand& op) \
-{ \
-  ASMJIT_ASSERT(Expect); \
-  return reinterpret_cast<const To&>(op); \
-}
-
-MAKE_OPERAND_CAST(BaseReg, (op.op() == OP_REG));
-MAKE_OPERAND_CAST(Register, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() <= REG_GPQ));
-MAKE_OPERAND_CAST(X87Register, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_X87));
-MAKE_OPERAND_CAST(MMRegister, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_MM));
-MAKE_OPERAND_CAST(XMMRegister, (op.op() == OP_REG && reinterpret_cast<const BaseReg&>(op).type() == REG_XMM));
-MAKE_OPERAND_CAST(Mem, (op.op() == OP_MEM));
-MAKE_OPERAND_CAST(BaseRegMem, (op.op() == OP_MEM || op.op() == OP_REG));
-MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
-
-#undef MAKE_OPERAND_CAST
-
-#endif // DEBUG
 
 // ============================================================================
 // [AsmJit::mm_shuffle]
@@ -1154,7 +1242,7 @@ MAKE_OPERAND_CAST(Immediate, (op.op() == OP_IMM));
 //! - @c AsmJit::Serializer::pshufhw()
 //! - @c AsmJit::Serializer::pshuflw()
 //! - @c AsmJit::Serializer::shufps()
-static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w)
+static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w) ASMJIT_NOTHROW
 { return (z << 6) | (y << 4) | (x << 2) | w; }
 
 // ============================================================================
@@ -1180,9 +1268,9 @@ struct ASMJIT_API _Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Create _Serializer instance.
-  _Serializer();
+  _Serializer() ASMJIT_NOTHROW;
   //! @brief Destroy _Serializer instance.
-  virtual ~_Serializer();
+  virtual ~_Serializer() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Properties]
@@ -1191,19 +1279,22 @@ struct ASMJIT_API _Serializer
   //! @brief Get property @a key from serializer.
   //!
   //! Method returns old property value on success, otherwise 0xFFFFFFFF.
-  virtual UInt32 getProperty(UInt32 key);
+  virtual UInt32 getProperty(UInt32 key) ASMJIT_NOTHROW;
 
   //! @brief Set property @a key to @a value.
-  virtual UInt32 setProperty(UInt32 key, UInt32 value);
+  virtual UInt32 setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Logging]
   // -------------------------------------------------------------------------
 
   //! @brief Return logger or @c NULL (if none).
-  inline Logger* logger() const { return _logger; }
+  inline Logger* logger() const ASMJIT_NOTHROW
+  { return _logger; }
+
   //! @brief Set logger to @a logger.
-  inline void setLogger(Logger* logger) { _logger = logger; }
+  inline void setLogger(Logger* logger) ASMJIT_NOTHROW
+  { _logger = logger; }
 
   // -------------------------------------------------------------------------
   // [Abstract Emitters]
@@ -1255,13 +1346,16 @@ struct ASMJIT_API _Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Return last assembler error code.
-  inline UInt32 error() const { return _error; }
+  inline UInt32 error() const ASMJIT_NOTHROW
+  { return _error; }
 
   //! @brief Set assembler error code.
-  inline void setError(UInt32 error) { _error = error; }
+  inline void setError(UInt32 error) ASMJIT_NOTHROW
+  { _error = error; }
 
   //! @brief Clear assembler error code.
-  inline void clearError() { _error = 0; }
+  inline void clearError() ASMJIT_NOTHROW
+  { _error = 0; }
 
   // -------------------------------------------------------------------------
   // [Make]
@@ -1327,7 +1421,7 @@ private:
 // ============================================================================
 
 //! @brief Assembler instruction serializer.
-struct Serializer : public _Serializer
+struct ASMJIT_HIDDEN Serializer : public _Serializer
 {
   // -------------------------------------------------------------------------
   // [Embed]
@@ -7561,9 +7655,8 @@ struct Serializer : public _Serializer
 
 } // AsmJit namespace
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif // _MSC_VER
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITSERIALIZERX86X64_H

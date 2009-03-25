@@ -39,6 +39,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 // VARIABLE_TYPE_INT64 not declared in 32 bit mode, in future this should 
 // change
 #if defined(ASMJIT_X86)
@@ -50,14 +53,6 @@ namespace AsmJit {
 // ============================================================================
 // [Helpers]
 // ============================================================================
-/*
-static void delAll(Compiler::EmittableList& buf)
-{
-  Emittable** emitters = buf.data();
-  SysUInt i, len = buf.length();
-  for (i = 0; i < len; i++) emitters[i]->~Emittable();
-}
-*/
 
 static void delAll(Emittable* first)
 {
@@ -104,6 +99,17 @@ static const UInt8 variableRegCodeData[] =
   REG_XMM
 };
 
+static const char* variableTypeName[] =
+{
+  "none",
+  "int32",
+  "int64",
+  "float",
+  "double",
+  "mm",
+  "xmm"
+};
+
 static UInt32 getVariableSize(UInt32 type)
 {
   ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableSizeData));
@@ -119,15 +125,19 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _function(f),
   _refCount(0),
   _spillCount(0),
-  _reuseCount(0),
   _registerAccessCount(0),
   _memoryAccessCount(0),
+  _reuseCount(0),
+  _globalSpillCount(0),
+  _globalRegisterAccessCount(0),
+  _globalMemoryAccessCount(0),
   _type(type),
   _size(getVariableSize(type)),
   _state(VARIABLE_STATE_UNUSED),
   _priority(10),
   _registerCode(NO_REG),
-  _preferredRegister(0xFF),
+  _preferredRegisterCode(0xFF),
+  _homeRegisterCode(0xFF),
   _changed(false),
   _stackOffset(0),
   _allocFn(NULL),
@@ -162,6 +172,26 @@ void Variable::deref()
 {
   if (--_refCount == 0) unuse();
 }
+
+void Variable::getReg(
+  UInt8 mode, UInt8 preferredRegister,
+  BaseReg* dest, UInt8 regType)
+{
+  alloc(mode, preferredRegister);
+
+  // Setup register in dest
+  UInt8 size = 1U << (regType >> 4);
+  if (regType == REG_X87) size = 10;
+  if (regType == REG_MM ) size = 8;
+  if (regType == REG_XMM) size = 16;
+
+  *dest = BaseReg((_registerCode & REGCODE_MASK) | regType, size);
+
+  // Statistics
+  _registerAccessCount++;
+  _globalRegisterAccessCount++;
+}
+
 
 // ============================================================================
 // [AsmJit::State]
@@ -307,11 +337,6 @@ void Instruction::emit(Assembler& a)
 // [AsmJit::Function]
 // ============================================================================
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4355) // this used in base member initializer list
-#endif // _MSC_VER
-
 Function::Function(Compiler* c) : 
   Emittable(c, EMITTABLE_FUNCTION),
   _stackAlignmentSize(0),
@@ -341,10 +366,6 @@ Function::Function(Compiler* c) :
   memset32(_cconvArgumentsGp, 0xFFFFFFFF, 16);
   memset32(_cconvArgumentsXmm, 0xFFFFFFFF, 16);
 }
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif // _MSC_VER
 
 Function::~Function()
 {
@@ -379,7 +400,7 @@ void Function::prepare()
 
       // Use only variable with size 'size' and variable not mapped to the 
       // function arguments
-      if (var->size() == size && var->_stackOffset <= 0 && var->_memoryAccessCount > 0)
+      if (var->size() == size && var->_stackOffset <= 0 && var->_globalMemoryAccessCount > 0)
       {
         // X86 stack is aligned to 32 bits (4 bytes). For MMX and SSE 
         // programming we need 8 or 16 bytes alignment. For MMX memory
@@ -460,6 +481,61 @@ void Function::prepare()
 
 void Function::emit(Assembler& a)
 {
+  // Dump function and statistics
+  Logger* logger = a.logger();
+  if (logger && logger->enabled())
+  {
+    char _loc[128];
+    char* loc;
+
+    SysUInt i;
+    SysUInt varlen = _variables.length();
+
+    // Log function and its parameters
+    logger->log("; Function Prototype:\n");
+    logger->log(";   (");
+    for (i = 0; i < argumentsCount(); i++)
+    {
+      Variable* v = _variables[i];
+
+      if (i != 0) logger->log(", ");
+      logger->log(
+        v->type() < _VARIABLE_TYPE_COUNT ? variableTypeName[v->type()] : "unknown");
+    }
+    logger->log(")\n");
+    logger->log(";\n");
+    logger->log("; Variables:\n");
+
+    // Log variables
+    for (i = 0; i < varlen; i++)
+    {
+      Variable* v = _variables[i];
+
+      if (v->_globalMemoryAccessCount > 0)
+      {
+        loc = _loc;
+        Logger::dumpOperand(_loc, v->_memoryOperand)[0] = '\0';
+      }
+      else
+      {
+        loc = "[None]";
+      }
+
+      logger->logFormat(";   %-2u (%-6s) at %-9s - reg access: %-3u, mem access: %-3u\n",
+        // Variable ID
+        (unsigned int)i,
+        // Variable Type
+        v->type() < _VARIABLE_TYPE_COUNT ? variableTypeName[v->type()] : "unknown",
+        // Variable Memory Address
+        loc,
+        // Register Access Count
+        (unsigned int)v->_globalRegisterAccessCount,
+        // Memory Access Count
+        (unsigned int)v->_globalMemoryAccessCount
+      );
+    }
+  }
+
   a.bind(_entryLabel);
 }
 
@@ -790,7 +866,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   _argumentsStackSize = (UInt32)(-stackOffset);
 }
 
-Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegister)
+Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegisterCode)
 {
   Variable* v;
 
@@ -802,11 +878,13 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
     if (v->refCount() == 0 && v->type() == type) 
     {
       v->_spillCount = 0;
-      v->_reuseCount++;
       v->_registerAccessCount = 0;
       v->_memoryAccessCount = 0;
 
-      v->_preferredRegister = preferredRegister;
+      v->_reuseCount++;
+
+      v->_preferredRegisterCode = preferredRegisterCode;
+      v->_homeRegisterCode = NO_REG;
       v->_priority = priority;
       v->_changed = 0;
 
@@ -820,7 +898,7 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
 
   // If variable can't be reused, create new one.
   v = compiler()->newObject<Variable>(this, type);
-  v->_preferredRegister = preferredRegister;
+  v->_preferredRegisterCode = preferredRegisterCode;
   v->_priority = priority;
   _variables.append(v);
 
@@ -830,7 +908,7 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
   return v;
 }
 
-void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
+void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
 {
   ASMJIT_ASSERT(compiler() == v->compiler());
   if (v->state() == VARIABLE_STATE_REGISTER) { _lastUsedRegister = v; return; }
@@ -838,9 +916,12 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
   UInt32 i;
 
   // Preferred register code
-  UInt8 pref = (preferredRegister != NO_REG) 
-    ? preferredRegister 
-    : v->_preferredRegister;
+  UInt8 pref = (preferredRegisterCode != NO_REG) 
+    ? preferredRegisterCode 
+    : v->_preferredRegisterCode;
+
+  // Last register code
+  UInt8 home = v->homeRegisterCode();
 
   // New register code.
   UInt8 code = NO_REG;
@@ -880,6 +961,15 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
           spill(candidate);
           code = pref;
         }
+      }
+    }
+
+    // Home register code
+    if (code == NO_REG && home != NO_REG)
+    {
+      if ((_usedGpRegisters & (1U << (home & REGCODE_MASK))) == 0)
+      {
+        code = home;
       }
     }
 
@@ -943,6 +1033,15 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
       }
     }
 
+    // Home register code
+    if (code == NO_REG && home != NO_REG)
+    {
+      if ((_usedMmRegisters & (1U << (home & REGCODE_MASK))) == 0)
+      {
+        code = home;
+      }
+    }
+
     if (code == NO_REG)
     {
       for (i = 0; i < 8; i++)
@@ -962,7 +1061,7 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
     {
       UInt8 last = _lastUsedRegister ? _lastUsedRegister->registerCode() : NO_REG;
 
-      if ((_usedMmRegisters & (1U << (pref & REGCODE_MASK))) == 0)
+      if ((_usedXmmRegisters & (1U << (pref & REGCODE_MASK))) == 0)
       {
         code = pref;
       }
@@ -986,6 +1085,15 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
           spill(candidate);
           code = pref;
         }
+      }
+    }
+
+    // Home register code
+    if (code == NO_REG && home != NO_REG)
+    {
+      if ((_usedXmmRegisters & (1U << (home & REGCODE_MASK))) == 0)
+      {
+        code = home;
       }
     }
 
@@ -1060,7 +1168,9 @@ void Function::spill(Variable* v)
               compiler()->movdqa(*v->_memoryOperand, mk_xmm(v->registerCode()));
             break;
         }
+
         v->_memoryAccessCount++;
+        v->_globalMemoryAccessCount++;
       }
 
       v->setChanged(false);
@@ -1071,6 +1181,7 @@ void Function::spill(Variable* v)
 
     v->_state = VARIABLE_STATE_MEMORY;
     v->_spillCount++;
+    v->_globalSpillCount++;
   }
 }
 
@@ -1212,7 +1323,9 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
             compiler()->movdqa(mk_xmm(v->_registerCode), *v->_memoryOperand);
           break;
       }
+
       v->_memoryAccessCount++;
+      v->_globalMemoryAccessCount++;
     }
   }
 
@@ -1250,6 +1363,9 @@ void Function::_allocReg(UInt8 code, Variable* v)
       _state._data._xmm[code & 0x0F] = v;
       break;
   }
+
+  // Set home code, Compiler is able to reuse it again.
+  v->_homeRegisterCode = code;
 }
 
 void Function::_freeReg(UInt8 code)
@@ -1538,7 +1654,7 @@ Label* JumpTable::addLabel()
 // [AsmJit::Compiler - Construction / Destruction]
 // ============================================================================
 
-Compiler::Compiler() :
+Compiler::Compiler() ASMJIT_NOTHROW :
   _first(NULL),
   _last(NULL),
   _currentFunction(NULL),
@@ -1548,7 +1664,7 @@ Compiler::Compiler() :
   _jumpTableLabel = newLabel();
 }
 
-Compiler::~Compiler()
+Compiler::~Compiler() ASMJIT_NOTHROW
 {
   delAll(_first);
 }
@@ -1648,7 +1764,7 @@ Function* Compiler::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count
 
   addEmittable(f);
 
-  Prolog* e = prolog(f);
+  Prolog* e = newProlog(f);
   e->_label = f->_prologLabel;
 
   return f;
@@ -1659,21 +1775,21 @@ Function* Compiler::endFunction()
   ASMJIT_ASSERT(_currentFunction != NULL);
   Function* f = _currentFunction;
 
-  Epilog* e = epilog(f);
+  Epilog* e = newEpilog(f);
   e->_label = f->_exitLabel;
 
   _currentFunction = NULL;
   return f;
 }
 
-Prolog* Compiler::prolog(Function* f)
+Prolog* Compiler::newProlog(Function* f)
 {
   Prolog* e = newObject<Prolog>(f);
   addEmittable(e);
   return e;
 }
 
-Epilog* Compiler::epilog(Function* f)
+Epilog* Compiler::newEpilog(Function* f)
 {
   Epilog* e = newObject<Epilog>(f);
   addEmittable(e);
@@ -1924,7 +2040,7 @@ void* Compiler::make(UInt32 allocType)
 }
 
 // logger switcher used in Compiler::serialize().
-struct LoggerSwitcher
+struct ASMJIT_HIDDEN LoggerSwitcher
 {
   LoggerSwitcher(Assembler* a, Compiler* c) :
     a(a),
@@ -1968,3 +2084,6 @@ void Compiler::serialize(Assembler& a)
 }
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

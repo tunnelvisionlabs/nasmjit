@@ -47,6 +47,9 @@
 #include <unistd.h>
 #endif // ASMJIT_POSIX
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 // helpers
 namespace AsmJit {
 
@@ -75,7 +78,7 @@ static UInt32 detectNumberOfProcessors(void)
 
 // cpuid() and detectCpuInfo() for x86 and x64 platforms begins here.
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-void cpuid(UInt32 in, CpuId* out)
+void cpuid(UInt32 in, CpuId* out) ASMJIT_NOTHROW
 {
 #if defined(_MSC_VER)
 
@@ -135,7 +138,7 @@ static const VendorInfo vendorInfo[] =
   { CpuInfo::Vendor_VIA  , { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} }
 };
 
-void detectCpuInfo(CpuInfo* i)
+void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 {
   UInt32 a;
 
@@ -259,22 +262,26 @@ void detectCpuInfo(CpuInfo* i)
 #endif // ASMJIT_X86 || ASMJIT_X64
 }
 #else
-void detectCpuInfo(CpuInfo* i)
+void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 {
   memset(i, 0, sizeof(CpuInfo));
 }
 #endif
 
-struct CpuInfoStatic
+struct ASMJIT_HIDDEN CpuInfoStatic
 {
-  CpuInfoStatic() { detectCpuInfo(&i); }
+  CpuInfoStatic() ASMJIT_NOTHROW { detectCpuInfo(&i); }
+
   CpuInfo i;
 };
 
-CpuInfo* cpuInfo()
+CpuInfo* cpuInfo() ASMJIT_NOTHROW
 {
   static CpuInfoStatic i;
   return &i.i;
 }
 
 } // AsmJit
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

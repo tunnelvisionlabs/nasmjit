@@ -34,14 +34,27 @@
 #define _ASMJITCONFIG_H
 
 // [AsmJit - OS]
+// 
+// Provides definitions about your operating system. It's detected by default,
+// so override it if you have problems with automatic detection.
+//
 // #define ASMJIT_WINDOWS 1
 // #define ASMJIT_POSIX 2
 
 // [AsmJit - Architecture]
+//
+// Provides definitions about your cpu architecture. It's detected by default,
+// so override it if you have problems with automatic detection.
+
 // #define ASMJIT_X86
 // #define ASMJIT_X64
 
 // [AsmJit - API]
+//
+// If you are embedding AsmJit library into your project (statically), undef
+// ASMJIT_API macro.
+
+// #define ASMJIT_HIDDEN
 // #define ASMJIT_API
 
 // [AsmJit - Memory Management]

@@ -26,26 +26,37 @@
 // [Dependencies]
 #include "AsmJitSerializer.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 // ============================================================================
 // [AsmJit::Mem - ptr[]]
 // ============================================================================
 
-Mem _ptr_build(Label* label, SysInt disp, UInt8 ptrSize)
+Mem _ptr_build(
+  Label* label, SysInt disp, UInt8 ptrSize)
+  ASMJIT_NOTHROW
 {
   return Mem(label, disp, ptrSize);
 }
 
-Mem _ptr_build(Label* label, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
+Mem _ptr_build(
+  Label* label, 
+  const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
+  ASMJIT_NOTHROW
 {
   Mem m(no_reg, index, shift, disp, ptrSize);
   m._mem.label = label;
   return m;
 }
 
-#if defined(ASMJIT_X86)
-ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, UInt8 ptrSize)
+// --- absolute addressing ---
+ASMJIT_API Mem _ptr_build_abs(
+  void* target, SysInt disp,
+  UInt32 segmentPrefix, UInt8 ptrSize)
+  ASMJIT_NOTHROW
 {
   Mem m;
   m._mem.size = ptrSize;
@@ -53,14 +64,33 @@ ASMJIT_API Mem _ptr_build_abs(void* target, SysInt disp, UInt32 segmentPrefix, U
   m._mem.segmentPrefix = (SysInt)segmentPrefix;
   return m;
 }
-#endif // ASMJIT_X86
 
-Mem _ptr_build(const Register& base, SysInt disp, UInt8 ptrSize)
+ASMJIT_API Mem _ptr_build_abs(
+  void* target, 
+  const Register& index, UInt32 shift, SysInt disp,
+  UInt32 segmentPrefix, UInt8 ptrSize)
+  ASMJIT_NOTHROW
+{
+  Mem m;
+  m._mem.size = ptrSize;
+  m._mem.target = (void*)( (UInt8*)target + disp );
+  m._mem.index = (shift << 5) | index.index() | 0x10;
+  m._mem.segmentPrefix = (SysInt)segmentPrefix;
+  return m;
+}
+// --- absolute addressing ---
+
+Mem _ptr_build(
+  const Register& base, SysInt disp, UInt8 ptrSize)
+  ASMJIT_NOTHROW
 {
   return Mem(base, disp, ptrSize);
 }
 
-Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
+Mem _ptr_build(
+  const Register& base, 
+  const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
+  ASMJIT_NOTHROW
 {
   return Mem(base, index, shift, disp, ptrSize);
 }
@@ -70,16 +100,22 @@ Mem _ptr_build(const Register& base, const Register& index, UInt32 shift, SysInt
 // ============================================================================
 
 //! @brief Create signed immediate value operand.
-Immediate imm(SysInt i) { return Immediate(i, false); }
+Immediate imm(SysInt i) ASMJIT_NOTHROW
+{ 
+  return Immediate(i, false);
+}
 
 //! @brief Create unsigned immediate value operand.
-Immediate uimm(SysUInt i) { return Immediate((SysInt)i, true); }
+Immediate uimm(SysUInt i) ASMJIT_NOTHROW
+{
+  return Immediate((SysInt)i, true);
+}
 
 // ============================================================================
 // [AsmJit::_Serializer - Construction / Destruction]
 // ============================================================================
 
-_Serializer::_Serializer() :
+_Serializer::_Serializer() ASMJIT_NOTHROW :
   _logger(NULL),
   _zone(65536 - sizeof(Zone::Chunk) - 32),
   _properties(0),
@@ -91,7 +127,7 @@ _Serializer::_Serializer() :
                  (1 << PROPERTY_JCC_HINTS     ) ;
 }
 
-_Serializer::~_Serializer()
+_Serializer::~_Serializer() ASMJIT_NOTHROW
 {
 }
 
@@ -100,7 +136,7 @@ _Serializer::~_Serializer()
 // ============================================================================
 
 //! @brief Get property @a key from serializer.
-UInt32 _Serializer::getProperty(UInt32 key)
+UInt32 _Serializer::getProperty(UInt32 key) ASMJIT_NOTHROW
 {
   if (key < 32)
     return (_properties & (1 << key)) >> key;
@@ -109,7 +145,7 @@ UInt32 _Serializer::getProperty(UInt32 key)
 }
 
 //! @brief Set property @a key to @a value.
-UInt32 _Serializer::setProperty(UInt32 key, UInt32 value)
+UInt32 _Serializer::setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW
 {
   if (key < 32)
   {
@@ -230,3 +266,6 @@ const UInt32 _Serializer::_cmovcctable[16] =
 };
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

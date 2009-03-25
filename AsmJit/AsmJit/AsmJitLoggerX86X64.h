@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_Logging
@@ -53,9 +56,9 @@ struct ASMJIT_API Logger
   // [Construction / Destruction]
 
   //! @brief Create logger.
-  Logger();
+  Logger() ASMJIT_NOTHROW;
   //! @brief Destroy logger.
-  virtual ~Logger();
+  virtual ~Logger() ASMJIT_NOTHROW;
 
   // [Methods]
 
@@ -63,43 +66,52 @@ struct ASMJIT_API Logger
   //!
   //! Default implementation that is in @c AsmJit::Logger is to do nothing. 
   //! It's virtual to fit to your logging system.
-  virtual void log(const char* buf);
+  virtual void log(const char* buf) ASMJIT_NOTHROW;
 
   //! @brief Log instruction with operands.
-  virtual void logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+  virtual void logInstruction(UInt32 code, 
+    const Operand* o1,
+    const Operand* o2,
+    const Operand* o3) ASMJIT_NOTHROW;
+
   //! @brief Log .align directive.
-  virtual void logAlign(SysInt m);
+  virtual void logAlign(SysInt m) ASMJIT_NOTHROW;
+
   //! @brief Log label.
-  virtual void logLabel(const Label* label);
+  virtual void logLabel(const Label* label) ASMJIT_NOTHROW;
+
   //! @brief Log printf like message.
-  virtual void logFormat(const char* fmt, ...);
+  virtual void logFormat(const char* fmt, ...) ASMJIT_NOTHROW;
 
   //! @brief Return @c true if logging is enabled.
-  inline bool enabled() const { return _enabled; }
+  inline bool enabled() const ASMJIT_NOTHROW
+  { return _enabled; }
+
   //! @brief Set logging to enabled or disabled.
-  inline void setEnabled(bool enabled) { _enabled = enabled; }
+  inline void setEnabled(bool enabled) ASMJIT_NOTHROW
+  { _enabled = enabled; }
 
   // [Statics]
 
   //! @brief Dump instruction @a code to @a buf and return destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static char* dumpInstruction(char* buf, UInt32 code);
+  static char* dumpInstruction(char* buf, UInt32 code) ASMJIT_NOTHROW;
 
   //! @brief Dump operand @a op to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static char* dumpOperand(char* buf, const Operand* op);
+  static char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW;
 
   //! @brief Dump register to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static char* dumpRegister(char* buf, UInt8 type, UInt8 index);
+  static char* dumpRegister(char* buf, UInt8 type, UInt8 index) ASMJIT_NOTHROW;
 
   //! @brief Dump label @a label to @a buf and returns destination size.
   //!
   //! @note Output is not @c NULL terminated.
-  static char* dumpLabel(char* buf, const Label* label);
+  static char* dumpLabel(char* buf, const Label* label) ASMJIT_NOTHROW;
 
   // [Variables]
 
@@ -135,20 +147,21 @@ struct ASMJIT_API FileLogger : public Logger
   //! @brief Create new @c FileLogger.
   //! @param stream FILE stream where logging will be sent (can be @c NULL 
   //! to disable logging).
-  FileLogger(FILE* stream = NULL);
+  FileLogger(FILE* stream = NULL) ASMJIT_NOTHROW;
 
   // [Methods]
 
-  virtual void log(const char* buf);
+  virtual void log(const char* buf) ASMJIT_NOTHROW;
 
   //! @brief Get file stream.
   //! @note Return value can be @c NULL.
-  inline FILE* stream() const { return _stream; }
+  inline FILE* stream() const ASMJIT_NOTHROW
+  { return _stream; }
 
   //! @brief Set file stream.
   //! @param stream FILE stream where logging will be sent (can be @c NULL 
   //! to disable logging).
-  void setStream(FILE* stream);
+  void setStream(FILE* stream) ASMJIT_NOTHROW;
 
   // [Variables]
 
@@ -159,6 +172,9 @@ private:
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITLOGGERX86X64_H

@@ -35,23 +35,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 // ============================================================================
 // [AsmJit::Logger]
 // ============================================================================
 
-Logger::Logger() :
+Logger::Logger() ASMJIT_NOTHROW :
   _enabled(true),
   _haveStream(true)
 {
 }
 
-Logger::~Logger()
+Logger::~Logger() ASMJIT_NOTHROW
 {
 }
 
-void Logger::logInstruction(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+void Logger::logInstruction(
+  UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+  ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
 
@@ -71,14 +76,14 @@ void Logger::logInstruction(UInt32 code, const Operand* o1, const Operand* o2, c
   log(buf);
 }
 
-void Logger::logAlign(SysInt m)
+void Logger::logAlign(SysInt m) ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
 
   logFormat(".align %d\n", (Int32)m);
 }
 
-void Logger::logLabel(const Label* label)
+void Logger::logLabel(const Label* label) ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
 
@@ -90,7 +95,7 @@ void Logger::logLabel(const Label* label)
   log(buf);
 }
 
-void Logger::logFormat(const char* fmt, ...)
+void Logger::logFormat(const char* fmt, ...) ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
 
@@ -104,7 +109,7 @@ void Logger::logFormat(const char* fmt, ...)
   log(buf);
 }
 
-void Logger::log(const char* buf)
+void Logger::log(const char* buf) ASMJIT_NOTHROW
 {
 }
 
@@ -112,13 +117,13 @@ void Logger::log(const char* buf)
 // [AsmJit::FileLogger]
 // ============================================================================
 
-FileLogger::FileLogger(FILE* stream)
+FileLogger::FileLogger(FILE* stream) ASMJIT_NOTHROW
   : _stream(NULL)
 {
   setStream(stream);
 }
 
-void FileLogger::log(const char* buf)
+void FileLogger::log(const char* buf) ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
 
@@ -126,10 +131,13 @@ void FileLogger::log(const char* buf)
 }
 
 //! @brief Set file stream.
-void FileLogger::setStream(FILE* stream)
+void FileLogger::setStream(FILE* stream) ASMJIT_NOTHROW
 {
   _stream = stream;
   _haveStream = (stream != NULL);
 }
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

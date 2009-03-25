@@ -30,25 +30,36 @@
 //! @mainpage
 //!
 //! @brief AsmJit is complete JIT assembler for X86/X64 platform.
+//! 
+//! AsmJit is complete x86/x64 JIT Assembler for C++ language. It supports FPU,
+//! MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 intrinsics, powerful compiler that 
+//! helps to write portable functions for 32-bit (x86) and 64-bit (x64) 
+//! architectures. AsmJit can be used to create functions at runtime that can
+//! be called from existing (but also generated) C/C++ code.
 //!
-//! It contains complete x86/x64 intrinsics (included is FPU, MMX, 3dNow, SSE, 
-//! SSE2, SSE3, SSE4) and powerful compiler that helps to write portable 
-//! functions for 32 bit (x86) and 64 bit (x64) architectures. AsmJit can be 
-//! used to compile functions at runtime that can be called from C/C++ code.
+//! AsmJit is crossplatform library that supports various compilers and
+//! operating systems. Currently only limitation is x86 (32-bit) or x64 (64-bit)
+//! processor. Currently tested operating systems are Windows (32 bit and 64 bit),
+//! Linux (32 bit and 64 bit) and MacOSX (32 bit). 
 //!
 //! <b>Introduction</b>
 //!
-//! AsmJit library contains low level and high level code generation classes.
-//! If you are looking for low level code generation that means that you
-//! perfectly understand calling conventions and you don't need automatic
-//! registers allocation or portable code between 32 bit operating systems
-//! and 64 bit ones, look at @ref AsmJit_Serializer and @ref AsmJit_Assembler
-//! sections.
+//! AsmJit library contains two main classes for code generation with different
+//! goals. First main code generation class is called @c AsmJit::Assembler and 
+//! contains low level API that can be used to generate JIT binary code. It 
+//! directly emits binary stream that represents encoded x86/x64 assembler 
+//! opcodes. Together with operands and labels it can be used to generate 
+//! complete code. For details look to @ref AsmJit_Serializer and 
+//! @ref AsmJit_Assembler sections.
 //!
-//! For high level code generation look at @ref AsmJit_Compiler section. 
-//! Please read also @ref AsmJit_Serializer and @ref AsmJit_Assembler even
-//! if you want to use pure @c AsmJit::Compiler solution. It's needed to
-//! understand how AsmJit library works and how you should use its API.
+//! There is also class named @c AsmJit::Compiler that allows to develop 
+//! crossplatform assembler code without worring about function calling 
+//! conventions and registers allocation. It can be also used to write 32 
+//! bit and 64 bit portable code. Compiler is recommended class to use for 
+//! code generation. If you want to use pure @c AsmJit::Compiler solution,
+//! it's needed also to look at @c AsmJit::Assembler and @c AsmJit::Serializer
+//! classes to understand how AsmJit library works and how you should use
+//! its API.
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!

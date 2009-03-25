@@ -1,3 +1,16 @@
+2009-03-25
+- Released 0.8-rc1
+- Fixed fxch instruction
+- Updated README - build instructions and introduction
+- Refactorized directory structure
+- Build shared library by default
+- Save last register used by variable to alloc it back when needed, this will
+  reduce overhead when switching states.
+- Removed operand_cast<>, use reinterpret_cast<> instead!
+- Added statistics to Function and Variable classes.
+- Fixed register allocator to use registerAccessCount
+- Fixed SysInt Variable in 64-bit mode
+
 2009-03-23
 - Fixed 64 bit jump table problems and 64 bit addressing again
 - Fixed fnstsw and fstsw instructions

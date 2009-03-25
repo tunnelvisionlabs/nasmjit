@@ -26,6 +26,9 @@
 // [Dependencies]
 #include "AsmJitVirtualMemory.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 // helpers
 namespace AsmJit {
 
@@ -75,9 +78,9 @@ static SysUInt roundUpToPowerOf2(SysUInt base)
 
 namespace AsmJit {
 
-struct VirtualMemoryLocal
+struct ASMJIT_HIDDEN VirtualMemoryLocal
 {
-  VirtualMemoryLocal()
+  VirtualMemoryLocal() ASMJIT_NOTHROW
   {
     SYSTEM_INFO info;
     GetSystemInfo(&info);
@@ -90,13 +93,14 @@ struct VirtualMemoryLocal
   SysUInt pageSize;
 };
 
-static VirtualMemoryLocal& vm()
+static VirtualMemoryLocal& vm() ASMJIT_NOTHROW
 {
   static VirtualMemoryLocal vm;
   return vm;
 };
 
 void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
+  ASMJIT_NOTHROW
 {
   // VirtualAlloc rounds allocated size to page size automatically.
   SysUInt msize = roundUp(length, vm().pageSize);
@@ -113,16 +117,19 @@ void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 }
 
 void VirtualMemory::free(void* addr, SysUInt /* length */)
+  ASMJIT_NOTHROW
 {
   VirtualFree(addr, 0, MEM_RELEASE);
 }
 
 SysUInt VirtualMemory::alignment()
+  ASMJIT_NOTHROW
 {
   return vm().alignment;
 }
 
 SysUInt VirtualMemory::pageSize()
+  ASMJIT_NOTHROW
 {
   return vm().pageSize;
 }
@@ -148,9 +155,9 @@ SysUInt VirtualMemory::pageSize()
 
 namespace AsmJit {
 
-struct VirtualMemoryLocal
+struct ASMJIT_HIDDEN VirtualMemoryLocal
 {
-  VirtualMemoryLocal()
+  VirtualMemoryLocal() ASMJIT_NOTHROW
   {
     alignment = pageSize = getpagesize();
   }
@@ -159,13 +166,15 @@ struct VirtualMemoryLocal
   SysUInt pageSize;
 };
 
-static VirtualMemoryLocal& vm()
+static VirtualMemoryLocal& vm() 
+  ASMJIT_NOTHROW
 {
   static VirtualMemoryLocal vm;
   return vm;
 }
 
 void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
+  ASMJIT_NOTHROW
 {
   SysUInt msize = roundUp(length, vm().pageSize);
   int protection = PROT_READ | PROT_WRITE | (canExecute ? PROT_EXEC : 0);
@@ -176,16 +185,19 @@ void* VirtualMemory::alloc(SysUInt length, SysUInt* allocated, bool canExecute)
 }
 
 void VirtualMemory::free(void* addr, SysUInt length)
+  ASMJIT_NOTHROW
 {
   munmap(addr, length);
 }
 
 SysUInt VirtualMemory::alignment()
+  ASMJIT_NOTHROW
 {
   return vm().alignment;
 }
 
 SysUInt VirtualMemory::pageSize()
+  ASMJIT_NOTHROW
 {
   return vm().pageSize;
 }
@@ -193,3 +205,6 @@ SysUInt VirtualMemory::pageSize()
 } // AsmJit
 
 #endif // ASMJIT_POSIX
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"

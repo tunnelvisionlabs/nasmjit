@@ -30,6 +30,9 @@
 // [Dependencies]
 #include "AsmJitBuild.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_MemoryManagement
@@ -52,16 +55,16 @@ enum MEMORY_ALLOC_TYPE
 //! @brief Virtual memory manager.
 struct ASMJIT_API MemoryManager
 {
-  MemoryManager();
-  ~MemoryManager();
+  MemoryManager() ASMJIT_NOTHROW;
+  ~MemoryManager() ASMJIT_NOTHROW;
 
-  void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE);
-  bool free(void* address);
+  void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
+  bool free(void* address) ASMJIT_NOTHROW;
 
-  SysUInt used();
-  SysUInt allocated();
+  SysUInt used() ASMJIT_NOTHROW;
+  SysUInt allocated() ASMJIT_NOTHROW;
 
-  static MemoryManager* global();
+  static MemoryManager* global() ASMJIT_NOTHROW;
 
 private:
   void* _d;
@@ -70,6 +73,9 @@ private:
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITMEMORYMANAGER_H

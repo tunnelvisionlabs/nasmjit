@@ -30,6 +30,9 @@
 // [Dependencies]
 #include "AsmJitBuild.h"
 
+// [Warnings-Push]
+#include "AsmJitWarningsPush.h"
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_CpuInfo
@@ -64,7 +67,7 @@ union CpuId
 //! @c cpuid() function has one input parameter that is passed to cpuid through 
 //! eax register and results in four output values representing result of cpuid 
 //! instruction (eax, ebx, ecx and edx registers).
-ASMJIT_API void cpuid(UInt32 in, CpuId* out);
+ASMJIT_API void cpuid(UInt32 in, CpuId* out) ASMJIT_NOTHROW;
 #endif // ASMJIT_X86 || ASMJIT_X64
 
 // ============================================================================
@@ -72,7 +75,7 @@ ASMJIT_API void cpuid(UInt32 in, CpuId* out);
 // ============================================================================
 
 //! @brief Informations about host cpu.
-struct CpuInfo
+struct ASMJIT_HIDDEN CpuInfo
 {
   //! @brief Cpu short vendor string.
   char vendor[16];
@@ -195,16 +198,19 @@ struct CpuInfo
 //! @brief Detect CPU features to CpuInfo structure @a i.
 //!
 //! @sa @c CpuInfo.
-ASMJIT_API void detectCpuInfo(CpuInfo* i);
+ASMJIT_API void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW;
 
 //! @brief Return CpuInfo (detection is done only once).
 //!
 //! @sa @c CpuInfo.
-ASMJIT_API CpuInfo* cpuInfo();
+ASMJIT_API CpuInfo* cpuInfo() ASMJIT_NOTHROW;
 
 //! @}
 
 } // AsmJit namespace
+
+// [Warnings-Pop]
+#include "AsmJitWarningsPop.h"
 
 // [Guard]
 #endif // _ASMJITCPUINFO_H
