@@ -731,8 +731,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
 
   // Stack arguments
   bool ltr = _cconvArgumentsDirection == ARGUMENT_DIR_LEFT_TO_RIGHT;
-  SysInt istart = ltr ? 0 : count-1;
-  SysInt iend   = ltr ? count : -1;
+  SysInt istart = ltr ? 0 : (SysInt)count - 1;
+  SysInt iend   = ltr ? (SysInt)count : -1;
   SysInt istep  = ltr ? 1 : -1;
 
   for (i = istart; i != iend; i += istep)
