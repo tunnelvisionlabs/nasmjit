@@ -1498,7 +1498,7 @@ void Function::restoreState(State* s)
       UInt8 regIndex = (UInt8)(i - base);
 
       // Spill register
-      if (from != NULL) 
+      if (from->v != NULL) 
       {
         // Here is important step. It can happen that variable that was saved
         // in state currently not exists. We can check for it by comparing
