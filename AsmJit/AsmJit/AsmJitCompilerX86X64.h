@@ -1521,6 +1521,12 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Enable or disable sfence instruction in epilog.
   inline void setSfence(UInt8 val) { _sfence = val; }
 
+  //! @brief Enable or disable lfence instruction in epilog.
+  inline void setLfence(UInt8 val) { _lfence = val; }
+
+  //! @brief Return whether optimizing prolog / epilog is enabled or disabled.
+  inline void setOptimizedPrologEpilog(UInt8 val) { _optimizedPrologEpilog = val; }
+
   //! @brief Return function calling convention, see @c CALL_CONV.
   inline UInt32 cconv() const { return _cconv; }
 
@@ -1544,6 +1550,12 @@ struct ASMJIT_API Function : public Emittable
 
   //! @brief Return whether sfence instruction is enabled or disabled in epilog.
   inline UInt8 sfence() const { return _sfence; }
+
+  //! @brief Return whether lfence instruction is enabled or disabled in epilog.
+  inline UInt8 lfence() const { return _lfence; }
+
+  //! @brief Return whether optimizing prolog / epilog is enabled or disabled.
+  inline UInt8 optimizedPrologEpilog() const { return _optimizedPrologEpilog; }
 
   //! @brief Return direction of arguments passed on the stack.
   //!
@@ -1744,6 +1756,12 @@ private:
 
   //! @brief Whether to generate sfence instruction in epilog.
   UInt8 _sfence;
+
+  //! @brief Whether to generate lfence instruction in epilog.
+  UInt8 _lfence;
+
+  //! @brief Whether to optimize prolog / epilog sequences.
+  UInt8 _optimizedPrologEpilog;
 
   //! @brief Direction for arguments passed on stack, see @c ARGUMENT_DIR.
   UInt32 _cconvArgumentsDirection;

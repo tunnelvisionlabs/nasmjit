@@ -1,3 +1,9 @@
+2009-03-26
+- Register allocator now checks for all nonpreserved registers first. This can
+  save some push/pop instructions in prolog/epilog if there are allocated only
+  few registers (this is probably most useful for x64 platforms).
+- Extended Function::emit() to log more informations about generated function.
+
 2009-03-25
 - Released 0.8-rc1
 - Fixed fxch instruction

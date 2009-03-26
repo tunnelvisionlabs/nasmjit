@@ -1000,10 +1000,9 @@ enum INST_CODE
 // [AsmJit::PROPERTY]
 // ============================================================================
 
+//! @brief @c Serializer properties.
 enum PROPERTY
 {
-  // [Assembler properties (0-15)]
-
   //! @brief Optimize align for current processor.
   //!
   //! Default: @c true.
@@ -1018,18 +1017,6 @@ enum PROPERTY
   //!
   //! Default: @c true.
   PROPERTY_JCC_HINTS = 2,
-
-  // [Compiler properties (16-31)]
-
-  //! @brief Optimize prolog and epilog sections for current processor.
-  //!
-  //! Default: @c true.
-  PROPERTY_OPTIMIZE_PROLOG_EPILOG = 16,
-
-  // [User properties]
-
-  //! @brief Start of used defined properties.
-  PROPERTY_USER = 32
 };
 
 //! @}

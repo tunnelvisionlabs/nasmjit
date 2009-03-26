@@ -24,6 +24,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // Disable some warnings we know about
+
+// MSVC
 #if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable: 4127) // conditional expression is constant

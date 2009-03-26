@@ -347,6 +347,8 @@ Function::Function(Compiler* c) :
   _allocableEbp(false),
   _emms(false),
   _sfence(false),
+  _lfence(false),
+  _optimizedPrologEpilog(true),
   _cconvArgumentsDirection(ARGUMENT_DIR_RIGHT_TO_LEFT),
   _argumentsStackSize(0),
   _usedGpRegisters(0),
@@ -485,8 +487,9 @@ void Function::emit(Assembler& a)
   Logger* logger = a.logger();
   if (logger && logger->enabled())
   {
-    char _loc[128];
+    char _buf[1024];
     char* loc;
+    char* p;
 
     SysUInt i;
     SysUInt varlen = _variables.length();
@@ -513,8 +516,8 @@ void Function::emit(Assembler& a)
 
       if (v->_globalMemoryAccessCount > 0)
       {
-        loc = _loc;
-        Logger::dumpOperand(_loc, v->_memoryOperand)[0] = '\0';
+        loc = _buf;
+        Logger::dumpOperand(_buf, v->_memoryOperand)[0] = '\0';
       }
       else
       {
@@ -534,6 +537,45 @@ void Function::emit(Assembler& a)
         (unsigned int)v->_globalMemoryAccessCount
       );
     }
+
+    // Log Registers
+    p = _buf;
+
+    SysUInt r;
+    SysUInt modifiedRegisters = 0;
+    for (r = 0; r < 3; r++)
+    {
+      bool first = true;
+      UInt32 regs;
+      UInt32 type;
+
+      memcpy(p, ";   ", 4); p += 4;
+
+      switch (r)
+      {
+        case 0: regs = _modifiedGpRegisters ; type = REG_GPN; memcpy(p, "GP :", 4); p += 4; break;
+        case 1: regs = _modifiedMmRegisters ; type = REG_MM ; memcpy(p, "MM :", 4); p += 4; break;
+        case 2: regs = _modifiedXmmRegisters; type = REG_XMM; memcpy(p, "XMM:", 4); p += 4; break;
+      }
+
+      for (i = 0; i < NUM_REGS; i++)
+      {
+        if ((regs & (1 << i)) != 0)
+        {
+          if (!first) { *p++ = ','; *p++ = ' '; }
+          p = Logger::dumpRegister(p, (UInt8)type, (UInt8)i);
+          first = false;
+          modifiedRegisters++;
+        }
+      }
+      *p++ = '\n';
+    }
+    *p = '\0';
+
+    logger->logFormat(";\n");
+    logger->logFormat("; Modified registers (%u):\n",
+      (unsigned int)modifiedRegisters);
+    logger->log(_buf);
   }
 
   a.bind(_entryLabel);
@@ -979,13 +1021,20 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     {
       for (i = 1; i < NUM_REGS; i++)
       {
-        if ((_usedGpRegisters & (1U << i)) == 0 && (i != RID_EBP || allocableEbp()) && i != RID_ESP) 
+        UInt32 mask = (1U << i);
+        if ((_usedGpRegisters & mask) == 0 && (i != RID_EBP || allocableEbp()) && i != RID_ESP)
         {
+          // Convenience to alloc registers from positions 0 to 15
+          if (code != NO_REG && (_cconvPreservedXmm & mask) == 1) continue;
+
           if (v->type() == VARIABLE_TYPE_INT32)
             code = i | REG_GPD;
           else
             code = i | REG_GPQ;
-          break;
+
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((_cconvPreservedGp & mask) == 0) break;
         }
       }
     }
@@ -1046,7 +1095,8 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     {
       for (i = 0; i < 8; i++)
       {
-        if ((_usedMmRegisters & (1U << i)) == 0)
+        UInt32 mask = (1U << i);
+        if ((_usedMmRegisters & mask) == 0)
         {
           code = i | REG_MM;
           break;
@@ -1101,10 +1151,17 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     {
       for (i = 0; i < NUM_REGS; i++)
       {
-        if ((_usedXmmRegisters & (1U << i)) == 0)
+        UInt32 mask = (1U << i);
+        if ((_usedXmmRegisters & mask) == 0)
         {
+          // Convenience to alloc registers from positions 0 to 15
+          if (code != NO_REG && (_cconvPreservedXmm & mask) == 1) continue;
+
           code = i | REG_XMM;
-          break;
+
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((_cconvPreservedXmm & mask) == 0) break;
         }
       }
     }
@@ -1548,10 +1605,13 @@ void Epilog::emit(Assembler& a)
   // First bind label (Function::_exitLabel) before the epilog
   if (_label) a.bind(_label);
 
-  if (f->emms())
-  {
-    a.emms();
-  }
+  // Emms
+  if (f->emms()) a.emms();
+
+  // Sfence / Lfence / Mfence
+  if ( f->sfence() && !f->lfence()) a.sfence(); // Only sfence
+  if (!f->sfence() &&  f->lfence()) a.lfence(); // Only lfence
+  if ( f->sfence() &&  f->lfence()) a.mfence(); // MFence == SFence & LFence
 
   // Add variables and register cleanup code
   int i;
@@ -1568,9 +1628,7 @@ void Epilog::emit(Assembler& a)
   // Use epilog code (if needed)
   if (!f->naked())
   {
-    bool emitLeave = (
-      compiler()->getProperty(PROPERTY_OPTIMIZE_PROLOG_EPILOG) && 
-      ci->vendorId == CpuInfo::Vendor_AMD);
+    bool emitLeave = (f->optimizedPrologEpilog() &&  ci->vendorId == CpuInfo::Vendor_AMD);
 
     if (emitLeave)
     {
@@ -1660,7 +1718,6 @@ Compiler::Compiler() ASMJIT_NOTHROW :
   _currentFunction(NULL),
   _labelIdCounter(1)
 {
-  _properties |= (1 << PROPERTY_OPTIMIZE_PROLOG_EPILOG);
   _jumpTableLabel = newLabel();
 }
 

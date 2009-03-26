@@ -2019,12 +2019,12 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
             (reinterpret_cast<const Register&>(dst).code() == 0 || 
              reinterpret_cast<const Register&>(src).code() == 0 ))
         {
-          int index = reinterpret_cast<const Register&>(dst).code() | src.code();
+          UInt8 index = reinterpret_cast<const Register&>(dst).code() | src.code();
           _emitByte(0x90 + index);
           return;
         }
 
-        _emitByte(0x86 + src.isRegType(REG_GPB));
+        _emitByte(0x86 + (!src.isRegType(REG_GPB)));
         _emitModRM(src.code(), dst, 0);
         return; 
       }

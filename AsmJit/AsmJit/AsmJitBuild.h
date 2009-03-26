@@ -215,5 +215,13 @@ private: \
 # endif
 #endif // DEBUG
 
+// GCC warnings fix: I can't understand why GCC hasn't interface to push/pop
+// warning
+#if defined(__GNUC__)
+# if (__GNUC__ * 10000  + __GNUC_MINOR__ * 100  + __GNUC_PATCHLEVEL__) >= 402001
+#  pragma GCC diagnostic ignored "-w"
+# endif
+#endif __GNUC__
+
 // [Guard]
 #endif // _ASMJITBUILD_H
