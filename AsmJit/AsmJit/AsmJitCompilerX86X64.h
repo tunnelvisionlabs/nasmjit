@@ -520,9 +520,9 @@ struct ASMJIT_API Variable
   inline SysUInt spillCount() const ASMJIT_NOTHROW
   { return _spillCount; }
   
-  //! @brief Return reuse count.
-  inline SysUInt reuseCount() const ASMJIT_NOTHROW
-  { return _reuseCount; }
+  //! @brief Return life id.
+  inline SysUInt lifeId() const ASMJIT_NOTHROW
+  { return _lifeId; }
   
   //! @brief Return register access statistics.
   inline SysUInt registerAccessCount() const ASMJIT_NOTHROW
@@ -698,8 +698,8 @@ private:
   //! @brief Memory access count (in current context).
   SysUInt _memoryAccessCount;
 
-  //! @brief How many times was variable reused.
-  SysUInt _reuseCount;
+  //! @brief Current variable life ID (also means how many times was variable reused).
+  SysUInt _lifeId;
 
   //! @brief How many times was variable spilled (in current context).
   SysUInt _globalSpillCount;
@@ -1071,18 +1071,24 @@ struct ASMJIT_API State
   State(Compiler* c, Function* f);
   virtual ~State();
 
+  struct Entry
+  {
+    Variable* v;
+    UInt32 lifeId;
+  };
+
   union Data 
   {
     //! @brief All variables in one array.
-    Variable* _v[16+8+16];
+    Entry regs[16+8+16];
 
     struct {
       //! @brief Regeral purpose registers.
-      Variable* _gp[16];
+      Entry gp[16];
       //! @brief MMX registers.
-      Variable* _mm[8];
+      Entry mm[8];
       //! @brief XMM registers.
-      Variable* _xmm[16];
+      Entry xmm[16];
     };
   };
 
@@ -2317,13 +2323,24 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Return first emittables in double linked list.
-  inline Emittable* firstEmittable() { return _first; }
+  inline Emittable* firstEmittable() const { return _first; }
 
   //! @brief Return last emittable in double linked list.
-  inline Emittable* lastEmittable() { return _first; }
+  inline Emittable* lastEmittable() const { return _first; }
 
+  //! @brief Return current emittable after all emittables are emitter.
+  //!
+  //! @note If this method return @c NULL it means first position.
+  inline Emittable* current() const { return _current; }
+
+  //! @brief Add emittable after current and set current to @a emittable.
   void addEmittable(Emittable* emittable);
+
+  //! @brief Remove emittable (and if needed set current to previous).
   void removeEmittable(Emittable* emittable);
+
+  //! @brief Set new current emittable and return previous one.
+  Emittable* setCurrent(Emittable* current);
 
   // -------------------------------------------------------------------------
   // [Logging]
@@ -2739,6 +2756,8 @@ private:
   Emittable* _first;
   //! @brief Last emittable.
   Emittable* _last;
+  //! @brief Current emittable.
+  Emittable* _current;
 
   //! @brief Operands list (operand id is index in this list, id 0 is not valid).
   OperandList _operands;

@@ -70,69 +70,10 @@
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::M_Node]
-// ============================================================================
-
-struct ASMJIT_HIDDEN M_Node
-{
-  // Chunk double-linked list
-  M_Node* prev;          // Prev node in list
-  M_Node* next;          // Next node in list
-
-  // Node (LLRB tree, KEY is mem)
-  M_Node* nlLeft;        // Left node
-  M_Node* nlRight;       // Right node
-  UInt32 nlColor;        // Color (RED or BLACK)
-
-  // Chunk memory
-  UInt8* mem;            // Virtual memory address
-
-  // Chunk data
-  SysUInt size;          // How many bytes contains this node
-  SysUInt blocks;        // How many blocks are here.
-  SysUInt density;       // Minimum count of allocated bytes in this node (also alignment).
-  SysUInt used;          // How many bytes are used in this node
-  SysUInt largestBlock;  // Contains largest block that can be allocated
-  SysUInt* baUsed;       // Contains bits about used blocks
-                         // (0 = unused, 1 = used)
-  SysUInt* baCont;       // Contains bits about continuous blocks
-                         // (0 = stop, 1 = continue)
-
-  // enums
-  enum NODE_COLOR
-  {
-    NODE_BLACK = 0,
-    NODE_RED = 1
-  };
-
-  // methods
-  inline SysUInt remain() const { return size - used; }
-};
-
-#define BITS_PER_ENTITY (sizeof(SysUInt) * 8)
-
-#define M_DIV(x, y) ((x) / (y))
-#define M_MOD(x, y) ((x) % (y))
-
-// ============================================================================
-// [M_Pernament]
-// ============================================================================
-
-//! @brief Pernament node.
-struct ASMJIT_HIDDEN M_PernamentNode
-{
-  UInt8* mem;            // Base pointer (virtual memory address).
-  SysUInt size;          // Count of bytes allocated.
-  SysUInt used;          // Count of bytes used.
-  M_PernamentNode* prev; // Pointer to prev chunk or NULL
-
-  // Return available space.
-  inline SysUInt available() const { return size - used; }
-};
-
-// ============================================================================
 // [Bits Manipulation]
 // ============================================================================
+
+#define BITS_PER_ENTITY (sizeof(SysUInt) * 8)
 
 static void _SetBit(SysUInt* buf, SysUInt index)
 {
@@ -223,6 +164,65 @@ static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len)
     *buf &= ((SysUInt)-1) << len;
   }
 }
+
+// ============================================================================
+// [AsmJit::M_Node]
+// ============================================================================
+
+#define M_DIV(x, y) ((x) / (y))
+#define M_MOD(x, y) ((x) % (y))
+
+struct ASMJIT_HIDDEN M_Node
+{
+  // Node double-linked list
+  M_Node* prev;          // Prev node in list
+  M_Node* next;          // Next node in list
+
+  // Node (LLRB tree, KEY is mem)
+  M_Node* nlLeft;        // Left node
+  M_Node* nlRight;       // Right node
+  UInt32 nlColor;        // Color (RED or BLACK)
+
+  // Chunk memory
+  UInt8* mem;            // Virtual memory address
+
+  // Chunk data
+  SysUInt size;          // How many bytes contains this node
+  SysUInt blocks;        // How many blocks are here.
+  SysUInt density;       // Minimum count of allocated bytes in this node (also alignment).
+  SysUInt used;          // How many bytes are used in this node
+  SysUInt largestBlock;  // Contains largest block that can be allocated
+  SysUInt* baUsed;       // Contains bits about used blocks
+                         // (0 = unused, 1 = used)
+  SysUInt* baCont;       // Contains bits about continuous blocks
+                         // (0 = stop, 1 = continue)
+
+  // enums
+  enum NODE_COLOR
+  {
+    NODE_BLACK = 0,
+    NODE_RED = 1
+  };
+
+  // methods
+  inline SysUInt remain() const { return size - used; }
+};
+
+// ============================================================================
+// [AsmJit::M_Pernament]
+// ============================================================================
+
+//! @brief Pernament node.
+struct ASMJIT_HIDDEN M_PernamentNode
+{
+  UInt8* mem;            // Base pointer (virtual memory address).
+  SysUInt size;          // Count of bytes allocated.
+  SysUInt used;          // Count of bytes used.
+  M_PernamentNode* prev; // Pointer to prev chunk or NULL
+
+  // Return available space.
+  inline SysUInt available() const { return size - used; }
+};
 
 // ============================================================================
 // [AsmJit::MemoryManagerPrivate]

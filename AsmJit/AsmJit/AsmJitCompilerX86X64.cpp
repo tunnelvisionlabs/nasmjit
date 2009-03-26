@@ -116,6 +116,12 @@ static UInt32 getVariableSize(UInt32 type)
   return variableSizeData[type];
 }
 
+static UInt8 getVariableRegisterCode(UInt32 type, UInt8 index)
+{
+  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableRegCodeData));
+  return variableRegCodeData[type] | index;
+}
+
 // ============================================================================
 // [AsmJit::Variable]
 // ============================================================================
@@ -127,7 +133,7 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _spillCount(0),
   _registerAccessCount(0),
   _memoryAccessCount(0),
-  _reuseCount(0),
+  _lifeId(0),
   _globalSpillCount(0),
   _globalRegisterAccessCount(0),
   _globalMemoryAccessCount(0),
@@ -766,7 +772,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       v->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
       _allocReg(reg, v);
 
-      _state._data._gp[reg & 0x0F] = v;
+      _state._data.gp[reg & 0x0F].v = v;
+      _state._data.gp[reg & 0x0F].lifeId = v->lifeId();
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -820,7 +827,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._data._gp[reg & 0x0F] = v;
+        _state._data.gp[reg & 0x0F].v = v;
+        _state._data.gp[reg & 0x0F].lifeId = v->lifeId();
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
@@ -831,7 +839,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._data._xmm[reg & 0x0F] = v;
+        _state._data.xmm[reg & 0x0F].v = v;
+        _state._data.xmm[reg & 0x0F].lifeId = v->lifeId();
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -862,7 +871,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._data._gp[reg & 0x0F] = v;
+        _state._data.gp[reg & 0x0F].v = v;
+        _state._data.gp[reg & 0x0F].lifeId = v->lifeId();
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -879,7 +889,8 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
-        _state._data._xmm[reg & 0x0F] = v;
+        _state._data.xmm[reg & 0x0F].v = v;
+        _state._data.xmm[reg & 0x0F].lifeId = v->lifeId();
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -919,21 +930,8 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
     v = _variables[i];
     if (v->refCount() == 0 && v->type() == type) 
     {
-      v->_spillCount = 0;
-      v->_registerAccessCount = 0;
-      v->_memoryAccessCount = 0;
-
-      v->_reuseCount++;
-
       v->_preferredRegisterCode = preferredRegisterCode;
-      v->_homeRegisterCode = NO_REG;
       v->_priority = priority;
-      v->_changed = 0;
-
-      v->_allocFn = NULL;
-      v->_spillFn = NULL;
-      v->_data = NULL;
-
       return v;
     }
   }
@@ -994,7 +992,7 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
         else
         {
           // Spill register we need
-          Variable* candidate = _state._data._gp[pref & REGCODE_MASK];
+          Variable* candidate = _state._data.gp[pref & REGCODE_MASK].v;
           // Candidate must exists if it's marked as used
           ASMJIT_ASSERT(candidate);
           // Candidate priority must be larger than zero
@@ -1070,7 +1068,7 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
         else
         {
           // Spill register we need
-          Variable* candidate = _state._data._mm[pref & 0x7 /* limit it to 0-7 */];
+          Variable* candidate = _state._data.mm[pref & 0x7 /* limit it to 0-7 */].v;
           // Candidate must exists if it's marked as used
           ASMJIT_ASSERT(candidate);
           // Candidate priority must be larger than zero
@@ -1126,7 +1124,7 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
         else
         {
           // Spill register we need
-          Variable* candidate = _state._data._xmm[pref & REGCODE_MASK];
+          Variable* candidate = _state._data.xmm[pref & REGCODE_MASK].v;
           // Candidate must exists if it's marked as used
           ASMJIT_ASSERT(candidate);
           // Candidate priority must be larger than zero
@@ -1254,7 +1252,21 @@ void Function::unuse(Variable* v)
   }
 
   v->_state = VARIABLE_STATE_UNUSED;
-  v->_reuseCount++;
+
+  v->_spillCount = 0;
+  v->_registerAccessCount = 0;
+  v->_memoryAccessCount = 0;
+
+  v->_lifeId++;
+
+  v->_preferredRegisterCode = NO_REG;
+  v->_homeRegisterCode = NO_REG;
+  v->_priority = 10;
+  v->_changed = 0;
+
+  v->_allocFn = NULL;
+  v->_spillFn = NULL;
+  v->_data = NULL;
 }
 
 static UInt32 getSpillScore(Variable* v)
@@ -1407,17 +1419,20 @@ void Function::_allocReg(UInt8 code, Variable* v)
     case REG_GPQ:
       useGpRegisters(mask);
       modifyGpRegisters(mask);
-      _state._data._gp[code & 0x0F] = v;
+      _state._data.gp[code & 0x0F].v = v;
+      _state._data.gp[code & 0x0F].lifeId = v->lifeId();
       break;
     case REG_MM:
       useMmRegisters(mask);
       modifyMmRegisters(mask);
-      _state._data._mm[code & 0x0F] = v;
+      _state._data.mm[code & 0x0F].v = v;
+      _state._data.mm[code & 0x0F].lifeId = v->lifeId();
       break;
     case REG_XMM:
       useXmmRegisters(mask);
       modifyXmmRegisters(mask);
-      _state._data._xmm[code & 0x0F] = v;
+      _state._data.xmm[code & 0x0F].v = v;
+      _state._data.xmm[code & 0x0F].lifeId = v->lifeId();
       break;
   }
 
@@ -1437,15 +1452,15 @@ void Function::_freeReg(UInt8 code)
     case REG_GPD:
     case REG_GPQ:
       unuseGpRegisters(mask);
-      _state._data._gp[code & 0x0F] = NULL;
+      memset(&_state._data.gp[code & 0x0F], 0, sizeof(State::Entry));
       break;
     case REG_MM:
       unuseMmRegisters(mask);
-      _state._data._mm[code & 0x0F] = NULL;
+      memset(&_state._data.mm[code & 0x0F], 0, sizeof(State::Entry));
       break;
     case REG_XMM:
       unuseXmmRegisters(mask);
-      _state._data._xmm[code & 0x0F] = NULL;
+      memset(&_state._data.xmm[code & 0x0F], 0, sizeof(State::Entry));
       break;
   }
 }
@@ -1475,17 +1490,32 @@ void Function::restoreState(State* s)
   {
     if (i == 16 || i == 24) base = i;
 
-    Variable* from = f_d._v[i];
-    Variable* to   = s_d._v[i];
+    State::Entry* from = &f_d.regs[i];
+    State::Entry* to   = &s_d.regs[i];
 
-    if (from != to)
+    if (from->v != to->v)
     {
       UInt8 regIndex = (UInt8)(i - base);
 
       // Spill register
       if (from != NULL) 
       {
-        spill(from);
+        // Here is important step. It can happen that variable that was saved
+        // in state currently not exists. We can check for it by comparing
+        // saved lifeId with current variable lifeIf. If IDs are different,
+        // variables not match. Another optimization is that we will spill 
+        // variable only if it's used in context we need. If it's unused, there
+        // is no reason to save it on the stack.
+        if (from->lifeId != from->v->lifeId() || from->v->state() == VARIABLE_STATE_UNUSED)
+        {
+          // Optimization, do not spill it, we can simply abandon it
+          _freeReg(getVariableRegisterCode(from->v->type(), regIndex));
+        }
+        else
+        {
+          // Variables match, do normal spill
+          spill(from->v);
+        }
       }
     }
   }
@@ -1495,18 +1525,18 @@ void Function::restoreState(State* s)
   {
     if (i == 16 || i == 24) base = i;
 
-    Variable* from = f_d._v[i];
-    Variable* to   = s_d._v[i];
+    State::Entry* from = &f_d.regs[i];
+    State::Entry* to   = &s_d.regs[i];
 
-    if (from != to)
+    if (from->v != to->v)
     {
       UInt8 regIndex = (UInt8)(i - base);
 
       // Alloc register
-      if (to != NULL) 
+      if (to->v != NULL) 
       {
-        UInt8 code = regIndex | variableRegCodeData[to->type()];
-        _allocAs(to, VARIABLE_ALLOC_READWRITE, code);
+        UInt8 code = getVariableRegisterCode(to->v->type(), regIndex);
+        _allocAs(to->v, VARIABLE_ALLOC_READ, code);
       }
     }
   }
@@ -1715,6 +1745,7 @@ Label* JumpTable::addLabel()
 Compiler::Compiler() ASMJIT_NOTHROW :
   _first(NULL),
   _last(NULL),
+  _current(NULL),
   _currentFunction(NULL),
   _labelIdCounter(1)
 {
@@ -1756,17 +1787,40 @@ void Compiler::free()
 
 void Compiler::addEmittable(Emittable* emittable)
 {
-  if (!_first)
+  ASMJIT_ASSERT(emittable != NULL);
+  ASMJIT_ASSERT(emittable->_prev == NULL);
+  ASMJIT_ASSERT(emittable->_next == NULL);
+
+  if (_current == NULL)
   {
-    _first = emittable;
-    _last = emittable;
+    if (!_first)
+    {
+      _first = emittable;
+      _last = emittable;
+    }
+    else
+    {
+      emittable->_next = _first;
+      _first->_prev = emittable;
+      _first = emittable;
+    }
   }
   else
   {
-    emittable->_prev = _last;
-    _last->_next = emittable;
-    _last = emittable;
+    Emittable* next = _current->_next;
+    Emittable* prev = _current;
+
+    emittable->_prev = prev;
+    emittable->_next = next;
+
+    prev->_next = emittable;
+    if (next)
+      next->_prev = emittable;
+    else
+      _last = emittable;
   }
+
+  _current = emittable;
 }
 
 void Compiler::removeEmittable(Emittable* emittable)
@@ -1779,6 +1833,15 @@ void Compiler::removeEmittable(Emittable* emittable)
 
   emittable->_prev = NULL;
   emittable->_next = NULL;
+
+  if (emittable == _current) _current = prev;
+}
+
+Emittable* Compiler::setCurrent(Emittable* current)
+{
+  Emittable* old = _current;
+  _current = current;
+  return old;
 }
 
 // ============================================================================
