@@ -69,20 +69,20 @@ struct ASMJIT_HIDDEN Operand
   inline Operand(const _DontInitialize&) ASMJIT_NOTHROW : _operandId(0) {}
 
   //! @brief Return type of operand, see @c OP.
-  inline UInt8 op() const ASMJIT_NOTHROW { return _op.op; }
+  inline UInt8 op() const ASMJIT_NOTHROW { return _base.op; }
   //! @brief Return size of operand in bytes.
-  inline UInt8 size() const ASMJIT_NOTHROW { return _op.size; }
+  inline UInt8 size() const ASMJIT_NOTHROW { return _base.size; }
 
   //! @brief Return @c true if operand is none (@c OP_NONE).
-  inline UInt8 isNone() const ASMJIT_NOTHROW { return _op.op == OP_NONE; }
+  inline UInt8 isNone() const ASMJIT_NOTHROW { return _base.op == OP_NONE; }
   //! @brief Return @c true if operand is any (general purpose, mmx or sse) register (@c OP_REG).
-  inline UInt8 isReg() const ASMJIT_NOTHROW { return _op.op == OP_REG; }
+  inline UInt8 isReg() const ASMJIT_NOTHROW { return _base.op == OP_REG; }
   //! @brief Return @c true if operand is memory address (@c OP_MEM).
-  inline UInt8 isMem() const ASMJIT_NOTHROW { return _op.op == OP_MEM; }
+  inline UInt8 isMem() const ASMJIT_NOTHROW { return _base.op == OP_MEM; }
   //! @brief Return @c true if operand is immediate (@c OP_IMM).
-  inline UInt8 isImm() const ASMJIT_NOTHROW { return _op.op == OP_IMM; }
+  inline UInt8 isImm() const ASMJIT_NOTHROW { return _base.op == OP_IMM; }
   //! @brief Return @c true if operand is label (@c OP_LABEL).
-  inline UInt8 isLabel() const ASMJIT_NOTHROW { return _op.op == OP_LABEL; }
+  inline UInt8 isLabel() const ASMJIT_NOTHROW { return _base.op == OP_LABEL; }
 
   //! @brief Return @c true if operand is register and type of register is @a regType.
   inline UInt8 isRegType(UInt8 regType) const ASMJIT_NOTHROW { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
@@ -101,25 +101,17 @@ struct ASMJIT_HIDDEN Operand
   //! @brief Return clears operand Id (@c Compiler will not recognize it after clearing).
   inline void clearId() ASMJIT_NOTHROW { _operandId = 0; }
 
-  //! @brief Generic operand data shared between all operands.
-  struct GenData
+  //! @brief Base operand data shared between all operands.
+  struct ASMJIT_HIDDEN BaseData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
     //! @brief Size of operand (register, address or immediate size).
     UInt8 size;
-    //! @brief Not used.
-    UInt8 unused2;
-    //! @brief Not used.
-    UInt8 unused3;
-    //! @brief Not used.
-    SysInt unused4;
-    //! @brief Not used.
-    void* unusedPtr;
   };
 
   //! @brief Register data.
-  struct RegData
+  struct ASMJIT_HIDDEN RegData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
@@ -128,15 +120,11 @@ struct ASMJIT_HIDDEN Operand
     //! @brief Register code, see @c REG.
     UInt8 code;
     //! @brief Not used.
-    UInt8 unused3;
-    //! @brief Not used.
-    SysInt unused4;
-    //! @brief Not used.
-    void* unusedPtr;
+    UInt8 reserved;
   };
 
   //! @brief Memory address data.
-  struct MemData
+  struct ASMJIT_HIDDEN MemData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
@@ -145,48 +133,31 @@ struct ASMJIT_HIDDEN Operand
     //! @brief Base register index, see @c REG.
     UInt8 base;
     //! @brief Index register index, see @c REG.
-    //!
-    //! Index register is a bit complicated here, because we need to store here 
-    //! more informations than only register index (to save operand size).
-    //! First 3 bits are shift (this very likely SIB byte), next one bit means
-    //! if index is used or not. Last 4 bytes are representing index register
-    //! code (0-15 is sufficient for 32 bit platform and 64 bit platform).
-    //!
-    //! To get if this is base+index+displacement address use
-    //!   index & 0x10
-    //!
-    //! To get shift use:
-    //!   index >> 5
-    //!
-    //! To get index register use:
-    //!   index & 0xF
-    //!
-    //! See @c Mem implementation for details
     UInt8 index;
+    //! @brief Index register shift (0 to 3 included).
+    UInt8 shift;
+    //! @brief Segment override prefix, see @c AsmJit::SEGMENT.
+    UInt8 segmentPrefix;
+    //! @brief Set to @c true if this operand is address to @c AsmJit::Label.
+    UInt8 hasLabel;
+    //! @brief Reserved (padding).
+    UInt8 reserved;
 
     //! @brief Displacement or target absolute address.
     union {
-      //! @brief Displacement.
-      SysInt displacement;
       //! @brief Target (for 32 bit, absolute address).
       void* target;
-    };
 
-    //! @brief Label address or segment override.
-    //!
-    //! See @c AsmJit::SEGMENT prefixes. Segment prefix is shared with @c Label
-    //! address, because @c Label will be never used with segment prefixes.
-    union
-    {
-      //! @brief Segment override prefix.
-      SysInt segmentPrefix;
       //! @brief Label (if memory operand is used with @c Label).
       Label* label;
     };
+
+    //! @brief Displacement.
+    SysInt displacement;
   };
 
   //! @brief Immediate value data.
-  struct ImmData
+  struct ASMJIT_HIDDEN ImmData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
@@ -198,19 +169,21 @@ struct ASMJIT_HIDDEN Operand
     UInt8 relocMode;
     //! @brief Immediate value.
     SysInt value;
-    //! @brief Not used.
-    void* unusedPtr;
   };
 
   //! @brief Label data.
-  struct LblData
+  struct ASMJIT_HIDDEN LblData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
+    //! @brief Size of label, currently not used.
+    UInt8 size;
     //! @brief State of label, see @c LABEL_STATE.
     UInt8 state;
+    //! @brief Reserved (padding).
+    UInt8 reserved;
     //! @brief Label Id (0 means unknown).
-    UInt16 id;
+    UInt32 id;
     //! @brief Position (always positive, information depends to @c state).
     SysInt position;
     //! @brief Previous link (used by @c AsmJit::Assembler).
@@ -219,8 +192,10 @@ struct ASMJIT_HIDDEN Operand
 
   union
   {
+    //! @brief Operand buffer.
+    UInt8 _buf[64];
     //! @brief Generic operand data.
-    GenData _op;
+    BaseData _base;
     //! @brief Register operand data.
     RegData _reg;
     //! @brief Memory operand data.
@@ -235,36 +210,10 @@ struct ASMJIT_HIDDEN Operand
   UInt32 _operandId;
 
   inline void _init(const Operand& other) ASMJIT_NOTHROW
-  {
-    memcpy(this, &other, sizeof(Operand));
-  }
+  { memcpy(this, &other, sizeof(Operand)); }
 
   inline void _copy(const Operand& other) ASMJIT_NOTHROW
-  {
-    memcpy(this, &other, sizeof(Operand));
-  }
-
-  //! @brief Private method to init whole operand.
-  //! 
-  //! If all parameters are constants then compiler can generate very small 
-  //! code (3 instructions) that's much better that code that generates for
-  //! each operand normally.
-  inline void _initAll(
-    UInt8 i8_0, 
-    UInt8 i8_1, 
-    UInt8 i8_2, 
-    UInt8 i8_3, 
-    SysInt i32_64, 
-    void* ptr) ASMJIT_NOTHROW
-  {
-    *reinterpret_cast<UInt32*>((UInt8*)this) = 
-      ((UInt32)i8_0      ) |
-      ((UInt32)i8_1 <<  8) |
-      ((UInt32)i8_2 << 16) |
-      ((UInt32)i8_3 << 24) ;
-    _op.unused4 = i32_64;
-    _op.unusedPtr = ptr;
-  }
+  { memcpy(this, &other, sizeof(Operand)); }
 
   friend struct Compiler;
 };
@@ -298,9 +247,13 @@ struct ASMJIT_HIDDEN BaseRegMem : public Operand
 //! @brief Base class for all registers.
 struct ASMJIT_HIDDEN BaseReg : public BaseRegMem
 {
-  inline BaseReg(UInt8 code, UInt8 size) ASMJIT_NOTHROW : 
+  inline BaseReg(UInt8 code, UInt8 size) ASMJIT_NOTHROW :
     BaseRegMem(_DontInitialize())
-  { _initAll(OP_REG, size, code, 0, 0, NULL); }
+  {
+    _reg.op = OP_REG;
+    _reg.size = size;
+    _reg.code = code;
+  }
 
   inline BaseReg(const BaseReg& other) ASMJIT_NOTHROW : 
     BaseRegMem(other)
@@ -334,6 +287,9 @@ struct ASMJIT_HIDDEN BaseReg : public BaseRegMem
   //! @brief Set register code.
   inline void setCode(UInt8 code) ASMJIT_NOTHROW
   { _reg.code = code; }
+
+  inline void setSize(UInt8 size) ASMJIT_NOTHROW
+  { _reg.size = size; }
 
   inline BaseReg& operator=(const BaseReg& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
@@ -671,38 +627,51 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
   inline Mem() ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, 0, 0x00, 0x00, 0, NULL);
+    memset(&_mem, 0, sizeof(MemData));
+    _mem.op = OP_MEM;
   }
 
   inline Mem(Label* label, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(OP_MEM, size, 0x00, 0x00, displacement, label);
+    _mem.op = OP_MEM;
+    _mem.size = size;
+    _mem.base = NO_REG;
+    _mem.index = NO_REG;
+    _mem.shift = 0;
+    _mem.segmentPrefix = SEGMENT_NONE;
+    _mem.hasLabel = true;
+    _mem.label = label;
+    _mem.displacement = displacement;
   }
 
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
-    _initAll(
-      OP_MEM,
-      size,
-      base.index() | 0x10,
-      0x00,
-      displacement,
-      NULL);
+    _mem.op = OP_MEM;
+    _mem.size = size;
+    _mem.base = base.code() & REGCODE_MASK;
+    _mem.index = NO_REG;
+    _mem.shift = 0;
+    _mem.segmentPrefix = SEGMENT_NONE;
+    _mem.hasLabel = false;
+    _mem.target = NULL;
+    _mem.displacement = displacement;
   }
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
     BaseRegMem(_DontInitialize())
   {
     ASMJIT_ASSERT(shift <= 3);
-    _initAll(
-      OP_MEM,
-      size,
-      base.code() == 0xFF ? 0 : base.index() | 0x10,
-      (shift << 5) | 0x10 | index.index(),
-      displacement,
-      NULL);
+    _mem.op = OP_MEM;
+    _mem.size = size;
+    _mem.base = base.code() & REGCODE_MASK;
+    _mem.index = index.code() & REGCODE_MASK;
+    _mem.shift = (UInt8)shift;
+    _mem.segmentPrefix = SEGMENT_NONE;
+    _mem.hasLabel = false;
+    _mem.target = NULL;
+    _mem.displacement = displacement;
   }
 
   inline Mem(const Mem& other) ASMJIT_NOTHROW :
@@ -713,23 +682,46 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
 
   //! @brief Return if address has base register. 
   inline bool hasBase() const ASMJIT_NOTHROW
-  { return (_mem.base & 0x10) != 0; }
+  { return _mem.base != NO_REG; }
 
   //! @brief Return if address has index register.
   inline bool hasIndex() const ASMJIT_NOTHROW
-  { return (_mem.index & 0x10) != 0; }
+  { return _mem.index != NO_REG; }
 
   //! @brief Address base register or @c NO_REG.
   inline UInt8 base() const ASMJIT_NOTHROW
-  { return _mem.base & 0xF; }
+  { return _mem.base; }
 
   //! @brief Address index register or @c NO_REG.
   inline UInt8 index() const ASMJIT_NOTHROW
-  { return _mem.index & 0xF; }
+  { return _mem.index; }
 
   //! @brief Address index scale (0, 1, 2 or 3).
   inline UInt32 shift() const ASMJIT_NOTHROW
-  { return _mem.index >> 5; }
+  { return _mem.shift; }
+
+  inline UInt8 segmentPrefix() const  ASMJIT_NOTHROW
+  { return _mem.segmentPrefix; }
+
+  inline UInt8 hasLabel() const ASMJIT_NOTHROW
+  { return _mem.hasLabel; }
+
+  inline UInt8 hasTarget() const ASMJIT_NOTHROW
+  { return !_mem.hasLabel; }
+
+  //! @brief Return Target.
+  //!
+  //! @note You should always check if operand is target by @c isTarget()
+  //! method, because labels and targets sharing data.
+  inline Label* label() const ASMJIT_NOTHROW
+  { return _mem.label; }
+
+  //! @brief 
+  //!
+  //! @note You should always check if operand is label based by @c isLabel()
+  //! method, because labels and targets sharing data.
+  inline void* target() const ASMJIT_NOTHROW
+  { return _mem.target; }
 
   //! @brief Address relative displacement.
   inline SysInt displacement() const ASMJIT_NOTHROW
@@ -738,13 +730,6 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
   //! @brief Set address relative displacement.
   inline void setDisplacement(SysInt displacement) ASMJIT_NOTHROW
   { _mem.displacement = displacement; }
-
-  //! @brief Return label associated with this operand.
-  inline Label* label() const ASMJIT_NOTHROW
-  { return (SysUInt)_mem.label < _SEGMENT_END ? NULL : _mem.label; }
-
-  inline SysUInt segmentPrefix() const  ASMJIT_NOTHROW
-  { return (SysUInt)_mem.label < _SEGMENT_END ? (SysUInt)_mem.label : 0; }
 };
 
 // ============================================================================
@@ -1059,17 +1044,23 @@ struct ASMJIT_HIDDEN Immediate : public Operand
 {
   Immediate() ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, 0, RELOC_NONE, 0, NULL);
+    memset(&_imm, 0, sizeof(ImmData));
+    _imm.op = OP_IMM;
   }
 
   Immediate(SysInt i) ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, 0, RELOC_NONE, i, NULL);
+    memset(&_imm, 0, sizeof(ImmData));
+    _imm.op = OP_IMM;
+    _imm.value = i;
   }
   
   Immediate(SysInt i, UInt8 isUnsigned) ASMJIT_NOTHROW : Operand(_DontInitialize())
   {
-    _initAll(OP_IMM, 0, isUnsigned, RELOC_NONE, i, NULL);
+    memset(&_imm, 0, sizeof(ImmData));
+    _imm.op = OP_IMM;
+    _imm.isUnsigned = isUnsigned;
+    _imm.value = i;
   }
   
   inline Immediate(const Immediate& other) ASMJIT_NOTHROW : Operand(other) {}
@@ -1169,9 +1160,10 @@ ASMJIT_API Immediate uimm(SysUInt i) ASMJIT_NOTHROW;
 struct ASMJIT_HIDDEN Label : public Operand
 {
   //! @brief Create new unused label.
-  inline Label(UInt16 id = 0) ASMJIT_NOTHROW
+  inline Label(UInt32 id = 0) ASMJIT_NOTHROW
   {
     _lbl.op = OP_LABEL;
+    _lbl.size = 4;
     _lbl.state = LABEL_STATE_UNUSED;
     _lbl.id = id;
     _lbl.position = -1;
@@ -1185,14 +1177,18 @@ struct ASMJIT_HIDDEN Label : public Operand
 
   //! @brief Unuse label (unbound or unlink) - Use with caution.
   inline void unuse() ASMJIT_NOTHROW
-  { _initAll(OP_LABEL, LABEL_STATE_UNUSED, 0, 0, -1, NULL); }
+  {
+    memset(&_lbl, 0, sizeof(LblData)); 
+    _lbl.op = OP_LABEL;
+    _lbl.position = -1;
+  }
 
   //! @brief Return label state, see @c LABEL_STATE. */
   inline UInt8 state() const ASMJIT_NOTHROW
   { return _lbl.state; }
 
   //! @brief Return label Id.
-  inline UInt16 labelId() const ASMJIT_NOTHROW
+  inline UInt32 labelId() const ASMJIT_NOTHROW
   { return _lbl.id; }
 
   //! @brief Returns @c true if label is unused (not bound or linked).
@@ -1213,10 +1209,8 @@ struct ASMJIT_HIDDEN Label : public Operand
   { return _lbl.position; }
 
   //! @brief Set label Id.
-  inline void setId(UInt16 id) ASMJIT_NOTHROW
-  {
-    _lbl.id = id;
-  }
+  inline void setId(UInt32 id) ASMJIT_NOTHROW
+  { _lbl.id = id; }
 
   //! @brief Set state and position
   inline void setStatePos(UInt8 state, SysInt position) ASMJIT_NOTHROW

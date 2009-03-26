@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/AsmJitAssembler.h>
 #include <AsmJit/AsmJitCompiler.h>
 #include <AsmJit/AsmJitLogger.h>
 #include <AsmJit/AsmJitMemoryManager.h>
@@ -88,7 +87,9 @@ int main(int argc, char* argv[])
     // StateRef is convenience class that will restore state in destructor.
     StateRef state(f.saveState());
 
-    // Create temporary variable
+    // This code is unrecheable, its a goal :)
+
+    // Create temporary variables
     Int32Ref t0(f.newVariable(VARIABLE_TYPE_INT32, 0));
     Int32Ref t1(f.newVariable(VARIABLE_TYPE_INT32, 0));
     Int32Ref t2(f.newVariable(VARIABLE_TYPE_INT32, 0));

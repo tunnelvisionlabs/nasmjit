@@ -1,8 +1,18 @@
+2009-03-27
+- Enchanced register allocator. It now remembers everything that is needed to
+  successfully save / restore state. This is step to have complete saving /
+  restoring implementation with jumps support.
+- Operand structure was cleaned up. Now operand is bigger, but structure data
+  for individual operand types are more organized. No more unused1... values,
+  design is now clean.
+
 2009-03-26
 - Register allocator now checks for all nonpreserved registers first. This can
   save some push/pop instructions in prolog/epilog if there are allocated only
   few registers (this is probably most useful for x64 platforms).
+- Register allocator is now able to realloc variable to different one.
 - Extended Function::emit() to log more informations about generated function.
+- Added teststate.cpp to see if State saving and restoring works
 
 2009-03-25
 - Released 0.8-rc1

@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/AsmJitAssembler.h>
 #include <AsmJit/AsmJitCompiler.h>
 #include <AsmJit/AsmJitLogger.h>
 #include <AsmJit/AsmJitMemoryManager.h>

@@ -47,8 +47,9 @@ Mem _ptr_build(
   const Register& index, UInt32 shift, SysInt disp, UInt8 ptrSize)
   ASMJIT_NOTHROW
 {
-  Mem m(no_reg, index, shift, disp, ptrSize);
-  m._mem.label = label;
+  Mem m(label, disp, ptrSize);
+  m._mem.index = index.code() & REGCODE_MASK;
+  m._mem.shift = shift;
   return m;
 }
 
@@ -60,8 +61,9 @@ ASMJIT_API Mem _ptr_build_abs(
 {
   Mem m;
   m._mem.size = ptrSize;
-  m._mem.target = (void*)( (UInt8*)target + disp );
-  m._mem.segmentPrefix = (SysInt)segmentPrefix;
+  m._mem.segmentPrefix = segmentPrefix;
+  m._mem.target = target;
+  m._mem.displacement = disp;
   return m;
 }
 
@@ -73,9 +75,11 @@ ASMJIT_API Mem _ptr_build_abs(
 {
   Mem m;
   m._mem.size = ptrSize;
-  m._mem.target = (void*)( (UInt8*)target + disp );
-  m._mem.index = (shift << 5) | index.index() | 0x10;
+  m._mem.index = index.index();
+  m._mem.shift = shift;
   m._mem.segmentPrefix = (SysInt)segmentPrefix;
+  m._mem.target = target;
+  m._mem.displacement = disp;
   return m;
 }
 // --- absolute addressing ---
@@ -139,7 +143,7 @@ _Serializer::~_Serializer() ASMJIT_NOTHROW
 UInt32 _Serializer::getProperty(UInt32 key) ASMJIT_NOTHROW
 {
   if (key < 32)
-    return (_properties & (1 << key)) >> key;
+    return (_properties >> key) & 1;
   else
     return 0xFFFFFFFF;
 }

@@ -1075,6 +1075,8 @@ struct ASMJIT_API State
   {
     Variable* v;
     UInt32 lifeId;
+    UInt8 state;
+    UInt8 changed;
   };
 
   union Data 
@@ -1091,6 +1093,8 @@ struct ASMJIT_API State
       Entry xmm[16];
     };
   };
+
+  static void saveFunctionState(Data* dst, Function* f);
 
 private:
   //! @brief Clear state.
@@ -1622,6 +1626,7 @@ struct ASMJIT_API Function : public Emittable
   void _allocAs(Variable* v, UInt8 mode, UInt32 code);
   void _allocReg(UInt8 code, Variable* v);
   void _freeReg(UInt8 code);
+  void _exchangeGp(Variable* v, UInt8 mode, Variable* other);
 
   //! @brief Return size of alignment on the stack.
   //!
@@ -1814,7 +1819,25 @@ private:
   // [State]
   // --------------------------------------------------------------------------
 
-  State _state;
+  //! This is similar to State::Data, but we need to save only allocated 
+  //! variables (this is enough). First idea was to use State here, but source
+  //! code was bloated by it (setting and restoring values that weren't needed)
+  union StateData
+  {
+    //! @brief All variables in one array.
+    Variable* regs[16+8+16];
+
+    struct {
+      //! @brief Regeral purpose registers.
+      Variable* gp[16];
+      //! @brief MMX registers.
+      Variable* mm[8];
+      //! @brief XMM registers.
+      Variable* xmm[16];
+    };
+  };
+
+  StateData _state;
 
   // --------------------------------------------------------------------------
   // [Labels]

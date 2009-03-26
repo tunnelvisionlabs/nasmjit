@@ -226,8 +226,6 @@ void Assembler::_emitModM(
     // In 64 bit mode is used relative addressing model together with absolute
     // addressing one. Main problem is that if instruction contains SIB then
     // relative addressing (RIP) is not possible.
-    Label* label = mem._mem.label;
-
 #if defined(ASMJIT_X86)
 
     if (mem.hasIndex())
@@ -243,8 +241,9 @@ void Assembler::_emitModM(
 
     // X86 uses absolute addressing model, all relative addresses will be
     // relocated to absolute ones.
-    if ((SysUInt)label >= (SysUInt)_SEGMENT_END)
+    if (mem.hasLabel())
     {
+      Label* label = mem._mem.label;
       UInt32 relocId = _relocData.length();
       RelocData rd;
 
@@ -270,14 +269,16 @@ void Assembler::_emitModM(
     else
     {
       // Absolute address
-      _emitInt32( (Int32)((UInt8*)mem._mem.target) );
+      _emitInt32( (Int32)((UInt8*)mem._mem.target + disp) );
     }
 
 #else
 
     // X64 uses relative addressing model
-    if ((SysUInt)label >= (SysUInt)_SEGMENT_END)
+    if (mem.hasLabel())
     {
+      Label* label = mem._mem.label;
+
       if (mem.hasIndex())
       {
         // Indexing is not possible
@@ -316,7 +317,7 @@ void Assembler::_emitModM(
       }
 
       // truncate to 32 bits
-      SysUInt target = (SysUInt)mem._mem.target;
+      SysUInt target = (SysUInt)((UInt8*)mem._mem.target + disp);
 
       if (target > (SysUInt)0xFFFFFFFF)
       {
@@ -324,7 +325,7 @@ void Assembler::_emitModM(
           _logger->log("; Warning: Absolute address truncated to 32 bits\n");
       }
 
-      _emitInt32((Int32)((UInt32)target));
+      _emitInt32( (Int32)((UInt32)target) );
     }
 
 #endif // ASMJIT_X64
@@ -371,7 +372,7 @@ void Assembler::_emitX86RM(
   // 16 bit prefix
   if (i16bit) _emitByte(0x66);
 
-  // cs prefix
+  // segment prefix
   _emitSegmentPrefix(op);
 
   // instruction prefix
@@ -406,7 +407,7 @@ void Assembler::_emitFpuSTI(UInt32 opCode, UInt32 sti) ASMJIT_NOTHROW
 
 void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_NOTHROW
 {
-  // cs prefix
+  // segment prefix
   _emitSegmentPrefix(mem);
 
   // instruction prefix
@@ -428,7 +429,7 @@ void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_N
 void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, 
   const BaseRegMem& src, SysInt immSize) ASMJIT_NOTHROW
 {
-  // cs prefix
+  // segment prefix
   _emitSegmentPrefix(src);
 
   // instruction prefix
@@ -1988,7 +1989,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         Int32 immSize = o1->size() <= 4 ? o1->size() : 4;
 
         if (o1->size() == 2) _emitByte(0x66); // 16 bit
-        _emitSegmentPrefix(reinterpret_cast<const BaseRegMem&>(*o1)); // cs prefix
+        _emitSegmentPrefix(reinterpret_cast<const BaseRegMem&>(*o1)); // segment prefix
 #if defined(ASMJIT_X64)
         _emitRexRM(o1->size() == 8, 0, reinterpret_cast<const BaseRegMem&>(*o1));
 #endif // ASMJIT_X64
@@ -2009,7 +2010,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         const Register& src = reinterpret_cast<const Register&>(*o2);
 
         if (src.isRegType(REG_GPW)) _emitByte(0x66); // 16 bit
-        _emitSegmentPrefix(dst); // cs prefix
+        _emitSegmentPrefix(dst); // segment prefix
 #if defined(ASMJIT_X64)
         _emitRexRM(src.isRegType(REG_GPQ), src.code(), dst);
 #endif // ASMJIT_X64
@@ -2089,7 +2090,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         const Mem& m = reinterpret_cast<const Mem&>(*o1);
 
-        // cs prefix
+        // segment prefix
         _emitSegmentPrefix(m);
 
         _emitByte(o1->size() == 4 
