@@ -62,13 +62,8 @@ int main(int argc, char* argv[])
   // Alloc and initialize
   c.comment("---- Allocate ----");
 
-  // use eax/rax
-  c.comment("Should be EAX/RAX");
   c.mov(var1.x(REG_NAX), imm(33));
-  // use also eax/rax to see if register can move allocated variable to
-  // different register
-  c.comment("Should be EAX/RAX");
-  c.mov(var2.x(REG_NAX), imm(44));
+  c.mov(var2.x(REG_NBX), imm(44));
 
   // Simple test
   c.comment("---- Block 1 ----");
@@ -78,6 +73,7 @@ int main(int argc, char* argv[])
     // Spill
     var1.spill();
     var2.spill();
+    c.comment("---- Restore 1 ----");
   } // Restore state
 
   // Complex test
@@ -89,15 +85,22 @@ int main(int argc, char* argv[])
     // Spill first
     var1.spill();
 
+    // This will replace EAX/RAX
+    {
+      SysIntRef varx(f.newVariable(VARIABLE_TYPE_SYSINT));
+      c.mov(varx.x(REG_NAX), imm(0));
+    }
+
     // Now, this is the complex test. We want to jump out, but Compiler must
     // save current state and restore it to previously saved 's'. This must
     // be done in extern label where will be implemented restore operation
-    // and there will be jump back.
-    c.jmp(L);
-    // c.jumpAndRestore(L, s);
+    // and there will be jump back to L.
+    c.jmpAndRestore(L, s);
 
     // Spill second
     var2.spill();
+
+    c.comment("---- Restore 2 ----");
   } // Restore state
   c.bind(L);
 

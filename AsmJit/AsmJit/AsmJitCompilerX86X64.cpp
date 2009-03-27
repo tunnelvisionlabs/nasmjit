@@ -203,6 +203,17 @@ void Variable::getReg(
 // [AsmJit::State]
 // ============================================================================
 
+// this helper structure is used for jumps that ensures that variable allocator
+// state is updated to correct values. It's saved in Label operand as single
+// linked list.
+struct JumpAndRestore
+{
+  JumpAndRestore* next;
+  Instruction* instruction;
+  State* from;
+  State* to;
+};
+
 State::State(Compiler* c, Function* f) :
   _compiler(c),
   _function(f)
@@ -232,6 +243,10 @@ void State::saveFunctionState(Data* dst, Function* f)
       memset(&dst->regs[i], 0, sizeof(Entry));
     }
   }
+
+  dst->usedGpRegisters  = f->usedGpRegisters ();
+  dst->usedMmRegisters  = f->usedMmRegisters ();
+  dst->usedXmmRegisters = f->usedXmmRegisters();
 }
 
 void State::_clear()
@@ -1693,6 +1708,11 @@ void Function::restoreState(State* s)
     }
   }
 
+  // Update masks
+  _usedGpRegisters  = s->_data.usedGpRegisters;
+  _usedMmRegisters  = s->_data.usedMmRegisters;
+  _usedXmmRegisters = s->_data.usedXmmRegisters;
+
   // Cleanup
   _lastUsedRegister = NULL;
 }
@@ -1703,7 +1723,22 @@ void Function::setState(State* s)
 
   for (SysUInt i = 0; i < 16+8+16; i++)
   {
+    Variable* old = _state.regs[i];
     Variable* v = s->_data.regs[i].v;
+
+    // This method is dirrerent to restoreState(), because we are not spilling
+    // and allocating registers. We need to actualize all variables that was
+    // changed by setState(). This means allocated and spilled variables. This
+    // is reason why we are modifiyng 'old'
+    if (v != old && old)
+    {
+      if (old->state() == VARIABLE_STATE_REGISTER)
+      {
+        old->_state = VARIABLE_STATE_MEMORY;
+        old->_registerCode = NO_REG;
+        old->_changed = false;
+      }
+    }
 
     if (v)
     {
@@ -1714,8 +1749,62 @@ void Function::setState(State* s)
     _state.regs[i] = v;
   }
 
+  // Update masks
+  _usedGpRegisters  = s->_data.usedGpRegisters;
+  _usedMmRegisters  = s->_data.usedMmRegisters;
+  _usedXmmRegisters = s->_data.usedXmmRegisters;
+
   // Cleanup
   _lastUsedRegister = NULL;
+}
+
+void Function::_jmpAndRestore(Compiler* c, Label* label)
+{
+  JumpAndRestore* jr = (JumpAndRestore*)label->_compilerData;
+
+  do {
+    // Working variables we need
+    State* from = jr->from;
+    State* to = jr->to;
+
+    Function* f = from->_function;
+    bool modifiedState;
+
+    // Emit code to the end (need to save old position)
+    Emittable* old = c->setCurrent(c->lastEmittable());
+    Emittable* first = c->current();
+    f->setState(from);
+    f->restoreState(to);
+    Emittable* last = c->current();
+    modifiedState = old != last;
+
+    // If state was modified, redirect jump
+    if (modifiedState)
+    {
+      Label* L_block = c->newLabel();
+
+      // Bind label to start of restore block
+      c->setCurrent(first);
+      c->align(sizeof(SysInt));
+      c->bind(L_block);
+
+      // Jump back from end of the block
+      c->setCurrent(last);
+      c->jmp(label);
+
+      // Patch instruction jump target to our new label
+      jr->instruction->_o[0] = L_block;
+    }
+
+    // Set pointer back
+    c->setCurrent(old);
+
+    // Next JumpAndRestore record
+    jr = jr->next;
+  } while (jr);
+
+  // Clear data, this is not longer needed
+  label->_compilerData = NULL;
 }
 
 // ============================================================================
@@ -1977,8 +2066,8 @@ void Compiler::addEmittable(Emittable* emittable)
   }
   else
   {
-    Emittable* next = _current->_next;
     Emittable* prev = _current;
+    Emittable* next = _current->_next;
 
     emittable->_prev = prev;
     emittable->_next = next;
@@ -2121,7 +2210,7 @@ void Compiler::_registerOperand(Operand* op)
 }
 
 // ============================================================================
-// [AsmJit::Compiler - Absolute Jumps / Calls]
+// [AsmJit::Compiler - Jumps / Calls]
 // ============================================================================
 
 void Compiler::jmp(void* target)
@@ -2156,6 +2245,20 @@ SysInt Compiler::_addTarget(void* target)
   SysInt id = _jumpTableData.length() * sizeof(SysInt);
   _jumpTableData.append(target);
   return id;
+}
+
+// jmpAndRestore
+
+void Compiler::_jmpAndRestore(UInt32 code, Label* label, State* state)
+{
+  JumpAndRestore* jr = (JumpAndRestore*)_zoneAlloc(sizeof(JumpAndRestore));
+  jr->next = (JumpAndRestore*)label->_compilerData;
+  jr->from = currentFunction()->saveState();
+  jr->to = state;
+  label->_compilerData = (void*)jr;
+
+  __emitX86(code, label);
+  jr->instruction = reinterpret_cast<Instruction*>(_current);
 }
 
 // ============================================================================
@@ -2310,6 +2413,9 @@ void Compiler::align(SysInt m)
 
 void Compiler::bind(Label* label)
 {
+  // JumpAndRestore is delayed to bind()
+  if (label->_compilerData) Function::_jmpAndRestore(this, label);
+
   addEmittable(newObject<Target>(label));
 }
 

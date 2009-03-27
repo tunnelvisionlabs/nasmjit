@@ -1079,19 +1079,26 @@ struct ASMJIT_API State
     UInt8 changed;
   };
 
-  union Data 
+  struct Data 
   {
-    //! @brief All variables in one array.
-    Entry regs[16+8+16];
+    union
+    {
+      //! @brief All variables in one array.
+      Entry regs[16+8+16];
 
-    struct {
-      //! @brief Regeral purpose registers.
-      Entry gp[16];
-      //! @brief MMX registers.
-      Entry mm[8];
-      //! @brief XMM registers.
-      Entry xmm[16];
+      struct {
+        //! @brief Regeral purpose registers.
+        Entry gp[16];
+        //! @brief MMX registers.
+        Entry mm[8];
+        //! @brief XMM registers.
+        Entry xmm[16];
+      };
     };
+
+    UInt32 usedGpRegisters;
+    UInt32 usedMmRegisters;
+    UInt32 usedXmmRegisters;
   };
 
   static void saveFunctionState(Data* dst, Function* f);
@@ -1144,6 +1151,9 @@ struct ASMJIT_HIDDEN StateRef
 
   //! @brief Return managed @c State instance.
   inline State* state() const { return _state; }
+
+  //! @brief Implicit cast to @c State.
+  operator State*() const { return _state; }
 
 private:
   State* _state;
@@ -1339,6 +1349,8 @@ private:
   Operand *_o[3];
   //! @brief Static array for instruction operands (cache)
   Operand _ocache[3];
+
+  friend struct Function;
 };
 
 // ============================================================================
@@ -1749,6 +1761,8 @@ private:
   //! @brief Sets function arguments (must be done after correct calling 
   //! convention is set).
   void _setArguments(const UInt32* args, SysUInt len);
+
+  static void _jmpAndRestore(Compiler* c, Label* label);
 
   //! @brief Calling convention, see @c CALL_CONV.
   UInt32 _cconv;
@@ -2349,7 +2363,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline Emittable* firstEmittable() const { return _first; }
 
   //! @brief Return last emittable in double linked list.
-  inline Emittable* lastEmittable() const { return _first; }
+  inline Emittable* lastEmittable() const { return _last; }
 
   //! @brief Return current emittable after all emittables are emitter.
   //!
@@ -2589,7 +2603,7 @@ struct ASMJIT_API Compiler : public Serializer
   void _registerOperand(Operand* op);
 
   // -------------------------------------------------------------------------
-  // [Absolute Jumps / Calls]
+  // [Jumps / Calls]
   // -------------------------------------------------------------------------
 
   using Serializer::jmp;
@@ -2601,6 +2615,48 @@ struct ASMJIT_API Compiler : public Serializer
   void jumpToTable(JumpTable* jt, const Register& index);
 
   SysInt _addTarget(void* target);
+
+  // jmpAndRestore
+
+  inline void jAndRestore(CONDITION cc, Label* label, State* state)
+  {
+    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
+    _jmpAndRestore(_jcctable[cc], label, state);
+  }
+
+  inline void jaAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JA  , label, state); }
+  inline void jaeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JAE , label, state); }
+  inline void jbAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JB  , label, state); }
+  inline void jbeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JBE , label, state); }
+  inline void jcAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JC  , label, state); }
+  inline void jeAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JE  , label, state); }
+  inline void jgAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JG  , label, state); }
+  inline void jgeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JGE , label, state); }
+  inline void jlAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JL  , label, state); }
+  inline void jleAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JLE , label, state); }
+  inline void jnaAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNA , label, state); }
+  inline void jnaeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNAE, label, state); }
+  inline void jnbAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNB , label, state); }
+  inline void jnbeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNBE, label, state); }
+  inline void jncAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNC , label, state); }
+  inline void jneAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNE , label, state); }
+  inline void jngAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNG , label, state); }
+  inline void jngeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNGE, label, state); }
+  inline void jnlAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNL , label, state); }
+  inline void jnleAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNLE, label, state); }
+  inline void jnoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNO , label, state); }
+  inline void jnpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNP , label, state); }
+  inline void jnsAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNS , label, state); }
+  inline void jnzAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNZ , label, state); }
+  inline void joAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JO  , label, state); }
+  inline void jpAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JP  , label, state); }
+  inline void jpeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPE , label, state); }
+  inline void jpoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPO , label, state); }
+  inline void jsAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JS  , label, state); }
+  inline void jzAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JZ  , label, state); }
+  inline void jmpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JMP , label, state); }
+
+  void _jmpAndRestore(UInt32 code, Label* label, State* state);
 
   // -------------------------------------------------------------------------
   // [Intrinsics]

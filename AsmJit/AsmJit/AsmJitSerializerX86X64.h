@@ -63,43 +63,75 @@ struct ASMJIT_HIDDEN _Initialize {};
 //! value operands.
 struct ASMJIT_HIDDEN Operand
 {
-  inline Operand() ASMJIT_NOTHROW { memset(this, 0, sizeof(Operand)); }
-  inline Operand(const Operand& other) ASMJIT_NOTHROW { _init(other); }
+  inline Operand() ASMJIT_NOTHROW
+  { memset(this, 0, sizeof(Operand)); }
+  
+  inline Operand(const Operand& other) ASMJIT_NOTHROW : 
+    _compilerData(NULL), _operandId(0)
+  { _init(other); }
 
-  inline Operand(const _DontInitialize&) ASMJIT_NOTHROW : _operandId(0) {}
+  inline Operand(const _DontInitialize&) ASMJIT_NOTHROW : 
+    _compilerData(NULL), _operandId(0) 
+  {}
 
   //! @brief Return type of operand, see @c OP.
-  inline UInt8 op() const ASMJIT_NOTHROW { return _base.op; }
+  inline UInt8 op() const ASMJIT_NOTHROW
+  { return _base.op; }
+  
   //! @brief Return size of operand in bytes.
-  inline UInt8 size() const ASMJIT_NOTHROW { return _base.size; }
+  inline UInt8 size() const ASMJIT_NOTHROW
+  { return _base.size; }
 
   //! @brief Return @c true if operand is none (@c OP_NONE).
-  inline UInt8 isNone() const ASMJIT_NOTHROW { return _base.op == OP_NONE; }
+  inline UInt8 isNone() const ASMJIT_NOTHROW
+  { return _base.op == OP_NONE; }
+
   //! @brief Return @c true if operand is any (general purpose, mmx or sse) register (@c OP_REG).
-  inline UInt8 isReg() const ASMJIT_NOTHROW { return _base.op == OP_REG; }
+  inline UInt8 isReg() const ASMJIT_NOTHROW
+  { return _base.op == OP_REG; }
+
   //! @brief Return @c true if operand is memory address (@c OP_MEM).
-  inline UInt8 isMem() const ASMJIT_NOTHROW { return _base.op == OP_MEM; }
+  inline UInt8 isMem() const ASMJIT_NOTHROW
+  { return _base.op == OP_MEM; }
+
   //! @brief Return @c true if operand is immediate (@c OP_IMM).
-  inline UInt8 isImm() const ASMJIT_NOTHROW { return _base.op == OP_IMM; }
+  inline UInt8 isImm() const ASMJIT_NOTHROW
+  { return _base.op == OP_IMM; }
+
   //! @brief Return @c true if operand is label (@c OP_LABEL).
-  inline UInt8 isLabel() const ASMJIT_NOTHROW { return _base.op == OP_LABEL; }
+  inline UInt8 isLabel() const ASMJIT_NOTHROW
+  { return _base.op == OP_LABEL; }
 
   //! @brief Return @c true if operand is register and type of register is @a regType.
-  inline UInt8 isRegType(UInt8 regType) const ASMJIT_NOTHROW { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
+  inline UInt8 isRegType(UInt8 regType) const ASMJIT_NOTHROW
+  { return isReg() & ((_reg.code & REGTYPE_MASK) == regType); }
+  
   //! @brief Return @c true if operand is register and code of register is @a regCode.
-  inline UInt8 isRegCode(UInt8 regCode) const ASMJIT_NOTHROW { return isReg() & (_reg.code == regCode); }
+  inline UInt8 isRegCode(UInt8 regCode) const ASMJIT_NOTHROW
+  { return isReg() & (_reg.code == regCode); }
+  
   //! @brief Return @c true if operand is register and index of register is @a regIndex.
-  inline UInt8 isRegIndex(UInt8 regIndex) const ASMJIT_NOTHROW { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
+  inline UInt8 isRegIndex(UInt8 regIndex) const ASMJIT_NOTHROW
+  { return isReg() & ((_reg.code & REGCODE_MASK) == (regIndex & REGCODE_MASK)); }
 
   //! @brief Return @c true if operand is any register or memory.
-  inline UInt8 isRegMem() const ASMJIT_NOTHROW { return isMem() | isReg(); }
+  inline UInt8 isRegMem() const ASMJIT_NOTHROW
+  { return isMem() | isReg(); }
+  
   //! @brief Return @c true if operand is register of @a regType type or memory.
-  inline UInt8 isRegMem(UInt8 regType) const ASMJIT_NOTHROW { return isMem() | isRegType(regType); }
+  inline UInt8 isRegMem(UInt8 regType) const ASMJIT_NOTHROW
+  { return isMem() | isRegType(regType); }
+
+  inline void* compilerData() const ASMJIT_NOTHROW
+  { return _compilerData; }
 
   //! @brief Return operand Id (Operand Id's are for @c Compiler class).
-  inline UInt32 operandId() const ASMJIT_NOTHROW { return _operandId; }
+  inline UInt32 operandId() const ASMJIT_NOTHROW
+  { return _operandId; }
+  
   //! @brief Return clears operand Id (@c Compiler will not recognize it after clearing).
-  inline void clearId() ASMJIT_NOTHROW { _operandId = 0; }
+  inline void clearId() ASMJIT_NOTHROW
+  { _operandId = 0; }
 
   //! @brief Base operand data shared between all operands.
   struct ASMJIT_HIDDEN BaseData
@@ -190,10 +222,12 @@ struct ASMJIT_HIDDEN Operand
     void* link;
   };
 
+  enum { BufSize = 64 - (2 * sizeof(void*)) };
+
   union
   {
     //! @brief Operand buffer.
-    UInt8 _buf[64];
+    UInt8 _buf[BufSize];
     //! @brief Generic operand data.
     BaseData _base;
     //! @brief Register operand data.
@@ -206,8 +240,15 @@ struct ASMJIT_HIDDEN Operand
     LblData _lbl;
   };
 
+  //! @brief Compiler specific data.
+  void *_compilerData;
+
   //! @brief Compiler operand id (do not modify manually).
   UInt32 _operandId;
+
+#if defined(ASMJIT_X64)
+  UInt32 _x64padding;
+#endif // ASMJIT_X64
 
   inline void _init(const Operand& other) ASMJIT_NOTHROW
   { memcpy(this, &other, sizeof(Operand)); }

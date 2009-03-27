@@ -5,6 +5,8 @@
 - Operand structure was cleaned up. Now operand is bigger, but structure data
   for individual operand types are more organized. No more unused1... values,
   design is now clean.
+- Added experimental support for jmp() and jcc() instructions to restore state
+- Fixed setState(), restoreState(), saveState() methods
 
 2009-03-26
 - Register allocator now checks for all nonpreserved registers first. This can
