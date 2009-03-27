@@ -1402,79 +1402,76 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
 
   _allocReg(code, v);
 
-  if (copy && mode != VARIABLE_ALLOC_WRITE)
+  if (v->isCustom())
   {
-    if (v->isCustom())
+    if (v->_allocFn && mode != VARIABLE_ALLOC_WRITE) v->_allocFn(v);
+  }
+  else if (copy && mode != VARIABLE_ALLOC_WRITE)
+  {
+    switch (v->type())
     {
-      if (v->_allocFn) v->_allocFn(v);
+      case VARIABLE_TYPE_INT32:
+      {
+        Register dst = mk_gpd(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->mov(dst, mk_gpd(old));
+        else
+          compiler()->mov(dst, *v->_memoryOperand);        
+        break;
+      }
+
+#if defined(ASMJIT_X64)
+      case VARIABLE_TYPE_INT64:
+        Register dst = mk_gpq(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->mov(dst, mk_gpq(old));
+        else
+          compiler()->mov(dst, *v->_memoryOperand);
+        break;
+#endif // ASMJIT_X64
+
+      case VARIABLE_TYPE_FLOAT:
+        // TODO: NOT IMPLEMENTED
+        break;
+
+      case VARIABLE_TYPE_DOUBLE:
+        // TODO: NOT IMPLEMENTED
+        break;
+
+      case VARIABLE_TYPE_MM:
+      {
+        MMRegister dst = mk_mm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movq(dst, mk_mm(old));
+        else
+          compiler()->movq(dst, *v->_memoryOperand);
+        break;
+      }
+
+      case VARIABLE_TYPE_XMM:
+      {
+        XMMRegister dst = mk_xmm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movdqa(dst, mk_xmm(old));
+        // Alignment is not guaranted for naked functions in 32 bit mode
+        // FIXME: And what about 64 bit mode ?
+        else if (naked())
+          compiler()->movdqu(dst, *v->_memoryOperand);
+        else
+          compiler()->movdqa(dst, *v->_memoryOperand);
+        break;
+      }
+    }
+
+    if (old != NO_REG)
+    {
+      v->_registerAccessCount++;
+      v->_globalRegisterAccessCount++;
     }
     else
     {
-      switch (v->type())
-      {
-        case VARIABLE_TYPE_INT32:
-        {
-          Register dst = mk_gpd(v->_registerCode);
-          if (old != NO_REG)
-            compiler()->mov(dst, mk_gpd(old));
-          else
-            compiler()->mov(dst, *v->_memoryOperand);        
-          break;
-        }
-
-#if defined(ASMJIT_X64)
-        case VARIABLE_TYPE_INT64:
-          Register dst = mk_gpq(v->_registerCode);
-          if (old != NO_REG)
-            compiler()->mov(dst, mk_gpq(old));
-          else
-            compiler()->mov(dst, *v->_memoryOperand);
-          break;
-#endif // ASMJIT_X64
-
-        case VARIABLE_TYPE_FLOAT:
-          // TODO: NOT IMPLEMENTED
-          break;
-
-        case VARIABLE_TYPE_DOUBLE:
-          // TODO: NOT IMPLEMENTED
-          break;
-
-        case VARIABLE_TYPE_MM:
-        {
-          MMRegister dst = mk_mm(v->_registerCode);
-          if (old != NO_REG)
-            compiler()->movq(dst, mk_mm(old));
-          else
-            compiler()->movq(dst, *v->_memoryOperand);
-          break;
-        }
-
-        case VARIABLE_TYPE_XMM:
-        {
-          XMMRegister dst = mk_xmm(v->_registerCode);
-          if (old != NO_REG)
-            compiler()->movdqa(dst, mk_xmm(old));
-          // Alignment is not guaranted for naked functions in 32 bit mode
-          // FIXME: And what about 64 bit mode ?
-          else if (naked())
-            compiler()->movdqu(dst, *v->_memoryOperand);
-          else
-            compiler()->movdqa(dst, *v->_memoryOperand);
-          break;
-        }
-      }
-
-      if (old != NO_REG)
-      {
-        v->_registerAccessCount++;
-        v->_globalRegisterAccessCount++;
-      }
-      else
-      {
-        v->_memoryAccessCount++;
-        v->_globalMemoryAccessCount++;
-      }
+      v->_memoryAccessCount++;
+      v->_globalMemoryAccessCount++;
     }
   }
 
@@ -1695,6 +1692,9 @@ void Function::restoreState(State* s)
       to_v->_changed = to->changed;
     }
   }
+
+  // Cleanup
+  _lastUsedRegister = NULL;
 }
 
 void Function::setState(State* s)
@@ -1713,6 +1713,9 @@ void Function::setState(State* s)
 
     _state.regs[i] = v;
   }
+
+  // Cleanup
+  _lastUsedRegister = NULL;
 }
 
 // ============================================================================
@@ -2018,22 +2021,21 @@ Emittable* Compiler::setCurrent(Emittable* current)
 void Compiler::comment(const char* fmt, ...)
 {
   char buf[1024];
+  char* p = buf;
 
   if (fmt)
   {
-    buf[0] = ';';
-    buf[1] = ' ';
+    *p++ = ';';
+    *p++ = ' ';
 
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(buf + 2, 1021, fmt, ap);
+    p += vsnprintf(p, 1020, fmt, ap);
     va_end(ap);
   }
-  else
-  {
-    buf[0] = '\n';
-    buf[1] = '\0';
-  }
+
+  *p++ = '\n';
+  *p   = '\0';
 
   addEmittable(newObject<Comment>(buf));
 }
@@ -2061,6 +2063,9 @@ Function* Compiler::endFunction()
 {
   ASMJIT_ASSERT(_currentFunction != NULL);
   Function* f = _currentFunction;
+
+  // Prevent from errors
+  f->_lastUsedRegister = NULL;
 
   Epilog* e = newEpilog(f);
   e->_label = f->_exitLabel;
@@ -2270,6 +2275,9 @@ void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
 void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
   addEmittable(newObject<Instruction>(code, o1, o2, o3));
+
+  // We can clear last used register, because instruction was emitted.
+  if (currentFunction()) currentFunction()->_lastUsedRegister = NULL;
 }
 
 // ============================================================================

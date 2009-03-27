@@ -61,6 +61,8 @@ ASMJIT_API Mem _ptr_build_abs(
 {
   Mem m;
   m._mem.size = ptrSize;
+  m._mem.base = NO_REG;
+  m._mem.index = NO_REG;
   m._mem.segmentPrefix = segmentPrefix;
   m._mem.target = target;
   m._mem.displacement = disp;
@@ -75,6 +77,7 @@ ASMJIT_API Mem _ptr_build_abs(
 {
   Mem m;
   m._mem.size = ptrSize;
+  m._mem.base = NO_REG;
   m._mem.index = index.index();
   m._mem.shift = shift;
   m._mem.segmentPrefix = (SysInt)segmentPrefix;
