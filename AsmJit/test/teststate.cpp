@@ -51,9 +51,7 @@ int main(int argc, char* argv[])
   c.comment("---- Begin ----");
   Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction0());
 
-  // Possibilities to improve code:
-  //   f.setNaked(true);
-  //   f.setAllocableEbp(true);
+  f.setNaked(true);
 
   // Variables
   SysIntRef var1(f.newVariable(VARIABLE_TYPE_SYSINT));

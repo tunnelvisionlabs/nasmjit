@@ -391,6 +391,9 @@ Function::Function(Compiler* c) :
   _lfence(false),
   _optimizedPrologEpilog(true),
   _cconvArgumentsDirection(ARGUMENT_DIR_RIGHT_TO_LEFT),
+  _cconvPreservedGp(0),
+  _cconvPreservedXmm(0),
+  _argumentsCount(0),
   _argumentsStackSize(0),
   _usedGpRegisters(0),
   _usedMmRegisters(0),
@@ -398,9 +401,7 @@ Function::Function(Compiler* c) :
   _modifiedGpRegisters(0),
   _modifiedMmRegisters(0),
   _modifiedXmmRegisters(0),
-  _cconvPreservedGp(0),
-  _cconvPreservedXmm(0),
-  _lastUsedRegister(NULL),
+  _usePrevention(true),
   _entryLabel(c->newLabel()),
   _prologLabel(c->newLabel()),
   _exitLabel(c->newLabel())
@@ -975,42 +976,9 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
   return v;
 }
 
-void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
+bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
 {
   ASMJIT_ASSERT(compiler() == v->compiler());
-
-  // Go away if variable is already allocated
-  if (v->state() == VARIABLE_STATE_REGISTER)
-  {
-    UInt8 oldIndex = v->registerCode() & 0xF;
-    UInt8 newIndex = preferredRegisterCode & 0xF;
-
-    if (preferredRegisterCode == NO_REG || oldIndex == newIndex)
-    {
-      // Nop
-
-      // Mark as changed if needed
-      if ((mode & VARIABLE_ALLOC_WRITE) != 0)
-      {
-        v->_changed = true;
-      }
-
-      _lastUsedRegister = v;
-      return;
-    }
-
-    if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
-    {
-      Variable* other = _state.gp[newIndex];
-
-      ASMJIT_ASSERT(other->priority() > 0);
-
-      // Exchange instead of spill/alloc
-      _exchangeGp(v, mode, other);
-      _lastUsedRegister = v;
-      return;
-    }
-  }
 
   UInt32 i;
 
@@ -1025,14 +993,53 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
   // New register code.
   UInt8 code = NO_REG;
 
-  // First try to find unused registers
+  // Spill candidate.
+  Variable* spillCandidate = NULL;
+
+  // --------------------------------------------------------------------------
+  // [Already Allocated]
+  // --------------------------------------------------------------------------
+
+  // Go away if variable is already allocated
+  if (v->state() == VARIABLE_STATE_REGISTER)
+  {
+    UInt8 oldIndex = v->registerCode() & 0xF;
+    UInt8 newIndex = preferredRegisterCode & 0xF;
+
+    // Preferred register is none or same as currently allocated one, this is
+    // best case
+    if (pref == NO_REG || oldIndex == newIndex)
+    {
+      _postAlloc(v, mode);
+      return true;
+    }
+
+    if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
+    {
+      Variable* other = _state.gp[newIndex];
+
+      if (other->priority() == 0)
+      {
+        // TODO: Error handling
+        ASMJIT_ASSERT(0);
+      }
+
+      // Exchange instead of spill/alloc
+      _exchangeGp(v, mode, other);
+      _postAlloc(v, mode);
+      return true;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // [Find Unused GP]
+  // --------------------------------------------------------------------------
+
   if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
   {
     // preferred register
     if (pref != NO_REG)
     {
-      UInt8 last = _lastUsedRegister ? _lastUsedRegister->registerCode() : NO_REG;
-
       // esp/rsp can't be never allocated
       ASMJIT_ASSERT((pref & REGCODE_MASK) != RID_ESP);
 
@@ -1042,24 +1049,19 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
       }
       else
       {
-        if ((last & REGTYPE_MASK) <= REG_GPQ && ((pref & REGCODE_MASK) == (last & REGCODE_MASK)))
+        // Spill register we need
+        spillCandidate = _state.gp[pref & REGCODE_MASK];
+
+        // Can't alloc register that is manually masked (marked as used but
+        // no variable exists). Yeah, this is possible, but not recommended.
+        if (spillCandidate == NULL)
         {
-          // Fatal error, need to spill register that is used in current 
-          // instruction
+          // TODO: Error handling
           ASMJIT_ASSERT(0);
         }
-        else
-        {
-          // Spill register we need
-          Variable* candidate = _state.gp[pref & REGCODE_MASK];
-          // Candidate must exists if it's marked as used
-          ASMJIT_ASSERT(candidate);
-          // Candidate priority must be larger than zero
-          ASMJIT_ASSERT(candidate->priority() > 0);
-          // Spill it (everything should be ok)
-          spill(candidate);
-          code = pref;
-        }
+
+        // Jump to spill part of allocation
+        goto L_spill;
       }
     }
 
@@ -1072,8 +1074,8 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
       }
     }
 
-    // We start from 1, because EAX/RAX registers are sometimes explicitly 
-    // needed
+    // We start from 1, because EAX/RAX register is sometimes explicitly 
+    // needed. So we trying to prevent register reallocation.
     if (code == NO_REG)
     {
       for (i = 1; i < NUM_REGS; i++)
@@ -1105,37 +1107,35 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
         code = RID_EAX | REG_GPQ;
     }
   }
+
+  // --------------------------------------------------------------------------
+  // [Find Unused MM]
+  // --------------------------------------------------------------------------
+
   else if (v->type() == VARIABLE_TYPE_MM)
   {
     // preferred register
     if (pref != NO_REG)
     {
-      UInt8 last = _lastUsedRegister ? _lastUsedRegister->registerCode() : NO_REG;
-
       if ((_usedMmRegisters & (1U << (pref & 0x7))) == 0)
       {
         code = pref;
       }
       else
       {
-        if ((last & 0x7) == REG_MM && ((pref & 0x7) == (last & 0x7)))
+        // Spill register we need
+        spillCandidate = _state.mm[pref & REGCODE_MASK];
+
+        // Can't alloc register that is manually masked (marked as used but
+        // no variable exists). Yeah, this is possible, but not recommended.
+        if (spillCandidate == NULL)
         {
-          // Fatal error, need to spill register that is used in current 
-          // instruction
+          // TODO: Error handling
           ASMJIT_ASSERT(0);
         }
-        else
-        {
-          // Spill register we need
-          Variable* candidate = _state.mm[pref & 0x7 /* limit it to 0-7 */];
-          // Candidate must exists if it's marked as used
-          ASMJIT_ASSERT(candidate);
-          // Candidate priority must be larger than zero
-          ASMJIT_ASSERT(candidate->priority() > 0);
-          // Spill it (everything should be ok)
-          spill(candidate);
-          code = pref;
-        }
+
+        // Jump to spill part of allocation
+        goto L_spill;
       }
     }
 
@@ -1161,37 +1161,35 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
       }
     }
   }
+
+  // --------------------------------------------------------------------------
+  // [Find Unused XMM]
+  // --------------------------------------------------------------------------
+
   else if (v->type() == VARIABLE_TYPE_XMM)
   {
     // preferred register
     if (pref != NO_REG)
     {
-      UInt8 last = _lastUsedRegister ? _lastUsedRegister->registerCode() : NO_REG;
-
       if ((_usedXmmRegisters & (1U << (pref & REGCODE_MASK))) == 0)
       {
         code = pref;
       }
       else
       {
-        if ((last & REGTYPE_MASK) == REG_XMM && ((pref & REGCODE_MASK) == (last & REGCODE_MASK)))
+        // Spill register we need
+        spillCandidate = _state.xmm[pref & REGCODE_MASK];
+
+        // Can't alloc register that is manually masked (marked as used but
+        // no variable exists). Yeah, this is possible, but not recommended.
+        if (spillCandidate == NULL)
         {
-          // Fatal error, need to spill register that is used in current 
-          // instruction
+          // TODO: Error handling
           ASMJIT_ASSERT(0);
         }
-        else
-        {
-          // Spill register we need
-          Variable* candidate = _state.xmm[pref & REGCODE_MASK];
-          // Candidate must exists if it's marked as used
-          ASMJIT_ASSERT(candidate);
-          // Candidate priority must be larger than zero
-          ASMJIT_ASSERT(candidate->priority() > 0);
-          // Spill it (everything should be ok)
-          spill(candidate);
-          code = pref;
-        }
+
+        // Jump to spill part of allocation
+        goto L_spill;
       }
     }
 
@@ -1224,29 +1222,68 @@ void Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     }
   }
 
+  // --------------------------------------------------------------------------
+  // [Spill]
+  // --------------------------------------------------------------------------
+
   // If register is still not found, spill some variable
   if (code == NO_REG)
   {
-    Variable* candidate = _getSpillCandidate(v->type());
-    ASMJIT_ASSERT(candidate);
+    if (!spillCandidate) spillCandidate = _getSpillCandidate(v->type());
 
-    code = candidate->_registerCode;
-    spill(candidate);
+    // Spill candidate not found.
+    if (!spillCandidate)
+    {
+      // TODO: Error handling
+      ASMJIT_ASSERT(0);
+    }
+
+L_spill:
+
+    // Prevented variables can't be spilled. _getSpillCandidate() never returns
+    // prevented variables, but when jumping to L_spill it can happen.
+    if (isPrevented(spillCandidate))
+    {
+      // TODO: Error handling
+      ASMJIT_ASSERT(0);
+    }
+
+    // Can't alloc register that is used in other variable and its priority is
+    // zero. Zero priority variable can't be spilled.
+    if (spillCandidate->priority() == 0)
+    {
+      // TODO: Error handling
+      ASMJIT_ASSERT(0);
+    }
+
+    code = spillCandidate->registerCode();
+    spill(spillCandidate);
   }
 
+  // --------------------------------------------------------------------------
+  // [Finish]
+  // --------------------------------------------------------------------------
+
   _allocAs(v, mode, code);
+  _postAlloc(v, mode);
+  return true;
 }
 
-void Function::spill(Variable* v)
+bool Function::spill(Variable* v)
 {
   ASMJIT_ASSERT(compiler() == v->compiler());
 
-  if (_lastUsedRegister == v) _lastUsedRegister = NULL;
+  removePrevented(v);
 
-  if (v->state() == VARIABLE_STATE_UNUSED) return;
-  if (v->state() == VARIABLE_STATE_MEMORY) return;
+  if (v->state() == VARIABLE_STATE_UNUSED) return true;
+  if (v->state() == VARIABLE_STATE_MEMORY) return true;
   if (v->state() == VARIABLE_STATE_REGISTER)
   {
+    if (v->priority() == 0)
+    {
+      return false;
+    }
+
     if (v->changed())
     {
       if (v->isCustom())
@@ -1297,6 +1334,8 @@ void Function::spill(Variable* v)
     v->_spillCount++;
     v->_globalSpillCount++;
   }
+
+  return true;
 }
 
 void Function::unuse(Variable* v)
@@ -1326,6 +1365,32 @@ void Function::unuse(Variable* v)
   v->_allocFn = NULL;
   v->_spillFn = NULL;
   v->_data = NULL;
+}
+
+bool Function::isPrevented(Variable* v)
+{
+  return _usePrevention && _prevented.length() && _prevented.indexOf(v) != (SysUInt)-1;
+}
+
+void Function::addPrevented(Variable* v)
+{
+  if (!_usePrevention) return;
+
+  SysUInt i = _prevented.indexOf(v);
+  if (i != (SysUInt)-1) _prevented.append(v);
+}
+
+void Function::removePrevented(Variable* v)
+{
+  if (!_usePrevention) return;
+
+  SysUInt i = _prevented.indexOf(v);
+  if (i != (SysUInt)-1) _prevented.removeAt(i);
+}
+
+void Function::clearPrevented()
+{
+  _prevented.clear();
 }
 
 static UInt32 getSpillScore(Variable* v)
@@ -1362,7 +1427,7 @@ Variable* Function::_getSpillCandidate(UInt8 type)
         v = _variables[i];
         if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
             (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (v != _lastUsedRegister))
+            (!isPrevented(v)))
         {
           variableScore = getSpillScore(v);
           if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
@@ -1381,7 +1446,7 @@ Variable* Function::_getSpillCandidate(UInt8 type)
         v = _variables[i];
         if ((v->type() == VARIABLE_TYPE_MM) &&
             (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (v != _lastUsedRegister))
+            (!isPrevented(v)))
         {
           variableScore = getSpillScore(v);
           if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
@@ -1394,7 +1459,7 @@ Variable* Function::_getSpillCandidate(UInt8 type)
         v = _variables[i];
         if ((v->type() == VARIABLE_TYPE_XMM) &&
             (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (v != _lastUsedRegister))
+            (!isPrevented(v)))
         {
           variableScore = getSpillScore(v);
           if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
@@ -1489,13 +1554,6 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
       v->_globalMemoryAccessCount++;
     }
   }
-
-  if ((mode & VARIABLE_ALLOC_WRITE) != 0)
-  {
-    v->_changed = true;
-  }
-
-  _lastUsedRegister = v;
 }
 
 void Function::_allocReg(UInt8 code, Variable* v)
@@ -1601,15 +1659,16 @@ void Function::_exchangeGp(Variable* v, UInt8 mode, Variable* other)
 
   other->_registerAccessCount++;
   other->_globalRegisterAccessCount++;
+}
 
-  // Mark as changed if needed
-  if ((mode & VARIABLE_ALLOC_WRITE) != 0)
-  {
-    v->_changed = true;
-  }
+void Function::_postAlloc(Variable* v, UInt8 mode)
+{
+  // Mark variable as changed if needed
+  if ((mode & VARIABLE_ALLOC_WRITE) != 0) v->_changed = true;
 
-  // Last changed register
-  _lastUsedRegister = v;
+  // Add variable to prevented ones. This will be cleared when instruction
+  // is emitted.
+  addPrevented(v);
 }
 
 State *Function::saveState()
@@ -1622,6 +1681,9 @@ State *Function::saveState()
 void Function::restoreState(State* s)
 {
   ASMJIT_ASSERT(s->_function == this);
+
+  // Stop prevention
+  _usePrevention = false;
 
   // make local copy of function state
   State::Data f_d;
@@ -1713,8 +1775,9 @@ void Function::restoreState(State* s)
   _usedMmRegisters  = s->_data.usedMmRegisters;
   _usedXmmRegisters = s->_data.usedXmmRegisters;
 
-  // Cleanup
-  _lastUsedRegister = NULL;
+  // Restore and clear prevention
+  _usePrevention = false;
+  clearPrevented();
 }
 
 void Function::setState(State* s)
@@ -1754,32 +1817,38 @@ void Function::setState(State* s)
   _usedMmRegisters  = s->_data.usedMmRegisters;
   _usedXmmRegisters = s->_data.usedXmmRegisters;
 
-  // Cleanup
-  _lastUsedRegister = NULL;
+  // Clear prevention
+  s->_function->clearPrevented();
 }
 
 void Function::_jmpAndRestore(Compiler* c, Label* label)
 {
   JumpAndRestore* jr = (JumpAndRestore*)label->_compilerData;
+  Function* f = jr->from->_function;
+
+  // Save internal state (we don't want to modify it)
+  State backup(c, f);
+  State::saveFunctionState(&backup._data, f);
 
   do {
     // Working variables we need
     State* from = jr->from;
     State* to = jr->to;
 
-    Function* f = from->_function;
+    bool isJmp = jr->instruction->code() == INST_JMP;
     bool modifiedState;
 
-    // Emit code to the end (need to save old position)
-    Emittable* old = c->setCurrent(c->lastEmittable());
+    // Emit code to the end (need to save old position) or if instructions is
+    // simple jmp()( we can inline state restore before it.
+    Emittable* old = c->setCurrent(isJmp ? jr->instruction->prev() : c->lastEmittable());
     Emittable* first = c->current();
     f->setState(from);
     f->restoreState(to);
     Emittable* last = c->current();
     modifiedState = old != last;
 
-    // If state was modified, redirect jump
-    if (modifiedState)
+    // If state was modified and it isn't a jmp(), redirect jump
+    if (modifiedState && !isJmp)
     {
       Label* L_block = c->newLabel();
 
@@ -1805,6 +1874,9 @@ void Function::_jmpAndRestore(Compiler* c, Label* label)
 
   // Clear data, this is not longer needed
   label->_compilerData = NULL;
+
+  // Restore internal state
+  f->setState(&backup);
 }
 
 // ============================================================================
@@ -2153,8 +2225,8 @@ Function* Compiler::endFunction()
   ASMJIT_ASSERT(_currentFunction != NULL);
   Function* f = _currentFunction;
 
-  // Prevent from errors
-  f->_lastUsedRegister = NULL;
+  // Clear prevention (this is probably not needed anymore)
+  f->clearPrevented();
 
   Epilog* e = newEpilog(f);
   e->_label = f->_exitLabel;
@@ -2380,7 +2452,7 @@ void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const
   addEmittable(newObject<Instruction>(code, o1, o2, o3));
 
   // We can clear last used register, because instruction was emitted.
-  if (currentFunction()) currentFunction()->_lastUsedRegister = NULL;
+  if (currentFunction()) currentFunction()->clearPrevented();
 }
 
 // ============================================================================

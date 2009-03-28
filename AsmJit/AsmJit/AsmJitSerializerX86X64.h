@@ -4831,6 +4831,12 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   }
 
   //! @brief Move Scalar SP-FP (SSE).
+  inline void movss(const XMMRegister& dst, const XMMRegister& src)
+  {
+    __emitX86(INST_MOVSS, &dst, &src);
+  }
+
+  //! @brief Move Scalar SP-FP (SSE).
   inline void movss(const XMMRegister& dst, const Mem& src)
   {
     __emitX86(INST_MOVSS, &dst, &src);

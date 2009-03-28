@@ -1223,7 +1223,7 @@ char* Logger::dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
     {
       SysInt d = mem.displacement();
       *buf++ = (d < 0) ? '-' : '+';
-      buf = myitoa(buf, d);
+      buf = myutoa(buf, d < 0 ? -d : d);
     }
 
     *buf++ = ']';

@@ -585,6 +585,24 @@ struct PodVector
     return true;
   }
 
+  //! @brief Return index of @a val or (SysUInt)-1 if not found.
+  SysUInt indexOf(const T& val) const ASMJIT_NOTHROW
+  {
+    SysUInt i = 0, len = _length;
+    for (i = 0; i < len; i++) { if (_data[i] == val) return i; }
+    return (SysUInt)-1;
+  }
+
+  //! @brief Remove element at index @a i.
+  void removeAt(SysUInt i)
+  {
+    ASMJIT_ASSERT(i < _length);
+
+    T* dst = _data + i;
+    _length--;
+    memmove(dst, dst + 1, _length - i);
+  }
+
   //! @brief Return item at @a i position.
   inline T& operator[](SysUInt i) ASMJIT_NOTHROW { ASMJIT_ASSERT(i < _length); return _data[i]; }
   //! @brief Return item at @a i position.

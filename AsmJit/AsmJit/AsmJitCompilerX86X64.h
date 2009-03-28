@@ -605,7 +605,7 @@ struct ASMJIT_API Variable
   //! @brief Allocate variable to register.
   //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
   //! @param preferredRegister Preferred register to use (see @c AsmJit::REG enum).
-  inline void alloc(
+  inline bool alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG);
 
@@ -618,7 +618,7 @@ struct ASMJIT_API Variable
     BaseReg* dest, UInt8 regType);
 
   //! @brief Spill variable (move to memory).
-  inline void spill();
+  inline bool spill();
 
   //! @brief Unuse variable
   //!
@@ -815,19 +815,19 @@ struct ASMJIT_HIDDEN VariableRef
   //! @brief Allocate variable to register.
   //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
   //! @param preferredRegister Preferred register to use (see @c REG enum).
-  inline void alloc(
+  inline bool alloc(
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG)
   {
     ASMJIT_ASSERT(_v);
-    _v->alloc(mode, preferredRegister);
+    return _v->alloc(mode, preferredRegister);
   }
 
   //! @brief Spill variable (move to memory).
-  inline void spill()
+  inline bool spill()
   {
     ASMJIT_ASSERT(_v);
-    _v->spill();
+    return _v->spill();
   }
 
   //! @brief Unuse variable
@@ -1627,11 +1627,16 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Create new variable
   Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
 
-  void alloc(Variable* v, 
+  bool alloc(Variable* v, 
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG);
-  void spill(Variable* v);
+  bool spill(Variable* v);
   void unuse(Variable* v);
+
+  bool isPrevented(Variable* v);
+  void addPrevented(Variable* v);
+  void removePrevented(Variable* v);
+  void clearPrevented();
 
   Variable* _getSpillCandidate(UInt8 type);
 
@@ -1639,6 +1644,7 @@ struct ASMJIT_API Function : public Emittable
   void _allocReg(UInt8 code, Variable* v);
   void _freeReg(UInt8 code);
   void _exchangeGp(Variable* v, UInt8 mode, Variable* other);
+  void _postAlloc(Variable* v, UInt8 mode);
 
   //! @brief Return size of alignment on the stack.
   //!
@@ -1827,7 +1833,10 @@ private:
   UInt32 _modifiedXmmRegisters;
 
   PodVector<Variable*> _variables;
-  Variable* _lastUsedRegister;
+  PodVector<Variable*> _prevented;
+  //! @brief Whether to use registers prevention. This is internally turned 
+  //! on / off while switching between states.
+  bool _usePrevention;
 
   // --------------------------------------------------------------------------
   // [State]
@@ -1866,11 +1875,11 @@ private:
 };
 
 // Inlines that uses AsmJit::Function
-inline void Variable::alloc(UInt8 mode, UInt8 preferredRegister) 
-{ function()->alloc(this, mode, preferredRegister); }
+inline bool Variable::alloc(UInt8 mode, UInt8 preferredRegister) 
+{ return function()->alloc(this, mode, preferredRegister); }
 
-inline void Variable::spill()
-{ function()->spill(this); }
+inline bool Variable::spill()
+{ return function()->spill(this); }
 
 inline void Variable::unuse()
 { function()->unuse(this); }

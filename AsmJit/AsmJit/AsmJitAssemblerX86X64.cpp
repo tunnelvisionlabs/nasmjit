@@ -1180,7 +1180,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_SUBPD            , "subpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F5C, 0),
   MAKE_INST(INST_SUBPS            , "subps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F5C, 0),
   MAKE_INST(INST_SUBSD            , "subsd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF2000F5C, 0),
-  MAKE_INST(INST_SUBSS            , "subss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F51, 0),
+  MAKE_INST(INST_SUBSS            , "subss"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0xF3000F5C, 0),
   MAKE_INST(INST_TEST             , "test"             , I_TEST          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_UCOMISD          , "ucomisd"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F2E, 0),
   MAKE_INST(INST_UCOMISS          , "ucomiss"          , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F2E, 0),
