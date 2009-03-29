@@ -1196,9 +1196,9 @@ char* Logger::dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
       buf = dumpRegister(buf, REG_GPN, mem.base());
     }
     // [label + index*scale + displacement]
-    else if (mem.label())
+    else if (mem.hasLabel())
     {
-      buf = dumpLabel(buf, mem.label());
+      buf = dumpLabel(buf, mem._mem.label);
     }
     // [absolute]
     else

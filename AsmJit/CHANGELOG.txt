@@ -1,5 +1,6 @@
 2009-03-29
 - Fixed 'Setting a preferred register leads to excessive load/store' bug
+- Fixed incorrect target display in Logger
 
 2009-03-28
 - Fixed logging [REG - DISP] form
