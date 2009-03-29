@@ -932,7 +932,7 @@ private:
 #define __REG_ACCESS(__regClass__, __allocType__, __preferredRegCode__, __regType__) \
   ASMJIT_ASSERT(_v); \
   __regClass__ result; \
-  _v->getReg(__allocType__, __preferredRegCode__, &result, __regType__); \
+  _v->getReg(__allocType__, __preferredRegCode__, (BaseReg*)&result, __regType__); \
   return result
 
 //! @brief 32 bit integer variable wrapper.

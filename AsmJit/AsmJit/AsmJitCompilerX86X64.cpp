@@ -1004,7 +1004,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
   if (v->state() == VARIABLE_STATE_REGISTER)
   {
     UInt8 oldIndex = v->registerCode() & 0xF;
-    UInt8 newIndex = preferredRegisterCode & 0xF;
+    UInt8 newIndex = pref & 0xF;
 
     // Preferred register is none or same as currently allocated one, this is
     // best case
@@ -1377,7 +1377,7 @@ void Function::addPrevented(Variable* v)
   if (!_usePrevention) return;
 
   SysUInt i = _prevented.indexOf(v);
-  if (i != (SysUInt)-1) _prevented.append(v);
+  if (i == (SysUInt)-1) _prevented.append(v);
 }
 
 void Function::removePrevented(Variable* v)
