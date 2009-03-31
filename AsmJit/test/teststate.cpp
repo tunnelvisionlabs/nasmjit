@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     // save current state and restore it to previously saved 's'. This must
     // be done in extern label where will be implemented restore operation
     // and there will be jump back to L.
-    c.jmpAndRestore(L, s);
+    c.jzAndRestore(L, s);
 
     // Spill second
     var2.spill();

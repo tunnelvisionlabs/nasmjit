@@ -2583,12 +2583,13 @@ void Assembler::_embed(const void* data, SysUInt size)
       p = buf + ASMJIT_ARRAY_SIZE(dot) - 1;
 
       for (j = 0; j < max; j++)
-      p += sprintf(p, "%0.2X", reinterpret_cast<const UInt8 *>(data)[i+j]);
-    }
-    *p++ = '\n';
-    *p = '\0';
+        p += sprintf(p, "%0.2X", reinterpret_cast<const UInt8 *>(data)[i+j]);
 
-    _logger->log(buf);
+      *p++ = '\n';
+      *p = '\0';
+
+      _logger->log(buf);
+    }
   }
 
   _buffer.emitData(data, size);

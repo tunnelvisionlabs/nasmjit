@@ -145,6 +145,8 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _preferredRegisterCode(0xFF),
   _homeRegisterCode(0xFF),
   _changed(false),
+  _reusable(true),
+  _customMemoryHome(false),
   _stackOffset(0),
   _allocFn(NULL),
   _spillFn(NULL),
@@ -166,6 +168,13 @@ void Variable::setPriority(UInt8 priority)
   
   // Alloc if priority is set to 0
   if (priority == 0) _function->alloc(this);
+}
+
+void Variable::setMemoryHome(const Mem& memoryHome) ASMJIT_NOTHROW
+{
+  _reusable = false;
+  _customMemoryHome = true;
+  *_memoryOperand = memoryHome;
 }
 
 Variable* Variable::ref()
@@ -956,7 +965,7 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
   for (i = 0; i < _variables.length(); i++)
   {
     v = _variables[i];
-    if (v->refCount() == 0 && v->type() == type) 
+    if (v->refCount() == 0 && v->reusable() && v->type() == type) 
     {
       v->_preferredRegisterCode = preferredRegisterCode;
       v->_priority = priority;
@@ -1084,7 +1093,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
         if ((_usedGpRegisters & mask) == 0 && (i != RID_EBP || allocableEbp()) && i != RID_ESP)
         {
           // Convenience to alloc registers from positions 0 to 15
-          if (code != NO_REG && (_cconvPreservedXmm & mask) == 1) continue;
+          if (code != NO_REG && (_cconvPreservedGp & mask) == 1) continue;
 
           if (v->type() == VARIABLE_TYPE_INT32)
             code = i | REG_GPD;
@@ -1367,9 +1376,66 @@ void Function::unuse(Variable* v)
   v->_data = NULL;
 }
 
+void Function::spillAll()
+{
+  _spillAll(0, 16+8+16);
+}
+
+void Function::spillAllGp()
+{
+  _spillAll(0, 16);
+}
+
+void Function::spillAllMm()
+{
+  _spillAll(16, 8);
+}
+
+void Function::spillAllXmm()
+{
+  _spillAll(16+8, 16);
+}
+
+void Function::_spillAll(SysUInt start, SysUInt end)
+{
+  SysUInt i;
+
+  for (i = start; i < end; i++)
+  {
+    Variable* v = _state.regs[i];
+    if (v) spill(v);
+  }
+}
+
+void Function::spillRegister(const BaseReg& reg)
+{
+  SysUInt i = reg.index();
+  Variable *v;
+
+  switch (reg.type())
+  {
+    case REG_GPB:
+    case REG_GPW:
+    case REG_GPD:
+    case REG_GPQ:
+      v = _state.gp[i];
+      break;
+    case REG_MM:
+      v = _state.mm[i];
+      break;
+    case REG_XMM:
+      v = _state.xmm[i];
+      break;
+    default:
+      return;
+  }
+
+  if (v) spill(v);
+}
+
 bool Function::isPrevented(Variable* v)
 {
-  return _usePrevention && _prevented.length() && _prevented.indexOf(v) != (SysUInt)-1;
+  return _usePrevention && _prevented.indexOf(v) != (SysUInt)-1;
 }
 
 void Function::addPrevented(Variable* v)
@@ -1502,12 +1568,14 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
 
 #if defined(ASMJIT_X64)
       case VARIABLE_TYPE_INT64:
+      {
         Register dst = mk_gpq(v->_registerCode);
         if (old != NO_REG)
           compiler()->mov(dst, mk_gpq(old));
         else
           compiler()->mov(dst, *v->_memoryOperand);
         break;
+      }
 #endif // ASMJIT_X64
 
       case VARIABLE_TYPE_FLOAT:

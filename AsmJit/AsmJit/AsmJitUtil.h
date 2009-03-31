@@ -603,6 +603,21 @@ struct PodVector
     memmove(dst, dst + 1, _length - i);
   }
 
+  void swap(PodVector<T>& other)
+  {
+    T* _tmp_data = _data;
+    SysUInt _tmp_length = _length;
+    SysUInt _tmp_capacity = _capacity;
+
+    _data = other._data;
+    _length = other._length;
+    _capacity = other._capacity;
+
+    other._data = _tmp_data;
+    other._length = _tmp_length;
+    other._capacity = _tmp_capacity;
+  }
+
   //! @brief Return item at @a i position.
   inline T& operator[](SysUInt i) ASMJIT_NOTHROW { ASMJIT_ASSERT(i < _length); return _data[i]; }
   //! @brief Return item at @a i position.

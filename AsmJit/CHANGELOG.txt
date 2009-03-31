@@ -1,3 +1,9 @@
+2009-02-31
+- Fixed assegnment operators in Int32Ref, Int64Ref, MMRef and XMMRef
+
+2009-03-30
+- Released 0.8-rc2
+
 2009-03-29
 - Fixed 'Setting a preferred register leads to excessive load/store' bug
 - Fixed incorrect target display in Logger

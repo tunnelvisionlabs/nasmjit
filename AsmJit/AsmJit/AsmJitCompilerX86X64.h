@@ -569,6 +569,14 @@ struct ASMJIT_API Variable
   inline UInt8 changed() const ASMJIT_NOTHROW
   { return _changed; }
   
+  //! @brief Return whether variable is reusable.
+  inline UInt8 reusable() const ASMJIT_NOTHROW
+  { return _reusable; }
+
+  //! @brief Return whether variable contains custom memory home address.
+  inline UInt8 customMemoryHome() const ASMJIT_NOTHROW
+  { return _customMemoryHome; }
+
   //! @brief Return variable stack offset.
   //!
   //! @note Stack offsets can be changed by Compiler, don't use this 
@@ -590,6 +598,8 @@ struct ASMJIT_API Variable
   //! @brief Memory operand that will be always pointed to variable memory address. */
   inline const Mem& memoryOperand() const ASMJIT_NOTHROW
   { return *_memoryOperand; }
+
+  void setMemoryHome(const Mem& memoryHome) ASMJIT_NOTHROW;
 
   // [Reference counting]
 
@@ -732,6 +742,12 @@ private:
   //! @brief true if variable in register was changed and when spilling it 
   //! needs to be copied into memory location.
   UInt8 _changed;
+
+  //! @brief Whether variable can be reused.
+  UInt8 _reusable;
+
+  //! @brief Whether variable contains custom home address.
+  UInt8 _customMemoryHome;
 
   //! @brief Stack location.
   SysInt _stackOffset;
@@ -879,6 +895,17 @@ struct ASMJIT_HIDDEN VariableRef
   inline void setChanged(UInt8 changed)
   { ASMJIT_ASSERT(_v); _v->setChanged(changed); }
 
+  //! @brief Return whether variable is reusable.
+  inline UInt8 reusable() const ASMJIT_NOTHROW
+  { ASMJIT_ASSERT(_v); return _v->reusable(); }
+
+  //! @brief Return whether variable contains custom memory home address.
+  inline UInt8 customMemoryHome() const ASMJIT_NOTHROW
+  { ASMJIT_ASSERT(_v); return _v->customMemoryHome(); }
+
+  inline void setMemoryHome(const Mem& memoryHome) ASMJIT_NOTHROW
+  { ASMJIT_ASSERT(_v); _v->setMemoryHome(memoryHome); }
+
   //! @brief Return memory address operand.
   //!
   //! @note Getting memory address operand will always call @c spill().
@@ -944,7 +971,7 @@ struct ASMJIT_HIDDEN Int32Ref : public VariableRef
   inline Int32Ref(const Int32Ref& other) : VariableRef(other._v) {}
   inline Int32Ref(Variable* v) : VariableRef(v) {}
 
-  inline Int32Ref& operator=(const Int32Ref& other) { _assign(other); }
+  inline Int32Ref& operator=(const Int32Ref& other) { _assign(other); return *this; }
 
   // [Registers]
 
@@ -983,7 +1010,7 @@ struct ASMJIT_HIDDEN Int64Ref : public VariableRef
   inline Int64Ref(const Int64Ref& other) : VariableRef(other._v) {}
   inline Int64Ref(Variable* v) : VariableRef(v) {}
 
-  inline Int64Ref& operator=(const Int64Ref& other) { _assign(other); }
+  inline Int64Ref& operator=(const Int64Ref& other) { _assign(other); return *this; }
 
   // [Registers]
 
@@ -1016,7 +1043,7 @@ struct ASMJIT_HIDDEN MMRef : public VariableRef
   inline MMRef(const MMRef& other) : VariableRef(other._v) {}
   inline MMRef(Variable* v) : VariableRef(v) {}
 
-  inline MMRef& operator=(const MMRef& other) { _assign(other); }
+  inline MMRef& operator=(const MMRef& other) { _assign(other); return *this; }
 
   // [Registers]
 
@@ -1034,7 +1061,7 @@ struct ASMJIT_HIDDEN XMMRef : public VariableRef
   inline XMMRef(const XMMRef& other) : VariableRef(other._v) {}
   inline XMMRef(Variable* v) : VariableRef(v) {}
 
-  inline XMMRef& operator=(const XMMRef& other) { _assign(other); }
+  inline XMMRef& operator=(const XMMRef& other) { _assign(other); return *this; }
 
   // [Registers]
 
@@ -1144,8 +1171,7 @@ struct ASMJIT_HIDDEN StateRef
 {
   inline StateRef(State* state) :
     _state(state)
-  {
-  }
+  {}
 
   inline ~StateRef();
 
@@ -1632,6 +1658,13 @@ struct ASMJIT_API Function : public Emittable
     UInt8 preferredRegister = NO_REG);
   bool spill(Variable* v);
   void unuse(Variable* v);
+
+  void spillAll();
+  void spillAllGp();
+  void spillAllMm();
+  void spillAllXmm();
+  void _spillAll(SysUInt start, SysUInt end);
+  void spillRegister(const BaseReg& reg);
 
   bool isPrevented(Variable* v);
   void addPrevented(Variable* v);
