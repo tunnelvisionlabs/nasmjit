@@ -24,11 +24,11 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitBuild.h"
-#include "AsmJitUtil.h"
+#include "Build.h"
+#include "Util.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -175,4 +175,4 @@ void Zone::freeAll()
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

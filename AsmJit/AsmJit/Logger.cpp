@@ -23,17 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// [Guard]
-#ifndef _ASMJITASSEMBLER_H
-#define _ASMJITASSEMBLER_H
-
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Logger.h"
 
-// [X86 / X64]
-#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-#include "AsmJitAssemblerX86X64.h"
-#endif // ASMJIT_X86 || ASMJIT_X64
-
-// [Guard]
-#endif // _ASMJITASSEMBLER_H
+// no code

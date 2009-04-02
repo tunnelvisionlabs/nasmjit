@@ -24,16 +24,16 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITSERIZALIZER_H
-#define _ASMJITSERIZALIZER_H
+#ifndef _ASMJIT_SERIZALIZER_H
+#define _ASMJIT_SERIZALIZER_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
 // [X86 / X64]
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-#include "AsmJitSerializerX86X64.h"
+#include "SerializerX86X64.h"
 #endif // ASMJIT_X86 || ASMJIT_X64
 
 // [Guard]
-#endif // _ASMJITSERIZALIZER_H
+#endif // _ASMJIT_SERIZALIZER_H

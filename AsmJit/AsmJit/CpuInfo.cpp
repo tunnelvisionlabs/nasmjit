@@ -24,7 +24,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitCpuInfo.h"
+#include "CpuInfo.h"
 
 #if defined(ASMJIT_WINDOWS)
 # include <windows.h>
@@ -48,7 +48,7 @@
 #endif // ASMJIT_POSIX
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 // helpers
 namespace AsmJit {
@@ -284,4 +284,4 @@ CpuInfo* cpuInfo() ASMJIT_NOTHROW
 } // AsmJit
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

@@ -24,10 +24,10 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitVirtualMemory.h"
+#include "VirtualMemory.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 // helpers
 namespace AsmJit {
@@ -207,4 +207,4 @@ SysUInt VirtualMemory::pageSize()
 #endif // ASMJIT_POSIX
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

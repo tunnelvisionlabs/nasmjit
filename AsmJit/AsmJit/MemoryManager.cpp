@@ -24,16 +24,16 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitBuild.h"
-#include "AsmJitLock.h"
-#include "AsmJitMemoryManager.h"
-#include "AsmJitVirtualMemory.h"
+#include "Build.h"
+#include "Lock.h"
+#include "MemoryManager.h"
+#include "VirtualMemory.h"
 
 #include <stdio.h>
 #include <string.h>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 // This file contains implementation of virtual memory management for AsmJit
 // library. The initial concept is to keep this implementation simple but 
@@ -880,4 +880,4 @@ MemoryManager* MemoryManager::global() ASMJIT_NOTHROW
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

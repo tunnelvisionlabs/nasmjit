@@ -24,10 +24,10 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitSerializer.h"
+#include "Serializer.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -275,4 +275,4 @@ const UInt32 _Serializer::_cmovcctable[16] =
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

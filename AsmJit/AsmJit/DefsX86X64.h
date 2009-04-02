@@ -24,18 +24,18 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITDEFSX86X64_H
-#define _ASMJITDEFSX86X64_H
+#ifndef _ASMJIT_DEFSX86X64_H
+#define _ASMJIT_DEFSX86X64_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
-#include "AsmJitUtil.h"
+#include "Build.h"
+#include "Util.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -1024,7 +1024,7 @@ enum PROPERTY
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
 
 // [Guard]
-#endif // _ASMJITDEFSX86X64_H
+#endif // _ASMJIT_DEFSX86X64_H

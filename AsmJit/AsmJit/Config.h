@@ -30,8 +30,8 @@
 // So modify this will by your build system or hand.
 
 // [Guard]
-#ifndef _ASMJITCONFIG_H
-#define _ASMJITCONFIG_H
+#ifndef _ASMJIT_CONFIG_H
+#define _ASMJIT_CONFIG_H
 
 // [AsmJit - OS]
 // 
@@ -74,4 +74,4 @@
 // #define ASMJIT_ASSERT(exp) do { if (!(exp)) ASMJIT_CRASH(); } while(0)
 
 // [Guard]
-#endif // _ASMJITCONFIG_H
+#endif // _ASMJIT_CONFIG_H

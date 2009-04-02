@@ -1,4 +1,8 @@
-2009-02-31
+2009-04-02
+- Changed header/source file names
+- Modified cmake script and build scripts (preparing for final 0.8)
+
+2009-03-31
 - Fixed assegnment operators in Int32Ref, Int64Ref, MMRef and XMMRef
 
 2009-03-30

@@ -24,14 +24,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITCOMPILERX86X64_H
-#define _ASMJITCOMPILERX86X64_H
+#ifndef _ASMJIT_COMPILERX86X64_H
+#define _ASMJIT_COMPILERX86X64_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
-#include "AsmJitAssembler.h"
-#include "AsmJitSerializer.h"
-#include "AsmJitUtil.h"
+#include "Build.h"
+#include "Assembler.h"
+#include "Serializer.h"
+#include "Util.h"
 
 #include <string.h>
 
@@ -39,7 +39,7 @@
 #include <new>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -2904,7 +2904,7 @@ private:
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
 
 // [Guard]
-#endif // _ASMJITCOMPILERX86X64_H
+#endif // _ASMJIT_COMPILERX86X64_H

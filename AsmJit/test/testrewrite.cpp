@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/AsmJitAssembler.h>
-#include <AsmJit/AsmJitMemoryManager.h>
+#include <AsmJit/Assembler.h>
+#include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
 typedef int (*MyFn)();

@@ -24,19 +24,19 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITLOGGERX86X64_H
-#define _ASMJITLOGGERX86X64_H
+#ifndef _ASMJIT_LOGGERX86X64_H
+#define _ASMJIT_LOGGERX86X64_H
 
 // [Dependencies]
-#include "AsmJitDefs.h"
-#include "AsmJitSerializer.h"
+#include "Defs.h"
+#include "Serializer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -174,7 +174,7 @@ private:
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
 
 // [Guard]
-#endif // _ASMJITLOGGERX86X64_H
+#endif // _ASMJIT_LOGGERX86X64_H

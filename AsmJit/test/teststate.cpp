@@ -29,9 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/AsmJitCompiler.h>
-#include <AsmJit/AsmJitLogger.h>
-#include <AsmJit/AsmJitMemoryManager.h>
+#include <AsmJit/Compiler.h>
+#include <AsmJit/Logger.h>
+#include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
 typedef AsmJit::SysInt (*MyFn)(void);

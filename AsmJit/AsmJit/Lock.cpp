@@ -24,6 +24,6 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
-#include "AsmJitLock.h"
+#include "Lock.h"
 
 // no code

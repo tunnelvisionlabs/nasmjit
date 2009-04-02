@@ -1,6 +1,4 @@
-mkdir build_borland
-cd build_borland
-
-cmake .. -DCMAKE_BUILD_TYPE=debug -G"Borland Makefiles"
-pause
-
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=debug -DASMJIT_BUILD_LIBRARY=1 -DASMJIT_BUILD_TEST=1 -G"Borland Makefiles"
+cd ..

@@ -24,11 +24,11 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITBUILD_H
-#define _ASMJITBUILD_H
+#ifndef _ASMJIT_BUILD_H
+#define _ASMJIT_BUILD_H
 
 // [Include]
-#include "AsmJitConfig.h"
+#include "Config.h"
 
 // Here should be optional include files that's needed fo successfuly
 // use macros defined here. Remember, AsmJit uses only AsmJit namespace
@@ -199,7 +199,7 @@ private: \
   inline __type__& operator=(const __type__& other)
 
 // [AsmJit - Debug]
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(_DEBUG)
 # if !defined(ASMJIT_CRASH)
 #  define ASMJIT_CRASH() crash()
 # endif
@@ -217,11 +217,11 @@ private: \
 
 // GCC warnings fix: I can't understand why GCC hasn't interface to push/pop
 // warning
-#if defined(__GNUC__)
-# if (__GNUC__ * 10000  + __GNUC_MINOR__ * 100  + __GNUC_PATCHLEVEL__) >= 402001
-#  pragma GCC diagnostic ignored "-w"
-# endif
-#endif // __GNUC__
+// #if defined(__GNUC__)
+// # if (__GNUC__ * 10000  + __GNUC_MINOR__ * 100  + __GNUC_PATCHLEVEL__) >= 402001
+// #  pragma GCC diagnostic ignored "-w"
+// # endif
+// #endif // __GNUC__
 
 // [Guard]
-#endif // _ASMJITBUILD_H
+#endif // _ASMJIT_BUILD_H

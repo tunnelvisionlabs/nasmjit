@@ -29,14 +29,14 @@
 #endif // _MSC_VER
 
 // [Dependencies]
-#include "AsmJitAssembler.h"
-#include "AsmJitCpuInfo.h"
-#include "AsmJitLogger.h"
-#include "AsmJitMemoryManager.h"
-#include "AsmJitVirtualMemory.h"
+#include "Assembler.h"
+#include "CpuInfo.h"
+#include "Logger.h"
+#include "MemoryManager.h"
+#include "VirtualMemory.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -2867,4 +2867,4 @@ void Assembler::_freeLinkData(LinkData* link) ASMJIT_NOTHROW
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

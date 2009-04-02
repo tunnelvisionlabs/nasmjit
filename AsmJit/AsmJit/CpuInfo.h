@@ -24,14 +24,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITCPUINFO_H
-#define _ASMJITCPUINFO_H
+#ifndef _ASMJIT_CPUINFO_H
+#define _ASMJIT_CPUINFO_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -210,7 +210,7 @@ ASMJIT_API CpuInfo* cpuInfo() ASMJIT_NOTHROW;
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
 
 // [Guard]
-#endif // _ASMJITCPUINFO_H
+#endif // _ASMJIT_CPUINFO_H

@@ -24,11 +24,11 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITLOCK_H
-#define _ASMJITLOCK_H
+#ifndef _ASMJIT_LOCK_H
+#define _ASMJIT_LOCK_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
 #if defined(ASMJIT_WINDOWS)
 #include <windows.h>
@@ -39,7 +39,7 @@
 #endif // ASMJIT_POSIX
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -140,5 +140,8 @@ private:
 
 } // AsmJit namespace
 
+// [Warnings-Pop]
+#include "WarningsPop.h"
+
 // [Guard]
-#endif // _ASMJITLOCK_H
+#endif // _ASMJIT_LOCK_H

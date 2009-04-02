@@ -24,16 +24,16 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITDEFS_H
-#define _ASMJITDEFS_H
+#ifndef _ASMJIT_DEFS_H
+#define _ASMJIT_DEFS_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
 // [X86 / X64]
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-#include "AsmJitDefsX86X64.h"
+#include "DefsX86X64.h"
 #endif // ASMJIT_X86 || ASMJIT_X64
 
 // [Guard]
-#endif // _ASMJITDEFS_H
+#endif // _ASMJIT_DEFS_H

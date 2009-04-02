@@ -24,16 +24,16 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITASSEMBLERX86X64_H
-#define _ASMJITASSEMBLERX86X64_H
+#ifndef _ASMJIT_ASSEMBLERX86X64_H
+#define _ASMJIT_ASSEMBLERX86X64_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
-#include "AsmJitSerializer.h"
-#include "AsmJitUtil.h"
+#include "Build.h"
+#include "Serializer.h"
+#include "Util.h"
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 // [AsmJit::]
 namespace AsmJit {
@@ -700,7 +700,7 @@ struct ASMJIT_API Assembler : public Serializer
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
 
 // [Guard]
-#endif // _ASMJITASSEMBLERX86X64_H
+#endif // _ASMJIT_ASSEMBLERX86X64_H

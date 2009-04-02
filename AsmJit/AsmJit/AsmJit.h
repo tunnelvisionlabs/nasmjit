@@ -371,16 +371,16 @@
 
 
 // [Includes]
-#include "AsmJitBuild.h"
-#include "AsmJitAssembler.h"
-#include "AsmJitCompiler.h"
-#include "AsmJitCpuInfo.h"
-#include "AsmJitDefs.h"
-#include "AsmJitLogger.h"
-#include "AsmJitMemoryManager.h"
-#include "AsmJitSerializer.h"
-#include "AsmJitUtil.h"
-#include "AsmJitVirtualMemory.h"
+#include "Build.h"
+#include "Assembler.h"
+#include "Compiler.h"
+#include "CpuInfo.h"
+#include "Defs.h"
+#include "Logger.h"
+#include "MemoryManager.h"
+#include "Serializer.h"
+#include "Util.h"
+#include "VirtualMemory.h"
 
 
 // [Guard]

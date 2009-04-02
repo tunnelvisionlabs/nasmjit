@@ -29,18 +29,18 @@
 #endif // _MSC_VER
 
 // [Dependencies]
-#include "AsmJitAssembler.h"
-#include "AsmJitCompiler.h"
-#include "AsmJitCpuInfo.h"
-#include "AsmJitLogger.h"
-#include "AsmJitUtil.h"
+#include "Assembler.h"
+#include "Compiler.h"
+#include "CpuInfo.h"
+#include "Logger.h"
+#include "Util.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 // VARIABLE_TYPE_INT64 not declared in 32 bit mode, in future this should 
 // change
@@ -2627,4 +2627,4 @@ void Compiler::serialize(Assembler& a)
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"

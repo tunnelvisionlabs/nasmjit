@@ -24,11 +24,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITVIRTUALMEMORY_H
-#define _ASMJITVIRTUALMEMORY_H
+#ifndef _ASMJIT_VIRTUALMEMORY_H
+#define _ASMJIT_VIRTUALMEMORY_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
+
+// [Warnings-Push]
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -77,5 +80,8 @@ struct ASMJIT_API VirtualMemory
 
 } // AsmJit namespace
 
+// [Warnings-Pop]
+#include "WarningsPop.h"
+
 // [Guard]
-#endif // _ASMJITVIRTUALMEMORY_H
+#endif // _ASMJIT_VIRTUALMEMORY_H

@@ -24,11 +24,11 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITUTIL_H
-#define _ASMJITUTIL_H
+#ifndef _ASMJIT_UTIL_H
+#define _ASMJIT_UTIL_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -760,4 +760,4 @@ private:
 
 } // AsmJit namespace
 
-#endif // _ASMJITUTIL_H
+#endif // _ASMJIT_UTIL_H

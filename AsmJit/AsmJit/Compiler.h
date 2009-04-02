@@ -24,58 +24,16 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJITMEMORYMANAGER_H
-#define _ASMJITMEMORYMANAGER_H
+#ifndef _ASMJIT_COMPILER_H
+#define _ASMJIT_COMPILER_H
 
 // [Dependencies]
-#include "AsmJitBuild.h"
+#include "Build.h"
 
-// [Warnings-Push]
-#include "AsmJitWarningsPush.h"
-
-namespace AsmJit {
-
-//! @addtogroup AsmJit_MemoryManagement
-//! @{
-
-// ============================================================================
-// [AsmJit::MemoryManager]
-// ============================================================================
-
-//! @brief Types of allocation used by @c AsmJit::MemoryManager::alloc() method.
-enum MEMORY_ALLOC_TYPE
-{
-  //! @brief Allocate pernament memory that will be never freed.
-  MEMORY_ALLOC_FREEABLE,
-  //! @brief Allocate memory that can be freed by @c AsmJit::MemoryManager::free()
-  //! method.
-  MEMORY_ALLOC_PERNAMENT
-};
-
-//! @brief Virtual memory manager.
-struct ASMJIT_API MemoryManager
-{
-  MemoryManager() ASMJIT_NOTHROW;
-  ~MemoryManager() ASMJIT_NOTHROW;
-
-  void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
-  bool free(void* address) ASMJIT_NOTHROW;
-
-  SysUInt used() ASMJIT_NOTHROW;
-  SysUInt allocated() ASMJIT_NOTHROW;
-
-  static MemoryManager* global() ASMJIT_NOTHROW;
-
-private:
-  void* _d;
-};
-
-//! @}
-
-} // AsmJit namespace
-
-// [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+// [X86 / X64]
+#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
+#include "CompilerX86X64.h"
+#endif // ASMJIT_X86 || ASMJIT_X64
 
 // [Guard]
-#endif // _ASMJITMEMORYMANAGER_H
+#endif // _ASMJIT_COMPILER_H

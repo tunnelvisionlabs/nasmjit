@@ -37,24 +37,27 @@ Building & Configuring
 You have two choices when using AsmJit library:
 
 1. Embed files into your project - This is simplest way how to use AsmJit
-   library. If you want to do this, edit AsmJit/AsmJitConfig.h file and
-   undefine "// #define ASMJIT_API" macro. You can also define ASMJIT_API
-   macro through your compiler command line (for example -DASMJIT_API).
+   library. If you want to do this, edit AsmJit/Config.h file and undefine
+   "// #define ASMJIT_API" macro or define ASMJIT_API using your IDE or
+   makefiles (for example gcc can accept -DASMJIT_API to define it).
 
-   By defining ASMJIT_API you will bypass shared library (dll) support.
+   You will bypass shared library (dll) support by defining ASMJIT_API .
 
 2. Build shared library and link your project to it. This is now default way
    for using AsmJit library, but can be easily changed. To build dynamically
    linked library use cmake (http://www.cmake.org/) that can generate 
    makefiles and project files for your IDE (included is Visual Studio,
    Code::Blocks, Eclipse, KDevelop and more...).
+   
+   To build shared library use this cmake command (or use provided scripts):
+     cmake {Replace this with AsmJit directory} DASMJIT_BUILD_LIBRARY=1
 
 Directory structure
 ===================
 
 AsmJit - Directory where are sources needed to compile AsmJit. This directory
 is designed to be embeddable to your application as easy as possible. There is
-also AsmJitConfig.h header where you can configure platform (if autodetection 
+also AsmJit/Config.h header where you can configure platform (if autodetection 
 now works for you) and application specific features. Look at platform macros 
 to change some backends to your preferences.
 

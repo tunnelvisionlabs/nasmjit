@@ -29,14 +29,14 @@
 #endif // _MSC_VER
 
 // [Dependencies]
-#include "AsmJitLogger.h"
+#include "Logger.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 // [Warnings-Push]
-#include "AsmJitWarningsPush.h"
+#include "WarningsPush.h"
 
 namespace AsmJit {
 
@@ -140,4 +140,4 @@ void FileLogger::setStream(FILE* stream) ASMJIT_NOTHROW
 } // AsmJit namespace
 
 // [Warnings-Pop]
-#include "AsmJitWarningsPop.h"
+#include "WarningsPop.h"
