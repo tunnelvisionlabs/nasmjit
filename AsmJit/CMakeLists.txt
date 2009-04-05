@@ -6,10 +6,10 @@ Project(AsmJit C CXX)
 
 # If ASMJIT_DIR is not specified, assume that we are building it from here
 If(NOT ASMJIT_DIR)
-  Set(ASMJIT_DIR ".")
+  Set(ASMJIT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 EndIf(NOT ASMJIT_DIR)
 
-# AsmJit C++ source files
+# AsmJit C++ sources
 Set(ASMJIT_SOURCES
   ${ASMJIT_DIR}/AsmJit/AssemblerX86X64.cpp
   ${ASMJIT_DIR}/AsmJit/CompilerX86X64.cpp
@@ -62,9 +62,9 @@ If(NOT WIN32)
 EndIf(NOT WIN32)
 
 # Debugging support is indicated through _DEBUG macro, add it if needed
-If(${CMAKE_BUILD_TYPE} MATCHES "debug")
+If(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   Add_Definitions(-D_DEBUG)
-EndIF(${CMAKE_BUILD_TYPE} MATCHES "debug")
+EndIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 # Build AsmJit shared library?
 If(ASMJIT_BUILD_LIBRARY)

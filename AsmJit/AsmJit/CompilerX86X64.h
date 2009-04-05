@@ -657,8 +657,12 @@ struct ASMJIT_API Variable
   { return _spillFn; }
 
   //! @brief Get custom data pointer.
-  inline void* data() const ASMJIT_NOTHROW
-  { return _data; }
+  inline void* dataPtr() const ASMJIT_NOTHROW
+  { return _dataPtr; }
+
+  //! @brief Get custom data pointer.
+  inline SysInt dataInt() const ASMJIT_NOTHROW
+  { return _dataInt; }
 
   //! @brief Set custom alloc function.
   inline void setAllocFn(AllocFn fn) ASMJIT_NOTHROW
@@ -668,9 +672,13 @@ struct ASMJIT_API Variable
   inline void setSpillFn(SpillFn fn) ASMJIT_NOTHROW
   { _spillFn = fn; }
 
-  //! @brief Set custom data.
-  inline void setData(void* data) ASMJIT_NOTHROW
-  { _data = data; }
+  //! @brief Set custom data pointer.
+  inline void setDataPtr(void* data) ASMJIT_NOTHROW
+  { _dataPtr = data; }
+
+  //! @brief Set custom data integer.
+  inline void setDataInt(SysInt data) ASMJIT_NOTHROW
+  { _dataInt = data; }
 
 private:
   //! @brief Set variable stack offset.
@@ -761,8 +769,11 @@ private:
   //! @brief Custom spill function (or NULL).
   SpillFn _spillFn;
 
-  //! @brief Custom data that can be used by custom spill and restore functions.
-  void* _data;
+  //! @brief Custom void* data that can be used by custom spill and restore functions.
+  void* _dataPtr;
+
+  //! @brief Custom integer that can be used by custom spill and restore functions.
+  SysInt _dataInt;
 
   friend struct Compiler;
   friend struct Function;
@@ -809,9 +820,7 @@ struct ASMJIT_HIDDEN VariableRef
 
   inline VariableRef& operator=(Variable* v)
   {
-    Variable* tmp = v->ref();
-    if (_v) _v->deref();
-    _v = tmp;
+    use(v); return *this;
   }
 
   //! @brief Return @c Variable instance.
@@ -826,7 +835,12 @@ struct ASMJIT_HIDDEN VariableRef
   //! @brief Return variable state, see @c VARIABLE_STATE.
   inline UInt8 state() const { ASMJIT_ASSERT(_v); return _v->state(); }
 
-  inline void use(Variable* v) { ASMJIT_ASSERT(_v == NULL); _v = v->ref(); }
+  void use(Variable* v)
+  {
+    Variable* tmp = v->ref();
+    if (_v) _v->deref();
+    _v = tmp;
+  }
 
   //! @brief Allocate variable to register.
   //! @param mode Allocation mode (see @c VARIABLE_ALLOC enum)
@@ -852,8 +866,7 @@ struct ASMJIT_HIDDEN VariableRef
   //! @c alloc() to allocate it again.
   inline void unuse()
   {
-    ASMJIT_ASSERT(_v);
-    _v->unuse();
+    if (_v) _v->unuse();
   }
 
   //! @brief Destroy variable (@c VariableRef can't be used anymore after destroy).
@@ -930,14 +943,18 @@ struct ASMJIT_HIDDEN VariableRef
   //! @brief Get custom spill function.
   inline SpillFn spillFn() const { ASMJIT_ASSERT(_v); return _v->spillFn(); }
   //! @brief Get custom data pointer.
-  inline void* data() const { ASMJIT_ASSERT(_v); return _v->data(); }
+  inline void* dataPtr() const { ASMJIT_ASSERT(_v); return _v->dataPtr(); }
+  //! @brief Get custom data pointer.
+  inline SysInt dataInt() const { ASMJIT_ASSERT(_v); return _v->dataInt(); }
 
   //! @brief Set custom restore function.
   inline void setAllocFn(AllocFn fn) { ASMJIT_ASSERT(_v); _v->setAllocFn(fn); }
   //! @brief Set custom spill function.
   inline void setSpillFn(SpillFn fn) { ASMJIT_ASSERT(_v); _v->setSpillFn(fn); }
   //! @brief Set custom data.
-  inline void setData(void* data) { ASMJIT_ASSERT(_v); _v->setData(data); }
+  inline void setDataPtr(void* data) { ASMJIT_ASSERT(_v); _v->setDataPtr(data); }
+  //! @brief Set custom data.
+  inline void setDataInt(SysInt data) { ASMJIT_ASSERT(_v); _v->setDataInt(data); }
 
 protected:
   void _assign(const VariableRef& other)
@@ -1762,7 +1779,7 @@ struct ASMJIT_API Function : public Emittable
   //! }
   //!
   //! @endcode
-  State *saveState();
+  State* saveState();
 
   //! @brief Restore function register state to @a state.
   //! @sa saveState().
@@ -2037,8 +2054,10 @@ struct ASMJIT_API JumpTable : public Emittable
   //! @brief Return labels list.
   const PodVector<Label*>& labels() const { return _labels; }
 
-  //! @brief Add new @c Label.
-  Label* addLabel();
+  //! @brief Add new label @a target to jump table.
+  //! @param target @c Label to add (or NULL to create one).
+  //! @param pos Position in jump table where to add it
+  Label* addLabel(Label* target = NULL, SysInt pos = -1);
 
   // [Members]
 
@@ -2572,6 +2591,101 @@ struct ASMJIT_API Compiler : public Serializer
   //!
   //! @sa @c Epilog, @c Function.
   Epilog* newEpilog(Function* f);
+
+  // --------------------------------------------------------------------------
+  // [Registers allocator / Variables]
+  // --------------------------------------------------------------------------
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->argument()
+  //! @sa @c Function::argument()
+  Variable* argument(SysInt i);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->newVariable()
+  //! @sa @c Function::newVariable()
+  Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->alloc()
+  //! @sa @c Function::alloc()
+  bool alloc(Variable* v,
+    UInt8 mode = VARIABLE_ALLOC_READWRITE,
+    UInt8 preferredRegister = NO_REG);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spill()
+  //! @sa @c Function::spill()
+  bool spill(Variable* v);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->unuse()
+  //! @sa @c Function::unuse()
+  void unuse(Variable* v);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spillAll()
+  //! @sa @c Function::spillAll()
+  void spillAll();
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spillAllGp()
+  //! @sa @c Function::spillAllGp()
+  void spillAllGp();
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spillAllMm()
+  //! @sa @c Function::spillAllMm()
+  void spillAllMm();
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spillAllXmm()
+  //! @sa @c Function::spillAllXmm()
+  void spillAllXmm();
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->spillRegister()
+  //! @sa @c Function::spillRegister()
+  void spillRegister(const BaseReg& reg);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->isPrevented()
+  //! @sa @c Function::isPrevented()
+  bool isPrevented(Variable* v);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->addPrevented()
+  //! @sa @c Function::addPrevented()
+  void addPrevented(Variable* v);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->removePrevented()
+  //! @sa @c Function::removePrevented()
+  void removePrevented(Variable* v);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->clearPrevented()
+  //! @sa @c Function::clearPrevented()
+  void clearPrevented();
+
+  // --------------------------------------------------------------------------
+  // [State]
+  // --------------------------------------------------------------------------
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFunction()->saveState()
+  //! @sa @c Function::saveState().
+  State* saveState();
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFuncion()->restoreState()
+  //! @sa @c Function::restoreState().
+  void restoreState(State* state);
+
+  //! @brief Convenience method that calls:
+  //!   Compiler::currentFuncion()->setState()
+  //! @sa @c Function::setState()
+  void setState(State* state);
 
   // -------------------------------------------------------------------------
   // [Labels]

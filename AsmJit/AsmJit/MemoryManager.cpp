@@ -289,7 +289,7 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
 
 MemoryManagerPrivate::MemoryManagerPrivate() :
   _newChunkSize(65536),
-  _newChunkDensity(32),
+  _newChunkDensity(64),
   _allocated(0),
   _used(0),
   _root(NULL),

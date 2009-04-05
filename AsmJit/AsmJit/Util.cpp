@@ -40,7 +40,10 @@ void Buffer::emitData(const void* dataPtr, SysUInt dataLen)
   ASMJIT_NOTHROW
 {
   SysInt max = capacity() - offset();
-  if ((SysUInt)max < dataLen) realloc(offset() + dataLen);
+  if ((SysUInt)max < dataLen)
+  {
+    if (!realloc(offset() + dataLen)) return;
+  }
 
   memcpy(_cur, dataPtr, dataLen);
   _cur += dataLen;
@@ -138,11 +141,17 @@ Zone::~Zone()
 void* Zone::alloc(SysUInt size)
   ASMJIT_NOTHROW
 {
+  // Align to 4 or 8 bytes
+  size = (size + sizeof(SysInt)-1) & ~(sizeof(SysInt)-1);
+
   Chunk* cur = _chunks;
 
   if (!cur || cur->remain() < size)
   {
-    cur = (Chunk*)ASMJIT_MALLOC(sizeof(Chunk) - (sizeof(UInt8)*4) + _chunkSize);
+    SysUInt chSize = _chunkSize;
+    if (chSize < size) chSize = size;
+
+    cur = (Chunk*)ASMJIT_MALLOC(sizeof(Chunk) - sizeof(void*) + chSize);
     if (!cur) return NULL;
 
     cur->prev = _chunks;
@@ -153,6 +162,7 @@ void* Zone::alloc(SysUInt size)
 
   UInt8* p = cur->data + cur->pos;
   cur->pos += size;
+  _total += size;
   return (void*)p;
 }
 

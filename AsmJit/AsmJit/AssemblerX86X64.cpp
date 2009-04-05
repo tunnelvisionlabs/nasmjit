@@ -491,6 +491,9 @@ void Assembler::relocCode(void* _dst) const
     const RelocData& r = _relocData[i];
     SysInt val;
 
+    // Be sure that reloc data structure is correct
+    ASMJIT_ASSERT((SysInt)(r.offset + r.size) <= codeSize());
+
     switch(r.type)
     {
       case RelocData::ABSOLUTE_TO_ABSOLUTE:
@@ -516,7 +519,6 @@ void Assembler::relocCode(void* _dst) const
         break;
 
       case 8:
-        printf("RELOC %d %p: \n", (int)r.offset, (void*)val);
         *reinterpret_cast<Int64*>(dst + r.offset) = (Int64)val;
         break;
 

@@ -1493,7 +1493,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   inline void data(const void* data, SysUInt size) { _embed(data, size); }
 
   template<typename T>
-  inline void dstruct(const T& x) { _embed(x, sizeof(T)); }
+  inline void dstruct(const T& x) { _embed(&x, sizeof(T)); }
 
   // -------------------------------------------------------------------------
   // [X86 Instructions]
@@ -2043,7 +2043,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
     __emitX86(INST_INC, &dst);
   }
 
-  //! @brief Interrupt 3 — trap to debugger.
+  //! @brief Interrupt 3 ï¿½ trap to debugger.
   inline void int3()
   {
     __emitX86(INST_INT3);
@@ -2170,7 +2170,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
 
   //! @brief Assert LOCK# Signal Prefix.
   //!
-  //! This instruction causes the processor’s LOCK# signal to be asserted
+  //! This instruction causes the processorï¿½s LOCK# signal to be asserted
   //! during execution of the accompanying instruction (turns the 
   //! instruction into an atomic instruction). In a multiprocessor environment,
   //! the LOCK# signal insures that the processor has exclusive use of any shared

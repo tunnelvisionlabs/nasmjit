@@ -150,7 +150,8 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _stackOffset(0),
   _allocFn(NULL),
   _spillFn(NULL),
-  _data(NULL)
+  _dataPtr(NULL),
+  _dataInt(0)
 {
   ASMJIT_ASSERT(f != NULL);
 
@@ -298,7 +299,8 @@ Comment::Comment(Compiler* c, const char* str) : Emittable(c, EMITTABLE_COMMENT)
   SysUInt len = strlen(str);
 
   // Alloc string, but round it up
-  _str = (char*)c->_zoneAlloc((len + sizeof(SysInt)) & ~(sizeof(SysInt)-1));
+  _str = (char*)c->_zoneAlloc(
+    (len + sizeof(SysInt)) & ~(sizeof(SysInt)-1));
   memcpy((char*)_str, str, len + 1);
 }
 
@@ -318,6 +320,8 @@ void Comment::emit(Assembler& a)
 EmbeddedData::EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size) :
   Emittable(c, EMITTABLE_EMBEDDED_DATA)
 {
+  ASMJIT_ASSERT(capacity >= size);
+
   _size = size;
   _capacity = capacity;
   memcpy(_data, data, size);
@@ -536,8 +540,8 @@ void Function::emit(Assembler& a)
   if (logger && logger->enabled())
   {
     char _buf[1024];
-    char* loc;
     char* p;
+    const char* loc;
 
     SysUInt i;
     SysUInt varlen = _variables.length();
@@ -1373,7 +1377,8 @@ void Function::unuse(Variable* v)
 
   v->_allocFn = NULL;
   v->_spillFn = NULL;
-  v->_data = NULL;
+  v->_dataPtr = NULL;
+  v->_dataInt = 0;
 }
 
 void Function::spillAll()
@@ -2126,14 +2131,28 @@ void JumpTable::postEmit(Assembler& a)
   SysUInt i, len = _labels.length();
   for (i = 0; i < len; i++)
   {
-    a._embedLabel(_labels[i]);
+    Label* label = _labels[i];
+    if (label)
+      a._embedLabel(label);
+    else
+      a.dsysint(0);
   }
 }
 
-Label* JumpTable::addLabel()
+Label* JumpTable::addLabel(Label* target, SysInt pos)
 {
-  Label* target = compiler()->newLabel();
-  _labels.append(target);
+  if (!target) target = compiler()->newLabel();
+
+  if (pos != -1)
+  {
+    while (_labels.length() <= (SysUInt)pos) _labels.append(NULL);
+    _labels[(SysUInt)pos] = target;
+  }
+  else
+  {
+    _labels.append(target);
+  }
+    
   return target;
 }
 
@@ -2315,6 +2334,99 @@ Epilog* Compiler::newEpilog(Function* f)
   Epilog* e = newObject<Epilog>(f);
   addEmittable(e);
   return e;
+}
+
+// ==========================================================================
+// [AsmJit::Compiler - Registers allocator / Variables]
+// ==========================================================================
+
+Variable* Compiler::argument(SysInt i)
+{
+  return currentFunction()->argument(i);
+}
+
+Variable* Compiler::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegister)
+{
+  return currentFunction()->newVariable(type, priority, preferredRegister);
+}
+
+bool Compiler::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
+{
+  return currentFunction()->alloc(v, mode, preferredRegister);
+}
+
+bool Compiler::spill(Variable* v)
+{
+  return currentFunction()->spill(v);
+}
+
+void Compiler::unuse(Variable* v)
+{
+  return currentFunction()->unuse(v);
+}
+
+void Compiler::spillAll()
+{
+  return currentFunction()->spillAll();
+}
+
+void Compiler::spillAllGp()
+{
+  return currentFunction()->spillAllGp();
+}
+
+void Compiler::spillAllMm()
+{
+  return currentFunction()->spillAllMm();
+}
+
+void Compiler::spillAllXmm()
+{
+  return currentFunction()->spillAllXmm();
+}
+
+void Compiler::spillRegister(const BaseReg& reg)
+{
+  return currentFunction()->spillRegister(reg);
+}
+
+bool Compiler::isPrevented(Variable* v)
+{
+  return currentFunction()->isPrevented(v);
+}
+
+void Compiler::addPrevented(Variable* v)
+{
+  return currentFunction()->addPrevented(v);
+}
+
+void Compiler::removePrevented(Variable* v)
+{
+  return currentFunction()->removePrevented(v);
+}
+
+void Compiler::clearPrevented()
+{
+  currentFunction()->clearPrevented();
+}
+
+// ==========================================================================
+// [AsmJit::Compiler - State]
+// ==========================================================================
+
+State* Compiler::saveState()
+{
+  return currentFunction()->saveState();
+}
+
+void Compiler::restoreState(State* state)
+{
+  currentFunction()->restoreState(state);
+}
+
+void Compiler::setState(State* state)
+{
+  currentFunction()->setState(state);
 }
 
 // ============================================================================
@@ -2571,11 +2683,22 @@ void* Compiler::make(UInt32 allocType)
 
   if (a.error())
   {
+    if (_logger)
+    {
+      _logger->logFormat("; Compiler failed (error %u).\n", (unsigned int)a.error());
+    }
+
     setError(a.error());
     return NULL;
   }
   else
   {
+    if (_logger)
+    {
+      _logger->logFormat("; Compiler successful (wrote %u bytes).\n", (unsigned int)a.codeSize());
+      _logger->log("\n");
+    }
+
     return a.make(allocType);
   }
 }

@@ -741,7 +741,7 @@ struct ASMJIT_API Zone
     SysUInt size;
 
     //! @brief Data.
-    UInt8 data[4];
+    UInt8 data[sizeof(void*)];
 
     //! @brief Return count of remaining (unused) bytes in chunk.
     inline SysUInt remain() const ASMJIT_NOTHROW { return size - pos; }

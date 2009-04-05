@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
   PtrRef a1(f.argument(0));
   PtrRef a2(f.argument(1));
-  
+
   // Create some variables, default variable priority is 10.
   Int32Ref x1(f.newVariable(VARIABLE_TYPE_INT32));
   Int32Ref x2(f.newVariable(VARIABLE_TYPE_INT32));
