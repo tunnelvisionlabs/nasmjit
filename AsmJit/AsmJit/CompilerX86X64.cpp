@@ -1438,6 +1438,39 @@ void Function::spillRegister(const BaseReg& reg)
   if (v) spill(v);
 }
 
+static SysInt getFreeRegs(UInt32 regs, SysUInt max)
+{
+  SysUInt n = 0;
+  SysUInt i;
+  UInt32 mask = 1;
+
+  for (i = 0; i < max; i++, mask <<= 1)
+  {
+    if ((regs & mask) == 0) n++;
+  }
+  return n;
+}
+
+SysInt Function::numFreeGp() const
+{
+  SysInt n = getFreeRegs(_usedGpRegisters, NUM_REGS);
+
+  if ((_usedGpRegisters & (1 << RID_ESP)) == 0) n--;
+  if ((_usedGpRegisters & (1 << RID_EBP)) == 0 && !allocableEbp()) n--;
+
+  return n;
+}
+
+SysInt Function::numFreeMm() const
+{
+  return getFreeRegs(_usedMmRegisters, 8);
+}
+
+SysInt Function::numFreeXmm() const
+{
+  return getFreeRegs(_usedXmmRegisters, NUM_REGS);
+}
+
 bool Function::isPrevented(Variable* v)
 {
   return _usePrevention && _prevented.indexOf(v) != (SysUInt)-1;
@@ -2121,6 +2154,8 @@ void JumpTable::emit(Assembler& a)
 
 void JumpTable::postEmit(Assembler& a)
 {
+  a.align(sizeof(SysInt));
+
 #if defined(ASMJIT_X64)
   // help with RIP addressing
   a._embedLabel(_target);
@@ -2388,6 +2423,21 @@ void Compiler::spillAllXmm()
 void Compiler::spillRegister(const BaseReg& reg)
 {
   return currentFunction()->spillRegister(reg);
+}
+
+SysInt Compiler::numFreeGp() const
+{
+  return _currentFunction->numFreeGp();
+}
+
+SysInt Compiler::numFreeMm() const
+{
+  return _currentFunction->numFreeMm();
+}
+
+SysInt Compiler::numFreeXmm() const
+{
+  return _currentFunction->numFreeXmm();
 }
 
 bool Compiler::isPrevented(Variable* v)

@@ -1683,6 +1683,10 @@ struct ASMJIT_API Function : public Emittable
   void _spillAll(SysUInt start, SysUInt end);
   void spillRegister(const BaseReg& reg);
 
+  SysInt numFreeGp() const;
+  SysInt numFreeMm() const;
+  SysInt numFreeXmm() const;
+
   bool isPrevented(Variable* v);
   void addPrevented(Variable* v);
   void removePrevented(Variable* v);
@@ -2647,6 +2651,10 @@ struct ASMJIT_API Compiler : public Serializer
   //!   Compiler::currentFunction()->spillRegister()
   //! @sa @c Function::spillRegister()
   void spillRegister(const BaseReg& reg);
+
+  SysInt numFreeGp() const;
+  SysInt numFreeMm() const;
+  SysInt numFreeXmm() const;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->isPrevented()

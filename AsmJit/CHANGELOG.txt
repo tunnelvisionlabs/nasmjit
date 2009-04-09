@@ -1,3 +1,6 @@
+2009-04-06
+- Added methods to get count of free gp/mm/xmm registers to Function and Compiler
+
 2009-04-02
 - Changed header/source file names
 - Modified cmake script and build scripts (preparing for final 0.8)

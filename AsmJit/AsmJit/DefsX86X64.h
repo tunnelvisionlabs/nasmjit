@@ -858,6 +858,7 @@ enum INST_CODE
   INST_PI2FW,         // 3dNow! Extensions
   INST_PINSRB,
   INST_PINSRD,
+  INST_PINSRQ,
   INST_PINSRW,        // MMX Extensions
   INST_PMADDUBSW,
   INST_PMADDWD,

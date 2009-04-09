@@ -4927,7 +4927,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   }
 
   //! @brief Insert Word (SSE).
-  inline void pinsrw(const MMRegister& dst, const MMRegister& src, const Immediate& imm8)
+  inline void pinsrw(const MMRegister& dst, const Register& src, const Immediate& imm8)
   {
     __emitX86(INST_PINSRW, &dst, &src, &imm8);
   }
@@ -7230,7 +7230,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   } 
 
   //! @brief Insert Byte (SSE4.1).
-  inline void pinsrb(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void pinsrb(const XMMRegister& dst, const Register& src, const Immediate& imm8)
   {
     __emitX86(INST_PINSRB, &dst, &src, &imm8);
   }
@@ -7241,7 +7241,7 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   }
 
   //! @brief Insert Dword (SSE4.1).
-  inline void pinsrd(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void pinsrd(const XMMRegister& dst, const Register& src, const Immediate& imm8)
   {
     __emitX86(INST_PINSRD, &dst, &src, &imm8);
   }
@@ -7251,8 +7251,19 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
     __emitX86(INST_PINSRD, &dst, &src, &imm8);
   }
 
+  //! @brief Insert Dword (SSE4.1).
+  inline void pinsrq(const XMMRegister& dst, const Register& src, const Immediate& imm8)
+  {
+    __emitX86(INST_PINSRQ, &dst, &src, &imm8);
+  }
+  //! @brief Insert Dword (SSE4.1).
+  inline void pinsrq(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  {
+    __emitX86(INST_PINSRQ, &dst, &src, &imm8);
+  }
+
   //! @brief Insert Word (SSE2).
-  inline void pinsrw(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  inline void pinsrw(const XMMRegister& dst, const Register& src, const Immediate& imm8)
   {
     __emitX86(INST_PINSRW, &dst, &src, &imm8);
   }

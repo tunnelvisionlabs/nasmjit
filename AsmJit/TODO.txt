@@ -1,5 +1,10 @@
 TODO (Compiler):
 [ ] Add ASMJIT_NOTHOW to all functions that can't throw exception
+[ ] Function return values should be supported
+[ ] Add possibility to easy call other functions through AsmJit::Compiler
+[ ] Add possibility to set register allocator method 
+    (to alloc preserved registers first or not - will be used together with
+     calling different functions from jit generated code)
 [ ] Add instruction reordering possibility in compiler (complex)
 [ ] What about float and double variables in compiler ?
     Current implementation can reserve memory for these types, but can't

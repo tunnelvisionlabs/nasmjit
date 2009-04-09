@@ -474,7 +474,7 @@ int main(int argc, char* argv[])
   a.pavgw(mm0,mm0);
   a.pavgw(mm0,ptr(nax));
   a.pextrw(nax,mm0,0);
-  a.pinsrw(mm0,mm0,0);
+  a.pinsrw(mm0,eax,0);
   a.pinsrw(mm0,ptr(nax),0);
   a.pmaxsw(mm0,mm0);
   a.pmaxsw(mm0,ptr(nax));
@@ -891,11 +891,11 @@ int main(int argc, char* argv[])
   a.pextrw(ptr(nax),xmm0,0);
   a.phminposuw(xmm0,xmm0);
   a.phminposuw(xmm0,ptr(nax));
-  a.pinsrb(xmm0,xmm0,0);
+  a.pinsrb(xmm0,eax,0);
   a.pinsrb(xmm0,ptr(nax),0);
-  a.pinsrd(xmm0,xmm0,0);
+  a.pinsrd(xmm0,eax,0);
   a.pinsrd(xmm0,ptr(nax),0);
-  a.pinsrw(xmm0,xmm0,0);
+  a.pinsrw(xmm0,eax,0);
   a.pinsrw(xmm0,ptr(nax),0);
   a.pmaxuw(xmm0,xmm0);
   a.pmaxuw(xmm0,ptr(nax));

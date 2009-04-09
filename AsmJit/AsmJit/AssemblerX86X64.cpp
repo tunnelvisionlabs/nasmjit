@@ -1060,9 +1060,10 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_PHSUBW           , "phsubw"           , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3805, 0),
   MAKE_INST(INST_PI2FD            , "pi2fd"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x0D),
   MAKE_INST(INST_PI2FW            , "pi2fw"            , I_MMU_RM_3DNOW  , O_MM            , O_MM_MEM        , 0, 0x00000F0F, 0x0C),
-  MAKE_INST(INST_PINSRB           , "pinsrb"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A20, 0),
-  MAKE_INST(INST_PINSRD           , "pinsrd"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A22, 0),
-  MAKE_INST(INST_PINSRW           , "pinsrw"           , I_MMU_RM_IMM8   , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FC4, 0),
+  MAKE_INST(INST_PINSRB           , "pinsrb"           , I_MMU_RM_IMM8   , O_XMM           , O_G32 | O_MEM   , 0, 0x660F3A20, 0),
+  MAKE_INST(INST_PINSRD           , "pinsrd"           , I_MMU_RM_IMM8   , O_XMM           , O_G32 | O_MEM   , 0, 0x660F3A22, 0),
+  MAKE_INST(INST_PINSRQ           , "pinsrq"           , I_MMU_RM_IMM8   , O_XMM           , O_G64 | O_MEM   , 0, 0x660F3A22, 0),
+  MAKE_INST(INST_PINSRW           , "pinsrw"           , I_MMU_RM_IMM8   , O_MM_XMM        , O_G32 | O_MEM   , 0, 0x00000FC4, 0),
   MAKE_INST(INST_PMADDUBSW        , "pmaddubsw"        , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x000F3804, 0),
   MAKE_INST(INST_PMADDWD          , "pmaddwd"          , I_MMU_RMI       , O_MM_XMM        , O_MM_XMM_MEM    , 0, 0x00000FF5, 0),
   MAKE_INST(INST_PMAXSB           , "pmaxsb"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x660F383C, 0),
@@ -2651,6 +2652,13 @@ void Assembler::align(SysInt m)
   if (_logger) _logger->logAlign(m);
 
   if (!m) return;
+
+  if (m > 64)
+  {
+    ASMJIT_ASSERT(0);
+    return;
+  }
+
   SysInt i = m - (offset() % m);
   if (i == m) return;
 
