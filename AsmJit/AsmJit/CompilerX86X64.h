@@ -956,6 +956,9 @@ struct ASMJIT_HIDDEN VariableRef
   //! @brief Set custom data.
   inline void setDataInt(SysInt data) { ASMJIT_ASSERT(_v); _v->setDataInt(data); }
 
+  inline bool operator==(const VariableRef& other) const { return _v == other._v; }
+  inline bool operator!=(const VariableRef& other) const { return _v != other._v; }
+
 protected:
   void _assign(const VariableRef& other)
   {

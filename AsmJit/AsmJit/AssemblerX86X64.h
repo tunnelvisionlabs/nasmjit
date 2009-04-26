@@ -155,7 +155,7 @@ namespace AsmJit {
 //! These methods returns you code size (or more precisely current code offset)
 //! in bytes. Use takeCode() to take internal buffer (all pointers in 
 //! @c AsmJit::Assembler instance will be zeroed and current buffer returned)
-//! to use it. If you don't take it,  @c AsmKit::Assembler destructor will
+//! to use it. If you don't take it,  @c AsmJit::Assembler destructor will
 //! free it automatically. To alloc and run code manually don't use
 //! @c malloc()'ed memory, but instead use @c AsmJit::VirtualMemory::alloc()
 //! to get memory for executing (specify @c canExecute to @c true) or

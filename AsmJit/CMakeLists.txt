@@ -51,11 +51,6 @@ Set(ASMJIT_HEADERS
 # Include AsmJit to be able to use #include <AsmJit/...>
 Include_Directories(${ASMJIT_DIR})
 
-# Include(FindThreads)
-# If(CMAKE_THREAD_LIBS_INIT)
-#   Link_Libraries(${CMAKE_THREAD_LIBS_INIT})
-# EndIf(CMAKE_THREAD_LIBS_INIT)
-
 # pthread library is needed for non-windows OSes.
 If(NOT WIN32)
   Link_Libraries(pthread)
@@ -83,6 +78,7 @@ If(ASMJIT_BUILD_TEST)
   Set(ASMJIT_TEST_FILES
     testcompiler
     testcpu
+    testdummy
     testjit
     testjumptable
     testmemorymanager

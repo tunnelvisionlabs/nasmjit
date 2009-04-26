@@ -1,3 +1,9 @@
+2009-04-10
+- Released 0.8
+
+2009-04-09
+- Fixed pinsrb/pinsrd/pinsrq/pinsrw instructions
+
 2009-04-06
 - Added methods to get count of free gp/mm/xmm registers to Function and Compiler
 
