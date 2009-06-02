@@ -564,8 +564,8 @@ struct ASMJIT_API Assembler : public Serializer
     }
     else if (rm.isMem())
     {
-      x = (reinterpret_cast<const Mem&>(rm).index() & 0x8) != 0;
-      b = (reinterpret_cast<const Mem&>(rm).base() & 0x8) != 0;
+      x = ((reinterpret_cast<const Mem&>(rm).index() & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).index() != NO_REG);
+      b = ((reinterpret_cast<const Mem&>(rm).base() & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).base() != NO_REG);
     }
 
     // w Default operand size(0=Default, 1=64 bits).

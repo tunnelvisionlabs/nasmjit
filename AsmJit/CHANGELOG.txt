@@ -1,3 +1,6 @@
+2009-06-02:
+- Fixed generating incorrect REX prefix (0x42)
+
 2009-04-10
 - Released 0.8
 
