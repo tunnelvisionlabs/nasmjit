@@ -1,3 +1,6 @@
+2009-08-15
+- Fixed issue - Operand size in compiler, reported by Frank
+
 2009-06-02:
 - Fixed generating incorrect REX prefix (0x42)
 

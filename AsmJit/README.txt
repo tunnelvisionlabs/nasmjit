@@ -73,7 +73,7 @@ Supported compilers
 
 AsmJit is successfully tested by following compilers:
 - MSVC (VC7.1 and VC8.0)
-- GCC (3.4.X+ including MinGW and 4.1.X+)
+- GCC (3.4.X+ including MinGW and 4.1.X+, 4.3.X+)
 
 If you are using different compiler and you have troubles, please use AsmJit
 mailing list or create an Issue (see project home page).

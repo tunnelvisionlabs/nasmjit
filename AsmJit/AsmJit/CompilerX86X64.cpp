@@ -155,7 +155,7 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
 {
   ASMJIT_ASSERT(f != NULL);
 
-  _memoryOperand = new(c->_zoneAlloc(sizeof(Mem))) Mem(ebp, 0, 0);
+  _memoryOperand = new(c->_zoneAlloc(sizeof(Mem))) Mem(ebp, 0, _size);
   c->_registerOperand(_memoryOperand);
 }
 
