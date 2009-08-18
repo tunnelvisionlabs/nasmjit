@@ -86,7 +86,9 @@ If(ASMJIT_BUILD_TEST)
     testopcode
     testrewrite
     teststate
-    testvariables)
+    testvariables
+    testvarmemalloc
+  )
 
   ForEach(file ${ASMJIT_TEST_FILES})
     Add_Executable(${file} ${ASMJIT_DIR}/test/${file}.cpp)

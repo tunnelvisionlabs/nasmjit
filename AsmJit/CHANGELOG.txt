@@ -1,7 +1,11 @@
+2009-08-18
+- Fixed incorrect memory access count generated for variables when using .m()
+- Fixed stack arguments in 64-bit mode (X64W and X64U calling conventions)
+
 2009-08-15
 - Fixed issue - Operand size in compiler, reported by Frank
 
-2009-06-02:
+2009-06-02
 - Fixed generating incorrect REX prefix (0x42), reported by Jaroslav Smid
 
 2009-04-10

@@ -208,6 +208,18 @@ void Variable::getReg(
   _globalRegisterAccessCount++;
 }
 
+const Mem& Variable::m()
+{
+  if (!spill())
+  {
+    // TODO: Error handling.
+  }
+
+  _memoryAccessCount++;
+  _globalMemoryAccessCount++;
+
+  return *_memoryOperand;
+}
 
 // ============================================================================
 // [AsmJit::State]

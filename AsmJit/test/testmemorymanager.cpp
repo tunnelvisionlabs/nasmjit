@@ -132,9 +132,9 @@ int main(int argc, char* argv[])
   }
 
   if (problems)
-    printf("\nDone, %d problems found...\n", problems);
+    printf("\nStatus: Failure: %d problems found\n", problems);
   else
-    printf("\nDone, no problems found...\n");
+    printf("\nStatus: Success\n");
 
   free(a);
   free(b);

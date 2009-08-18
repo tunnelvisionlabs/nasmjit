@@ -627,6 +627,8 @@ struct ASMJIT_API Variable
     UInt8 mode, UInt8 preferredRegister,
     BaseReg* dest, UInt8 regType);
 
+  const Mem& m();
+
   //! @brief Spill variable (move to memory).
   inline bool spill();
 
@@ -923,7 +925,7 @@ struct ASMJIT_HIDDEN VariableRef
   //!
   //! @note Getting memory address operand will always call @c spill().
   inline const Mem& m() const
-  { ASMJIT_ASSERT(_v); _v->spill(); return *_v->_memoryOperand; }
+  { ASMJIT_ASSERT(_v); return _v->m(); }
 
   // [Reference counting]
 

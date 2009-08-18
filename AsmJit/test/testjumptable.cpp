@@ -117,10 +117,18 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   // Call it.
+  int results[4];
+
   for (int i = 0; i < 4; i++)
   {
-    printf("Result from JIT function (%d): %d\n", i, (int)fn(i));
+    results[i] = fn(i);
+    printf("Result from JIT function f(%d): %d\n", i, results[i]);
   }
+
+  bool success =
+    results[0] ==  0 && results[1] == 10 &&
+    results[2] == 20 && results[3] == 30;
+  printf("Status: %s\n", (success) ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::global()->free((void*)fn);
