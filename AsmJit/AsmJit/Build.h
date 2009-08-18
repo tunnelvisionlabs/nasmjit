@@ -35,6 +35,7 @@
 // and all macros are used within it. So for example crash handler is
 // not called as AsmJit::crash(0) in ASMJIT_CRASH() macro, but simply
 // as crash(0).
+#include <stdio.h>
 #include <stdlib.h>
 
 // [AsmJit - OS]

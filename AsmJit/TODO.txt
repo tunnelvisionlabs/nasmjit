@@ -1,5 +1,5 @@
 TODO (Compiler):
-[ ] Add ASMJIT_NOTHOW to all functions that can't throw exception
+[ ] Add ASMJIT_NOTHROW to all functions that can't throw exception
 [ ] Function return values should be supported
 [ ] Add possibility to easy call other functions through AsmJit::Compiler
 [ ] Add possibility to set register allocator method 

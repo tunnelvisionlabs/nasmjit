@@ -58,7 +58,7 @@ Directory structure
 AsmJit - Directory where are sources needed to compile AsmJit. This directory
 is designed to be embeddable to your application as easy as possible. There is
 also AsmJit/Config.h header where you can configure platform (if autodetection 
-now works for you) and application specific features. Look at platform macros 
+not works for you) and application specific features. Look at platform macros 
 to change some backends to your preferences.
 
 test - Directory with cmake project to test AsmJit library. It generates simple

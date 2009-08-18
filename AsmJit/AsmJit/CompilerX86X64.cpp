@@ -894,6 +894,18 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isIntegerArgument(a))
       {
+        stackOffset -= 8;
+
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        args[i] = VARIABLE_TYPE_NONE;
+      }
+      else if (isFloatArgument(a))
+      {
+        if (a == VARIABLE_TYPE_FLOAT) 
+          stackOffset -= 4;
+        else
+          stackOffset -= 8;
+
         _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
@@ -942,6 +954,18 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       UInt32 a = args[i];
       if (isIntegerArgument(a))
       {
+        stackOffset -= 8;
+
+        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        args[i] = VARIABLE_TYPE_NONE;
+      }
+      else if (isFloatArgument(a))
+      {
+        if (a == VARIABLE_TYPE_FLOAT)
+          stackOffset -= 4;
+        else
+          stackOffset -= 8;
+
         _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }

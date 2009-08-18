@@ -79,6 +79,7 @@ If(ASMJIT_BUILD_TEST)
     testcompiler
     testcpu
     testdummy
+    testfunclargeargs
     testjit
     testjumptable
     testmemorymanager
