@@ -55,15 +55,22 @@ enum MEMORY_ALLOC_TYPE
 //! @brief Virtual memory manager.
 struct ASMJIT_API MemoryManager
 {
+  //! @brief Create memory manager instance.
   MemoryManager() ASMJIT_NOTHROW;
+  //! @brief Destroy memory manager instance, this means also to free all blocks.
   ~MemoryManager() ASMJIT_NOTHROW;
 
+  //! @brief Allocate a @a size bytes of virtual memory.
   void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
+  //! @brief Free previously allocated memory at a given @a address.
   bool free(void* address) ASMJIT_NOTHROW;
 
+  //! @brief Tell how many bytes are currently used.
   SysUInt used() ASMJIT_NOTHROW;
+  //! @brief Tell how many bytes are currently allocated.
   SysUInt allocated() ASMJIT_NOTHROW;
 
+  //! @brief Get global instance of memory manager.
   static MemoryManager* global() ASMJIT_NOTHROW;
 
 private:

@@ -285,18 +285,19 @@ union ASMJIT_HIDDEN XMMData
 
 //! @brief Buffer used to store instruction stream in AsmJit.
 //! 
-//! This class can be dangerous, if you don't know how it workd. Assembler
-//! instruction stream is usually constructed by multiple calling emit
+//! This class can be dangerous, if you don't know how it works. Assembler
+//! instruction stream is usually constructed by multiple calls of emit
 //! functions that emits bytes, words, dwords or qwords. But to decrease
 //! AsmJit library size and improve performance, we are not checking for
 //! buffer overflow for each emit operation, but only once in highler level
 //! emit instruction.
 //!
 //! So, if you want to use this class, you need to do buffer checking yourself
-//! by using @c ensureSpace() method. It's designed to grow buffer. Threshold
-//! for growing is named @c growThreshold() and it means count of bytes for
-//! emitting single operation. Default size is set to 16 bytes, because x86
-//! and x64 instruction can't be larget (so it's space to hold 1 instruction).
+//! by using @c ensureSpace() method. It's designed to grow buffer if needed.
+//! Threshold for growing is named @c growThreshold() and it means count of
+//! bytes for emitting single operation. Default size is set to 16 bytes,
+//! because x86 and x64 instruction can't be larger (so it's space to hold 1
+//! instruction).
 //!
 //! Example using Buffer:
 //!
