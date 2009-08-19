@@ -140,6 +140,7 @@ int main(int argc, char* argv[])
   int x;
   fn(&x);
   printf("Result from JIT function: %d\n", x);
+  printf("Status: %s\n", x == 36 ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::global()->free((void*)fn);

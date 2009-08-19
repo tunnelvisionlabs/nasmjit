@@ -35,7 +35,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)();
+typedef AsmJit::SysInt (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -50,15 +50,23 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
   c.newFunction(CALL_CONV_DEFAULT, BuildFunction0());
 
-  PtrRef v1(c.newVariable(VARIABLE_TYPE_PTR));
-  PtrRef v2(c.newVariable(VARIABLE_TYPE_PTR));
-  PtrRef v3(c.newVariable(VARIABLE_TYPE_PTR));
-  PtrRef v4(c.newVariable(VARIABLE_TYPE_PTR));
+  SysIntRef v0(c.newVariable(VARIABLE_TYPE_SYSINT));
+  SysIntRef v1(c.newVariable(VARIABLE_TYPE_SYSINT));
+  SysIntRef v2(c.newVariable(VARIABLE_TYPE_SYSINT));
+  SysIntRef v3(c.newVariable(VARIABLE_TYPE_SYSINT));
+  SysIntRef v4(c.newVariable(VARIABLE_TYPE_SYSINT));
 
-  c.add(v1, 1);
-  c.add(v2, 2);
-  c.add(v3, 3);
-  c.add(v4, 4);
+  c.mov(v1, 1);
+  c.mov(v2, 2);
+  c.mov(v3, 3);
+  c.mov(v4, 4);
+
+  v0.setPreferredRegisterCode(REG_NAX);
+  c.xor_(v0.x(), v0.x());
+  c.add(v0.r(), v1);
+  c.add(v0.r(), v2);
+  c.add(v0.r(), v3);
+  c.add(v0.r(), v4);
 
   c.endFunction();
   // ==========================================================================
@@ -66,6 +74,10 @@ int main(int argc, char* argv[])
   // ==========================================================================
   // Make function
   MyFn fn = function_cast<MyFn>(c.make());
+  int result = (int)fn();
+
+  printf("Result from JIT function: %d\n", result);
+  printf("Status: %s\n", result == 11 ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::global()->free((void*)fn);

@@ -1,8 +1,10 @@
-2009-08-18
+2009-08-19
 - Fixed relocation problems for variables that were passed as a function argument
   (address was not relocated)
 - Added more variable types and now the x87 and xmm float/doubles are different
   (added also float4 and double2 packed types)
+- Fixed variable allocation again
+- Fixed wrong prolog / epilog generation with naked() turned on
 
 2009-08-18
 - Fixed incorrect memory access count generated for variables when using .m()
