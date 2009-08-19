@@ -88,6 +88,7 @@ If(ASMJIT_BUILD_TEST)
     teststate
     testvariables
     testvarmemalloc
+    testvarspill
   )
 
   ForEach(file ${ASMJIT_TEST_FILES})

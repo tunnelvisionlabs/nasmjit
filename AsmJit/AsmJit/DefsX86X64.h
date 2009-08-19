@@ -58,7 +58,7 @@ enum OP
   //! @brief Operand is immediate.
   OP_IMM = 3,
   //! @brief Operand is label.
-  OP_LABEL = 4,
+  OP_LABEL = 4
 };
 
 // ============================================================================
@@ -1017,7 +1017,7 @@ enum PROPERTY
   //! @brief Emit hints added to jcc() instructions.
   //!
   //! Default: @c true.
-  PROPERTY_JCC_HINTS = 2,
+  PROPERTY_JCC_HINTS = 2
 };
 
 //! @}

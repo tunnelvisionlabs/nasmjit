@@ -5605,6 +5605,12 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
   }
 
   //! @brief Move Aligned Packed Double-Precision FP Values (SSE2).
+  inline void movapd(const XMMRegister& dst, const XMMRegister& src)
+  {
+    __emitX86(INST_MOVAPD, &dst, &src);
+  }
+
+  //! @brief Move Aligned Packed Double-Precision FP Values (SSE2).
   inline void movapd(const XMMRegister& dst, const Mem& src)
   {
     __emitX86(INST_MOVAPD, &dst, &src);

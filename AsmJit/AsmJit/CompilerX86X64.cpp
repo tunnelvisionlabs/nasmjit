@@ -66,60 +66,63 @@ static void memset32(UInt32* p, UInt32 c, SysUInt len)
   for (i = 0; i < len; i++) p[i] = c;
 }
 
-static bool isIntegerArgument(UInt32 arg)
+struct VariableInfo
 {
-  return arg == VARIABLE_TYPE_INT32 ||
-         arg == VARIABLE_TYPE_INT64 ;
-}
+  enum CLASS_INFO
+  {
+    CLASS_NONE   = 0x00,
+    CLASS_GP     = 0x01,
+    CLASS_X87    = 0x02,
+    CLASS_MM     = 0x04,
+    CLASS_XMM    = 0x08,
+    CLASS_SP_FP  = 0x10,
+    CLASS_DP_FP  = 0x20,
+    CLASS_VECTOR = 0x40
+  };
 
-static bool isFloatArgument(UInt32 arg)
-{
-  return arg == VARIABLE_TYPE_FLOAT || 
-         arg == VARIABLE_TYPE_DOUBLE;
-}
-
-static const UInt32 variableSizeData[] = {
-  0,               // VARIABLE_TYPE_NONE
-  4,               // VARIABLE_TYPE_INT32, VARIABLE_TYPE_UINT32
-  8,               // VARIABLE_TYPE_INT64, VARIABLE_TYPE_UINT64
-  4,               // VARIABLE_TYPE_FLOAT
-  8,               // VARIABLE_TYPE_DOUBLE
-  8,               // VARIABLE_TYPE_MM
-  16               // VARIABLE_TYPE_XMM
+  UInt8 size;
+  UInt8 regCode;
+  UInt8 clazz;
+  UInt8 reserved;
+  const char name[12];
 };
 
-static const UInt8 variableRegCodeData[] = 
-{
-  NO_REG,
-  REG_GPD,
-  REG_GPQ,
-  REG_X87,
-  REG_X87,
-  REG_MM,
-  REG_XMM
-};
-
-static const char* variableTypeName[] =
-{
-  "none",
-  "int32",
-  "int64",
-  "float",
-  "double",
-  "mm",
-  "xmm"
+static VariableInfo variableInfo[] = {
+  { 0 , NO_REG , VariableInfo::CLASS_NONE                                                         , 0, "none"        },
+  { 4 , REG_GPD, VariableInfo::CLASS_GP                                                           , 0, "int32"       },
+  { 8 , REG_GPQ, VariableInfo::CLASS_GP                                                           , 0, "int64"       },
+  { 4 , REG_X87, VariableInfo::CLASS_X87  | VariableInfo::CLASS_SP_FP                             , 0, "x87_float"   },
+  { 8 , REG_X87, VariableInfo::CLASS_X87  | VariableInfo::CLASS_DP_FP                             , 0, "x87_double"  },
+  { 4 , REG_XMM, VariableInfo::CLASS_XMM  | VariableInfo::CLASS_SP_FP                             , 0, "xmm_float"   },
+  { 8 , REG_XMM, VariableInfo::CLASS_XMM  | VariableInfo::CLASS_DP_FP                             , 0, "xmm_double"  },
+  { 16, REG_XMM, VariableInfo::CLASS_XMM  | VariableInfo::CLASS_SP_FP | VariableInfo::CLASS_VECTOR, 0, "xmm_float4"  },
+  { 16, REG_XMM, VariableInfo::CLASS_XMM  | VariableInfo::CLASS_DP_FP | VariableInfo::CLASS_VECTOR, 0, "xmm_double2" },
+  { 8 , REG_MM , VariableInfo::CLASS_MM                                                           , 0, "mm"          },
+  { 16, REG_XMM, VariableInfo::CLASS_XMM                                                          , 0, "xmm"         }
 };
 
 static UInt32 getVariableSize(UInt32 type)
 {
-  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableSizeData));
-  return variableSizeData[type];
+  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableInfo));
+  return variableInfo[type].size;
 }
 
 static UInt8 getVariableRegisterCode(UInt32 type, UInt8 index)
 {
-  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableRegCodeData));
-  return variableRegCodeData[type] | index;
+  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableInfo));
+  return variableInfo[type].regCode | index;
+}
+
+static bool isIntegerVariable(UInt32 type)
+{
+  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableInfo));
+  return (variableInfo[type].clazz & VariableInfo::CLASS_GP) != 0;
+}
+
+static bool isFloatArgument(UInt32 type)
+{
+  ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableInfo));
+  return (variableInfo[type].clazz & (VariableInfo::CLASS_SP_FP | VariableInfo::CLASS_DP_FP)) != 0;
 }
 
 // ============================================================================
@@ -467,9 +470,9 @@ void Function::prepare()
     {
       Variable* var = _variables[v];
 
-      // Use only variable with size 'size' and variable not mapped to the 
-      // function arguments
-      if (var->size() == size && var->_stackOffset <= 0 && var->_globalMemoryAccessCount > 0)
+      // Use only variable with size 'size' and variable that is not mapped
+      // to the function arguments.
+      if (var->size() == size && (var->_stackOffset <= 0 || var->_globalMemoryAccessCount > 0))
       {
         // X86 stack is aligned to 32 bits (4 bytes). For MMX and SSE 
         // programming we need 8 or 16 bytes alignment. For MMX memory
@@ -567,7 +570,7 @@ void Function::emit(Assembler& a)
 
       if (i != 0) logger->log(", ");
       logger->log(
-        v->type() < _VARIABLE_TYPE_COUNT ? variableTypeName[v->type()] : "unknown");
+        v->type() < _VARIABLE_TYPE_COUNT ? variableInfo[v->type()].name : "unknown");
     }
     logger->log(")\n");
     logger->log(";\n");
@@ -577,6 +580,7 @@ void Function::emit(Assembler& a)
     for (i = 0; i < varlen; i++)
     {
       Variable* v = _variables[i];
+      const VariableInfo* vinfo = &variableInfo[v->type()];
 
       if (v->_globalMemoryAccessCount > 0)
       {
@@ -588,16 +592,18 @@ void Function::emit(Assembler& a)
         loc = "[None]";
       }
 
-      logger->logFormat(";   %-2u (%-6s) at %-9s - reg access: %-3u, mem access: %-3u\n",
-        // Variable ID
+      logger->logFormat(";   %-2u %-12s (%2uB) at %-20s - reg access: %-3u, mem access: %-3u\n",
+        // Variable id
         (unsigned int)i,
-        // Variable Type
-        v->type() < _VARIABLE_TYPE_COUNT ? variableTypeName[v->type()] : "unknown",
-        // Variable Memory Address
+        // Variable type
+        v->type() < _VARIABLE_TYPE_COUNT ? vinfo->name : "unknown",
+        // Variable size
+        v->size(),
+        // Variable memory address
         loc,
-        // Register Access Count
+        // Register access count
         (unsigned int)v->_globalRegisterAccessCount,
-        // Memory Access Count
+        // Memory access count
         (unsigned int)v->_globalMemoryAccessCount
       );
     }
@@ -822,12 +828,14 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   for (i = 0; i != count; i++)
   {
     UInt32 a = args[i];
-    if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
+    if (isIntegerVariable(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
     {
       UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
+      UInt8 size = variableInfo[a].size;
+
       Variable* v = _variables[i];
 
-      v->setAll(a, 0, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
+      v->setAll(a, size, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
       _allocReg(reg, v);
 
       _state.gp[reg & 0x0F] = v;
@@ -844,21 +852,21 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   for (i = istart; i != iend; i += istep)
   {
     UInt32 a = args[i];
-    if (isIntegerArgument(a))
+
+    if (isIntegerVariable(a))
     {
+      UInt8 size = variableInfo[a].size;
       stackOffset -= 4;
 
-      _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+      _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
       args[i] = VARIABLE_TYPE_NONE;
     }
     else if (isFloatArgument(a))
     {
-      if (a == VARIABLE_TYPE_FLOAT) 
-        stackOffset -= 4;
-      else
-        stackOffset -= 8;
+      UInt8 size = variableInfo[a].size;
+      stackOffset -= size;
 
-      _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+      _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -876,12 +884,13 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     for (i = 0; i != max; i++)
     {
       UInt32 a = args[i];
-      if (isIntegerArgument(a))
+      if (isIntegerVariable(a))
       {
         UInt8 reg = _cconvArgumentsGp[i] | REG_GPN;
+        UInt8 size = variableInfo[a].size;
         Variable* v = _variables[i];
 
-        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
         _state.gp[reg & 0x0F] = v;
@@ -890,9 +899,10 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       else if (isFloatArgument(a))
       {
         UInt8 reg = _cconvArgumentsXmm[i] | REG_XMM;
+        UInt8 size = variableInfo[a].size;
         Variable* v = _variables[i];
 
-        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
         _state.xmm[reg & 0x0F] = v;
@@ -904,21 +914,20 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     for (i = count-1; i != -1; i--)
     {
       UInt32 a = args[i];
-      if (isIntegerArgument(a))
+      if (isIntegerVariable(a))
       {
-        stackOffset -= 8;
+        UInt8 size = variableInfo[a].size;
+        stackOffset -= 8; // Always 8 bytes
 
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
-        if (a == VARIABLE_TYPE_FLOAT) 
-          stackOffset -= 4;
-        else
-          stackOffset -= 8;
+        UInt8 size = variableInfo[a].size;
+        stackOffset -= size;
 
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -930,12 +939,13 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     for (i = 0; i != count; i++)
     {
       UInt32 a = args[i];
-      if (isIntegerArgument(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
+      if (isIntegerVariable(a) && gpnPos < 32 && _cconvArgumentsGp[gpnPos] != 0xFFFFFFFF)
       {
         UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
+        UInt8 size = variableInfo[a].size;
         Variable* v = _variables[i];
 
-        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
         _state.gp[reg & 0x0F] = v;
@@ -950,9 +960,10 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isFloatArgument(a))
       {
         UInt8 reg = _cconvArgumentsXmm[xmmPos++] | REG_XMM;
+        UInt8 size = variableInfo[a].size;
         Variable* v = _variables[i];
 
-        v->setAll(a, 0, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
         _allocReg(reg, v);
 
         _state.xmm[reg & 0x0F] = v;
@@ -964,21 +975,20 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     for (i = count-1; i != -1; i--)
     {
       UInt32 a = args[i];
-      if (isIntegerArgument(a))
+      if (isIntegerVariable(a))
       {
+        UInt8 size = variableInfo[a].size;
         stackOffset -= 8;
 
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
-        if (a == VARIABLE_TYPE_FLOAT)
-          stackOffset -= 4;
-        else
-          stackOffset -= 8;
+        UInt8 size = variableInfo[a].size;
+        stackOffset -= size;
 
-        _variables[i]->setAll(a, 0, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -1063,7 +1073,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
       return true;
     }
 
-    if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
+    if (isIntegerVariable(v->type()))
     {
       Variable* other = _state.gp[newIndex];
 
@@ -1083,8 +1093,9 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
   // --------------------------------------------------------------------------
   // [Find Unused GP]
   // --------------------------------------------------------------------------
+  UInt8 clazz = variableInfo[v->type()].clazz;
 
-  if (v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64)
+  if (clazz & VariableInfo::CLASS_GP)
   {
     // preferred register
     if (pref != NO_REG)
@@ -1123,7 +1134,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
       }
     }
 
-    // We start from 1, because EAX/RAX register is sometimes explicitly 
+    // We start from 1, because EAX/RAX register is sometimes explicitly
     // needed. So we trying to prevent register reallocation.
     if (code == NO_REG)
     {
@@ -1148,7 +1159,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     }
 
     // If not found, try EAX/RAX
-    if (code == NO_REG && (_usedGpRegisters & 1) == 0) 
+    if (code == NO_REG && (_usedGpRegisters & 1) == 0)
     {
       if (v->type() == VARIABLE_TYPE_INT32)
         code = RID_EAX | REG_GPD;
@@ -1161,7 +1172,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
   // [Find Unused MM]
   // --------------------------------------------------------------------------
 
-  else if (v->type() == VARIABLE_TYPE_MM)
+  else if (clazz & VariableInfo::CLASS_MM)
   {
     // preferred register
     if (pref != NO_REG)
@@ -1215,7 +1226,7 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
   // [Find Unused XMM]
   // --------------------------------------------------------------------------
 
-  else if (v->type() == VARIABLE_TYPE_XMM)
+  else if (clazz & VariableInfo::CLASS_XMM)
   {
     // preferred register
     if (pref != NO_REG)
@@ -1346,20 +1357,49 @@ bool Function::spill(Variable* v)
           case VARIABLE_TYPE_INT32:
             compiler()->mov(*v->_memoryOperand, mk_gpd(v->registerCode()));
             break;
+
 #if defined(ASMJIT_X64)
           case VARIABLE_TYPE_INT64:
             compiler()->mov(*v->_memoryOperand, mk_gpq(v->registerCode()));
             break;
 #endif // ASMJIT_X64
-          case VARIABLE_TYPE_FLOAT:
+
+          case VARIABLE_TYPE_X87_FLOAT:
             // TODO: NOT IMPLEMENTED
             break;
-          case VARIABLE_TYPE_DOUBLE:
+
+          case VARIABLE_TYPE_X87_DOUBLE:
             // TODO: NOT IMPLEMENTED
             break;
+
+          case VARIABLE_TYPE_XMM_FLOAT:
+            compiler()->movss(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            break;
+
+          case VARIABLE_TYPE_XMM_DOUBLE:
+            compiler()->movsd(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            break;
+
+          case VARIABLE_TYPE_XMM_FLOAT_4:
+            // Alignment is not guaranted for naked functions in 32 bit mode
+            if (naked())
+              compiler()->movups(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            else
+              compiler()->movaps(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            break;
+
+          case VARIABLE_TYPE_XMM_DOUBLE_2:
+            // Alignment is not guaranted for naked functions in 32 bit mode
+            if (naked())
+              compiler()->movupd(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            else
+              compiler()->movapd(*v->_memoryOperand, mk_xmm(v->registerCode()));
+            break;
+
           case VARIABLE_TYPE_MM:
             compiler()->movq(*v->_memoryOperand, mk_mm(v->registerCode()));
             break;
+
           case VARIABLE_TYPE_XMM:
             // Alignment is not guaranted for naked functions in 32 bit mode
             if (naked())
@@ -1558,54 +1598,53 @@ Variable* Function::_getSpillCandidate(UInt8 type)
   UInt32 candidateScore = 0;
   UInt32 variableScore;
 
-  switch (type)
+  UInt8 clazz = variableInfo[type].clazz;
+
+  if (clazz & VariableInfo::CLASS_GP)
   {
-    case VARIABLE_TYPE_INT32:
-    case VARIABLE_TYPE_INT64:
-      for (i = 0; i < len; i++)
+    for (i = 0; i < len; i++)
+    {
+      v = _variables[i];
+      if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (!isPrevented(v)))
       {
-        v = _variables[i];
-        if ((v->type() == VARIABLE_TYPE_INT32 || v->type() == VARIABLE_TYPE_INT64) &&
-            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (!isPrevented(v)))
-        {
-          variableScore = getSpillScore(v);
-          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
-        }
+        variableScore = getSpillScore(v);
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
       }
-      break;
-    case VARIABLE_TYPE_FLOAT:
-      // TODO: NOT IMPLEMENTED
-      break;
-    case VARIABLE_TYPE_DOUBLE:
-      // TODO: NOT IMPLEMENTED
-      break;
-    case VARIABLE_TYPE_MM:
-      for (i = 0; i < len; i++)
+    }
+  }
+  else if (clazz & VariableInfo::CLASS_X87)
+  {
+    // TODO: Not implemented.
+  }
+  else if (clazz & VariableInfo::CLASS_MM)
+  {
+    for (i = 0; i < len; i++)
+    {
+      v = _variables[i];
+      if ((v->type() == VARIABLE_TYPE_MM) &&
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (!isPrevented(v)))
       {
-        v = _variables[i];
-        if ((v->type() == VARIABLE_TYPE_MM) &&
-            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (!isPrevented(v)))
-        {
-          variableScore = getSpillScore(v);
-          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
-        }
+        variableScore = getSpillScore(v);
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
       }
-      break;
-    case VARIABLE_TYPE_XMM:
-      for (i = 0; i < len; i++)
+    }
+  }
+  else if (clazz & VariableInfo::CLASS_XMM)
+  {
+    for (i = 0; i < len; i++)
+    {
+      v = _variables[i];
+      if ((v->type() == VARIABLE_TYPE_XMM) &&
+          (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
+          (!isPrevented(v)))
       {
-        v = _variables[i];
-        if ((v->type() == VARIABLE_TYPE_XMM) &&
-            (v->state() == VARIABLE_STATE_REGISTER && v->priority() > 0) &&
-            (!isPrevented(v)))
-        {
-          variableScore = getSpillScore(v);
-          if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
-        }
+        variableScore = getSpillScore(v);
+        if (variableScore > candidateScore) { candidateScore = variableScore; candidate = v; }
       }
-      break;
+    }
   }
 
   return candidate;
@@ -1652,13 +1691,65 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
       }
 #endif // ASMJIT_X64
 
-      case VARIABLE_TYPE_FLOAT:
+      case VARIABLE_TYPE_X87_FLOAT:
+      {
         // TODO: NOT IMPLEMENTED
         break;
+      }
 
-      case VARIABLE_TYPE_DOUBLE:
+      case VARIABLE_TYPE_X87_DOUBLE:
+      {
         // TODO: NOT IMPLEMENTED
         break;
+      }
+
+      case VARIABLE_TYPE_XMM_FLOAT:
+      {
+        XMMRegister dst = mk_xmm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movss(dst, mk_xmm(old));
+        else
+          compiler()->movss(dst, *v->_memoryOperand);
+        break;
+      }
+
+      case VARIABLE_TYPE_XMM_DOUBLE:
+      {
+        XMMRegister dst = mk_xmm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movsd(dst, mk_xmm(old));
+        else
+          compiler()->movsd(dst, *v->_memoryOperand);
+        break;
+      }
+
+      case VARIABLE_TYPE_XMM_FLOAT_4:
+      {
+        XMMRegister dst = mk_xmm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movaps(dst, mk_xmm(old));
+        // Alignment is not guaranted for naked functions in 32 bit mode
+        // FIXME: And what about 64 bit mode ?
+        else if (naked())
+          compiler()->movups(dst, *v->_memoryOperand);
+        else
+          compiler()->movaps(dst, *v->_memoryOperand);
+        break;
+      }
+
+      case VARIABLE_TYPE_XMM_DOUBLE_2:
+      {
+        XMMRegister dst = mk_xmm(v->_registerCode);
+        if (old != NO_REG)
+          compiler()->movapd(dst, mk_xmm(old));
+        // Alignment is not guaranted for naked functions in 32 bit mode
+        // FIXME: And what about 64 bit mode ?
+        else if (naked())
+          compiler()->movupd(dst, *v->_memoryOperand);
+        else
+          compiler()->movapd(dst, *v->_memoryOperand);
+        break;
+      }
 
       case VARIABLE_TYPE_MM:
       {

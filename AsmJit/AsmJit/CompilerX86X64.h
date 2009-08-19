@@ -380,19 +380,40 @@ enum VARIABLE_TYPE
   //! @brief Variable is pointer or reference to memory (or any type).
   VARIABLE_TYPE_PTR = VARIABLE_TYPE_SYSUINT,
 
-  //! @brief Variable is SP-FP number (float).
+  //! @brief Variable is X87 (FPU) SP-FP number (float).
   //!
   //! TODO: Float registers allocation is not supported.
-  VARIABLE_TYPE_FLOAT = 3,
-  //! @brief Variable is DP-FP number (double).
+  VARIABLE_TYPE_X87_FLOAT = 3,
+
+  //! @brief Variable is X87 (FPU) DP-FP number (double).
   //!
-  //! TODO: Double registers allocation  is not supported.
-  VARIABLE_TYPE_DOUBLE = 4,
+  //! TODO: Double registers allocation is not supported.
+  VARIABLE_TYPE_X87_DOUBLE = 4,
+
+  //! @brief Variable is SSE scalar SP-FP number.
+  VARIABLE_TYPE_XMM_FLOAT = 5,
+
+  //! @brief Variable is SSE2 scalar DP-FP number.
+  VARIABLE_TYPE_XMM_DOUBLE = 6,
+
+  //! @brief Variable is SSE packed SP-FP number (4 floats).
+  VARIABLE_TYPE_XMM_FLOAT_4 = 7,
+  //! @brief Variable is SSE2 packed DP-FP number (2 doubles).
+  VARIABLE_TYPE_XMM_DOUBLE_2 = 8,
+
+#if defined(ASMJIT_X86)
+  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_FLOAT,
+  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_DOUBLE,
+#else
+  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_XMM_FLOAT,
+  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_DOUBLE,
+#endif
 
   //! @brief Variable is MM register / memory location.
-  VARIABLE_TYPE_MM = 5,
+  VARIABLE_TYPE_MM = 9,
+
   //! @brief Variable is XMM register / memory location.
-  VARIABLE_TYPE_XMM = 6,
+  VARIABLE_TYPE_XMM = 10,
 
   //! @brief Count of variable types.
   _VARIABLE_TYPE_COUNT
@@ -1429,10 +1450,12 @@ struct TypeAsId<__T__> { enum { Id = __Id__ }; }
 
 __DECLARE_TYPE_AS_ID(Int32, VARIABLE_TYPE_INT32);
 __DECLARE_TYPE_AS_ID(UInt32, VARIABLE_TYPE_UINT32);
+
 #if defined(ASMJIT_X64)
 __DECLARE_TYPE_AS_ID(Int64, VARIABLE_TYPE_INT64);
 __DECLARE_TYPE_AS_ID(UInt64, VARIABLE_TYPE_UINT64);
 #endif // ASMJIT_X64
+
 __DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
 __DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 
