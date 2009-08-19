@@ -150,6 +150,7 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
   _changed(false),
   _reusable(true),
   _customMemoryHome(false),
+  _stackArgument(false),
   _stackOffset(0),
   _allocFn(NULL),
   _spillFn(NULL),
@@ -474,9 +475,9 @@ void Function::prepare()
     {
       Variable* var = _variables[v];
 
-      // Use only variable with size 'size' and variable that is not mapped
-      // to the function arguments.
-      if (var->size() == size && var->_stackOffset >= 0 && var->_globalMemoryAccessCount > 0)
+      // Use only variable with size 'size' and function arguments that was
+      // passed through registers.
+      if (var->size() == size && !var->stackArgument() && var->_globalMemoryAccessCount > 0)
       {
         // X86 stack is aligned to 32 bits (4 bytes) in 32-bit mode (Is this
         // correct?) and for 128-bits (16 bytes) in 64-bit mode.
@@ -539,15 +540,19 @@ void Function::prepare()
     Variable* var = _variables[v];
     Mem* memop = var->_memoryOperand;
 
-    if (v < argumentsCount())
+    // Different stack home for function arguments and variables.
+    //
+    // NOTE: Function arguments given in registers can be relocated onto the
+    // stack without problems. This code doest something different, it will
+    // not change stack arguments location. So only stack based arguments needs
+    // this special handling
+    if (var->stackArgument())
     {
-      // Arguments
       memop->_mem.base = argMemBase;
       memop->_mem.displacement = var->stackOffset() + argDisp;
     }
     else
     {
-      // Variables
       memop->_mem.base = varMemBase;
       memop->_mem.displacement = var->stackOffset() + varDisp;
     }
@@ -838,7 +843,6 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     {
       UInt8 reg = _cconvArgumentsGp[gpnPos++] | REG_GPN;
       UInt8 size = variableInfo[a].size;
-
       Variable* v = _variables[i];
 
       v->setAll(a, size, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
@@ -862,9 +866,12 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
     if (isIntegerVariable(a))
     {
       UInt8 size = variableInfo[a].size;
+      Variable* v = _variables[i];
+
       stackOffset -= 4;
 
-      _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+      v->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+      v->_stackArgument = true;
       args[i] = VARIABLE_TYPE_NONE;
     }
     else if (isFloatArgument(a))
@@ -873,6 +880,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       stackOffset -= size;
 
       _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+      _variables[i]->_stackArgument = true;
       args[i] = VARIABLE_TYPE_NONE;
     }
   }
@@ -923,17 +931,23 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isIntegerVariable(a))
       {
         UInt8 size = variableInfo[a].size;
+        Variable* v = _variables[i];
+
         stackOffset -= 8; // Always 8 bytes
 
-        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->_stackArgument = true;
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
         UInt8 size = variableInfo[a].size;
+        Variable* v = _variables[i];
+
         stackOffset -= size;
 
-        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->_stackArgument = true;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
@@ -970,6 +984,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         Variable* v = _variables[i];
 
         v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->_stackArgument = true;
         _allocReg(reg, v);
 
         _state.xmm[reg & 0x0F] = v;
@@ -984,17 +999,23 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       if (isIntegerVariable(a))
       {
         UInt8 size = variableInfo[a].size;
+        Variable* v = _variables[i];
+
         stackOffset -= 8;
 
-        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->_stackArgument = true;
         args[i] = VARIABLE_TYPE_NONE;
       }
       else if (isFloatArgument(a))
       {
         UInt8 size = variableInfo[a].size;
+        Variable* v = _variables[i];
+
         stackOffset -= size;
 
-        _variables[i]->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->setAll(a, size, VARIABLE_STATE_MEMORY, 20, NO_REG, NO_REG, stackOffset);
+        v->_stackArgument = true;
         args[i] = VARIABLE_TYPE_NONE;
       }
     }

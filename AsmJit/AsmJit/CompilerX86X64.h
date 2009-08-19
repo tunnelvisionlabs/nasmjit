@@ -598,6 +598,10 @@ struct ASMJIT_API Variable
   inline UInt8 customMemoryHome() const ASMJIT_NOTHROW
   { return _customMemoryHome; }
 
+  //! @brief Return whether variable contains custom memory home address.
+  inline UInt8 stackArgument() const ASMJIT_NOTHROW
+  { return _stackArgument; }
+
   //! @brief Return variable stack offset.
   //!
   //! @note Stack offsets can be changed by Compiler, don't use this 
@@ -779,6 +783,9 @@ private:
 
   //! @brief Whether variable contains custom home address.
   UInt8 _customMemoryHome;
+
+  //! @brief Whether variable is function argument passed onto the stack.
+  UInt8 _stackArgument;
 
   //! @brief Stack location.
   SysInt _stackOffset;
