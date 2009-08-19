@@ -513,25 +513,25 @@ void Function::prepare()
   _variablesStackSize = sp;
   _stackAlignmentSize = alignSize;
 
-  // Calculate displacement
-  if (!naked())
+  // Calculate displacements.
+  if (naked())
   {
-    // Functions with prolog/epilog are using ebp/rbp for variables
-    argMemBase = RID_EBP;
-    // push ebp/rpb size (return address is already in arguments stack offset)
-    argDisp = sizeof(SysInt);
-
-    varMemBase = RID_ESP;
-    varDisp = pe;
-  }
-  else
-  {
-    // Naked functions are using always esp/rsp
+    // Naked functions are using always esp/rsp.
     argMemBase = RID_ESP;
     argDisp = pe;
 
     varMemBase = RID_ESP;
-    varDisp = -sp;
+    varDisp = -sp - sizeof(SysInt);
+  }
+  else
+  {
+    // Functions with prolog/epilog are using ebp/rbp for variables.
+    argMemBase = RID_EBP;
+    // Push ebp/rpb size (return address is already in arguments stack offset).
+    argDisp = sizeof(SysInt);
+
+    varMemBase = RID_ESP;
+    varDisp = pe;
   }
 
   // Patch all variables to point to correct address in memory
