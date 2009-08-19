@@ -464,6 +464,10 @@ void Function::prepare()
   // all others next.
   for (i = 0; i < ASMJIT_ARRAY_SIZE(sizes); i++)
   {
+    // See sizes declaration. We allocate variables on the stack in ordered way:
+    // 16 byte variables (xmm) first,
+    // 8 byte variables (mmx, gpq) second,
+    // 4,2,1 (these not needs to be aligned)
     UInt32 size = sizes[i];
 
     for (v = 0; v < _variables.length(); v++)
@@ -472,11 +476,13 @@ void Function::prepare()
 
       // Use only variable with size 'size' and variable that is not mapped
       // to the function arguments.
-      if (var->size() == size && (var->_stackOffset <= 0 || var->_globalMemoryAccessCount > 0))
+      if (var->size() == size && var->_stackOffset >= 0 && var->_globalMemoryAccessCount > 0)
       {
-        // X86 stack is aligned to 32 bits (4 bytes). For MMX and SSE 
-        // programming we need 8 or 16 bytes alignment. For MMX memory
-        // operands we can use 4 bytes and for SSE 12 bytes.
+        // X86 stack is aligned to 32 bits (4 bytes) in 32-bit mode (Is this
+        // correct?) and for 128-bits (16 bytes) in 64-bit mode.
+        //
+        // For MMX and SSE  programming we need 8 or 16 bytes alignment. For
+        // MMX/SSE memory operands we can be adjusted by 4 or 12 bytes.
 #if defined(ASMJIT_X86)
         if (size ==  8 && alignSize <  8) alignSize =  8;
         if (size == 16 && alignSize < 16) alignSize = 16;
