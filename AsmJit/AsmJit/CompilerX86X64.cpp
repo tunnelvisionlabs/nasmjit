@@ -846,6 +846,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
       Variable* v = _variables[i];
 
       v->setAll(a, size, VARIABLE_STATE_REGISTER, 10, reg, NO_REG, 0);
+      v->_changed = true;
       _allocReg(reg, v);
 
       _state.gp[reg & 0x0F] = v;
@@ -905,6 +906,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         Variable* v = _variables[i];
 
         v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->_changed = true;
         _allocReg(reg, v);
 
         _state.gp[reg & 0x0F] = v;
@@ -917,6 +919,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         Variable* v = _variables[i];
 
         v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->_changed = true;
         _allocReg(reg, v);
 
         _state.xmm[reg & 0x0F] = v;
@@ -966,6 +969,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         Variable* v = _variables[i];
 
         v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
+        v->_changed = true;
         _allocReg(reg, v);
 
         _state.gp[reg & 0x0F] = v;
@@ -984,7 +988,7 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         Variable* v = _variables[i];
 
         v->setAll(a, size, VARIABLE_STATE_REGISTER, 20, reg, NO_REG, 0);
-        v->_stackArgument = true;
+        v->_changed = true;
         _allocReg(reg, v);
 
         _state.xmm[reg & 0x0F] = v;
