@@ -9,6 +9,8 @@ TODO (Compiler):
 [ ] What about float and double variables in compiler ?
     Current implementation can reserve memory for these types, but can't
     alloc registers for them (because x87 is stack based).
+    - Added more variable types, spill and alloc operations are now supported
+      for all xmm data types (packed ints, packed floats/doubles, scalar float/double)
 
 TODO (Architecture):
 [ ] ARM support
