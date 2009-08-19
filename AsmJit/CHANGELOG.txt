@@ -1,4 +1,10 @@
 2009-08-18
+- Fixed relocation problems for variables that were passed as a function argument
+  (address was not relocated)
+- Added more variable types and now the x87 and xmm float/doubles are different
+  (added also float4 and double2 packed types)
+
+2009-08-18
 - Fixed incorrect memory access count generated for variables when using .m()
 - Fixed stack arguments in 64-bit mode (X64W and X64U calling conventions)
 
