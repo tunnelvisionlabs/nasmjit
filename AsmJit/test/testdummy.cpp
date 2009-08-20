@@ -48,32 +48,7 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, BuildFunction8<SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt>());
-
-  PtrRef p1(c.argument(0));
-  PtrRef p2(c.argument(1));
-  PtrRef p3(c.argument(2));
-  PtrRef p4(c.argument(3));
-  PtrRef p5(c.argument(4));
-  PtrRef p6(c.argument(5));
-  PtrRef p7(c.argument(6));
-  PtrRef p8(c.argument(7));
-
-  PtrRef eax(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RAX));
-  PtrRef ebx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RBX));
-  PtrRef ecx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RCX));
-  PtrRef edx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RDX));
-  PtrRef edi(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RDI));
-  PtrRef esi(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RSI));
-
-  c.add(p1.r(), 1);
-  c.add(p2.r(), 2);
-  c.add(p3.r(), 3);
-  c.add(p4.r(), 4);
-  c.add(p5.r(), 5);
-  c.add(p6.r(), 6);
-  c.add(p7.r(), 7);
-  c.add(p8.r(), 8);
+  c.newFunction(CALL_CONV_DEFAULT, BuildFunction0());
   c.endFunction();
   // ==========================================================================
 

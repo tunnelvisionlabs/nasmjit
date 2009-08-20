@@ -2340,6 +2340,7 @@ void Epilog::emit(Assembler& a)
 
 #if defined(ASMJIT_X86)
   if (!f->naked() && stackSize && f->stackAlignmentSize())
+  {
     isStackAlignedTo16Bytes = true;
   }
 #endif // ASMJIT_X86
