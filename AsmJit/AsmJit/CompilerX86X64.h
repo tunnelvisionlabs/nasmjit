@@ -1245,14 +1245,34 @@ private:
 //! @brief Emmitable.
 //!
 //! Emittable is object that can emit single or more instructions. To
-//! create your custom emittable it's needed to override virtual method 
-//! @c emit().
+//! create your custom emittable it's needed to override abstract virtual
+//! method @c emit().
+//!
+//! When you are finished serializing instructions to the @c Compiler and you
+//! call @c Compiler::make(), it will first call @c prepare() method for each
+//! emittable in list, then @c emit() and then @c postEmit(). Prepare can be
+//! used to calculate something that can be only calculated when everything
+//! is finished (for example @c Function uses @c prepare() to relocate memory
+//! home for all memory/spilled variables). @c emit() should be used to emit
+//! instruction or multiple instructions into @a Assembler stream, and
+//! @c postEmit() is here to allow emitting embedded data (after function
+//! declaration), etc.
 struct ASMJIT_API Emittable
 {
   // [Construction / Destruction]
 
-  Emittable(Compiler* c, UInt32 type);
-  virtual ~Emittable();
+  //! @brief Create new emittable.
+  //!
+  //! Never create @c Emittable by @c new operator or on the stack, use
+  //! @c Compiler::newObject template to do that.
+  Emittable(Compiler* c, UInt32 type) ASMJIT_NOTHROW;
+
+  //! @brief Destroy emittable.
+  //!
+  //! @note Never destroy emittable using @c delete keyword, @c Compiler
+  //! manages all emittables in internal memory pool and it will destroy
+  //! all emittables after you destroy it.
+  virtual ~Emittable() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -1266,13 +1286,13 @@ struct ASMJIT_API Emittable
   // [Methods]
 
   //! @brief Return compiler instance where this emittable is connected to.
-  inline Compiler* compiler() const { return _compiler; }
+  inline Compiler* compiler() const ASMJIT_NOTHROW { return _compiler; }
   //! @brief Return previsou emittable in list.
-  inline Emittable* prev() const { return _prev; }
+  inline Emittable* prev() const ASMJIT_NOTHROW { return _prev; }
   //! @brief Return next emittable in list.
-  inline Emittable* next() const { return _next; }
+  inline Emittable* next() const ASMJIT_NOTHROW { return _next; }
   //! @brief Return emittable type, see @c EMITTABLE_TYPE.
-  inline UInt32 type() const { return _type; }
+  inline UInt32 type() const ASMJIT_NOTHROW { return _type; }
 
   // [Members]
 
@@ -1298,12 +1318,18 @@ private:
 // ============================================================================
 
 //! @brief Emittable used to emit comment into @c Assembler logger.
+//!
+//! Comments allows to comment your assembler stream for better debugging
+//! and visualization whats happening. Comments are ignored if logger is not
+//! set.
+//!
+//! Comment data can't be modified after comment was created.
 struct ASMJIT_API Comment : public Emittable
 {
   // [Construction / Destruction]
 
-  Comment(Compiler* c, const char* str);
-  virtual ~Comment();
+  Comment(Compiler* c, const char* str) ASMJIT_NOTHROW;
+  virtual ~Comment() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -1311,7 +1337,8 @@ struct ASMJIT_API Comment : public Emittable
 
   // [Methods]
 
-  inline const char* str() const { return _str; }
+  //! @brief Get comment data.
+  inline const char* str() const ASMJIT_NOTHROW { return _str; }
 
   // [Members]
 
@@ -1330,8 +1357,8 @@ struct ASMJIT_API EmbeddedData : public Emittable
 {
   // [Construction / Destruction]
 
-  EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size);
-  virtual ~EmbeddedData();
+  EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size) ASMJIT_NOTHROW;
+  virtual ~EmbeddedData() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -1339,9 +1366,13 @@ struct ASMJIT_API EmbeddedData : public Emittable
 
   // [Methods]
 
-  SysUInt size() const { return _size; }
-  SysUInt capacity() const { return _size; }
-  UInt8* data() const { return (UInt8*)_data; }
+  //! @brief Get size of embedded data.
+  SysUInt size() const ASMJIT_NOTHROW { return _size; }
+  //! @brief Get capacity of embedded data.
+  //! @internal
+  SysUInt capacity() const ASMJIT_NOTHROW { return _size; }
+  //! @brief Get pointer to embedded data.
+  UInt8* data() const ASMJIT_NOTHROW { return (UInt8*)_data; }
 
   // [Members]
 
@@ -1362,15 +1393,17 @@ struct ASMJIT_API Align : public Emittable
 {
   // [Construction / Destruction]
 
-  Align(Compiler* c, SysInt size = 0);
-  virtual ~Align();
+  Align(Compiler* c, SysInt size = 0) ASMJIT_NOTHROW;
+  virtual ~Align() ASMJIT_NOTHROW;
 
   // [Methods]
 
   virtual void emit(Assembler& a);
 
-  inline SysInt size() const { return _size; }
-  inline void setSize(SysInt size) { _size = size; }
+  //! @brief Get align size in bytes.
+  inline SysInt size() const ASMJIT_NOTHROW { return _size; }
+  //! @brief Set align size in bytes to @a size.
+  inline void setSize(SysInt size) ASMJIT_NOTHROW { _size = size; }
 
 private:
   SysInt _size;
@@ -1385,9 +1418,9 @@ struct ASMJIT_API Instruction : public Emittable
 {
   // [Construction / Destruction]
 
-  Instruction(Compiler* c);
-  Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
-  virtual ~Instruction();
+  Instruction(Compiler* c) ASMJIT_NOTHROW;
+  Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
+  virtual ~Instruction() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -1396,25 +1429,25 @@ struct ASMJIT_API Instruction : public Emittable
   // [Methods]
 
   //! @brief Return instruction code, see @c INST_CODE.
-  inline UInt32 code() const { return _code; }
+  inline UInt32 code() const ASMJIT_NOTHROW { return _code; }
 
   //! @brief Return array of operands (3 operands total).
-  inline Operand* const * ops() { return _o; }
+  inline Operand* const* ops() ASMJIT_NOTHROW { return _o; }
 
   //! @brief Return first instruction operand.
-  inline Operand* o1() const { return _o[0]; }
+  inline Operand* o1() const ASMJIT_NOTHROW { return _o[0]; }
 
   //! @brief Return second instruction operand.
-  inline Operand* o2() const { return _o[1]; }
+  inline Operand* o2() const ASMJIT_NOTHROW { return _o[1]; }
 
   //! @brief Return third instruction operand.
-  inline Operand* o3() const { return _o[2]; }
+  inline Operand* o3() const ASMJIT_NOTHROW { return _o[2]; }
 
   //! @brief Set instruction code.
   //!
   //! Please do not modify instruction code if you are not know what you are 
   //! doing. Incorrect instruction code or operands can assert() in runtime.
-  inline void setCode(UInt32 code) { _code = code; }
+  inline void setCode(UInt32 code) ASMJIT_NOTHROW { _code = code; }
 
   // [Members]
 
@@ -1477,88 +1510,88 @@ __DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 //! @brief Class used to build function without arguments.
 struct BuildFunction0
 {
-  inline const UInt32* args() const { return NULL; }
-  inline SysUInt count() const { return 0; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { return NULL; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 0; }
 };
 
 //! @brief Class used to build function with 1 argument.
 template<typename P0>
 struct BuildFunction1
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id }; return data; }
-  inline SysUInt count() const { return 1; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 1; }
 };
 
 //! @brief Class used to build function with 2 arguments.
 template<typename P0, typename P1>
 struct BuildFunction2
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id }; return data; }
-  inline SysUInt count() const { return 2; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 2; }
 };
 
 //! @brief Class used to build function with 3 arguments.
 template<typename P0, typename P1, typename P2>
 struct BuildFunction3
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id }; return data; }
-  inline SysUInt count() const { return 3; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 3; }
 };
 
 //! @brief Class used to build function with 4 arguments.
 template<typename P0, typename P1, typename P2, typename P3>
 struct BuildFunction4
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id }; return data; }
-  inline SysUInt count() const { return 4; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 4; }
 };
 
 //! @brief Class used to build function with 5 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4>
 struct BuildFunction5
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id }; return data; }
-  inline SysUInt count() const { return 5; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 5; }
 };
 
 //! @brief Class used to build function with 6 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct BuildFunction6
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id }; return data; }
-  inline SysUInt count() const { return 6; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 6; }
 };
 
 //! @brief Class used to build function with 7 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
 struct BuildFunction7
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id }; return data; }
-  inline SysUInt count() const { return 7; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 7; }
 };
 
 //! @brief Class used to build function with 8 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 struct BuildFunction8
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id }; return data; }
-  inline SysUInt count() const { return 8; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 8; }
 };
 
 //! @brief Class used to build function with 9 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 struct BuildFunction9
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id }; return data; }
-  inline SysUInt count() const { return 9; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 9; }
 };
 
 //! @brief Class used to build function with 9 arguments.
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct BuildFunction10
 {
-  inline const UInt32* args() const { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id, TypeAsId<P9>::Id }; return data; }
-  inline SysUInt count() const { return 10; }
+  inline const UInt32* args() const ASMJIT_NOTHROW { static const UInt32 data[] = { TypeAsId<P0>::Id, TypeAsId<P1>::Id, TypeAsId<P2>::Id, TypeAsId<P3>::Id, TypeAsId<P4>::Id, TypeAsId<P5>::Id, TypeAsId<P6>::Id, TypeAsId<P7>::Id, TypeAsId<P8>::Id, TypeAsId<P9>::Id }; return data; }
+  inline SysUInt count() const ASMJIT_NOTHROW { return 10; }
 };
 
 // ============================================================================
@@ -1589,9 +1622,9 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! @note Always use @c AsmJit::Compiler::newFunction() to create @c Function
   //! instance.
-  Function(Compiler* c);
+  Function(Compiler* c) ASMJIT_NOTHROW;
   //! @brief Destroy @c Function instance.
-  virtual ~Function();
+  virtual ~Function() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Emit]
@@ -1610,25 +1643,28 @@ struct ASMJIT_API Function : public Emittable
   void setPrototype(UInt32 cconv, const UInt32* args, SysUInt count);
 
   //! @brief Set naked function to true or false (naked means no prolog / epilog code).
-  void setNaked(UInt8 naked);
+  void setNaked(UInt8 naked) ASMJIT_NOTHROW;
 
   //! @brief Enable or disable allocation of EBP/RBP register.
-  inline void setAllocableEbp(UInt8 val) { _allocableEbp = val; }
+  inline void setAllocableEbp(UInt8 val) ASMJIT_NOTHROW { _allocableEbp = val; }
+
+  //! @brief Enable or disable allocation of EBP/RBP register.
+  inline void setPrologEpilogPushPop(UInt8 val) ASMJIT_NOTHROW { _prologEpilogPushPop = val; }
 
   //! @brief Enable or disable emms instruction in epilog.
-  inline void setEmms(UInt8 val) { _emms = val; }
+  inline void setEmms(UInt8 val) ASMJIT_NOTHROW { _emms = val; }
 
   //! @brief Enable or disable sfence instruction in epilog.
-  inline void setSfence(UInt8 val) { _sfence = val; }
+  inline void setSfence(UInt8 val) ASMJIT_NOTHROW { _sfence = val; }
 
   //! @brief Enable or disable lfence instruction in epilog.
-  inline void setLfence(UInt8 val) { _lfence = val; }
+  inline void setLfence(UInt8 val) ASMJIT_NOTHROW { _lfence = val; }
 
   //! @brief Return whether optimizing prolog / epilog is enabled or disabled.
-  inline void setOptimizedPrologEpilog(UInt8 val) { _optimizedPrologEpilog = val; }
+  inline void setOptimizedPrologEpilog(UInt8 val) ASMJIT_NOTHROW { _optimizedPrologEpilog = val; }
 
   //! @brief Return function calling convention, see @c CALL_CONV.
-  inline UInt32 cconv() const { return _cconv; }
+  inline UInt32 cconv() const ASMJIT_NOTHROW { return _cconv; }
 
   //! @brief Return @c true if callee pops the stack by ret() instruction.
   //!
@@ -1637,25 +1673,28 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline UInt8 calleePopsStack() const { return _calleePopsStack; }
+  inline UInt8 calleePopsStack() const ASMJIT_NOTHROW { return _calleePopsStack; }
 
   //! @brief Return @c true if function is naked (no prolog / epilog code).
-  inline UInt8 naked() const { return _naked; }
+  inline UInt8 naked() const ASMJIT_NOTHROW { return _naked; }
 
   //! @brief Return @c true if EBP/RBP register can be allocated by register allocator.
-  inline UInt8 allocableEbp() const { return _allocableEbp; }
+  inline UInt8 allocableEbp() const ASMJIT_NOTHROW { return _allocableEbp; }
+
+  //! @brief Return @c true if EBP/RBP register can be allocated by register allocator.
+  inline UInt8 prologEpilogPushPop() const ASMJIT_NOTHROW { return _prologEpilogPushPop; }
 
   //! @brief Return whether emms instruction is enabled or disabled in epilog.
-  inline UInt8 emms() const { return _emms; }
+  inline UInt8 emms() const ASMJIT_NOTHROW { return _emms; }
 
   //! @brief Return whether sfence instruction is enabled or disabled in epilog.
-  inline UInt8 sfence() const { return _sfence; }
+  inline UInt8 sfence() const ASMJIT_NOTHROW { return _sfence; }
 
   //! @brief Return whether lfence instruction is enabled or disabled in epilog.
-  inline UInt8 lfence() const { return _lfence; }
+  inline UInt8 lfence() const ASMJIT_NOTHROW { return _lfence; }
 
   //! @brief Return whether optimizing prolog / epilog is enabled or disabled.
-  inline UInt8 optimizedPrologEpilog() const { return _optimizedPrologEpilog; }
+  inline UInt8 optimizedPrologEpilog() const ASMJIT_NOTHROW { return _optimizedPrologEpilog; }
 
   //! @brief Return direction of arguments passed on the stack.
   //!
@@ -1663,40 +1702,40 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline UInt32 cconvArgumentsDirection() const { return _cconvArgumentsDirection; }
+  inline UInt32 cconvArgumentsDirection() const ASMJIT_NOTHROW { return _cconvArgumentsDirection; }
 
   //! @brief Return registers used to pass first integer parameters by current
   //! calling convention.
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline const UInt32* cconvArgumentsGp() const { return _cconvArgumentsGp; }
+  inline const UInt32* cconvArgumentsGp() const ASMJIT_NOTHROW { return _cconvArgumentsGp; }
 
   //! @brief Return registers used to pass first SP-FP or DP-FPparameters by 
   //! current calling convention.
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline const UInt32* cconvArgumentsXmm() const { return _cconvArgumentsXmm; }
+  inline const UInt32* cconvArgumentsXmm() const ASMJIT_NOTHROW { return _cconvArgumentsXmm; }
 
   //! @brief Return bitmask of general purpose registers that's preserved 
   //! (non-volatile).
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline UInt32 cconvPreservedGp() const { return _cconvPreservedGp; }
+  inline UInt32 cconvPreservedGp() const ASMJIT_NOTHROW { return _cconvPreservedGp; }
   //! @brief Return bitmask of sse registers that's preserved (non-volatile).
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline UInt32 cconvPreservedXmm() const { return _cconvPreservedXmm; }
+  inline UInt32 cconvPreservedXmm() const ASMJIT_NOTHROW { return _cconvPreservedXmm; }
 
   // --------------------------------------------------------------------------
   // [Registers allocator / Variables]
   // --------------------------------------------------------------------------
 
   //! @brief Return argument at @a i.
-  inline Variable* argument(SysInt i)
+  inline Variable* argument(SysInt i) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT((SysUInt)i < _argumentsCount);
     return _variables[i];
@@ -1740,60 +1779,63 @@ struct ASMJIT_API Function : public Emittable
   //! Stack is aligned to 16 bytes by default. For X64 platforms there is 
   //! no extra code needed to align stack to 16 bytes, because it's default
   //! stack alignment.
-  inline SysInt stackAlignmentSize() const { return _stackAlignmentSize; }
+  inline SysInt stackAlignmentSize() const ASMJIT_NOTHROW { return _stackAlignmentSize; }
 
   //! @brief Size needed to save registers in prolog / epilog.
-  inline SysInt prologEpilogStackSize() const { return _prologEpilogStackSize; }
+  inline SysInt prologEpilogStackSize() const ASMJIT_NOTHROW { return _prologEpilogStackSize; }
 
   //! @brief Return size of variables on the stack.
   //!
   //! This variable is always aligned to 16 bytes for each platform.
-  inline SysInt variablesStackSize() const { return _variablesStackSize; }
+  inline SysInt variablesStackSize() const ASMJIT_NOTHROW { return _variablesStackSize; }
 
   //! @brief Return count of arguments.
-  inline UInt32 argumentsCount() const { return _argumentsCount; }
+  inline UInt32 argumentsCount() const ASMJIT_NOTHROW { return _argumentsCount; }
 
   //! @brief Return stack size of all function arguments (passed on the 
   //! stack).
-  inline UInt32 argumentsStackSize() const { return _argumentsStackSize; }
+  inline UInt32 argumentsStackSize() const ASMJIT_NOTHROW { return _argumentsStackSize; }
 
   //! @brief Return bitmask of all used (for actual context) general purpose registers.
-  inline UInt32 usedGpRegisters() const { return _usedGpRegisters; }
+  inline UInt32 usedGpRegisters() const ASMJIT_NOTHROW { return _usedGpRegisters; }
   //! @brief Return bitmask of all used (for actual context) mmx registers.
-  inline UInt32 usedMmRegisters() const { return _usedMmRegisters; }
+  inline UInt32 usedMmRegisters() const ASMJIT_NOTHROW { return _usedMmRegisters; }
   //! @brief Return bitmask of all used (for actual context) sse registers.
-  inline UInt32 usedXmmRegisters() const { return _usedXmmRegisters; }
+  inline UInt32 usedXmmRegisters() const ASMJIT_NOTHROW { return _usedXmmRegisters; }
 
   //! @brief Mark general purpose registers in the given @a mask as used.
-  inline void useGpRegisters(UInt32 mask) { _usedGpRegisters |= mask; }
+  inline void useGpRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedGpRegisters |= mask; }
   //! @brief Mark mmx registers in the given @a mask as used.
-  inline void useMmRegisters(UInt32 mask) { _usedMmRegisters |= mask; }
+  inline void useMmRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedMmRegisters |= mask; }
   //! @brief Mark sse registers in the given @a mask as used.
-  inline void useXmmRegisters(UInt32 mask) { _usedXmmRegisters |= mask; }
+  inline void useXmmRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedXmmRegisters |= mask; }
 
   //! @brief Mark general purpose registers in the given @a mask as unused.
-  inline void unuseGpRegisters(UInt32 mask) { _usedGpRegisters &= ~mask; }
+  inline void unuseGpRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedGpRegisters &= ~mask; }
   //! @brief Mark mmx registers in the given @a mask as unused.
-  inline void unuseMmRegisters(UInt32 mask) { _usedMmRegisters &= ~mask; }
+  inline void unuseMmRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedMmRegisters &= ~mask; }
   //! @brief Mark sse registers in the given @a mask as unused.
-  inline void unuseXmmRegisters(UInt32 mask) { _usedXmmRegisters &= ~mask; }
+  inline void unuseXmmRegisters(UInt32 mask) ASMJIT_NOTHROW { _usedXmmRegisters &= ~mask; }
 
   //! @brief Return bitmask of all changed general purpose registers during
   //! function execution (for generating optimized prolog / epilog).
-  inline UInt32 modifiedGpRegisters() const { return _modifiedGpRegisters; }
+  inline UInt32 modifiedGpRegisters() const ASMJIT_NOTHROW { return _modifiedGpRegisters; }
   //! @brief Return bitmask of all changed mmx registers during
   //! function execution (for generating optimized prolog / epilog).
-  inline UInt32 modifiedMmRegisters() const { return _modifiedMmRegisters; }
+  inline UInt32 modifiedMmRegisters() const ASMJIT_NOTHROW { return _modifiedMmRegisters; }
   //! @brief Return bitmask of all changed sse registers during
   //! function execution (for generating optimized prolog / epilog).
-  inline UInt32 modifiedXmmRegisters() const { return _modifiedXmmRegisters; }
+  inline UInt32 modifiedXmmRegisters() const ASMJIT_NOTHROW { return _modifiedXmmRegisters; }
 
   //! @brief Mark general purpose registers in the given @a mask as modified.
-  inline void modifyGpRegisters(UInt32 mask) { _modifiedGpRegisters |= mask; }
+  inline void modifyGpRegisters(UInt32 mask) ASMJIT_NOTHROW { _modifiedGpRegisters |= mask; }
   //! @brief Mark mmx registers in the given @a mask as modified.
-  inline void modifyMmRegisters(UInt32 mask) { _modifiedMmRegisters |= mask; }
+  inline void modifyMmRegisters(UInt32 mask) ASMJIT_NOTHROW { _modifiedMmRegisters |= mask; }
   //! @brief Mark sse registers in the given @a mask as modified.
-  inline void modifyXmmRegisters(UInt32 mask) { _modifiedXmmRegisters |= mask; }
+  inline void modifyXmmRegisters(UInt32 mask) ASMJIT_NOTHROW { _modifiedXmmRegisters |= mask; }
+
+  SysInt countOfGpRegistersToBeSaved() const ASMJIT_NOTHROW;
+  SysInt countOfXmmRegistersToBeSaved() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [State]
@@ -1835,15 +1877,15 @@ struct ASMJIT_API Function : public Emittable
   //!
   //! Entry label can be used to call this function from another code that's
   //! being generated.
-  inline Label* entryLabel() const { return _entryLabel; }
+  inline Label* entryLabel() const ASMJIT_NOTHROW { return _entryLabel; }
 
   //! @brief Return prolog label (label after function prolog)
-  inline Label* prologLabel() const { return _prologLabel; }
+  inline Label* prologLabel() const ASMJIT_NOTHROW { return _prologLabel; }
 
   //! @brief Return exit label.
   //!
   //! Use exit label to jump to function epilog.
-  inline Label* exitLabel() const { return _exitLabel; }
+  inline Label* exitLabel() const ASMJIT_NOTHROW { return _exitLabel; }
 
 private:
   // --------------------------------------------------------------------------
@@ -1851,7 +1893,7 @@ private:
   // --------------------------------------------------------------------------
 
   //! @brief Sets function calling convention.
-  void _setCallingConvention(UInt32 cconv);
+  void _setCallingConvention(UInt32 cconv) ASMJIT_NOTHROW;
 
   //! @brief Sets function arguments (must be done after correct calling 
   //! convention is set).
@@ -1870,6 +1912,10 @@ private:
 
   //! @brief Whether EBP/RBP register can be used by register allocator.
   UInt8 _allocableEbp;
+
+  //! @brief Whether Prolog and epilog should be generated by push/pop
+  //! instructions instead of mov instructions.
+  UInt8 _prologEpilogPushPop;
 
   //! @brief Whether to generate emms instruction in epilog.
   UInt8 _emms;
@@ -1985,8 +2031,8 @@ struct ASMJIT_API Prolog : public Emittable
 {
   // [Construction / Destruction]
 
-  Prolog(Compiler* c, Function* f);
-  virtual ~Prolog();
+  Prolog(Compiler* c, Function* f) ASMJIT_NOTHROW;
+  virtual ~Prolog() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -1994,7 +2040,7 @@ struct ASMJIT_API Prolog : public Emittable
 
   // [Methods]
 
-  inline Function* function() const { return _function; }
+  inline Function* function() const ASMJIT_NOTHROW { return _function; }
 
   // [Members]
 
@@ -2015,8 +2061,8 @@ struct ASMJIT_API Epilog : public Emittable
 {
   // [Construction / Destruction]
 
-  Epilog(Compiler* c, Function* f);
-  virtual ~Epilog();
+  Epilog(Compiler* c, Function* f) ASMJIT_NOTHROW;
+  virtual ~Epilog() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -2024,7 +2070,7 @@ struct ASMJIT_API Epilog : public Emittable
 
   // [Methods]
 
-  inline Function* function() const { return _function; }
+  inline Function* function() const ASMJIT_NOTHROW { return _function; }
 
   // [Members]
 
@@ -2047,8 +2093,8 @@ struct ASMJIT_API Target : public Emittable
 {
   // [Construction / Destruction]
 
-  Target(Compiler* c, Label* target);
-  virtual ~Target();
+  Target(Compiler* c, Label* target) ASMJIT_NOTHROW;
+  virtual ~Target() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -2057,7 +2103,7 @@ struct ASMJIT_API Target : public Emittable
   // [Methods]
 
   //! @brief Return label bound to this target.
-  inline Label* target() const { return _target; }
+  inline Label* target() const ASMJIT_NOTHROW { return _target; }
 
   // [Members]
 
@@ -2074,8 +2120,8 @@ struct ASMJIT_API JumpTable : public Emittable
 {
   // [Construction / Destruction]
 
-  JumpTable(Compiler* c);
-  virtual ~JumpTable();
+  JumpTable(Compiler* c) ASMJIT_NOTHROW;
+  virtual ~JumpTable() ASMJIT_NOTHROW;
 
   // [Emit]
 
@@ -2085,13 +2131,13 @@ struct ASMJIT_API JumpTable : public Emittable
   // [Methods]
 
   //! @brief Return target label where are informations about jump adresses.
-  inline Label* target() const { return _target; }
+  inline Label* target() const ASMJIT_NOTHROW { return _target; }
 
   //! @brief Return labels list.
-  PodVector<Label*>& labels() { return _labels; }
+  PodVector<Label*>& labels() ASMJIT_NOTHROW { return _labels; }
 
   //! @brief Return labels list.
-  const PodVector<Label*>& labels() const { return _labels; }
+  const PodVector<Label*>& labels() const ASMJIT_NOTHROW { return _labels; }
 
   //! @brief Add new label @a target to jump table.
   //! @param target @c Label to add (or NULL to create one).
@@ -2460,15 +2506,15 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Return first emittables in double linked list.
-  inline Emittable* firstEmittable() const { return _first; }
+  inline Emittable* firstEmittable() const ASMJIT_NOTHROW { return _first; }
 
   //! @brief Return last emittable in double linked list.
-  inline Emittable* lastEmittable() const { return _last; }
+  inline Emittable* lastEmittable() const ASMJIT_NOTHROW { return _last; }
 
   //! @brief Return current emittable after all emittables are emitter.
   //!
   //! @note If this method return @c NULL it means first position.
-  inline Emittable* current() const { return _current; }
+  inline Emittable* current() const ASMJIT_NOTHROW { return _current; }
 
   //! @brief Add emittable after current and set current to @a emittable.
   void addEmittable(Emittable* emittable);

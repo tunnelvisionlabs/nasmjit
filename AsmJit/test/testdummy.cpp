@@ -34,7 +34,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)(AsmJit::UInt32*, AsmJit::UInt32*);
+typedef AsmJit::SysInt (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -48,45 +48,38 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, BuildFunction2<UInt32*, UInt32*>());
+  c.newFunction(CALL_CONV_DEFAULT, BuildFunction8<SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt, SysUInt>());
 
-  SysIntRef a0(c.argument(0));
-  SysIntRef a1(c.argument(1));
+  PtrRef p1(c.argument(0));
+  PtrRef p2(c.argument(1));
+  PtrRef p3(c.argument(2));
+  PtrRef p4(c.argument(3));
+  PtrRef p5(c.argument(4));
+  PtrRef p6(c.argument(5));
+  PtrRef p7(c.argument(6));
+  PtrRef p8(c.argument(7));
 
-  XMMRef xmmzero(c.newVariable(VARIABLE_TYPE_XMM));
-  XMMRef msk0(c.newVariable(VARIABLE_TYPE_XMM));
-  XMMRef msk1(c.newVariable(VARIABLE_TYPE_XMM));
+  PtrRef eax(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RAX));
+  PtrRef ebx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RBX));
+  PtrRef ecx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RCX));
+  PtrRef edx(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RDX));
+  PtrRef edi(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RDI));
+  PtrRef esi(c.newVariable(VARIABLE_TYPE_PTR, 0, REG_RSI));
 
-  c.pxor(xmmzero.x(), xmmzero.x());
-  c.movd(msk0.r(), ptr(a0.r()));
-
-  c.punpcklbw(msk0.r(), xmmzero.r());
-  c.pshufd(msk0.r(), msk0.r(), imm(mm_shuffle(1, 0, 1, 0)));
-
-  c.pshufhw(msk1.r(), msk0.r(), imm(mm_shuffle(3, 3, 3, 3)));
-  c.pshuflw(msk1.r(), msk1.r(), imm(mm_shuffle(2, 2, 2, 2)));
-  c.pshufhw(msk0.r(), msk0.r(), imm(mm_shuffle(1, 1, 1, 1)));
-  c.pshuflw(msk0.r(), msk0.r(), imm(mm_shuffle(0, 0, 0, 0)));
-
-  c.movdqu(ptr(a1.r()), msk0.r());
-  c.movdqu(ptr(a1.r(), 16), msk1.r());
-
-  // Finish
+  c.add(p1.r(), 1);
+  c.add(p2.r(), 2);
+  c.add(p3.r(), 3);
+  c.add(p4.r(), 4);
+  c.add(p5.r(), 5);
+  c.add(p6.r(), 6);
+  c.add(p7.r(), 7);
+  c.add(p8.r(), 8);
   c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
   // Make function
   MyFn fn = function_cast<MyFn>(c.make());
-
-  // Call it
-  UInt32 x[1] = { 0x11223344 };
-  UInt32 y[8];
-  fn(x, y);
-
-  printf("Input : %0.8X\n", x[0]);
-  printf("Output: %0.8X|%0.8X|%0.8X|%0.8X\n", y[3], y[2], y[1], y[0]);
-  printf("Output: %0.8X|%0.8X|%0.8X|%0.8X\n", y[7], y[6], y[5], y[4]);
 
   // If function is not needed again it should be freed.
   MemoryManager::global()->free((void*)fn);

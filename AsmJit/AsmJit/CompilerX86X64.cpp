@@ -284,7 +284,7 @@ void State::_clear()
 // [AsmJit::Emittable]
 // ============================================================================
 
-Emittable::Emittable(Compiler* c, UInt32 type) : 
+Emittable::Emittable(Compiler* c, UInt32 type) ASMJIT_NOTHROW :
   _compiler(c),
   _next(NULL),
   _prev(NULL),
@@ -292,7 +292,7 @@ Emittable::Emittable(Compiler* c, UInt32 type) :
 {
 }
 
-Emittable::~Emittable()
+Emittable::~Emittable() ASMJIT_NOTHROW
 {
 }
 
@@ -310,7 +310,8 @@ void Emittable::postEmit(Assembler& a)
 // [AsmJit::Comment]
 // ============================================================================
 
-Comment::Comment(Compiler* c, const char* str) : Emittable(c, EMITTABLE_COMMENT)
+Comment::Comment(Compiler* c, const char* str) ASMJIT_NOTHROW :
+  Emittable(c, EMITTABLE_COMMENT)
 {
   SysUInt len = strlen(str);
 
@@ -320,7 +321,7 @@ Comment::Comment(Compiler* c, const char* str) : Emittable(c, EMITTABLE_COMMENT)
   memcpy((char*)_str, str, len + 1);
 }
 
-Comment::~Comment()
+Comment::~Comment() ASMJIT_NOTHROW
 {
 }
 
@@ -333,7 +334,7 @@ void Comment::emit(Assembler& a)
 // [AsmJit::EmbeddedData]
 // ============================================================================
 
-EmbeddedData::EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size) :
+EmbeddedData::EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysUInt size) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_EMBEDDED_DATA)
 {
   ASMJIT_ASSERT(capacity >= size);
@@ -343,7 +344,7 @@ EmbeddedData::EmbeddedData(Compiler* c, SysUInt capacity, const void* data, SysU
   memcpy(_data, data, size);
 }
 
-EmbeddedData::~EmbeddedData()
+EmbeddedData::~EmbeddedData() ASMJIT_NOTHROW
 {
 }
 
@@ -356,12 +357,12 @@ void EmbeddedData::emit(Assembler& a)
 // [AsmJit::Align]
 // ============================================================================
 
-Align::Align(Compiler* c, SysInt size) : 
+Align::Align(Compiler* c, SysInt size) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_ALIGN), _size(size) 
 {
 }
 
-Align::~Align()
+Align::~Align() ASMJIT_NOTHROW
 {
 }
 
@@ -374,7 +375,7 @@ void Align::emit(Assembler& a)
 // [AsmJit::Instruction]
 // ============================================================================
 
-Instruction::Instruction(Compiler* c) :
+Instruction::Instruction(Compiler* c) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_INSTRUCTION)
 {
   _o[0] = &_ocache[0];
@@ -383,7 +384,7 @@ Instruction::Instruction(Compiler* c) :
   memset(_ocache, 0, sizeof(_ocache));
 }
 
-Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) :
+Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_INSTRUCTION)
 {
   _code = code;
@@ -394,7 +395,7 @@ Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Oper
   if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[2] = c->_operands[oid]; } else { _o[2] = &_ocache[2]; _ocache[2] = *o3; }
 }
 
-Instruction::~Instruction()
+Instruction::~Instruction() ASMJIT_NOTHROW
 {
 }
 
@@ -407,14 +408,15 @@ void Instruction::emit(Assembler& a)
 // [AsmJit::Function]
 // ============================================================================
 
-Function::Function(Compiler* c) : 
+Function::Function(Compiler* c) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_FUNCTION),
-  _stackAlignmentSize(0),
+  _stackAlignmentSize(sizeof(SysInt) == 4 ? 0 : 16),
   _variablesStackSize(0),
   _cconv(CALL_CONV_NONE),
   _calleePopsStack(false),
   _naked(false),
   _allocableEbp(false),
+  _prologEpilogPushPop(true),
   _emms(false),
   _sfence(false),
   _lfence(false),
@@ -440,7 +442,7 @@ Function::Function(Compiler* c) :
   memset(&_state, 0, sizeof(_state));
 }
 
-Function::~Function()
+Function::~Function() ASMJIT_NOTHROW
 {
 }
 
@@ -452,7 +454,9 @@ void Function::prepare()
   SysUInt i, v;
 
   SysInt sp = 0;       // Stack offset
-  SysInt pe = 0;       // Prolog / epilog size
+  SysInt pe;           // Prolog / epilog size
+  SysInt peGp;         // Prolog / epilog for GP registers size
+  SysInt peXmm;        // Prolog / epilog for XMM registers size
 
   UInt8 argMemBase;    // Address base register for function arguments
   UInt8 varMemBase;    // Address base register for function variables
@@ -489,25 +493,19 @@ void Function::prepare()
         if (size == 16 && alignSize < 16) alignSize = 16;
 #endif // ASMJIT_X86
 
-        sp += size;
         _variables[v]->_stackOffset = sp;
+        sp += size;
       }
     }
   }
 
-  // Align to 16 bytes
+  // Align to 16 bytes.
   sp = (sp + 15) & ~15;
 
-  // Get prolog/epilog push/pop size on the stack
-  for (i = 0; i < NUM_REGS; i++)
-  {
-    if ((modifiedGpRegisters () & (1U << i)) && 
-        (cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NSP & REGCODE_MASK)) )
-    {
-      pe += sizeof(SysInt);
-    }
-  }
+  // Get prolog/epilog push/pop size on the stack.
+  peGp = countOfGpRegistersToBeSaved() * sizeof(SysInt);
+  peXmm = countOfXmmRegistersToBeSaved() * 16;
+  pe = peGp + peXmm;
 
   _prologEpilogStackSize = pe;
   _variablesStackSize = sp;
@@ -518,7 +516,7 @@ void Function::prepare()
   {
     // Naked functions are using always esp/rsp.
     argMemBase = RID_ESP;
-    argDisp = pe;
+    argDisp = prologEpilogPushPop() ? peGp : 0;
 
     varMemBase = RID_ESP;
     varDisp = -sp - sizeof(SysInt);
@@ -531,7 +529,7 @@ void Function::prepare()
     argDisp = sizeof(SysInt);
 
     varMemBase = RID_ESP;
-    varDisp = pe;
+    varDisp = 0;
   }
 
   // Patch all variables to point to correct address in memory
@@ -668,14 +666,14 @@ void Function::setPrototype(UInt32 cconv, const UInt32* args, SysUInt count)
   _setArguments(args, count);
 }
 
-void Function::setNaked(UInt8 naked)
+void Function::setNaked(UInt8 naked) ASMJIT_NOTHROW
 {
   if (_naked == naked) return;
 
   _naked = naked;
 }
 
-void Function::_setCallingConvention(UInt32 cconv)
+void Function::_setCallingConvention(UInt32 cconv) ASMJIT_NOTHROW
 {
   // Safe defaults
   _cconv = cconv;
@@ -954,6 +952,9 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
         args[i] = VARIABLE_TYPE_NONE;
       }
     }
+
+    // 32 bytes shadow space (X64W calling convention specific).
+    stackOffset -= 4 * 8;
   }
   // All others
   else
@@ -1935,6 +1936,35 @@ void Function::_postAlloc(Variable* v, UInt8 mode)
   addPrevented(v);
 }
 
+SysInt Function::countOfGpRegistersToBeSaved() const ASMJIT_NOTHROW
+{
+  SysInt count = 0;
+
+  for (int i = 0; i < NUM_REGS; i++)
+  {
+    if ((modifiedGpRegisters() & (1U << i)) && (cconvPreservedGp() & (1U << i)) && (i != (REG_NSP & REGCODE_MASK)) )
+    {
+      count++;
+    }
+  }
+  return count;
+}
+
+SysInt Function::countOfXmmRegistersToBeSaved() const ASMJIT_NOTHROW
+{
+  SysInt count = 0;
+
+  for (int i = 0; i < NUM_REGS; i++)
+  {
+    if ((modifiedXmmRegisters() & (1U << i)) && (cconvPreservedXmm() & (1U << i)))
+    {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 State *Function::saveState()
 {
   State* s = compiler()->newObject<State>(this);
@@ -2147,13 +2177,39 @@ void Function::_jmpAndRestore(Compiler* c, Label* label)
 // [AsmJit::Prolog]
 // ============================================================================
 
-Prolog::Prolog(Compiler* c, Function* f) : 
+static inline SysInt alignTo16Bytes(SysInt x)
+{
+  return (x + 15) & ~15;
+}
+
+static SysInt getStackSize(Function* f, SysInt stackAdjust)
+{
+  // Get stack size needed for store all variables and to save all used
+  // registers. AlignedStackSize is stack size adjusted for aligning.
+  SysInt stackSize = 
+    alignTo16Bytes(f->variablesStackSize()) + f->prologEpilogStackSize();
+
+#if defined(ASMJIT_X86)
+  SysInt stackAlignment = f->stackAlignmentSize();
+#else
+  SysInt stackAlignment = 16;
+#endif
+
+  if (stackAlignment)
+  {
+    stackSize = (stackSize + stackAlignment - 1) & ~(stackAlignment - 1);
+  }
+
+  return stackSize;
+}
+
+Prolog::Prolog(Compiler* c, Function* f) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_PROLOGUE), 
   _function(f)
 {
 }
 
-Prolog::~Prolog()
+Prolog::~Prolog() ASMJIT_NOTHROW
 {
 }
 
@@ -2162,43 +2218,86 @@ void Prolog::emit(Assembler& a)
   Function* f = function();
   ASMJIT_ASSERT(f);
 
+  // In 64-bit mode the stack is aligned to 16 bytes by default.
+  bool isStackAlignedTo16Bytes = sizeof(SysInt) == 8;
+
+  // How many bytes to add to stack to make it aligned to 128-bits.
+  SysInt stackAdjust = (f->naked() && sizeof(SysInt) == 8) ? 8 : 0;
+
+  // Calculate stack size with stack adjustment. This will give us proper
+  // count of bytes to subtract from esp/rsp.
+  SysInt stackSize = getStackSize(f, stackAdjust);
+  SysInt stackSubtract = stackSize;
+
   int i;
 
-  // Emit prolog if needed (prolog is not emitted for pure naked functions)
+  // Emit prolog (but don't do it if function is set to be naked).
+  //
+  // Also see the stackAdjust variable. If function is naked (so prolog and
+  // epilog will not contain "push ebp" and "mov ebp, esp", we need to adjust
+  // stack by 8 bytes in 64-bit mode (this will give us that stack will remain
+  // aligned to 16 bytes).
   if (!f->naked())
   {
     a.push(nbp);
     a.mov(nbp, nsp);
+  }
 
-    // Arguments size
-    if (f->variablesStackSize())
+  // Save GP registers using PUSH/POP.
+  if (f->prologEpilogPushPop())
+  {
+    for (i = 0; i < NUM_REGS; i++)
     {
-      SysInt ss = (
-        f->variablesStackSize() + 
-        f->prologEpilogStackSize() + 
-        f->stackAlignmentSize() + 
-        sizeof(SysInt) + 15) & ~15;
-      a.sub(nsp, ss);
+      if ((f->modifiedGpRegisters() & (1U << i)) && (f->cconvPreservedGp() & (1U << i)) && (i != (REG_NSP & REGCODE_MASK)) )
+      {
+        a.push(mk_gpn(i));
+      }
+    }
+    stackSubtract -= f->countOfGpRegistersToBeSaved() * sizeof(SysInt);
+  }
+
+  if (!f->naked())
+  {
+    if (stackSubtract) a.sub(nsp, stackSubtract);
 
 #if defined(ASMJIT_X86)
-      // Alignment
-      if (f->stackAlignmentSize())
-      {
-        // stackAlignmentSize can be 8 or 16
-        a.and_(nsp, -((Int32)f->stackAlignmentSize()));
-      }
+    // Manual alignment. This is a bit complicated if we don't want to use
+    // ebp/rpb register and standard prolog.
+    if (stackSize && f->stackAlignmentSize())
+    {
+      // stackAlignmentSize can be 8 or 16
+      a.and_(nsp, -((Int32)f->stackAlignmentSize()));
+      isStackAlignedTo16Bytes = true;
+    }
 #endif // ASMJIT_X86
+  }
+
+  SysInt nspPos = alignTo16Bytes(f->variablesStackSize());
+  if (f->naked()) nspPos -= stackSize;
+
+  // Save XMM registers using MOVDQA/MOVDQU.
+  for (i = 0; i < NUM_REGS; i++)
+  {
+    if ((f->modifiedXmmRegisters() & (1U << i)) && (f->cconvPreservedXmm() & (1U << i)))
+    {
+      if (isStackAlignedTo16Bytes)
+        a.movdqa(dqword_ptr(nsp, nspPos), mk_xmm(i));
+      else
+        a.movdqu(dqword_ptr(nsp, nspPos), mk_xmm(i));
+      nspPos += 16;
     }
   }
 
-  // Save registers if needed
-  for (i = 0; i < NUM_REGS; i++)
+  // Save GP registers using MOV.
+  if (!f->prologEpilogPushPop())
   {
-    if ((f->modifiedGpRegisters () & (1U << i)) && 
-        (f->cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NSP & REGCODE_MASK)) )
+    for (i = 0; i < NUM_REGS; i++)
     {
-      a.push(mk_gpn(i));
+      if ((f->modifiedGpRegisters() & (1U << i)) && (f->cconvPreservedGp() & (1U << i)) && (i != (REG_NSP & REGCODE_MASK)) )
+      {
+        a.mov(sysint_ptr(nsp, nspPos), mk_gpn(i));
+        nspPos += sizeof(SysInt);
+      }
     }
   }
 
@@ -2210,13 +2309,13 @@ void Prolog::emit(Assembler& a)
 // [AsmJit::Epilog]
 // ============================================================================
 
-Epilog::Epilog(Compiler* c, Function* f) : 
+Epilog::Epilog(Compiler* c, Function* f) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_EPILOGUE),
   _function(f)
 {
 }
 
-Epilog::~Epilog()
+Epilog::~Epilog() ASMJIT_NOTHROW
 {
 }
 
@@ -2227,8 +2326,72 @@ void Epilog::emit(Assembler& a)
 
   const CpuInfo* ci = cpuInfo();
 
-  // First bind label (Function::_exitLabel) before the epilog
+  // In 64-bit mode the stack is aligned to 16 bytes by default.
+  bool isStackAlignedTo16Bytes = sizeof(SysInt) == 8;
+
+  // How many bytes to add to stack to make it aligned to 128-bits.
+  SysInt stackAdjust = (f->naked() && sizeof(SysInt) == 8) ? 8 : 0;
+
+  // Calculate stack size with stack adjustment. This will give us proper
+  // count of bytes to subtract from esp/rsp.
+  SysInt stackSize = getStackSize(f, stackAdjust);
+
+  int i;
+
+#if defined(ASMJIT_X86)
+  if (!f->naked() && stackSize && f->stackAlignmentSize())
+    isStackAlignedTo16Bytes = true;
+  }
+#endif // ASMJIT_X86
+
+  // First bind label (Function::_exitLabel) before the epilog.
   if (_label) a.bind(_label);
+
+  SysInt nspPos = alignTo16Bytes(f->variablesStackSize());
+  if (f->naked()) nspPos -= stackSize;
+
+  // Restore XMM registers using MOV.
+  for (i = 0; i < NUM_REGS; i++)
+  {
+    if ((f->modifiedXmmRegisters() & (1U << i)) && (f->cconvPreservedXmm() & (1U << i)))
+    {
+      if (isStackAlignedTo16Bytes)
+        a.movdqa(mk_xmm(i), dqword_ptr(nsp, nspPos));
+      else
+        a.movdqu(mk_xmm(i), dqword_ptr(nsp, nspPos));
+      nspPos += 16;
+    }
+  }
+
+  // Restore GP registers using MOV.
+  if (!f->prologEpilogPushPop())
+  {
+    for (i = 0; i < NUM_REGS; i++)
+    {
+      if ((f->modifiedGpRegisters() & (1U << i)) && (f->cconvPreservedGp() & (1U << i)) && (i != (REG_NSP & REGCODE_MASK)) )
+      {
+        a.mov(mk_gpn(i), sysint_ptr(nsp, nspPos));
+        nspPos += sizeof(SysInt);
+      }
+    }
+  }
+  // Restore GP registers using PUSH/POP.
+  else
+  {
+    if (!f->naked())
+    {
+      SysInt stackAdd = stackSize - (f->countOfGpRegistersToBeSaved() * sizeof(SysInt));
+      if (stackAdd != 0) a.add(nsp, stackAdd);
+    }
+
+    for (i = NUM_REGS; i >= 0; i--)
+    {
+      if ((f->modifiedGpRegisters() & (1U << i)) && (f->cconvPreservedGp() & (1U << i)) && (i != (REG_NSP & REGCODE_MASK)) )
+      {
+        a.pop(mk_gpn(i));
+      }
+    }
+  }
 
   // Emms
   if (f->emms()) a.emms();
@@ -2237,18 +2400,6 @@ void Epilog::emit(Assembler& a)
   if ( f->sfence() && !f->lfence()) a.sfence(); // Only sfence
   if (!f->sfence() &&  f->lfence()) a.lfence(); // Only lfence
   if ( f->sfence() &&  f->lfence()) a.mfence(); // MFence == SFence & LFence
-
-  // Add variables and register cleanup code
-  int i;
-  for (i = NUM_REGS-1; i >= 0; i--)
-  {
-    if ((f->modifiedGpRegisters() & (1U << i)) && 
-        (f->cconvPreservedGp() & (1U << i)) &&
-        (i != (REG_NSP & REGCODE_MASK)) )
-    {
-      a.pop(mk_gpn(i));
-    }
-  }
 
   // Use epilog code (if needed)
   if (!f->naked())
@@ -2266,7 +2417,7 @@ void Epilog::emit(Assembler& a)
     }
   }
 
-  // Return using correct instruction
+  // Return using correct instruction.
   if (f->calleePopsStack())
     a.ret((Int16)f->argumentsStackSize());
   else
@@ -2277,13 +2428,13 @@ void Epilog::emit(Assembler& a)
 // [AsmJit::Target]
 // ============================================================================
 
-Target::Target(Compiler* c, Label* target) : 
+Target::Target(Compiler* c, Label* target) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_TARGET), 
   _target(target)
 {
 }
 
-Target::~Target()
+Target::~Target() ASMJIT_NOTHROW
 {
 }
 
@@ -2296,13 +2447,13 @@ void Target::emit(Assembler& a)
 // [AsmJit::JumpTable]
 // ============================================================================
 
-JumpTable::JumpTable(Compiler* c) :
+JumpTable::JumpTable(Compiler* c) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_TARGET),
   _target(c->newLabel())
 {
 }
 
-JumpTable::~JumpTable()
+JumpTable::~JumpTable() ASMJIT_NOTHROW
 {
 }
 
@@ -2911,20 +3062,20 @@ void* Compiler::make(UInt32 allocType)
   }
 }
 
-// logger switcher used in Compiler::serialize().
+// Logger switcher used in Compiler::serialize().
 struct ASMJIT_HIDDEN LoggerSwitcher
 {
   LoggerSwitcher(Assembler* a, Compiler* c) :
     a(a),
     logger(a->logger())
   {
-    // Set compiler logger
+    // Set compiler logger.
     if (!logger && c->logger()) a->setLogger(c->logger());
   }
 
   ~LoggerSwitcher()
   {
-    // Restore logger
+    // Restore logger.
     a->setLogger(logger);
   }
 
@@ -2937,14 +3088,14 @@ void Compiler::serialize(Assembler& a)
   LoggerSwitcher loggerSwitcher(&a, this);
   Emittable* cur;
 
-  // Prepare (prepare action can append emittable)
+  // Prepare (prepare action can append emittable).
   for (cur = _first; cur; cur = cur->next()) cur->prepare();
 
-  // Emit and postEmit
+  // Emit and postEmit.
   for (cur = _first; cur; cur = cur->next()) cur->emit(a);
   for (cur = _first; cur; cur = cur->next()) cur->postEmit(a);
 
-  // Jump table
+  // Jump table.
   SysUInt i, len;
   a.bind(_jumpTableLabel);
 
