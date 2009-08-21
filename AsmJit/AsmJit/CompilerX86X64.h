@@ -1141,6 +1141,8 @@ typedef SysIntRef PtrRef;
 //! @note Always use StateRef to manage register states and don't create State
 //! directly. Instead use @c AsmJit::Function::saveState() and 
 //! @c AsmJit::Function::restoreState() methods.
+//!
+//! @sa StateRef
 struct ASMJIT_API State
 {
   // [Construction / Destruction]
