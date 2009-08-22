@@ -1271,41 +1271,42 @@ struct ASMJIT_HIDDEN Label : public Operand
 //! @param y Third component position, number at interval [0, 3].
 //! @param w Fourth component position, number at interval [0, 3].
 //!
-//! Shiffle constants are used in these instructions:
-//! - @c AsmJit::Serializer::pshufw()
-//! - @c AsmJit::Serializer::pshufd()
-//! - @c AsmJit::Serializer::pshufhw()
-//! - @c AsmJit::Serializer::pshuflw()
-//! - @c AsmJit::Serializer::shufps()
+//! Shuffle constants are used in these instructions:
+//! - @c AsmJit::SerializerIntrinsics::pshufw()
+//! - @c AsmJit::SerializerIntrinsics::pshufd()
+//! - @c AsmJit::SerializerIntrinsics::pshufhw()
+//! - @c AsmJit::SerializerIntrinsics::pshuflw()
+//! - @c AsmJit::SerializerIntrinsics::shufps()
 static inline UInt8 mm_shuffle(UInt8 z, UInt8 y, UInt8 x, UInt8 w) ASMJIT_NOTHROW
 { return (z << 6) | (y << 4) | (x << 2) | w; }
 
 // ============================================================================
-// [AsmJit::_Serializer]
+// [AsmJit::SerializerCore]
 // ============================================================================
 
 //! @brief Assembler intrinsics seralizer.
 //!
-//! Serializer is abstract class that is used by @c Assembler and @a Compiler.
+//! SerializerCore is abstract class that is used by @c Assembler and @a Compiler.
 //! You probably never use this class directly, instead you use it to serialize
-//! intrinsics to @c Assembler or @c Compiler. Serializer implements all
-//! intruction intrinsics thats used 
+//! intrinsics to @c Assembler or @c Compiler. @c SerializerIntrinsics implements
+//! all intruction intrinsics thats used and @c Serializer is public serializer
+//! class that should be used (instead of @c SerializerCore or @c SerializerInstrinsics).
 //!
 //! @note Use always @c Serializer class, this class is only designed to 
 //! decrease code size when exporting AsmJit library symbols. Some compilers
 //! (for example MSVC) are exporting inline symbols when class is declared 
 //! to export them and @c Serializer class contains really huge count of 
 //! symbols that will be never used (everything is inlined).
-struct ASMJIT_API _Serializer
+struct ASMJIT_API SerializerCore
 {
   // -------------------------------------------------------------------------
   // [Construction / Destruction]
   // -------------------------------------------------------------------------
 
-  //! @brief Create _Serializer instance.
-  _Serializer() ASMJIT_NOTHROW;
-  //! @brief Destroy _Serializer instance.
-  virtual ~_Serializer() ASMJIT_NOTHROW;
+  //! @brief Create SerializerCore instance.
+  SerializerCore() ASMJIT_NOTHROW;
+  //! @brief Destroy SerializerCore instance.
+  virtual ~SerializerCore() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Properties]
@@ -1444,11 +1445,11 @@ protected:
   UInt32 _error;
 
 private:
-  friend struct Assembler;
-  friend struct Compiler;
+  friend struct AssemblerCore;
+  friend struct CompilerCore;
 
   // disable copy
-  ASMJIT_DISABLE_COPY(_Serializer);
+  ASMJIT_DISABLE_COPY(SerializerCore);
 };
 
 // ============================================================================
@@ -1456,8 +1457,10 @@ private:
 // ============================================================================
 
 //! @brief Assembler instruction serializer.
-struct ASMJIT_HIDDEN Serializer : public _Serializer
+struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
 {
+  inline SerializerIntrinsics() ASMJIT_NOTHROW {}
+
   // -------------------------------------------------------------------------
   // [Embed]
   // -------------------------------------------------------------------------
@@ -7707,6 +7710,23 @@ struct ASMJIT_HIDDEN Serializer : public _Serializer
     ASMJIT_ASSERT(!src.isRegType(REG_GPB));
     __emitX86(INST_MOVBE, &dst, &src);
   }
+};
+
+// ============================================================================
+// [AsmJit::Serializer]
+// ============================================================================
+
+//! @brief Assembler instruction serializer.
+//!
+//! @brief Serializer functionality is implemented in @c SerializerCore class
+//! and serializer intrinsics are implemented in @c SerializerIntrinsics class.
+//!
+//! Always use this class and never use @c SerializerCore or @c SerializerIntrinsics
+//! classes directly.
+struct ASMJIT_HIDDEN Serializer : public SerializerIntrinsics
+{
+  Serializer() ASMJIT_NOTHROW;
+  virtual ~Serializer() ASMJIT_NOTHROW;
 };
 
 //! @}

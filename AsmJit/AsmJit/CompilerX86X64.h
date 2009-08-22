@@ -805,7 +805,7 @@ private:
   //! @brief Custom integer that can be used by custom spill and restore functions.
   SysInt _dataInt;
 
-  friend struct Compiler;
+  friend struct CompilerCore;
   friend struct Function;
   friend struct VariableRef;
 
@@ -854,7 +854,7 @@ struct ASMJIT_HIDDEN VariableRef
   }
 
   //! @brief Return @c Variable instance.
-  inline Variable* v() { return _v; }
+  inline Variable* v() const { return _v; }
 
   // [Methods]
 
@@ -1206,7 +1206,7 @@ private:
   //! @brief State data.
   Data _data;
 
-  friend struct Compiler;
+  friend struct CompilerCore;
   friend struct Function;
   friend struct StateRef;
 
@@ -1309,7 +1309,7 @@ protected:
   UInt32 _type;
 
 private:
-  friend struct Compiler;
+  friend struct CompilerCore;
 
   // disable copy
   ASMJIT_DISABLE_COPY(Emittable);
@@ -1383,7 +1383,7 @@ private:
   SysUInt _capacity;
   UInt8 _data[sizeof(void*)];
 
-  friend struct Compiler;
+  friend struct CompilerCore;
 };
 
 // ============================================================================
@@ -2007,7 +2007,7 @@ private:
   Label* _prologLabel;
   Label* _exitLabel;
 
-  friend struct Compiler;
+  friend struct CompilerCore;
   friend struct State;
 };
 
@@ -2050,7 +2050,7 @@ private:
   Function* _function;
   Label* _label;
 
-  friend struct Compiler;
+  friend struct CompilerCore;
   friend struct Function;
 };
 
@@ -2080,7 +2080,7 @@ private:
   Function* _function;
   Label* _label;
 
-  friend struct Compiler;
+  friend struct CompilerCore;
   friend struct Function;
 };
 
@@ -2469,7 +2469,7 @@ private:
 //! - Each @c Label must be allocated by @c AsmJit::Compiler::newLabel().
 //! - Contains function builder.
 //! - Contains register allocator / variables management.
-struct ASMJIT_API Compiler : public Serializer
+struct ASMJIT_API CompilerCore : public Serializer
 {
   // -------------------------------------------------------------------------
   // [Typedefs]
@@ -2485,9 +2485,9 @@ struct ASMJIT_API Compiler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Create new (empty) instance of @c Compiler.
-  Compiler() ASMJIT_NOTHROW;
+  CompilerCore() ASMJIT_NOTHROW;
   //! @brief Destroy @c Compiler instance.
-  virtual ~Compiler() ASMJIT_NOTHROW;
+  virtual ~CompilerCore() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Compiler]
@@ -2805,7 +2805,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline T* newObject()
   {
     void* addr = _zoneAlloc(sizeof(T));
-    return new(addr) T(this);
+    return new(addr) T(reinterpret_cast<Compiler*>(this));
   }
 
   //! @brief Create object managed by compiler internal memory manager.
@@ -2813,7 +2813,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline T* newObject(P1 p1)
   {
     void* addr = _zoneAlloc(sizeof(T));
-    return new(addr) T(this, p1);
+    return new(addr) T(reinterpret_cast<Compiler*>(this), p1);
   }
 
   //! @brief Create object managed by compiler internal memory manager.
@@ -2821,7 +2821,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline T* newObject(P1 p1, P2 p2)
   {
     void* addr = _zoneAlloc(sizeof(T));
-    return new(addr) T(this, p1, p2);
+    return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2);
   }
 
   //! @brief Create object managed by compiler internal memory manager.
@@ -2829,7 +2829,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline T* newObject(P1 p1, P2 p2, P3 p3)
   {
     void* addr = _zoneAlloc(sizeof(T));
-    return new(addr) T(this, p1, p2, p3);
+    return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3);
   }
 
   //! @brief Create object managed by compiler internal memory manager.
@@ -2837,7 +2837,7 @@ struct ASMJIT_API Compiler : public Serializer
   inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4)
   {
     void* addr = _zoneAlloc(sizeof(T));
-    return new(addr) T(this, p1, p2, p3, p4);
+    return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3, p4);
   }
 
   //! @brief Internal function that registers operand @a op in compiler.
@@ -2862,46 +2862,6 @@ struct ASMJIT_API Compiler : public Serializer
   void jumpToTable(JumpTable* jt, const Register& index);
 
   SysInt _addTarget(void* target);
-
-  // jmpAndRestore
-
-  inline void jAndRestore(CONDITION cc, Label* label, State* state)
-  {
-    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
-    _jmpAndRestore(_jcctable[cc], label, state);
-  }
-
-  inline void jaAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JA  , label, state); }
-  inline void jaeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JAE , label, state); }
-  inline void jbAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JB  , label, state); }
-  inline void jbeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JBE , label, state); }
-  inline void jcAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JC  , label, state); }
-  inline void jeAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JE  , label, state); }
-  inline void jgAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JG  , label, state); }
-  inline void jgeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JGE , label, state); }
-  inline void jlAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JL  , label, state); }
-  inline void jleAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JLE , label, state); }
-  inline void jnaAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNA , label, state); }
-  inline void jnaeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNAE, label, state); }
-  inline void jnbAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNB , label, state); }
-  inline void jnbeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNBE, label, state); }
-  inline void jncAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNC , label, state); }
-  inline void jneAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNE , label, state); }
-  inline void jngAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNG , label, state); }
-  inline void jngeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNGE, label, state); }
-  inline void jnlAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNL , label, state); }
-  inline void jnleAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNLE, label, state); }
-  inline void jnoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNO , label, state); }
-  inline void jnpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNP , label, state); }
-  inline void jnsAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNS , label, state); }
-  inline void jnzAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNZ , label, state); }
-  inline void joAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JO  , label, state); }
-  inline void jpAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JP  , label, state); }
-  inline void jpeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPE , label, state); }
-  inline void jpoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPO , label, state); }
-  inline void jsAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JS  , label, state); }
-  inline void jzAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JZ  , label, state); }
-  inline void jmpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JMP , label, state); }
 
   void _jmpAndRestore(UInt32 code, Label* label, State* state);
 
@@ -2943,19 +2903,136 @@ struct ASMJIT_API Compiler : public Serializer
   void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b);
 #endif // ASMJIT_X64
 
-  using Serializer::adc;
-  using Serializer::add;
-  using Serializer::and_;
-  using Serializer::cmp;
-  using Serializer::dec;
-  using Serializer::inc;
-  using Serializer::mov;
-  using Serializer::neg;
-  using Serializer::not_;
-  using Serializer::or_;
-  using Serializer::sbb;
-  using Serializer::sub;
-  using Serializer::xor_;
+  // -------------------------------------------------------------------------
+  // [EmitX86]
+  // -------------------------------------------------------------------------
+
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+
+  // -------------------------------------------------------------------------
+  // [Embed]
+  // -------------------------------------------------------------------------
+
+  virtual void _embed(const void* dataPtr, SysUInt dataSize);
+
+  // -------------------------------------------------------------------------
+  // [Align]
+  // -------------------------------------------------------------------------
+
+  virtual void align(SysInt m);
+
+  // -------------------------------------------------------------------------
+  // [Bind]
+  // -------------------------------------------------------------------------
+
+  virtual void bind(Label* label);
+
+  // -------------------------------------------------------------------------
+  // [Make]
+  // -------------------------------------------------------------------------
+
+  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+
+  //! @brief Method that will emit everything to @c Assembler instance @a a.
+  void serialize(Assembler& a);
+
+  // -------------------------------------------------------------------------
+  // [Variables]
+  // -------------------------------------------------------------------------
+private:
+  //! @brief First emittable.
+  Emittable* _first;
+  //! @brief Last emittable.
+  Emittable* _last;
+  //! @brief Current emittable.
+  Emittable* _current;
+
+  //! @brief Operands list (operand id is index in this list, id 0 is not valid).
+  OperandList _operands;
+
+  //! @brief Current function.
+  Function* _currentFunction;
+
+  //! @brief Label id counter (starts from 1).
+  UInt32 _labelIdCounter;
+
+  //! @brief Jump table label.
+  Label* _jumpTableLabel;
+
+  //! @brief Jump table entities.
+  PodVector<void*> _jumpTableData;
+
+  friend struct Instruction;
+  friend struct Variable;
+};
+
+// ============================================================================
+// [AsmJit::CompilerIntrinsics]
+// ============================================================================
+
+struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
+{
+  inline CompilerIntrinsics() ASMJIT_NOTHROW {}
+
+  // --------------------------------------------------------------------------
+  // [jmpAndRestore]
+  // --------------------------------------------------------------------------
+
+  inline void jAndRestore(CONDITION cc, Label* label, State* state)
+  {
+    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
+    _jmpAndRestore(_jcctable[cc], label, state);
+  }
+
+  inline void jaAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JA  , label, state); }
+  inline void jaeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JAE , label, state); }
+  inline void jbAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JB  , label, state); }
+  inline void jbeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JBE , label, state); }
+  inline void jcAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JC  , label, state); }
+  inline void jeAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JE  , label, state); }
+  inline void jgAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JG  , label, state); }
+  inline void jgeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JGE , label, state); }
+  inline void jlAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JL  , label, state); }
+  inline void jleAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JLE , label, state); }
+  inline void jnaAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNA , label, state); }
+  inline void jnaeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNAE, label, state); }
+  inline void jnbAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNB , label, state); }
+  inline void jnbeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNBE, label, state); }
+  inline void jncAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNC , label, state); }
+  inline void jneAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNE , label, state); }
+  inline void jngAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNG , label, state); }
+  inline void jngeAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNGE, label, state); }
+  inline void jnlAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNL , label, state); }
+  inline void jnleAndRestore(Label* label, State* state) { _jmpAndRestore(INST_JNLE, label, state); }
+  inline void jnoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNO , label, state); }
+  inline void jnpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNP , label, state); }
+  inline void jnsAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNS , label, state); }
+  inline void jnzAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JNZ , label, state); }
+  inline void joAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JO  , label, state); }
+  inline void jpAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JP  , label, state); }
+  inline void jpeAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPE , label, state); }
+  inline void jpoAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JPO , label, state); }
+  inline void jsAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JS  , label, state); }
+  inline void jzAndRestore  (Label* label, State* state) { _jmpAndRestore(INST_JZ  , label, state); }
+  inline void jmpAndRestore (Label* label, State* state) { _jmpAndRestore(INST_JMP , label, state); }
+
+  // --------------------------------------------------------------------------
+  // [Intrinsics]
+  // --------------------------------------------------------------------------
+
+  using SerializerIntrinsics::adc;
+  using SerializerIntrinsics::add;
+  using SerializerIntrinsics::and_;
+  using SerializerIntrinsics::cmp;
+  using SerializerIntrinsics::dec;
+  using SerializerIntrinsics::inc;
+  using SerializerIntrinsics::mov;
+  using SerializerIntrinsics::neg;
+  using SerializerIntrinsics::not_;
+  using SerializerIntrinsics::or_;
+  using SerializerIntrinsics::sbb;
+  using SerializerIntrinsics::sub;
+  using SerializerIntrinsics::xor_;
 
   inline void adc(const Register& dst, const Int32Ref& src) { op_reg32_var32(INST_ADC, dst, src); }
   inline void adc(const Int32Ref& dst, const Register& src) { op_var32_reg32(INST_ADC, dst, src); }
@@ -3040,68 +3117,23 @@ struct ASMJIT_API Compiler : public Serializer
   inline void xor_(const Int64Ref& dst, const Register& src) { op_var64_reg64(INST_XOR, dst, src); }
   inline void xor_(const Int64Ref& dst, const Immediate& src) { op_var64_imm(INST_XOR, dst, src); }
 #endif // ASMJIT_X64
+};
 
-  // -------------------------------------------------------------------------
-  // [EmitX86]
-  // -------------------------------------------------------------------------
+// ============================================================================
+// [AsmJit::Compiler]
+// ============================================================================
 
-  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
-
-  // -------------------------------------------------------------------------
-  // [Embed]
-  // -------------------------------------------------------------------------
-
-  virtual void _embed(const void* dataPtr, SysUInt dataSize);
-
-  // -------------------------------------------------------------------------
-  // [Align]
-  // -------------------------------------------------------------------------
-
-  virtual void align(SysInt m);
-
-  // -------------------------------------------------------------------------
-  // [Bind]
-  // -------------------------------------------------------------------------
-
-  virtual void bind(Label* label);
-
-  // -------------------------------------------------------------------------
-  // [Make]
-  // -------------------------------------------------------------------------
-
-  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
-
-  //! @brief Method that will emit everything to @c Assembler instance @a a.
-  void serialize(Assembler& a);
-
-  // -------------------------------------------------------------------------
-  // [Variables]
-  // -------------------------------------------------------------------------
-private:
-  //! @brief First emittable.
-  Emittable* _first;
-  //! @brief Last emittable.
-  Emittable* _last;
-  //! @brief Current emittable.
-  Emittable* _current;
-
-  //! @brief Operands list (operand id is index in this list, id 0 is not valid).
-  OperandList _operands;
-
-  //! @brief Current function.
-  Function* _currentFunction;
-
-  //! @brief Label id counter (starts from 1).
-  UInt32 _labelIdCounter;
-
-  //! @brief Jump table label.
-  Label* _jumpTableLabel;
-
-  //! @brief Jump table entities.
-  PodVector<void*> _jumpTableData;
-
-  friend struct Instruction;
-  friend struct Variable;
+//! @brief Compiler is higher level code generation class.
+//!
+//! Compiler functionality is implemented in @c CompilerCore class, extended
+//! compiler intrinsics are implemented in @c CompilerIntrinsics class.
+//!
+//! Always use this class and never use @c CompilerCore or @c CompilerIntrinsics
+//! classes directly.
+struct ASMJIT_API Compiler : public CompilerIntrinsics
+{
+  Compiler() ASMJIT_NOTHROW;
+  virtual ~Compiler() ASMJIT_NOTHROW;
 };
 
 //! @}

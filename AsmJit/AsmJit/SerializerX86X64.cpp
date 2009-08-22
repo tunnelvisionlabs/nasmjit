@@ -119,10 +119,10 @@ Immediate uimm(SysUInt i) ASMJIT_NOTHROW
 }
 
 // ============================================================================
-// [AsmJit::_Serializer - Construction / Destruction]
+// [AsmJit::SerializerCore - Construction / Destruction]
 // ============================================================================
 
-_Serializer::_Serializer() ASMJIT_NOTHROW :
+SerializerCore::SerializerCore() ASMJIT_NOTHROW :
   _logger(NULL),
   _zone(65536 - sizeof(Zone::Chunk) - 32),
   _properties(0),
@@ -134,16 +134,16 @@ _Serializer::_Serializer() ASMJIT_NOTHROW :
                  (1 << PROPERTY_JCC_HINTS     ) ;
 }
 
-_Serializer::~_Serializer() ASMJIT_NOTHROW
+SerializerCore::~SerializerCore() ASMJIT_NOTHROW
 {
 }
 
 // ============================================================================
-// [AsmJit::_Serializer - Properties]
+// [AsmJit::SerializerCore - Properties]
 // ============================================================================
 
 //! @brief Get property @a key from serializer.
-UInt32 _Serializer::getProperty(UInt32 key) ASMJIT_NOTHROW
+UInt32 SerializerCore::getProperty(UInt32 key) ASMJIT_NOTHROW
 {
   if (key < 32)
     return (_properties >> key) & 1;
@@ -152,7 +152,7 @@ UInt32 _Serializer::getProperty(UInt32 key) ASMJIT_NOTHROW
 }
 
 //! @brief Set property @a key to @a value.
-UInt32 _Serializer::setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW
+UInt32 SerializerCore::setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW
 {
   if (key < 32)
   {
@@ -170,23 +170,23 @@ UInt32 _Serializer::setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW
 }
 
 // ============================================================================
-// [AsmJit::_Serializer - Memory Management]
+// [AsmJit::SerializerCore - Memory Management]
 // ============================================================================
 
 //! @brief Allocate memory using compiler internal memory manager.
-void* _Serializer::_zoneAlloc(SysUInt size)
+void* SerializerCore::_zoneAlloc(SysUInt size)
 {
   return _zone.alloc(size);
 }
 
 // ============================================================================
-// [AsmJit::_Serializer - Helpers]
+// [AsmJit::SerializerCore - Helpers]
 // ============================================================================
 
 // Used for NULL operands in _emitX86() function
 static const UInt8 none[sizeof(Operand)] = { 0 };
 
-void _Serializer::__emitX86(UInt32 code)
+void SerializerCore::__emitX86(UInt32 code)
 {
   _emitX86(code, 
     reinterpret_cast<const Operand*>(none), 
@@ -194,7 +194,7 @@ void _Serializer::__emitX86(UInt32 code)
     reinterpret_cast<const Operand*>(none));
 }
 
-void _Serializer::__emitX86(UInt32 code, const Operand* o1)
+void SerializerCore::__emitX86(UInt32 code, const Operand* o1)
 {
   _emitX86(code, 
     o1, 
@@ -202,7 +202,7 @@ void _Serializer::__emitX86(UInt32 code, const Operand* o1)
     reinterpret_cast<const Operand*>(&none));
 }
 
-void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2)
+void SerializerCore::__emitX86(UInt32 code, const Operand* o1, const Operand* o2)
 {
   _emitX86(code, 
     o1, 
@@ -210,7 +210,7 @@ void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2)
     reinterpret_cast<const Operand*>(&none));
 }
 
-void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+void SerializerCore::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
   _emitX86(code, 
     o1, 
@@ -219,7 +219,7 @@ void _Serializer::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, c
 }
 
 //! @brief Private method for emitting jcc.
-void _Serializer::_emitJcc(UInt32 code, Label* label, UInt32 hint)
+void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint)
 {
   if (!hint)
   {
@@ -232,7 +232,7 @@ void _Serializer::_emitJcc(UInt32 code, Label* label, UInt32 hint)
   }
 }
 
-const UInt32 _Serializer::_jcctable[16] = 
+const UInt32 SerializerCore::_jcctable[16] =
 {
   INST_JO,
   INST_JNO,
@@ -252,7 +252,7 @@ const UInt32 _Serializer::_jcctable[16] =
   INST_JG
 };
 
-const UInt32 _Serializer::_cmovcctable[16] = 
+const UInt32 SerializerCore::_cmovcctable[16] =
 {
   INST_CMOVO,
   INST_CMOVNO,
@@ -271,6 +271,13 @@ const UInt32 _Serializer::_cmovcctable[16] =
   INST_CMOVLE,
   INST_CMOVG
 };
+
+// ============================================================================
+// [AsmJit::Serializer]
+// ============================================================================
+
+Serializer::Serializer() ASMJIT_NOTHROW {}
+Serializer::~Serializer() ASMJIT_NOTHROW {}
 
 } // AsmJit namespace
 

@@ -66,7 +66,7 @@
 
 // [AsmJit - API]
 
-// Hide AsmJit symbols that we don't want to export (Serializer for example).
+// Hide AsmJit symbols that we don't want to export (SerializerIntrinsics class for example).
 #if !defined(ASMJIT_HIDDEN)
 # if defined(__GNUC__) && __GNUC__ >= 4
 #  define ASMJIT_HIDDEN __attribute__((visibility("hidden")))

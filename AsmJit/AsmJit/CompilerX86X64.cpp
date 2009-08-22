@@ -462,7 +462,6 @@ void Function::prepare()
   UInt8 varMemBase;    // Address base register for function variables
   SysInt argDisp = 0;  // Displacement for arguments
   SysInt varDisp = 0;  // Displacement for variables
-
   UInt32 alignSize = 0;// Maximum alignment stack size
 
   // This is simple optimization to do 16 byte aligned variables first and
@@ -2221,8 +2220,8 @@ void Prolog::emit(Assembler& a)
   // In 64-bit mode the stack is aligned to 16 bytes by default.
   bool isStackAlignedTo16Bytes = sizeof(SysInt) == 8;
 
-  // How many bytes to add to stack to make it aligned to 128-bits.
-  SysInt stackAdjust = (f->naked() && sizeof(SysInt) == 8) ? 8 : 0;
+  // How many bytes to add to stack to make it aligned to 16 bytes.
+  SysInt stackAdjust = (f->naked()) ? ((sizeof(SysInt) == 8) ? 8 : 12) : ((sizeof(SysInt) == 8) ? 0 : 8);
 
   // Calculate stack size with stack adjustment. This will give us proper
   // count of bytes to subtract from esp/rsp.
@@ -2502,10 +2501,10 @@ Label* JumpTable::addLabel(Label* target, SysInt pos)
 }
 
 // ============================================================================
-// [AsmJit::Compiler - Construction / Destruction]
+// [AsmJit::CompilerCore - Construction / Destruction]
 // ============================================================================
 
-Compiler::Compiler() ASMJIT_NOTHROW :
+CompilerCore::CompilerCore() ASMJIT_NOTHROW :
   _first(NULL),
   _last(NULL),
   _current(NULL),
@@ -2515,16 +2514,16 @@ Compiler::Compiler() ASMJIT_NOTHROW :
   _jumpTableLabel = newLabel();
 }
 
-Compiler::~Compiler() ASMJIT_NOTHROW
+CompilerCore::~CompilerCore() ASMJIT_NOTHROW
 {
   delAll(_first);
 }
 
 // ============================================================================
-// [AsmJit::Compiler - Buffer]
+// [AsmJit::CompilerCore - Buffer]
 // ============================================================================
 
-void Compiler::clear()
+void CompilerCore::clear()
 {
   delAll(_first);
   _first = NULL;
@@ -2537,7 +2536,7 @@ void Compiler::clear()
   _jumpTableData.clear();
 }
 
-void Compiler::free()
+void CompilerCore::free()
 {
   clear();
   _operands.free();
@@ -2548,7 +2547,7 @@ void Compiler::free()
 // [AsmJit::Compiler - Emittables]
 // ============================================================================
 
-void Compiler::addEmittable(Emittable* emittable)
+void CompilerCore::addEmittable(Emittable* emittable)
 {
   ASMJIT_ASSERT(emittable != NULL);
   ASMJIT_ASSERT(emittable->_prev == NULL);
@@ -2586,7 +2585,7 @@ void Compiler::addEmittable(Emittable* emittable)
   _current = emittable;
 }
 
-void Compiler::removeEmittable(Emittable* emittable)
+void CompilerCore::removeEmittable(Emittable* emittable)
 {
   Emittable* prev = emittable->_prev;
   Emittable* next = emittable->_next;
@@ -2600,7 +2599,7 @@ void Compiler::removeEmittable(Emittable* emittable)
   if (emittable == _current) _current = prev;
 }
 
-Emittable* Compiler::setCurrent(Emittable* current)
+Emittable* CompilerCore::setCurrent(Emittable* current)
 {
   Emittable* old = _current;
   _current = current;
@@ -2611,7 +2610,7 @@ Emittable* Compiler::setCurrent(Emittable* current)
 // [AsmJit::Compiler - Logging]
 // ============================================================================
 
-void Compiler::comment(const char* fmt, ...)
+void CompilerCore::comment(const char* fmt, ...)
 {
   char buf[1024];
   char* p = buf;
@@ -2637,7 +2636,7 @@ void Compiler::comment(const char* fmt, ...)
 // [AsmJit::Compiler - Function Builder]
 // ============================================================================
 
-Function* Compiler::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count)
+Function* CompilerCore::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count)
 {
   ASMJIT_ASSERT(_currentFunction == NULL);
 
@@ -2652,7 +2651,7 @@ Function* Compiler::newFunction_(UInt32 cconv, const UInt32* args, SysUInt count
   return f;
 }
 
-Function* Compiler::endFunction()
+Function* CompilerCore::endFunction()
 {
   ASMJIT_ASSERT(_currentFunction != NULL);
   Function* f = _currentFunction;
@@ -2667,14 +2666,14 @@ Function* Compiler::endFunction()
   return f;
 }
 
-Prolog* Compiler::newProlog(Function* f)
+Prolog* CompilerCore::newProlog(Function* f)
 {
   Prolog* e = newObject<Prolog>(f);
   addEmittable(e);
   return e;
 }
 
-Epilog* Compiler::newEpilog(Function* f)
+Epilog* CompilerCore::newEpilog(Function* f)
 {
   Epilog* e = newObject<Epilog>(f);
   addEmittable(e);
@@ -2685,87 +2684,87 @@ Epilog* Compiler::newEpilog(Function* f)
 // [AsmJit::Compiler - Registers allocator / Variables]
 // ==========================================================================
 
-Variable* Compiler::argument(SysInt i)
+Variable* CompilerCore::argument(SysInt i)
 {
   return currentFunction()->argument(i);
 }
 
-Variable* Compiler::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegister)
+Variable* CompilerCore::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegister)
 {
   return currentFunction()->newVariable(type, priority, preferredRegister);
 }
 
-bool Compiler::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
+bool CompilerCore::alloc(Variable* v, UInt8 mode, UInt8 preferredRegister)
 {
   return currentFunction()->alloc(v, mode, preferredRegister);
 }
 
-bool Compiler::spill(Variable* v)
+bool CompilerCore::spill(Variable* v)
 {
   return currentFunction()->spill(v);
 }
 
-void Compiler::unuse(Variable* v)
+void CompilerCore::unuse(Variable* v)
 {
   return currentFunction()->unuse(v);
 }
 
-void Compiler::spillAll()
+void CompilerCore::spillAll()
 {
   return currentFunction()->spillAll();
 }
 
-void Compiler::spillAllGp()
+void CompilerCore::spillAllGp()
 {
   return currentFunction()->spillAllGp();
 }
 
-void Compiler::spillAllMm()
+void CompilerCore::spillAllMm()
 {
   return currentFunction()->spillAllMm();
 }
 
-void Compiler::spillAllXmm()
+void CompilerCore::spillAllXmm()
 {
   return currentFunction()->spillAllXmm();
 }
 
-void Compiler::spillRegister(const BaseReg& reg)
+void CompilerCore::spillRegister(const BaseReg& reg)
 {
   return currentFunction()->spillRegister(reg);
 }
 
-SysInt Compiler::numFreeGp() const
+SysInt CompilerCore::numFreeGp() const
 {
   return _currentFunction->numFreeGp();
 }
 
-SysInt Compiler::numFreeMm() const
+SysInt CompilerCore::numFreeMm() const
 {
   return _currentFunction->numFreeMm();
 }
 
-SysInt Compiler::numFreeXmm() const
+SysInt CompilerCore::numFreeXmm() const
 {
   return _currentFunction->numFreeXmm();
 }
 
-bool Compiler::isPrevented(Variable* v)
+bool CompilerCore::isPrevented(Variable* v)
 {
   return currentFunction()->isPrevented(v);
 }
 
-void Compiler::addPrevented(Variable* v)
+void CompilerCore::addPrevented(Variable* v)
 {
   return currentFunction()->addPrevented(v);
 }
 
-void Compiler::removePrevented(Variable* v)
+void CompilerCore::removePrevented(Variable* v)
 {
   return currentFunction()->removePrevented(v);
 }
 
-void Compiler::clearPrevented()
+void CompilerCore::clearPrevented()
 {
   currentFunction()->clearPrevented();
 }
@@ -2774,17 +2773,17 @@ void Compiler::clearPrevented()
 // [AsmJit::Compiler - State]
 // ==========================================================================
 
-State* Compiler::saveState()
+State* CompilerCore::saveState()
 {
   return currentFunction()->saveState();
 }
 
-void Compiler::restoreState(State* state)
+void CompilerCore::restoreState(State* state)
 {
   currentFunction()->restoreState(state);
 }
 
-void Compiler::setState(State* state)
+void CompilerCore::setState(State* state)
 {
   currentFunction()->setState(state);
 }
@@ -2793,7 +2792,7 @@ void Compiler::setState(State* state)
 // [AsmJit::Compiler - Labels]
 // ============================================================================
 
-Label* Compiler::newLabel()
+Label* CompilerCore::newLabel()
 {
   Label* label = new(_zoneAlloc(sizeof(Label))) Label((UInt16)(_labelIdCounter++));
   _registerOperand(label);
@@ -2804,7 +2803,7 @@ Label* Compiler::newLabel()
 // [AsmJit::Compiler - Jump Table]
 // ============================================================================
 
-JumpTable* Compiler::newJumpTable()
+JumpTable* CompilerCore::newJumpTable()
 {
   JumpTable* e = newObject<JumpTable>();
   addEmittable(e);
@@ -2815,7 +2814,7 @@ JumpTable* Compiler::newJumpTable()
 // [AsmJit::Compiler - Memory Management]
 // ============================================================================
 
-void Compiler::_registerOperand(Operand* op)
+void CompilerCore::_registerOperand(Operand* op)
 {
   op->_operandId = _operands.length();
   _operands.append(op);
@@ -2825,17 +2824,17 @@ void Compiler::_registerOperand(Operand* op)
 // [AsmJit::Compiler - Jumps / Calls]
 // ============================================================================
 
-void Compiler::jmp(void* target)
+void CompilerCore::jmp(void* target)
 {
   jmp(ptr(_jumpTableLabel, _addTarget(target)));
 }
 
-void Compiler::call(void* target)
+void CompilerCore::call(void* target)
 {
   call(ptr(_jumpTableLabel, _addTarget(target)));
 }
 
-void Compiler::jumpToTable(JumpTable* jt, const Register& index)
+void CompilerCore::jumpToTable(JumpTable* jt, const Register& index)
 {
 #if defined(ASMJIT_X64)
   // 64 bit mode: Complex address can't be used, because SIB byte not allows
@@ -2852,7 +2851,7 @@ void Compiler::jumpToTable(JumpTable* jt, const Register& index)
 #endif
 }
 
-SysInt Compiler::_addTarget(void* target)
+SysInt CompilerCore::_addTarget(void* target)
 {
   SysInt id = _jumpTableData.length() * sizeof(SysInt);
   _jumpTableData.append(target);
@@ -2861,7 +2860,7 @@ SysInt Compiler::_addTarget(void* target)
 
 // jmpAndRestore
 
-void Compiler::_jmpAndRestore(UInt32 code, Label* label, State* state)
+void CompilerCore::_jmpAndRestore(UInt32 code, Label* label, State* state)
 {
   JumpAndRestore* jr = (JumpAndRestore*)_zoneAlloc(sizeof(JumpAndRestore));
   jr->next = (JumpAndRestore*)label->_compilerData;
@@ -2877,7 +2876,7 @@ void Compiler::_jmpAndRestore(UInt32 code, Label* label, State* state)
 // [AsmJit::Compiler - Intrinsics]
 // ============================================================================
 
-void Compiler::op_var32(UInt32 code, const Int32Ref& a)
+void CompilerCore::op_var32(UInt32 code, const Int32Ref& a)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2890,7 +2889,7 @@ void Compiler::op_var32(UInt32 code, const Int32Ref& a)
   }
 }
 
-void Compiler::op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
+void CompilerCore::op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
 {
   if (b.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2903,7 +2902,7 @@ void Compiler::op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b)
   }
 }
 
-void Compiler::op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
+void CompilerCore::op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2916,7 +2915,7 @@ void Compiler::op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b)
   }
 }
 
-void Compiler::op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
+void CompilerCore::op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2930,7 +2929,7 @@ void Compiler::op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b)
 }
 
 #if defined(ASMJIT_X64)
-void Compiler::op_var64(UInt32 code, const Int64Ref& a)
+void CompilerCore::op_var64(UInt32 code, const Int64Ref& a)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2943,7 +2942,7 @@ void Compiler::op_var64(UInt32 code, const Int64Ref& a)
   }
 }
 
-void Compiler::op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
+void CompilerCore::op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
 {
   if (b.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2956,7 +2955,7 @@ void Compiler::op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b)
   }
 }
 
-void Compiler::op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
+void CompilerCore::op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2969,7 +2968,7 @@ void Compiler::op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b)
   }
 }
 
-void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
+void CompilerCore::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
 {
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
@@ -2987,7 +2986,7 @@ void Compiler::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b)
 // [AsmJit::Compiler - EmitX86]
 // ============================================================================
 
-void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+void CompilerCore::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
   addEmittable(newObject<Instruction>(code, o1, o2, o3));
 
@@ -2999,14 +2998,14 @@ void Compiler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const
 // [AsmJit::Compiler - Embed]
 // ============================================================================
 
-void Compiler::_embed(const void* data, SysUInt size)
+void CompilerCore::_embed(const void* data, SysUInt size)
 {
   // Align capacity to 16 bytes
   SysUInt capacity = (size + 15) & ~15;
 
   EmbeddedData* e = 
     new(_zoneAlloc(sizeof(EmbeddedData) - sizeof(void*) + capacity)) 
-      EmbeddedData(this, capacity, data, size);
+      EmbeddedData(reinterpret_cast<Compiler*>(this), capacity, data, size);
   addEmittable(e);
 }
 
@@ -3014,7 +3013,7 @@ void Compiler::_embed(const void* data, SysUInt size)
 // [AsmJit::Compiler - Align]
 // ============================================================================
 
-void Compiler::align(SysInt m)
+void CompilerCore::align(SysInt m)
 {
   addEmittable(newObject<Align>(m));
 }
@@ -3023,10 +3022,10 @@ void Compiler::align(SysInt m)
 // [AsmJit::Compiler - Bind]
 // ============================================================================
 
-void Compiler::bind(Label* label)
+void CompilerCore::bind(Label* label)
 {
   // JumpAndRestore is delayed to bind()
-  if (label->_compilerData) Function::_jmpAndRestore(this, label);
+  if (label->_compilerData) Function::_jmpAndRestore(reinterpret_cast<Compiler*>(this), label);
 
   addEmittable(newObject<Target>(label));
 }
@@ -3035,7 +3034,7 @@ void Compiler::bind(Label* label)
 // [AsmJit::Compiler - Make]
 // ============================================================================
 
-void* Compiler::make(UInt32 allocType)
+void* CompilerCore::make(UInt32 allocType)
 {
   Assembler a;
   a._properties = _properties;
@@ -3084,9 +3083,9 @@ struct ASMJIT_HIDDEN LoggerSwitcher
   Logger* logger;
 };
 
-void Compiler::serialize(Assembler& a)
+void CompilerCore::serialize(Assembler& a)
 {
-  LoggerSwitcher loggerSwitcher(&a, this);
+  LoggerSwitcher loggerSwitcher(&a, reinterpret_cast<Compiler*>(this));
   Emittable* cur;
 
   // Prepare (prepare action can append emittable).
@@ -3106,6 +3105,13 @@ void Compiler::serialize(Assembler& a)
     a.dptr(_jumpTableData[i]);
   }
 }
+
+// ============================================================================
+// [AsmJit::Compiler - Construction / Destruction]
+// ============================================================================
+
+Compiler::Compiler() ASMJIT_NOTHROW {}
+Compiler::~Compiler() ASMJIT_NOTHROW {}
 
 } // AsmJit namespace
 
