@@ -4779,11 +4779,25 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   {
     __emitX86(INST_MOVQ, &dst, &src);
   }
+#if defined(ASMJIT_X64)
+  //! @brief Move QWord (SSE).
+  inline void movq(const Register& dst, const XMMRegister& src)
+  {
+    __emitX86(INST_MOVQ, &dst, &src);
+  }
+#endif // ASMJIT_X64
   //! @brief Move QWord (SSE).
   inline void movq(const XMMRegister& dst, const Mem& src)
   {
     __emitX86(INST_MOVQ, &dst, &src);
   }
+#if defined(ASMJIT_X64)
+  //! @brief Move QWord (SSE).
+  inline void movq(const XMMRegister& dst, const Register& src)
+  {
+    __emitX86(INST_MOVQ, &dst, &src);
+  }
+#endif // ASMJIT_X64
 
   //! @brief Move 64 Bits Non Temporal (SSE).
   inline void movntq(const Mem& dst, const MMRegister& src)

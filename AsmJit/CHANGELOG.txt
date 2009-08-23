@@ -1,3 +1,8 @@
+2009-08-23
+- Split Complier class to CompilerCore, CompilerIntrinsics and Compiler
+  (Same as Serializer to not export unneeded symbols in dlls)
+- Added missing movq instruction for reg64/xmm and xmm/reg64
+
 2009-08-19
 - Fixed relocation problems for variables that were passed as a function argument
   (address was not relocated)
