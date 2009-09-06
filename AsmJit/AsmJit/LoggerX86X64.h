@@ -72,7 +72,8 @@ struct ASMJIT_API Logger
   virtual void logInstruction(UInt32 code, 
     const Operand* o1,
     const Operand* o2,
-    const Operand* o3) ASMJIT_NOTHROW;
+    const Operand* o3,
+    const char* inlineComment = NULL) ASMJIT_NOTHROW;
 
   //! @brief Log .align directive.
   virtual void logAlign(SysInt m) ASMJIT_NOTHROW;

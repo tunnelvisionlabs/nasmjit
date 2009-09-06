@@ -1336,6 +1336,15 @@ struct ASMJIT_API SerializerCore
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
+  //! @brief Adds inline comment to next generated instruction.
+  //!
+  //! This method is only iseful when debugging (present Logger). If Logger is
+  //! not set, it does nothing.
+  //!
+  //! @param text String that contains comment.
+  //! @param len Length of that string or -1 to detect it using @c strlen().
+  virtual void _inlineComment(const char* text, SysInt len) = 0;
+
   //! @brief Emits X86/FPU or MM instruction.
   //!
   //! Operands @a o1, @a o2 or @a o3 can't be @c NULL.
@@ -1374,7 +1383,7 @@ struct ASMJIT_API SerializerCore
   // [Memory Management]
   // -------------------------------------------------------------------------
 
-  //! @brief Allocate memory using compiler internal memory manager.
+  //! @brief Allocate memory using Assembler or Compiler internal memory manager.
   void* _zoneAlloc(SysUInt size);
 
   // -------------------------------------------------------------------------
@@ -1443,6 +1452,8 @@ protected:
 
   //! @brief Last error code.
   UInt32 _error;
+
+  enum { MaxInlineCommentSize = 256 };
 
 private:
   friend struct AssemblerCore;

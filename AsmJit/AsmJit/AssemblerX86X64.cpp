@@ -48,6 +48,7 @@ Assembler::Assembler() ASMJIT_NOTHROW :
   _buffer(32), // max instruction length is 15, but we can align up to 32 bytes
   _unusedLinks(NULL)
 {
+  _inlineCommentBuffer[0] = '\0';
 }
 
 Assembler::~Assembler() ASMJIT_NOTHROW
@@ -531,6 +532,16 @@ void Assembler::relocCode(void* _dst) const
 // ============================================================================
 // [AsmJit::Assembler - Abstract Emitters]
 // ============================================================================
+
+void Assembler::_inlineComment(const char* text, SysInt len)
+{
+  if (_logger == NULL) return;
+
+  if (len < 0) len = strlen(text);
+  if (len > MaxInlineCommentSize - 1) len = MaxInlineCommentSize - 1;
+
+  memcpy(_inlineCommentBuffer, text, len + 1);
+}
 
 // #define ASMJIT_DEBUG_INSTRUCTION_MAP
 
@@ -1216,7 +1227,11 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
   ASMJIT_ASSERT(id.instruction == code);
 #endif // ASMJIT_DEBUG_INSTRUCTION_MAP
 
-  if (_logger) _logger->logInstruction(code, o1, o2, o3);
+  if (_logger)
+  {
+    _logger->logInstruction(code, o1, o2, o3, _inlineCommentBuffer);
+    _inlineCommentBuffer[0] = '\0';
+  }
 
   switch (id.group)
   {

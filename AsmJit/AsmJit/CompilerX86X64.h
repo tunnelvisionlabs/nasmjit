@@ -707,6 +707,11 @@ struct ASMJIT_API Variable
   inline void setDataInt(SysInt data) ASMJIT_NOTHROW
   { _dataInt = data; }
 
+  inline const char* name() const ASMJIT_NOTHROW
+  { return _name; }
+
+  void setName(const char* name) ASMJIT_NOTHROW;
+
 private:
   //! @brief Set variable stack offset.
   //! @internal
@@ -804,6 +809,9 @@ private:
 
   //! @brief Custom integer that can be used by custom spill and restore functions.
   SysInt _dataInt;
+
+  enum { MaxVariableNameLength = 32 };
+  char _name[MaxVariableNameLength];
 
   friend struct CompilerCore;
   friend struct Function;
@@ -985,6 +993,9 @@ struct ASMJIT_HIDDEN VariableRef
   inline void setDataPtr(void* data) { ASMJIT_ASSERT(_v); _v->setDataPtr(data); }
   //! @brief Set custom data.
   inline void setDataInt(SysInt data) { ASMJIT_ASSERT(_v); _v->setDataInt(data); }
+  
+  inline const char* name() const { ASMJIT_ASSERT(_v); return _v->name(); }
+  inline void setName(const char* name) const { ASMJIT_ASSERT(_v); _v->setName(name); }
 
   inline bool operator==(const VariableRef& other) const { return _v == other._v; }
   inline bool operator!=(const VariableRef& other) const { return _v != other._v; }
@@ -1231,7 +1242,7 @@ struct ASMJIT_HIDDEN StateRef
   inline State* state() const { return _state; }
 
   //! @brief Implicit cast to @c State.
-  operator State*() const { return _state; }
+  inline operator State*() const { return _state; }
 
 private:
   State* _state;
@@ -1421,7 +1432,10 @@ struct ASMJIT_API Instruction : public Emittable
   // [Construction / Destruction]
 
   Instruction(Compiler* c) ASMJIT_NOTHROW;
-  Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
+  Instruction(Compiler* c,
+    UInt32 code,
+    const Operand* o1, const Operand* o2, const Operand* o3,
+    const char* inlineComment = NULL) ASMJIT_NOTHROW;
   virtual ~Instruction() ASMJIT_NOTHROW;
 
   // [Emit]
@@ -1460,6 +1474,8 @@ private:
   Operand *_o[3];
   //! @brief Static array for instruction operands (cache)
   Operand _ocache[3];
+
+  const char* _inlineComment;
 
   friend struct Function;
 };
@@ -1746,7 +1762,7 @@ struct ASMJIT_API Function : public Emittable
   //! @brief Create new variable
   Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
 
-  bool alloc(Variable* v, 
+  bool alloc(Variable* v,
     UInt8 mode = VARIABLE_ALLOC_READWRITE, 
     UInt8 preferredRegister = NO_REG);
   bool spill(Variable* v);
@@ -2475,9 +2491,9 @@ struct ASMJIT_API CompilerCore : public Serializer
   // [Typedefs]
   // -------------------------------------------------------------------------
 
-  //! @brief List of variables used in @c Compiler.
+  //! @brief List of variables used and managed by @c Compiler.
   typedef PodVector<Variable*> VariableList;
-  //! @brief List of operands used in @c Compiler.
+  //! @brief List of operands used and managed by @c Compiler.
   typedef PodVector<Operand*> OperandList;
 
   // -------------------------------------------------------------------------
@@ -2840,6 +2856,14 @@ struct ASMJIT_API CompilerCore : public Serializer
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3, p4);
   }
 
+  //! @brief Create object managed by compiler internal memory manager.
+  template<typename T, typename P1, typename P2, typename P3, typename P4, typename P5>
+  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
+  {
+    void* addr = _zoneAlloc(sizeof(T));
+    return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3, p4, p5);
+  }
+
   //! @brief Internal function that registers operand @a op in compiler.
   //!
   //! Operand registration means adding @a op to internal operands list and 
@@ -2907,6 +2931,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   // [EmitX86]
   // -------------------------------------------------------------------------
 
+  virtual void _inlineComment(const char* text, SysInt len = -1);
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   // -------------------------------------------------------------------------
@@ -2961,6 +2986,9 @@ private:
 
   //! @brief Jump table entities.
   PodVector<void*> _jumpTableData;
+
+  //! @brief Buffer for inline comment (for next instruction).
+  const char* _inlineCommentBuffer;
 
   friend struct Instruction;
   friend struct Variable;

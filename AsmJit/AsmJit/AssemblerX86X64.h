@@ -644,6 +644,7 @@ struct ASMJIT_API Assembler : public Serializer
   // [EmitX86]
   // -------------------------------------------------------------------------
 
+  virtual void _inlineComment(const char* text, SysInt len = -1);
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
 
   // -------------------------------------------------------------------------
@@ -693,6 +694,9 @@ struct ASMJIT_API Assembler : public Serializer
 
   //! @brief Relocations data.
   PodVector<RelocData> _relocData;
+
+  //! @brief Buffer for inline comment (for next instruction).
+  char _inlineCommentBuffer[MaxInlineCommentSize];
 };
 
 //! @}

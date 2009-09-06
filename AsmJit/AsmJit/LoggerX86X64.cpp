@@ -55,7 +55,7 @@ Logger::~Logger() ASMJIT_NOTHROW
 }
 
 void Logger::logInstruction(
-  UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+  UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3, const char* inlineComment)
   ASMJIT_NOTHROW
 {
   if (!_enabled || !_haveStream) return;
@@ -70,8 +70,33 @@ void Logger::logInstruction(
   if (!o1->isNone()) { *p++ = ' '; p = dumpOperand(p, o1); }
   if (!o2->isNone()) { *p++ = ','; *p++ = ' '; p = dumpOperand(p, o2); }
   if (!o3->isNone()) { *p++ = ','; *p++ = ' '; p = dumpOperand(p, o3); }
+
+  if (inlineComment && inlineComment[0] != '\0')
+  {
+    // We like aligned comments.
+    SysUInt currentLength = (SysUInt)(p - buf);
+    SysUInt commentLength = strlen(inlineComment);
+    // Truncate if it's too long (it shouldn't be, larger than 255 seems to be
+    // like exploit).
+    if (commentLength > 255) commentLength = 255;
+    SysUInt alignBy = 40;
+
+    if (currentLength >= alignBy)
+      alignBy = 0; // But do not align too much.
+    else
+      alignBy -= currentLength;
+
+    memset(p, ' ', alignBy);
+    p += alignBy;
+
+    *p++ = ';';
+    *p++ = ' ';
+
+    memcpy(p, inlineComment, commentLength);
+    p += commentLength;
+  }
   
-  *p++ = '\n';
+  *p++ = '\n'; // Each instruction in separate line.
   *p = '\0';
   log(buf);
 }

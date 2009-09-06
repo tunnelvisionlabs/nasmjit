@@ -161,6 +161,8 @@ Variable::Variable(Compiler* c, Function* f, UInt8 type) :
 
   _memoryOperand = new(c->_zoneAlloc(sizeof(Mem))) Mem(ebp, 0, _size);
   c->_registerOperand(_memoryOperand);
+
+  _name[0] = '\0';
 }
 
 Variable::~Variable()
@@ -223,6 +225,16 @@ const Mem& Variable::m()
   _globalMemoryAccessCount++;
 
   return *_memoryOperand;
+}
+
+void Variable::setName(const char* name) ASMJIT_NOTHROW
+{
+  SysUInt len = 0;
+
+  if (name) len = strlen(name);
+  if (len > MaxVariableNameLength - 1) len = MaxVariableNameLength - 1;
+
+  memcpy(_name, name, len + 1);
 }
 
 // ============================================================================
@@ -384,8 +396,10 @@ Instruction::Instruction(Compiler* c) ASMJIT_NOTHROW :
   memset(_ocache, 0, sizeof(_ocache));
 }
 
-Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW :
-  Emittable(c, EMITTABLE_INSTRUCTION)
+Instruction::Instruction(Compiler* c,
+  UInt32 code,
+  const Operand* o1, const Operand* o2, const Operand* o3,
+  const char* inlineComment) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_INSTRUCTION)
 {
   _code = code;
 
@@ -393,6 +407,8 @@ Instruction::Instruction(Compiler* c, UInt32 code, const Operand* o1, const Oper
   if ((oid = o1->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[0] = c->_operands[oid]; } else { _o[0] = &_ocache[0]; _ocache[0] = *o1; }
   if ((oid = o2->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[1] = c->_operands[oid]; } else { _o[1] = &_ocache[1]; _ocache[1] = *o2; }
   if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[2] = c->_operands[oid]; } else { _o[2] = &_ocache[2]; _ocache[2] = *o3; }
+
+  _inlineComment = inlineComment;
 }
 
 Instruction::~Instruction() ASMJIT_NOTHROW
@@ -401,6 +417,7 @@ Instruction::~Instruction() ASMJIT_NOTHROW
 
 void Instruction::emit(Assembler& a)
 {
+  if (_inlineComment) a._inlineComment(_inlineComment);
   a._emitX86(code(), _o[0], _o[1], _o[2]);
 }
 
@@ -822,6 +839,16 @@ void Function::_setArguments(const UInt32* _args, SysUInt count)
   {
     Variable* v = _compiler->newObject<Variable>(this, args[i]);
     v->_refCount = 1; // Arguments are never freed or reused.
+
+    // Set variable name only if logger is present.
+    if (compiler()->logger() != NULL)
+    {
+      // Default argument name is argINDEX.
+      char name[32];
+      sprintf(name, "arg%d", (int)i);
+      v->setName(name);
+    }
+
     _variables.append(v);
   }
 
@@ -1054,10 +1081,20 @@ Variable* Function::newVariable(UInt8 type, UInt8 priority, UInt8 preferredRegis
     }
   }
 
-  // If variable can't be reused, create new one.
+  // If there is no variable that can be reused, create new one.
   v = compiler()->newObject<Variable>(this, type);
   v->_preferredRegisterCode = preferredRegisterCode;
   v->_priority = priority;
+
+  // Set variable name only if logger is present.
+  if (compiler()->logger())
+  {
+    // Default variable name is varINDEX.
+    char name[32];
+    sprintf(name, "var%d", (int)i);
+    v->setName(name);
+  }
+
   _variables.append(v);
 
   // Alloc register if priority is zero
@@ -1368,6 +1405,7 @@ bool Function::spill(Variable* v)
 
   if (v->state() == VARIABLE_STATE_UNUSED) return true;
   if (v->state() == VARIABLE_STATE_MEMORY) return true;
+
   if (v->state() == VARIABLE_STATE_REGISTER)
   {
     if (v->priority() == 0)
@@ -1383,6 +1421,14 @@ bool Function::spill(Variable* v)
       }
       else
       {
+        // Inline comment - Spill variable.
+        if (compiler()->logger())
+        {
+          char comment[128];
+          sprintf(comment, "spill %s", v->name());
+          compiler()->_inlineComment(comment);
+        }
+
         switch (v->type())
         {
           case VARIABLE_TYPE_INT32:
@@ -1438,6 +1484,12 @@ bool Function::spill(Variable* v)
             else
               compiler()->movdqa(*v->_memoryOperand, mk_xmm(v->registerCode()));
             break;
+        }
+
+        // Inline comment - Spill variable.
+        if (compiler()->logger())
+        {
+          compiler()->_inlineComment(NULL, 0);
         }
 
         v->_memoryAccessCount++;
@@ -1692,6 +1744,14 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
 
   _allocReg(code, v);
 
+  // Inline comment - Alloc variable.
+  if (compiler()->logger())
+  {
+    char comment[128];
+    sprintf(comment, "alloc %s", v->name());
+    compiler()->_inlineComment(comment);
+  }
+
   if (v->isCustom())
   {
     if (v->_allocFn && mode != VARIABLE_ALLOC_WRITE) v->_allocFn(v);
@@ -1817,6 +1877,12 @@ void Function::_allocAs(Variable* v, UInt8 mode, UInt32 code)
       v->_memoryAccessCount++;
       v->_globalMemoryAccessCount++;
     }
+  }
+
+  // Inline comment - Alloc variable.
+  if (compiler()->logger())
+  {
+    compiler()->_inlineComment(NULL, 0);
   }
 }
 
@@ -2135,8 +2201,10 @@ void Function::_jmpAndRestore(Compiler* c, Label* label)
     // simple jmp()( we can inline state restore before it.
     Emittable* old = c->setCurrent(isJmp ? jr->instruction->prev() : c->lastEmittable());
     Emittable* first = c->current();
+
     f->setState(from);
     f->restoreState(to);
+
     Emittable* last = c->current();
     modifiedState = old != last;
 
@@ -2509,7 +2577,8 @@ CompilerCore::CompilerCore() ASMJIT_NOTHROW :
   _last(NULL),
   _current(NULL),
   _currentFunction(NULL),
-  _labelIdCounter(1)
+  _labelIdCounter(1),
+  _inlineCommentBuffer(NULL)
 {
   _jumpTableLabel = newLabel();
 }
@@ -2986,9 +3055,29 @@ void CompilerCore::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate&
 // [AsmJit::Compiler - EmitX86]
 // ============================================================================
 
+void CompilerCore::_inlineComment(const char* _text, SysInt len)
+{
+  if (len < 0) len = strlen(_text);
+
+  if (len > 0)
+  {
+    if (len > MaxInlineCommentSize - 1) len = MaxInlineCommentSize - 1;
+
+    char* text = (char*)_zoneAlloc((len + 1 + sizeof(SysInt)-1) & ~(sizeof(SysInt)-1));
+    memcpy(text, _text, len + 1);
+
+    _inlineCommentBuffer = text;
+  }
+  else
+  {
+    _inlineCommentBuffer = NULL;
+  }
+}
+
 void CompilerCore::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
-  addEmittable(newObject<Instruction>(code, o1, o2, o3));
+  addEmittable(newObject<Instruction>(code, o1, o2, o3, _inlineCommentBuffer));
+  _inlineCommentBuffer = NULL;
 
   // We can clear last used register, because instruction was emitted.
   if (currentFunction()) currentFunction()->clearPrevented();
