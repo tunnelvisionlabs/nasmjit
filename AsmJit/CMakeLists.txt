@@ -59,14 +59,14 @@ EndIf(NOT WIN32)
 # Debugging support is indicated through _DEBUG macro, add it if needed
 If(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   Add_Definitions(-D_DEBUG)
-EndIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+EndIf(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 # Build AsmJit shared library?
 If(ASMJIT_BUILD_LIBRARY)
   Add_Library(AsmJit SHARED ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 
   Install(TARGETS AsmJit DESTINATION "lib")
-  
+
   ForEach(i ${ASMJIT_HEADERS})
     Get_Filename_Component(file ${i} PATH)
     Install(FILES ${i} DESTINATION "include/${file}")

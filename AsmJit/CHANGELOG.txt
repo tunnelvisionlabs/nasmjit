@@ -1,3 +1,8 @@
+2009-09-06:
+- Added initial support for inline comments
+- Compiler now produces inline comments when allocating / spilling variables
+- Added support to name variables
+
 2009-08-23
 - Split Complier class to CompilerCore, CompilerIntrinsics and Compiler
   (Same as Serializer to not export unneeded symbols in dlls)
