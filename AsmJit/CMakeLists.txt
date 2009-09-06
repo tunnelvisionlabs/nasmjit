@@ -65,11 +65,11 @@ EndIf(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 If(ASMJIT_BUILD_LIBRARY)
   Add_Library(AsmJit SHARED ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
 
-  Install(TARGETS AsmJit DESTINATION "lib")
+  Install(TARGETS AsmJit LIBRARY DESTINATION lib)
 
   ForEach(i ${ASMJIT_HEADERS})
-    Get_Filename_Component(file ${i} PATH)
-    Install(FILES ${i} DESTINATION "include/${file}")
+    Get_Filename_Component(file ${i} NAME)
+    Install(FILES ${i} DESTINATION "include/AsmJit")
   EndForEach(i)
 EndIf(ASMJIT_BUILD_LIBRARY)
 
