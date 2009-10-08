@@ -272,6 +272,26 @@ const UInt32 SerializerCore::_cmovcctable[16] =
   INST_CMOVG
 };
 
+const UInt32 SerializerCore::_setcctable[16] =
+{
+  INST_SETO,
+  INST_SETNO,
+  INST_SETB,
+  INST_SETAE,
+  INST_SETE,
+  INST_SETNE,
+  INST_SETBE,
+  INST_SETA,
+  INST_SETS,
+  INST_SETNS,
+  INST_SETPE,
+  INST_SETPO,
+  INST_SETL,
+  INST_SETGE,
+  INST_SETLE,
+  INST_SETG
+};
+
 // ============================================================================
 // [AsmJit::Serializer]
 // ============================================================================

@@ -962,6 +962,37 @@ enum INST_CODE
   INST_SAL,           // X86/X64
   INST_SAR,           // X86/X64
   INST_SBB,           // X86/X64
+  INST_SET,           // Begin (setcc)
+  INST_SETA=INST_SET, // X86/X64 (setcc)
+  INST_SETAE,         // X86/X64 (setcc)
+  INST_SETB,          // X86/X64 (setcc)
+  INST_SETBE,         // X86/X64 (setcc)
+  INST_SETC,          // X86/X64 (setcc)
+  INST_SETE,          // X86/X64 (setcc)
+  INST_SETG,          // X86/X64 (setcc)
+  INST_SETGE,         // X86/X64 (setcc)
+  INST_SETL,          // X86/X64 (setcc)
+  INST_SETLE,         // X86/X64 (setcc)
+  INST_SETNA,         // X86/X64 (setcc)
+  INST_SETNAE,        // X86/X64 (setcc)
+  INST_SETNB,         // X86/X64 (setcc)
+  INST_SETNBE,        // X86/X64 (setcc)
+  INST_SETNC,         // X86/X64 (setcc)
+  INST_SETNE,         // X86/X64 (setcc)
+  INST_SETNG,         // X86/X64 (setcc)
+  INST_SETNGE,        // X86/X64 (setcc)
+  INST_SETNL,         // X86/X64 (setcc)
+  INST_SETNLE,        // X86/X64 (setcc)
+  INST_SETNO,         // X86/X64 (setcc)
+  INST_SETNP,         // X86/X64 (setcc)
+  INST_SETNS,         // X86/X64 (setcc)
+  INST_SETNZ,         // X86/X64 (setcc)
+  INST_SETO,          // X86/X64 (setcc)
+  INST_SETP,          // X86/X64 (setcc)
+  INST_SETPE,         // X86/X64 (setcc)
+  INST_SETPO,         // X86/X64 (setcc)
+  INST_SETS,          // X86/X64 (setcc)
+  INST_SETZ,          // X86/X64 (setcc)
   INST_SFENCE,        // MMX Extensions
   INST_SHL,           // X86/X64
   INST_SHLD,          // X86/X64

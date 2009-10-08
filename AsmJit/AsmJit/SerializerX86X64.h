@@ -1436,6 +1436,8 @@ protected:
   static const UInt32 _jcctable[16];
   //! @brief Map used for cmovcc instructions.
   static const UInt32 _cmovcctable[16];
+  //! @brief Map used for setcc instructions.
+  static const UInt32 _setcctable[16];
 
   // -------------------------------------------------------------------------
   // [Members]
@@ -2677,6 +2679,74 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   {
     __emitX86(INST_SAR, &dst, &src);
   }
+
+  //! @brief Set Byte on Condition.
+  inline void set(CONDITION cc, const BaseRegMem& dst)
+  {
+    ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
+    __emitX86(_setcctable[cc], &dst);
+  }
+
+  //! @brief Set Byte on Condition.
+  inline void seta  (const BaseRegMem& dst) { __emitX86(INST_SETA  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setae (const BaseRegMem& dst) { __emitX86(INST_SETAE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setb  (const BaseRegMem& dst) { __emitX86(INST_SETB  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setbe (const BaseRegMem& dst) { __emitX86(INST_SETBE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setc  (const BaseRegMem& dst) { __emitX86(INST_SETC  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void sete  (const BaseRegMem& dst) { __emitX86(INST_SETE  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setg  (const BaseRegMem& dst) { __emitX86(INST_SETG  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setge (const BaseRegMem& dst) { __emitX86(INST_SETGE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setl  (const BaseRegMem& dst) { __emitX86(INST_SETL  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setle (const BaseRegMem& dst) { __emitX86(INST_SETLE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setna (const BaseRegMem& dst) { __emitX86(INST_SETNA , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnae(const BaseRegMem& dst) { __emitX86(INST_SETNAE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnb (const BaseRegMem& dst) { __emitX86(INST_SETNB , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnbe(const BaseRegMem& dst) { __emitX86(INST_SETNBE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnc (const BaseRegMem& dst) { __emitX86(INST_SETNC , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setne (const BaseRegMem& dst) { __emitX86(INST_SETNE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setng (const BaseRegMem& dst) { __emitX86(INST_SETNG , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnge(const BaseRegMem& dst) { __emitX86(INST_SETNGE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnl (const BaseRegMem& dst) { __emitX86(INST_SETNL , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnle(const BaseRegMem& dst) { __emitX86(INST_SETNLE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setno (const BaseRegMem& dst) { __emitX86(INST_SETNO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnp (const BaseRegMem& dst) { __emitX86(INST_SETNP , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setns (const BaseRegMem& dst) { __emitX86(INST_SETNS , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnz (const BaseRegMem& dst) { __emitX86(INST_SETNZ , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void seto  (const BaseRegMem& dst) { __emitX86(INST_SETO  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setp  (const BaseRegMem& dst) { __emitX86(INST_SETP  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpe (const BaseRegMem& dst) { __emitX86(INST_SETPE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpo (const BaseRegMem& dst) { __emitX86(INST_SETPO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void sets  (const BaseRegMem& dst) { __emitX86(INST_SETS  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setz  (const BaseRegMem& dst) { __emitX86(INST_SETZ  , &dst); }
 
   //! @brief Shift Bits Left.
   //! @note @a src register can be only @c cl.

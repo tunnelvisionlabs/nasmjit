@@ -591,6 +591,7 @@ enum I
   I_PUSH, // I_PUSH is implemented before I_POP
   I_POP,
   I_R_RM,
+  I_RM_B,
   I_RM,
   I_RM_R,
   I_RET,
@@ -1177,6 +1178,36 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_SAL              , "sal"              , I_ROT           , 0               , 0               , 4, 0         , 0),
   MAKE_INST(INST_SAR              , "sar"              , I_ROT           , 0               , 0               , 7, 0         , 0),
   MAKE_INST(INST_SBB              , "sbb"              , I_ALU           , 0               , 0               , 3, 0x00000018, 0x00000080),
+  MAKE_INST(INST_SETA             , "seta"             , I_RM_B          , 0               , 0               , 0, 0x00000F97, 0),
+  MAKE_INST(INST_SETAE            , "setae"            , I_RM_B          , 0               , 0               , 0, 0x00000F93, 0),
+  MAKE_INST(INST_SETB             , "setb"             , I_RM_B          , 0               , 0               , 0, 0x00000F92, 0),
+  MAKE_INST(INST_SETBE            , "setbe"            , I_RM_B          , 0               , 0               , 0, 0x00000F96, 0),
+  MAKE_INST(INST_SETC             , "setc"             , I_RM_B          , 0               , 0               , 0, 0x00000F92, 0),
+  MAKE_INST(INST_SETE             , "sete"             , I_RM_B          , 0               , 0               , 0, 0x00000F94, 0),
+  MAKE_INST(INST_SETG             , "setg"             , I_RM_B          , 0               , 0               , 0, 0x00000F9F, 0),
+  MAKE_INST(INST_SETGE            , "setge"            , I_RM_B          , 0               , 0               , 0, 0x00000F9D, 0),
+  MAKE_INST(INST_SETL             , "setl"             , I_RM_B          , 0               , 0               , 0, 0x00000F9C, 0),
+  MAKE_INST(INST_SETLE            , "setle"            , I_RM_B          , 0               , 0               , 0, 0x00000F9E, 0),
+  MAKE_INST(INST_SETNA            , "setna"            , I_RM_B          , 0               , 0               , 0, 0x00000F96, 0),
+  MAKE_INST(INST_SETNAE           , "setnae"           , I_RM_B          , 0               , 0               , 0, 0x00000F92, 0),
+  MAKE_INST(INST_SETNB            , "setnb"            , I_RM_B          , 0               , 0               , 0, 0x00000F93, 0),
+  MAKE_INST(INST_SETNBE           , "setnbe"           , I_RM_B          , 0               , 0               , 0, 0x00000F97, 0),
+  MAKE_INST(INST_SETNC            , "setnc"            , I_RM_B          , 0               , 0               , 0, 0x00000F93, 0),
+  MAKE_INST(INST_SETNE            , "setne"            , I_RM_B          , 0               , 0               , 0, 0x00000F95, 0),
+  MAKE_INST(INST_SETNG            , "setng"            , I_RM_B          , 0               , 0               , 0, 0x00000F9E, 0),
+  MAKE_INST(INST_SETNGE           , "setnge"           , I_RM_B          , 0               , 0               , 0, 0x00000F9C, 0),
+  MAKE_INST(INST_SETNL            , "setnl"            , I_RM_B          , 0               , 0               , 0, 0x00000F9D, 0),
+  MAKE_INST(INST_SETNLE           , "setnle"           , I_RM_B          , 0               , 0               , 0, 0x00000F9F, 0),
+  MAKE_INST(INST_SETNO            , "setno"            , I_RM_B          , 0               , 0               , 0, 0x00000F91, 0),
+  MAKE_INST(INST_SETNP            , "setnp"            , I_RM_B          , 0               , 0               , 0, 0x00000F9B, 0),
+  MAKE_INST(INST_SETNS            , "setns"            , I_RM_B          , 0               , 0               , 0, 0x00000F99, 0),
+  MAKE_INST(INST_SETNZ            , "setnz"            , I_RM_B          , 0               , 0               , 0, 0x00000F95, 0),
+  MAKE_INST(INST_SETO             , "seto"             , I_RM_B          , 0               , 0               , 0, 0x00000F90, 0),
+  MAKE_INST(INST_SETP             , "setp"             , I_RM_B          , 0               , 0               , 0, 0x00000F9A, 0),
+  MAKE_INST(INST_SETPE            , "setpe"            , I_RM_B          , 0               , 0               , 0, 0x00000F9A, 0),
+  MAKE_INST(INST_SETPO            , "setpo"            , I_RM_B          , 0               , 0               , 0, 0x00000F9B, 0),
+  MAKE_INST(INST_SETS             , "sets"             , I_RM_B          , 0               , 0               , 0, 0x00000F98, 0),
+  MAKE_INST(INST_SETZ             , "setz"             , I_RM_B          , 0               , 0               , 0, 0x00000F94, 0),
   MAKE_INST(INST_SFENCE           , "sfence"           , I_EMIT          , 0               , 0               , 0, 0x000FAEF8, 0),
   MAKE_INST(INST_SHL              , "shl"              , I_ROT           , 0               , 0               , 4, 0         , 0),
   MAKE_INST(INST_SHLD             , "shld"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FA4, 0),
@@ -1862,6 +1893,18 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           dst.type() == REG_GPW, 
           dst.type() == REG_GPQ, dst.code(), src,
           0);
+        return;
+      }
+
+      break;
+    }
+
+    case I_RM_B:
+    {
+      if (o1->isRegMem())
+      {
+        const BaseRegMem& op = reinterpret_cast<const BaseRegMem&>(*o1);
+        _emitX86RM(id.opCode1, false, false, 0, op, 0);
         return;
       }
 
