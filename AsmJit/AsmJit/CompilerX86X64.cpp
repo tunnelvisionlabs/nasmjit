@@ -387,6 +387,9 @@ void Align::emit(Assembler& a)
 // [AsmJit::Instruction]
 // ============================================================================
 
+// Used for NULL operands to translate them to OP_NONE.
+static const UInt8 _none[sizeof(Operand)] = { 0 };
+
 Instruction::Instruction(Compiler* c) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_INSTRUCTION)
 {
@@ -402,13 +405,17 @@ Instruction::Instruction(Compiler* c,
   const char* inlineComment) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_INSTRUCTION)
 {
   _code = code;
+  _inlineComment = inlineComment;
 
   UInt32 oid;
-  if ((oid = o1->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[0] = c->_operands[oid]; } else { _o[0] = &_ocache[0]; _ocache[0] = *o1; }
-  if ((oid = o2->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[1] = c->_operands[oid]; } else { _o[1] = &_ocache[1]; _ocache[1] = *o2; }
-  if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[2] = c->_operands[oid]; } else { _o[2] = &_ocache[2]; _ocache[2] = *o3; }
 
-  _inlineComment = inlineComment;
+  _o[0] = &_ocache[0];
+  _o[1] = &_ocache[1];
+  _o[2] = &_ocache[2];
+
+  if (o1 == NULL) { memset(_o[0], 0, sizeof(Operand)); } else if ((oid = o1->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[0] = c->_operands[oid]; } else { _ocache[0] = *o1; }
+  if (o2 == NULL) { memset(_o[1], 0, sizeof(Operand)); } else if ((oid = o2->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[1] = c->_operands[oid]; } else { _ocache[1] = *o2; }
+  if (o3 == NULL) { memset(_o[2], 0, sizeof(Operand)); } else if ((oid = o3->operandId()) != 0) { ASMJIT_ASSERT(oid < c->_operands.length()); _o[2] = c->_operands[oid]; } else { _ocache[2] = *o3; }
 }
 
 Instruction::~Instruction() ASMJIT_NOTHROW
@@ -418,6 +425,7 @@ Instruction::~Instruction() ASMJIT_NOTHROW
 void Instruction::emit(Assembler& a)
 {
   if (_inlineComment) a._inlineComment(_inlineComment);
+
   a._emitX86(code(), _o[0], _o[1], _o[2]);
 }
 
@@ -748,7 +756,8 @@ void Function::_setCallingConvention(UInt32 cconv) ASMJIT_NOTHROW
       break;
 
     default:
-      ASMJIT_CRASH();
+      // Illegal calling convention.
+      ASMJIT_ASSERT(0);
   }
 #else
   // [X64 calling conventions]
@@ -815,7 +824,8 @@ void Function::_setCallingConvention(UInt32 cconv) ASMJIT_NOTHROW
       break;
 
     default:
-      ASMJIT_CRASH();
+      // Illegal calling convention.
+      ASMJIT_ASSERT(0);
   }
 #endif
 }
@@ -2937,7 +2947,7 @@ void CompilerCore::_jmpAndRestore(UInt32 code, Label* label, State* state)
   jr->to = state;
   label->_compilerData = (void*)jr;
 
-  __emitX86(code, label);
+  emitX86(code, label);
   jr->instruction = reinterpret_cast<Instruction*>(_current);
 }
 
@@ -2950,11 +2960,11 @@ void CompilerCore::op_var32(UInt32 code, const Int32Ref& a)
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r32();
-    __emitX86(code, &ar);
+    emitX86(code, &ar);
   }
   else
   {
-    __emitX86(code, &a.m());
+    emitX86(code, &a.m());
   }
 }
 
@@ -2963,11 +2973,11 @@ void CompilerCore::op_reg32_var32(UInt32 code, const Register& a, const Int32Ref
   if (b.state() == VARIABLE_STATE_REGISTER)
   {
     Register br = b.r32();
-    __emitX86(code, &a, &br);
+    emitX86(code, &a, &br);
   }
   else
   {
-    __emitX86(code, &a, &b.m());
+    emitX86(code, &a, &b.m());
   }
 }
 
@@ -2976,11 +2986,11 @@ void CompilerCore::op_var32_reg32(UInt32 code, const Int32Ref& a, const Register
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r32();
-    __emitX86(code, &ar, &b);
+    emitX86(code, &ar, &b);
   }
   else
   {
-    __emitX86(code, &a.m(), &b);
+    emitX86(code, &a.m(), &b);
   }
 }
 
@@ -2989,11 +2999,11 @@ void CompilerCore::op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate&
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r32();
-    __emitX86(code, &ar, &b);
+    emitX86(code, &ar, &b);
   }
   else
   {
-    __emitX86(code, &a.m(), &b);
+    emitX86(code, &a.m(), &b);
   }
 }
 
@@ -3003,11 +3013,11 @@ void CompilerCore::op_var64(UInt32 code, const Int64Ref& a)
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r64();
-    __emitX86(code, &ar);
+    emitX86(code, &ar);
   }
   else
   {
-    __emitX86(code, &a.m());
+    emitX86(code, &a.m());
   }
 }
 
@@ -3016,11 +3026,11 @@ void CompilerCore::op_reg64_var64(UInt32 code, const Register& a, const Int64Ref
   if (b.state() == VARIABLE_STATE_REGISTER)
   {
     Register br = b.r64();
-    __emitX86(code, &a, &br);
+    emitX86(code, &a, &br);
   }
   else
   {
-    __emitX86(code, &a, &b.m());
+    emitX86(code, &a, &b.m());
   }
 }
 
@@ -3029,11 +3039,11 @@ void CompilerCore::op_var64_reg64(UInt32 code, const Int64Ref& a, const Register
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r64();
-    __emitX86(code, &ar, &b);
+    emitX86(code, &ar, &b);
   }
   else
   {
-    __emitX86(code, &a.m(), &b);
+    emitX86(code, &a.m(), &b);
   }
 }
 
@@ -3042,11 +3052,11 @@ void CompilerCore::op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate&
   if (a.state() == VARIABLE_STATE_REGISTER)
   {
     Register ar = a.r64();
-    __emitX86(code, &ar, &b);
+    emitX86(code, &ar, &b);
   }
   else
   {
-    __emitX86(code, &a.m(), &b);
+    emitX86(code, &a.m(), &b);
   }
 }
 #endif // ASMJIT_X64
@@ -3123,7 +3133,7 @@ void CompilerCore::bind(Label* label)
 // [AsmJit::Compiler - Make]
 // ============================================================================
 
-void* CompilerCore::make(UInt32 allocType)
+void* CompilerCore::make(MemoryManager* memoryManager, UInt32 allocType)
 {
   Assembler a;
   a._properties = _properties;
@@ -3133,7 +3143,8 @@ void* CompilerCore::make(UInt32 allocType)
   {
     if (_logger)
     {
-      _logger->logFormat("; Compiler failed (error %u).\n", (unsigned int)a.error());
+      _logger->logFormat("; Compiler failed, error %u: %s\n\n",
+        (unsigned int)a.error(), errorCodeToString(a.error()));
     }
 
     setError(a.error());
@@ -3143,11 +3154,11 @@ void* CompilerCore::make(UInt32 allocType)
   {
     if (_logger)
     {
-      _logger->logFormat("; Compiler successful (wrote %u bytes).\n", (unsigned int)a.codeSize());
-      _logger->log("\n");
+      _logger->logFormat("; Compiler successful (wrote %u bytes).\n\n",
+        (unsigned int)a.codeSize());
     }
 
-    return a.make(allocType);
+    return a.make(memoryManager, allocType);
   }
 }
 

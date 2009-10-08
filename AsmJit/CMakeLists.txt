@@ -14,6 +14,7 @@ Set(ASMJIT_SOURCES
   ${ASMJIT_DIR}/AsmJit/AssemblerX86X64.cpp
   ${ASMJIT_DIR}/AsmJit/CompilerX86X64.cpp
   ${ASMJIT_DIR}/AsmJit/CpuInfo.cpp
+  ${ASMJIT_DIR}/AsmJit/Defs.cpp
   ${ASMJIT_DIR}/AsmJit/Lock.cpp
   ${ASMJIT_DIR}/AsmJit/Logger.cpp
   ${ASMJIT_DIR}/AsmJit/LoggerX86X64.cpp

@@ -2711,7 +2711,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   // [Make]
   // -------------------------------------------------------------------------
 
-  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE);
 
   //! @brief Method that will emit everything to @c Assembler instance @a a.
   void serialize(Assembler& a);

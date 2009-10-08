@@ -53,6 +53,12 @@ static void verify(void* a, void* b)
   }
 }
 
+static void die()
+{
+  printf("Couldn't allocate virtual memory, this test needs at least 100MB of free virtual memory\n");
+  exit(1);
+}
+
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
@@ -65,7 +71,7 @@ int main(int argc, char* argv[])
 
   void** a = (void**)malloc(sizeof(void*) * count);
   void** b = (void**)malloc(sizeof(void*) * count);
-  if (!a || !b) return 1;
+  if (!a || !b) die();
 
   srand(1);
   printf("Allocating virtual memory...");
@@ -73,7 +79,10 @@ int main(int argc, char* argv[])
   for (SysUInt i = 0; i < count; i++)
   {
     int r = (rand() % 1000) + 4;
+
     a[i] = memmgr->alloc(r);
+    if (a[i] == NULL) die();
+
     memset(a[i], 0, r);
   }
 
@@ -101,8 +110,11 @@ int main(int argc, char* argv[])
   for (SysUInt i = 0; i < count; i++)
   {
     int r = (rand() % 1000) + 4;
+
     a[i] = memmgr->alloc(r);
     b[i] = malloc(r);
+    if (a[i] == NULL || b[i] == NULL) die();
+
     gen(a[i], b[i], r);
   }
 
@@ -118,8 +130,11 @@ int main(int argc, char* argv[])
   for (SysUInt i = 0; i < count; i += 2)
   {
     int r = (rand() % 1000) + 4;
+
     a[i] = memmgr->alloc(r);
     b[i] = malloc(r);
+    if (a[i] == NULL || b[i] == NULL) die();
+
     gen(a[i], b[i], r);
   }
 

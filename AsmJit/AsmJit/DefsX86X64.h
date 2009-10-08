@@ -43,46 +43,6 @@ namespace AsmJit {
 //! @{
 
 // ============================================================================
-// [AsmJit::OP]
-// ============================================================================
-
-//! @brief Operand types that can be encoded in @c Op operand.
-enum OP
-{
-  //! @brief Operand is none, used only internally.
-  OP_NONE = 0,
-  //! @brief Operand is register.
-  OP_REG = 1,
-  //! @brief Operand is memory.
-  OP_MEM = 2,
-  //! @brief Operand is immediate.
-  OP_IMM = 3,
-  //! @brief Operand is label.
-  OP_LABEL = 4
-};
-
-// ============================================================================
-// [AsmJit::SIZE]
-// ============================================================================
-
-//! @brief Size of registers and pointers.
-enum SIZE
-{
-  //! @brief 1 byte size.
-  SIZE_BYTE   = 1,
-  //! @brief 2 bytes size.
-  SIZE_WORD   = 2,
-  //! @brief 4 bytes size.
-  SIZE_DWORD  = 4,
-  //! @brief 8 bytes size.
-  SIZE_QWORD  = 8,
-  //! @brief 10 bytes size.
-  SIZE_TWORD  = 10,
-  //! @brief 16 bytes size.
-  SIZE_DQWORD = 16
-};
-
-// ============================================================================
 // [AsmJit::RID]
 // ============================================================================
 
@@ -440,39 +400,15 @@ enum FP_CW
 };
 
 // ============================================================================
-// [AsmJit::RELOC_MODE]
-// ============================================================================
-
-//! @brief Relocation info.
-enum RELOC_MODE
-{
-  //! @brief No relocation.
-  RELOC_NONE = 0,
-
-  //! @brief Overwrite relocation (immediates as constants).
-  RELOC_OVERWRITE = 1
-};
-
-// ============================================================================
-// [AsmJit::LABEL_STATE]
-// ============================================================================
-
-//! @brief Label state.
-enum LABEL_STATE
-{
-  //! @brief Label is unused.
-  LABEL_STATE_UNUSED = 0,
-  //! @brief Label is linked (waiting to be bound)
-  LABEL_STATE_LINKED = 1,
-  //! @brief Label is bound
-  LABEL_STATE_BOUND = 2
-};
-
-// ============================================================================
 // [AsmJit::INST_CODE]
 // ============================================================================
 
-//! @brief Instruction codes (AsmJit specific)
+//! @brief Instruction codes.
+//!
+//! Note that these instruction codes are AsmJit specific. Each instruction is
+//! unique ID into AsmJit instruction table. Instruction codes are used together
+//! with AsmJit::Assembler and you can also use instruction codes to serialize
+//! instructions by AsmJit::SerializerCore::_emitX86().
 enum INST_CODE
 {
   INST_ADC,           // X86/X64
@@ -1026,29 +962,6 @@ enum INST_CODE
   INST_XORPS,
 
   _INST_COUNT
-};
-
-// ============================================================================
-// [AsmJit::PROPERTY]
-// ============================================================================
-
-//! @brief @c Serializer properties.
-enum PROPERTY
-{
-  //! @brief Optimize align for current processor.
-  //!
-  //! Default: @c true.
-  PROPERTY_OPTIMIZE_ALIGN = 0,
-
-  //! @brief Force rex prefix emitting.
-  //!
-  //! Default: @c false.
-  PROPERTY_FORCE_REX = 1,
-
-  //! @brief Emit hints added to jcc() instructions.
-  //!
-  //! Default: @c true.
-  PROPERTY_JCC_HINTS = 2
 };
 
 //! @}

@@ -1,6 +1,15 @@
 2009-10-08
 - Added SETcc instructions
 - Fixed cmake project issue
+- Fixed AsmJit::Serializer visibility bug (it was declared as hidden)
+- Added error codes to AsmJit/Defs.h
+- Common defs are now in AsmJit/Defs.h, X86 specific in AsmJit/DefsX86X64.h
+- Invalid instruction now sets ERROR_INVALID_INSTRUCTION error
+- Memory allocation failure now sets ERROR_NO_HEAP_MEMORY error
+- _emitX86() virtual method now can be called with NULL arguments. No need
+  to wrap code to operand of type OP_NONE
+- __emitX86() methods now renamed to emitX86() and are public
+- SerializerCore::make() now accepts MemoryManager instance as first argument
 
 2009-09-06:
 - Added initial support for inline comments

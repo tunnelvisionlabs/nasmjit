@@ -104,7 +104,21 @@ void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
 
 bool Assembler::canEmit()
 {
-  return ensureSpace() && !error();
+  // If there is an error, we can't emit another instruction until clearError()
+  // is called. If something caused an error while generating code it's probably
+  // fatal in all cases. You can't use generated code, because you are not sure
+  // about its status.
+  if (error()) return false;
+
+  // The ensureSpace() method returns true on success and false on failure. We
+  // are catching return value and setting error code here.
+  if (ensureSpace()) return true;
+
+  // If we are here, there is memory allocation error. Note that this is HEAP
+  // allocation error, virtual allocation error can be caused only by
+  // AsmJit::VirtualMemory class!
+  setError(ERROR_NO_HEAP_MEMORY);
+  return false;
 }
 
 void Assembler::_emitSegmentPrefix(const BaseRegMem& rm) ASMJIT_NOTHROW
@@ -480,11 +494,11 @@ Assembler::LinkData* Assembler::_emitDisplacement(
 
 void Assembler::relocCode(void* _dst) const
 {
-  // Copy code
+  // Copy code to virtual memory (this is a given _dst pointer).
   UInt8* dst = reinterpret_cast<UInt8*>(_dst);
   memcpy(dst, _buffer.data(), codeSize());
 
-  // Reloc
+  // Relocate recorded locations.
   SysInt i, len = _relocData.length();
 
   for (i = 0; i < len; i++)
@@ -492,7 +506,7 @@ void Assembler::relocCode(void* _dst) const
     const RelocData& r = _relocData[i];
     SysInt val;
 
-    // Be sure that reloc data structure is correct
+    // Be sure that reloc data structure is correct.
     ASMJIT_ASSERT((SysInt)(r.offset + r.size) <= codeSize());
 
     switch(r.type)
@@ -1243,15 +1257,24 @@ static const InstructionDescription x86instructions[] =
 
 #undef MAKE_INST
 
+// Used for NULL operands to translate them to OP_NONE.
+static const UInt8 _none[sizeof(Operand)] = { 0 };
+
 void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
 {
-  // Operands can't be non null, OP_NONE must be used instead
-  ASMJIT_ASSERT(o1 && o2 && o3);
-
   // Check for buffer space (and grow if needed).
   if (!canEmit()) return;
 
-  if (code >= _INST_COUNT) return;
+  // Convert operands to OP_NONE if needed.
+  if (o1 == NULL) o1 = reinterpret_cast<const Operand*>(_none);
+  if (o2 == NULL) o2 = reinterpret_cast<const Operand*>(_none);
+  if (o3 == NULL) o3 = reinterpret_cast<const Operand*>(_none);
+
+  if (code >= _INST_COUNT)
+  {
+    setError(ERROR_UNKNOWN_INSTRUCTION);
+    return;
+  }
   const InstructionDescription& id = x86instructions[code];
 
 #if defined(ASMJIT_DEBUG_INSTRUCTION_MAP)
@@ -1567,7 +1590,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (o2->isImm() && 
             reinterpret_cast<const Immediate&>(*o2).value() != HINT_NONE && 
-            _properties & (1 << PROPERTY_JCC_HINTS))
+            _properties & (1 << PROPERTY_X86_JCC_HINTS))
         {
           UInt8 hint = reinterpret_cast<const Immediate&>(*o2).value() & 0xFF;
           _emitByte(hint);
@@ -2613,11 +2636,13 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
   }
 
 illegalInstruction:
-  // Log each illegal instruction
-  if (_logger) _logger->log("; Error: Last instruction was illegal.\n");
+  // Set an error. If we run in release mode assertion will be not used, so we
+  // must inform about invalid state.
+  setError(ERROR_ILLEGAL_INSTRUCTION);
 
-  // It's illegal to be here
-  ASMJIT_CRASH();
+  // We raise an assertion failure, because in debugging this just shouldn't
+  // happen.
+  ASMJIT_ASSERT(0);
 }
 
 // ============================================================================
@@ -2886,15 +2911,23 @@ void Assembler::bindTo(Label* label, SysInt pos)
 // [AsmJit::Assembler - Make]
 // ============================================================================
 
-void* Assembler::make(UInt32 allocType)
+void* Assembler::make(MemoryManager* memoryManager, UInt32 allocType)
 {
-  if (codeSize() == 0) return NULL;
+  // Do nothing on error state or when no instruction was emitted.
+  if (error() || codeSize() == 0) return NULL;
 
-  MemoryManager* memmgr = MemoryManager::global();
+  // Switch to global memory manager if not provided.
+  if (memoryManager == NULL) memoryManager = MemoryManager::global();
 
-  void* p = memmgr->alloc(codeSize(), allocType);
-  if (p == NULL) return NULL;
+  // Try to allocate memory and check if everything is ok.
+  void* p = memoryManager->alloc(codeSize(), allocType);
+  if (p == NULL)
+  {
+    setError(ERROR_NO_VIRTUAL_MEMORY);
+    return NULL;
+  }
 
+  // This is last step. Relocate code and return generated code.
   relocCode(p);
   return p;
 }

@@ -58,7 +58,7 @@ namespace AsmJit {
 //! instructions are stored. Look at @c AsmJit::Buffer for buffer 
 //! implementation. To generate and allocate memory for function use
 //! @c AsmJit::Assembler::make() method that will allocate memory using 
-//! global memory manager ( see @c AsmJit::MemoryManager::global() ) and
+//! provided memory manager ( see @c AsmJit::MemoryManager::global() ) and
 //! relocates code to provided address. If you want to create your function
 //! manually, you should look at @c AsmJit::VirtualMemory and use 
 //! @c AsmJit::Assembler::relocCode() method to relocate emitted code into 
@@ -146,10 +146,12 @@ namespace AsmJit {
 //! <b>Calling Code</b>
 //!
 //! While you are over from emitting instructions, you can make your function
-//! using @c AsmJit::Assembler::make() method. This method will allocate 
-//! virtual memory and relocates generated code to it. For memory allocation
-//! is used global memory manager by default and memory is freeable. If you
-//! want to do with code something else, there are methods that allows it.
+//! using @c AsmJit::Assembler::make() method. This method will use memory
+//! manager to allocate virtual memory and relocates generated code to it. For
+//! memory allocation is used global memory manager by default and memory is
+//! freeable, but of course this default behavior can be overriden specifying
+//! your memory manager and allocation type. If you want to do with code
+//! something else you can always override make() method and do what you want.
 //!
 //! You can get size of generated code by @c codeSize() or @c offset() methods.
 //! These methods returns you code size (or more precisely current code offset)
@@ -355,10 +357,17 @@ struct ASMJIT_API Assembler : public Serializer
   // -------------------------------------------------------------------------
 
   //! @brief Return start of assembler code buffer.
+  //!
+  //! Note that buffer address can change if you emit instruction or something
+  //! else. Use this pointer only when you finished or make sure you do not
+  //! use returned pointer after emitting.
   inline UInt8* code() const ASMJIT_NOTHROW
   { return _buffer.data(); }
 
-  //! @brief Ensure space for next instruction
+  //! @brief Ensure space for next instruction.
+  //!
+  //! Note that this method can return false. It's rare and probably you never
+  //! get this, but in some situations it's still possible.
   inline bool ensureSpace() ASMJIT_NOTHROW
   { return _buffer.ensureSpace(); }
 
@@ -374,6 +383,8 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! This method can be used to truncate code (previous offset is not
   //! recorded) or to overwrite instruction stream at position @a o.
+  //!
+  //! @return Previous offset value that can be uset to set offset back later.
   inline SysInt toOffset(SysInt o) ASMJIT_NOTHROW
   { return _buffer.toOffset(o); }
 
@@ -539,7 +550,7 @@ struct ASMJIT_API Assembler : public Serializer
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field not used in RexR
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-    if (w || r || b || (_properties & (1 << PROPERTY_FORCE_REX)))
+    if (w || r || b || (_properties & (1 << PROPERTY_X86_FORCE_REX)))
     {
       _emitByte(0x40 | (w << 3) | (r << 2) | b);
     }
@@ -572,7 +583,7 @@ struct ASMJIT_API Assembler : public Serializer
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field (1=high bit extension of the SIB Index field).
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-    if (w || r || x || b || (_properties & (1 << PROPERTY_FORCE_REX)))
+    if (w || r || x || b || (_properties & (1 << PROPERTY_X86_FORCE_REX)))
     {
       _emitByte(0x40 | (w << 3) | (r << 2) | (x << 1) | b);
     }
@@ -673,7 +684,7 @@ struct ASMJIT_API Assembler : public Serializer
   // [Make]
   // -------------------------------------------------------------------------
 
-  virtual void* make(UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE);
 
   // -------------------------------------------------------------------------
   // [Links]

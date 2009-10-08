@@ -24,7 +24,9 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
+#include "Defs.h"
 #include "Serializer.h"
+#include "Logger.h"
 
 // [Warnings-Push]
 #include "WarningsPush.h"
@@ -131,7 +133,7 @@ SerializerCore::SerializerCore() ASMJIT_NOTHROW :
   // Set default properties for Assembler and Compiler
   // (compiler can set other ones)
   _properties |= (1 << PROPERTY_OPTIMIZE_ALIGN) |
-                 (1 << PROPERTY_JCC_HINTS     ) ;
+                 (1 << PROPERTY_X86_JCC_HINTS     ) ;
 }
 
 SerializerCore::~SerializerCore() ASMJIT_NOTHROW
@@ -170,6 +172,53 @@ UInt32 SerializerCore::setProperty(UInt32 key, UInt32 value) ASMJIT_NOTHROW
 }
 
 // ============================================================================
+// [AsmJit::SerializerCode - Logging]
+// ============================================================================
+
+void SerializerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
+{
+  _logger = logger;
+}
+
+// ============================================================================
+// [AsmJit::SerializerCore - Emit]
+// ============================================================================
+
+void SerializerCore::emitX86(UInt32 code)
+{
+  _emitX86(code, NULL, NULL, NULL);
+}
+
+void SerializerCore::emitX86(UInt32 code, const Operand* o1)
+{
+  _emitX86(code, o1, NULL, NULL);
+}
+
+void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2)
+{
+  _emitX86(code, o1, o2, NULL);
+}
+
+void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+{
+  _emitX86(code, o1, o2, o3);
+}
+
+//! @brief Private method for emitting jcc.
+void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint)
+{
+  if (!hint)
+  {
+    emitX86(code, label);
+  }
+  else
+  {
+    Immediate imm(hint);
+    emitX86(code, label, &imm);
+  }
+}
+
+// ============================================================================
 // [AsmJit::SerializerCore - Memory Management]
 // ============================================================================
 
@@ -180,57 +229,25 @@ void* SerializerCore::_zoneAlloc(SysUInt size)
 }
 
 // ============================================================================
-// [AsmJit::SerializerCore - Helpers]
+// [AsmJit::SerializerCore - Error Handling]
 // ============================================================================
 
-// Used for NULL operands in _emitX86() function
-static const UInt8 none[sizeof(Operand)] = { 0 };
-
-void SerializerCore::__emitX86(UInt32 code)
+void SerializerCore::setError(UInt32 error) ASMJIT_NOTHROW
 {
-  _emitX86(code, 
-    reinterpret_cast<const Operand*>(none), 
-    reinterpret_cast<const Operand*>(none), 
-    reinterpret_cast<const Operand*>(none));
+  _error = error;
+
+  // Log each illegal instruction
+  if (_logger && _logger->enabled()) _logger->logFormat("ERROR %u: %s.\n", errorCodeToString(error));
 }
 
-void SerializerCore::__emitX86(UInt32 code, const Operand* o1)
+void SerializerCore::clearError() ASMJIT_NOTHROW
 {
-  _emitX86(code, 
-    o1, 
-    reinterpret_cast<const Operand*>(&none), 
-    reinterpret_cast<const Operand*>(&none));
+  _error = 0;
 }
 
-void SerializerCore::__emitX86(UInt32 code, const Operand* o1, const Operand* o2)
-{
-  _emitX86(code, 
-    o1, 
-    o2, 
-    reinterpret_cast<const Operand*>(&none));
-}
-
-void SerializerCore::__emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
-{
-  _emitX86(code, 
-    o1, 
-    o2, 
-    o3);
-}
-
-//! @brief Private method for emitting jcc.
-void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint)
-{
-  if (!hint)
-  {
-    __emitX86(code, label);
-  }
-  else
-  {
-    Immediate imm(hint);
-    __emitX86(code, label, &imm);
-  }
-}
+// ============================================================================
+// [AsmJit::SerializerCore - Constants]
+// ============================================================================
 
 const UInt32 SerializerCore::_jcctable[16] =
 {
