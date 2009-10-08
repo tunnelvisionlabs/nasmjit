@@ -1,3 +1,7 @@
+2009-10-08
+- Added SETcc instructions
+- Fixed cmake project issue
+
 2009-09-06:
 - Added initial support for inline comments
 - Compiler now produces inline comments when allocating / spilling variables
