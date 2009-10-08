@@ -84,6 +84,7 @@ If(ASMJIT_BUILD_TEST)
     testmemorymanager
     testopcode
     testrewrite
+    testsetcc
     teststate
     testvariables
     testvarmemalloc
