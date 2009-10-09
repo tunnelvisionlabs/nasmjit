@@ -1,3 +1,7 @@
+2009-10-09
+- MemoryManager is now pure virtual, added DefaultMemoryManager that implements
+  it.
+
 2009-10-08
 - Added SETcc instructions
 - Fixed cmake project issue

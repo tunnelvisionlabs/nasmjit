@@ -833,19 +833,37 @@ M_Node* MemoryManagerPrivate::nlFindPtr(UInt8* mem)
 
 MemoryManager::MemoryManager() ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = new MemoryManagerPrivate();
-  _d = (void*)d;
 }
 
 MemoryManager::~MemoryManager() ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
+}
+
+MemoryManager* MemoryManager::global() ASMJIT_NOTHROW
+{
+  static DefaultMemoryManager memmgr;
+  return &memmgr;
+}
+
+// ============================================================================
+// [AsmJit::DefaultMemoryManager]
+// ============================================================================
+
+DefaultMemoryManager::DefaultMemoryManager() ASMJIT_NOTHROW
+{
+  MemoryManagerPrivate* d = new MemoryManagerPrivate();
+  _d = (void*)d;
+}
+
+DefaultMemoryManager::~DefaultMemoryManager() ASMJIT_NOTHROW
+{
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   delete d;
 }
 
-void* MemoryManager::alloc(SysUInt size, UInt32 type) ASMJIT_NOTHROW
+void* DefaultMemoryManager::alloc(SysUInt size, UInt32 type) ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
 
   if (type == MEMORY_ALLOC_PERNAMENT) 
     return d->allocPernament(size);
@@ -853,28 +871,22 @@ void* MemoryManager::alloc(SysUInt size, UInt32 type) ASMJIT_NOTHROW
     return d->allocFreeable(size);
 }
 
-bool MemoryManager::free(void* address) ASMJIT_NOTHROW
+bool DefaultMemoryManager::free(void* address) ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   return d->free(address);
 }
 
-SysUInt MemoryManager::used() ASMJIT_NOTHROW
+SysUInt DefaultMemoryManager::used() ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   return d->_used;
 }
 
-SysUInt MemoryManager::allocated() ASMJIT_NOTHROW
+SysUInt DefaultMemoryManager::allocated() ASMJIT_NOTHROW
 {
-  MemoryManagerPrivate* d = (MemoryManagerPrivate*)_d;
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   return d->_allocated;
-}
-
-MemoryManager* MemoryManager::global() ASMJIT_NOTHROW
-{
-  static MemoryManager memmgr;
-  return &memmgr;
 }
 
 } // AsmJit namespace

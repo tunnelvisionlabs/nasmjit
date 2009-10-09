@@ -52,13 +52,48 @@ enum MEMORY_ALLOC_TYPE
   MEMORY_ALLOC_PERNAMENT
 };
 
-//! @brief Virtual memory manager.
+//! @brief Virtual memory manager interface.
+//!
+//! This class is pure virtual. You can get default virtual memory manager using
+//! @c global() method. If you want to create more memory managers with same
+//! functionality as global memory manager use @c DefaultMemoryManager class.
 struct ASMJIT_API MemoryManager
 {
   //! @brief Create memory manager instance.
   MemoryManager() ASMJIT_NOTHROW;
-  //! @brief Destroy memory manager instance, this means also to free all blocks.
+  //! @brief Destroy memory manager instance, this means also to free all memory
+  //! blocks.
   virtual ~MemoryManager() ASMJIT_NOTHROW;
+
+  //! @brief Allocate a @a size bytes of virtual memory.
+  //!
+  //! Note that if you are implementing your own virtual memory manager then you
+  //! can quitly ignore type of allocation. This is mainly for AsmJit to memory
+  //! manager that allocated memory will be never freed.
+  virtual void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW = 0;
+  //! @brief Free previously allocated memory at a given @a address.
+  virtual bool free(void* address) ASMJIT_NOTHROW = 0;
+
+  //! @brief Tell how many bytes are currently used.
+  virtual SysUInt used() ASMJIT_NOTHROW = 0;
+  //! @brief Tell how many bytes are currently allocated.
+  virtual SysUInt allocated() ASMJIT_NOTHROW = 0;
+
+  //! @brief Get global memory manager instance.
+  //!
+  //! Global instance is instance of @c DefaultMemoryManager class.
+  static MemoryManager* global() ASMJIT_NOTHROW;
+};
+
+//! @brief Reference implementation of memory manager that uses
+//! AsmJit::VirtualMemory class to allocate chunks of virtual memory and bit
+//! arrays to manage it.
+struct ASMJIT_API DefaultMemoryManager : public MemoryManager
+{
+  //! @brief Create memory manager instance.
+  DefaultMemoryManager() ASMJIT_NOTHROW;
+  //! @brief Destroy memory manager instance, this means also to free all blocks.
+  virtual ~DefaultMemoryManager() ASMJIT_NOTHROW;
 
   //! @brief Allocate a @a size bytes of virtual memory.
   virtual void* alloc(SysUInt size, UInt32 type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
@@ -69,9 +104,6 @@ struct ASMJIT_API MemoryManager
   virtual SysUInt used() ASMJIT_NOTHROW;
   //! @brief Tell how many bytes are currently allocated.
   virtual SysUInt allocated() ASMJIT_NOTHROW;
-
-  //! @brief Get global instance of memory manager.
-  static MemoryManager* global() ASMJIT_NOTHROW;
 
 private:
   void* _d;
