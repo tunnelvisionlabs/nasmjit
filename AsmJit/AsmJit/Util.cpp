@@ -174,7 +174,7 @@ void Zone::clear()
 
   Chunk* prev;
   do {
-    Chunk* prev = cur->prev;
+    prev = cur->prev;
     if (prev) ASMJIT_FREE(cur);
     cur = prev;
   } while (cur);
