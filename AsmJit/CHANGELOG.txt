@@ -4,6 +4,7 @@
 - Assembler::clear() now calls _zone.clear() instead of _zone.freeAll(), this
   means that reusing Assembler instance is bit more efficient.
 - Assembler::clear() now clears also error code.
+- Assembler::free() now clears also error code.
 
 2009-10-09
 - MemoryManager is now pure virtual, added DefaultMemoryManager that implements
