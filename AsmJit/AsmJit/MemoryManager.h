@@ -45,10 +45,10 @@ namespace AsmJit {
 //! @brief Types of allocation used by @c AsmJit::MemoryManager::alloc() method.
 enum MEMORY_ALLOC_TYPE
 {
-  //! @brief Allocate pernament memory that will be never freed.
-  MEMORY_ALLOC_FREEABLE,
   //! @brief Allocate memory that can be freed by @c AsmJit::MemoryManager::free()
   //! method.
+  MEMORY_ALLOC_FREEABLE,
+  //! @brief Allocate pernament memory that will be never freed.
   MEMORY_ALLOC_PERNAMENT
 };
 

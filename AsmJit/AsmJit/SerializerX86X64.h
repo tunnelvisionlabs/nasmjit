@@ -1349,9 +1349,9 @@ struct ASMJIT_API SerializerCore
 
   //! @brief Emits X86/FPU or MM instruction.
   //!
-  //! Operands @a o1, @a o2 or @a o3 can't be @c NULL.
+  //! Operands @a o1, @a o2 or @a o3 can be @c NULL if they are not used.
   //!
-  //! Use @c emitX86() helpers to emit instructions.
+  //! Hint: Use @c emitX86() helpers to emit instructions.
   virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
 
   // Helpers to decrease binary code size. These four emit methods are just

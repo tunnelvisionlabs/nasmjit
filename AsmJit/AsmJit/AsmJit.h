@@ -29,13 +29,12 @@
 
 //! @mainpage
 //!
-//! @brief AsmJit is complete JIT assembler for X86/X64 platform.
+//! @brief AsmJit is complete x86/x64 JIT Assembler for C++ language
 //! 
-//! AsmJit is complete x86/x64 JIT Assembler for C++ language. It supports FPU,
-//! MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 intrinsics, powerful compiler that 
-//! helps to write portable functions for 32-bit (x86) and 64-bit (x64) 
-//! architectures. AsmJit can be used to create functions at runtime that can
-//! be called from existing (but also generated) C/C++ code.
+//! It supports FPU, MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 intrinsics, powerful
+//! compiler that helps to write portable functions for 32-bit (x86) and 64-bit
+//! (x64) architectures. AsmJit can be used to create functions at runtime that
+//! can be called from existing (but also generated) C/C++ code.
 //!
 //! AsmJit is crossplatform library that supports various compilers and
 //! operating systems. Currently only limitation is x86 (32-bit) or x64 (64-bit)
