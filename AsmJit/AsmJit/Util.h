@@ -721,7 +721,16 @@ struct ASMJIT_API Zone
   //! @endcode
   void* alloc(SysUInt size) ASMJIT_NOTHROW;
 
+  //! @brief Free all allocated memory except first block that remains for reuse.
+  //!
+  //! Note that this method will invalidate all instances using this memory
+  //! allocated by this zone instance.
+  void clear() ASMJIT_NOTHROW;
+
   //! @brief Free all allocated memory at once.
+  //!
+  //! Note that this method will invalidate all instances using this memory
+  //! allocated by this zone instance.
   void freeAll() ASMJIT_NOTHROW;
 
   //! @brief Return total size of allocated objects - by @c alloc().

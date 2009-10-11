@@ -672,6 +672,16 @@ struct ASMJIT_API Assembler : public Serializer
   virtual void align(SysInt m);
 
   // -------------------------------------------------------------------------
+  // [Labels]
+  // -------------------------------------------------------------------------
+
+  //! @brief Create and return new @a Label managed by assembler.
+  //!
+  //! Note that if you create labels by this way they are not checked like
+  //! Labels statically allocated on the stack!.
+  Label* newLabel();
+
+  // -------------------------------------------------------------------------
   // [Bind]
   // -------------------------------------------------------------------------
 

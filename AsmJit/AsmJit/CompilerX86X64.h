@@ -35,7 +35,7 @@
 
 #include <string.h>
 
-// a little bit C++
+// A little bit C++.
 #include <new>
 
 // [Warnings-Push]

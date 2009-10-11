@@ -166,17 +166,36 @@ void* Zone::alloc(SysUInt size)
   return (void*)p;
 }
 
+void Zone::clear()
+  ASMJIT_NOTHROW
+{
+  Chunk* cur = _chunks;
+  if (!cur) return;
+
+  Chunk* prev;
+  do {
+    Chunk* prev = cur->prev;
+    if (prev) ASMJIT_FREE(cur);
+    cur = prev;
+  } while (cur);
+
+  _chunks = prev;
+  _chunks->pos = 0;
+  _total = 0;
+}
+
 void Zone::freeAll()
   ASMJIT_NOTHROW
 {
   Chunk* cur = _chunks;
+  if (!cur) return;
 
-  while (cur)
-  {
-    Chunk* prev = cur->prev;
+  Chunk* prev;
+  do {
+    prev = cur->prev;
     ASMJIT_FREE(cur);
     cur = prev;
-  }
+  } while (cur);
 
   _chunks = NULL;
   _total = 0;

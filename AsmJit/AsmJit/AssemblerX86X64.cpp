@@ -35,6 +35,9 @@
 #include "MemoryManager.h"
 #include "VirtualMemory.h"
 
+// A little bit C++.
+#include <new>
+
 // [Warnings-Push]
 #include "WarningsPush.h"
 
@@ -69,6 +72,7 @@ UInt8* Assembler::takeCode()
 {
   UInt8* code = _buffer.take();
   _relocData.clear();
+  _zone.clear();
   return code;
 }
 
@@ -76,6 +80,7 @@ void Assembler::clear()
 {
   _buffer.clear();
   _relocData.clear();
+  _zone.clear();
 }
 
 // ============================================================================
@@ -2847,6 +2852,16 @@ void Assembler::align(SysInt m)
   do {
     _emitByte(0x90);
   } while(--i);
+}
+
+// ============================================================================
+// [AsmJit::Assembler - Labels]
+// ============================================================================
+
+Label* Assembler::newLabel()
+{
+  Label* label = new(_zoneAlloc(sizeof(Label))) Label();
+  return label;
 }
 
 // ============================================================================
