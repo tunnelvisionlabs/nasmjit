@@ -66,6 +66,7 @@ void Assembler::free()
 {
   _buffer.free();
   _relocData.free();
+  _zone.freeAll();
 }
 
 UInt8* Assembler::takeCode()
@@ -81,6 +82,8 @@ void Assembler::clear()
   _buffer.clear();
   _relocData.clear();
   _zone.clear();
+
+  if (error()) clearError();
 }
 
 // ============================================================================
