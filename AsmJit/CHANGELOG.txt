@@ -1,3 +1,7 @@
+2009-10-17
+- Implemented call(imm) and jmp(imm). Trampoline is used if relative displacement
+  isn't possible.
+
 2009-10-11
 - Added Assembler::newLabel() - similar functionality to compiler
 - Added Clear method to Zone

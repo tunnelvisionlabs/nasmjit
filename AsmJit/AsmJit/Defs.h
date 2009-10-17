@@ -64,6 +64,9 @@ enum ERROR_CODE
   //! In debug mode you get assertion failure instead.
   ERROR_ILLEGAL_INSTRUCTION = 4,
 
+  //! @brief Illegal addressing used (unencodable).
+  ERROR_ILLEGAL_ADDRESING = 5,
+
   //! @brief Count of error codes in AsmJit. Can grow in future.
   _ERROR_COUNT
 };

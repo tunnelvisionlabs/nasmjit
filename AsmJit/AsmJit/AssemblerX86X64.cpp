@@ -43,12 +43,46 @@
 
 namespace AsmJit {
 
+#if defined(ASMJIT_X64)
+
+// ============================================================================
+// [AsmJit::TrampolineWriter]
+// ============================================================================
+
+//! @brief Class used to determine size of trampoline and as trampoline writer.
+struct ASMJIT_HIDDEN TrampolineWriter
+{
+  // Size of trampoline
+  enum {
+    TRAMPOLINE_JMP = 6,
+    TRAMPOLINE_ADDR = sizeof(SysInt),
+
+    TRAMPOLINE_SIZE = TRAMPOLINE_JMP + TRAMPOLINE_ADDR
+  };
+
+  // Write trampoline into code at address @a code that will jump to @a target.
+  static void writeTrampoline(UInt8* code, void* target)
+  {
+    // Jmp.
+    code[0] = 0xFF;
+    // ModM (RIP addressing).
+    code[1] = 0x25;
+    // Offset (zero).
+    ((UInt32*)(code + 2))[0] = 0;
+    // Absolute address.
+    ((SysUInt*)(code + TRAMPOLINE_JMP))[0] = (SysUInt)target;
+  }
+};
+
+#endif // ASMJIT_X64
+
 // ============================================================================
 // [AsmJit::Assembler - Construction / Destruction]
 // ============================================================================
 
 Assembler::Assembler() ASMJIT_NOTHROW :
-  _buffer(32), // max instruction length is 15, but we can align up to 32 bytes
+  _buffer(32), // Max instruction length is 15, but we can align up to 32 bytes.
+  _trampolineSize(0),
   _unusedLinks(NULL)
 {
   _inlineCommentBuffer[0] = '\0';
@@ -149,6 +183,7 @@ void Assembler::_emitImmediate(const Immediate& imm, UInt32 size)
 
   if (imm.relocMode() != RELOC_NONE) 
   {
+    // TODO: I don't know why there is this condition.
   }
 
   if (size == 1 && !isUnsigned) _emitByte ((Int8  )i);
@@ -307,7 +342,8 @@ void Assembler::_emitModM(
       if (mem.hasIndex())
       {
         // Indexing is not possible
-
+        setError(ERROR_ILLEGAL_ADDRESING);
+        return;
       }
 
       // Relative address (RIP +/- displacement)
@@ -454,21 +490,21 @@ void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_N
 void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, 
   const BaseRegMem& src, SysInt immSize) ASMJIT_NOTHROW
 {
-  // segment prefix
+  // Segment prefix.
   _emitSegmentPrefix(src);
 
-  // instruction prefix
+  // Instruction prefix.
   if (opCode & 0xFF000000) _emitByte((UInt8)((opCode & 0xFF000000) >> 24));
 
-  // rex prefix
+  // Rex prefix
 #if defined(ASMJIT_X64)
   _emitRexRM(rexw, opReg, src);
 #endif // ASMJIT_X64
 
-  // instruction opcodes
+  // Instruction opcodes.
   if (opCode & 0x00FF0000) _emitByte((UInt8)((opCode & 0x00FF0000) >> 16));
 
-  // no checking, MMX/SSE instructions have always two opcodes or more
+  // No checking, MMX/SSE instructions have always two opcodes or more.
   _emitByte((UInt8)((opCode & 0x0000FF00) >> 8));
   _emitByte((UInt8)((opCode & 0x000000FF)));
 
@@ -483,7 +519,7 @@ Assembler::LinkData* Assembler::_emitDisplacement(
 {
   ASMJIT_ASSERT(!label->isBound());
 
-  // Chain with label
+  // Chain with label.
   LinkData* link = _newLinkData();
   link->prev = (LinkData*)label->_lbl.link;
   link->offset = offset();
@@ -492,10 +528,32 @@ Assembler::LinkData* Assembler::_emitDisplacement(
   label->_lbl.link = link;
   label->_lbl.state = LABEL_STATE_LINKED;
 
-  // Emit dummy DWORD
+  // Emit dummy DWORD.
   _emitInt32(0);
 
   return link;
+}
+
+void Assembler::_emitJmpOrCallReloc(UInt32 instruction, void* target) ASMJIT_NOTHROW
+{
+  RelocData rd;
+
+  rd.type = RelocData::ABSOLUTE_TO_RELATIVE_TRAMPOLINE;
+
+#if defined(ASMJIT_X64)
+  // If we are compiling in 64-bit mode, we can use trampoline if relative jump
+  // is not possible.
+  _trampolineSize += TrampolineWriter::TRAMPOLINE_SIZE;
+#endif // ARCHITECTURE_SPECIFIC
+
+  rd.size = 4;
+  rd.offset = offset();
+  rd.address = target;
+
+  _relocData.append(rd);
+
+  // Emit dummy 32-bit integer (will be overwritten by relocCode()).
+  _emitInt32(0);
 }
 
 // ============================================================================
@@ -506,18 +564,36 @@ void Assembler::relocCode(void* _dst) const
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   UInt8* dst = reinterpret_cast<UInt8*>(_dst);
-  memcpy(dst, _buffer.data(), codeSize());
+
+  SysInt coff = _buffer.offset();
+  SysInt csize = codeSize();
+
+  // We are copying exactly size of generated code. Extra code for trampolines
+  // is generated on-the-fly by relocator (this code not exists at now).
+  memcpy(dst, _buffer.data(), coff);
+
+#if defined(ASMJIT_X64)
+  // Trampoline pointer.
+  UInt8* tramp = dst + coff;
+#endif // ASMJIT_X64
 
   // Relocate recorded locations.
-  SysInt i, len = _relocData.length();
+  SysInt i;
+  SysInt len = _relocData.length();
 
   for (i = 0; i < len; i++)
   {
     const RelocData& r = _relocData[i];
     SysInt val;
 
+#if defined(ASMJIT_X64)
+    // Whether to use trampoline, can be only used if relocation type is
+    // ABSOLUTE_TO_RELATIVE_TRAMPOLINE.
+    bool useTrampoline = false;
+#endif // ASMJIT_X64
+
     // Be sure that reloc data structure is correct.
-    ASMJIT_ASSERT((SysInt)(r.offset + r.size) <= codeSize());
+    ASMJIT_ASSERT((SysInt)(r.offset + r.size) <= csize);
 
     switch(r.type)
     {
@@ -530,7 +606,16 @@ void Assembler::relocCode(void* _dst) const
         break;
 
       case RelocData::ABSOLUTE_TO_RELATIVE:
-        val = (SysInt)(r.address) - (SysInt)(dst + r.offset);
+      case RelocData::ABSOLUTE_TO_RELATIVE_TRAMPOLINE:
+        val = (SysInt)( (SysUInt)r.address - ((SysUInt)dst + (SysUInt)r.offset + 4) );
+
+#if defined(ASMJIT_X64)
+        if (r.type == RelocData::ABSOLUTE_TO_RELATIVE_TRAMPOLINE && !isInt32(val))
+        {
+          val = (SysInt)( (SysUInt)tramp - ((SysUInt)dst + (SysUInt)r.offset + 4) );
+          useTrampoline = true;
+        }
+#endif // ASMJIT_X64
         break;
 
       default:
@@ -550,6 +635,19 @@ void Assembler::relocCode(void* _dst) const
       default:
         ASMJIT_ASSERT(0);
     }
+
+#if defined(ASMJIT_X64)
+    if (useTrampoline)
+    {
+      if (logger() && logger()->enabled())
+      {
+        logger()->logFormat("; Trampoline from %p -> %p\n", dst + r.offset, r.address);
+      }
+
+      TrampolineWriter::writeTrampoline(tramp, r.address);
+      tramp += TrampolineWriter::TRAMPOLINE_SIZE;
+    }
+#endif // ASMJIT_X64
   }
 }
 
@@ -1430,6 +1528,14 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         return;
       }
 
+      if (o1->isImm())
+      {
+        const Immediate& imm = reinterpret_cast<const Immediate&>(*o1);
+        _emitByte(0xE8);
+        _emitJmpOrCallReloc(I_CALL, (void*)imm.value());
+        return;
+      }
+
       if (o1->isLabel())
       {
         Label* label = (Label*)(o1);
@@ -1649,6 +1755,14 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           0, 4, dst,
           0);
         return; 
+      }
+
+      if (o1->isImm())
+      {
+        const Immediate& imm = reinterpret_cast<const Immediate&>(*o1);
+        _emitByte(0xE9);
+        _emitJmpOrCallReloc(I_JMP, (void*)imm.value());
+        return;
       }
 
       if (o1->isLabel())

@@ -87,6 +87,7 @@ If(ASMJIT_BUILD_TEST)
     testrewrite
     testsetcc
     teststate
+    testtrampoline
     testvariables
     testvarmemalloc
     testvarspill

@@ -1767,6 +1767,11 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
     emitX86(INST_CALL, &dst);
   }
   //! @brief Call Procedure.
+  inline void call(const Immediate& dst)
+  {
+    emitX86(INST_CALL, &dst);
+  }
+  //! @brief Call Procedure.
   inline void call(Label* label)
   {
     emitX86(INST_CALL, label);
@@ -2185,28 +2190,33 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   inline void jz  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JZ  , label, hint); }
 
   //! @brief Jump.
-  //!
-  //! This instruction transfers program control to a different point
-  //! in the instruction stream without recording return information. 
-  //! The destination (target) operand specifies the address of the
-  //! instruction being jumped to.
-  inline void jmp(Label* label)
-  {
-    emitX86(INST_JMP, label);
-  }
-
-  //! @brief Jump.
   //! @overload
   inline void jmp(const Register& dst)
   {
     emitX86(INST_JMP, &dst);
   }
-
   //! @brief Jump.
   //! @overload
   inline void jmp(const Mem& dst)
   {
     emitX86(INST_JMP, &dst);
+  }
+  //! @brief Jump.
+  //! @overload
+  inline void jmp(const Immediate& dst)
+  {
+    emitX86(INST_JMP, &dst);
+  }
+
+  //! @brief Jump.
+  //!
+  //! This instruction transfers program control to a different point
+  //! in the instruction stream without recording return information.
+  //! The destination (target) operand specifies the address of the
+  //! instruction being jumped to.
+  inline void jmp(Label* label)
+  {
+    emitX86(INST_JMP, label);
   }
 
   //! @brief Load Effective Address

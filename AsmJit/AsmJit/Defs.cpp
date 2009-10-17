@@ -39,6 +39,7 @@ const char* errorCodeToString(UInt32 error) ASMJIT_NOTHROW
     "No virtual memory",
     "Unknown instruction",
     "Illegal instruction",
+    "Illegal addressing",
     "Unknown error"
   };
 

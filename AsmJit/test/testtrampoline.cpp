@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -33,57 +33,61 @@
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
+#if defined(ASMJIT_X86)
+
+int main(int argc, char* argv[])
+{
+  printf("Trampoline test can be only used in x64 mode.\n");
+  return 0;
+}
+
+#else
+
 // This is type of function we will generate
-typedef void (*MyFn)(int, int, char*);
+typedef void (*MyFn)(void);
+
+static int i = 0;
+
+// Function that is called from JIT code.
+static void calledfn(void)
+{
+  i++;
+}
 
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
   // ==========================================================================
-  // Create compiler.
-  Compiler c;
+  // Create assembler.
+  Assembler a;
 
   // Log compiler output.
   FileLogger logger(stderr);
-  c.setLogger(&logger);
+  a.setLogger(&logger);
 
-  Function& f = *c.newFunction(CALL_CONV_DEFAULT, BuildFunction3<int, int, char*>());
+  a.call(imm((SysInt)calledfn)); // First trampoline - call.
+  a.jmp(imm((SysInt)calledfn));  // Second trampoline - jump, will return.
+  MyFn fn0 = function_cast<MyFn>(a.make());
 
-  // Possibilities to improve code:
-  //   f.setNaked(true);
-  //   f.setAllocableEbp(true);
+  a.clear(); // Purge assembler, we will reuse it.
+  a.jmp(imm((SysInt)fn0));
+  MyFn fn1 = function_cast<MyFn>(a.make());
 
-  PtrRef src0(f.argument(0));
-  PtrRef src1(f.argument(1));
-  PtrRef dst0(f.argument(2));
-
-  c.cmp(src0.c(), src1.c());
-  c.setz(byte_ptr(dst0.c()));
-
-  // Finish
-  c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
-  // Make function
-  MyFn fn = function_cast<MyFn>(c.make());
+  fn0();
+  fn1();
 
-  // Results storage.
-  char r[4];
+  printf("Status: %s\n", (i == 4) ? "Success" : "Failure");
 
-  // Call it
-  fn(0, 0, &r[0]); // We are expecting 1 (0 == 0).
-  fn(0, 1, &r[1]); // We are expecting 0 (0 != 1).
-  fn(1, 0, &r[2]); // We are expecting 0 (1 != 0).
-  fn(1, 1, &r[3]); // We are expecting 1 (1 == 1).
-
-  printf("Result from JIT function: %d %d %d %d\n", r[0], r[1], r[2], r[3]);
-  printf("Status: %s\n", (r[0] == 1 && r[1] == 0 && r[2] == 0 && r[3] == 1) ? "Success" : "Failure");
-
-  // If function is not needed again it should be freed.
-  MemoryManager::global()->free((void*)fn);
+  // If functions are not needed again they should be freed.
+  MemoryManager::global()->free((void*)fn0);
+  MemoryManager::global()->free((void*)fn1);
   // ==========================================================================
 
   return 0;
 }
+
+#endif

@@ -321,7 +321,8 @@ struct ASMJIT_API Assembler : public Serializer
     {
       ABSOLUTE_TO_ABSOLUTE = 0,
       RELATIVE_TO_ABSOLUTE = 1,
-      ABSOLUTE_TO_RELATIVE = 2
+      ABSOLUTE_TO_RELATIVE = 2,
+      ABSOLUTE_TO_RELATIVE_TRAMPOLINE = 3
     };
 
     //! @brief Type of relocation.
@@ -371,13 +372,23 @@ struct ASMJIT_API Assembler : public Serializer
   inline bool ensureSpace() ASMJIT_NOTHROW
   { return _buffer.ensureSpace(); }
 
-  //! @brief Return size of currently generated code.
-  inline SysInt codeSize() const ASMJIT_NOTHROW
-  { return _buffer.offset(); }
-
-  //! @brief Return current offset in buffer (same as codeSize()).
+  //! @brief Return current offset in buffer).
   inline SysInt offset() const ASMJIT_NOTHROW
   { return _buffer.offset(); }
+
+  //! @brief Return current offset in buffer (same as offset() + tramplineSize()).
+  inline SysInt codeSize() const ASMJIT_NOTHROW
+  { return _buffer.offset() + trampolineSize(); }
+
+  //! @brief Return size of all possible trampolines needed to successfuly generate
+  //! relative jumps to absolute addresses. This value is only non-zero if jmp
+  //! of call instructions were used with immediate operand (this means jump or
+  //! call absolute address directly).
+  //!
+  //! Currently only _emitJmpOrCallReloc() method can increase trampoline size
+  //! value.
+  inline SysInt trampolineSize() const ASMJIT_NOTHROW
+  { return _trampolineSize; }
 
   //! @brief Sets offset to @a o and returns previous offset.
   //!
@@ -641,6 +652,12 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief Emit displacement.
   LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement) ASMJIT_NOTHROW;
 
+  //! @brief Emit relative relocation to absolute pointer @a target. It's needed
+  //! to add what instruction is emitting this, because in x64 mode the relative
+  //! displacement can be impossible to calculate and in this case the trampoline
+  //! is used.
+  void _emitJmpOrCallReloc(UInt32 instruction, void* target) ASMJIT_NOTHROW;
+
   // -------------------------------------------------------------------------
   // [Relocation helpers]
   // -------------------------------------------------------------------------
@@ -649,7 +666,7 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! A given buffer will be overwritten, to get number of bytes required use
   //! @c codeSize() or @c offset() methods.
-  void relocCode(void* dst) const;
+  virtual void relocCode(void* dst) const;
 
   // -------------------------------------------------------------------------
   // [EmitX86]
@@ -709,6 +726,9 @@ struct ASMJIT_API Assembler : public Serializer
 
   //! @brief Binary code buffer.
   Buffer _buffer;
+
+  //! @brief Size of possible trampolines.
+  SysInt _trampolineSize;
 
   //! @brief Linked list of unused links (@c LinkData* structures)
   LinkData* _unusedLinks;
