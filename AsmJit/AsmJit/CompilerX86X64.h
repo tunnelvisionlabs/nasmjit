@@ -2635,9 +2635,6 @@ struct ASMJIT_API CompilerCore : public Serializer
   using Serializer::jmp;
   using Serializer::call;
 
-  void jmp(void* target);
-  void call(void* target);
-
   void jumpToTable(JumpTable* jt, const Register& index);
 
   SysInt _addTarget(void* target);

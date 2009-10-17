@@ -1771,6 +1771,14 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   {
     emitX86(INST_CALL, &dst);
   }
+  //! @brief Jump.
+  //! @overload
+  inline void call(void* dst)
+  {
+    Immediate imm((SysInt)dst);
+    emitX86(INST_CALL, &imm);
+  }
+
   //! @brief Call Procedure.
   inline void call(Label* label)
   {
@@ -2206,6 +2214,14 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   inline void jmp(const Immediate& dst)
   {
     emitX86(INST_JMP, &dst);
+  }
+  
+  //! @brief Jump.
+  //! @overload
+  inline void jmp(void* dst)
+  {
+    Immediate imm((SysInt)dst);
+    emitX86(INST_JMP, &imm);
   }
 
   //! @brief Jump.

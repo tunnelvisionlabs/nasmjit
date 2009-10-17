@@ -2903,16 +2903,6 @@ void CompilerCore::_registerOperand(Operand* op)
 // [AsmJit::Compiler - Jumps / Calls]
 // ============================================================================
 
-void CompilerCore::jmp(void* target)
-{
-  jmp(ptr(_jumpTableLabel, _addTarget(target)));
-}
-
-void CompilerCore::call(void* target)
-{
-  call(ptr(_jumpTableLabel, _addTarget(target)));
-}
-
 void CompilerCore::jumpToTable(JumpTable* jt, const Register& index)
 {
 #if defined(ASMJIT_X64)
