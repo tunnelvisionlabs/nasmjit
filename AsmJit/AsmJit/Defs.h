@@ -67,6 +67,9 @@ enum ERROR_CODE
   //! @brief Illegal addressing used (unencodable).
   ERROR_ILLEGAL_ADDRESING = 5,
 
+  //! @brief Short jump instruction used, but displacement is out of bounds.
+  ERROR_ILLEGAL_SHORT_JUMP = 6,
+
   //! @brief Count of error codes in AsmJit. Can grow in future.
   _ERROR_COUNT
 };

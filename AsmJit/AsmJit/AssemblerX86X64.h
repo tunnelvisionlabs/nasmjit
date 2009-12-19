@@ -650,7 +650,7 @@ struct ASMJIT_API Assembler : public Serializer
     SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit displacement.
-  LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement) ASMJIT_NOTHROW;
+  LinkData* _emitDisplacement(Label* label, SysInt inlinedDisplacement, int size) ASMJIT_NOTHROW;
 
   //! @brief Emit relative relocation to absolute pointer @a target. It's needed
   //! to add what instruction is emitting this, because in x64 mode the relative

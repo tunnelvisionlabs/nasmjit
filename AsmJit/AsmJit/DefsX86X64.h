@@ -346,15 +346,25 @@ enum SCALE
 // [AsmJit::HINT]
 // ============================================================================
 
-//! @brief Condition hint, see @c AsmJit::Serializer::jz() and others.
+//! @brief Condition hint, see @c AsmJit::Serializer::jz() and friends.
 enum HINT
 {
   //! @brief No hint.
-  HINT_NONE = 0,
+  HINT_NONE = 0x00,
   //! @brief Condition will be taken (likely).
-  HINT_TAKEN = 0x3E,
+  HINT_TAKEN = 0x01,
   //! @brief Condition will be not taken (unlikely).
-  HINT_NOT_TAKEN = 0x2E
+  HINT_NOT_TAKEN = 0x02
+};
+
+//! @brief Hint byte value is the byte that will be emitted if hint flag
+//! is specified by @c HINT.
+enum HINT_BYTE_VALUE
+{
+  //! @brief Condition will be taken (likely).
+  HINT_BYTE_VALUE_TAKEN = 0x3E,
+  //! @brief Condition will be not taken (unlikely).
+  HINT_BYTE_VALUE_NOT_TAKEN = 0x2E
 };
 
 // ============================================================================
@@ -387,12 +397,12 @@ enum FP_CW
   FP_CW_PRECC_MASK    = 0x300,
   FP_CW_ROUNDC_MASK   = 0xC00,
 
-  // values for precision control
+  // Values for precision control.
   FP_CW_PREC_SINGLE   = 0x000,
   FP_CW_PREC_DOUBLE   = 0x200,
   FP_CW_PREC_EXTENDED = 0x300,
 
-  // values for rounding control
+  // Values for rounding control.
   FP_CW_ROUND_NEAREST = 0x000,
   FP_CW_ROUND_DOWN    = 0x400,
   FP_CW_ROUND_UP      = 0x800,
@@ -444,8 +454,9 @@ enum INST_CODE
   INST_CLD,           // X86/X64
   INST_CLFLUSH,
   INST_CMC,           // X86/X64
+
   INST_CMOV,          // Begin (cmovcc) (i586)
-  INST_CMOVA=INST_CMOV,//X86/X64 (cmovcc) (i586)
+  INST_CMOVA = INST_CMOV, //X86/X64 (cmovcc) (i586)
   INST_CMOVAE,        // X86/X64 (cmovcc) (i586)
   INST_CMOVB,         // X86/X64 (cmovcc) (i586)
   INST_CMOVBE,        // X86/X64 (cmovcc) (i586)
@@ -475,6 +486,7 @@ enum INST_CODE
   INST_CMOVPO,        // X86/X64 (cmovcc) (i586)
   INST_CMOVS,         // X86/X64 (cmovcc) (i586)
   INST_CMOVZ,         // X86/X64 (cmovcc) (i586)
+
   INST_CMP,           // X86/X64
   INST_CMPPD,
   INST_CMPPS,
@@ -627,6 +639,7 @@ enum INST_CODE
   INST_IMUL,          // X86/X64
   INST_INC,           // X86/X64
   INST_INT3,          // X86/X64
+
   INST_J,             // Begin (jcc)
   INST_JA = INST_J,   // X86/X64 (jcc)
   INST_JAE,           // X86/X64 (jcc)
@@ -659,6 +672,40 @@ enum INST_CODE
   INST_JS,            // X86/X64 (jcc)
   INST_JZ,            // X86/X64 (jcc)
   INST_JMP,           // X86/X64 (jmp)
+
+  INST_J_SHORT,       // Begin (jcc short)
+  INST_JA_SHORT = INST_J_SHORT, // X86/X64 (jcc short)
+  INST_JAE_SHORT,     // X86/X64 (jcc short)
+  INST_JB_SHORT,      // X86/X64 (jcc short)
+  INST_JBE_SHORT,     // X86/X64 (jcc short)
+  INST_JC_SHORT,      // X86/X64 (jcc short)
+  INST_JE_SHORT,      // X86/X64 (jcc short)
+  INST_JG_SHORT,      // X86/X64 (jcc short)
+  INST_JGE_SHORT,     // X86/X64 (jcc short)
+  INST_JL_SHORT,      // X86/X64 (jcc short)
+  INST_JLE_SHORT,     // X86/X64 (jcc short)
+  INST_JNA_SHORT,     // X86/X64 (jcc short)
+  INST_JNAE_SHORT,    // X86/X64 (jcc short)
+  INST_JNB_SHORT,     // X86/X64 (jcc short)
+  INST_JNBE_SHORT,    // X86/X64 (jcc short)
+  INST_JNC_SHORT,     // X86/X64 (jcc short)
+  INST_JNE_SHORT,     // X86/X64 (jcc short)
+  INST_JNG_SHORT,     // X86/X64 (jcc short)
+  INST_JNGE_SHORT,    // X86/X64 (jcc short)
+  INST_JNL_SHORT,     // X86/X64 (jcc short)
+  INST_JNLE_SHORT,    // X86/X64 (jcc short)
+  INST_JNO_SHORT,     // X86/X64 (jcc short)
+  INST_JNP_SHORT,     // X86/X64 (jcc short)
+  INST_JNS_SHORT,     // X86/X64 (jcc short)
+  INST_JNZ_SHORT,     // X86/X64 (jcc short)
+  INST_JO_SHORT,      // X86/X64 (jcc short)
+  INST_JP_SHORT,      // X86/X64 (jcc short)
+  INST_JPE_SHORT,     // X86/X64 (jcc short)
+  INST_JPO_SHORT,     // X86/X64 (jcc short)
+  INST_JS_SHORT,      // X86/X64 (jcc short)
+  INST_JZ_SHORT,      // X86/X64 (jcc short)
+  INST_JMP_SHORT,     // X86/Z64 (jmp short)
+
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LEA,           // X86/X64

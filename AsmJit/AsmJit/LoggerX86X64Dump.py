@@ -23,7 +23,7 @@ dinst = []
 daddr = []
 dpos = 0
 
-r = re.compile(r'\"(?P<INST>[A-Za-z0-9_]+)\"')
+r = re.compile(r'\"(?P<INST>[A-Za-z0-9_ ]+)\"')
 for m in r.finditer(din):
   dinst.append('\"' + m.group("INST") + '\\0\"');
   daddr.append(dpos)

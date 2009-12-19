@@ -321,7 +321,7 @@ void Assembler::_emitModM(
       }
       else
       {
-        _emitDisplacement(label, -4 - immSize)->relocId = relocId;
+        _emitDisplacement(label, -4 - immSize, 4)->relocId = relocId;
       }
 
       _relocData.append(rd);
@@ -358,7 +358,7 @@ void Assembler::_emitModM(
       }
       else
       {
-        _emitDisplacement(label, disp);
+        _emitDisplacement(label, disp, 4);
       }
     }
     else
@@ -515,9 +515,10 @@ void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg,
 }
 
 Assembler::LinkData* Assembler::_emitDisplacement(
-  Label* label, SysInt inlinedDisplacement) ASMJIT_NOTHROW
+  Label* label, SysInt inlinedDisplacement, int size) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(!label->isBound());
+  ASMJIT_ASSERT(size == 1 || size == 4);
 
   // Chain with label.
   LinkData* link = _newLinkData();
@@ -529,7 +530,10 @@ Assembler::LinkData* Assembler::_emitDisplacement(
   label->_lbl.state = LABEL_STATE_LINKED;
 
   // Emit dummy DWORD.
-  _emitInt32(0);
+  if (size == 1)
+    _emitByte(0x01);
+  else // if (size == 4)
+    _emitDWord(0x04040404);
 
   return link;
 }
@@ -1061,6 +1065,37 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_JS               , "js"               , I_J             , 0               , 0               , 0, 0x8       , 0),
   MAKE_INST(INST_JZ               , "jz"               , I_J             , 0               , 0               , 0, 0x4       , 0),
   MAKE_INST(INST_JMP              , "jmp"              , I_JMP           , 0               , 0               , 0, 0         , 0),
+  MAKE_INST(INST_JA_SHORT         , "ja short"         , I_J             , 0               , 0               , 0, 0x7       , 0),
+  MAKE_INST(INST_JAE_SHORT        , "jae short"        , I_J             , 0               , 0               , 0, 0x3       , 0),
+  MAKE_INST(INST_JB_SHORT         , "jb short"         , I_J             , 0               , 0               , 0, 0x2       , 0),
+  MAKE_INST(INST_JBE_SHORT        , "jbe short"        , I_J             , 0               , 0               , 0, 0x6       , 0),
+  MAKE_INST(INST_JC_SHORT         , "jc short"         , I_J             , 0               , 0               , 0, 0x2       , 0),
+  MAKE_INST(INST_JE_SHORT         , "je short"         , I_J             , 0               , 0               , 0, 0x4       , 0),
+  MAKE_INST(INST_JG_SHORT         , "jg short"         , I_J             , 0               , 0               , 0, 0xF       , 0),
+  MAKE_INST(INST_JGE_SHORT        , "jge short"        , I_J             , 0               , 0               , 0, 0xD       , 0),
+  MAKE_INST(INST_JL_SHORT         , "jl short"         , I_J             , 0               , 0               , 0, 0xC       , 0),
+  MAKE_INST(INST_JLE_SHORT        , "jle short"        , I_J             , 0               , 0               , 0, 0xE       , 0),
+  MAKE_INST(INST_JNA_SHORT        , "jna short"        , I_J             , 0               , 0               , 0, 0x6       , 0),
+  MAKE_INST(INST_JNAE_SHORT       , "jnae short"       , I_J             , 0               , 0               , 0, 0x2       , 0),
+  MAKE_INST(INST_JNB_SHORT        , "jnb short"        , I_J             , 0               , 0               , 0, 0x3       , 0),
+  MAKE_INST(INST_JNBE_SHORT       , "jnbe short"       , I_J             , 0               , 0               , 0, 0x7       , 0),
+  MAKE_INST(INST_JNC_SHORT        , "jnc short"        , I_J             , 0               , 0               , 0, 0x3       , 0),
+  MAKE_INST(INST_JNE_SHORT        , "jne short"        , I_J             , 0               , 0               , 0, 0x5       , 0),
+  MAKE_INST(INST_JNG_SHORT        , "jng short"        , I_J             , 0               , 0               , 0, 0xE       , 0),
+  MAKE_INST(INST_JNGE_SHORT       , "jnge short"       , I_J             , 0               , 0               , 0, 0xC       , 0),
+  MAKE_INST(INST_JNL_SHORT        , "jnl short"        , I_J             , 0               , 0               , 0, 0xD       , 0),
+  MAKE_INST(INST_JNLE_SHORT       , "jnle short"       , I_J             , 0               , 0               , 0, 0xF       , 0),
+  MAKE_INST(INST_JNO_SHORT        , "jno short"        , I_J             , 0               , 0               , 0, 0x1       , 0),
+  MAKE_INST(INST_JNP_SHORT        , "jnp short"        , I_J             , 0               , 0               , 0, 0xB       , 0),
+  MAKE_INST(INST_JNS_SHORT        , "jns short"        , I_J             , 0               , 0               , 0, 0x9       , 0),
+  MAKE_INST(INST_JNZ_SHORT        , "jnz short"        , I_J             , 0               , 0               , 0, 0x5       , 0),
+  MAKE_INST(INST_JO_SHORT         , "jo short"         , I_J             , 0               , 0               , 0, 0x0       , 0),
+  MAKE_INST(INST_JP_SHORT         , "jp short"         , I_J             , 0               , 0               , 0, 0xA       , 0),
+  MAKE_INST(INST_JPE_SHORT        , "jpe short"        , I_J             , 0               , 0               , 0, 0xA       , 0),
+  MAKE_INST(INST_JPO_SHORT        , "jpo short"        , I_J             , 0               , 0               , 0, 0xB       , 0),
+  MAKE_INST(INST_JS_SHORT         , "js short"         , I_J             , 0               , 0               , 0, 0x8       , 0),
+  MAKE_INST(INST_JZ_SHORT         , "jz short"         , I_J             , 0               , 0               , 0, 0x4       , 0),
+  MAKE_INST(INST_JMP_SHORT        , "jmp short"        , I_JMP           , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_LDDQU            , "lddqu"            , I_MMU_RMI       , O_XMM           , O_MEM           , 0, 0xF2000FF0, 0),
   MAKE_INST(INST_LDMXCSR          , "ldmxcsr"          , I_M             , O_MEM           , 0               , 2, 0x00000FAE, 0),
   MAKE_INST(INST_LEA              , "lea"              , I_LEA           , 0               , 0               , 0, 0         , 0),
@@ -1552,7 +1587,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         else
         {
           _emitByte(0xE8);
-          _emitDisplacement(label, -4);
+          _emitDisplacement(label, -4, 4);
         }
         return;
       }
@@ -1703,13 +1738,19 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isLabel())
       {
         Label* label = (Label*)(o1);
+        UInt32 hint = 0;
+        bool isShortJump = (code >= INST_J_SHORT && code <= INST_JMP_SHORT);
 
-        if (o2->isImm() && 
-            reinterpret_cast<const Immediate&>(*o2).value() != HINT_NONE && 
-            _properties & (1 << PROPERTY_X86_JCC_HINTS))
+        if (o2->isImm()) hint = reinterpret_cast<const Immediate&>(*o2).value();
+
+        // Emit jump hint if configured for that.
+        if ((hint & (HINT_TAKEN | HINT_NOT_TAKEN)) && 
+            (_properties & (1 << PROPERTY_X86_JCC_HINTS)))
         {
-          UInt8 hint = reinterpret_cast<const Immediate&>(*o2).value() & 0xFF;
-          _emitByte(hint);
+          if (hint & HINT_TAKEN)
+            _emitByte(HINT_BYTE_VALUE_TAKEN);
+          else if (hint & HINT_NOT_TAKEN)
+            _emitByte(HINT_BYTE_VALUE_NOT_TAKEN);
         }
 
         if (label->isBound())
@@ -1727,6 +1768,11 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           }
           else
           {
+            if (isShortJump && _logger)
+            {
+              _logger->log("; WARNING: Emitting long conditional jump, but short jump instruction forced!");
+            }
+
             _emitByte(0x0F);
             _emitByte(0x80 | (UInt8)id.opCode1);
             _emitInt32((Int32)(offs - rel32_size));
@@ -1734,9 +1780,17 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         }
         else
         {
-          _emitByte(0x0F);
-          _emitByte(0x80 | (UInt8)id.opCode1);
-          _emitDisplacement(label, -4);
+          if (isShortJump)
+          {
+            _emitByte(0x70 | (UInt8)id.opCode1);
+            _emitDisplacement(label, -1, 1);
+          }
+          else
+          {
+            _emitByte(0x0F);
+            _emitByte(0x80 | (UInt8)id.opCode1);
+            _emitDisplacement(label, -4, 4);
+          }
         }
         return;
       }
@@ -1768,6 +1822,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isLabel())
       {
         Label* label = (Label*)(o1);
+        bool isShortJump = (code == INST_JMP_SHORT);
 
         if (label->isBound())
         {
@@ -1782,14 +1837,27 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           }
           else
           {
+            if (isShortJump && _logger)
+            {
+              _logger->log("; WARNING: Emitting long jump, but short jump instruction forced!");
+            }
+
             _emitByte(0xE9);
             _emitInt32((Int32)(offs - rel32_size));
           }
         }
         else
         {
-          _emitByte(0xE9);
-          _emitDisplacement(label, -4);
+          if (isShortJump)
+          {
+            _emitByte(0xEB);
+            _emitDisplacement(label, -1, 1);
+          }
+          else
+          {
+            _emitByte(0xE9);
+            _emitDisplacement(label, -4, 4);
+          }
         }
         return;
       }
@@ -3020,14 +3088,35 @@ void Assembler::bindTo(Label* label, SysInt pos)
       {
         // Not using relocId, this means that we overwriting real displacement
         // in assembler stream.
-        setInt32At(offset, (Int32)(pos - offset + link->displacement));
+        Int32 patchedValue = (Int32)(pos - offset + link->displacement);
+        UInt32 size = getByteAt(offset);
+
+        // Only these size specifiers are allowed.
+        ASMJIT_ASSERT(size == 1 || size == 4);
+
+        if (size == 1)
+        {
+          if (isInt8(patchedValue))
+          {
+            setByteAt(offset, (UInt8)(Int8)patchedValue);
+          }
+          else
+          {
+            // Fatal error.
+            setError(ERROR_ILLEGAL_SHORT_JUMP);
+          }
+        }
+        else
+        {
+          setInt32At(offset, patchedValue);
+        }
       }
 
       prev = link->prev;
       link = prev;
     }
 
-    // add to unused list
+    // Add to unused list.
     link = (LinkData*)label->_lbl.link;
     if (prev == NULL) prev = link;
 

@@ -3133,8 +3133,8 @@ void* CompilerCore::make(MemoryManager* memoryManager, UInt32 allocType)
   {
     if (_logger)
     {
-      _logger->logFormat("; Compiler failed, error %u: %s\n\n",
-        (unsigned int)a.error(), errorCodeToString(a.error()));
+      _logger->logFormat("; Compiler failed: %s (%u).\n\n",
+        errorCodeToString(a.error()), (unsigned int)a.error());
     }
 
     setError(a.error());

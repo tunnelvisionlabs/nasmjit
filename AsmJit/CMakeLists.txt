@@ -11,42 +11,42 @@ EndIf(NOT ASMJIT_DIR)
 
 # AsmJit C++ sources
 Set(ASMJIT_SOURCES
-  ${ASMJIT_DIR}/AsmJit/AssemblerX86X64.cpp
-  ${ASMJIT_DIR}/AsmJit/CompilerX86X64.cpp
-  ${ASMJIT_DIR}/AsmJit/CpuInfo.cpp
-  ${ASMJIT_DIR}/AsmJit/Defs.cpp
-  ${ASMJIT_DIR}/AsmJit/Lock.cpp
-  ${ASMJIT_DIR}/AsmJit/Logger.cpp
-  ${ASMJIT_DIR}/AsmJit/LoggerX86X64.cpp
-  ${ASMJIT_DIR}/AsmJit/LoggerX86X64Dump.cpp
-  ${ASMJIT_DIR}/AsmJit/MemoryManager.cpp
-  ${ASMJIT_DIR}/AsmJit/SerializerX86X64.cpp
-  ${ASMJIT_DIR}/AsmJit/Util.cpp
-  ${ASMJIT_DIR}/AsmJit/VirtualMemory.cpp
+  AsmJit/AssemblerX86X64.cpp
+  AsmJit/CompilerX86X64.cpp
+  AsmJit/CpuInfo.cpp
+  AsmJit/Defs.cpp
+  AsmJit/Lock.cpp
+  AsmJit/Logger.cpp
+  AsmJit/LoggerX86X64.cpp
+  AsmJit/LoggerX86X64Dump.cpp
+  AsmJit/MemoryManager.cpp
+  AsmJit/SerializerX86X64.cpp
+  AsmJit/Util.cpp
+  AsmJit/VirtualMemory.cpp
 )
 
 # AsmJit C++ headers
 Set(ASMJIT_HEADERS
-  ${ASMJIT_DIR}/AsmJit/AsmJit.h
-  ${ASMJIT_DIR}/AsmJit/Assembler.h
-  ${ASMJIT_DIR}/AsmJit/AssemblerX86X64.h
-  ${ASMJIT_DIR}/AsmJit/Build.h
-  ${ASMJIT_DIR}/AsmJit/Compiler.h
-  ${ASMJIT_DIR}/AsmJit/CompilerX86X64.h
-  ${ASMJIT_DIR}/AsmJit/Config.h
-  ${ASMJIT_DIR}/AsmJit/CpuInfo.h
-  ${ASMJIT_DIR}/AsmJit/Defs.h
-  ${ASMJIT_DIR}/AsmJit/DefsX86X64.h
-  ${ASMJIT_DIR}/AsmJit/Lock.h
-  ${ASMJIT_DIR}/AsmJit/Logger.h
-  ${ASMJIT_DIR}/AsmJit/LoggerX86X64.h
-  ${ASMJIT_DIR}/AsmJit/MemoryManager.h
-  ${ASMJIT_DIR}/AsmJit/Serializer.h
-  ${ASMJIT_DIR}/AsmJit/SerializerX86X64.h
-  ${ASMJIT_DIR}/AsmJit/Util.h
-  ${ASMJIT_DIR}/AsmJit/VirtualMemory.h
-  ${ASMJIT_DIR}/AsmJit/WarningsPop.h
-  ${ASMJIT_DIR}/AsmJit/WarningsPush.h
+  AsmJit/AsmJit.h
+  AsmJit/Assembler.h
+  AsmJit/AssemblerX86X64.h
+  AsmJit/Build.h
+  AsmJit/Compiler.h
+  AsmJit/CompilerX86X64.h
+  AsmJit/Config.h
+  AsmJit/CpuInfo.h
+  AsmJit/Defs.h
+  AsmJit/DefsX86X64.h
+  AsmJit/Lock.h
+  AsmJit/Logger.h
+  AsmJit/LoggerX86X64.h
+  AsmJit/MemoryManager.h
+  AsmJit/Serializer.h
+  AsmJit/SerializerX86X64.h
+  AsmJit/Util.h
+  AsmJit/VirtualMemory.h
+  AsmJit/WarningsPop.h
+  AsmJit/WarningsPush.h
 )
 
 # Include AsmJit to be able to use #include <AsmJit/...>
@@ -67,9 +67,10 @@ If(ASMJIT_BUILD_LIBRARY)
   Add_Library(AsmJit SHARED ${ASMJIT_SOURCES} ${ASMJIT_HEADERS})
   Install(TARGETS AsmJit DESTINATION lib)
 
+  # Install header files.
   ForEach(i ${ASMJIT_HEADERS})
-    Get_Filename_Component(file ${i} NAME)
-    Install(FILES ${i} DESTINATION "include/AsmJit")
+    Get_Filename_Component(path ${i} PATH)
+    Install(FILES ${i} DESTINATION "include/${path}")
   EndForEach(i)
 EndIf(ASMJIT_BUILD_LIBRARY)
 
@@ -81,6 +82,7 @@ If(ASMJIT_BUILD_TEST)
     testdummy
     testfunclargeargs
     testjit
+    testjumpshort
     testjumptable
     testmemorymanager
     testopcode
@@ -94,7 +96,7 @@ If(ASMJIT_BUILD_TEST)
   )
 
   ForEach(file ${ASMJIT_TEST_FILES})
-    Add_Executable(${file} ${ASMJIT_DIR}/test/${file}.cpp)
+    Add_Executable(${file} test/${file}.cpp)
     Target_Link_Libraries(${file} AsmJit)
   EndForEach(file)
 EndIf(ASMJIT_BUILD_TEST)

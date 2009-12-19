@@ -237,12 +237,16 @@ void SerializerCore::setError(UInt32 error) ASMJIT_NOTHROW
   _error = error;
 
   // Log each illegal instruction
-  if (_logger && _logger->enabled()) _logger->logFormat("ERROR %u: %s.\n", errorCodeToString(error));
+  if (_logger && _logger->enabled())
+  {
+    _logger->logFormat("; FATAL ERROR: %s (%u).\n",
+      errorCodeToString(error), (unsigned int)error);
+  }
 }
 
 void SerializerCore::clearError() ASMJIT_NOTHROW
 {
-  _error = 0;
+  _error = ERROR_NONE;
 }
 
 // ============================================================================

@@ -2197,6 +2197,82 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   //! @brief Jump to label @a label if condition is met.
   inline void jz  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JZ  , label, hint); }
 
+  //! @brief Jump to label @a label if condition @a cc is met.
+  //!
+  //! This instruction checks the state of one or more of the status flags in
+  //! the EFLAGS register (CF, OF, PF, SF, and ZF) and, if the flags are in the
+  //! specified state (condition), performs a jump to the target instruction
+  //! specified by the destination operand. A condition code (cc) is associated
+  //! with each instruction to indicate the condition being tested for. If the
+  //! condition is not satisfied, the jump is not performed and execution
+  //! continues with the instruction following the Jcc instruction.
+  inline void j_short(CONDITION cc, Label* label, UInt32 hint = HINT_NONE)
+  {
+    // Adjust returned condition to jxx_short version.
+    _emitJcc(conditionToJCC(cc) + (INST_J_SHORT - INST_J), label, hint);
+  }
+
+  //! @brief Jump to label @a label if condition is met.
+  inline void ja_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JA_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jae_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JAE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jb_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JB_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jbe_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JBE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jc_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JC_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void je_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JE_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jg_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JG_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jge_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JGE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jl_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JL_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jle_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JLE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jna_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNA_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnae_short(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNAE_SHORT, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnb_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNB_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnbe_short(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNBE_SHORT, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnc_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNC_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jne_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jng_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNG_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnge_short(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNGE_SHORT, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnl_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNL_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnle_short(Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNLE_SHORT, label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jno_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNO_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnp_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNP_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jns_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNS_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jnz_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JNZ_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jo_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JO_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jp_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JP_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jpe_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JPE_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jpo_short (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JPO_SHORT , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void js_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JS_SHORT  , label, hint); }
+  //! @brief Jump to label @a label if condition is met.
+  inline void jz_short  (Label* label, UInt32 hint = HINT_NONE) { _emitJcc(INST_JZ_SHORT  , label, hint); }
+
   //! @brief Jump.
   //! @overload
   inline void jmp(const Register& dst)
@@ -2228,11 +2304,16 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   //!
   //! This instruction transfers program control to a different point
   //! in the instruction stream without recording return information.
-  //! The destination (target) operand specifies the address of the
+  //! The destination (target) operand specifies the label of the
   //! instruction being jumped to.
   inline void jmp(Label* label)
   {
     emitX86(INST_JMP, label);
+  }
+  //! @brief Jump, see @c jmp().
+  inline void jmp_short(Label* label)
+  {
+    emitX86(INST_JMP_SHORT, label);
   }
 
   //! @brief Load Effective Address

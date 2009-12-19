@@ -40,6 +40,7 @@ const char* errorCodeToString(UInt32 error) ASMJIT_NOTHROW
     "Unknown instruction",
     "Illegal instruction",
     "Illegal addressing",
+    "Illegal short jump",
     "Unknown error"
   };
 
