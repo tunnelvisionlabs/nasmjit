@@ -1,3 +1,10 @@
+2009-12-19
+- Added possibility to specify short jump type.
+  Added pseudo-instructions:
+  - jcc_short (all jxx_short() conditions).
+  - jmp_short (jmp variant).
+  Added also related error code and test.
+
 2009-10-17
 - Implemented call(imm) and jmp(imm). Trampoline is used if relative displacement
   isn't possible.
