@@ -27,6 +27,10 @@
 #ifndef _ASMJIT_ASSEMBLERX86X64_H
 #define _ASMJIT_ASSEMBLERX86X64_H
 
+#if !defined(_ASMJIT_ASSEMBLER_H)
+#warning "AsmJit/AssemblerX86X64 can be only included by AsmJit/Assembler.h"
+#endif // _ASMJIT_ASSEMBLER_H
+
 // [Dependencies]
 #include "Build.h"
 #include "Serializer.h"
@@ -407,22 +411,22 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! It's only used for growing, buffer is never reallocated to smaller 
   //! number than current capacity() is.
-  bool realloc(SysInt to);
+  bool realloc(SysInt to) ASMJIT_NOTHROW;
 
   //! @brief Used to grow the buffer.
   //!
   //! It will typically realloc to twice size of capacity(), but if capacity()
   //! is large, it will use smaller steps.
-  bool grow();
+  bool grow() ASMJIT_NOTHROW;
 
   //! @brief Clear everything, but not deallocate buffers.
-  void clear();
+  void clear() ASMJIT_NOTHROW;
 
   //! @brief Free internal buffer and NULL all pointers.
-  void free();
+  void free() ASMJIT_NOTHROW;
 
   //! @brief Return internal buffer and NULL all pointers.
-  UInt8* takeCode();
+  UInt8* takeCode() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Stream Setters / Getters]
@@ -471,7 +475,7 @@ struct ASMJIT_API Assembler : public Serializer
   //! @brief Set custom variable @a imm at position @a pos.
   //!
   //! @note This function is used to patch existing code.
-  void setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size);
+  void setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Assembler Emitters]
@@ -489,7 +493,7 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! It's implemented like:
   //!   <code>return ensureSpace() && !error();</code>
-  bool canEmit();
+  bool canEmit() ASMJIT_NOTHROW;
 
   //! @brief Emit Byte to internal buffer.
   inline void _emitByte(UInt8 x) ASMJIT_NOTHROW
@@ -520,7 +524,7 @@ struct ASMJIT_API Assembler : public Serializer
   { _buffer.emitSysUInt(x); }
 
   //! @brief Emit immediate value of specified @a size.
-  void _emitImmediate(const Immediate& imm, UInt32 size);
+  void _emitImmediate(const Immediate& imm, UInt32 size) ASMJIT_NOTHROW;
 
   //! @brief Emit single @a opCode without operands.
   inline void _emitOpCode(UInt32 opCode) ASMJIT_NOTHROW
@@ -539,7 +543,7 @@ struct ASMJIT_API Assembler : public Serializer
   //! Behavior of this function is to emit code prefix only if memory operand
   //! address uses code segment. Code segment is used through memory operand
   //! with attached @c AsmJit::Label.
-  void _emitSegmentPrefix(const BaseRegMem& rm) ASMJIT_NOTHROW;
+  void _emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW;
 
   //! @brief Emit MODR/M byte.
   //! @internal
@@ -573,7 +577,7 @@ struct ASMJIT_API Assembler : public Serializer
   }
 
   //! @brief Emit REX prefix (64 bit mode only).
-  inline void _emitRexRM(UInt8 w, UInt8 opReg, const BaseRegMem& rm) ASMJIT_NOTHROW
+  inline void _emitRexRM(UInt8 w, UInt8 opReg, const Operand& rm) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X64)
     UInt8 r = (opReg & 0x8) != 0;
@@ -627,14 +631,14 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! @note @a opReg is usually real register ID (see @c R) but some instructions
   //! have specific format and in that cases @a opReg is part of opcode.
-  void _emitModRM(UInt8 opReg, const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW;
+  void _emitModRM(UInt8 opReg, const Operand& op, SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit instruction where register is inlined to opcode.
   void _emitX86Inl(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 reg) ASMJIT_NOTHROW;
 
   //! @brief Emit instruction with reg/memory operand.
   void _emitX86RM(UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, 
-    const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW;
+    const Operand& op, SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit FPU instruction with no operands.
   void _emitFpu(UInt32 opCode) ASMJIT_NOTHROW;
@@ -646,7 +650,7 @@ struct ASMJIT_API Assembler : public Serializer
   void _emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_NOTHROW;
 
   //! @brief Emit MMX/SSE instruction.
-  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const BaseRegMem& src, 
+  void _emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, const Operand& src,
     SysInt immSize) ASMJIT_NOTHROW;
 
   //! @brief Emit displacement.
@@ -666,27 +670,27 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! A given buffer will be overwritten, to get number of bytes required use
   //! @c codeSize() or @c offset() methods.
-  virtual void relocCode(void* dst) const;
+  virtual void relocCode(void* dst) const ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [EmitX86]
   // -------------------------------------------------------------------------
 
-  virtual void _inlineComment(const char* text, SysInt len = -1);
-  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+  virtual void _inlineComment(const char* text, SysInt len = -1) ASMJIT_NOTHROW;
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Embed]
   // -------------------------------------------------------------------------
 
-  virtual void _embed(const void* dataPtr, SysUInt dataLen);
-  virtual void _embedLabel(Label* label);
+  virtual void _embed(const void* dataPtr, SysUInt dataLen) ASMJIT_NOTHROW;
+  virtual void _embedLabel(Label* label) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Align]
   // -------------------------------------------------------------------------
 
-  virtual void align(SysInt m);
+  virtual void align(SysInt m) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Labels]
@@ -696,22 +700,22 @@ struct ASMJIT_API Assembler : public Serializer
   //!
   //! Note that if you create labels by this way they are not checked like
   //! Labels statically allocated on the stack!.
-  Label* newLabel();
+  Label* newLabel() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Bind]
   // -------------------------------------------------------------------------
 
-  virtual void bind(Label* label);
+  virtual void bind(Label* label) ASMJIT_NOTHROW;
 
   //! @brief Bind label to pos - called from bind(Label* label).
-  void bindTo(Label* label, SysInt pos);
+  void bindTo(Label* label, SysInt pos) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Make]
   // -------------------------------------------------------------------------
 
-  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Links]
@@ -737,7 +741,7 @@ struct ASMJIT_API Assembler : public Serializer
   PodVector<RelocData> _relocData;
 
   //! @brief Buffer for inline comment (for next instruction).
-  char _inlineCommentBuffer[MaxInlineCommentSize];
+  char _inlineCommentBuffer[MAX_INLINE_COMMENT_SIZE];
 };
 
 //! @}

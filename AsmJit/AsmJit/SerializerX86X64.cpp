@@ -184,28 +184,28 @@ void SerializerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
 // [AsmJit::SerializerCore - Emit]
 // ============================================================================
 
-void SerializerCore::emitX86(UInt32 code)
+void SerializerCore::emitX86(UInt32 code) ASMJIT_NOTHROW
 {
   _emitX86(code, NULL, NULL, NULL);
 }
 
-void SerializerCore::emitX86(UInt32 code, const Operand* o1)
+void SerializerCore::emitX86(UInt32 code, const Operand* o1) ASMJIT_NOTHROW
 {
   _emitX86(code, o1, NULL, NULL);
 }
 
-void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2)
+void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
 {
   _emitX86(code, o1, o2, NULL);
 }
 
-void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+void SerializerCore::emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW
 {
   _emitX86(code, o1, o2, o3);
 }
 
 //! @brief Private method for emitting jcc.
-void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint)
+void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint) ASMJIT_NOTHROW
 {
   if (!hint)
   {
@@ -223,7 +223,7 @@ void SerializerCore::_emitJcc(UInt32 code, Label* label, UInt32 hint)
 // ============================================================================
 
 //! @brief Allocate memory using compiler internal memory manager.
-void* SerializerCore::_zoneAlloc(SysUInt size)
+void* SerializerCore::_zoneAlloc(SysUInt size) ASMJIT_NOTHROW
 {
   return _zone.alloc(size);
 }

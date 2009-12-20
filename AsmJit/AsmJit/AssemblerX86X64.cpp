@@ -96,7 +96,7 @@ Assembler::~Assembler() ASMJIT_NOTHROW
 // [AsmJit::Assembler - Buffer]
 // ============================================================================
 
-void Assembler::free()
+void Assembler::free() ASMJIT_NOTHROW
 {
   _buffer.free();
   _relocData.free();
@@ -105,15 +105,17 @@ void Assembler::free()
   if (error()) clearError();
 }
 
-UInt8* Assembler::takeCode()
+UInt8* Assembler::takeCode() ASMJIT_NOTHROW
 {
   UInt8* code = _buffer.take();
   _relocData.clear();
   _zone.clear();
+
+  if (error()) clearError();
   return code;
 }
 
-void Assembler::clear()
+void Assembler::clear() ASMJIT_NOTHROW
 {
   _buffer.clear();
   _relocData.clear();
@@ -126,7 +128,7 @@ void Assembler::clear()
 // [AsmJit::Assembler - Stream Setters / Getters]
 // ============================================================================
 
-void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
+void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size) ASMJIT_NOTHROW
 {
   if (size == 1 && !isUnsigned) setByteAt (pos, (Int8  )i);
   else if (size == 1 &&  isUnsigned) setByteAt (pos, (UInt8 )i);
@@ -146,7 +148,7 @@ void Assembler::setVarAt(SysInt pos, SysInt i, UInt8 isUnsigned, UInt32 size)
 // [AsmJit::Assembler - Assembler Emitters]
 // ============================================================================
 
-bool Assembler::canEmit()
+bool Assembler::canEmit() ASMJIT_NOTHROW
 {
   // If there is an error, we can't emit another instruction until clearError()
   // is called. If something caused an error while generating code it's probably
@@ -165,7 +167,7 @@ bool Assembler::canEmit()
   return false;
 }
 
-void Assembler::_emitSegmentPrefix(const BaseRegMem& rm) ASMJIT_NOTHROW
+void Assembler::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
 {
   static const UInt8 prefixes[] = { 0x00, 0x2E, 0x36, 0x3E, 0x26, 0x64, 0x65 };
 
@@ -176,7 +178,7 @@ void Assembler::_emitSegmentPrefix(const BaseRegMem& rm) ASMJIT_NOTHROW
   }
 }
 
-void Assembler::_emitImmediate(const Immediate& imm, UInt32 size)
+void Assembler::_emitImmediate(const Immediate& imm, UInt32 size) ASMJIT_NOTHROW
 {
   UInt8 isUnsigned = imm.isUnsigned();
   SysInt i = imm.value();
@@ -395,7 +397,7 @@ void Assembler::_emitModM(
 }
 
 void Assembler::_emitModRM(
-  UInt8 opReg, const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW
+  UInt8 opReg, const Operand& op, SysInt immSize) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(op.op() == OP_REG || op.op() == OP_MEM);
 
@@ -428,7 +430,7 @@ void Assembler::_emitX86Inl(
 
 void Assembler::_emitX86RM(
   UInt32 opCode, UInt8 i16bit, UInt8 rexw, UInt8 o, 
-  const BaseRegMem& op, SysInt immSize) ASMJIT_NOTHROW
+  const Operand& op, SysInt immSize) ASMJIT_NOTHROW
 {
   // 16 bit prefix
   if (i16bit) _emitByte(0x66);
@@ -488,7 +490,7 @@ void Assembler::_emitFpuMEM(UInt32 opCode, UInt8 opReg, const Mem& mem) ASMJIT_N
 }
 
 void Assembler::_emitMmu(UInt32 opCode, UInt8 rexw, UInt8 opReg, 
-  const BaseRegMem& src, SysInt immSize) ASMJIT_NOTHROW
+  const Operand& src, SysInt immSize) ASMJIT_NOTHROW
 {
   // Segment prefix.
   _emitSegmentPrefix(src);
@@ -564,7 +566,7 @@ void Assembler::_emitJmpOrCallReloc(UInt32 instruction, void* target) ASMJIT_NOT
 // [AsmJit::Assembler - Relocation helpers]
 // ============================================================================
 
-void Assembler::relocCode(void* _dst) const
+void Assembler::relocCode(void* _dst) const ASMJIT_NOTHROW
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   UInt8* dst = reinterpret_cast<UInt8*>(_dst);
@@ -659,12 +661,12 @@ void Assembler::relocCode(void* _dst) const
 // [AsmJit::Assembler - Abstract Emitters]
 // ============================================================================
 
-void Assembler::_inlineComment(const char* text, SysInt len)
+void Assembler::_inlineComment(const char* text, SysInt len) ASMJIT_NOTHROW
 {
   if (_logger == NULL) return;
 
   if (len < 0) len = strlen(text);
-  if (len > MaxInlineCommentSize - 1) len = MaxInlineCommentSize - 1;
+  if (len > MAX_INLINE_COMMENT_SIZE - 1) len = MAX_INLINE_COMMENT_SIZE - 1;
 
   memcpy(_inlineCommentBuffer, text, len + 1);
 }
@@ -1403,7 +1405,7 @@ static const InstructionDescription x86instructions[] =
 // Used for NULL operands to translate them to OP_NONE.
 static const UInt8 _none[sizeof(Operand)] = { 0 };
 
-void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3)
+void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW
 {
   // Check for buffer space (and grow if needed).
   if (!canEmit()) return;
@@ -1450,7 +1452,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           o2->isRegType(REG_GPW), 
           o2->isRegType(REG_GPQ), 
           reinterpret_cast<const Register&>(*o2).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o1),
+          reinterpret_cast<const Operand&>(*o1),
           0);
         return;
       }
@@ -1462,7 +1464,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
           o1->isRegType(REG_GPW), 
           o1->isRegType(REG_GPQ), 
           reinterpret_cast<const Register&>(*o1).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o2),
+          reinterpret_cast<const Operand&>(*o2),
           0);
         return;
       }
@@ -1489,7 +1491,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         _emitX86RM(id.opCode2 + (o1->size() != 1 ? (immSize != 1 ? 1 : 3) : 0), 
           o1->size() == 2,
           o1->size() == 8,
-          opReg, reinterpret_cast<const BaseRegMem&>(*o1),
+          opReg, reinterpret_cast<const Operand&>(*o1),
           immSize);
         _emitImmediate(
           reinterpret_cast<const Immediate&>(*o2),
@@ -1521,7 +1523,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem() && o2->isReg())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         const Register& src = reinterpret_cast<const Register&>(*o2);
 
         _emitX86RM(id.opCode1, 
@@ -1535,7 +1537,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       if (o1->isRegMem() && o2->isImm())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         const Immediate& src = reinterpret_cast<const Immediate&>(*o2);
 
         _emitX86RM(id.opCode2,
@@ -1555,7 +1557,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem(REG_GPN))
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         _emitX86RM(0xFF, 
           0, 
           0, 2, dst,
@@ -1600,7 +1602,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isReg() && o2->isRegMem())
       {
         const Register& dst = reinterpret_cast<const Register&>(*o1);
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+        const Operand& src = reinterpret_cast<const Operand&>(*o2);
         ASMJIT_ASSERT(dst.type() == REG_GPD || dst.type() == REG_GPQ);
 
         _emitX86RM(id.opCode1 + (src.size() != 1),
@@ -1629,7 +1631,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       // 1 operand
       if (o1->isRegMem() && o2->isNone() && o3->isNone())
       {
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& src = reinterpret_cast<const Operand&>(*o1);
         _emitX86RM(0xF6 + (src.size() != 1),
           src.size() == 2,
           src.size() == 8, 5, src,
@@ -1644,11 +1646,11 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (o2->isRegMem())
         {
-          const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+          const Operand& src = reinterpret_cast<const Operand&>(*o2);
 
           _emitX86RM(0x0FAF,
             dst.isRegType(REG_GPW), 
-            dst.isRegType(REG_GPQ), dst.code(), reinterpret_cast<const BaseRegMem&>(src),
+            dst.isRegType(REG_GPQ), dst.code(), src,
             0);
           return;
         }
@@ -1680,7 +1682,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       else if (o1->isReg() && o2->isRegMem() && o3->isImm())
       {
         const Register& dst = reinterpret_cast<const Register&>(*o1);
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+        const Operand& src = reinterpret_cast<const Operand&>(*o2);
         const Immediate& imm = reinterpret_cast<const Immediate&>(*o3);
 
         if (isInt8(imm.value()) && imm.relocMode() == RELOC_NONE)
@@ -1710,7 +1712,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
 
         // INC [r16|r32] in 64 bit mode is not encodable.
 #if defined(ASMJIT_X86)
@@ -1802,7 +1804,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
 
         _emitX86RM(0xFF,
           0,
@@ -1914,7 +1916,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
             dst.isRegType(REG_GPW),
             dst.isRegType(REG_GPQ),
             reinterpret_cast<const Register&>(dst).code(),
-            reinterpret_cast<const BaseRegMem&>(src),
+            reinterpret_cast<const Operand&>(src),
             0);
           return;
         }
@@ -1966,7 +1968,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
             src.isRegType(REG_GPW),
             src.isRegType(REG_GPQ),
             reinterpret_cast<const Register&>(src).code(), 
-            reinterpret_cast<const BaseRegMem&>(dst),
+            reinterpret_cast<const Operand&>(dst),
             0);
           return;
         }
@@ -1980,7 +1982,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
             dst.size() == 2,
             dst.size() == 8,
             0,
-            reinterpret_cast<const BaseRegMem&>(dst),
+            reinterpret_cast<const Operand&>(dst),
             immSize);
           _emitImmediate(reinterpret_cast<const Immediate&>(src), 
             (UInt32)immSize);
@@ -2019,7 +2021,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isReg() && o2->isRegMem())
       {
         const Register& dst = reinterpret_cast<const Register&>(*o1);
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+        const Operand& src = reinterpret_cast<const Operand&>(*o2);
 
         if (dst.isRegType(REG_GPB)) goto illegalInstruction;
         if (src.size() != 1 && src.size() != 2) goto illegalInstruction;
@@ -2043,7 +2045,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       if (o1->isReg() && o2->isRegMem())
       {
         const Register& dst = reinterpret_cast<const Register&>(*o1);
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+        const Operand& src = reinterpret_cast<const Operand&>(*o2);
         _emitX86RM(0x00000063,
           0,
           1, dst.code(), src,
@@ -2089,7 +2091,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
       if (o1->isMem())
       {
-        _emitX86RM(id.opCode2, o1->size() == 2, 0, id.opCodeR, reinterpret_cast<const BaseRegMem&>(*o1), 0);
+        _emitX86RM(id.opCode2, o1->size() == 2, 0, id.opCodeR, reinterpret_cast<const Operand&>(*o1), 0);
         return;
       }
 
@@ -2102,7 +2104,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         const Register& dst = reinterpret_cast<const Register&>(*o1);
         ASMJIT_ASSERT(dst.type() != REG_GPB);
-        const BaseRegMem& src = reinterpret_cast<const BaseRegMem&>(*o2);
+        const Operand& src = reinterpret_cast<const Operand&>(*o2);
 
         _emitX86RM(id.opCode1,
           dst.type() == REG_GPW, 
@@ -2118,7 +2120,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem())
       {
-        const BaseRegMem& op = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& op = reinterpret_cast<const Operand&>(*o1);
         _emitX86RM(id.opCode1, false, false, 0, op, 0);
         return;
       }
@@ -2130,7 +2132,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem())
       {
-        const BaseRegMem& op = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& op = reinterpret_cast<const Operand&>(*o1);
         _emitX86RM(id.opCode1 + (op.size() != 1),
           op.size() == 2,
           op.size() == 8, (UInt8)id.opCodeR, op,
@@ -2145,7 +2147,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem() && o2->isReg())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         const Register& src = reinterpret_cast<const Register&>(*o2);
         _emitX86RM(id.opCode1 + src.type() != REG_GPB,
           src.type() == REG_GPW, 
@@ -2201,7 +2203,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         _emitX86RM(opCode,
           o1->size() == 2,
           o1->size() == 8,
-          id.opCodeR, reinterpret_cast<const BaseRegMem&>(*o1),
+          id.opCodeR, reinterpret_cast<const Operand&>(*o1),
           useImm8 ? 1 : 0);
         if (useImm8)
           _emitImmediate(reinterpret_cast<const Immediate&>(*o2), 1);
@@ -2215,7 +2217,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem() && o2->isReg() && (o3->isImm() || (o3->isReg() && o3->isRegCode(REG_CL))))
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         const Register& src1 = reinterpret_cast<const Register&>(*o2);
         const Operand& src2 = reinterpret_cast<const Operand&>(*o3);
 
@@ -2242,7 +2244,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         _emitX86RM(0x84 + (o2->size() != 1),
           o2->size() == 2, o2->size() == 8, 
           reinterpret_cast<const BaseReg&>(*o2).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o1),
+          reinterpret_cast<const Operand&>(*o1),
           0);
         return;
       }
@@ -2253,7 +2255,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
 
         if (o1->size() == 2) _emitByte(0x66); // 16 bit
 #if defined(ASMJIT_X64)
-        _emitRexRM(o1->size() == 8, 0, reinterpret_cast<const BaseRegMem&>(*o1));
+        _emitRexRM(o1->size() == 8, 0, reinterpret_cast<const Operand&>(*o1));
 #endif // ASMJIT_X64
         _emitByte(0xA8 + (o1->size() != 1));
         _emitImmediate(reinterpret_cast<const Immediate&>(*o2), (UInt32)immSize);
@@ -2265,12 +2267,12 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
         Int32 immSize = o1->size() <= 4 ? o1->size() : 4;
 
         if (o1->size() == 2) _emitByte(0x66); // 16 bit
-        _emitSegmentPrefix(reinterpret_cast<const BaseRegMem&>(*o1)); // segment prefix
+        _emitSegmentPrefix(reinterpret_cast<const Operand&>(*o1)); // segment prefix
 #if defined(ASMJIT_X64)
-        _emitRexRM(o1->size() == 8, 0, reinterpret_cast<const BaseRegMem&>(*o1));
+        _emitRexRM(o1->size() == 8, 0, reinterpret_cast<const Operand&>(*o1));
 #endif // ASMJIT_X64
         _emitByte(0xF6 + (o1->size() != 1));
-        _emitModRM(0, reinterpret_cast<const BaseRegMem&>(*o1), immSize);
+        _emitModRM(0, reinterpret_cast<const Operand&>(*o1), immSize);
         _emitImmediate(reinterpret_cast<const Immediate&>(*o2), (UInt32)immSize);
         return;
       }
@@ -2282,7 +2284,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     {
       if (o1->isRegMem() && o2->isReg())
       {
-        const BaseRegMem& dst = reinterpret_cast<const BaseRegMem&>(*o1);
+        const Operand& dst = reinterpret_cast<const Operand&>(*o1);
         const Register& src = reinterpret_cast<const Register&>(*o2);
 
         if (src.isRegType(REG_GPW)) _emitByte(0x66); // 16 bit
@@ -2523,7 +2525,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         _emitMmu(o1->isRegType(REG_XMM) ? 0x66000F6E : 0x00000F6E, 0,
           reinterpret_cast<const BaseReg&>(*o1).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o2),
+          reinterpret_cast<const Operand&>(*o2),
           0);
         return;
       }
@@ -2532,7 +2534,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         _emitMmu(o2->isRegType(REG_XMM) ? 0x66000F7E : 0x00000F7E, 0,
           reinterpret_cast<const BaseReg&>(*o2).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o1),
+          reinterpret_cast<const Operand&>(*o1),
           0);
         return;
       }
@@ -2621,7 +2623,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         _emitMmu(o1->isRegType(REG_XMM) ? 0x66000F6E : 0x00000F6E, 1,
           reinterpret_cast<const BaseReg&>(*o1).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o2),
+          reinterpret_cast<const Operand&>(*o2),
           0);
         return;
       }
@@ -2630,7 +2632,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       {
         _emitMmu(o2->isRegType(REG_XMM) ? 0x66000F7E : 0x00000F7E, 1,
           reinterpret_cast<const BaseReg&>(*o2).code(), 
-          reinterpret_cast<const BaseRegMem&>(*o1),
+          reinterpret_cast<const Operand&>(*o1),
           0);
         return;
       }
@@ -2841,7 +2843,7 @@ illegalInstruction:
 // [AsmJit::Assembler - Embed]
 // ============================================================================
 
-void Assembler::_embed(const void* data, SysUInt size)
+void Assembler::_embed(const void* data, SysUInt size) ASMJIT_NOTHROW
 {
   if (!canEmit()) return;
 
@@ -2873,7 +2875,7 @@ void Assembler::_embed(const void* data, SysUInt size)
   _buffer.emitData(data, size);
 }
 
-void Assembler::_embedLabel(Label* label)
+void Assembler::_embedLabel(Label* label) ASMJIT_NOTHROW
 {
   if (!canEmit()) return;
 
@@ -2921,7 +2923,7 @@ void Assembler::_embedLabel(Label* label)
 // [AsmJit::Assembler - Align]
 // ============================================================================
 
-void Assembler::align(SysInt m)
+void Assembler::align(SysInt m) ASMJIT_NOTHROW
 {
   if (!canEmit()) return;
   if (_logger) _logger->logAlign(m);
@@ -3045,7 +3047,7 @@ void Assembler::align(SysInt m)
 // [AsmJit::Assembler - Labels]
 // ============================================================================
 
-Label* Assembler::newLabel()
+Label* Assembler::newLabel() ASMJIT_NOTHROW
 {
   Label* label = new(_zoneAlloc(sizeof(Label))) Label();
   return label;
@@ -3055,7 +3057,7 @@ Label* Assembler::newLabel()
 // [AsmJit::Assembler - Bind]
 // ============================================================================
 
-void Assembler::bind(Label* label)
+void Assembler::bind(Label* label) ASMJIT_NOTHROW
 {
   // label can only be bound once
   ASMJIT_ASSERT(!label->isBound());
@@ -3064,7 +3066,7 @@ void Assembler::bind(Label* label)
   bindTo(label, offset());
 }
 
-void Assembler::bindTo(Label* label, SysInt pos)
+void Assembler::bindTo(Label* label, SysInt pos) ASMJIT_NOTHROW
 {
   // pos is signed integer, but I it should be never negative (because it
   // means count of bytes in assembler stream from the start).
@@ -3134,7 +3136,7 @@ void Assembler::bindTo(Label* label, SysInt pos)
 // [AsmJit::Assembler - Make]
 // ============================================================================
 
-void* Assembler::make(MemoryManager* memoryManager, UInt32 allocType)
+void* Assembler::make(MemoryManager* memoryManager, UInt32 allocType) ASMJIT_NOTHROW
 {
   // Do nothing on error state or when no instruction was emitted.
   if (error() || codeSize() == 0) return NULL;

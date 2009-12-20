@@ -27,6 +27,10 @@
 #ifndef _ASMJIT_LOGGERX86X64_H
 #define _ASMJIT_LOGGERX86X64_H
 
+#if !defined(_ASMJIT_LOGGER_H)
+#warning "AsmJit/LoggerX86X64 can be only included by AsmJit/Logger.h"
+#endif // _ASMJIT_LOGGER_H
+
 // [Dependencies]
 #include "Defs.h"
 #include "Serializer.h"
@@ -136,7 +140,7 @@ protected:
   bool _haveStream;
 
 private:
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(Logger);
 };
 

@@ -1,4 +1,4 @@
-AsmJit - Complete x86/x64 JIT Assembler for C++ Language - Version 0.8
+AsmJit - Complete x86/x64 JIT Assembler for C++ Language - Version SVN
 ======================================================================
 
 http://code.google.com/p/asmjit/
@@ -61,7 +61,7 @@ also AsmJit/Config.h header where you can configure platform (if autodetection
 not works for you) and application specific features. Look at platform macros 
 to change some backends to your preferences.
 
-test - Directory with cmake project to test AsmJit library. It generates simple
+Test - Directory with cmake project to test AsmJit library. It generates simple
 command line applications for testing AsmJit functionality. It's only here as a
 demonstration how easy this can be done. These applications are also examples 
 how to use AsmJit API. For example look at testjit for simple code generation, 
@@ -81,8 +81,8 @@ mailing list or create an Issue (see project home page).
 Supported platforms
 ===================
 
-Fully supported platforms at this time are X86 (32-bit) and X64 (64 bit) ones.
-Other platforms needs volunteers to support them. Also note that AsmJit is
+Fully supported platforms at this time are X86 (32-bit) and X64 (64 bit).
+Other platforms need volunteers to support them. Also note that AsmJit is
 designed to generate assembler binary only for host CPU, don't try to generate
 64 bit assembler in 32 bit mode and vica versa - this is not designed to work
 and will not work.
@@ -90,10 +90,10 @@ and will not work.
 Examples
 ========
 
-Examples can be found on these places:
+Examples and tests can be found in these places:
 - AsmJit home page <http://code.google.com/p/asmjit/>
 - AsmJit wiki <http://code.google.com/p/asmjit/w/list>
-- AsmJit test directory (in this package)
+- AsmJit Test directory (in this package)
 
 Licence
 =======

@@ -1,5 +1,5 @@
 #!/bin/sh
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DASMJIT_BUILD_LIBRARY=1 -G"Unix Makefiles"
+mkdir Build
+cd Build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DASMJIT_BUILD_LIBRARY=1 -DASMJIT_BUILD_TEST -G"Unix Makefiles"
 cd ..

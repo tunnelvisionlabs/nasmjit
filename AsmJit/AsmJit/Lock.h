@@ -110,7 +110,7 @@ struct ASMJIT_HIDDEN Lock
 private:
   Handle _handle;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(Lock);
 };
 
@@ -132,7 +132,7 @@ private:
   //! @brief Pointer to target (lock).
   Lock& _target;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(AutoLock);
 };
 

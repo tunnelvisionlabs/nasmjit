@@ -36,8 +36,7 @@ namespace AsmJit {
 // [AsmJit::Buffer]
 // ============================================================================
 
-void Buffer::emitData(const void* dataPtr, SysUInt dataLen) 
-  ASMJIT_NOTHROW
+void Buffer::emitData(const void* dataPtr, SysUInt dataLen) ASMJIT_NOTHROW
 {
   SysInt max = capacity() - offset();
   if ((SysUInt)max < dataLen)
@@ -49,8 +48,7 @@ void Buffer::emitData(const void* dataPtr, SysUInt dataLen)
   _cur += dataLen;
 }
 
-bool Buffer::realloc(SysInt to)
-  ASMJIT_NOTHROW
+bool Buffer::realloc(SysInt to) ASMJIT_NOTHROW
 {
   if (capacity() < to)
   {
@@ -74,8 +72,7 @@ bool Buffer::realloc(SysInt to)
   return true;
 }
 
-bool Buffer::grow()
-  ASMJIT_NOTHROW
+bool Buffer::grow() ASMJIT_NOTHROW
 {
   SysInt to = _capacity;
 
@@ -89,14 +86,12 @@ bool Buffer::grow()
   return realloc(to);
 }
 
-void Buffer::clear()
-  ASMJIT_NOTHROW
+void Buffer::clear() ASMJIT_NOTHROW
 {
   _cur = _data;
 }
 
-void Buffer::free()
-  ASMJIT_NOTHROW
+void Buffer::free() ASMJIT_NOTHROW
 {
   if (!_data) return;
   ASMJIT_FREE(_data);
@@ -107,8 +102,7 @@ void Buffer::free()
   _capacity = 0;
 }
 
-UInt8* Buffer::take()
-  ASMJIT_NOTHROW
+UInt8* Buffer::take() ASMJIT_NOTHROW
 {
   UInt8* data = _data;
 
@@ -124,22 +118,19 @@ UInt8* Buffer::take()
 // [AsmJit::Zone]
 // ============================================================================
 
-Zone::Zone(SysUInt chunkSize)
-  ASMJIT_NOTHROW
+Zone::Zone(SysUInt chunkSize) ASMJIT_NOTHROW
 {
   _chunks = NULL;
   _total = 0;
   _chunkSize = chunkSize;
 }
 
-Zone::~Zone()
-  ASMJIT_NOTHROW
+Zone::~Zone() ASMJIT_NOTHROW
 {
   freeAll();
 }
 
-void* Zone::alloc(SysUInt size)
-  ASMJIT_NOTHROW
+void* Zone::alloc(SysUInt size) ASMJIT_NOTHROW
 {
   // Align to 4 or 8 bytes
   size = (size + sizeof(SysInt)-1) & ~(sizeof(SysInt)-1);
@@ -166,8 +157,7 @@ void* Zone::alloc(SysUInt size)
   return (void*)p;
 }
 
-void Zone::clear()
-  ASMJIT_NOTHROW
+void Zone::clear() ASMJIT_NOTHROW
 {
   Chunk* cur = _chunks;
   if (!cur) return;
@@ -184,8 +174,7 @@ void Zone::clear()
   _total = 0;
 }
 
-void Zone::freeAll()
-  ASMJIT_NOTHROW
+void Zone::freeAll() ASMJIT_NOTHROW
 {
   Chunk* cur = _chunks;
   if (!cur) return;

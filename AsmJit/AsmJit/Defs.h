@@ -70,12 +70,9 @@ enum ERROR_CODE
   //! @brief Short jump instruction used, but displacement is out of bounds.
   ERROR_ILLEGAL_SHORT_JUMP = 6,
 
-  //! @brief Count of error codes in AsmJit. Can grow in future.
+  //! @brief Count of error codes by AsmJit. Can grow in future.
   _ERROR_COUNT
 };
-
-//! @brief Translates error code (see @c ERROR_CODE) into text representation.
-const char* errorCodeToString(UInt32 error) ASMJIT_NOTHROW;
 
 // ============================================================================
 // [AsmJit::OP]
@@ -84,8 +81,11 @@ const char* errorCodeToString(UInt32 error) ASMJIT_NOTHROW;
 //! @brief Operand types that can be encoded in @c Op operand.
 enum OP
 {
-  //! @brief Operand is none, used only internally.
+  //! @brief Operand is none, used only internally (not initialized Operand).
+  //!
+  //! This operand is not valid.
   OP_NONE = 0,
+
   //! @brief Operand is register.
   OP_REG = 1,
   //! @brief Operand is memory.
@@ -93,7 +93,9 @@ enum OP
   //! @brief Operand is immediate.
   OP_IMM = 3,
   //! @brief Operand is label.
-  OP_LABEL = 4
+  OP_LABEL = 4,
+  //! @brief Operand is variable.
+  OP_VAR = 5
 };
 
 // ============================================================================
@@ -172,6 +174,13 @@ enum PROPERTY
   //! @note This is X86/X86 property only.
   PROPERTY_X86_JCC_HINTS = 2
 };
+
+// ============================================================================
+// [AsmJit::API]
+// ============================================================================
+
+//! @brief Translates error code (see @c ERROR_CODE) into text representation.
+ASMJIT_API const char* errorCodeToString(UInt32 error) ASMJIT_NOTHROW;
 
 //! @}
 

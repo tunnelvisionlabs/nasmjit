@@ -27,6 +27,10 @@
 #ifndef _ASMJIT_SERIALIZERX86X64_H
 #define _ASMJIT_SERIALIZERX86X64_H
 
+#if !defined(_ASMJIT_SERIALIZER_H)
+#warning "AsmJit/SerializerX86X64 can be only included by AsmJit/Serializer.h"
+#endif // _ASMJIT_SERIALIZER_H
+
 // [Dependencies]
 #include "Build.h"
 #include "Defs.h"
@@ -38,12 +42,6 @@
 
 namespace AsmJit {
 
-// forward declarations
-struct Label;
-struct Logger;
-struct Assembler;
-struct Compiler;
-
 //! @addtogroup AsmJit_Serializer
 //! @{
 
@@ -51,21 +49,13 @@ struct Compiler;
 // [AsmJit::Operand]
 // ============================================================================
 
-// Skip documenting this
-#if !defined(ASMJIT_NODOC)
-
-struct ASMJIT_HIDDEN _DontInitialize {};
-struct ASMJIT_HIDDEN _Initialize {};
-
-#endif // !ASMJIT_NODOC
-
 //! @brief Operand, abstract class for register, memory location and immediate 
 //! value operands.
 struct ASMJIT_HIDDEN Operand
 {
   inline Operand() ASMJIT_NOTHROW
   { memset(this, 0, sizeof(Operand)); }
-  
+
   inline Operand(const Operand& other) ASMJIT_NOTHROW : 
     _compilerData(NULL), _operandId(0)
   { _init(other); }
@@ -78,10 +68,6 @@ struct ASMJIT_HIDDEN Operand
   inline UInt8 op() const ASMJIT_NOTHROW
   { return _base.op; }
   
-  //! @brief Return size of operand in bytes.
-  inline UInt8 size() const ASMJIT_NOTHROW
-  { return _base.size; }
-
   //! @brief Return @c true if operand is none (@c OP_NONE).
   inline UInt8 isNone() const ASMJIT_NOTHROW
   { return _base.op == OP_NONE; }
@@ -122,6 +108,10 @@ struct ASMJIT_HIDDEN Operand
   inline UInt8 isRegMem(UInt8 regType) const ASMJIT_NOTHROW
   { return isMem() | isRegType(regType); }
 
+  //! @brief Return size of operand in bytes.
+  inline UInt8 size() const ASMJIT_NOTHROW
+  { return _base.size; }
+
   inline void* compilerData() const ASMJIT_NOTHROW
   { return _compilerData; }
 
@@ -134,7 +124,7 @@ struct ASMJIT_HIDDEN Operand
   { _operandId = 0; }
 
   //! @brief Base operand data shared between all operands.
-  struct ASMJIT_HIDDEN BaseData
+  struct BaseData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
@@ -143,12 +133,13 @@ struct ASMJIT_HIDDEN Operand
   };
 
   //! @brief Register data.
-  struct ASMJIT_HIDDEN RegData
+  struct RegData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
     //! @brief Size of register.
     UInt8 size;
+
     //! @brief Register code, see @c REG.
     UInt8 code;
     //! @brief Not used.
@@ -156,12 +147,13 @@ struct ASMJIT_HIDDEN Operand
   };
 
   //! @brief Memory address data.
-  struct ASMJIT_HIDDEN MemData
+  struct MemData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
     //! @brief Size of pointer.
     UInt8 size;
+
     //! @brief Base register index, see @c REG.
     UInt8 base;
     //! @brief Index register index, see @c REG.
@@ -189,12 +181,13 @@ struct ASMJIT_HIDDEN Operand
   };
 
   //! @brief Immediate value data.
-  struct ASMJIT_HIDDEN ImmData
+  struct ImmData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
     //! @brief Size of immediate (or 0 to autodetect).
     UInt8 size;
+
     //! @brief @c true if immediate is unsigned.
     UInt8 isUnsigned;
     //! @brief Not used.
@@ -204,7 +197,7 @@ struct ASMJIT_HIDDEN Operand
   };
 
   //! @brief Label data.
-  struct ASMJIT_HIDDEN LblData
+  struct LblData
   {
     //! @brief Type of operand, see @c OP.
     UInt8 op;
@@ -226,8 +219,6 @@ struct ASMJIT_HIDDEN Operand
 
   union
   {
-    //! @brief Operand buffer.
-    UInt8 _buf[BufSize];
     //! @brief Generic operand data.
     BaseData _base;
     //! @brief Register operand data.
@@ -238,6 +229,8 @@ struct ASMJIT_HIDDEN Operand
     ImmData _imm;
     //! @brief Label data.
     LblData _lbl;
+    //! @brief Operand buffer.
+    UInt8 _buf[BufSize];
   };
 
   //! @brief Compiler specific data.
@@ -260,36 +253,14 @@ struct ASMJIT_HIDDEN Operand
 };
 
 // ============================================================================
-// [AsmJit::BaseRegMem]
-// ============================================================================
-
-//! @brief Base class for registers and memory location.
-//!
-//! Reason for this class is that internally most functions supports
-//! source or destination operands that can be registers or memory location.
-struct ASMJIT_HIDDEN BaseRegMem : public Operand
-{
-  inline BaseRegMem(const BaseRegMem& other) ASMJIT_NOTHROW : 
-    Operand(other)
-  {}
-  
-  inline BaseRegMem(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
-    Operand(dontInitialize)
-  {}
-
-  inline BaseRegMem& operator=(const BaseRegMem& other) ASMJIT_NOTHROW 
-  { _copy(other); }
-};
-
-// ============================================================================
 // [AsmJit::BaseReg]
 // ============================================================================
 
 //! @brief Base class for all registers.
-struct ASMJIT_HIDDEN BaseReg : public BaseRegMem
+struct ASMJIT_HIDDEN BaseReg : public Operand
 {
   inline BaseReg(UInt8 code, UInt8 size) ASMJIT_NOTHROW :
-    BaseRegMem(_DontInitialize())
+    Operand(_DontInitialize())
   {
     _reg.op = OP_REG;
     _reg.size = size;
@@ -297,11 +268,11 @@ struct ASMJIT_HIDDEN BaseReg : public BaseRegMem
   }
 
   inline BaseReg(const BaseReg& other) ASMJIT_NOTHROW : 
-    BaseRegMem(other)
+    Operand(other)
   {}
 
   inline BaseReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW : 
-    BaseRegMem(dontInitialize)
+    Operand(dontInitialize)
   {}
 
   //! @brief Return register type, see @c REG.
@@ -358,9 +329,9 @@ struct ASMJIT_HIDDEN Register : public BaseReg
   inline Register(const _Initialize&, UInt8 code) ASMJIT_NOTHROW :
     BaseReg(code, static_cast<UInt8>(1U << ((code & REGTYPE_MASK) >> 4))) {}
 
-  inline Register& operator=(const Register& other) { _copy(other); return *this; }
-  inline bool operator==(const Register& other) const { return code() == other.code(); }
-  inline bool operator!=(const Register& other) const { return code() != other.code(); }
+  inline Register& operator=(const Register& other) ASMJIT_NOTHROW { _copy(other); return *this; }
+  inline bool operator==(const Register& other) const ASMJIT_NOTHROW { return code() == other.code(); }
+  inline bool operator!=(const Register& other) const ASMJIT_NOTHROW { return code() != other.code(); }
 };
 
 // ============================================================================
@@ -663,17 +634,17 @@ static inline X87Register st(int i) ASMJIT_NOTHROW
 // ============================================================================
 
 //! @brief Memory location operand.
-struct ASMJIT_HIDDEN Mem : public BaseRegMem
+struct ASMJIT_HIDDEN Mem : public Operand
 {
   inline Mem() ASMJIT_NOTHROW : 
-    BaseRegMem(_DontInitialize())
+    Operand(_DontInitialize())
   {
     memset(&_mem, 0, sizeof(MemData));
     _mem.op = OP_MEM;
   }
 
   inline Mem(Label* label, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
-    BaseRegMem(_DontInitialize())
+    Operand(_DontInitialize())
   {
     _mem.op = OP_MEM;
     _mem.size = size;
@@ -687,7 +658,7 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
   }
 
   inline Mem(const Register& base, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
-    BaseRegMem(_DontInitialize())
+    Operand(_DontInitialize())
   {
     _mem.op = OP_MEM;
     _mem.size = size;
@@ -701,7 +672,7 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
   }
 
   inline Mem(const Register& base, const Register& index, UInt32 shift, SysInt displacement, UInt8 size = 0) ASMJIT_NOTHROW : 
-    BaseRegMem(_DontInitialize())
+    Operand(_DontInitialize())
   {
     ASMJIT_ASSERT(shift <= 3);
     _mem.op = OP_MEM;
@@ -716,7 +687,7 @@ struct ASMJIT_HIDDEN Mem : public BaseRegMem
   }
 
   inline Mem(const Mem& other) ASMJIT_NOTHROW :
-    BaseRegMem(other)
+    Operand(other)
   {}
 
   inline Mem& operator=(const Mem& other) ASMJIT_NOTHROW { _copy(other); return *this; }
@@ -1335,9 +1306,6 @@ struct ASMJIT_API SerializerCore
   // [Abstract Emitters]
   // -------------------------------------------------------------------------
 
-  //! @brief Maximum size of inlined comment (see @c _inlineComment() method).
-  enum { MaxInlineCommentSize = 256 };
-
   //! @brief Adds inline comment to next generated instruction.
   //!
   //! This method is only iseful when debugging (present Logger). If Logger is
@@ -1345,14 +1313,14 @@ struct ASMJIT_API SerializerCore
   //!
   //! @param text String that contains comment.
   //! @param len Length of that string or -1 to detect it using @c strlen().
-  virtual void _inlineComment(const char* text, SysInt len) = 0;
+  virtual void _inlineComment(const char* text, SysInt len) ASMJIT_NOTHROW = 0;
 
   //! @brief Emits X86/FPU or MM instruction.
   //!
   //! Operands @a o1, @a o2 or @a o3 can be @c NULL if they are not used.
   //!
   //! Hint: Use @c emitX86() helpers to emit instructions.
-  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) = 0;
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW = 0;
 
   // Helpers to decrease binary code size. These four emit methods are just
   // helpers thats used by serializer. They call _emitX86() adding NULLs
@@ -1361,30 +1329,30 @@ struct ASMJIT_API SerializerCore
   //! @brief Emits instruction with no operand.
   //!
   //! Should be use as an alternative to @c _emitX86() method.
-  void emitX86(UInt32 code);
+  void emitX86(UInt32 code) ASMJIT_NOTHROW;
   //! @brief Emits instruction with one operand.
   //!
   //! Should be use as an alternative to @c _emitX86() method.
-  void emitX86(UInt32 code, const Operand* o1);
+  void emitX86(UInt32 code, const Operand* o1) ASMJIT_NOTHROW;
   //! @brief Emits instruction with two operands.
   //!
   //! Should be use as an alternative to @c _emitX86() method.
-  void emitX86(UInt32 code, const Operand* o1, const Operand* o2);
+  void emitX86(UInt32 code, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW;
   //! @brief Emits instruction with three operands.
   //!
   //! Should be use as an alternative to @c _emitX86() method.
-  void emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+  void emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
 
   //! @brief Private method for emitting jcc.
   //! @internal This should be probably private.
-  void _emitJcc(UInt32 code, Label* label, UInt32 hint);
+  void _emitJcc(UInt32 code, Label* label, UInt32 hint) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Embed]
   // -------------------------------------------------------------------------
 
   //! @brief Embed data into instruction stream.
-  virtual void _embed(const void* dataPtr, SysUInt dataLen) = 0;
+  virtual void _embed(const void* dataPtr, SysUInt dataLen) ASMJIT_NOTHROW = 0;
 
   // -------------------------------------------------------------------------
   // [Align]
@@ -1395,7 +1363,7 @@ struct ASMJIT_API SerializerCore
   //! Typical usage of this is to align labels at start of inner loops.
   //!
   //! Inserts @c nop() instructions.
-  virtual void align(SysInt m) = 0;
+  virtual void align(SysInt m) ASMJIT_NOTHROW = 0;
 
   // -------------------------------------------------------------------------
   // [Bind]
@@ -1404,14 +1372,14 @@ struct ASMJIT_API SerializerCore
   //! @brief Bind label to the current offset.
   //!
   //! @note Label can be bound only once!
-  virtual void bind(Label* label) = 0;
+  virtual void bind(Label* label) ASMJIT_NOTHROW = 0;
 
   // -------------------------------------------------------------------------
   // [Memory Management]
   // -------------------------------------------------------------------------
 
   //! @brief Allocate memory using Assembler or Compiler internal memory manager.
-  void* _zoneAlloc(SysUInt size);
+  void* _zoneAlloc(SysUInt size) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Error Handling]
@@ -1448,7 +1416,7 @@ struct ASMJIT_API SerializerCore
   //!
   //! Default allocation type is @c MEMORY_ALLOC_FREEABLE. If you need pernament
   //! allocation you should use MEMORY_ALLOC_PERNAMENT instead.
-  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE) = 0;
+  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW = 0;
 
   // -------------------------------------------------------------------------
   // [Constants]
@@ -1463,7 +1431,7 @@ struct ASMJIT_API SerializerCore
 
   //! @brief Translate condition code @a CC to AsmJit jump (jcc) instruction code.
   //! @sa @c INST_CODE, @c INST_J.
-  static inline UInt32 conditionToJCC(CONDITION cc)
+  static inline UInt32 conditionToJCC(CONDITION cc) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
     return _jcctable[cc];
@@ -1471,7 +1439,7 @@ struct ASMJIT_API SerializerCore
 
   //! @brief Translate condition code @a CC to AsmJit cmov (cmovcc) instruction code.
   //! @sa @c INST_CODE, @c INST_CMOV.
-  static inline UInt32 conditionToCMovCC(CONDITION cc)
+  static inline UInt32 conditionToCMovCC(CONDITION cc) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
     return _cmovcctable[cc];
@@ -1479,7 +1447,7 @@ struct ASMJIT_API SerializerCore
 
   //! @brief Translate condition code @a CC to AsmJit set (setcc) instruction code.
   //! @sa @c INST_CODE, @c INST_SET.
-  static inline UInt32 conditionToSetCC(CONDITION cc)
+  static inline UInt32 conditionToSetCC(CONDITION cc) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(static_cast<UInt32>(cc) <= 0xF);
     return _setcctable[cc];
@@ -1506,7 +1474,7 @@ private:
   friend struct AssemblerCore;
   friend struct CompilerCore;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(SerializerCore);
 };
 
@@ -1523,38 +1491,38 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   // [Embed]
   // -------------------------------------------------------------------------
 
-  inline void db(UInt8  x) { _embed(&x, 1); }
-  inline void dw(UInt16 x) { _embed(&x, 2); }
-  inline void dd(UInt32 x) { _embed(&x, 4); }
-  inline void dq(UInt64 x) { _embed(&x, 8); }
+  inline void db(UInt8  x) ASMJIT_NOTHROW { _embed(&x, 1); }
+  inline void dw(UInt16 x) ASMJIT_NOTHROW { _embed(&x, 2); }
+  inline void dd(UInt32 x) ASMJIT_NOTHROW { _embed(&x, 4); }
+  inline void dq(UInt64 x) ASMJIT_NOTHROW { _embed(&x, 8); }
 
-  inline void dint8(Int8 x) { _embed(&x, sizeof(Int8)); }
-  inline void duint8(UInt8 x) { _embed(&x, sizeof(UInt8)); }
+  inline void dint8(Int8 x) ASMJIT_NOTHROW { _embed(&x, sizeof(Int8)); }
+  inline void duint8(UInt8 x) ASMJIT_NOTHROW { _embed(&x, sizeof(UInt8)); }
 
-  inline void dint16(Int16 x) { _embed(&x, sizeof(Int16)); }
-  inline void duint16(UInt16 x) { _embed(&x, sizeof(UInt16)); }
+  inline void dint16(Int16 x) ASMJIT_NOTHROW { _embed(&x, sizeof(Int16)); }
+  inline void duint16(UInt16 x) ASMJIT_NOTHROW { _embed(&x, sizeof(UInt16)); }
 
-  inline void dint32(Int32 x) { _embed(&x, sizeof(Int32)); }
-  inline void duint32(UInt32 x) { _embed(&x, sizeof(UInt32)); }
+  inline void dint32(Int32 x) ASMJIT_NOTHROW { _embed(&x, sizeof(Int32)); }
+  inline void duint32(UInt32 x) ASMJIT_NOTHROW { _embed(&x, sizeof(UInt32)); }
 
-  inline void dint64(Int64 x) { _embed(&x, sizeof(Int64)); }
-  inline void duint64(UInt64 x) { _embed(&x, sizeof(UInt64)); }
+  inline void dint64(Int64 x) ASMJIT_NOTHROW { _embed(&x, sizeof(Int64)); }
+  inline void duint64(UInt64 x) ASMJIT_NOTHROW { _embed(&x, sizeof(UInt64)); }
 
-  inline void dsysint(SysInt x) { _embed(&x, sizeof(SysInt)); }
-  inline void dsysuint(SysUInt x) { _embed(&x, sizeof(SysUInt)); }
+  inline void dsysint(SysInt x) ASMJIT_NOTHROW { _embed(&x, sizeof(SysInt)); }
+  inline void dsysuint(SysUInt x) ASMJIT_NOTHROW { _embed(&x, sizeof(SysUInt)); }
 
-  inline void dfloat(float x) { _embed(&x, sizeof(float)); }
-  inline void ddouble(double x) { _embed(&x, sizeof(double)); }
+  inline void dfloat(float x) ASMJIT_NOTHROW { _embed(&x, sizeof(float)); }
+  inline void ddouble(double x) ASMJIT_NOTHROW { _embed(&x, sizeof(double)); }
 
-  inline void dptr(void* x) { _embed(&x, sizeof(void*)); }
+  inline void dptr(void* x) ASMJIT_NOTHROW { _embed(&x, sizeof(void*)); }
 
-  inline void dmm(const MMData& x) { _embed(&x, sizeof(MMData)); }
-  inline void dxmm(const XMMData& x) { _embed(&x, sizeof(XMMData)); }
+  inline void dmm(const MMData& x) ASMJIT_NOTHROW { _embed(&x, sizeof(MMData)); }
+  inline void dxmm(const XMMData& x) ASMJIT_NOTHROW { _embed(&x, sizeof(XMMData)); }
 
-  inline void data(const void* data, SysUInt size) { _embed(data, size); }
+  inline void data(const void* data, SysUInt size) ASMJIT_NOTHROW { _embed(data, size); }
 
   template<typename T>
-  inline void dstruct(const T& x) { _embed(&x, sizeof(T)); }
+  inline void dstruct(const T& x) ASMJIT_NOTHROW { _embed(&x, sizeof(T)); }
 
   // -------------------------------------------------------------------------
   // [X86 Instructions]
@@ -1837,71 +1805,137 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   }
 
   //! @brief Conditional Move.
-  inline void cmov(CONDITION cc, const Register& dst, const BaseRegMem& src)
+  inline void cmov(CONDITION cc, const Register& dst, const Register& src)
   {
     emitX86(conditionToCMovCC(cc), &dst, &src);
   }
 
   //! @brief Conditional Move.
-  inline void cmova  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVA  , &dst, &src); }
+  inline void cmov(CONDITION cc, const Register& dst, const Mem& src)
+  {
+    emitX86(conditionToCMovCC(cc), &dst, &src);
+  }
+
   //! @brief Conditional Move.
-  inline void cmovae (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVAE , &dst, &src); }
+  inline void cmova  (const Register& dst, const Register& src) { emitX86(INST_CMOVA  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovb  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVB  , &dst, &src); }
+  inline void cmova  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVA  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovbe (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVBE , &dst, &src); }
+  inline void cmovae (const Register& dst, const Register& src) { emitX86(INST_CMOVAE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovc  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVC  , &dst, &src); }
+  inline void cmovae (const Register& dst, const Mem& src)      { emitX86(INST_CMOVAE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmove  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVE  , &dst, &src); }
+  inline void cmovb  (const Register& dst, const Register& src) { emitX86(INST_CMOVB  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovg  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVG  , &dst, &src); }
+  inline void cmovb  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVB  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovge (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVGE , &dst, &src); }
+  inline void cmovbe (const Register& dst, const Register& src) { emitX86(INST_CMOVBE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovl  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVL  , &dst, &src); }
+  inline void cmovbe (const Register& dst, const Mem& src)      { emitX86(INST_CMOVBE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovle (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVLE , &dst, &src); }
+  inline void cmovc  (const Register& dst, const Register& src) { emitX86(INST_CMOVC  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovna (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNA , &dst, &src); }
+  inline void cmovc  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVC  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnae(const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNAE, &dst, &src); }
+  inline void cmove  (const Register& dst, const Register& src) { emitX86(INST_CMOVE  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnb (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNB , &dst, &src); }
+  inline void cmove  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVE  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnbe(const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNBE, &dst, &src); }
+  inline void cmovg  (const Register& dst, const Register& src) { emitX86(INST_CMOVG  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnc (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNC , &dst, &src); }
+  inline void cmovg  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVG  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovne (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNE , &dst, &src); }
+  inline void cmovge (const Register& dst, const Register& src) { emitX86(INST_CMOVGE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovng (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNG , &dst, &src); }
+  inline void cmovge (const Register& dst, const Mem& src)      { emitX86(INST_CMOVGE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnge(const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNGE, &dst, &src); }
+  inline void cmovl  (const Register& dst, const Register& src) { emitX86(INST_CMOVL  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnl (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNL , &dst, &src); }
+  inline void cmovl  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVL  , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnle(const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNLE, &dst, &src); }
+  inline void cmovle (const Register& dst, const Register& src) { emitX86(INST_CMOVLE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovno (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNO , &dst, &src); }
+  inline void cmovle (const Register& dst, const Mem& src)      { emitX86(INST_CMOVLE , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnp (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNP , &dst, &src); }
+  inline void cmovna (const Register& dst, const Register& src) { emitX86(INST_CMOVNA , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovns (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNS , &dst, &src); }
+  inline void cmovna (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNA , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovnz (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVNZ , &dst, &src); }
+  inline void cmovnae(const Register& dst, const Register& src) { emitX86(INST_CMOVNAE, &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovo  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVO  , &dst, &src); }
+  inline void cmovnae(const Register& dst, const Mem& src)      { emitX86(INST_CMOVNAE, &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovp  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVP  , &dst, &src); }
+  inline void cmovnb (const Register& dst, const Register& src) { emitX86(INST_CMOVNB , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovpe (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVPE , &dst, &src); }
+  inline void cmovnb (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNB , &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovpo (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVPO , &dst, &src); }
+  inline void cmovnbe(const Register& dst, const Register& src) { emitX86(INST_CMOVNBE, &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovs  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVS  , &dst, &src); }
+  inline void cmovnbe(const Register& dst, const Mem& src)      { emitX86(INST_CMOVNBE, &dst, &src); }
   //! @brief Conditional Move.
-  inline void cmovz  (const Register& dst, const BaseRegMem& src) { emitX86(INST_CMOVZ  , &dst, &src); }
+  inline void cmovnc (const Register& dst, const Register& src) { emitX86(INST_CMOVNC , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnc (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNC , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovne (const Register& dst, const Register& src) { emitX86(INST_CMOVNE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovne (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovng (const Register& dst, const Register& src) { emitX86(INST_CMOVNG , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovng (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNG , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnge(const Register& dst, const Register& src) { emitX86(INST_CMOVNGE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnge(const Register& dst, const Mem& src)      { emitX86(INST_CMOVNGE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnl (const Register& dst, const Register& src) { emitX86(INST_CMOVNL , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnl (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNL , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnle(const Register& dst, const Register& src) { emitX86(INST_CMOVNLE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnle(const Register& dst, const Mem& src)      { emitX86(INST_CMOVNLE, &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovno (const Register& dst, const Register& src) { emitX86(INST_CMOVNO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovno (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnp (const Register& dst, const Register& src) { emitX86(INST_CMOVNP , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnp (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNP , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovns (const Register& dst, const Register& src) { emitX86(INST_CMOVNS , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovns (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNS , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnz (const Register& dst, const Register& src) { emitX86(INST_CMOVNZ , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovnz (const Register& dst, const Mem& src)      { emitX86(INST_CMOVNZ , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovo  (const Register& dst, const Register& src) { emitX86(INST_CMOVO  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovo  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVO  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovp  (const Register& dst, const Register& src) { emitX86(INST_CMOVP  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovp  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVP  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpe (const Register& dst, const Register& src) { emitX86(INST_CMOVPE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpe (const Register& dst, const Mem& src)      { emitX86(INST_CMOVPE , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpo (const Register& dst, const Register& src) { emitX86(INST_CMOVPO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovpo (const Register& dst, const Mem& src)      { emitX86(INST_CMOVPO , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovs  (const Register& dst, const Register& src) { emitX86(INST_CMOVS  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovs  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVS  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovz  (const Register& dst, const Register& src) { emitX86(INST_CMOVZ  , &dst, &src); }
+  //! @brief Conditional Move.
+  inline void cmovz  (const Register& dst, const Mem& src)      { emitX86(INST_CMOVZ  , &dst, &src); }
 
   //! @brief Compare Two Operands.
   inline void cmp(const Register& dst, const Register& src)
@@ -2831,71 +2865,137 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
   }
 
   //! @brief Set Byte on Condition.
-  inline void set(CONDITION cc, const BaseRegMem& dst)
+  inline void set(CONDITION cc, const Register& dst)
   {
     emitX86(conditionToSetCC(cc), &dst);
   }
 
   //! @brief Set Byte on Condition.
-  inline void seta  (const BaseRegMem& dst) { emitX86(INST_SETA  , &dst); }
+  inline void set(CONDITION cc, const Mem& dst)
+  {
+    emitX86(conditionToSetCC(cc), &dst);
+  }
+
   //! @brief Set Byte on Condition.
-  inline void setae (const BaseRegMem& dst) { emitX86(INST_SETAE , &dst); }
+  inline void seta  (const Register& dst) { emitX86(INST_SETA  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setb  (const BaseRegMem& dst) { emitX86(INST_SETB  , &dst); }
+  inline void seta  (const Mem& dst)      { emitX86(INST_SETA  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setbe (const BaseRegMem& dst) { emitX86(INST_SETBE , &dst); }
+  inline void setae (const Register& dst) { emitX86(INST_SETAE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setc  (const BaseRegMem& dst) { emitX86(INST_SETC  , &dst); }
+  inline void setae (const Mem& dst)      { emitX86(INST_SETAE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void sete  (const BaseRegMem& dst) { emitX86(INST_SETE  , &dst); }
+  inline void setb  (const Register& dst) { emitX86(INST_SETB  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setg  (const BaseRegMem& dst) { emitX86(INST_SETG  , &dst); }
+  inline void setb  (const Mem& dst)      { emitX86(INST_SETB  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setge (const BaseRegMem& dst) { emitX86(INST_SETGE , &dst); }
+  inline void setbe (const Register& dst) { emitX86(INST_SETBE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setl  (const BaseRegMem& dst) { emitX86(INST_SETL  , &dst); }
+  inline void setbe (const Mem& dst)      { emitX86(INST_SETBE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setle (const BaseRegMem& dst) { emitX86(INST_SETLE , &dst); }
+  inline void setc  (const Register& dst) { emitX86(INST_SETC  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setna (const BaseRegMem& dst) { emitX86(INST_SETNA , &dst); }
+  inline void setc  (const Mem& dst)      { emitX86(INST_SETC  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnae(const BaseRegMem& dst) { emitX86(INST_SETNAE, &dst); }
+  inline void sete  (const Register& dst) { emitX86(INST_SETE  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnb (const BaseRegMem& dst) { emitX86(INST_SETNB , &dst); }
+  inline void sete  (const Mem& dst)      { emitX86(INST_SETE  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnbe(const BaseRegMem& dst) { emitX86(INST_SETNBE, &dst); }
+  inline void setg  (const Register& dst) { emitX86(INST_SETG  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnc (const BaseRegMem& dst) { emitX86(INST_SETNC , &dst); }
+  inline void setg  (const Mem& dst)      { emitX86(INST_SETG  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setne (const BaseRegMem& dst) { emitX86(INST_SETNE , &dst); }
+  inline void setge (const Register& dst) { emitX86(INST_SETGE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setng (const BaseRegMem& dst) { emitX86(INST_SETNG , &dst); }
+  inline void setge (const Mem& dst)      { emitX86(INST_SETGE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnge(const BaseRegMem& dst) { emitX86(INST_SETNGE, &dst); }
+  inline void setl  (const Register& dst) { emitX86(INST_SETL  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnl (const BaseRegMem& dst) { emitX86(INST_SETNL , &dst); }
+  inline void setl  (const Mem& dst)      { emitX86(INST_SETL  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnle(const BaseRegMem& dst) { emitX86(INST_SETNLE, &dst); }
+  inline void setle (const Register& dst) { emitX86(INST_SETLE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setno (const BaseRegMem& dst) { emitX86(INST_SETNO , &dst); }
+  inline void setle (const Mem& dst)      { emitX86(INST_SETLE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnp (const BaseRegMem& dst) { emitX86(INST_SETNP , &dst); }
+  inline void setna (const Register& dst) { emitX86(INST_SETNA , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setns (const BaseRegMem& dst) { emitX86(INST_SETNS , &dst); }
+  inline void setna (const Mem& dst)      { emitX86(INST_SETNA , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnz (const BaseRegMem& dst) { emitX86(INST_SETNZ , &dst); }
+  inline void setnae(const Register& dst) { emitX86(INST_SETNAE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void seto  (const BaseRegMem& dst) { emitX86(INST_SETO  , &dst); }
+  inline void setnae(const Mem& dst)      { emitX86(INST_SETNAE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setp  (const BaseRegMem& dst) { emitX86(INST_SETP  , &dst); }
+  inline void setnb (const Register& dst) { emitX86(INST_SETNB , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpe (const BaseRegMem& dst) { emitX86(INST_SETPE , &dst); }
+  inline void setnb (const Mem& dst)      { emitX86(INST_SETNB , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpo (const BaseRegMem& dst) { emitX86(INST_SETPO , &dst); }
+  inline void setnbe(const Register& dst) { emitX86(INST_SETNBE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void sets  (const BaseRegMem& dst) { emitX86(INST_SETS  , &dst); }
+  inline void setnbe(const Mem& dst)      { emitX86(INST_SETNBE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setz  (const BaseRegMem& dst) { emitX86(INST_SETZ  , &dst); }
+  inline void setnc (const Register& dst) { emitX86(INST_SETNC , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnc (const Mem& dst)      { emitX86(INST_SETNC , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setne (const Register& dst) { emitX86(INST_SETNE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setne (const Mem& dst)      { emitX86(INST_SETNE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setng (const Register& dst) { emitX86(INST_SETNG , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setng (const Mem& dst)      { emitX86(INST_SETNG , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnge(const Register& dst) { emitX86(INST_SETNGE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnge(const Mem& dst)      { emitX86(INST_SETNGE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnl (const Register& dst) { emitX86(INST_SETNL , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnl (const Mem& dst)      { emitX86(INST_SETNL , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnle(const Register& dst) { emitX86(INST_SETNLE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnle(const Mem& dst)      { emitX86(INST_SETNLE, &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setno (const Register& dst) { emitX86(INST_SETNO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setno (const Mem& dst)      { emitX86(INST_SETNO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnp (const Register& dst) { emitX86(INST_SETNP , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnp (const Mem& dst)      { emitX86(INST_SETNP , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setns (const Register& dst) { emitX86(INST_SETNS , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setns (const Mem& dst)      { emitX86(INST_SETNS , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnz (const Register& dst) { emitX86(INST_SETNZ , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setnz (const Mem& dst)      { emitX86(INST_SETNZ , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void seto  (const Register& dst) { emitX86(INST_SETO  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void seto  (const Mem& dst)      { emitX86(INST_SETO  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setp  (const Register& dst) { emitX86(INST_SETP  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setp  (const Mem& dst)      { emitX86(INST_SETP  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpe (const Register& dst) { emitX86(INST_SETPE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpe (const Mem& dst)      { emitX86(INST_SETPE , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpo (const Register& dst) { emitX86(INST_SETPO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setpo (const Mem& dst)      { emitX86(INST_SETPO , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void sets  (const Register& dst) { emitX86(INST_SETS  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void sets  (const Mem& dst)      { emitX86(INST_SETS  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setz  (const Register& dst) { emitX86(INST_SETZ  , &dst); }
+  //! @brief Set Byte on Condition.
+  inline void setz  (const Mem& dst)      { emitX86(INST_SETZ  , &dst); }
 
   //! @brief Shift Bits Left.
   //! @note @a src register can be only @c cl.

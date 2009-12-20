@@ -39,6 +39,16 @@ namespace AsmJit {
 //! @{
 
 // ============================================================================
+// [AsmJit::Macros]
+// ============================================================================
+
+// Skip documenting this.
+#if !defined(ASMJIT_NODOC)
+struct ASMJIT_HIDDEN _DontInitialize {};
+struct ASMJIT_HIDDEN _Initialize {};
+#endif // !ASMJIT_NODOC
+
+// ============================================================================
 // [AsmJit::function_cast<>]
 // ============================================================================
 
@@ -50,7 +60,7 @@ namespace AsmJit {
 //! crossplatform software with various compiler support, consider using
 //! @c AsmJit::function_cast<> instead of @c @c reinterpret_cast<>.
 template<typename T, typename Z>
-static inline T function_cast(Z* p) { return (T)p; }
+static inline T function_cast(Z* p) ASMJIT_NOTHROW { return (T)p; }
 
 // ============================================================================
 // [AsmJit::isIntX]
@@ -653,7 +663,7 @@ private:
   //! @brief Capacity of buffer (maximum items that can fit to current array).
   SysUInt _capacity;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(PodVector<T>);
 };
 

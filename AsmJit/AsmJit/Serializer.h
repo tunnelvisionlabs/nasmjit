@@ -24,11 +24,42 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJIT_SERIZALIZER_H
-#define _ASMJIT_SERIZALIZER_H
+#ifndef _ASMJIT_SERIALIZER_H
+#define _ASMJIT_SERIALIZER_H
 
 // [Dependencies]
 #include "Build.h"
+
+namespace AsmJit {
+
+// ============================================================================
+// [Forward Declarations]
+// ============================================================================
+
+struct Label;
+struct Logger;
+struct Assembler;
+struct Compiler;
+
+//! @addtogroup AsmJit_Serializer
+//! @{
+
+// ============================================================================
+// [Constants]
+// ============================================================================
+
+enum {
+  //! @brief Maximum size of inlined comment (see @c SerializerCore::_inlineComment() method).
+  MAX_INLINE_COMMENT_SIZE = 256
+};
+
+//! @}
+
+} // AsmJit namespace.
+
+// ============================================================================
+// [Platform Specific]
+// ============================================================================
 
 // [X86 / X64]
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
@@ -36,4 +67,4 @@
 #endif // ASMJIT_X86 || ASMJIT_X64
 
 // [Guard]
-#endif // _ASMJIT_SERIZALIZER_H
+#endif // _ASMJIT_SERIALIZER_H

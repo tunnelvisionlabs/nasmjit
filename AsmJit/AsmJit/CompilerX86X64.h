@@ -27,6 +27,10 @@
 #ifndef _ASMJIT_COMPILERX86X64_H
 #define _ASMJIT_COMPILERX86X64_H
 
+#if !defined(_ASMJIT_COMPILER_H)
+#warning "AsmJit/CompilerX86X64 can be only included by AsmJit/Compiler.h"
+#endif // _ASMJIT_COMPILER_H
+
 // [Dependencies]
 #include "Build.h"
 #include "Assembler.h"
@@ -43,55 +47,12 @@
 
 namespace AsmJit {
 
-// forward declarations
-struct Comment;
-struct Compiler;
-struct Emittable;
-struct Epilog;
-struct Function;
-struct Instruction;
-struct Prolog;
-struct State;
-struct Variable;
-
 //! @addtogroup AsmJit_Compiler
 //! @{
 
 // ============================================================================
 // [Constants]
 // ============================================================================
-
-//! @brief Emmitable type.
-//!
-//! For each emittable that is used by @c Compiler must be defined it's type.
-//! Compiler can optimize instruction stream by analyzing emittables and each
-//! type is hint for it. The most used emittables are instructions 
-//! (@c EMITTABLE_INSTRUCTION).
-enum EMITTABLE_TYPE
-{
-  //! @brief Emittable is invalid (can't be used).
-  EMITTABLE_NONE = 0,
-  //! @brief Emittable is comment (no code).
-  EMITTABLE_COMMENT,
-  //! @brief Emittable is embedded data.
-  EMITTABLE_EMBEDDED_DATA,
-  //! @brief Emittable is .align directive.
-  EMITTABLE_ALIGN,
-  //! @brief Emittable is single instruction.
-  EMITTABLE_INSTRUCTION,
-  //! @brief Emittable is block of instructions.
-  EMITTABLE_BLOCK,
-  //! @brief Emittable is function declaration.
-  EMITTABLE_FUNCTION,
-  //! @brief Emittable is function prolog.
-  EMITTABLE_PROLOGUE,
-  //! @brief Emittable is function epilog.
-  EMITTABLE_EPILOGUE,
-  //! @brief Emittable is target (bound label).
-  EMITTABLE_TARGET,
-  //! @brief Emittable is jump table.
-  EMITTABLE_JUMP_TABLE
-};
 
 //! @brief Calling convention type.
 //!
@@ -327,20 +288,6 @@ enum CALL_CONV
 #endif // ASMJIT_X86
 };
 
-//! @brief Arguments direction used by @c Function.
-enum ARGUMENT_DIR
-{
-  //! @brief Arguments are passed left to right.
-  //!
-  //! This arguments direction is unusual to C programming, it's used by pascal
-  //! compilers and in some calling conventions by Borland compiler).
-  ARGUMENT_DIR_LEFT_TO_RIGHT = 0,
-  //! @brief Arguments are passer right ro left
-  //!
-  //! This is default argument direction in C programming.
-  ARGUMENT_DIR_RIGHT_TO_LEFT = 1
-};
-
 //! @brief Variable type.
 //!
 //! Variable type is used by @c AsmJit::Function::newVariable() method and can
@@ -419,57 +366,6 @@ enum VARIABLE_TYPE
   _VARIABLE_TYPE_COUNT
 };
 
-//! @brief State of variable.
-//!
-//! Variable state can be retrieved by @c AsmJit::VariableRef::state().
-enum VARIABLE_STATE
-{
-  //! @brief Variable is currently not used.
-  //!
-  //! Variables of this state are not used or they are currently not 
-  //! initialized (short time after @c AsmJit::VariableRef::alloc() call).
-  VARIABLE_STATE_UNUSED = 0,
-
-  //! @brief Variable is in register.
-  //!
-  //! Variable is currently allocated in register.
-  VARIABLE_STATE_REGISTER = 1,
-
-  //! @brief Variable is in memory location or spilled.
-  //!
-  //! Variable was spilled from register to memory or variable is used for 
-  //! memory only storage.
-  VARIABLE_STATE_MEMORY = 2
-};
-
-//! @brief Variable alloc mode.
-//! @internal
-enum VARIABLE_ALLOC
-{
-  //! @brief Allocating variable to read only.
-  //!
-  //! Read only variables are used to optimize variable spilling. If variable
-  //! is some time ago deallocated and it's not marked as changed (so it was
-  //! all the life time read only) then spill is simply NOP (no mov instruction
-  //! is generated to move it to it's home memory location).
-  VARIABLE_ALLOC_READ = 0x1,
-
-  //! @brief Allocating variable to write only (overwrite).
-  //!
-  //! Overwriting means that if variable is in memory, there is no generated
-  //! instruction to move variable from memory to register, because that 
-  //! register will be overwritten by next instruction. This is used as a
-  //! simple optimization to improve generated code by @c Compiler.
-  VARIABLE_ALLOC_WRITE = 0x2,
-
-  //! @brief Allocating variable to read / write.
-  //!
-  //! Variable allocated for read / write is marked as changed. This means that
-  //! if variable must be later spilled into memory, mov (or similar) 
-  //! instruction will be generated.
-  VARIABLE_ALLOC_READWRITE = 0x3
-};
-
 // ============================================================================
 // [AsmJit::Variable]
 // ============================================================================
@@ -536,7 +432,7 @@ struct ASMJIT_API Variable
   //! @brief Return reference count.
   inline SysUInt refCount() const ASMJIT_NOTHROW
   { return _refCount; }
-  
+
   //! @brief Return spill count.
   inline SysUInt spillCount() const ASMJIT_NOTHROW
   { return _spillCount; }
@@ -707,9 +603,11 @@ struct ASMJIT_API Variable
   inline void setDataInt(SysInt data) ASMJIT_NOTHROW
   { _dataInt = data; }
 
+  //! @brief Get variable name.
   inline const char* name() const ASMJIT_NOTHROW
   { return _name; }
 
+  //! @brief Set variable name.
   void setName(const char* name) ASMJIT_NOTHROW;
 
 private:
@@ -810,14 +708,14 @@ private:
   //! @brief Custom integer that can be used by custom spill and restore functions.
   SysInt _dataInt;
 
-  enum { MaxVariableNameLength = 32 };
-  char _name[MaxVariableNameLength];
+  //! @brief Variable name.
+  char _name[MAX_VARIABLE_LENGTH];
 
   friend struct CompilerCore;
   friend struct Function;
   friend struct VariableRef;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(Variable);
 };
 
@@ -1012,7 +910,7 @@ protected:
   Variable* _v;
 
 private:
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(VariableRef);
 };
 
@@ -1226,7 +1124,7 @@ private:
   friend struct Function;
   friend struct StateRef;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(State);
 };
 
@@ -1255,7 +1153,7 @@ struct ASMJIT_HIDDEN StateRef
 private:
   State* _state;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(StateRef);
 };
 
@@ -1330,7 +1228,7 @@ protected:
 private:
   friend struct CompilerCore;
 
-  // disable copy
+  // Disable copy.
   ASMJIT_DISABLE_COPY(Emittable);
 };
 
@@ -1504,28 +1402,26 @@ struct TypeAsId
 #endif
 };
 
-// Skip documenting this
+// Skip documenting this.
 #if !defined(ASMJIT_NODOC)
 
 template<typename T>
 struct TypeAsId<T*> { enum { Id = VARIABLE_TYPE_PTR }; };
 
-#define __DECLARE_TYPE_AS_ID(__T__, __Id__) \
-template<> \
-struct TypeAsId<__T__> { enum { Id = __Id__ }; }
+#define ASMJIT_DECLARE_TYPE_AS_ID(__T__, __Id__) \
+  template<> \
+  struct TypeAsId<__T__> { enum { Id = __Id__ }; }
 
-__DECLARE_TYPE_AS_ID(Int32, VARIABLE_TYPE_INT32);
-__DECLARE_TYPE_AS_ID(UInt32, VARIABLE_TYPE_UINT32);
+ASMJIT_DECLARE_TYPE_AS_ID(Int32, VARIABLE_TYPE_INT32);
+ASMJIT_DECLARE_TYPE_AS_ID(UInt32, VARIABLE_TYPE_UINT32);
 
 #if defined(ASMJIT_X64)
-__DECLARE_TYPE_AS_ID(Int64, VARIABLE_TYPE_INT64);
-__DECLARE_TYPE_AS_ID(UInt64, VARIABLE_TYPE_UINT64);
+ASMJIT_DECLARE_TYPE_AS_ID(Int64, VARIABLE_TYPE_INT64);
+ASMJIT_DECLARE_TYPE_AS_ID(UInt64, VARIABLE_TYPE_UINT64);
 #endif // ASMJIT_X64
 
-__DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
-__DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
-
-#undef __DECLARE_TYPE_AS_ID
+ASMJIT_DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
+ASMJIT_DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 
 #endif // !ASMJIT_NODOC
 
@@ -2234,7 +2130,7 @@ private:
 };
 
 // ============================================================================
-// [AsmJit::Compiler]
+// [AsmJit::CompilerCore]
 // ============================================================================
 
 //! @brief Compiler core.
@@ -2267,12 +2163,12 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @brief Clear everything, but not deallocate buffers.
   //!
   //! @note This method will destroy your code.
-  void clear();
+  void clear() ASMJIT_NOTHROW;
 
   //! @brief Free internal buffer, all emitters and NULL all pointers.
   //!
   //! @note This method will destroy your code.
-  void free();
+  void free() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Emittables]
@@ -2287,16 +2183,16 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @brief Return current emittable after all emittables are emitter.
   //!
   //! @note If this method return @c NULL it means first position.
-  inline Emittable* current() const ASMJIT_NOTHROW { return _current; }
+  inline Emittable* currentEmittable() const ASMJIT_NOTHROW { return _current; }
 
   //! @brief Add emittable after current and set current to @a emittable.
-  void addEmittable(Emittable* emittable);
+  void addEmittable(Emittable* emittable) ASMJIT_NOTHROW;
 
   //! @brief Remove emittable (and if needed set current to previous).
-  void removeEmittable(Emittable* emittable);
+  void removeEmittable(Emittable* emittable) ASMJIT_NOTHROW;
 
   //! @brief Set new current emittable and return previous one.
-  Emittable* setCurrent(Emittable* current);
+  Emittable* setCurrentEmittable(Emittable* current) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Logging]
@@ -2311,7 +2207,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @note Emitting comment is not directly sent to logger, but instead it's
   //! stored in @c AsmJit::Compiler and emitted when @c serialize() method is
   //! called with all instructions together in correct order.
-  void comment(const char* fmt, ...);
+  void comment(const char* fmt, ...) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Function Builder]
@@ -2391,7 +2287,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //!
   //! @sa @c BuildFunction0, @c BuildFunction1, @c BuildFunction2, ...
   template<typename T>
-  Function* newFunction(UInt32 cconv, const T& params)
+  Function* newFunction(UInt32 cconv, const T& params) ASMJIT_NOTHROW
   { return newFunction_(cconv, params.args(), params.count()); }
 
   //! @brief Create a new function (low level version).
@@ -2404,10 +2300,10 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! contains arguments thats used internally by @c AsmJit::Compiler.
   //!
   //! @note To get current function use @c currentFunction() method.
-  Function* newFunction_(UInt32 cconv, const UInt32* args, SysUInt count);
+  Function* newFunction_(UInt32 cconv, const UInt32* args, SysUInt count) ASMJIT_NOTHROW;
 
   //! @brief Ends current function.
-  Function* endFunction();
+  Function* endFunction() ASMJIT_NOTHROW;
 
   //! @brief Return current function.
   //!
@@ -2416,7 +2312,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! to store @c AsmJit::Function pointer returned by @c newFunction<> method,
   //! because this allows you in future implement function sections outside of
   //! function itself (yeah, this is possible!).
-  inline Function* currentFunction() { return _currentFunction; }
+  inline Function* currentFunction() const ASMJIT_NOTHROW { return _currentFunction; }
 
   //! @brief Create function prolog (function begin section).
   //!
@@ -2432,7 +2328,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @note Compiler can optimize prologs and epilogs.
   //!
   //! @sa @c Prolog, @c Function.
-  Prolog* newProlog(Function* f);
+  Prolog* newProlog(Function* f) ASMJIT_NOTHROW;
 
   //! @brief Create function epilog (function leave section).
   //!
@@ -2448,7 +2344,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @note Compiler can optimize prologs and epilogs.
   //!
   //! @sa @c Epilog, @c Function.
-  Epilog* newEpilog(Function* f);
+  Epilog* newEpilog(Function* f) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Registers allocator / Variables]
@@ -2457,78 +2353,78 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->argument()
   //! @sa @c Function::argument()
-  Variable* argument(SysInt i);
+  Variable* argument(SysInt i) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->newVariable()
   //! @sa @c Function::newVariable()
-  Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG);
+  Variable* newVariable(UInt8 type, UInt8 priority = 10, UInt8 preferredRegister = NO_REG) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->alloc()
   //! @sa @c Function::alloc()
   bool alloc(Variable* v,
     UInt8 mode = VARIABLE_ALLOC_READWRITE,
-    UInt8 preferredRegister = NO_REG);
+    UInt8 preferredRegister = NO_REG) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spill()
   //! @sa @c Function::spill()
-  bool spill(Variable* v);
+  bool spill(Variable* v) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->unuse()
   //! @sa @c Function::unuse()
-  void unuse(Variable* v);
+  void unuse(Variable* v) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spillAll()
   //! @sa @c Function::spillAll()
-  void spillAll();
+  void spillAll() ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spillAllGp()
   //! @sa @c Function::spillAllGp()
-  void spillAllGp();
+  void spillAllGp() ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spillAllMm()
   //! @sa @c Function::spillAllMm()
-  void spillAllMm();
+  void spillAllMm() ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spillAllXmm()
   //! @sa @c Function::spillAllXmm()
-  void spillAllXmm();
+  void spillAllXmm() ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->spillRegister()
   //! @sa @c Function::spillRegister()
-  void spillRegister(const BaseReg& reg);
+  void spillRegister(const BaseReg& reg) ASMJIT_NOTHROW;
 
-  SysInt numFreeGp() const;
-  SysInt numFreeMm() const;
-  SysInt numFreeXmm() const;
+  SysInt numFreeGp() const ASMJIT_NOTHROW;
+  SysInt numFreeMm() const ASMJIT_NOTHROW;
+  SysInt numFreeXmm() const ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->isPrevented()
   //! @sa @c Function::isPrevented()
-  bool isPrevented(Variable* v);
+  bool isPrevented(Variable* v) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->addPrevented()
   //! @sa @c Function::addPrevented()
-  void addPrevented(Variable* v);
+  void addPrevented(Variable* v) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->removePrevented()
   //! @sa @c Function::removePrevented()
-  void removePrevented(Variable* v);
+  void removePrevented(Variable* v) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->clearPrevented()
   //! @sa @c Function::clearPrevented()
-  void clearPrevented();
+  void clearPrevented() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [State]
@@ -2537,17 +2433,17 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @brief Convenience method that calls:
   //!   Compiler::currentFunction()->saveState()
   //! @sa @c Function::saveState().
-  State* saveState();
+  State* saveState() ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFuncion()->restoreState()
   //! @sa @c Function::restoreState().
-  void restoreState(State* state);
+  void restoreState(State* state) ASMJIT_NOTHROW;
 
   //! @brief Convenience method that calls:
   //!   Compiler::currentFuncion()->setState()
   //! @sa @c Function::setState()
-  void setState(State* state);
+  void setState(State* state) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Labels]
@@ -2559,13 +2455,13 @@ struct ASMJIT_API CompilerCore : public Serializer
   //! @c Assembler. There is only one limitation that if you are using 
   //! @c Compiler each label must be created by @c AsmJit::Compiler::newLabel()
   //! method.
-  Label* newLabel();
+  Label* newLabel() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Jump Table]
   // -------------------------------------------------------------------------
 
-  JumpTable* newJumpTable();
+  JumpTable* newJumpTable() ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Memory Management]
@@ -2573,7 +2469,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T>
-  inline T* newObject()
+  inline T* newObject() ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this));
@@ -2581,7 +2477,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1>
-  inline T* newObject(P1 p1)
+  inline T* newObject(P1 p1) ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1);
@@ -2589,7 +2485,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2>
-  inline T* newObject(P1 p1, P2 p2)
+  inline T* newObject(P1 p1, P2 p2) ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2);
@@ -2597,7 +2493,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2, typename P3>
-  inline T* newObject(P1 p1, P2 p2, P3 p3)
+  inline T* newObject(P1 p1, P2 p2, P3 p3) ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3);
@@ -2605,7 +2501,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2, typename P3, typename P4>
-  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4)
+  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4) ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3, p4);
@@ -2613,7 +2509,7 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Create object managed by compiler internal memory manager.
   template<typename T, typename P1, typename P2, typename P3, typename P4, typename P5>
-  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)
+  inline T* newObject(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) ASMJIT_NOTHROW
   {
     void* addr = _zoneAlloc(sizeof(T));
     return new(addr) T(reinterpret_cast<Compiler*>(this), p1, p2, p3, p4, p5);
@@ -2626,7 +2522,7 @@ struct ASMJIT_API CompilerCore : public Serializer
   //!
   //! @note Operand @a op should by allocated by @c Compiler or you must
   //! guarantee that it will be not destroyed before @c Compiler is destroyed.
-  void _registerOperand(Operand* op);
+  void _registerOperand(Operand* op) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Jumps / Calls]
@@ -2635,11 +2531,11 @@ struct ASMJIT_API CompilerCore : public Serializer
   using Serializer::jmp;
   using Serializer::call;
 
-  void jumpToTable(JumpTable* jt, const Register& index);
+  void jumpToTable(JumpTable* jt, const Register& index) ASMJIT_NOTHROW;
 
-  SysInt _addTarget(void* target);
+  SysInt _addTarget(void* target) ASMJIT_NOTHROW;
 
-  void _jmpAndRestore(UInt32 code, Label* label, State* state);
+  void _jmpAndRestore(UInt32 code, Label* label, State* state) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Intrinsics]
@@ -2647,71 +2543,71 @@ struct ASMJIT_API CompilerCore : public Serializer
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var32(UInt32 code, const Int32Ref& a);
+  void op_var32(UInt32 code, const Int32Ref& a) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b);
+  void op_reg32_var32(UInt32 code, const Register& a, const Int32Ref& b) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b);
+  void op_var32_reg32(UInt32 code, const Int32Ref& a, const Register& b) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b);
+  void op_var32_imm(UInt32 code, const Int32Ref& a, const Immediate& b) ASMJIT_NOTHROW;
 
 #if defined(ASMJIT_X64)
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var64(UInt32 code, const Int64Ref& a);
+  void op_var64(UInt32 code, const Int64Ref& a) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b);
+  void op_reg64_var64(UInt32 code, const Register& a, const Int64Ref& b) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b);
+  void op_var64_reg64(UInt32 code, const Int64Ref& a, const Register& b) ASMJIT_NOTHROW;
 
   //! @brief Intrinsics helper method.
   //! @internal
-  void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b);
+  void op_var64_imm(UInt32 code, const Int64Ref& a, const Immediate& b) ASMJIT_NOTHROW;
 #endif // ASMJIT_X64
 
   // -------------------------------------------------------------------------
   // [EmitX86]
   // -------------------------------------------------------------------------
 
-  virtual void _inlineComment(const char* text, SysInt len = -1);
-  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3);
+  virtual void _inlineComment(const char* text, SysInt len = -1) ASMJIT_NOTHROW;
+  virtual void _emitX86(UInt32 code, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Embed]
   // -------------------------------------------------------------------------
 
-  virtual void _embed(const void* dataPtr, SysUInt dataSize);
+  virtual void _embed(const void* dataPtr, SysUInt dataSize) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Align]
   // -------------------------------------------------------------------------
 
-  virtual void align(SysInt m);
+  virtual void align(SysInt m) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Bind]
   // -------------------------------------------------------------------------
 
-  virtual void bind(Label* label);
+  virtual void bind(Label* label) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Make]
   // -------------------------------------------------------------------------
 
-  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE);
+  virtual void* make(MemoryManager* memoryManager = NULL, UInt32 allocType = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
 
   //! @brief Method that will emit everything to @c Assembler instance @a a.
-  void serialize(Assembler& a);
+  void serialize(Assembler& a) ASMJIT_NOTHROW;
 
   // -------------------------------------------------------------------------
   // [Variables]

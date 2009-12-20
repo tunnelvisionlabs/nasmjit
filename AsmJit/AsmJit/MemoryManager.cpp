@@ -75,7 +75,7 @@ namespace AsmJit {
 
 #define BITS_PER_ENTITY (sizeof(SysUInt) * 8)
 
-static void _SetBit(SysUInt* buf, SysUInt index)
+static void _SetBit(SysUInt* buf, SysUInt index) ASMJIT_NOTHROW
 {
   SysUInt i = index / BITS_PER_ENTITY; // SysUInt[]
   SysUInt j = index % BITS_PER_ENTITY; // SysUInt[][] bit index
@@ -84,7 +84,7 @@ static void _SetBit(SysUInt* buf, SysUInt index)
   *buf |= (SysUInt)1 << j;
 }
 
-static void _ClearBit(SysUInt* buf, SysUInt index)
+static void _ClearBit(SysUInt* buf, SysUInt index) ASMJIT_NOTHROW
 {
   SysUInt i = index / BITS_PER_ENTITY; // SysUInt[]
   SysUInt j = index % BITS_PER_ENTITY; // SysUInt[][] bit index
@@ -93,7 +93,7 @@ static void _ClearBit(SysUInt* buf, SysUInt index)
   *buf &= ~((SysUInt)1 << j);
 }
 
-static void _SetBits(SysUInt* buf, SysUInt index, SysUInt len)
+static void _SetBits(SysUInt* buf, SysUInt index, SysUInt len) ASMJIT_NOTHROW
 {
   if (len == 0) return;
 
@@ -129,7 +129,7 @@ static void _SetBits(SysUInt* buf, SysUInt index, SysUInt len)
   }
 }
 
-static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len)
+static void _ClearBits(SysUInt* buf, SysUInt index, SysUInt len) ASMJIT_NOTHROW
 {
   if (len == 0) return;
 
@@ -205,7 +205,7 @@ struct ASMJIT_HIDDEN M_Node
   };
 
   // methods
-  inline SysUInt remain() const { return size - used; }
+  inline SysUInt remain() const ASMJIT_NOTHROW { return size - used; }
 };
 
 // ============================================================================
@@ -221,7 +221,7 @@ struct ASMJIT_HIDDEN M_PernamentNode
   M_PernamentNode* prev; // Pointer to prev chunk or NULL
 
   // Return available space.
-  inline SysUInt available() const { return size - used; }
+  inline SysUInt available() const ASMJIT_NOTHROW { return size - used; }
 };
 
 // ============================================================================
@@ -232,35 +232,35 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
 {
   // [Construction / Destruction]
 
-  MemoryManagerPrivate();
-  ~MemoryManagerPrivate();
+  MemoryManagerPrivate() ASMJIT_NOTHROW;
+  ~MemoryManagerPrivate() ASMJIT_NOTHROW;
 
   // [Allocation]
 
-  static M_Node* createNode(SysUInt size, SysUInt density);
+  static M_Node* createNode(SysUInt size, SysUInt density) ASMJIT_NOTHROW;
 
-  void* allocPernament(SysUInt vsize);
-  void* allocFreeable(SysUInt vsize);
-  bool free(void* address);
+  void* allocPernament(SysUInt vsize) ASMJIT_NOTHROW;
+  void* allocFreeable(SysUInt vsize) ASMJIT_NOTHROW;
+  bool free(void* address) ASMJIT_NOTHROW;
 
   // [NodeList LLRB-Tree]
 
-  static inline bool nlIsRed(M_Node* n);
-  static M_Node* nlRotateLeft(M_Node* n);
-  static M_Node* nlRotateRight(M_Node* n);
-  static inline void nlFlipColor(M_Node* n);
-  static M_Node* nlMoveRedLeft(M_Node* h);
-  static M_Node* nlMoveRedRight(M_Node* h);
-  static inline M_Node* nlFixUp(M_Node* h);
+  static inline bool nlIsRed(M_Node* n) ASMJIT_NOTHROW;
+  static M_Node* nlRotateLeft(M_Node* n) ASMJIT_NOTHROW;
+  static M_Node* nlRotateRight(M_Node* n) ASMJIT_NOTHROW;
+  static inline void nlFlipColor(M_Node* n) ASMJIT_NOTHROW;
+  static M_Node* nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW;
+  static M_Node* nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW;
+  static inline M_Node* nlFixUp(M_Node* h) ASMJIT_NOTHROW;
 
-  inline void nlInsertNode(M_Node* n);
-  M_Node* nlInsertNode_(M_Node* h, M_Node* n);
+  inline void nlInsertNode(M_Node* n) ASMJIT_NOTHROW;
+  M_Node* nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW;
 
-  inline void nlRemoveNode(M_Node* n);
-  M_Node* nlRemoveNode_(M_Node* h, M_Node* n);
-  M_Node* nlRemoveMin(M_Node* h);
+  inline void nlRemoveNode(M_Node* n) ASMJIT_NOTHROW;
+  M_Node* nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW;
+  M_Node* nlRemoveMin(M_Node* h) ASMJIT_NOTHROW;
 
-  M_Node* nlFindPtr(UInt8* mem);
+  M_Node* nlFindPtr(UInt8* mem) ASMJIT_NOTHROW;
 
   // [Members]
 
@@ -287,7 +287,7 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
 // [AsmJit::MemoryManagerPrivate - Construction / Destruction]
 // ============================================================================
 
-MemoryManagerPrivate::MemoryManagerPrivate() :
+MemoryManagerPrivate::MemoryManagerPrivate() ASMJIT_NOTHROW :
   _newChunkSize(65536),
   _newChunkDensity(64),
   _allocated(0),
@@ -300,7 +300,7 @@ MemoryManagerPrivate::MemoryManagerPrivate() :
 {
 }
 
-MemoryManagerPrivate::~MemoryManagerPrivate()
+MemoryManagerPrivate::~MemoryManagerPrivate() ASMJIT_NOTHROW
 {
 }
 
@@ -311,7 +311,7 @@ MemoryManagerPrivate::~MemoryManagerPrivate()
 // allocates virtual memory node and M_Node structure.
 //
 // returns M_Node* if success, otherwise NULL
-M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density)
+M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density) ASMJIT_NOTHROW
 {
   SysUInt vsize;
   UInt8* vmem = (UInt8*)VirtualMemory::alloc(size, &vsize, true);
@@ -347,7 +347,7 @@ M_Node* MemoryManagerPrivate::createNode(SysUInt size, SysUInt density)
   return node;
 }
 
-void* MemoryManagerPrivate::allocPernament(SysUInt vsize)
+void* MemoryManagerPrivate::allocPernament(SysUInt vsize) ASMJIT_NOTHROW
 {
   static const SysUInt pernamentAlignment = 32;
   static const SysUInt pernamentNodeSize  = 32768;
@@ -397,7 +397,7 @@ void* MemoryManagerPrivate::allocPernament(SysUInt vsize)
   return (void*)result;
 }
 
-void* MemoryManagerPrivate::allocFreeable(SysUInt vsize)
+void* MemoryManagerPrivate::allocFreeable(SysUInt vsize) ASMJIT_NOTHROW
 {
   SysUInt i;               // current index
   SysUInt need;            // how many we need to be freed
@@ -532,7 +532,7 @@ found:
   return result;
 }
 
-bool MemoryManagerPrivate::free(void* address)
+bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
 {
   if (address == NULL) return true;
 
@@ -623,12 +623,12 @@ bool MemoryManagerPrivate::free(void* address)
 // [AsmJit::MemoryManagerPrivate - NodeList LLRB-Tree]
 // ============================================================================
 
-inline bool MemoryManagerPrivate::nlIsRed(M_Node* n)
+inline bool MemoryManagerPrivate::nlIsRed(M_Node* n) ASMJIT_NOTHROW
 {
   return n && n->nlColor == M_Node::NODE_RED;
 }
 
-inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n)
+inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n) ASMJIT_NOTHROW
 {
   M_Node* x = n->nlRight;
   n->nlRight = x->nlLeft;
@@ -638,7 +638,7 @@ inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n)
   return x;
 }
 
-inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n)
+inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n) ASMJIT_NOTHROW
 {
   M_Node* x = n->nlLeft;
   n->nlLeft = x->nlRight;
@@ -648,14 +648,14 @@ inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n)
   return x;
 }
 
-inline void MemoryManagerPrivate::nlFlipColor(M_Node* n)
+inline void MemoryManagerPrivate::nlFlipColor(M_Node* n) ASMJIT_NOTHROW
 {
   n->nlColor = !n->nlColor;
   n->nlLeft->nlColor = !(n->nlLeft->nlColor);
   n->nlRight->nlColor = !(n->nlRight->nlColor);
 }
 
-M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h)
+M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW
 {
   nlFlipColor(h);
   if (nlIsRed(h->nlRight->nlLeft))
@@ -667,7 +667,7 @@ M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h)
   return h;
 }
 
-M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h)
+M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW
 {
   nlFlipColor(h);
   if (nlIsRed(h->nlLeft->nlLeft))
@@ -678,7 +678,7 @@ M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h)
   return h;
 }
 
-inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h)
+inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h) ASMJIT_NOTHROW
 {
   if (nlIsRed(h->nlRight))
     h = nlRotateLeft(h);
@@ -690,12 +690,12 @@ inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h)
   return h;
 }
 
-inline void MemoryManagerPrivate::nlInsertNode(M_Node* n)
+inline void MemoryManagerPrivate::nlInsertNode(M_Node* n) ASMJIT_NOTHROW
 {
   _root = nlInsertNode_(_root, n);
 }
 
-M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n)
+M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 {
   if (h == NULL) return n;
 
@@ -712,7 +712,7 @@ M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n)
   return h;
 }
 
-void MemoryManagerPrivate::nlRemoveNode(M_Node* n)
+void MemoryManagerPrivate::nlRemoveNode(M_Node* n) ASMJIT_NOTHROW
 {
   _root = nlRemoveNode_(_root, n);
   if (_root) _root->nlColor = M_Node::NODE_BLACK;
@@ -720,7 +720,7 @@ void MemoryManagerPrivate::nlRemoveNode(M_Node* n)
   ASMJIT_ASSERT(nlFindPtr(n->mem) == NULL);
 }
 
-static M_Node* findParent(M_Node* root, M_Node* n)
+static M_Node* findParent(M_Node* root, M_Node* n) ASMJIT_NOTHROW
 {
   M_Node* parent = NULL;
   M_Node* cur = root;
@@ -753,7 +753,7 @@ static M_Node* findParent(M_Node* root, M_Node* n)
   return NULL;
 }
 
-M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n)
+M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 {
   if (n->mem < h->mem)
   {
@@ -789,7 +789,7 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n)
   return nlFixUp(h);
 }
 
-M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h)
+M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h) ASMJIT_NOTHROW
 {
   if (h->nlLeft == NULL) return NULL;
   if (!nlIsRed(h->nlLeft) && !nlIsRed(h->nlLeft->nlLeft))
@@ -798,7 +798,7 @@ M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h)
   return nlFixUp(h);
 }
 
-M_Node* MemoryManagerPrivate::nlFindPtr(UInt8* mem)
+M_Node* MemoryManagerPrivate::nlFindPtr(UInt8* mem) ASMJIT_NOTHROW
 {
   M_Node* cur = _root;
   UInt8* curMem;
