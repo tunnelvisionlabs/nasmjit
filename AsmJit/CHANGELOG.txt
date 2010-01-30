@@ -1,3 +1,6 @@
+2010-01-30
+- Fixed mulps instruction (thanks to Ben Harper).
+
 2009-12-19
 - Added possibility to specify short jump type.
   Added pseudo-instructions:
