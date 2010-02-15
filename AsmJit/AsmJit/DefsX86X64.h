@@ -981,6 +981,7 @@ enum INST_CODE
   INST_SHLD,          // X86/X64
   INST_SHR,           // X86/X64
   INST_SHRD,          // X86/X64
+  INST_SHUFPD,
   INST_SHUFPS,
   INST_SQRTPD,
   INST_SQRTPS,

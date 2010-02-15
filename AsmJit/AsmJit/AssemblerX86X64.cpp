@@ -1372,6 +1372,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_SHLD             , "shld"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FA4, 0),
   MAKE_INST(INST_SHR              , "shr"              , I_ROT           , 0               , 0               , 5, 0         , 0),
   MAKE_INST(INST_SHRD             , "shrd"             , I_SHLD_SHRD     , 0               , 0               , 0, 0x00000FAC, 0),
+  MAKE_INST(INST_SHUFPD           , "shufpd"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x66000FC6, 0),
   MAKE_INST(INST_SHUFPS           , "shufps"           , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x00000FC6, 0),
   MAKE_INST(INST_SQRTPD           , "sqrtpd"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F51, 0),
   MAKE_INST(INST_SQRTPS           , "sqrtps"           , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F51, 0),

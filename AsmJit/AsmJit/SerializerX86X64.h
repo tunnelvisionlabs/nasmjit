@@ -6814,6 +6814,17 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
     emitX86(INST_PXOR, &dst, &src);
   }
 
+  //! @brief Shuffle DP-FP (SSE2).
+  inline void shufpd(const XMMRegister& dst, const XMMRegister& src, const Immediate& imm8)
+  {
+    emitX86(INST_SHUFPD, &dst, &src, &imm8);
+  }
+  //! @brief Shuffle DP-FP (SSE2).
+  inline void shufpd(const XMMRegister& dst, const Mem& src, const Immediate& imm8)
+  {
+    emitX86(INST_SHUFPD, &dst, &src, &imm8);
+  }
+
   //! @brief Compute Square Roots of Packed DP-FP Values (SSE2).
   inline void sqrtpd(const XMMRegister& dst, const XMMRegister& src)
   {
