@@ -1,3 +1,7 @@
+2010-03-16
+- Fixed AsmJit::Compiler::clear() method (crashing if used) (reported by Wolfgang).
+- Fixed X64 RIP issue (reported by vanviegen).
+
 2010-02-15
 - Added shufpd instruction (Issue 6).
 

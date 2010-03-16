@@ -355,7 +355,7 @@ void Assembler::_emitModM(
 
       if (label->isBound())
       {
-        disp += offset() - label->position();
+        disp += label->position() - offset();
         _emitInt32((Int32)disp);
       }
       else

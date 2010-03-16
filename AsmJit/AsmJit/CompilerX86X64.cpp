@@ -2605,8 +2605,10 @@ CompilerCore::~CompilerCore() ASMJIT_NOTHROW
 void CompilerCore::clear() ASMJIT_NOTHROW
 {
   delAll(_first);
+
   _first = NULL;
   _last = NULL;
+  _current = NULL;
 
   _zone.freeAll();
 
