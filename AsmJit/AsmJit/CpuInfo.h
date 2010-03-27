@@ -173,7 +173,7 @@ struct ASMJIT_HIDDEN CpuInfo
     //! @brief Cpu has SSE5.
     Feature_SSE5 = 1U << 22,
     //! @brief Cpu supports MONITOR and MWAIT instructions.
-    Feature_MotitorMWait = 1U << 23,
+    Feature_MonitorMWait = 1U << 23,
     //! @brief Cpu supports POPCNT instruction.
     Feature_POPCNT = 1U << 24,
     //! @brief Cpu supports LZCNT instruction.
