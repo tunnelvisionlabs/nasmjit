@@ -1,3 +1,6 @@
+2010-04-14
+- Fixed FADD instruction (incorrect opcode, thanks to Kev).
+
 2010-03-27
 - Fixed misspelled MonitorMWait in Cpu features detection (issue 9, reported by arturomdn).
 

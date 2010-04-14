@@ -934,7 +934,7 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_EXTRACTPS        , "extractps"        , I_MMU_RM_IMM8   , O_XMM           , O_XMM_MEM       , 0, 0x660F3A17, 0),
   MAKE_INST(INST_F2XM1            , "f2xm1"            , I_EMIT          , 0               , 0               , 0, 0x0000D9F0, 0),
   MAKE_INST(INST_FABS             , "fabs"             , I_EMIT          , 0               , 0               , 0, 0x0000D9E1, 0),
-  MAKE_INST(INST_FADD             , "fadd"             , I_X87_FPU       , 0               , 0               , 0, 0xD8C0DCC0, 0),
+  MAKE_INST(INST_FADD             , "fadd"             , I_X87_FPU       , 0               , 0               , 0, 0xD8DCC0C0, 0),
   MAKE_INST(INST_FADDP            , "faddp"            , I_X87_STI       , 0               , 0               , 0, 0x0000DEC0, 0),
   MAKE_INST(INST_FBLD             , "fbld"             , I_M             , O_MEM           , 0               , 4, 0x000000DF, 0),
   MAKE_INST(INST_FBSTP            , "fbstp"            , I_M             , O_MEM           , 0               , 6, 0x000000DF, 0),
