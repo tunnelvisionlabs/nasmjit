@@ -728,6 +728,8 @@ enum I
   I_TEST,
   I_XCHG,
 
+  I_REP_INST,
+
   // Group for x87 FP instructions in format mem or st(i), st(i) (fadd, fsub, fdiv, ...)
   I_X87_FPU,
   // Group for x87 FP instructions in format st(i), st(i)
@@ -1398,7 +1400,42 @@ static const InstructionDescription x86instructions[] =
   MAKE_INST(INST_XCHG             , "xchg"             , I_XCHG          , 0               , 0               , 0, 0         , 0),
   MAKE_INST(INST_XOR              , "xor"              , I_ALU           , 0               , 0               , 6, 0x00000030, 0x00000080),
   MAKE_INST(INST_XORPD            , "xorpd"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x66000F57, 0),
-  MAKE_INST(INST_XORPS            , "xorps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F57, 0)
+  MAKE_INST(INST_XORPS            , "xorps"            , I_MMU_RMI       , O_XMM           , O_XMM_MEM       , 0, 0x00000F57, 0),
+
+  MAKE_INST(INST_REP_LODSB        , "rep lodsb"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AC, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSD        , "rep lodsd"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AC, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSQ        , "rep lodsq"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AC, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSW        , "rep lodsw"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AC, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REP_MOVSB        , "rep movsb"        , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A4, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSD        , "rep movsd"        , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A4, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSQ        , "rep movsq"        , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A4, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSW        , "rep movsw"        , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A4, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REP_STOSB        , "rep stosb"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AA, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSD        , "rep stosd"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AA, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSQ        , "rep stosq"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AA, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSW        , "rep stosw"        , I_REP_INST      , O_MEM           , 0               , 0, 0xF30000AA, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REPE_CMPSB       , "repe cmpsb"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A6, 1 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSD       , "repe cmpsd"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A6, 4 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSQ       , "repe cmpsq"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A6, 8 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSW       , "repe cmpsw"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000A6, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REPE_SCASB       , "repe scasb"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000AE, 1 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASD       , "repe scasd"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000AE, 4 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASQ       , "repe scasq"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000AE, 8 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASW       , "repe scasw"       , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF30000AE, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REPNE_CMPSB      , "repne cmpsb"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000A6, 1 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSD      , "repne cmpsd"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000A6, 4 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSQ      , "repne cmpsq"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000A6, 8 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSW      , "repne cmpsw"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000A6, 2 /* Size of mem */),
+
+  MAKE_INST(INST_REPNE_SCASB      , "repne scasb"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000AE, 1 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASD      , "repne scasd"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000AE, 4 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASQ      , "repne scasq"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000AE, 8 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASW      , "repne scasw"      , I_REP_INST      , O_MEM           , O_MEM           , 0, 0xF20000AE, 2 /* Size of mem */)
 };
 
 #undef MAKE_INST
@@ -2310,6 +2347,23 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       }
 
       break;
+    }
+    
+    case I_REP_INST:
+    {
+      UInt32 opCode = id.opCode1 & 0xFF;
+      UInt32 opSize = id.opCode2;
+
+      _emitByte(id.opCode1 >> 24); // Emit REP prefix (1 BYTE).
+
+      if (opSize != 1) opCode++;
+      if (opSize == 2) _emitByte(0x66);
+#if defined(ASMJIT_X64)
+      else if (opSize == 8) _emitByte(0x48);
+#endif // ASMJIT_X64
+
+      _emitByte(id.opCode1 & 0xFF); // Emit opcode (1 BYTE).
+      return;
     }
 
     case I_MOVBE:

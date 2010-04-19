@@ -86,6 +86,7 @@ If(ASMJIT_BUILD_TEST)
     testjumptable
     testmemorymanager
     testopcode
+    testrep
     testrewrite
     testsetcc
     teststate

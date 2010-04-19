@@ -1155,14 +1155,25 @@ bool Function::alloc(Variable* v, UInt8 mode, UInt8 preferredRegisterCode)
     {
       Variable* other = _state.gp[newIndex];
 
-      if (other->priority() == 0)
+      if (other)
       {
-        // TODO: Error handling
-        ASMJIT_ASSERT(0);
+        if (other->priority() != 0)
+        {
+          // Exchange instead of spill/alloc.
+          _exchangeGp(v, mode, other);
+        }
+        else
+        {
+          // TODO: Error handling, finished in See AsmJit-1.0
+          ASMJIT_ASSERT(0);
+          return false;
+        }
+      }
+      else
+      {
+        _moveGp(v, newIndex);
       }
 
-      // Exchange instead of spill/alloc
-      _exchangeGp(v, mode, other);
       _postAlloc(v, mode);
       return true;
     }
@@ -1950,6 +1961,31 @@ void Function::_freeReg(UInt8 code)
       _state.xmm[code & 0x0F] = NULL;
       break;
   }
+}
+
+void Function::_moveGp(Variable* v, UInt8 code)
+{
+  ASMJIT_ASSERT(v->state() == VARIABLE_STATE_REGISTER);
+
+  UInt8 dstCode = code;
+  UInt8 srcCode = v->registerCode();
+
+  UInt8 dstIndex = dstCode & REGCODE_MASK;
+  UInt8 srcIndex = srcCode & REGCODE_MASK;
+
+  Register dstReg = mk_gpn(dstIndex);
+  Register srcReg = mk_gpn(srcIndex);
+
+  compiler()->mov(dstReg, srcReg);
+
+  v->_registerCode = (code & REGTYPE_MASK) | dstCode;
+
+  _state.gp[dstCode] = v;
+  _state.gp[srcCode] = NULL;
+
+  // Statistics.
+  v->_registerAccessCount++;
+  v->_globalRegisterAccessCount++;
 }
 
 void Function::_exchangeGp(Variable* v, UInt8 mode, Variable* other)

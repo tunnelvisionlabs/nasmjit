@@ -1709,6 +1709,8 @@ struct ASMJIT_API Function : public Emittable
   void _allocAs(Variable* v, UInt8 mode, UInt32 code);
   void _allocReg(UInt8 code, Variable* v);
   void _freeReg(UInt8 code);
+
+  void _moveGp(Variable* v, UInt8 code);
   void _exchangeGp(Variable* v, UInt8 mode, Variable* other);
   void _postAlloc(Variable* v, UInt8 mode);
 

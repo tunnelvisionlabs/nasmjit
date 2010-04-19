@@ -623,7 +623,35 @@ static const char instructionName[] =
   "xchg\0"
   "xor\0"
   "xorpd\0"
-  "xorps\0";
+  "xorps\0"
+  "rep lodsb\0"
+  "rep lodsd\0"
+  "rep lodsq\0"
+  "rep lodsw\0"
+  "rep movsb\0"
+  "rep movsd\0"
+  "rep movsq\0"
+  "rep movsw\0"
+  "rep stosb\0"
+  "rep stosd\0"
+  "rep stosq\0"
+  "rep stosw\0"
+  "repe cmpsb\0"
+  "repe cmpsd\0"
+  "repe cmpsq\0"
+  "repe cmpsw\0"
+  "repe scasb\0"
+  "repe scasd\0"
+  "repe scasq\0"
+  "repe scasw\0"
+  "repne cmpsb\0"
+  "repne cmpsd\0"
+  "repne cmpsq\0"
+  "repne cmpsw\0"
+  "repne scasb\0"
+  "repne scasd\0"
+  "repne scasq\0"
+  "repne scasw\0";
 
 static const UInt16 instructionIndex[] =
 {
@@ -1204,7 +1232,35 @@ static const UInt16 instructionIndex[] =
   3893, 
   3898, 
   3902, 
-  3908
+  3908, 
+  3914, 
+  3924, 
+  3934, 
+  3944, 
+  3954, 
+  3964, 
+  3974, 
+  3984, 
+  3994, 
+  4004, 
+  4014, 
+  4024, 
+  4034, 
+  4045, 
+  4056, 
+  4067, 
+  4078, 
+  4089, 
+  4100, 
+  4111, 
+  4122, 
+  4134, 
+  4146, 
+  4158, 
+  4170, 
+  4182, 
+  4194, 
+  4206
 };
 
 static const char* operandSize[] =
