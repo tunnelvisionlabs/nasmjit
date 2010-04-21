@@ -2351,10 +2351,10 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
     
     case I_REP_INST:
     {
-      UInt32 opCode = id.opCode1 & 0xFF;
+      UInt32 opCode = id.opCode1;
       UInt32 opSize = id.opCode2;
 
-      _emitByte(id.opCode1 >> 24); // Emit REP prefix (1 BYTE).
+      _emitByte(opCode >> 24); // Emit REP prefix (1 BYTE).
 
       if (opSize != 1) opCode++;
       if (opSize == 2) _emitByte(0x66);
@@ -2362,7 +2362,7 @@ void Assembler::_emitX86(UInt32 code, const Operand* o1, const Operand* o2, cons
       else if (opSize == 8) _emitByte(0x48);
 #endif // ASMJIT_X64
 
-      _emitByte(id.opCode1 & 0xFF); // Emit opcode (1 BYTE).
+      _emitByte(opCode & 0xFF); // Emit opcode (1 BYTE).
       return;
     }
 

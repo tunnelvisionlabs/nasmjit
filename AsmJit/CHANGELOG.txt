@@ -1,3 +1,6 @@
+2010-04-21
+- Fixed REP_... instructions.
+
 2010-04-19
 - Added missing instructions that uses the REP prefix (rep_movsb, ...).
 - Fixed bug in Compiler when tried to move allocated variable to different one.
