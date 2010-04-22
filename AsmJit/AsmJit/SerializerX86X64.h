@@ -8072,37 +8072,51 @@ struct ASMJIT_HIDDEN SerializerIntrinsics : public SerializerCore
 
   inline void rep_lodsb() { emitX86(INST_REP_LODSB); }
   inline void rep_lodsd() { emitX86(INST_REP_LODSD); }
+#if defined(ASMJIT_X64)
   inline void rep_lodsq() { emitX86(INST_REP_LODSQ); }
+#endif // ASMJIT_X64
   inline void rep_lodsw() { emitX86(INST_REP_LODSW); }
 
   inline void rep_movsb() { emitX86(INST_REP_MOVSB); }
   inline void rep_movsd() { emitX86(INST_REP_MOVSD); }
+#if defined(ASMJIT_X64)
   inline void rep_movsq() { emitX86(INST_REP_MOVSQ); }
+#endif // ASMJIT_X64
   inline void rep_movsw() { emitX86(INST_REP_MOVSW); }
 
   inline void rep_stosb() { emitX86(INST_REP_STOSB); }
   inline void rep_stosd() { emitX86(INST_REP_STOSD); }
+#if defined(ASMJIT_X64)
   inline void rep_stosq() { emitX86(INST_REP_STOSQ); }
+#endif // ASMJIT_X64
   inline void rep_stosw() { emitX86(INST_REP_STOSW); }
 
   inline void repe_cmpsb() { emitX86(INST_REPE_CMPSB); }
   inline void repe_cmpsd() { emitX86(INST_REPE_CMPSD); }
+#if defined(ASMJIT_X64)
   inline void repe_cmpsq() { emitX86(INST_REPE_CMPSQ); }
+#endif // ASMJIT_X64
   inline void repe_cmpsw() { emitX86(INST_REPE_CMPSW); }
 
   inline void repe_scasb() { emitX86(INST_REPE_SCASB); }
   inline void repe_scasd() { emitX86(INST_REPE_SCASD); }
+#if defined(ASMJIT_X64)
   inline void repe_scasq() { emitX86(INST_REPE_SCASQ); }
+#endif // ASMJIT_X64
   inline void repe_scasw() { emitX86(INST_REPE_SCASW); }
 
   inline void repne_cmpsb() { emitX86(INST_REPNE_CMPSB); }
   inline void repne_cmpsd() { emitX86(INST_REPNE_CMPSD); }
+#if defined(ASMJIT_X64)
   inline void repne_cmpsq() { emitX86(INST_REPNE_CMPSQ); }
+#endif // ASMJIT_X64
   inline void repne_cmpsw() { emitX86(INST_REPNE_CMPSW); }
 
   inline void repne_scasb() { emitX86(INST_REPNE_SCASB); }
   inline void repne_scasd() { emitX86(INST_REPNE_SCASD); }
+#if defined(ASMJIT_X64)
   inline void repne_scasq() { emitX86(INST_REPNE_SCASQ); }
+#endif // ASMJIT_X64
   inline void repne_scasw() { emitX86(INST_REPNE_SCASW); }
 };
 
