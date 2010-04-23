@@ -162,14 +162,14 @@ void Zone::clear() ASMJIT_NOTHROW
   Chunk* cur = _chunks;
   if (!cur) return;
 
-  Chunk* prev;
-  do {
-    prev = cur->prev;
-    if (prev) ASMJIT_FREE(cur);
+  while (cur->prev)
+  {
+    Chunk* prev = cur->prev;
+    ASMJIT_FREE(cur);
     cur = prev;
-  } while (cur);
+  }
 
-  _chunks = prev;
+  _chunks = cur;
   _chunks->pos = 0;
   _total = 0;
 }
@@ -179,9 +179,8 @@ void Zone::freeAll() ASMJIT_NOTHROW
   Chunk* cur = _chunks;
   if (!cur) return;
 
-  Chunk* prev;
   do {
-    prev = cur->prev;
+    Chunk* prev = cur->prev;
     ASMJIT_FREE(cur);
     cur = prev;
   } while (cur);
