@@ -1,3 +1,6 @@
+2010-04-03
+- Fixed but in Zone::clear() (thanks to dok.slade).
+
 2010-04-21
 - Fixed REP_... instructions.
 
