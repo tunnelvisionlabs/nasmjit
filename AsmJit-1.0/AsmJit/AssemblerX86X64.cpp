@@ -963,7 +963,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
     case InstructionDescription::G_ALU:
     {
       uint32_t opCode = id->opCode[0];
-      uint8_t opReg = id->opCodeR;
+      uint8_t opReg = (uint8_t)id->opCodeR;
 
       // Mem <- Reg
       if (o0->isMem() && o1->isReg())
@@ -1063,7 +1063,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         _emitX86RM(id->opCode[1],
           src.getSize() == 2,
           src.getSize() == 8,
-          id->opCodeR,
+          (uint8_t)id->opCodeR,
           dst,
           1, forceRexPrefix);
         _emitImmediate(src, 1);
@@ -1243,7 +1243,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         {
           _emitX86Inl(id->opCode[0],
             dst.isRegType(REG_TYPE_GPW),
-            0, reinterpret_cast<const BaseReg&>(dst).getRegCode());
+            0, reinterpret_cast<const BaseReg&>(dst).getRegCode(),
+            false);
           goto end;
         }
 #endif // ASMJIT_X86
@@ -1415,7 +1416,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
     {
       if (o0->isMem())
       {
-        _emitX86RM(id->opCode[0], 0, (uint8_t)id->opCode[1], id->opCodeR, reinterpret_cast<const Mem&>(*o0), 0, forceRexPrefix);
+        _emitX86RM(id->opCode[0], 0, (uint8_t)id->opCode[1], (uint8_t)id->opCodeR, reinterpret_cast<const Mem&>(*o0), 0, forceRexPrefix);
         goto end;
       }
       break;
@@ -1629,7 +1630,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
       if (o0->isMem())
       {
-        _emitX86RM(id->opCode[1], o0->getSize() == 2, 0, id->opCodeR, reinterpret_cast<const Operand&>(*o0), 0, forceRexPrefix);
+        _emitX86RM(id->opCode[1], o0->getSize() == 2, 0, (uint8_t)id->opCodeR, reinterpret_cast<const Operand&>(*o0), 0, forceRexPrefix);
         goto end;
       }
 
@@ -1741,7 +1742,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         _emitX86RM(opCode,
           o0->getSize() == 2,
           o0->getSize() == 8,
-          id->opCodeR, reinterpret_cast<const Operand&>(*o0),
+          (uint8_t)id->opCodeR, reinterpret_cast<const Operand&>(*o0),
           useImm8 ? 1 : 0, forceRexPrefix);
         if (useImm8)
           _emitImmediate(reinterpret_cast<const Imm&>(*o1), 1);
@@ -1912,7 +1913,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         _emitByte(o0->getSize() == 4
           ? ((id->opCode[0] & 0xFF000000) >> 24)
           : ((id->opCode[0] & 0x00FF0000) >> 16));
-        _emitModM(id->opCodeR, m, 0);
+        _emitModM((uint8_t)id->opCodeR, m, 0);
         goto end;
       }
 
@@ -1943,7 +1944,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
       if (o0->isMem())
       {
-        _emitX86RM(id->opCode[0], 0, 0, id->opCodeR, reinterpret_cast<const Mem&>(*o0), 0, forceRexPrefix);
+        _emitX86RM(id->opCode[0], 0, 0, (uint8_t)id->opCodeR, reinterpret_cast<const Mem&>(*o0), 0, forceRexPrefix);
         goto end;
       }
 
@@ -1973,12 +1974,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->getSize() == 2 && (id->oflags[0] & InstructionDescription::O_FM_2))
       {
         opCode = (uint8_t)((id->opCode[0] & 0xFF000000) >> 24);
-        mod    = id->opCodeR;
+        mod    = (uint8_t)id->opCodeR;
       }
       if (o0->getSize() == 4 && (id->oflags[0] & InstructionDescription::O_FM_4))
       {
         opCode = (uint8_t)((id->opCode[0] & 0x00FF0000) >> 16);
-        mod    = id->opCodeR;
+        mod    = (uint8_t)id->opCodeR;
       }
       if (o0->getSize() == 8 && (id->oflags[0] & InstructionDescription::O_FM_8))
       {
@@ -2224,7 +2225,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
       if (o0->isMem())
       {
-        _emitMmu(opCode, id->opCodeR,
+        _emitMmu(opCode, (uint8_t)id->opCodeR,
           reinterpret_cast<const BaseReg&>(*o1).getRegCode(),
           reinterpret_cast<const Mem&>(*o0), 1);
         _emitImmediate(
@@ -2288,7 +2289,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         if ((id->oflags[1] & InstructionDescription::O_IMM) == 0) goto illegalInstruction;
         _emitMmu(id->opCode[1] | prefix, rexw,
-          id->opCodeR,
+          (uint8_t)id->opCodeR,
           reinterpret_cast<const BaseReg&>(*o0), 1);
         _emitImmediate(
           reinterpret_cast<const Imm&>(*o1), 1);

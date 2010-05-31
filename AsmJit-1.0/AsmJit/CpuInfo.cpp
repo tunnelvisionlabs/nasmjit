@@ -189,7 +189,7 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   i->x86ExtendedInfo.apicPhysicalId        = ((out.ebx >> 24) & 0xFF);
 
   if (out.ecx & 0x00000001U) i->features |= CpuInfo::Feature_SSE3;
-  if (out.ecx & 0x00000008U) i->features |= CpuInfo::Feature_MotitorMWait;
+  if (out.ecx & 0x00000008U) i->features |= CpuInfo::Feature_MonitorMWait;
   if (out.ecx & 0x00000200U) i->features |= CpuInfo::Feature_SSSE3;
   if (out.ecx & 0x00002000U) i->features |= CpuInfo::Feature_CMPXCHG16B;
   if (out.ecx & 0x00080000U) i->features |= CpuInfo::Feature_SSE4_1;

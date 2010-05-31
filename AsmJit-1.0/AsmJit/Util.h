@@ -57,8 +57,8 @@ struct ASMJIT_HIDDEN _Initialize {};
 //!
 //! If you are using single compiler and @c reinterpret_cast<> works for you,
 //! there is no reason to use @c AsmJit::function_cast<>. If you are writing
-//! crossplatform software with various compiler support, consider using
-//! @c AsmJit::function_cast<> instead of @c @c reinterpret_cast<>.
+//! cross-platform software with various compiler support, consider using
+//! @c AsmJit::function_cast<> instead of @c reinterpret_cast<>.
 template<typename T, typename Z>
 static inline T function_cast(Z* p) ASMJIT_NOTHROW { return (T)p; }
 
