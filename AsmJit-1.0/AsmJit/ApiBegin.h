@@ -34,6 +34,7 @@
 #pragma warning(disable: 4275) // non dll-interface struct ... used as base for
                                // dll-interface struct
 #pragma warning(disable: 4355) // this used in base member initializer list
+#pragma warning(disable: 4800) // forcing value to bool 'true' or 'false'
 
 // Rename symbols.
 #define vsnprintf _vsnprintf

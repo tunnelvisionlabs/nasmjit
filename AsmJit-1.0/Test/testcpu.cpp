@@ -64,7 +64,7 @@ static const BitDescription cFeatures[] =
   { CpuInfo::Feature_SSE4_1                      , "SSE4.1" },
   { CpuInfo::Feature_SSE4_2                      , "SSE4.2" },
   { CpuInfo::Feature_SSE5                        , "SSE5" },
-  { CpuInfo::Feature_MotitorMWait                , "MONITOR/MWAIT" },
+  { CpuInfo::Feature_MonitorMWait                , "MONITOR/MWAIT" },
   { CpuInfo::Feature_POPCNT                      , "POPCNT" },
   { CpuInfo::Feature_LZCNT                       , "LZCNT" },
   { CpuInfo::Feature_MultiThreading              , "MultiThreading" },

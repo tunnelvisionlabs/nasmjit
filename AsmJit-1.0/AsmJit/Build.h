@@ -36,11 +36,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__GNUC__)
-#include <stdint.h>
-#endif // __GNUC__
-
+// ----------------------------------------------------------------------------
 // [AsmJit - OS]
+// ----------------------------------------------------------------------------
+
 #if defined(WINDOWS) || defined(__WINDOWS__) || defined(_WIN32) || defined(_WIN64)
 # define ASMJIT_WINDOWS
 #elif defined(__linux__)     || defined(__unix__)    || \
@@ -53,7 +52,10 @@
 # define ASMJIT_POSIX
 #endif
 
+// ----------------------------------------------------------------------------
 // [AsmJit - Architecture]
+// ----------------------------------------------------------------------------
+
 // define it only if it's not defined. In some systems we can
 // use -D command in compiler to bypass this autodetection.
 #if !defined(ASMJIT_X86) && !defined(ASMJIT_X64)
@@ -66,7 +68,9 @@
 # endif
 #endif
 
+// ----------------------------------------------------------------------------
 // [AsmJit - API]
+// ----------------------------------------------------------------------------
 
 // Hide AsmJit symbols that we don't want to export (SerializerIntrinsics class for example).
 #if !defined(ASMJIT_HIDDEN)
@@ -126,7 +130,10 @@
 # define ASMJIT_FREE ::free
 #endif // ASMJIT_FREE
 
+// ----------------------------------------------------------------------------
 // [AsmJit - Calling Conventions]
+// ----------------------------------------------------------------------------
+
 #if defined(ASMJIT_X86)
 # if defined(__GNUC__)
 #  define ASMJIT_FASTCALL_2 __attribute__((regparm(2)))
@@ -171,8 +178,18 @@ namespace AsmJit {
 
 #endif
 
+// ----------------------------------------------------------------------------
 // [AsmJit - Types]
+// ----------------------------------------------------------------------------
 
+#if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1500)
+
+// Use <stdint.h>
+#include <stdint.h>
+
+#else
+
+// Use typedefs.
 #if defined(_MSC_VER)
 #if (_MSC_VER < 1300)
 typedef char int8_t;
@@ -193,11 +210,13 @@ typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 #endif
+#endif // _MSC_VER
+#endif // STDINT.H
+
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
-#endif // _MSC_VER
 
 #if defined(ASMJIT_X86)
 typedef int32_t sysint_t;
@@ -215,7 +234,10 @@ typedef uint64_t sysuint_t;
 # define ASMJIT_UINT64_C(num) num##ULL
 #endif
 
+// ----------------------------------------------------------------------------
 // [AsmJit - C++ Macros]
+// ----------------------------------------------------------------------------
+
 #define ASMJIT_ARRAY_SIZE(A) (sizeof(A) / sizeof(*A))
 
 #define ASMJIT_DISABLE_COPY(__type__) \
@@ -223,12 +245,14 @@ private: \
   inline __type__(const __type__& other); \
   inline __type__& operator=(const __type__& other);
 
+// ----------------------------------------------------------------------------
 // [AsmJit - Assert]
+// ----------------------------------------------------------------------------
+
 #if defined(DEBUG) || defined(_DEBUG)
-namespace AsmJit
-{
-  ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
-}
+namespace AsmJit {
+ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
+} // AsmJit namespace
 # if !defined(ASMJIT_ASSERT)
 #  define ASMJIT_ASSERT(exp) do { if (!(exp)) ::AsmJit::assertionFailure(__FILE__, __LINE__, #exp); } while(0)
 # endif

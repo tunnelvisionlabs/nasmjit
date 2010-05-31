@@ -1009,6 +1009,8 @@ EJmpInstruction::EJmpInstruction(Compiler* c, uint32_t code, Operand* operandsDa
   EInstruction(c, code, operandsData, operandsCount)
 {
   _jumpTarget = _compiler->_getTarget(_operands[0].getId());
+  _jumpTarget->_jumpsCount++;
+
   _jumpNext = _jumpTarget->_from;
   _jumpTarget->_from = this;
 }
@@ -1046,14 +1048,43 @@ void EJmpInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
 void EJmpInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
 {
-  if (_jumpTarget->getOffset() < getOffset())
+  if (_jumpTarget->getOffset() > getOffset())
   {
-    
+    // State is not known, so we need to call _doJump() later. Compiler will
+    // do it for us.
+    c.addForwardJump(this);
+  }
+  else
+  {
+    _doJump(c);
   }
 
   EInstruction::translate(c);
 
+  // Mark next code as unrecheable, cleared by a next label.
   if (_code == INST_JMP) c._unrecheable = true;
+}
+
+void EJmpInstruction::_doJump(CompilerContext& c) ASMJIT_NOTHROW
+{
+  if (_code == INST_JMP)
+  {
+    // Instruction type is JMP - We can set state here instead of jumping
+    // out, setting state and jumping to _jumpTarget.
+    
+    // The state have to be already known.
+    ASMJIT_ASSERT(_jumpTarget->getState());
+
+    c._restoreState(_jumpTarget->getState());
+  }
+  else
+  {
+    // The state have to be already known.
+    ASMJIT_ASSERT(_jumpTarget->getState());
+
+    // TODO: Not optimal, not correct, generate jump out code instead.
+    c._restoreState(_jumpTarget->getState());
+  }
 }
 
 ETarget* EJmpInstruction::getJumpTarget() const ASMJIT_NOTHROW
@@ -1850,6 +1881,8 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
   _state.clear();
   _active = NULL;
 
+  _forwardJumps = NULL;
+
   _currentOffset = 0;
   _unrecheable = false;
 
@@ -1896,7 +1929,7 @@ void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflag
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: NOT IMPLEMENTED.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     case VARIABLE_TYPE_MM:
@@ -1929,7 +1962,7 @@ void CompilerContext::spillVar(VarData* vdata) ASMJIT_NOTHROW
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: NOT IMPLEMENTED.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     case VARIABLE_TYPE_MM:
@@ -1966,7 +1999,7 @@ void CompilerContext::unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW
       case VARIABLE_TYPE_X87:
       case VARIABLE_TYPE_X87_F:
       case VARIABLE_TYPE_X87_D:
-        // TODO: NOT IMPLEMENTED.
+        // TODO: X87 VARIABLES NOT IMPLEMENTED.
         break;
 
       case VARIABLE_TYPE_MM:
@@ -2487,7 +2520,7 @@ void CompilerContext::emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: Not implemented.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     case VARIABLE_TYPE_MM:
@@ -2536,7 +2569,7 @@ void CompilerContext::emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: Not implemented.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     case VARIABLE_TYPE_MM:
@@ -2582,7 +2615,7 @@ void CompilerContext::emitMoveVar(VarData* vdata, uint32_t regIndex, uint32_t vf
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: Not implemented.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     case VARIABLE_TYPE_MM:
@@ -2641,7 +2674,7 @@ void CompilerContext::emitExchangeVar(VarData* vdata, uint32_t regIndex, uint32_
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_F:
     case VARIABLE_TYPE_X87_D:
-      // TODO: Not implemented.
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
       break;
 
     // NOTE: MM and XMM registers shoudln't be exchanged using this way, it's
@@ -2874,6 +2907,18 @@ void CompilerContext::_allocatedVariable(VarData* vdata) ASMJIT_NOTHROW
   }
 }
 
+void CompilerContext::addForwardJump(EJmpInstruction* inst) ASMJIT_NOTHROW
+{
+  CompilerContext::ForwardJump* j = 
+    reinterpret_cast<CompilerContext::ForwardJump*>(
+      _zone.zalloc(sizeof(CompilerContext::ForwardJump)));
+  if (j == NULL) { _compiler->setError(ERROR_NO_HEAP_MEMORY); return; }
+
+  j->inst = inst;
+  j->next = _forwardJumps;
+  _forwardJumps = j;
+}
+
 StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
 {
   StateData* state = _compiler->_newStateData();
@@ -2903,12 +2948,13 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
 {
   StateData* fromState = &_state;
   StateData* toState = state;
+
   if (fromState == toState) return;
 
-  uint32_t toOffset = _offset;
+  // uint32_t toOffset = _offset;
 
   // Make local copy of function state.
-  State::saveFunctionState(&fromState, this);
+  // State::saveFunctionState(&fromState, this);
 
   uint32_t base;
   uint32_t i;
@@ -2928,32 +2974,19 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
       // zde jsem skoncil:)
 
       // Spill register
-      if (from_v != NULL)
+      if (fromVar != NULL)
       {
-        // Here is important step. It can happen that variable that was saved
-        // in state currently not exists. We can check for it by comparing
-        // saved lifeId with current variable lifeIf. If IDs are different,
-        // variables not match. Another optimization is that we will spill
-        // variable only if it's used in context we need. If it's unused, there
-        // is no reason to save it on the stack.
-        if (from->lifeId != from_v->lifeId() || from_v->state() == VARIABLE_STATE_UNUSED)
+        // It is possible that variable that was saved in state currently not 
+        // exists.
+        if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
           // Optimization, do not spill it, we can simply abandon it
-          _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
-
-          // TODO: Is this right way? We spilled variable manually, but I'm
-          // not sure if I can set its state to MEMORY.
-
-          // This will prevent to reset unused variable to be memory variable.
-          if (from_v->state() == VARIABLE_STATE_REGISTER)
-          {
-            from_v->_state = VARIABLE_STATE_MEMORY;
-          }
+          // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
         }
         else
         {
           // Variables match, do normal spill
-          spill(from_v);
+          spillVar(fromVar);
         }
       }
     }
@@ -2967,35 +3000,29 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
     VarData* fromVar = fromState->regs[i];
     VarData* toVar = toState->regs[i];
 
-    Variable* from_v = from->v;
-    Variable* to_v = to->v;
-
-    if (from_v != to_v)
+    if (fromVar != toVar)
     {
-      UInt8 regIndex = (UInt8)(i - base);
+      uint32_t regIndex = i - base;
 
       // Alloc register
-      if (to_v != NULL)
+      if (toVar != NULL)
       {
-        UInt8 code = getVariableRegisterCode(to_v->type(), regIndex);
-        _allocAs(to_v, VARIABLE_ALLOC_READ, code);
+        // uint32_t code = getVariableRegisterCode(toVar->type, regIndex);
+        // _allocAs(to_v, VARIABLE_ALLOC_READ, code);
+        allocVar(toVar, regIndex, VARIABLE_ALLOC_READ);
       }
     }
 
-    if (to_v)
-    {
-      to_v->_changed = to->changed;
-    }
+    //if (toVar)
+    //{
+      // toVar->changed = to->changed;
+    //}
   }
 
   // Update masks
-  _usedGpRegisters  = s->_data.usedGpRegisters;
-  _usedMmRegisters  = s->_data.usedMmRegisters;
-  _usedXmmRegisters = s->_data.usedXmmRegisters;
-
-  // Restore and clear prevention
-  _usePrevention = false;
-  clearPrevented();
+  _state.usedGP = state->usedGP;
+  _state.usedMM = state->usedMM;
+  _state.usedXMM = state->usedXMM;
 }
 
 VarMemBlock* CompilerContext::_allocMemBlock(uint32_t size) ASMJIT_NOTHROW
@@ -3507,11 +3534,11 @@ Label CompilerCore::newLabel() ASMJIT_NOTHROW
 
 void CompilerCore::bind(const Label& label) ASMJIT_NOTHROW
 {
-  // JumpAndRestore is delayed to bind()
-  // OLD_CODE:
-  // if (label->_compilerData) Function::_jmpAndRestore(reinterpret_cast<Compiler*>(this), label);
+  uint32_t id = label.getId() & OPERAND_ID_VALUE_MASK;
+  ASMJIT_ASSERT(id != INVALID_VALUE);
+  ASMJIT_ASSERT(id < _targetData.getLength());
 
-  addEmittable(Compiler_newObject<ETarget>(reinterpret_cast<Compiler*>(this), label));
+  addEmittable(_targetData[id]);
 }
 
 // ============================================================================
@@ -3851,7 +3878,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // - Extract variables from instructions.
     // - Prepare variables for register allocator, doing:
     //   - Update read/write statistics.
-    //   - Find first/last emittable where variable is used.
+    //   - Find scope (first/last emittable) where variable is used.
     for (cur = start; cur != stop; cur = cur->getNext())
     {
       cur->prepare(c);
@@ -3875,12 +3902,22 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // Step 2.a:
     // - Alloc registers.
     // - Translate special instructions (imul, cmpxchg8b, ...).
+    // - Translate forward jumps.
     Emittable* prev = NULL;
     for (cur = start; cur != stop; prev = cur, cur = cur->getNext())
     {
       _current = prev;
       c._currentOffset = cur->_offset;
       cur->translate(c);
+    }
+
+    {
+      CompilerContext::ForwardJump* fwdJmp = c._forwardJumps;
+      while (fwdJmp)
+      {
+        fwdJmp->inst->_doJump(c);
+        fwdJmp = fwdJmp->next;
+      }
     }
 
     // Step 2.b:

@@ -637,6 +637,9 @@ struct ASMJIT_API ETarget : public Emittable
   //! @brief Get register allocator state for this target.
   inline StateData* getState() const ASMJIT_NOTHROW { return _state; }
 
+  //! @brief Get number of jumps to this target.
+  inline uint32_t getJumpsCount() const ASMJIT_NOTHROW { return _jumpsCount; }
+
   // --------------------------------------------------------------------------
   // [Members]
   // --------------------------------------------------------------------------
@@ -645,6 +648,8 @@ protected:
   Label _label;
   EJmpInstruction* _from;
   StateData* _state;
+
+  uint32_t _jumpsCount;
 
   friend struct CompilerContext;
   friend struct CompilerCore;

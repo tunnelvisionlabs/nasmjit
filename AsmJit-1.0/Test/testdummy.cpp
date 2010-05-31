@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
   c.setProperty(PROPERTY_LOG_BINARY, true);
 
   c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
+  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
   GPVar var[20];
   int i;
@@ -93,6 +94,11 @@ int main(int argc, char* argv[])
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
+
+  // TODO: Remove
+#if defined(_WIN32)
+  system("pause");
+#endif //
 
   return 0;
 }

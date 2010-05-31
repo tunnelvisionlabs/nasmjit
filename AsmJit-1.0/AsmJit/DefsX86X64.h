@@ -1638,17 +1638,17 @@ enum VARIABLE_TYPE
 
   //! @brief Variable is X87 (FPU).
   //!
-  //! TODO: Float registers allocation is not supported.
+  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87 = 2,
 
   //! @brief Variable is X87 (FPU) SP-FP number (float).
   //!
-  //! TODO: Float registers allocation is not supported.
+  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87_F = 3,
 
   //! @brief Variable is X87 (FPU) DP-FP number (double).
   //!
-  //! TODO: Double registers allocation is not supported.
+  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87_D = 4,
 
   //! @brief Variable is MM register / memory location.

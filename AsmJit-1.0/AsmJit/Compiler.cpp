@@ -169,7 +169,8 @@ ETarget::ETarget(Compiler* c, const Label& label) ASMJIT_NOTHROW :
   Emittable(c, EMITTABLE_TARGET),
   _label(label),
   _from(NULL),
-  _state(NULL)
+  _state(NULL),
+  _jumpsCount(0)
 {
 }
 
