@@ -1265,7 +1265,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         LabelData& l_data = _labelData[reinterpret_cast<const Label*>(o0)->getId() & OPERAND_ID_VALUE_MASK];
 
-        uint32_t hint = o1->isImm() ? reinterpret_cast<const Imm&>(*o1).getValue() : 0;
+        uint32_t hint = (uint32_t)(o1->isImm() ? reinterpret_cast<const Imm&>(*o1).getValue() : 0);
         bool isShortJump = false;
 
         // Emit jump hint if configured for that.

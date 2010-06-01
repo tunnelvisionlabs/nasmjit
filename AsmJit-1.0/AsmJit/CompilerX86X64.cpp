@@ -218,7 +218,7 @@ FunctionPrototype::~FunctionPrototype() ASMJIT_NOTHROW
 {
 }
 
-void FunctionPrototype::setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW
+void FunctionPrototype::setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
 {
   _setCallingConvention(callingConvention);
 
@@ -379,11 +379,11 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
 #endif // ASMJIT_X64
 }
 
-void FunctionPrototype::_setPrototype(const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW
+void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(count <= 32);
 
-  sysint_t i;
+  int32_t i;
 
   int32_t posGP = 0;
   int32_t posXMM = 0;
@@ -397,7 +397,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, sysuint_t count) ASM
     a.stackOffset = INVALID_VALUE;
   }
 
-  _argumentsCount = count;
+  _argumentsCount = (uint32_t)count;
   if (_argumentsCount == 0) return;
 
   // --------------------------------------------------------------------------
@@ -1193,7 +1193,7 @@ void EFunction::prepare(CompilerContext& c) ASMJIT_NOTHROW
   _offset = c._currentOffset++;
 }
 
-void EFunction::setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW
+void EFunction::setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
 {
   _functionPrototype.setPrototype(callingConvention, args, count);
 }
@@ -1272,11 +1272,14 @@ void EFunction::_allocVariables(CompilerContext& c) ASMJIT_NOTHROW
   {
     VarData* vdata = _argumentVariables[i];
 
-    if (vdata->firstEmittable != vdata->lastEmittable)
+    if (vdata->firstEmittable != vdata->lastEmittable || 
+        vdata->isRegArgument ||
+        vdata->isMemArgument)
     {
       // Variable is used.
       if (vdata->registerIndex != INVALID_VALUE)
       {
+        vdata->state = VARIABLE_STATE_REGISTER;
         // If variable is in register -> mark it as changed so it will not be
         // lost by first spill.
         vdata->changed = true;
@@ -3533,7 +3536,7 @@ void CompilerCore::comment(const char* fmt, ...) ASMJIT_NOTHROW
 // [AsmJit::CompilerCore - Function Builder]
 // ============================================================================
 
-EFunction* CompilerCore::newFunction_(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW
+EFunction* CompilerCore::newFunction_(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(_function == NULL);
   EFunction* f = _function = Compiler_newObject<EFunction>(this);
@@ -3682,7 +3685,7 @@ void CompilerCore::align(uint32_t m) ASMJIT_NOTHROW
 Label CompilerCore::newLabel() ASMJIT_NOTHROW
 {
   Label label;
-  label._base.id = _targetData.getLength() | OPERAND_ID_TYPE_LABEL;
+  label._base.id = (uint32_t)_targetData.getLength() | OPERAND_ID_TYPE_LABEL;
 
   ETarget* target = Compiler_newObject<ETarget>(this, label);
   _targetData.append(target);
@@ -3721,7 +3724,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
   vdata->lastEmittable = NULL;
 
   vdata->name = _zone.zstrdup(name);
-  vdata->id = _varData.getLength() | OPERAND_ID_TYPE_VAR;
+  vdata->id = (uint32_t)_varData.getLength() | OPERAND_ID_TYPE_VAR;
   vdata->type = type;
   vdata->size = size;
 

@@ -120,7 +120,7 @@ struct ASMJIT_API FunctionPrototype
   //! This will set function calling convention and setup arguments variables.
   //!
   //! @note This function will allocate variables, it can be called only once.
-  void setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
+  void setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
 
   //! @brief Get function calling convention, see @c CALL_CONV.
   inline uint32_t getCallingConvention() const ASMJIT_NOTHROW { return _callingConvention; }
@@ -182,7 +182,7 @@ private:
 
   void _clear() ASMJIT_NOTHROW;
   void _setCallingConvention(uint32_t callingConvention) ASMJIT_NOTHROW;
-  void _setPrototype(const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
+  void _setPrototype(const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
   void _setReturnValue(uint32_t valueId) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -655,7 +655,7 @@ struct ASMJIT_API EFunction : public Emittable
   inline const FunctionPrototype& getPrototype() const ASMJIT_NOTHROW { return _functionPrototype; }
   inline uint32_t getHint(uint32_t hint) ASMJIT_NOTHROW { return _hints[hint]; }
 
-  void setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
+  void setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
   void setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW;
 
   inline EProlog* getProlog() const ASMJIT_NOTHROW { return _prolog; }
@@ -1167,7 +1167,7 @@ struct ASMJIT_API CompilerCore
   //! contains arguments thats used internally by @c AsmJit::Compiler.
   //!
   //! @note To get current function use @c currentFunction() method.
-  EFunction* newFunction_(uint32_t cconv, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
+  EFunction* newFunction_(uint32_t cconv, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
 
   //! @brief Get current function.
   //!
@@ -7399,7 +7399,7 @@ struct ASMJIT_API Compiler : public CompilerIntrinsics
 {
   //! @brief Create a new @c Compiler instance.
   Compiler() ASMJIT_NOTHROW;
-  //! @brief Destroy @c Compiler instance.
+  //! @brief Destroy the @c Compiler instance.
   virtual ~Compiler() ASMJIT_NOTHROW;
 };
 

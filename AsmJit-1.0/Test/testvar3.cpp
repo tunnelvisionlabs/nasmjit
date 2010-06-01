@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test setcc instruction generation.
+// This file is used to test AsmJit register allocator.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)(int, int, char*);
+typedef void (*MyFn)(int*, int*);
 
 int main(int argc, char* argv[])
 {
@@ -44,21 +44,67 @@ int main(int argc, char* argv[])
   // Create compiler.
   Compiler c;
 
-  // Log compiler output.
+  // Log assembler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, char*>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<int*, int*>());
 
-  GPVar src0(c.argGP(0));
-  GPVar src1(c.argGP(1));
-  GPVar dst0(c.argGP(2));
+  // Function arguments.
+  GPVar a1(c.argGP(0));
+  GPVar a2(c.argGP(1));
 
-  c.cmp(src0, src1);
-  c.setz(byte_ptr(dst0));
+  // Create some variables.
+  GPVar x1(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x2(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x3(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x4(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x5(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x6(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x7(c.newGP(VARIABLE_TYPE_GPD));
+  GPVar x8(c.newGP(VARIABLE_TYPE_GPD));
 
-  // Finish.
+  GPVar t(c.newGP(VARIABLE_TYPE_GPD));
+
+  // Setup variables (use mov with reg/imm to se if register allocator works).
+  c.mov(x1, 1);
+  c.mov(x2, 2);
+  c.mov(x3, 3);
+  c.mov(x4, 4);
+  c.mov(x5, 5);
+  c.mov(x6, 6);
+  c.mov(x7, 7);
+  c.mov(x8, 8);
+
+  // Make sum (addition)
+  c.xor_(t, t);
+  c.add(t, x1);
+  c.add(t, x2);
+  c.add(t, x3);
+  c.add(t, x4);
+  c.add(t, x5);
+  c.add(t, x6);
+  c.add(t, x7);
+  c.add(t, x8);
+
+  // Store result to a given pointer in first argument.
+  c.mov(dword_ptr(a1), t);
+
+  // Make sum (subtraction).
+  c.xor_(t, t);
+  c.sub(t, x1);
+  c.sub(t, x2);
+  c.sub(t, x3);
+  c.sub(t, x4);
+  c.sub(t, x5);
+  c.sub(t, x6);
+  c.sub(t, x7);
+  c.sub(t, x8);
+
+  // Store result to a given pointer in second argument.
+  c.mov(dword_ptr(a2), t);
+
+  // End of function.
   c.endFunction();
   // ==========================================================================
 
@@ -66,17 +112,13 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  // Results storage.
-  char r[4];
+  // Call it.
+  int x;
+  int y;
+  fn(&x, &y);
 
-  // Call it
-  fn(0, 0, &r[0]); // We are expecting 1 (0 == 0).
-  fn(0, 1, &r[1]); // We are expecting 0 (0 != 1).
-  fn(1, 0, &r[2]); // We are expecting 0 (1 != 0).
-  fn(1, 1, &r[3]); // We are expecting 1 (1 == 1).
-
-  printf("Result from JIT function: %d %d %d %d\n", r[0], r[1], r[2], r[3]);
-  printf("Status: %s\n", (r[0] == 1 && r[1] == 0 && r[2] == 0 && r[3] == 1) ? "Success" : "Failure");
+  printf("\nResults from JIT function: %d %d\n", x, y);
+  printf("Status: %s\n", (x == 36 && y == -36) ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);
