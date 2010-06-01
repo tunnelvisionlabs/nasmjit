@@ -180,8 +180,18 @@ ETarget::~ETarget() ASMJIT_NOTHROW
 
 void ETarget::translate(CompilerContext& c) ASMJIT_NOTHROW
 {
-  c._unrecheable = false;
-  if (_state == NULL) _state = c._saveState();
+  if (c._unrecheable == true)
+  {
+    c._unrecheable = false;
+
+    // Assign state to the compiler context. 
+    ASMJIT_ASSERT(_state != NULL);
+    c._assignState(_state);
+  }
+  else
+  {
+    _state = c._saveState();
+  }
 }
 
 void ETarget::emit(Assembler& a) ASMJIT_NOTHROW

@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
   }
 
   c.dec(j);
-  c.jnz(r);
+  c.jnz(r, HINT_NOT_TAKEN);
 
   c.ret(var[0]);
   c.endFunction();

@@ -90,7 +90,7 @@ AssemblerCore::AssemblerCore() ASMJIT_NOTHROW :
   _zone(16384 - sizeof(Zone::Chunk) - 32),
   _logger(NULL),
   _error(0),
-  _properties((1 << PROPERTY_OPTIMIZE_ALIGN) | (1 << PROPERTY_JUMP_HINTS)),
+  _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
   _emitFlags(0),
   _buffer(32), // Max instruction length is 15, but we can align up to 32 bytes.
   _trampolineSize(0),
@@ -2728,8 +2728,6 @@ Label AssemblerCore::newLabel() ASMJIT_NOTHROW
 
 void AssemblerCore::registerLabels(sysuint_t count) ASMJIT_NOTHROW
 {
-  ASMJIT_ASSERT(_labelData.getLength() == 0);
-
   // Duplicated newLabel() code, but we are not creating Label instances.
   LabelData l_data;
   l_data.offset = -1;

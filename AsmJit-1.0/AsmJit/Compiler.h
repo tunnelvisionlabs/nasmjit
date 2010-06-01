@@ -48,6 +48,8 @@ struct CompilerContext;
 struct CompilerCore;
 struct CompilerIntrinsics;
 
+struct ForwardJumpData;
+
 struct VarData;
 struct VarAllocRecord;
 struct StateData;

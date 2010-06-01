@@ -410,6 +410,17 @@ struct StateData
 };
 
 // ============================================================================
+// [AsmJit::ForwardJumpData]
+// ============================================================================
+
+struct ForwardJumpData
+{
+  EJmpInstruction* inst;
+  StateData* state;
+  ForwardJumpData* next;
+};
+
+// ============================================================================
 // [AsmJit::EVariableHint]
 // ============================================================================
 
@@ -440,13 +451,7 @@ struct ASMJIT_API EVariableHint : public Emittable
 
   inline void setHintId(uint32_t hintId) ASMJIT_NOTHROW { _hintId = hintId; }
   inline void setHintValue(uint32_t hintValue) ASMJIT_NOTHROW { _hintValue = hintValue; }
-/*
-  TODO: REMOVE
-  udelat to takto, pricitat ID behem translate(), ale u spicialnich typu to nedelat.
-  Timto zpusobem nebude nutne prochazet promenne, ktere nelze presunout (v zavislosti
-  na instrukci, ...). No a toto ID se pak muze pouzit i dale :) Vyhoda = Nebudou
-  potreba tyto struktury, staci hintId, hintValue, a zdar.
-*/
+
   VarData* _vdata;
   uint32_t _hintId;
   uint32_t _hintValue;
@@ -583,7 +588,9 @@ struct ASMJIT_API EJmpInstruction : public EInstruction
   // --------------------------------------------------------------------------
 
   virtual ETarget* getJumpTarget() const ASMJIT_NOTHROW;
-  inline EJmpInstruction* getJumpNext() const ASMJIT_NOTHROW;
+
+  inline EJmpInstruction* getJumpNext() const ASMJIT_NOTHROW { return _jumpNext; }
+  inline bool isTaken() const ASMJIT_NOTHROW { return _isTaken; }
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -592,6 +599,8 @@ struct ASMJIT_API EJmpInstruction : public EInstruction
 protected:
   ETarget* _jumpTarget;
   EJmpInstruction *_jumpNext;
+  StateData* _state;
+  bool _isTaken;
 
   friend struct EFunction;
   friend struct CompilerContext;
@@ -648,6 +657,9 @@ struct ASMJIT_API EFunction : public Emittable
 
   void setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
   void setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW;
+
+  inline EProlog* getProlog() const { return _prolog; }
+  inline EEpilog* getEpilog() const { return _epilog; }
 
   //! @brief Create variables from FunctionPrototype declaration. This is just
   //! parsing what FunctionPrototype generated for current function calling
@@ -873,6 +885,16 @@ struct ASMJIT_API CompilerContext
   inline void _markChangedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= (1 << index); }
 
   // --------------------------------------------------------------------------
+  // [Accessors]
+  // --------------------------------------------------------------------------
+
+  inline Compiler* getCompiler() const ASMJIT_NOTHROW { return _compiler; }
+  inline EFunction* getFunction() const ASMJIT_NOTHROW { return _function; }
+
+  inline Emittable* getExtraBlock() const ASMJIT_NOTHROW { return _extraBlock; }
+  inline void setExtraBlock(Emittable* e) ASMJIT_NOTHROW { _extraBlock = e; }
+
+  // --------------------------------------------------------------------------
   // [Forward Jump]
   // --------------------------------------------------------------------------
 
@@ -883,6 +905,7 @@ struct ASMJIT_API CompilerContext
   // --------------------------------------------------------------------------
 
   StateData* _saveState() ASMJIT_NOTHROW;
+  void _assignState(StateData* state) ASMJIT_NOTHROW;
   void _restoreState(StateData* state) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -911,6 +934,8 @@ struct ASMJIT_API CompilerContext
   Emittable* _start;
   //! @brief Current active scope end emittable.
   Emittable* _stop;
+  //! @brief Emittable that is used to insert some code after the function body.
+  Emittable* _extraBlock;
 
   //! @brief Current state (register allocator).
   StateData _state;
@@ -918,12 +943,8 @@ struct ASMJIT_API CompilerContext
   //! (for current state).
   VarData* _active;
 
-  struct ForwardJump
-  {
-    EJmpInstruction* inst;
-    ForwardJump* next;
-  };
-  ForwardJump* _forwardJumps;
+  //! @brief Forward jumps (single linked list).
+  ForwardJumpData* _forwardJumps;
 
   //! @brief Current offset, used in prepare() stage and each emittable can
   //! increment it.

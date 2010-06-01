@@ -1013,6 +1013,12 @@ EJmpInstruction::EJmpInstruction(Compiler* c, uint32_t code, Operand* operandsDa
 
   _jumpNext = _jumpTarget->_from;
   _jumpTarget->_from = this;
+
+  // The 'jmp' is always taken, conditional jump can contain hint, we detect it.
+  _isTaken = (getCode() == INST_JMP) ||
+             (operandsCount > 1 && 
+              operandsData[1].isImm() && 
+              reinterpret_cast<Imm*>(&operandsData[1])->getValue() == HINT_TAKEN);
 }
 
 EJmpInstruction::~EJmpInstruction() ASMJIT_NOTHROW
@@ -1048,42 +1054,77 @@ void EJmpInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
 void EJmpInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
 {
+  EInstruction::translate(c);
+  _state = c._saveState();
+
   if (_jumpTarget->getOffset() > getOffset())
   {
     // State is not known, so we need to call _doJump() later. Compiler will
     // do it for us.
     c.addForwardJump(this);
+    _jumpTarget->_state = _state;
   }
   else
   {
     _doJump(c);
   }
 
-  EInstruction::translate(c);
-
-  // Mark next code as unrecheable, cleared by a next label.
-  if (_code == INST_JMP) c._unrecheable = true;
+  // Mark next code as unrecheable, cleared by a next label (ETarget).
+  if (_code == INST_JMP)
+  {
+    c._unrecheable = true;
+  }
 }
 
 void EJmpInstruction::_doJump(CompilerContext& c) ASMJIT_NOTHROW
 {
-  if (_code == INST_JMP)
-  {
-    // Instruction type is JMP - We can set state here instead of jumping
-    // out, setting state and jumping to _jumpTarget.
-    
-    // The state have to be already known.
-    ASMJIT_ASSERT(_jumpTarget->getState());
+  // The state have to be already known. The _doJump() method is called by
+  // translate() or by Compiler in case that it's forward jump.
+  ASMJIT_ASSERT(_jumpTarget->getState());
 
+  if (getCode() == INST_JMP || (isTaken() && _jumpTarget->getOffset() < getOffset()))
+  {
+    // Instruction type is JMP or conditional jump that should be taken (likely).
+    // We can set state here instead of jumping out, setting state and jumping 
+    // to _jumpTarget.
+    //
+    // NOTE: We can't use this technique if instruction is forward conditional 
+    // jump. The reason is that when generating code we can't change state here,
+    // because next instruction depends to it.
     c._restoreState(_jumpTarget->getState());
   }
   else
   {
-    // The state have to be already known.
-    ASMJIT_ASSERT(_jumpTarget->getState());
+    // Instruction type is JMP or conditional jump that should be normally not 
+    // taken. If we need add code that will switch between different states we 
+    // add it after the end of function body (after epilog, using 'ExtraBlock').
+    Compiler* compiler = c.getCompiler();
 
-    // TODO: Not optimal, not correct, generate jump out code instead.
+    Emittable* ext = c.getExtraBlock();
+    Emittable* old = compiler->setCurrentEmittable(ext);
+    
     c._restoreState(_jumpTarget->getState());
+
+    if (compiler->getCurrentEmittable() != old)
+    {
+      // Add the jump to the target.
+      compiler->jmp(_jumpTarget->_label);
+      ext = compiler->getCurrentEmittable();
+
+      // The c._restoreState() method emitted some instructions so we need to
+      // patch the jump.
+      Label L = compiler->newLabel();
+      compiler->setCurrentEmittable(c.getExtraBlock());
+      compiler->bind(L);
+
+      // Finally, patch the jump target.
+      ASMJIT_ASSERT(_operandsCount > 0);
+      _operands[0] = L;                              // Operand part (Label).
+      _jumpTarget = compiler->_getTarget(L.getId()); // Emittable part (ETarget).
+    }
+
+    c.setExtraBlock(ext);
+    compiler->setCurrentEmittable(old);
   }
 }
 
@@ -1370,7 +1411,9 @@ void Function::prepare(CompilerContext& c)
 }
 #endif
 
-/*static uint32_t getStackSize(EFunction* f, uint32_t stackAdjust)
+/*
+TODO:
+static uint32_t getStackSize(EFunction* f, uint32_t stackAdjust)
 {
   // Get stack size needed for store all variables and to save all used
   // registers. AlignedStackSize is stack size adjusted for aligning.
@@ -1380,9 +1423,6 @@ void Function::prepare(CompilerContext& c)
   return variables + prologEpilog;
 }
 */
-
-
-
 
 void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
 {
@@ -2909,12 +2949,12 @@ void CompilerContext::_allocatedVariable(VarData* vdata) ASMJIT_NOTHROW
 
 void CompilerContext::addForwardJump(EJmpInstruction* inst) ASMJIT_NOTHROW
 {
-  CompilerContext::ForwardJump* j = 
-    reinterpret_cast<CompilerContext::ForwardJump*>(
-      _zone.zalloc(sizeof(CompilerContext::ForwardJump)));
+  ForwardJumpData* j = 
+    reinterpret_cast<ForwardJumpData*>(_zone.zalloc(sizeof(ForwardJumpData)));
   if (j == NULL) { _compiler->setError(ERROR_NO_HEAP_MEMORY); return; }
 
   j->inst = inst;
+  j->state = _saveState();
   j->next = _forwardJumps;
   _forwardJumps = j;
 }
@@ -2944,6 +2984,28 @@ StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
   return state;
 }
 
+void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
+{
+  memcpy(&_state, state, sizeof(StateData));
+
+  _state.changedGP = state->changedGP;
+  _state.changedMM = state->changedMM;
+  _state.changedXMM = state->changedXMM;
+
+  uint i;
+  uint mask;
+
+  for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
+  {
+    if (state->changedGP  & mask) state->gp[i]->changed = 1;
+    if (state->changedXMM & mask) state->xmm[i]->changed = 1;
+  }
+  for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
+  {
+    if (state->changedMM  & mask) state->mm[i]->changed = 1;
+  }
+}
+
 void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
 {
   StateData* fromState = &_state;
@@ -2951,6 +3013,7 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
 
   if (fromState == toState) return;
 
+  // TODO: Remove...
   // uint32_t toOffset = _offset;
 
   // Make local copy of function state.
@@ -3181,7 +3244,7 @@ CompilerCore::CompilerCore() ASMJIT_NOTHROW :
   _zone(16384 - sizeof(Zone::Chunk) - 32),
   _logger(NULL),
   _error(0),
-  _properties((1 << PROPERTY_OPTIMIZE_ALIGN) | (1 << PROPERTY_JUMP_HINTS)),
+  _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
   _finished(false),
   _first(NULL),
   _last(NULL),
@@ -3869,7 +3932,8 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
 
     c._function = reinterpret_cast<EFunction*>(start);
     c._start = start;
-    c._stop = stop = reinterpret_cast<EFunction*>(start)->_epilog->getNext();
+    c._stop = stop = c.getFunction()->getEpilog();
+    c._extraBlock = c.getFunction()->getEpilog();
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
@@ -3879,9 +3943,10 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // - Prepare variables for register allocator, doing:
     //   - Update read/write statistics.
     //   - Find scope (first/last emittable) where variable is used.
-    for (cur = start; cur != stop; cur = cur->getNext())
+    for (cur = start; ; cur = cur->getNext())
     {
       cur->prepare(c);
+      if (cur == stop) break;
     }
 
     // Step 1.b:
@@ -3902,29 +3967,33 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // Step 2.a:
     // - Alloc registers.
     // - Translate special instructions (imul, cmpxchg8b, ...).
-    // - Translate forward jumps.
     Emittable* prev = NULL;
-    for (cur = start; cur != stop; prev = cur, cur = cur->getNext())
+    for (cur = start; ; prev = cur, cur = cur->getNext())
     {
       _current = prev;
       c._currentOffset = cur->_offset;
       cur->translate(c);
-    }
-
-    {
-      CompilerContext::ForwardJump* fwdJmp = c._forwardJumps;
-      while (fwdJmp)
-      {
-        fwdJmp->inst->_doJump(c);
-        fwdJmp = fwdJmp->next;
-      }
+      if (cur == stop) break;
     }
 
     // Step 2.b:
+    // - Translate forward jumps.
+    {
+      ForwardJumpData* j = c._forwardJumps;
+      while (j)
+      {
+        c._assignState(j->state);
+        _current = j->inst->getPrev();
+        j->inst->_doJump(c);
+        j = j->next;
+      }
+    }
+
+    // Step 2.c:
     // - Alloc memory operands (variables related).
     c._allocMemoryOperands();
 
-    // Step 2.c:
+    // Step 2.d:
     // - Emit function prolog.
     // - Emit function epilog.
     c._function->_preparePrologEpilog(c);
@@ -3950,24 +4019,34 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
+    // Hack, need to register labels that was created by the Step 2.
+    if (a._labelData.getLength() < _targetData.getLength())
+    {
+      a.registerLabels(_targetData.getLength() - a._labelData.getLength());
+    }
+
+    Emittable* extraBlock = c._extraBlock;
+
     // Step 3:
     // - Emit instructions to Assembler stream.
-    for (cur = start; cur != stop; cur = cur->getNext())
+    for (cur = start; ; cur = cur->getNext())
     {
       cur->emit(a);
+      if (cur == extraBlock) break;
     }
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
     // Step 4:
     // - Emit everything else (post action).
-    for (cur = start; cur != stop; cur = cur->getNext())
+    for (cur = start; ; cur = cur->getNext())
     {
       cur->post(a);
+      if (cur == extraBlock) break;
     }
     // ------------------------------------------------------------------------
 
-    start = stop;
+    start = extraBlock->getNext();
     c._clear();
   }
 }
