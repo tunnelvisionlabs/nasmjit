@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used as a dummy test. It's changed during development.
+// This file is used to test variable spilling bug, originally
+// reported by Tilo Nitzsche for X64W and X64U calling conventions.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef uint32_t (*MyFn)(uint32_t, uint32_t);
+typedef void (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -47,41 +48,85 @@ int main(int argc, char* argv[])
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
-  c.setProperty(PROPERTY_LOG_BINARY, true);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunction(CALL_CONV_DEFAULT, 
+    FunctionBuilder8<sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t>());
 
-  GPVar var[20];
-  int i;
+  GPVar p1(c.argGP(0));
+  GPVar p2(c.argGP(1));
+  GPVar p3(c.argGP(2));
+  GPVar p4(c.argGP(3));
+  GPVar p5(c.argGP(4));
+  GPVar p6(c.argGP(5));
+  GPVar p7(c.argGP(6));
+  GPVar p8(c.argGP(7));
 
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    var[i] = c.newGP();
-  }
+  GPVar v1(c.newGP());
+  GPVar v2(c.newGP());
+  GPVar v3(c.newGP());
+  GPVar v4(c.newGP());
+  GPVar v5(c.newGP());
+  GPVar v6(c.newGP());
+  GPVar v7(c.newGP());
+  GPVar v8(c.newGP());
 
-  c.alloc(var[0], eax);
+  GPVar r1(c.newGP());
+  GPVar r2(c.newGP());
+  GPVar r3(c.newGP());
+  GPVar r4(c.newGP());
+  GPVar r5(c.newGP());
+  GPVar r6(c.newGP());
 
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    c.mov(var[i], imm(i));
-    //c.spill(var[i]);
-  }
+  c.add(p1, 1);
+  c.add(p2, 2);
+  c.add(p3, 3);
+  c.add(p4, 4);
+  c.add(p5, 5);
+  c.add(p6, 6);
+  c.add(p7, 7);
+  c.add(p8, 8);
 
-  GPVar j = c.newGP();
-  Label r = c.newLabel();
-  c.mov(j, 4);
+  c.mov(v1, 10);
+  c.mov(v2, 20);
+  c.mov(v3, 30);
+  c.mov(v4, 40);
+  c.mov(v5, 50);
+  c.mov(v6, 60);
+  c.mov(v7, 70);
+  c.mov(v8, 80);
 
-  c.bind(r);
-  for (i = ASMJIT_ARRAY_SIZE(var) - 1; i > 0; i--)
-  {
-    c.add(var[0], var[i]);
-  }
+  c.mov(r1, 100);
+  c.mov(r2, 200);
+  c.mov(r3, 300);
+  c.mov(r4, 400);
+  c.mov(r5, 500);
+  c.mov(r6, 600);
 
-  c.dec(j);
-  c.jnz(r, HINT_NOT_TAKEN);
+  c.add(v1, 10);
+  c.add(v2, 20);
+  c.add(v3, 30);
+  c.add(v4, 40);
+  c.add(v5, 50);
+  c.add(v6, 60);
+  c.add(v7, 70);
+  c.add(v8, 80);
 
-  c.ret(var[0]);
+  c.add(r1, 100);
+  c.add(r2, 200);
+  c.add(r3, 300);
+  c.add(r4, 400);
+  c.add(r5, 500);
+  c.add(r6, 600);
+
+  c.sub(p1, 1);
+  c.sub(p2, 2);
+  c.sub(p3, 3);
+  c.sub(p4, 4);
+  c.sub(p5, 5);
+  c.sub(p6, 6);
+  c.sub(p7, 7);
+  c.sub(p8, 8);
+
   c.endFunction();
   // ==========================================================================
 
@@ -89,16 +134,9 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  printf("Result %u\n", fn(1, 2));
-
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
-
-  // TODO: Remove
-#if defined(_WIN32)
-  system("pause");
-#endif //
 
   return 0;
 }

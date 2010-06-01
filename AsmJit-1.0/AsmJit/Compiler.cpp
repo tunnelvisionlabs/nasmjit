@@ -87,18 +87,31 @@ void Emittable::setComment(const char* str) ASMJIT_NOTHROW
 void Emittable::setCommentF(const char* fmt, ...) ASMJIT_NOTHROW
 {
   // I'm really not expecting larger inline comments:)
-  char buf[128];
+  char buf[256];
 
   va_list ap;
   va_start(ap, fmt);
-  vsnprintf(buf, 127, fmt, ap);
+  vsnprintf(buf, 255, fmt, ap);
   va_end(ap);
 
   // I don't know if vsnprintf can produce non-null terminated string, in case
   // it can, we terminate it here.
-  buf[127] = '\0';
+  buf[255] = '\0';
 
   setComment(buf);
+}
+
+// ============================================================================
+// [AsmJit::EDummy]
+// ============================================================================
+
+EDummy::EDummy(Compiler* c) ASMJIT_NOTHROW :
+  Emittable(c, EMITTABLE_DUMMY)
+{
+}
+
+EDummy::~EDummy() ASMJIT_NOTHROW
+{
 }
 
 // ============================================================================
@@ -180,9 +193,9 @@ ETarget::~ETarget() ASMJIT_NOTHROW
 
 void ETarget::translate(CompilerContext& c) ASMJIT_NOTHROW
 {
-  if (c._unrecheable == true)
+  if (c._unrecheable)
   {
-    c._unrecheable = false;
+    c._unrecheable = 0;
 
     // Assign state to the compiler context. 
     ASMJIT_ASSERT(_state != NULL);

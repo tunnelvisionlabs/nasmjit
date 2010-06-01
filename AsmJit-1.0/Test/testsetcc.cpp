@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -23,60 +23,61 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is only included as an example and simple test if jit
-// compiler works.
+// This file is used to test setcc instruction generation.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/Assembler.h>
+#include <AsmJit/Compiler.h>
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef int (*MyFn)();
+typedef void (*MyFn)(int, int, char*);
 
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
   // ==========================================================================
-  // Create assembler.
-  Assembler a;
+  // Create compiler.
+  Compiler c;
 
-  // Log assembler output.
+  // Log compiler output.
   FileLogger logger(stderr);
-  a.setLogger(&logger);
+  c.setLogger(&logger);
 
-  // Prolog.
-  a.push(nbp);
-  a.mov(nbp, nsp);
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, char*>());
 
-  // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  a.mov(nax, 1024);
+  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
-  // Epilog.
-  a.mov(nsp, nbp);
-  a.pop(nbp);
-  a.ret();
+  GPVar src0(c.argGP(0));
+  GPVar src1(c.argGP(1));
+  GPVar dst0(c.argGP(2));
+
+  c.cmp(src0, src1);
+  c.setz(byte_ptr(dst0));
+
+  // Finish.
+  c.endFunction();
   // ==========================================================================
-
-  // NOTE:
-  // This function can be also completely rewritten to this form:
-  //   a.mov(nax, 1024);
-  //   a.ret();
-  // If you are interested in removing prolog and epilog, please
-  // study calling conventions and check register preservations.
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(a.make());
+  MyFn fn = function_cast<MyFn>(c.make());
 
-  // Call it.
-  int result = fn();
-  printf("Result from jit function: %d\n", result);
-  printf("Status: %s\n", result == 1024 ? "Success" : "Failure");
+  // Results storage.
+  char r[4];
+
+  // Call it
+  fn(0, 0, &r[0]); // We are expecting 1 (0 == 0).
+  fn(0, 1, &r[1]); // We are expecting 0 (0 != 1).
+  fn(1, 0, &r[2]); // We are expecting 0 (1 != 0).
+  fn(1, 1, &r[3]); // We are expecting 1 (1 == 1).
+
+  printf("Result from JIT function: %d %d %d %d\n", r[0], r[1], r[2], r[3]);
+  printf("Status: %s\n", (r[0] == 1 && r[1] == 0 && r[2] == 0 && r[3] == 1) ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);

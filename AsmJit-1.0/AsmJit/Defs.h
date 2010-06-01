@@ -220,6 +220,8 @@ enum EMITTABLE_TYPE
 {
   //! @brief Emittable is invalid (can't be used).
   EMITTABLE_NONE = 0,
+  //! @brief Emittable is dummy (used as a mark).
+  EMITTABLE_DUMMY,
   //! @brief Emittable is comment (no code).
   EMITTABLE_COMMENT,
   //! @brief Emittable is embedded data.

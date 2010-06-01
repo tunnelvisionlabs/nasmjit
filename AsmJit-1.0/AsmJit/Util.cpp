@@ -237,8 +237,7 @@ char* Zone::zstrdup(const char* str) ASMJIT_NOTHROW
   // Limit string length.
   if (len > 256) len = 256;
 
-  len = (len + 15) & ~15;
-  char* m = reinterpret_cast<char*>(zalloc(len));
+  char* m = reinterpret_cast<char*>(zalloc((len + 15) & ~15));
   if (!m) return NULL;
 
   memcpy(m, str, len);

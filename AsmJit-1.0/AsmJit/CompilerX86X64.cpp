@@ -839,7 +839,11 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
   // pcmpgt reg, reg      ; Set all bits in reg to 0.
   // pcmpeq reg, reg      ; Set all bits in reg to 1.
 
-  if (_variablesCount == 1 && !_memOp)
+  if (_variablesCount == 1 && 
+      _operandsCount > 1 &&
+      _operands[0].isVar() &&
+      _operands[1].isVar() &&
+      !_memOp)
   {
     switch (_code)
     {
@@ -974,7 +978,7 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
 
 void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
 {
-  if (a._comment) a._comment = _comment;
+  if (_comment) a._comment = _comment;
 
   switch (_operandsCount)
   {
@@ -1142,6 +1146,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   _argumentVariables = NULL;
   Util::memset32(_hints, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_hints));
 
+  // Stack is always aligned to 16-bytes when using 64-bit mode.
   _isStackAlignedTo16Bytes = (sizeof(sysuint_t) == 8);
 
   // Linux guarantees stack alignment to 16 bytes by default, I'm not sure about
@@ -1151,7 +1156,10 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
 #endif // __linux__
 
   // Just clear to safe defaults.
-  _isNaked = _isStackAlignedTo16Bytes;
+  _isNaked = false;
+  _isEspAdjusted = false;
+  _isCallee = false;
+
   _prologEpilogPushPop = true;
   _emitEMMS = false;
   _emitSFence = false;
@@ -1171,6 +1179,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
 
   _prolog = Compiler_newObject<EProlog>(c, this);
   _epilog = Compiler_newObject<EEpilog>(c, this);
+  _end = Compiler_newObject<EDummy>(c);
 }
 
 EFunction::~EFunction() ASMJIT_NOTHROW
@@ -1219,7 +1228,7 @@ void EFunction::_createVariables() ASMJIT_NOTHROW
     uint32_t size = getVariableSize(a.variableType);
     VarData* vdata = _compiler->_newVarData(argName, a.variableType, size);
 
-    if (a.registerIndex != INVALID_VALUE)
+    if (a.registerIndex != (uint32_t)INVALID_VALUE)
     {
       vdata->isRegArgument = true;
       vdata->registerIndex = a.registerIndex;
@@ -1271,6 +1280,10 @@ void EFunction::_allocVariables(CompilerContext& c) ASMJIT_NOTHROW
         vdata->changed = true;
         c._allocatedVariable(vdata);
       }
+      else if (vdata->isMemArgument)
+      {
+        vdata->state = VARIABLE_STATE_MEMORY;
+      }
     }
     else
     {
@@ -1300,6 +1313,7 @@ void EFunction::_allocVariables(CompilerContext& c) ASMJIT_NOTHROW
 
 
 #if 0
+// TODO:
 void Function::prepare(CompilerContext& c)
 {
   // Prepare variables
@@ -1428,11 +1442,15 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
 {
   const CpuInfo* cpuInfo = getCpuInfo();
 
-  _isNaked = _isStackAlignedTo16Bytes;
-  _prologEpilogPushPop = (cpuInfo->vendorId == CpuInfo::Vendor_AMD);
+  _prologEpilogPushPop = true;
   _emitEMMS = false;
   _emitSFence = false;
   _emitLFence = false;
+
+  // If another function is called by the function it's needed to adjust
+  // ESP.
+  if (_isCallee)
+    _isEspAdjusted = true;
 
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
     _isNaked = (bool)_hints[FUNCTION_HINT_NAKED];
@@ -1463,13 +1481,31 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   _memStackSizeAligned16 = alignTo16Bytes(_memStackSize);
 
   // How many bytes to add to stack to make it aligned to 16 bytes.
-  _stackAdjust = (_isNaked) ? ((sizeof(sysint_t) == 8) ? 8 : 12) : ((sizeof(sysint_t) == 8) ? 0 : 8);
+  if (_isNaked)
+  {
+    // TODO:
+    //_stackAdjust = ((sizeof(sysint_t) == 8) ? 8 : 12);
+    // stackAdjust = sizeof(sysint_t); //((sizeof(sysint_t) == 8) ? 8 : 4);
+    _stackAdjust = 0; 
 
-  c._argumentsBaseReg = REG_INDEX_ESP;
-  c._argumentsBaseOffset = -(int32_t)(_prologEpilogStackSizeAligned16 + _stackAdjust);
+    c._argumentsBaseReg = REG_INDEX_ESP;
+    c._variablesBaseReg = REG_INDEX_ESP;
 
-  c._variablesBaseReg = REG_INDEX_ESP;
-  c._variablesBaseOffset = -(int32_t)(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16 + _stackAdjust);
+    c._argumentsBaseOffset = _prologEpilogStackSize + _stackAdjust;
+    c._variablesBaseOffset = -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
+  }
+  else
+  {
+    // TODO:
+    //((sizeof(sysint_t) == 8) ? 0 : 8);
+    _stackAdjust = sizeof(sysint_t);
+
+    c._argumentsBaseReg = REG_INDEX_EBP;
+    c._variablesBaseReg = REG_INDEX_ESP;
+
+    c._argumentsBaseOffset = (int32_t)(_stackAdjust);
+    c._variablesBaseOffset = -(int32_t)(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16) + (int32_t)_stackAdjust;
+  }
 }
 
 void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
@@ -1692,18 +1728,24 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
 
   if (!_isNaked)
   {
-    if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+    if (_isEspAdjusted)
+    {
+      if (stackSubtract)
+        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
 
 #if defined(ASMJIT_X86)
-    // Manual alignment. This is a bit complicated if we don't want to pollute
-    // ebp/rpb register and standard prolog.
-    if (stackSize && 1)
-    {
-      // stackAlignmentSize can be 8 or 16
-      _compiler->emit(INST_AND, nsp, imm(-16));
-      // _isStackAlignedTo16Bytes = true;
-    }
+      // TODO:
+      //
+      // Manual alignment. This is a bit complicated if we don't want to pollute
+      // ebp/rpb register and standard prolog.
+      if (stackSize && 0)
+      {
+        // stackAlignmentSize can be 8 or 16
+        _compiler->emit(INST_AND, nsp, imm(-16));
+        // _isStackAlignedTo16Bytes = true;
+      }
 #endif // ASMJIT_X86
+    }
   }
 
   sysint_t nspPos = _memStackSizeAligned16; // alignTo16Bytes( _legacy_variablesStackSize());
@@ -1735,7 +1777,10 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
     }
   }
 
-  if (_compiler->getLogger() && _compiler->getLogger()->isUsed()) _compiler->comment("Function body");
+  if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
+  {
+    _compiler->comment("Function body");
+  }
 }
 
 void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
@@ -1754,6 +1799,7 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
 
   uint32_t i, mask;
 
+  // TODO:
 //#if defined(ASMJIT_X86)
 //  if (!_isNaked && stackSize && f->stackAlignmentSize())
 //  {
@@ -1761,7 +1807,10 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
 //  }
 //#endif // ASMJIT_X86
 
-  if (_compiler->getLogger() && _compiler->getLogger()->isUsed()) _compiler->comment("Function epilog");
+  if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
+  {
+    _compiler->comment("Function epilog");
+  }
 
   sysint_t nspPos = _memStackSizeAligned16; //alignTo16Bytes(_legacy_variablesStackSize());
   if (_isNaked) nspPos -= stackSize + _stackAdjust;
@@ -1787,11 +1836,14 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
       // Restore GP registers using MOV.
       if (!_isNaked)
       {
-        sysint_t stackAdd = stackSize - bitCount(preservedGP) * sizeof(sysint_t);
-        if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
+        if (_isEspAdjusted)
+        {
+          int32_t stackAdd = stackSize - bitCount(preservedGP) * sizeof(sysint_t);
+          if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
+        }
       }
 
-      for (i = REG_NUM - 1, mask = 1 << i; (int32_t)i >= 0; i++, mask >>= 1)
+      for (i = REG_NUM - 1, mask = 1 << i; (int32_t)i >= 0; i--, mask >>= 1)
       {
         if (preservedGP & mask)
         {
@@ -1900,6 +1952,9 @@ CompilerContext::CompilerContext(Compiler* compiler) ASMJIT_NOTHROW :
 {
   _compiler = compiler;
   _clear();
+
+  _emitComments = compiler->getLogger() != NULL && 
+                  compiler->getLogger()->isUsed();
 }
 
 CompilerContext::~CompilerContext() ASMJIT_NOTHROW
@@ -2550,10 +2605,12 @@ void CompilerContext::emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
   {
     case VARIABLE_TYPE_GPD:
       _compiler->emit(INST_MOV, gpd(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
 #if defined(ASMJIT_X64)
     case VARIABLE_TYPE_GPQ:
       _compiler->emit(INST_MOV, gpq(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
 #endif // ASMJIT_X64
 
@@ -2565,24 +2622,34 @@ void CompilerContext::emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
 
     case VARIABLE_TYPE_MM:
       _compiler->emit(INST_MOVQ, mm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
 
     case VARIABLE_TYPE_XMM:
       _compiler->emit(INST_MOVDQA, xmm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_1F:
       _compiler->emit(INST_MOVSS, xmm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_1D:
       _compiler->emit(INST_MOVSD, xmm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_4F:
       _compiler->emit(INST_MOVAPS, xmm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_2D:
       _compiler->emit(INST_MOVAPD, xmm(regIndex), m);
+      if (_emitComments) goto addComment;
       break;
   }
+  return;
+
+addComment:
+  _compiler->getCurrentEmittable()->setCommentF("Alloc %s", vdata->name);
 }
 
 void CompilerContext::emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTHROW
@@ -2599,10 +2666,12 @@ void CompilerContext::emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
   {
     case VARIABLE_TYPE_GPD:
       _compiler->emit(INST_MOV, m, gpd(regIndex));
+      if (_emitComments) goto addComment;
       break;
 #if defined(ASMJIT_X64)
     case VARIABLE_TYPE_GPQ:
       _compiler->emit(INST_MOV, m, gpq(regIndex));
+      if (_emitComments) goto addComment;
       break;
 #endif // ASMJIT_X64
 
@@ -2614,24 +2683,34 @@ void CompilerContext::emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
 
     case VARIABLE_TYPE_MM:
       _compiler->emit(INST_MOVQ, m, mm(regIndex));
+      if (_emitComments) goto addComment;
       break;
 
     case VARIABLE_TYPE_XMM:
       _compiler->emit(INST_MOVDQA, m, xmm(regIndex));
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_1F:
       _compiler->emit(INST_MOVSS, m, xmm(regIndex));
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_1D:
       _compiler->emit(INST_MOVSD, m, xmm(regIndex));
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_4F:
       _compiler->emit(INST_MOVAPS, m, xmm(regIndex));
+      if (_emitComments) goto addComment;
       break;
     case VARIABLE_TYPE_XMM_2D:
       _compiler->emit(INST_MOVAPD, m, xmm(regIndex));
+      if (_emitComments) goto addComment;
       break;
   }
+  return;
+
+addComment:
+  _compiler->getCurrentEmittable()->setCommentF("Spill %s", vdata->name);
 }
 
 void CompilerContext::emitMoveVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
@@ -3220,6 +3299,7 @@ void CompilerContext::_patchMemoryOperands() ASMJIT_NOTHROW
         if (vdata->isMemArgument)
         {
           mem->_mem.base = _argumentsBaseReg;
+          mem->_mem.displacement += vdata->homeMemoryOffset;
           mem->_mem.displacement += _argumentsBaseOffset;
         }
         else
@@ -3228,8 +3308,8 @@ void CompilerContext::_patchMemoryOperands() ASMJIT_NOTHROW
           ASMJIT_ASSERT(mb != NULL);
 
           mem->_mem.base = _variablesBaseReg;
-          mem->_mem.displacement += _variablesBaseOffset;
           mem->_mem.displacement += mb->offset;
+          mem->_mem.displacement += _variablesBaseOffset;
         }
       }
     }
@@ -3249,7 +3329,8 @@ CompilerCore::CompilerCore() ASMJIT_NOTHROW :
   _first(NULL),
   _last(NULL),
   _current(NULL),
-  _function(NULL)
+  _function(NULL),
+  _varNameId(0)
 {
 }
 
@@ -3452,6 +3533,8 @@ EFunction* CompilerCore::newFunction_(uint32_t callingConvention, const uint32_t
   bind(f->_entryLabel);
   addEmittable(f->_prolog);
 
+  _varNameId = 0;
+
   f->_createVariables();
   return f;
 }
@@ -3463,6 +3546,7 @@ EFunction* CompilerCore::endFunction() ASMJIT_NOTHROW
 
   bind(f->_exitLabel);
   addEmittable(f->_epilog);
+  addEmittable(f->_end);
 
   _function = NULL;
   return f;
@@ -3612,6 +3696,14 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
 {
   VarData* vdata = reinterpret_cast<VarData*>(_zone.zalloc(sizeof(VarData)));
   if (vdata == NULL) return NULL;
+
+  char nameBuffer[32];
+  if (name == NULL)
+  {
+    sprintf(nameBuffer, "var_%d", _varNameId);
+    name = nameBuffer;
+    _varNameId++;
+  }
 
   vdata->scope = getFunction();
   vdata->firstEmittable = NULL;
@@ -3932,8 +4024,8 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
 
     c._function = reinterpret_cast<EFunction*>(start);
     c._start = start;
-    c._stop = stop = c.getFunction()->getEpilog();
-    c._extraBlock = c.getFunction()->getEpilog();
+    c._stop = stop = c._function->getEnd();
+    c._extraBlock = stop;
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------

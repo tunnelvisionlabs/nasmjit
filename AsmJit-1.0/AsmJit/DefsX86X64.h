@@ -1634,7 +1634,7 @@ enum VARIABLE_TYPE
 #endif
 
   //! @brief Variable is pointer or reference to memory (to any type).
-  VARIABLE_TYPE_PTR = VARIABLE_TYPE_GPQ,
+  VARIABLE_TYPE_PTR = VARIABLE_TYPE_GPN,
 
   //! @brief Variable is X87 (FPU).
   //!

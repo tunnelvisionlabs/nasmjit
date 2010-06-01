@@ -824,7 +824,7 @@ static char* dumpComment(char* buf, sysuint_t len, const uint8_t* binaryData, sy
     // be an exploit).
     if (commentLength > 80) commentLength = 80;
 
-    for (sysuint_t i = 0; i < 2; i++)
+    for (sysuint_t i = (binaryLen == 0); i < 2; i++)
     {
       char* bufBegin = buf;
 

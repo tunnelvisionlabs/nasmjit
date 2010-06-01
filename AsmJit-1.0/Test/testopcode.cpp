@@ -964,7 +964,7 @@ int main(int argc, char* argv[])
   // ==========================================================================
 
   // ==========================================================================
-  // Make function
+  // Make the function.
   MyFn fn = function_cast<MyFn>(a.make());
 
   // Call function (This is convenience for IDEs to go directly to disassembly).

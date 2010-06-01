@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,60 +23,65 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is only included as an example and simple test if jit
-// compiler works.
+// This file is used to test function with many arguments. Bug originally
+// reported by Tilo Nitzsche for X64W and X64U calling conventions.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/Assembler.h>
+#include <AsmJit/Compiler.h>
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef int (*MyFn)();
+typedef sysint_t (*MyFn)();
 
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
   // ==========================================================================
-  // Create assembler.
-  Assembler a;
+  // Create compiler.
+  Compiler c;
 
-  // Log assembler output.
+  // Log compiler output.
   FileLogger logger(stderr);
-  a.setLogger(&logger);
+  c.setLogger(&logger);
 
-  // Prolog.
-  a.push(nbp);
-  a.mov(nbp, nsp);
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0());
 
-  // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  a.mov(nax, 1024);
+  GPVar v0(c.newGP());
+  GPVar v1(c.newGP());
+  GPVar v2(c.newGP());
+  GPVar v3(c.newGP());
+  GPVar v4(c.newGP());
 
-  // Epilog.
-  a.mov(nsp, nbp);
-  a.pop(nbp);
-  a.ret();
+  c.alloc(v0, nax);
+
+  c.xor_(v0, v0);
+
+  c.mov(v1, 1);
+  c.mov(v2, 2);
+  c.mov(v3, 3);
+  c.mov(v4, 4);
+
+  c.add(v0, v1);
+  c.add(v0, v2);
+  c.add(v0, v3);
+  c.add(v0, v4);
+
+  c.ret(v0);
+  c.endFunction();
   // ==========================================================================
-
-  // NOTE:
-  // This function can be also completely rewritten to this form:
-  //   a.mov(nax, 1024);
-  //   a.ret();
-  // If you are interested in removing prolog and epilog, please
-  // study calling conventions and check register preservations.
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(a.make());
+  MyFn fn = function_cast<MyFn>(c.make());
+  int result = (int)fn();
 
-  // Call it.
-  int result = fn();
-  printf("Result from jit function: %d\n", result);
-  printf("Status: %s\n", result == 1024 ? "Success" : "Failure");
+  printf("Result from JIT function: %d\n", result);
+  printf("Status: %s\n", result == 10 ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);

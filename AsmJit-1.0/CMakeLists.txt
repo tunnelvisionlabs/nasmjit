@@ -83,6 +83,9 @@ If(ASMJIT_BUILD_TEST)
     testjit
     testmemorymanager
     testopcode
+    testsetcc
+    testvar1
+    testvar2
   )
 
   ForEach(file ${ASMJIT_TEST_FILES})

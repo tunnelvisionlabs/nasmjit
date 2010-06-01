@@ -658,8 +658,10 @@ struct ASMJIT_API EFunction : public Emittable
   void setPrototype(uint32_t callingConvention, const uint32_t* args, sysuint_t count) ASMJIT_NOTHROW;
   void setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW;
 
-  inline EProlog* getProlog() const { return _prolog; }
-  inline EEpilog* getEpilog() const { return _epilog; }
+  inline EProlog* getProlog() const ASMJIT_NOTHROW { return _prolog; }
+  inline EEpilog* getEpilog() const ASMJIT_NOTHROW { return _epilog; }
+
+  inline EDummy* getEnd() const ASMJIT_NOTHROW { return _end; }
 
   //! @brief Create variables from FunctionPrototype declaration. This is just
   //! parsing what FunctionPrototype generated for current function calling
@@ -696,7 +698,7 @@ struct ASMJIT_API EFunction : public Emittable
   // [Members]
   // --------------------------------------------------------------------------
 
-private:
+protected:
   //! @brief Function prototype.
   FunctionPrototype _functionPrototype;
   //! @brief Function arguments (variable IDs).
@@ -704,30 +706,70 @@ private:
   //! @brief Function hints.
   uint32_t _hints[16];
 
+  //! @brief Whether the function stack is aligned by 16-bytes by OS.
+  //!
+  //! This is always true for 64-bit mode and for linux.
   bool _isStackAlignedTo16Bytes;
+
+  //! @brief Whether the function is using naked prolog / epilog
+  //!
+  //! Naked prolog / epilog means to omit saving and restoring EBP.
   bool _isNaked;
+
+  //! @brief Whether the ESP register is adjusted by the stack size needed 
+  //! to save registers and function variables.
+  //!
+  //! Esp is adjusted by 'sub' instruction in prolog and by add function in
+  //! epilog (only if function is not naked).
+  bool _isEspAdjusted;
+
+  //! @brief Whether another function is called from this function.
+  //!
+  //! If another function is called from this function, it's needed to prepare
+  //! stack for it. If this member is true then it's likely that true will be
+  //! also @c _isEspAdjusted one.
+  bool _isCallee;
+
+  //! @brief Whether to emit prolog / epilog sequence using push & pop 
+  //! instructions (the default).
   bool _prologEpilogPushPop;
+
+  //! @brief Whether to emit EMMS instruction in epilog (auto-detected).
   bool _emitEMMS;
+
+  //! @brief Whether to emit SFence instruction in epilog (auto-detected).
+  //!
+  //! @note Combination of @c _emitSFence and @c _emitLFence will result in
+  //! emitting mfence.
   bool _emitSFence;
+
+  //! @brief Whether to emit LFence instruction in epilog (auto-detected).
+  //!
+  //! @note Combination of @c _emitSFence and @c _emitLFence will result in
+  //! emitting mfence.
   bool _emitLFence;
 
   uint32_t _modifiedAndPreservedGP;
   uint32_t _modifiedAndPreservedXMM;
   uint32_t _movDqaInstruction;
 
-  uint32_t _prologEpilogStackSize;
-  uint32_t _prologEpilogStackSizeAligned16;
-  uint32_t _memStackSize;
-  uint32_t _memStackSizeAligned16;
-  uint32_t _stackAdjust;
+  int32_t _prologEpilogStackSize;
+  int32_t _prologEpilogStackSizeAligned16;
+  int32_t _memStackSize;
+  int32_t _memStackSizeAligned16;
+  int32_t _stackAdjust;
 
   //! @brief Function entry label.
   Label _entryLabel;
   //! @brief Function exit label.
   Label _exitLabel;
 
+  //! @brief Function prolog emittable.
   EProlog* _prolog;
+  //! @brief Function epilog emittable.
   EEpilog* _epilog;
+  //! @brief Dummy emittable, signalizes end of function.
+  EDummy* _end;
 
   friend struct CompilerContext;
   friend struct CompilerCore;
@@ -995,6 +1037,9 @@ struct ASMJIT_API CompilerContext
   uint32_t _mem16BlocksCount;
   //! @brief Count of total bytes of stack memory used by the function.
   uint32_t _memBytesTotal;
+
+  //! @brief Whether to emit comments.
+  bool _emitComments;
 };
 
 // ============================================================================
@@ -1302,6 +1347,9 @@ protected:
 
   //! @brief Variable data.
   PodVector<VarData*> _varData;
+
+  //! @brief Variable name id (used to generate unique names per function).
+  int _varNameId;
 
   friend struct BaseVar;
   friend struct CompilerContext;
@@ -7250,7 +7298,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! // End of function body.
 //! c.endFunction();
 //!
-//! // Make function
+//! // Make the function.
 //! typedef void (*MyFn)(int*);
 //! MyFn fn = function_cast<MyFn>(c.make());
 //! @endcode
