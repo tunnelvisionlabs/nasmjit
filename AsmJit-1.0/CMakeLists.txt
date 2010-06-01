@@ -80,10 +80,12 @@ If(ASMJIT_BUILD_TEST)
     testbasics
     testcpu
     testdummy
+    testfuncmanyargs
     testjit
     testmemorymanager
     testopcode
     testsetcc
+    testtrampoline
     testvar1
     testvar2
   )

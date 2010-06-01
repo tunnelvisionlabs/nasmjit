@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used as a dummy test. It's changed during development.
+// This file is used to test trampoline generation (absolute addressing
+// in 64-bit mode).
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,66 +34,63 @@
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
+#if defined(ASMJIT_X86)
+
+int main(int argc, char* argv[])
+{
+  printf("Trampoline test can be only used in x64 mode.\n");
+  printf("Status: %s\n", "Success");
+
+  return 0;
+}
+
+#else
+
 // This is type of function we will generate
-typedef uint32_t (*MyFn)(uint32_t, uint32_t);
+typedef void (*MyFn)(void);
+
+static int i = 0;
+
+// Function that is called from JIT code.
+static void calledfn(void)
+{
+  i++;
+}
 
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
   // ==========================================================================
-  // Create compiler.
-  Compiler c;
+  // Create assembler.
+  Assembler a;
 
   // Log compiler output.
   FileLogger logger(stderr);
-  c.setLogger(&logger);
-  c.setProperty(PROPERTY_LOG_BINARY, true);
+  a.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  a.call(imm((sysint_t)calledfn)); // First trampoline - call.
+  a.jmp(imm((sysint_t)calledfn));  // Second trampoline - jump, will return.
+  MyFn fn0 = function_cast<MyFn>(a.make());
 
-  GPVar var[20];
-  int i;
+  a.clear(); // Purge assembler, we will reuse it.
+  a.jmp(imm((sysint_t)fn0));
+  MyFn fn1 = function_cast<MyFn>(a.make());
 
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    var[i] = c.newGP();
-  }
-
-  c.alloc(var[0], eax);
-
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    c.mov(var[i], imm(i));
-  }
-
-  GPVar j = c.newGP();
-  Label r = c.newLabel();
-  c.mov(j, 4);
-
-  c.bind(r);
-  for (i = ASMJIT_ARRAY_SIZE(var) - 1; i > 0; i--)
-  {
-    c.add(var[0], var[i]);
-  }
-
-  c.dec(j);
-  c.jnz(r, HINT_TAKEN);
-
-  c.ret(var[0]);
-  c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
-  // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  fn0();
+  fn1();
 
-  printf("Result %u\n", fn(1, 2));
+  printf("Status: %s\n", (i == 4) ? "Success" : "Failure");
 
-  // If function is not needed again it should be freed.
-  MemoryManager::getGlobal()->free((void*)fn);
+  // If functions are not needed again they should be freed.
+  MemoryManager::getGlobal()->free((void*)fn0);
+  MemoryManager::getGlobal()->free((void*)fn1);
   // ==========================================================================
 
   return 0;
 }
+
+#endif

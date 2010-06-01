@@ -934,7 +934,9 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
           ASMJIT_ASSERT(vdata != NULL);
 
           // Memory access. We just increment here actual displacement.
-          o._mem.displacement += vdata->isMemArgument ? c._argumentsActualDisp : c._variablesActualDisp;
+          o._mem.displacement += vdata->isMemArgument 
+            ? c._argumentsActualDisp
+            : c._variablesActualDisp;
 
           // NOTE: This is not enough, variable position will be patched later
           // by CompilerContext::_patchMemoryOperands().
@@ -1597,8 +1599,25 @@ void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
         memHome = _buf;
 
         Mem memOp;
-        memOp._mem.base = vdata->homeMemoryRegister;
         memOp._mem.displacement = vdata->homeMemoryOffset;
+
+        if (vdata->homeMemoryRegister == INVALID_VALUE)
+        {
+          if (vdata->isMemArgument)
+          {
+            memOp._mem.base = c._argumentsBaseReg;
+            memOp._mem.displacement += c._argumentsBaseOffset;
+          }
+          else
+          {
+            memOp._mem.base = c._variablesBaseReg;
+            memOp._mem.displacement += c._variablesBaseOffset;
+          }
+        }
+        else
+        {
+          memOp._mem.base = vdata->homeMemoryRegister & REG_INDEX_MASK;
+        }
         dumpOperand(memHome, &memOp)[0] = '\0';
       }
 
@@ -3092,12 +3111,6 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
 
   if (fromState == toState) return;
 
-  // TODO: Remove...
-  // uint32_t toOffset = _offset;
-
-  // Make local copy of function state.
-  // State::saveFunctionState(&fromState, this);
-
   uint32_t base;
   uint32_t i;
 
@@ -3113,8 +3126,6 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
     {
       uint32_t regIndex = i - base;
 
-      // zde jsem skoncil:)
-
       // Spill register
       if (fromVar != NULL)
       {
@@ -3122,6 +3133,7 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
         // exists.
         if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
+          // TODO:
           // Optimization, do not spill it, we can simply abandon it
           // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
         }
@@ -3149,12 +3161,11 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
       // Alloc register
       if (toVar != NULL)
       {
-        // uint32_t code = getVariableRegisterCode(toVar->type, regIndex);
-        // _allocAs(to_v, VARIABLE_ALLOC_READ, code);
         allocVar(toVar, regIndex, VARIABLE_ALLOC_READ);
       }
     }
 
+    // TODO:
     //if (toVar)
     //{
       // toVar->changed = to->changed;

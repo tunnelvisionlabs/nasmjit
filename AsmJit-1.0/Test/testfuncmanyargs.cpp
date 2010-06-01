@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used as a dummy test. It's changed during development.
+// This file is used to test function with many arguments. Bug originally
+// reported by Tilo Nitzsche for X64W and X64U calling conventions.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef uint32_t (*MyFn)(uint32_t, uint32_t);
+typedef void (*MyFn)(void*, void*, void*, void*, void*, void*, void*, void*);
 
 int main(int argc, char* argv[])
 {
@@ -47,48 +48,59 @@ int main(int argc, char* argv[])
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
-  c.setProperty(PROPERTY_LOG_BINARY, true);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunction(CALL_CONV_DEFAULT, 
+    FunctionBuilder8<void*, void*, void*, void*, void*, void*, void*, void*>());
 
-  GPVar var[20];
-  int i;
+  GPVar p1(c.argGP(0));
+  GPVar p2(c.argGP(1));
+  GPVar p3(c.argGP(2));
+  GPVar p4(c.argGP(3));
+  GPVar p5(c.argGP(4));
+  GPVar p6(c.argGP(5));
+  GPVar p7(c.argGP(6));
+  GPVar p8(c.argGP(7));
 
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    var[i] = c.newGP();
-  }
+  c.add(p1, 1);
+  c.add(p2, 2);
+  c.add(p3, 3);
+  c.add(p4, 4);
+  c.add(p5, 5);
+  c.add(p6, 6);
+  c.add(p7, 7);
+  c.add(p8, 8);
 
-  c.alloc(var[0], eax);
+  // Move some data into buffer provided by arguments so we can verify if it
+  // really works without looking into assembler output.
+  c.add(byte_ptr(p1), imm(1));
+  c.add(byte_ptr(p2), imm(2));
+  c.add(byte_ptr(p3), imm(3));
+  c.add(byte_ptr(p4), imm(4));
+  c.add(byte_ptr(p5), imm(5));
+  c.add(byte_ptr(p6), imm(6));
+  c.add(byte_ptr(p7), imm(7));
+  c.add(byte_ptr(p8), imm(8));
 
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    c.mov(var[i], imm(i));
-  }
-
-  GPVar j = c.newGP();
-  Label r = c.newLabel();
-  c.mov(j, 4);
-
-  c.bind(r);
-  for (i = ASMJIT_ARRAY_SIZE(var) - 1; i > 0; i--)
-  {
-    c.add(var[0], var[i]);
-  }
-
-  c.dec(j);
-  c.jnz(r, HINT_TAKEN);
-
-  c.ret(var[0]);
   c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  uint8_t var[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-  printf("Result %u\n", fn(1, 2));
+  MyFn fn = function_cast<MyFn>(c.make());
+  fn(var, var, var, var, var, var, var, var);
+  
+  printf("Results: %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
+    var[0], var[1], var[2], var[3], 
+    var[4], var[5], var[6], var[7], 
+    var[8]);
+
+  bool success = 
+    var[0] == 0 && var[1] == 1 && var[2] == 2 && var[3] == 3 &&
+    var[4] == 4 && var[5] == 5 && var[6] == 6 && var[7] == 7 &&
+    var[8] == 8;
+  printf("Status: %s\n", success ? "Success" : "Failure");
 
   // If function is not needed again it should be freed.
   MemoryManager::getGlobal()->free((void*)fn);
