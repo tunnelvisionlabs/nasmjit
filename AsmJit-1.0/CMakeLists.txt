@@ -90,6 +90,8 @@ If(ASMJIT_BUILD_TEST)
     testvar1
     testvar2
     testvar3
+    testvar4
+    testvar5
   )
 
   ForEach(file ${ASMJIT_TEST_FILES})

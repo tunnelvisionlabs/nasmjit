@@ -1101,7 +1101,7 @@ void EJmpInstruction::_doJump(CompilerContext& c) ASMJIT_NOTHROW
   }
   else
   {
-    // Instruction type is JMP or conditional jump that should be normally not 
+    // Instruction type is JMP or conditional jump that should be not normally 
     // taken. If we need add code that will switch between different states we 
     // add it after the end of function body (after epilog, using 'ExtraBlock').
     Compiler* compiler = c.getCompiler();
@@ -1131,6 +1131,9 @@ void EJmpInstruction::_doJump(CompilerContext& c) ASMJIT_NOTHROW
 
     c.setExtraBlock(ext);
     compiler->setCurrentEmittable(old);
+
+    // Assign state back.
+    c._assignState(_state);
   }
 }
 
@@ -2065,6 +2068,37 @@ void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflag
   _postAlloc(vdata, vflags);
 }
 
+void CompilerContext::saveVar(VarData* vdata) ASMJIT_NOTHROW
+{
+  switch (vdata->type)
+  {
+    case VARIABLE_TYPE_GPD:
+#if defined(ASMJIT_X64)
+    case VARIABLE_TYPE_GPQ:
+#endif // ASMJIT_X64
+      saveGPVar(vdata);
+      break;
+
+    case VARIABLE_TYPE_X87:
+    case VARIABLE_TYPE_X87_F:
+    case VARIABLE_TYPE_X87_D:
+      // TODO: X87 VARIABLES NOT IMPLEMENTED.
+      break;
+
+    case VARIABLE_TYPE_MM:
+      saveMMVar(vdata);
+      break;
+
+    case VARIABLE_TYPE_XMM:
+    case VARIABLE_TYPE_XMM_1F:
+    case VARIABLE_TYPE_XMM_4F:
+    case VARIABLE_TYPE_XMM_1D:
+    case VARIABLE_TYPE_XMM_2D:
+      saveXMMVar(vdata);
+      break;
+  }
+}
+
 void CompilerContext::spillVar(VarData* vdata) ASMJIT_NOTHROW
 {
   switch (vdata->type)
@@ -2284,6 +2318,19 @@ L_Spill:
   _allocatedVariable(vdata);
 }
 
+void CompilerContext::saveGPVar(VarData* vdata) ASMJIT_NOTHROW
+{
+  // Can't save variable that isn't allocated.
+  ASMJIT_ASSERT(vdata->state == VARIABLE_STATE_REGISTER);
+  ASMJIT_ASSERT(vdata->registerIndex != INVALID_VALUE);
+
+  uint32_t idx = vdata->registerIndex;
+  emitSaveVar(vdata, idx);
+
+  // Update VarData.
+  vdata->changed = false;
+}
+
 void CompilerContext::spillGPVar(VarData* vdata) ASMJIT_NOTHROW
 {
   // Can't spill variable that isn't allocated.
@@ -2442,6 +2489,19 @@ L_Spill:
   _allocatedVariable(vdata);
 }
 
+void CompilerContext::saveMMVar(VarData* vdata) ASMJIT_NOTHROW
+{
+  // Can't save variable that isn't allocated.
+  ASMJIT_ASSERT(vdata->state == VARIABLE_STATE_REGISTER);
+  ASMJIT_ASSERT(vdata->registerIndex != INVALID_VALUE);
+
+  uint32_t idx = vdata->registerIndex;
+  emitSaveVar(vdata, idx);
+
+  // Update VarData.
+  vdata->changed = false;
+}
+
 void CompilerContext::spillMMVar(VarData* vdata) ASMJIT_NOTHROW
 {
   // Can't spill variable that isn't allocated.
@@ -2594,6 +2654,19 @@ L_Spill:
 
   // Update StateData.
   _allocatedVariable(vdata);
+}
+
+void CompilerContext::saveXMMVar(VarData* vdata) ASMJIT_NOTHROW
+{
+  // Can't save variable that isn't allocated.
+  ASMJIT_ASSERT(vdata->state == VARIABLE_STATE_REGISTER);
+  ASMJIT_ASSERT(vdata->registerIndex != INVALID_VALUE);
+
+  uint32_t idx = vdata->registerIndex;
+  emitSaveVar(vdata, idx);
+
+  // Update VarData.
+  vdata->changed = false;
 }
 
 void CompilerContext::spillXMMVar(VarData* vdata) ASMJIT_NOTHROW
@@ -3074,12 +3147,17 @@ StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
 
   for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
   {
-    if (state->gp [i] && state->gp [i]->changed) state->changedGP  |= mask;
-    if (state->xmm[i] && state->xmm[i]->changed) state->changedXMM |= mask;
+    if (state->gp[i] && state->gp[i]->changed) state->changedGP |= mask;
   }
+
   for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
   {
-    if (state->mm [i] && state->mm [i]->changed) state->changedMM  |= mask;
+    if (state->mm[i] && state->mm[i]->changed) state->changedMM |= mask;
+  }
+
+  for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
+  {
+    if (state->xmm[i] && state->xmm[i]->changed) state->changedXMM |= mask;
   }
 
   return state;
@@ -3087,23 +3165,53 @@ StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
 
 void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
 {
+  Compiler* compiler = getCompiler();
   memcpy(&_state, state, sizeof(StateData));
 
-  _state.changedGP = state->changedGP;
-  _state.changedMM = state->changedMM;
-  _state.changedXMM = state->changedXMM;
-
-  uint i;
+  uint i, len;
   uint mask;
+
+  // Clear all variables in registers.
+  for (i = 0, len = (uint)compiler->_varData.getLength(); i < len; i++)
+  {
+    VarData* varData = compiler->_varData[i];
+    if (varData->state == VARIABLE_STATE_REGISTER)
+    {
+      varData->state = VARIABLE_STATE_MEMORY;
+    }
+  }
 
   for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
   {
-    if (state->changedGP  & mask) state->gp[i]->changed = 1;
-    if (state->changedXMM & mask) state->xmm[i]->changed = 1;
+    VarData* varData = _state.gp[i];
+    if (varData)
+    {
+      varData->state = VARIABLE_STATE_REGISTER;
+      varData->registerIndex = i;
+      varData->changed = (_state.changedGP & mask) != 0;
+    }
   }
+
   for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
   {
-    if (state->changedMM  & mask) state->mm[i]->changed = 1;
+    VarData* varData = _state.mm[i];
+    if (varData)
+    {
+      varData->state = VARIABLE_STATE_REGISTER;
+      varData->registerIndex = i;
+      varData->changed = (_state.changedMM & mask) != 0;
+    }
+  }
+
+  for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
+  {
+    VarData* varData = _state.xmm[i];
+    if (varData)
+    {
+      varData->state = VARIABLE_STATE_REGISTER;
+      varData->registerIndex = i;
+      varData->changed = (_state.changedXMM & mask) != 0;
+    }
   }
 }
 
@@ -3145,6 +3253,15 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
           // Variables match, do normal spill
           spillVar(fromVar);
         }
+      }
+    }
+    else if (fromVar != NULL)
+    {
+      uint32_t msk = (1 << i);
+      // Variables are the same, we just need to compare changed flags.
+      if ((fromState->changedGP & msk) && !(toState->changedGP & msk))
+      {
+        saveVar(fromVar);
       }
     }
   }

@@ -881,16 +881,20 @@ struct ASMJIT_API CompilerContext
   // --------------------------------------------------------------------------
 
   void allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void saveVar(VarData* vdata) ASMJIT_NOTHROW;
   void spillVar(VarData* vdata) ASMJIT_NOTHROW;
   void unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW;
 
   void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void saveGPVar(VarData* vdata) ASMJIT_NOTHROW;
   void spillGPVar(VarData* vdata) ASMJIT_NOTHROW;
 
   void allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void saveMMVar(VarData* vdata) ASMJIT_NOTHROW;
   void spillMMVar(VarData* vdata) ASMJIT_NOTHROW;
 
   void allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void saveXMMVar(VarData* vdata) ASMJIT_NOTHROW;
   void spillXMMVar(VarData* vdata) ASMJIT_NOTHROW;
 
   void emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTHROW;
