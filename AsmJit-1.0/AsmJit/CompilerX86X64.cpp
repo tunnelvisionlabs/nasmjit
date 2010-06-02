@@ -1035,6 +1035,13 @@ void EJmpInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 {
   _offset = c._currentOffset;
 
+  // Update _isTaken to true if this is conditional backward jump. This behavior
+  // can be overriden by using HINT_NOT_TAKEN when using the instruction.
+  if (getCode() != INST_JMP && _operandsCount == 1 && _jumpTarget->getOffset() < getOffset())
+  {
+    _isTaken = true;
+  }
+
   // Now patch all variables where jump location is in the active range.
   if (_jumpTarget->getOffset() != INVALID_VALUE && c._active)
   {
