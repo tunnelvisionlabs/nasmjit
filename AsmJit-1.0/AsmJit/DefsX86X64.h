@@ -1637,18 +1637,12 @@ enum VARIABLE_TYPE
   VARIABLE_TYPE_PTR = VARIABLE_TYPE_GPN,
 
   //! @brief Variable is X87 (FPU).
-  //!
-  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87 = 2,
 
   //! @brief Variable is X87 (FPU) SP-FP number (float).
-  //!
-  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87_F = 3,
 
   //! @brief Variable is X87 (FPU) DP-FP number (double).
-  //!
-  //! TODO: X87 VARIABLES NOT IMPLEMENTED.
   VARIABLE_TYPE_X87_D = 4,
 
   //! @brief Variable is MM register / memory location.

@@ -1266,7 +1266,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //! @brief Signed multiply.
   //!
   //! Destination operand (the first operand) is multiplied by the source
-  //! operand (second operand). The destination operand is a generalpurpose
+  //! operand (second operand). The destination operand is a general-purpose
   //! register and the source operand is an immediate value, a general-purpose
   //! register, or a memory location. The product is then stored in the
   //! destination operand location.

@@ -86,6 +86,7 @@ If(ASMJIT_BUILD_TEST)
     testopcode
     testrep
     testsetcc
+    testspecial1
     testtrampoline
     testvar1
     testvar2

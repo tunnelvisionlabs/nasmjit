@@ -46,6 +46,12 @@
 // [Api-Begin]
 #include "ApiBegin.h"
 
+//! @internal
+//!
+//! @brief Mark methods not supported by @ref Compiler. These methods are 
+//! usually used only in function prologs/epilogs or to manage stack.
+#define ASMJIT_NOT_SUPPORTED_BY_COMPILER 0
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_Compiler
@@ -354,6 +360,8 @@ struct VarAllocRecord
   VarData* vdata;
   //! @brief Variable alloc flags, see @c VARIABLE_ALLOC.
   uint32_t vflags;
+  //! @brief Register index (default is @c INVALID_VALUE)
+  uint32_t regIndex;
 };
 
 // ============================================================================
@@ -468,7 +476,9 @@ struct ASMJIT_API EInstruction : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EInstruction instance.
   EInstruction(Compiler* c, uint32_t code, Operand* operandsData, uint32_t operandsCount) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EInstruction instance.
   virtual ~EInstruction() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -483,6 +493,12 @@ struct ASMJIT_API EInstruction : public Emittable
   // --------------------------------------------------------------------------
   // [Instruction Code]
   // --------------------------------------------------------------------------
+
+  //! @brief Get whether the instruction is special.
+  inline bool isSpecial() const ASMJIT_NOTHROW { return _isSpecial; }
+
+  //! @brief Get whether the instruction is FPU.
+  inline bool isFPU() const ASMJIT_NOTHROW { return _isFPU; }
 
   //! @brief Get instruction code, see @c INST_CODE.
   inline uint32_t getCode() const ASMJIT_NOTHROW { return _code; }
@@ -506,7 +522,9 @@ struct ASMJIT_API EInstruction : public Emittable
   //! @brief Get operands array (3 operands total).
   inline const Operand* getOperands() const ASMJIT_NOTHROW { return _operands; }
 
+  //! @brief Get memory operand.
   inline Mem* getMemOp() ASMJIT_NOTHROW { return _memOp; }
+  //! @brief Set memory operand.
   inline void setMemOp(Mem* op) ASMJIT_NOTHROW { _memOp = op; }
 
   // --------------------------------------------------------------------------
@@ -552,6 +570,11 @@ protected:
 
   //! @brief Variables (extracted from operands).
   VarAllocRecord* _variables;
+
+  //! @brief Whether the instruction is special.
+  bool _isSpecial;
+  //! @brief Whether the instruction is FPU.
+  bool _isFPU;
 
   friend struct EFunction;
   friend struct CompilerContext;
@@ -1244,8 +1267,11 @@ struct ASMJIT_API CompilerCore
   //! @brief Emit instruction with three operands.
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW;
 
-  //! @brief Emit instruction with four operands (Compiler specific).
+  //! @brief Emit instruction with four operands (Special instructions).
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
+
+  //! @brief Emit instruction with five operands (Special instructions).
+  void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3, const Operand* o4) ASMJIT_NOTHROW;
 
   //! @brief Private method for emitting jcc.
   void _emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW;
@@ -2061,32 +2087,36 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 
   //! @brief Compare and Exchange (i486).
-  inline void cmpxchg(const GPVar& dst, const GPVar& src)
+  inline void cmpxchg(const GPVar cmp_1_eax, const GPVar& cmp_2, const GPVar& src)
   {
-    _emitInstruction(INST_CMPXCHG, &dst, &src);
+    ASMJIT_ASSERT(cmp_1_eax.getId() != src.getId());
+    _emitInstruction(INST_CMPXCHG, &cmp_1_eax, &cmp_2, &src);
   }
   //! @brief Compare and Exchange (i486).
-  inline void cmpxchg(const Mem& dst, const GPVar& src)
+  inline void cmpxchg(const GPVar cmp_1_eax, const Mem& cmp_2, const GPVar& src)
   {
-    _emitInstruction(INST_CMPXCHG, &dst, &src);
+    ASMJIT_ASSERT(cmp_1_eax.getId() != src.getId());
+    _emitInstruction(INST_CMPXCHG, &cmp_1_eax, &cmp_2, &src);
   }
 
-#if 0
-  // TODO: NOT IMPLEMENTED BY THE COMPILER.
   //! @brief Compares the 64-bit value in EDX:EAX with the memory operand (Pentium).
   //!
   //! If the values are equal, then this instruction stores the 64-bit value
   //! in ECX:EBX into the memory operand and sets the zero flag. Otherwise,
   //! this instruction copies the 64-bit memory operand into the EDX:EAX
   //! registers and clears the zero flag.
-  inline void cmpxchg8b(const Mem& dst)
+  inline void cmpxchg8b(
+    const GPVar& cmp_edx, const GPVar& cmp_eax,
+    const GPVar& cmp_ecx, const GPVar& cmp_ebx,
+    const Mem& dst)
   {
-    _emitInstruction(INST_CMPXCHG8B, &dst);
-  }
-#endif
+    ASMJIT_ASSERT(cmp_edx.getId() != cmp_eax.getId() &&
+                  cmp_eax.getId() != cmp_ecx.getId() &&
+                  cmp_ecx.getId() != cmp_ebx.getId());
 
-#if 0
-  // TODO: NOT IMPLEMENTED BY THE COMPILER.
+    _emitInstruction(INST_CMPXCHG8B, &cmp_edx, &cmp_eax, &cmp_ecx, &cmp_ebx, &dst);
+  }
+
 #if defined(ASMJIT_X64)
   //! @brief Compares the 128-bit value in RDX:RAX with the memory operand (X64).
   //!
@@ -2094,27 +2124,46 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! in RCX:RBX into the memory operand and sets the zero flag. Otherwise,
   //! this instruction copies the 128-bit memory operand into the RDX:RAX
   //! registers and clears the zero flag.
-  inline void cmpxchg16b(const Mem& dst)
+  inline void cmpxchg16b(
+    const GPVar& cmp_edx, const GPVar& cmp_eax,
+    const GPVar& cmp_ecx, const GPVar& cmp_ebx,
+    const Mem& dst)
   {
-    _emitInstruction(INST_CMPXCHG16B, &dst);
+    ASMJIT_ASSERT(cmp_edx.getId() != cmp_eax.getId() &&
+                  cmp_eax.getId() != cmp_ecx.getId() &&
+                  cmp_ecx.getId() != cmp_ebx.getId());
+
+    _emitInstruction(INST_CMPXCHG16B, &cmp_edx, &cmp_eax, &cmp_ecx, &cmp_ebx, &dst);
   }
 #endif // ASMJIT_X64
-#endif
 
   //! @brief CPU Identification (i486).
-  inline void cpuid()
+  inline void cpuid(
+    const GPVar& inout_eax,
+    const GPVar& out_ebx,
+    const GPVar& out_ecx,
+    const GPVar& out_edx)
   {
-    _emitInstruction(INST_CPUID);
+    // Destination variables must be different.
+    ASMJIT_ASSERT(inout_eax.getId() != out_ebx.getId() && 
+                  out_ebx.getId() != out_ecx.getId() && 
+                  out_ecx.getId() != out_edx.getId());
+
+    _emitInstruction(INST_CPUID, &inout_eax, &out_ebx, &out_ecx, &out_edx);
   }
 
-#if 0 && defined(ASMJIT_X86)
-  // TODO: NOT IMPLEMENTED BY THE COMPILER.
-  inline void daa();
+#if defined(ASMJIT_X86)
+  inline void daa(const GPVar& dst)
+  {
+    _emitInstruction(INST_DAA, &dst);
+  }
 #endif // ASMJIT_X86
 
-#if 0 && defined(ASMJIT_X86)
-  // TODO: NOT IMPLEMENTED BY THE COMPILER.
-  inline void das();
+#if defined(ASMJIT_X86)
+  inline void das(const GPVar& dst)
+  {
+    _emitInstruction(INST_DAS, &dst);
+  }
 #endif // ASMJIT_X86
 
   //! @brief Decrement by 1.
@@ -2135,59 +2184,76 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! This instruction divides (unsigned) the value in the AL, AX, or EAX
   //! register by the source operand and stores the result in the AX,
   //! DX:AX, or EDX:EAX registers.
-  inline void div(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void div_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_DIV, &dst_lo, &dst_hi, &src);
   }
   //! @brief Unsigned divide.
   //! @overload
-  inline void div(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void div_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_DIV, &dst_lo, &dst_hi, &src);
   }
 
+#if ASMJIT_NOT_SUPPORTED_BY_COMPILER
   //! @brief Make Stack Frame for Procedure Parameters.
   inline void enter(const Imm& imm16, const Imm& imm8)
   {
     _emitInstruction(INST_ENTER, &imm16, &imm8);
   }
+#endif
 
   //! @brief Signed divide.
   //!
   //! This instruction divides (signed) the value in the AL, AX, or EAX
   //! register by the source operand and stores the result in the AX,
   //! DX:AX, or EDX:EAX registers.
-  inline void idiv(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void idiv_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_IDIV, &dst_lo, &dst_hi, &src);
   }
   //! @brief Signed divide.
   //! @overload
-  inline void idiv(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void idiv_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_IDIV, &dst_lo, &dst_hi, &src);
   }
 
   //! @brief Signed multiply.
   //!
-  //! Source operand (in a general-purpose register or memory location)
-  //! is multiplied by the value in the AL, AX, or EAX register (depending
-  //! on the operand size) and the product is stored in the AX, DX:AX, or
-  //! EDX:EAX registers, respectively.
-  inline void imul(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  //! [dst_lo:dst_hi] = dst_hi * src.
+  inline void imul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_IMUL, &src);
   }
   //! @overload
-  inline void imul(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void imul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_IMUL, &src);
   }
 
   //! @brief Signed multiply.
   //!
   //! Destination operand (the first operand) is multiplied by the source
-  //! operand (second operand). The destination operand is a generalpurpose
+  //! operand (second operand). The destination operand is a general-purpose
   //! register and the source operand is an immediate value, a general-purpose
   //! register, or a memory location. The product is then stored in the
   //! destination operand location.
@@ -2367,15 +2433,17 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_LEA, &dst, &src);
   }
 
+#if ASMJIT_NOT_SUPPORTED_BY_COMPILER
   //! @brief High Level Procedure Exit.
   inline void leave()
   {
     _emitInstruction(INST_LEAVE);
   }
+#endif
 
   //! @brief Assert LOCK# Signal Prefix.
-  //!
-  //! This instruction causes the processor�s LOCK# signal to be asserted
+  //
+  //! This instruction causes the processor's LOCK# signal to be asserted
   //! during execution of the accompanying instruction (turns the
   //! instruction into an atomic instruction). In a multiprocessor environment,
   //! the LOCK# signal insures that the processor has exclusive use of any shared
@@ -2505,14 +2573,20 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! is multiplied by the value in the AL, AX, or EAX register (depending
   //! on the operand size) and the product is stored in the AX, DX:AX, or
   //! EDX:EAX registers, respectively.
-  inline void mul(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void mul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_MUL, &src);
   }
   //! @brief Unsigned multiply.
   //! @overload
-  inline void mul(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void mul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
   {
+    // Destination variables must be different.
+    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+
     _emitInstruction(INST_MUL, &src);
   }
 
@@ -2720,12 +2794,19 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Read Time-Stamp Counter (Pentium).
   inline void rdtsc(const GPVar& dst_edx, const GPVar& dst_eax)
   {
+    // Destination registers must be different.
+    ASMJIT_ASSERT(dst_edx.getId() != dst_eax.getId());
+
     _emitInstruction(INST_RDTSC, &dst_edx, &dst_eax);
   }
 
   //! @brief Read Time-Stamp Counter and Processor ID (New).
   inline void rdtscp(const GPVar& dst_edx, const GPVar& dst_eax, const GPVar& dst_ecx)
   {
+    // Destination registers must be different.
+    ASMJIT_ASSERT(dst_edx.getId() != dst_eax.getId() &&
+                  dst_eax.getId() != dst_ecx.getId());
+
     _emitInstruction(INST_RDTSCP, &dst_edx, &dst_eax, &dst_ecx);
   }
 
@@ -6134,7 +6215,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_ADDSUBPS, &dst, &src);
   }
 
-#if 0
+#if ASMJIT_NOT_SUPPORTED_BY_COMPILER
   // TODO: NOT IMPLEMENTED BY THE COMPILER.
   //! @brief Store Integer with Truncation (SSE3).
   inline void fisttp(const Mem& dst)

@@ -616,6 +616,106 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
       break;
     }
   }
+
+  const InstructionDescription* id = &instructionDescription[_code];
+  _isSpecial = id->isSpecial();
+  _isFPU = id->isFPU();
+
+  if (_isSpecial)
+  {
+    // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
+    switch (_code)
+    {
+      case INST_CPUID:
+        // Special...
+        break;
+
+      case INST_CBW:
+      case INST_CDQE:
+      case INST_CWDE:
+        // Special...
+        break;
+
+      case INST_CMPXCHG:
+      case INST_CMPXCHG8B:
+#if defined(ASMJIT_X64)
+      case INST_CMPXCHG16B:
+#endif // ASMJIT_X64
+        // Special...
+        break;
+
+#if defined(ASMJIT_X86)
+      case INST_DAA:
+      case INST_DAS:
+        // Special...
+        break;
+#endif // ASMJIT_X86
+
+      case INST_IMUL:
+        switch (operandsCount)
+        {
+          case 2:
+            // IMUL dst, src is not special instruction.
+            _isSpecial = false;
+            break;
+          case 3:
+            if (!(_operands[0].isReg() && _operands[1].isReg() && _operands[2].isRegMem()))
+            {
+              // Only IMUL dst_lo, dst_hi, reg/mem is special, all others not.
+              _isSpecial = false;
+            }
+            break;
+        }
+        break;
+      case INST_MUL:
+      case INST_IDIV:
+      case INST_DIV:
+        // Special...
+        break;
+
+      case INST_LAHF:
+      case INST_SAHF:
+        // Special...
+        break;
+
+      case INST_ENTER:
+      case INST_LEAVE:
+        // Special...
+        break;
+
+      case INST_RET:
+        // Special...
+        break;
+
+      case INST_MONITOR:
+      case INST_MWAIT:
+        // Special...
+        break;
+
+      case INST_POP:
+      case INST_POPAD:
+      case INST_POPFD:
+      case INST_POPFQ:
+        // Special...
+        break;
+
+      case INST_PUSH:
+      case INST_PUSHAD:
+      case INST_PUSHFD:
+      case INST_PUSHFQ:
+        // Special...
+        break;
+
+      case INST_RDTSC:
+      case INST_RDTSCP:
+        // Special...
+        break;
+
+      default:
+        ASMJIT_ASSERT(0);
+    }
+    // ${SPECIAL_INSTRUCTION_HANDLING_END}
+  }
 }
 
 EInstruction::~EInstruction() ASMJIT_NOTHROW
@@ -637,6 +737,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
         var = cur++; \
         var->vdata = candidate; \
         var->vflags = 0; \
+        var->regIndex = INVALID_VALUE; \
         break; \
       } \
       \
@@ -737,9 +838,218 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
       __GET_VARIABLE(o.getId())
       var->vflags |= VARIABLE_ALLOC_REGISTER;
 
-      if (id->isSpecial())
+      if (isSpecial())
       {
-        // TODO.
+        // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
+        switch (_code)
+        {
+          case INST_CPUID:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 1:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EBX;
+                break;
+              case 2:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              case 3:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EDX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_CBW:
+          case INST_CDQE:
+          case INST_CWDE:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_CMPXCHG:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 1:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                break;
+              case 2:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_CMPXCHG8B:
+#if defined(ASMJIT_X64)
+          case INST_CMPXCHG16B:
+#endif // ASMJIT_X64
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EDX;
+                break;
+              case 1:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 2:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              case 3:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EBX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+#if defined(ASMJIT_X86)
+          case INST_DAA:
+          case INST_DAS:
+            ASMJIT_ASSERT(i == 0);
+            var->vdata->registerRWCount++;
+            var->vflags |= VARIABLE_ALLOC_READWRITE;
+            var->regIndex = REG_INDEX_EAX;
+            break;
+#endif // ASMJIT_X86
+
+          case INST_IMUL:
+          case INST_MUL:
+          case INST_IDIV:
+          case INST_DIV:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EDX;
+                break;
+              case 1:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 2:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_LAHF:
+            ASMJIT_ASSERT(i == 0);
+            var->vdata->registerWriteCount++;
+            var->vflags |= VARIABLE_ALLOC_WRITE;
+            var->regIndex = REG_INDEX_EAX;
+            break;
+
+          case INST_SAHF:
+            ASMJIT_ASSERT(i == 0);
+            var->vdata->registerReadCount++;
+            var->vflags |= VARIABLE_ALLOC_READ;
+            var->regIndex = REG_INDEX_EAX;
+            break;
+
+          case INST_ENTER:
+          case INST_LEAVE:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_RET:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_MONITOR:
+          case INST_MWAIT:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_POP:
+          case INST_POPAD:
+          case INST_POPFD:
+          case INST_POPFQ:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_PUSH:
+          case INST_PUSHAD:
+          case INST_PUSHFD:
+          case INST_PUSHFQ:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_RDTSC:
+          case INST_RDTSCP:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EDX;
+                break;
+              case 1:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 2:
+                ASMJIT_ASSERT(_code == INST_RDTSCP);
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          default:
+            ASMJIT_ASSERT(0);
+        }
+        // ${SPECIAL_INSTRUCTION_HANDLING_END}
       }
       else
       {
@@ -749,7 +1059,9 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
           // or variable is MOVSS/MOVSD instruction and source operand is memory,
           // then register allocator should know that previous destination value
           // is lost (write only operation).
-          if (id->isMov() || ((id->code == INST_MOVSS || id->code == INST_MOVSD) && _operands[1].isMem()))
+          if ((id->isMov()) ||
+              ((id->code == INST_MOVSS || id->code == INST_MOVSD) && _operands[1].isMem()) ||
+              (id->code == INST_IMUL && _operandsCount == 3 && !isSpecial()))
           {
             // Write only case.
             var->vdata->registerWriteCount++;
@@ -909,7 +1221,7 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
     for (i = 0; i < variablesCount; i++)
     {
       VarAllocRecord& r = _variables[i];
-      c.allocVar(r.vdata, INVALID_VALUE, r.vflags);
+      c.allocVar(r.vdata, r.regIndex, r.vflags);
     }
 
     // Translate variables to registers.
@@ -981,6 +1293,96 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
 void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
 {
   if (_comment) a._comment = _comment;
+
+  if (isSpecial())
+  {
+    // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
+    switch (_code)
+    {
+      case INST_CPUID:
+        a._emitInstruction(_code);
+        return;
+
+      case INST_CBW:
+      case INST_CDQE:
+      case INST_CWDE:
+        a._emitInstruction(_code);
+        return;
+
+      case INST_CMPXCHG:
+        a._emitInstruction(_code, &_operands[1], &_operands[2]);
+        return;
+
+      case INST_CMPXCHG8B:
+#if defined(ASMJIT_X64)
+      case INST_CMPXCHG16B:
+#endif // ASMJIT_X64
+        a._emitInstruction(_code, &_operands[4]);
+        return;
+
+#if defined(ASMJIT_X86)
+      case INST_DAA:
+      case INST_DAS:
+        a._emitInstruction(_code);
+        return;
+#endif // ASMJIT_X86
+
+      case INST_IMUL:
+      case INST_MUL:
+      case INST_IDIV:
+      case INST_DIV:
+        if (isSpecial())
+        {
+          // INST dst_lo (implicid), dst_hi (implicid), src (explicit)
+          ASMJIT_ASSERT(_operandsCount == 3);
+          a._emitInstruction(_code, &_operands[2]);
+          return;
+        }
+        break;
+
+      case INST_LAHF:
+      case INST_SAHF:
+        a._emitInstruction(_code);
+        return;
+
+      case INST_ENTER:
+      case INST_LEAVE:
+        // TODO: SPECIAL INSTRUCTION.
+        break;
+
+      case INST_RET:
+        // TODO: SPECIAL INSTRUCTION.
+        break;
+
+      case INST_MONITOR:
+      case INST_MWAIT:
+        // TODO: SPECIAL INSTRUCTION.
+        break;
+
+      case INST_POP:
+      case INST_POPAD:
+      case INST_POPFD:
+      case INST_POPFQ:
+        // TODO: SPECIAL INSTRUCTION.
+        break;
+
+      case INST_PUSH:
+      case INST_PUSHAD:
+      case INST_PUSHFD:
+      case INST_PUSHFQ:
+        // TODO: SPECIAL INSTRUCTION.
+        break;
+
+      case INST_RDTSC:
+      case INST_RDTSCP:
+        a._emitInstruction(_code);
+        return;
+
+      default:
+        ASMJIT_ASSERT(0);
+    }
+    // ${SPECIAL_INSTRUCTION_HANDLING_END}
+  }
 
   switch (_operandsCount)
   {
@@ -3755,6 +4157,23 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Oper
   operands[3] = *o3;
 
   EInstruction* e = newInstruction(code, operands, 4);
+  if (!e) return;
+
+  addEmittable(e);
+}
+
+void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3, const Operand* o4) ASMJIT_NOTHROW
+{
+  Operand* operands = reinterpret_cast<Operand*>(_zone.zalloc(5 * sizeof(Operand)));
+  if (!operands) return;
+
+  operands[0] = *o0;
+  operands[1] = *o1;
+  operands[2] = *o2;
+  operands[3] = *o3;
+  operands[4] = *o4;
+
+  EInstruction* e = newInstruction(code, operands, 5);
   if (!e) return;
 
   addEmittable(e);
