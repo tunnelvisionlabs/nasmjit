@@ -2239,7 +2239,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     // Destination variables must be different.
     ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
 
-    _emitInstruction(INST_IMUL, &src);
+    _emitInstruction(INST_IMUL, &dst_lo, &dst_hi, &src);
   }
   //! @overload
   inline void imul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
@@ -2247,7 +2247,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     // Destination variables must be different.
     ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
 
-    _emitInstruction(INST_IMUL, &src);
+    _emitInstruction(INST_IMUL, &dst_lo, &dst_hi, &src);
   }
 
   //! @brief Signed multiply.
@@ -2578,7 +2578,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     // Destination variables must be different.
     ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
 
-    _emitInstruction(INST_MUL, &src);
+    _emitInstruction(INST_MUL, &dst_lo, &dst_hi, &src);
   }
   //! @brief Unsigned multiply.
   //! @overload
@@ -2587,7 +2587,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     // Destination variables must be different.
     ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
 
-    _emitInstruction(INST_MUL, &src);
+    _emitInstruction(INST_MUL, &dst_lo, &dst_hi, &src);
   }
 
   //! @brief Two's Complement Negation.

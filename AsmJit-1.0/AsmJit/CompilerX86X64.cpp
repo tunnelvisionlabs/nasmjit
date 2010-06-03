@@ -659,7 +659,7 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
             _isSpecial = false;
             break;
           case 3:
-            if (!(_operands[0].isReg() && _operands[1].isReg() && _operands[2].isRegMem()))
+            if (!(_operands[0].isVar() && _operands[1].isVar() && _operands[2].isVarMem()))
             {
               // Only IMUL dst_lo, dst_hi, reg/mem is special, all others not.
               _isSpecial = false;
@@ -1331,14 +1331,10 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
       case INST_MUL:
       case INST_IDIV:
       case INST_DIV:
-        if (isSpecial())
-        {
-          // INST dst_lo (implicid), dst_hi (implicid), src (explicit)
-          ASMJIT_ASSERT(_operandsCount == 3);
-          a._emitInstruction(_code, &_operands[2]);
-          return;
-        }
-        break;
+        // INST dst_lo (implicid), dst_hi (implicid), src (explicit)
+        ASMJIT_ASSERT(_operandsCount == 3);
+        a._emitInstruction(_code, &_operands[2]);
+        return;
 
       case INST_LAHF:
       case INST_SAHF:

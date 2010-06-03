@@ -136,6 +136,10 @@ struct ASMJIT_HIDDEN Operand
   inline bool isVar() const ASMJIT_NOTHROW
   { return (_base.op == OPERAND_VAR); }
 
+  //! @brief Get whether operand is variable or memory.
+  inline bool isVarMem() const ASMJIT_NOTHROW
+  { return ((_base.op & (OPERAND_VAR | OPERAND_MEM)) != 0); }
+
   //! @brief Get whether operand is register and type of register is @a regType.
   inline bool isRegType(uint32_t regType) const ASMJIT_NOTHROW
   { return (_base.op == OPERAND_REG) & ((_reg.code & REG_TYPE_MASK) == regType); }

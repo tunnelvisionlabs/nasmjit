@@ -34,7 +34,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)(uint32_t*, uint32_t, uint32_t);
+typedef void (*MyFn)(int32_t*, int32_t*, int32_t, int32_t);
 
 int main(int argc, char* argv[])
 {
@@ -49,15 +49,19 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<uint32_t*, uint32_t, uint32_t>());
+    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<int32_t*, int32_t*, int32_t, int32_t>());
 
-    GPVar dst0(c.argGP(0));
-    GPVar v0(c.argGP(1));
-    GPVar v1(c.argGP(2));
+    GPVar dst0_lo(c.argGP(0));
+    GPVar dst0_hi(c.argGP(1));
 
-    c.imul(v0, v1);
+    GPVar v0_lo(c.newGP());
+    GPVar v0_hi(c.argGP(2));
+    GPVar src0(c.argGP(3));
 
-    c.mov(dword_ptr(dst0), v0);
+    c.imul_lo_hi(v0_lo, v0_hi, src0);
+
+    c.mov(dword_ptr(dst0_lo), v0_lo);
+    c.mov(dword_ptr(dst0_hi), v0_hi);
   }
 
   c.endFunction();
@@ -68,15 +72,23 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   {
-    uint32_t out;
-    uint32_t v0 = 4;
-    uint32_t v1 = 4;
-    uint32_t expected = v0 * v1;
+    int32_t out_lo;
+    int32_t out_hi;
 
-    fn(&out, v0, v1);
+    int32_t v0 = 4;
+    int32_t v1 = 4;
 
-    printf("out=%u (should be %u)\n", out, expected);
-    printf("Status: %s\n", (out == expected) ? "Success" : "Failure");
+    int32_t expected_lo = 0;
+    int32_t expected_hi = v0 * v1;
+
+    fn(&out_lo, &out_hi, v0, v1);
+
+    printf("out_lo=%d (should be %d)\n", out_lo, expected_lo);
+    printf("out_hi=%d (should be %d)\n", out_hi, expected_hi);
+
+    printf("Status: %s\n", (out_lo == expected_lo && out_hi == expected_hi) 
+      ? "Success" 
+      : "Failure");
   }
 
   // If function is not needed again it should be freed.
