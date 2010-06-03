@@ -81,9 +81,9 @@ namespace Util
   // [AsmJit::floatAsInt32, int32AsFloat]
   // --------------------------------------------------------------------------
 
-  //! @brief used to cast float to 32 bit integer and vica versa.
-  //!
   //! @internal
+  //!
+  //! @brief used to cast float to 32 bit integer and vica versa.
   union I32FPUnion
   {
     //! @brief 32 bit signed integer value.
@@ -92,9 +92,9 @@ namespace Util
     float f;
   };
 
-  //! @brief used to cast double to 64 bit integer and vica versa.
-  //!
   //! @internal
+  //!
+  //! @brief used to cast double to 64 bit integer and vica versa.
   union I64FPUnion
   {
     //! @brief 64 bit signed integer value.

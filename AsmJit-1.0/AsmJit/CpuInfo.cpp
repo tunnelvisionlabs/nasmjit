@@ -132,10 +132,10 @@ struct VendorInfo
 
 static const VendorInfo vendorInfo[] = 
 {
-  { CpuInfo::Vendor_INTEL, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
-  { CpuInfo::Vendor_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
-  { CpuInfo::Vendor_AMD  , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
-  { CpuInfo::Vendor_VIA  , { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} }
+  { CPU_VENDOR_INTEL, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
+  { CPU_VENDOR_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
+  { CPU_VENDOR_AMD  , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
+  { CPU_VENDOR_VIA  , { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} }
 };
 
 void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
@@ -188,24 +188,24 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   i->x86ExtendedInfo.logicalProcessors     = ((out.ebx >> 16) & 0xFF);
   i->x86ExtendedInfo.apicPhysicalId        = ((out.ebx >> 24) & 0xFF);
 
-  if (out.ecx & 0x00000001U) i->features |= CpuInfo::Feature_SSE3;
-  if (out.ecx & 0x00000008U) i->features |= CpuInfo::Feature_MonitorMWait;
-  if (out.ecx & 0x00000200U) i->features |= CpuInfo::Feature_SSSE3;
-  if (out.ecx & 0x00002000U) i->features |= CpuInfo::Feature_CMPXCHG16B;
-  if (out.ecx & 0x00080000U) i->features |= CpuInfo::Feature_SSE4_1;
-  if (out.ecx & 0x00100000U) i->features |= CpuInfo::Feature_SSE4_2;
-  if (out.ecx & 0x00800000U) i->features |= CpuInfo::Feature_POPCNT;
+  if (out.ecx & 0x00000001U) i->features |= CPU_FEATURE_SSE3;
+  if (out.ecx & 0x00000008U) i->features |= CPU_FEATURE_MONITOR_MWAIT;
+  if (out.ecx & 0x00000200U) i->features |= CPU_FEATURE_SSSE3;
+  if (out.ecx & 0x00002000U) i->features |= CPU_FEATURE_CMPXCHG16B;
+  if (out.ecx & 0x00080000U) i->features |= CPU_FEATURE_SSE4_1;
+  if (out.ecx & 0x00100000U) i->features |= CPU_FEATURE_SSE4_2;
+  if (out.ecx & 0x00800000U) i->features |= CPU_FEATURE_POPCNT;
 
-  if (out.edx & 0x00000010U) i->features |= CpuInfo::Feature_RDTSC;
-  if (out.edx & 0x00000100U) i->features |= CpuInfo::Feature_CMPXCHG8B;
-  if (out.edx & 0x00008000U) i->features |= CpuInfo::Feature_CMOV;
-  if (out.edx & 0x00800000U) i->features |= CpuInfo::Feature_MMX;
-  if (out.edx & 0x01000000U) i->features |= CpuInfo::Feature_FXSR;
-  if (out.edx & 0x02000000U) i->features |= CpuInfo::Feature_SSE | CpuInfo::Feature_MMXExt;
-  if (out.edx & 0x04000000U) i->features |= CpuInfo::Feature_SSE | CpuInfo::Feature_SSE2;
-  if (out.edx & 0x10000000U) i->features |= CpuInfo::Feature_MultiThreading;
+  if (out.edx & 0x00000010U) i->features |= CPU_FEATURE_RDTSC;
+  if (out.edx & 0x00000100U) i->features |= CPU_FEATURE_CMPXCHG8B;
+  if (out.edx & 0x00008000U) i->features |= CPU_FEATURE_CMOV;
+  if (out.edx & 0x00800000U) i->features |= CPU_FEATURE_MMX;
+  if (out.edx & 0x01000000U) i->features |= CPU_FEATURE_FXSR;
+  if (out.edx & 0x02000000U) i->features |= CPU_FEATURE_SSE | CPU_FEATURE_MMX_EXT;
+  if (out.edx & 0x04000000U) i->features |= CPU_FEATURE_SSE | CPU_FEATURE_SSE2;
+  if (out.edx & 0x10000000U) i->features |= CPU_FEATURE_MULTI_THREADING;
 
-  if (i->vendorId == CpuInfo::Vendor_AMD && (out.edx & 0x10000000U))
+  if (i->vendorId == CPU_VENDOR_AMD && (out.edx & 0x10000000U))
   {
     // AMD sets Multithreading to ON if it has more cores.
     if (i->numberOfProcessors == 1) i->numberOfProcessors = 2;
@@ -219,9 +219,9 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   // pre-release versions, but not in versions released to customers,
   // so we test only for Rev E, which is family 15, model 32..63 inclusive.
 
-  if (i->vendorId == CpuInfo::Vendor_AMD && i->family == 15 && i->model >= 32 && i->model <= 63) 
+  if (i->vendorId == CPU_VENDOR_AMD && i->family == 15 && i->model >= 32 && i->model <= 63) 
   {
-    i->bugs |= CpuInfo::Bug_AmdLockMB;
+    i->bugs |= CPU_BUG_AMD_LOCK_MB;
   }
 
   // Calling cpuid with 0x80000000 as the in argument
@@ -238,20 +238,20 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
     switch (a)
     {
       case 0x80000001:
-        if (out.ecx & 0x00000001U) i->features |= CpuInfo::Feature_LAHF_SAHF;
-        if (out.ecx & 0x00000020U) i->features |= CpuInfo::Feature_LZCNT;
-        if (out.ecx & 0x00000040U) i->features |= CpuInfo::Feature_SSE4_A;
-        if (out.ecx & 0x00000080U) i->features |= CpuInfo::Feature_MSSE;
-        if (out.ecx & 0x00000100U) i->features |= CpuInfo::Feature_PREFETCH;
-        if (out.ecx & 0x00000800U) i->features |= CpuInfo::Feature_SSE5;
+        if (out.ecx & 0x00000001U) i->features |= CPU_FEATURE_LAHF_SAHF;
+        if (out.ecx & 0x00000020U) i->features |= CPU_FEATURE_LZCNT;
+        if (out.ecx & 0x00000040U) i->features |= CPU_FEATURE_SSE4_A;
+        if (out.ecx & 0x00000080U) i->features |= CPU_FEATURE_MSSE;
+        if (out.ecx & 0x00000100U) i->features |= CPU_FEATURE_PREFETCH;
+        if (out.ecx & 0x00000800U) i->features |= CPU_FEATURE_SSE5;
 
-        if (out.edx & 0x00100000U) i->features |= CpuInfo::Feature_ExecuteDisableBit;
-        if (out.edx & 0x00200000U) i->features |= CpuInfo::Feature_FFXSR;
-        if (out.edx & 0x00400000U) i->features |= CpuInfo::Feature_MMXExt;
-        if (out.edx & 0x08000000U) i->features |= CpuInfo::Feature_RDTSCP;
-        if (out.edx & 0x20000000U) i->features |= CpuInfo::Feature_64Bit;
-        if (out.edx & 0x40000000U) i->features |= CpuInfo::Feature_3dNowExt | CpuInfo::Feature_MMXExt;
-        if (out.edx & 0x80000000U) i->features |= CpuInfo::Feature_3dNow;
+        if (out.edx & 0x00100000U) i->features |= CPU_FEATURE_EXECUTE_DISABLE_BIT;
+        if (out.edx & 0x00200000U) i->features |= CPU_FEATURE_FFXSR;
+        if (out.edx & 0x00400000U) i->features |= CPU_FEATURE_MMX_EXT;
+        if (out.edx & 0x08000000U) i->features |= CPU_FEATURE_RDTSCP;
+        if (out.edx & 0x20000000U) i->features |= CPU_FEATURE_64_BIT;
+        if (out.edx & 0x40000000U) i->features |= CPU_FEATURE_3DNOW_EXT | CPU_FEATURE_MMX_EXT;
+        if (out.edx & 0x80000000U) i->features |= CPU_FEATURE_3DNOW;
 
         break;
 

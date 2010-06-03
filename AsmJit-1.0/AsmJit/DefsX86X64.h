@@ -1667,12 +1667,19 @@ enum VARIABLE_TYPE
   //! @brief Variable is SSE2 packed DP-FP number (2 doubles).
   VARIABLE_TYPE_XMM_2D = 10,
 
+#if !defined(ASMJIT_NODOC)
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_F,
   VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_D,
 #else
   VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_XMM_1F,
   VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_1D,
+#endif
+#else
+  //! @brief Variable is SP-FP (x87 or xmm).
+  VARIABLE_TYPE_FLOAT = XXX,
+  //! @brief Variable is DP-FP (x87 or xmm).
+  VARIABLE_TYPE_DOUBLE = XXX,
 #endif
 
   //! @brief Count of variable types.
@@ -1683,10 +1690,16 @@ enum VARIABLE_TYPE
 // [AsmJit::VARIABLE_HINT]
 // ============================================================================
 
+//! @brief Variable hint (used by @ref Compiler).
+//!
+//! @sa @ref Compiler.
 enum VARIABLE_HINT
 {
+  //! @brief Alloc variable.
   VARIABLE_HINT_ALLOC = 0,
+  //! @brief Spill variable.
   VARIABLE_HINT_SPILL = 1,
+  //! @brief Mark variable as unused.
   VARIABLE_HINT_UNUSE = 2
 };
 

@@ -43,10 +43,10 @@ namespace AsmJit {
 // ============================================================================
 
 // Skip documenting this.
-#if !defined(ASMJIT_DOXYGEN)
+#if !defined(ASMJIT_NODOC)
 struct ASMJIT_HIDDEN _DontInitialize {};
 struct ASMJIT_HIDDEN _Initialize {};
-#endif // !ASMJIT_DOXYGEN
+#endif // !ASMJIT_NODOC
 
 // ============================================================================
 // [AsmJit::function_cast<>]
@@ -75,56 +75,56 @@ union ASMJIT_HIDDEN MMData
   // [Methods]
   // --------------------------------------------------------------------------
 
-  //! @brief Set all eight signed 8 bit integers.
+  //! @brief Set all eight signed 8-bit integers.
   inline void setSB(
     int8_t x0, int8_t x1, int8_t x2, int8_t x3, int8_t x4, int8_t x5, int8_t x6, int8_t x7) ASMJIT_NOTHROW
   {
     sb[0] = x0; sb[1] = x1; sb[2] = x2; sb[3] = x3; sb[4] = x4; sb[5] = x5; sb[6] = x6; sb[7] = x7;
   }
 
-  //! @brief Set all eight unsigned 8 bit integers.
+  //! @brief Set all eight unsigned 8-bit integers.
   inline void setUB(
     uint8_t x0, uint8_t x1, uint8_t x2, uint8_t x3, uint8_t x4, uint8_t x5, uint8_t x6, uint8_t x7) ASMJIT_NOTHROW
   {
     ub[0] = x0; ub[1] = x1; ub[2] = x2; ub[3] = x3; ub[4] = x4; ub[5] = x5; ub[6] = x6; ub[7] = x7;
   }
 
-  //! @brief Set all four signed 16 bit integers.
+  //! @brief Set all four signed 16-bit integers.
   inline void setSW(
     int16_t x0, int16_t x1, int16_t x2, int16_t x3) ASMJIT_NOTHROW
   {
     sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3;
   }
 
-  //! @brief Set all four unsigned 16 bit integers.
+  //! @brief Set all four unsigned 16-bit integers.
   inline void setUW(
     uint16_t x0, uint16_t x1, uint16_t x2, uint16_t x3) ASMJIT_NOTHROW
   {
     uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3;
   }
 
-  //! @brief Set all two signed 32 bit integers.
+  //! @brief Set all two signed 32-bit integers.
   inline void setSD(
     int32_t x0, int32_t x1) ASMJIT_NOTHROW
   {
     sd[0] = x0; sd[1] = x1;
   }
 
-  //! @brief Set all two unsigned 32 bit integers.
+  //! @brief Set all two unsigned 32-bit integers.
   inline void setUD(
     uint32_t x0, uint32_t x1) ASMJIT_NOTHROW
   {
     ud[0] = x0; ud[1] = x1;
   }
 
-  //! @brief Set signed 64 bit integer.
+  //! @brief Set signed 64-bit integer.
   inline void setSQ(
     int64_t x0) ASMJIT_NOTHROW
   {
     sq[0] = x0;
   }
 
-  //! @brief Set unsigned 64 bit integer.
+  //! @brief Set unsigned 64-bit integer.
   inline void setUQ(
     uint64_t x0) ASMJIT_NOTHROW
   {
@@ -142,21 +142,21 @@ union ASMJIT_HIDDEN MMData
   // [Members]
   // --------------------------------------------------------------------------
 
-  //! @brief Array of eight signed 8 bit integers.
+  //! @brief Array of eight signed 8-bit integers.
   int8_t sb[8];
-  //! @brief Array of eight unsigned 8 bit integers.
+  //! @brief Array of eight unsigned 8-bit integers.
   uint8_t ub[8];
-  //! @brief Array of four signed 16 bit integers.
+  //! @brief Array of four signed 16-bit integers.
   int16_t sw[4];
-  //! @brief Array of four unsigned 16 bit integers.
+  //! @brief Array of four unsigned 16-bit integers.
   uint16_t uw[4];
-  //! @brief Array of two signed 32 bit integers.
+  //! @brief Array of two signed 32-bit integers.
   int32_t sd[2];
-  //! @brief Array of two unsigned 32 bit integers.
+  //! @brief Array of two unsigned 32-bit integers.
   uint32_t ud[2];
-  //! @brief Array of one signed 64 bit integer.
+  //! @brief Array of one signed 64-bit integer.
   int64_t sq[1];
-  //! @brief Array of one unsigned 64 bit integer.
+  //! @brief Array of one unsigned 64-bit integer.
   uint64_t uq[1];
 
   //! @brief Array of two SP-FP values.
@@ -167,13 +167,14 @@ union ASMJIT_HIDDEN MMData
 //!
 //! This structure can be used to load / store data from / to SSE register.
 //!
-//! @note Always align SSE data to 16 bytes.
+//! @note Always align SSE data to 16-bytes.
 union ASMJIT_HIDDEN XMMData
 {
   // --------------------------------------------------------------------------
   // [Methods]
   // --------------------------------------------------------------------------
 
+  //! @brief Set all sixteen signed 8-bit integers.
   inline void setSB(
     int8_t x0, int8_t x1, int8_t x2 , int8_t x3 , int8_t x4 , int8_t x5 , int8_t x6 , int8_t x7 ,
     int8_t x8, int8_t x9, int8_t x10, int8_t x11, int8_t x12, int8_t x13, int8_t x14, int8_t x15) ASMJIT_NOTHROW
@@ -182,6 +183,7 @@ union ASMJIT_HIDDEN XMMData
     sb[8] = x8; sb[9] = x9; sb[10] = x10; sb[11] = x11; sb[12] = x12; sb[13] = x13; sb[14] = x14; sb[15] = x15; 
   }
 
+  //! @brief Set all sixteen unsigned 8-bit integers.
   inline void setUB(
     uint8_t x0, uint8_t x1, uint8_t x2 , uint8_t x3 , uint8_t x4 , uint8_t x5 , uint8_t x6 , uint8_t x7 ,
     uint8_t x8, uint8_t x9, uint8_t x10, uint8_t x11, uint8_t x12, uint8_t x13, uint8_t x14, uint8_t x15) ASMJIT_NOTHROW
@@ -190,48 +192,56 @@ union ASMJIT_HIDDEN XMMData
     ub[8] = x8; ub[9] = x9; ub[10] = x10; ub[11] = x11; ub[12] = x12; ub[13] = x13; ub[14] = x14; ub[15] = x15; 
   }
 
+  //! @brief Set all eight signed 16-bit integers.
   inline void setSW(
     int16_t x0, int16_t x1, int16_t x2, int16_t x3, int16_t x4, int16_t x5, int16_t x6, int16_t x7) ASMJIT_NOTHROW
   {
     sw[0] = x0; sw[1] = x1; sw[2] = x2; sw[3] = x3; sw[4] = x4; sw[5] = x5; sw[6] = x6; sw[7] = x7;
   }
 
+  //! @brief Set all eight unsigned 16-bit integers.
   inline void setUW(
     uint16_t x0, uint16_t x1, uint16_t x2, uint16_t x3, uint16_t x4, uint16_t x5, uint16_t x6, uint16_t x7) ASMJIT_NOTHROW
   {
     uw[0] = x0; uw[1] = x1; uw[2] = x2; uw[3] = x3; uw[4] = x4; uw[5] = x5; uw[6] = x6; uw[7] = x7;
   }
 
+  //! @brief Set all four signed 32-bit integers.
   inline void setSD(
     int32_t x0, int32_t x1, int32_t x2, int32_t x3) ASMJIT_NOTHROW
   {
     sd[0] = x0; sd[1] = x1; sd[2] = x2; sd[3] = x3;
   }
 
+  //! @brief Set all four unsigned 32-bit integers.
   inline void setUD(
     uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3) ASMJIT_NOTHROW
   {
     ud[0] = x0; ud[1] = x1; ud[2] = x2; ud[3] = x3;
   }
 
+  //! @brief Set all two signed 64-bit integers.
   inline void setSQ(
     int64_t x0, int64_t x1) ASMJIT_NOTHROW
   {
     sq[0] = x0; sq[1] = x1;
   }
 
+  //! @brief Set all two unsigned 64-bit integers.
   inline void setUQ(
     uint64_t x0, uint64_t x1) ASMJIT_NOTHROW
   {
     uq[0] = x0; uq[1] = x1;
   }
 
+  //! @brief Set all four SP-FP floats.
   inline void setSF(
     float x0, float x1, float x2, float x3) ASMJIT_NOTHROW
   {
     sf[0] = x0; sf[1] = x1; sf[2] = x2; sf[3] = x3;
   }
 
+  //! @brief Set all two DP-FP floats.
   inline void setDF(
     double x0, double x1) ASMJIT_NOTHROW
   {
@@ -576,6 +586,7 @@ struct PodVector
     return true;
   }
 
+  //! @brief Insert an @a item at the @a index.
   bool insert(sysuint_t index, const T& item) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(index <= _length);
@@ -618,6 +629,7 @@ struct PodVector
     memmove(dst, dst + 1, _length - i);
   }
 
+  //! @brief Swap this pod vertor with @a other.
   void swap(PodVector<T>& other)
   {
     T* _tmp_data = _data;
@@ -646,6 +658,7 @@ struct PodVector
     return _data[i];
   }
 
+  //! @brief Append the item and return address so it can be initialized.
   T* newItem() ASMJIT_NOTHROW
   {
     if (_length == _capacity && !_grow()) return NULL;
@@ -785,6 +798,8 @@ struct ASMJIT_API Zone
   // [Chunk]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //!
   //! @brief One allocated chunk of memory.
   struct ASMJIT_HIDDEN Chunk
   {

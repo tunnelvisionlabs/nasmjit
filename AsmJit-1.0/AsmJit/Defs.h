@@ -141,10 +141,15 @@ enum OPERAND_TYPE
 // [AsmJit::OPERAND_MEM_TYPE]
 // ============================================================================
 
+//! @brief Type of memory operand.
 enum OPERAND_MEM_TYPE
 {
+  //! @brief Operand is combination of register(s) and displacement (native).
   OPERAND_MEM_NATIVE = 0,
+  //! @brief Operand is label.
   OPERAND_MEM_LABEL = 1,
+  //! @brief Operand is absolute memory location (supported mainly in 32-bit 
+  //! mode)
   OPERAND_MEM_ABSOLUTE = 2,
 };
 
@@ -278,7 +283,6 @@ enum VARIABLE_STATE
 // ============================================================================
 
 //! @brief Variable alloc mode.
-//! @internal
 enum VARIABLE_ALLOC
 {
   VARIABLE_ALLOC_REGISTER = 0x10,

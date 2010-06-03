@@ -68,14 +68,16 @@ struct EProlog;
 // [AsmJit::TypeToId]
 // ============================================================================
 
+#if !defined(ASMJIT_NODOC)
+
 #if defined(ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION)
 
 template<typename T>
 struct TypeToId
 {
-#if defined(ASMJIT_DOXYGEN)
+#if defined(ASMJIT_NODOC)
   enum { Id = INVALID_VALUE };
-#endif // ASMJIT_DOXYGEN
+#endif // ASMJIT_NODOC
 };
 
 template<typename T>
@@ -113,6 +115,8 @@ struct TypeToId
   template<> \
   struct TypeToId<__T__> { enum { Id = __Id__ }; }
 
+#endif // ASMJIT_NODOC
+
 // ============================================================================
 // [AsmJit::Function Builder]
 // ============================================================================
@@ -120,11 +124,13 @@ struct TypeToId
 //! @brief Class used to build function without arguments.
 struct FunctionBuilder0
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     return NULL;
   }
 
+  //! @brief Get count of arguments (0).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 0;
@@ -135,6 +141,7 @@ struct FunctionBuilder0
 template<typename P0>
 struct FunctionBuilder1
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -144,6 +151,7 @@ struct FunctionBuilder1
     return data;
   }
 
+  //! @brief Get count of arguments (1).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 1;
@@ -154,6 +162,7 @@ struct FunctionBuilder1
 template<typename P0, typename P1>
 struct FunctionBuilder2
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -164,6 +173,7 @@ struct FunctionBuilder2
     return data;
   }
 
+  //! @brief Get count of arguments (2).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 2;
@@ -174,6 +184,7 @@ struct FunctionBuilder2
 template<typename P0, typename P1, typename P2>
 struct FunctionBuilder3
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -185,6 +196,7 @@ struct FunctionBuilder3
     return data;
   }
 
+  //! @brief Get count of arguments (3).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 3;
@@ -195,6 +207,7 @@ struct FunctionBuilder3
 template<typename P0, typename P1, typename P2, typename P3>
 struct FunctionBuilder4
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -207,6 +220,7 @@ struct FunctionBuilder4
     return data;
   }
 
+  //! @brief Get count of arguments (4).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 4;
@@ -217,6 +231,7 @@ struct FunctionBuilder4
 template<typename P0, typename P1, typename P2, typename P3, typename P4>
 struct FunctionBuilder5
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -230,6 +245,7 @@ struct FunctionBuilder5
     return data;
   }
 
+  //! @brief Get count of arguments (5).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 5;
@@ -240,6 +256,7 @@ struct FunctionBuilder5
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct FunctionBuilder6
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -254,6 +271,7 @@ struct FunctionBuilder6
     return data;
   }
 
+  //! @brief Get count of arguments (6).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 6;
@@ -264,6 +282,7 @@ struct FunctionBuilder6
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
 struct FunctionBuilder7
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -279,6 +298,7 @@ struct FunctionBuilder7
     return data;
   }
 
+  //! @brief Get count of arguments (7).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 7;
@@ -289,6 +309,7 @@ struct FunctionBuilder7
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 struct FunctionBuilder8
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -305,6 +326,7 @@ struct FunctionBuilder8
     return data;
   }
 
+  //! @brief Get count of arguments (8).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 8;
@@ -315,6 +337,7 @@ struct FunctionBuilder8
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 struct FunctionBuilder9
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -332,6 +355,7 @@ struct FunctionBuilder9
     return data;
   }
 
+  //! @brief Get count of arguments (9).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 9;
@@ -342,6 +366,7 @@ struct FunctionBuilder9
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct FunctionBuilder10
 {
+  //! @brief Get function argument IDs.
   inline const uint32_t* getArgs() const ASMJIT_NOTHROW
   {
     static const uint32_t data[] =
@@ -360,6 +385,7 @@ struct FunctionBuilder10
     return data;
   }
 
+  //! @brief Get count of arguments (10).
   inline uint32_t getCount() const ASMJIT_NOTHROW
   {
     return 10;
@@ -492,13 +518,18 @@ private:
 // ============================================================================
 
 //! @brief Dummy emittable, used as a mark.
+//!
+//! This emittable does nothing and it's only used by @ref Compiler to mark 
+//! specific location in the code.
 struct ASMJIT_API EDummy : public Emittable
 {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EDummy instance.
   EDummy(Compiler* c) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EDummy instance.
   virtual ~EDummy() ASMJIT_NOTHROW;
 
 private:
@@ -522,7 +553,9 @@ struct ASMJIT_API EComment : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EComment instance.
   EComment(Compiler* c, const char* comment) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EComment instance.
   virtual ~EComment() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -550,7 +583,9 @@ struct ASMJIT_API EData : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EData instance.
   EData(Compiler* c, const void* data, sysuint_t length) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EData instance.
   virtual ~EData() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -573,10 +608,13 @@ struct ASMJIT_API EData : public Emittable
   // [Members]
   // --------------------------------------------------------------------------
 
-private:
+protected:
+  //! @brief Data length.
   sysuint_t _length;
+  //! @brief Data buffer (that will be embedded to the assembler stream).
   uint8_t _data[sizeof(void*)];
 
+private:
   friend struct CompilerCore;
 
   ASMJIT_DISABLE_COPY(EData)
@@ -593,7 +631,9 @@ struct ASMJIT_API EAlign : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EAlign instance.
   EAlign(Compiler* c, uint32_t size = 0) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EAlign instance.
   virtual ~EAlign() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -615,9 +655,11 @@ struct ASMJIT_API EAlign : public Emittable
   // [Members]
   // --------------------------------------------------------------------------
 
-private:
+protected:
+  //! @brief Align size.
   uint32_t _size;
 
+private:
   friend struct CompilerCore;
 
   ASMJIT_DISABLE_COPY(EAlign)
@@ -634,7 +676,9 @@ struct ASMJIT_API ETarget : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref ETarget instance.
   ETarget(Compiler* c, const Label& target) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref ETarget instance.
   virtual ~ETarget() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -665,16 +709,23 @@ struct ASMJIT_API ETarget : public Emittable
   // --------------------------------------------------------------------------
 
 protected:
+  //! @brief Label.
   Label _label;
+  //! @brief First jump instruction that points to this target (label).
   EJmpInstruction* _from;
+  //! @brief State at this location.
   StateData* _state;
 
+  //! @brief Count of jumps to this target (label).
   uint32_t _jumpsCount;
 
+private:
   friend struct CompilerContext;
   friend struct CompilerCore;
   friend struct EInstruction;
   friend struct EJmpInstruction;
+
+  ASMJIT_DISABLE_COPY(ETarget)
 };
 
 } // AsmJit namespace

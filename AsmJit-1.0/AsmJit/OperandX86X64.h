@@ -72,26 +72,36 @@ struct ASMJIT_HIDDEN Operand
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create an uninitialized operand.
   inline Operand() ASMJIT_NOTHROW
   {
     memset(this, 0, sizeof(Operand));
     _base.id = INVALID_VALUE;
   }
 
+  //! @brief Create a reference to @a other operand.
   inline Operand(const Operand& other) ASMJIT_NOTHROW
   {
     _init(other);
   }
 
+#if !defined(ASMJIT_NODOC)
   inline Operand(const _DontInitialize&) ASMJIT_NOTHROW
   {
   }
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Init & Copy]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //!
+  //! @brief Initialize operand to @a other (used by constructors).
   inline void _init(const Operand& other) ASMJIT_NOTHROW { memcpy(this, &other, sizeof(Operand)); }
+  //! @internal
+  //!
+  //! @brief Initialize operand to @a other (used by assign operators).
   inline void _copy(const Operand& other) ASMJIT_NOTHROW { memcpy(this, &other, sizeof(Operand)); }
 
   // --------------------------------------------------------------------------
@@ -170,6 +180,8 @@ struct ASMJIT_HIDDEN Operand
   // [Extensions]
   // --------------------------------------------------------------------------
 
+  //! @brief Get whether the extended register (additional eight registers
+  //! introduced by 64-bit mode) is used.
   inline bool isExtendedRegisterUsed() const ASMJIT_NOTHROW
   {
     // Hacky, but correct.
@@ -188,6 +200,8 @@ struct ASMJIT_HIDDEN Operand
   // [Data Structures]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //! 
   //! @brief Base operand data shared between all operands.
   struct BaseData
   {
@@ -205,6 +219,8 @@ struct ASMJIT_HIDDEN Operand
     uint32_t id;
   };
 
+  //! @internal
+  //! 
   //! @brief Register data.
   struct RegData
   {
@@ -223,6 +239,8 @@ struct ASMJIT_HIDDEN Operand
     uint32_t code;
   };
 
+  //! @internal
+  //! 
   //! @brief Memory address data.
   struct MemData
   {
@@ -253,6 +271,8 @@ struct ASMJIT_HIDDEN Operand
     sysint_t displacement;
   };
 
+  //! @internal
+  //! 
   //! @brief Immediate value data.
   struct ImmData
   {
@@ -273,6 +293,8 @@ struct ASMJIT_HIDDEN Operand
     sysint_t value;
   };
 
+  //! @internal
+  //! 
   //! @brief Label data.
   struct LblData
   {
@@ -288,6 +310,9 @@ struct ASMJIT_HIDDEN Operand
     uint32_t id;
   };
 
+  //! @internal
+  //! 
+  //! @brief Variable data.
   struct VarData
   {
     //! @brief Type of operand, see @c OPERAND_TYPE (in this case @c OPERAND_VAR).
@@ -347,6 +372,7 @@ struct ASMJIT_HIDDEN BaseReg : public Operand
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new base register.
   inline BaseReg(uint32_t code, uint32_t size) ASMJIT_NOTHROW :
     Operand(_DontInitialize())
   {
@@ -356,13 +382,16 @@ struct ASMJIT_HIDDEN BaseReg : public Operand
     _reg.code = code;
   }
 
+  //! @brief Create a new reference to @a other.
   inline BaseReg(const BaseReg& other) ASMJIT_NOTHROW :
     Operand(other)
   {}
 
+#if !defined(ASMJIT_NODOC)
   inline BaseReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     Operand(dontInitialize)
   {}
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [BaseReg Specific]
@@ -427,37 +456,53 @@ struct ASMJIT_HIDDEN GPReg : public BaseReg
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create non-initialized general purpose register.
   inline GPReg() ASMJIT_NOTHROW :
     BaseReg(INVALID_VALUE, 0) {}
 
+  //! @brief Create a reference to @a other general purpose register.
   inline GPReg(const GPReg& other) ASMJIT_NOTHROW :
     BaseReg(other) {}
 
+#if !defined(ASMJIT_NODOC)
   inline GPReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     BaseReg(dontInitialize) {}
 
   inline GPReg(const _Initialize&, uint32_t code) ASMJIT_NOTHROW :
     BaseReg(code, static_cast<uint32_t>(1U << ((code & REG_TYPE_MASK) >> 12))) {}
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [GPReg Specific]
   // --------------------------------------------------------------------------
 
+  //! @brief Get whether the general purpose register is BYTE (8-bit) type.
   inline bool isGPB() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) <= REG_TYPE_GPB_HI; }
+  //! @brief Get whether the general purpose register is LO-BYTE (8-bit) type.
   inline bool isGPB_lo() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
+  //! @brief Get whether the general purpose register is HI-BYTE (8-bit) type.
   inline bool isGPB_hi() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_HI; }
 
+  //! @brief Get whether the general purpose register is WORD (16-bit) type.
   inline bool isGPW() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPW; }
+  //! @brief Get whether the general purpose register is DWORD (32-bit) type.
+  //!
+  //! This is default type for 32-bit platforms.
   inline bool isGPD() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPD; }
+  //! @brief Get whether the general purpose register is QWORD (64-bit) type.
+  //!
+  //! This is default type for 64-bit platforms.
   inline bool isGPQ() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPQ; }
 
   // --------------------------------------------------------------------------
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline GPReg& operator=(const GPReg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
   inline bool operator==(const GPReg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
   inline bool operator!=(const GPReg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -473,25 +518,31 @@ struct ASMJIT_HIDDEN X87Reg : public BaseReg
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create non-initialized x87 register.
   inline X87Reg() ASMJIT_NOTHROW :
     BaseReg(INVALID_VALUE, 10) {}
 
+  //! @brief Create a reference to @a other x87 register.
   inline X87Reg(const X87Reg& other) ASMJIT_NOTHROW :
     BaseReg(other) {}
 
+#if !defined(ASMJIT_NODOC)
   inline X87Reg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     BaseReg(dontInitialize) {}
 
   inline X87Reg(const _Initialize&, uint32_t code) ASMJIT_NOTHROW :
     BaseReg(code | REG_TYPE_X87, 10) {}
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline X87Reg& operator=(const X87Reg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
   inline bool operator==(const X87Reg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
   inline bool operator!=(const X87Reg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -505,25 +556,31 @@ struct ASMJIT_HIDDEN MMReg : public BaseReg
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create non-initialized MM register.
   inline MMReg() ASMJIT_NOTHROW :
     BaseReg(INVALID_VALUE, 8) {}
 
+  //! @brief Create a reference to @a other MM register.
   inline MMReg(const MMReg& other) ASMJIT_NOTHROW :
     BaseReg(other) {}
 
+#if !defined(ASMJIT_NODOC)
   inline MMReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     BaseReg(dontInitialize) {}
 
   inline MMReg(const _Initialize&, uint32_t code) ASMJIT_NOTHROW :
     BaseReg(code, 8) {}
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline MMReg& operator=(const MMReg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
   inline bool operator==(const MMReg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
   inline bool operator!=(const MMReg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -537,25 +594,31 @@ struct ASMJIT_HIDDEN XMMReg : public BaseReg
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create non-initialized XMM register.
   inline XMMReg() ASMJIT_NOTHROW :
     BaseReg(INVALID_VALUE, 16) {}
 
+  //! @brief Create a reference to @a other XMM register.
   inline XMMReg(const _Initialize&, uint32_t code) ASMJIT_NOTHROW :
     BaseReg(code, 16) {}
 
+#if !defined(ASMJIT_NODOC)
   inline XMMReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     BaseReg(dontInitialize) {}
 
   inline XMMReg(const XMMReg& other) ASMJIT_NOTHROW :
     BaseReg(other) {}
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline XMMReg& operator=(const XMMReg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
   inline bool operator==(const XMMReg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
   inline bool operator!=(const XMMReg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -878,6 +941,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new immediate value (initial value is 0).
   Imm() ASMJIT_NOTHROW :
     Operand(_DontInitialize())
   {
@@ -890,6 +954,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.value = 0;
   }
 
+  //! @brief Create a new signed immediate value, assigning the value to @a i.
   Imm(sysint_t i) ASMJIT_NOTHROW :
     Operand(_DontInitialize())
   {
@@ -902,6 +967,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.value = i;
   }
 
+  //! @brief Create a new signed or unsigned immediate value, assigning the value to @a i.
   Imm(sysint_t i, bool isUnsigned) ASMJIT_NOTHROW :
     Operand(_DontInitialize())
   {
@@ -914,6 +980,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.value = i;
   }
 
+  //! @brief Create a new immediate value from @a other.
   inline Imm(const Imm& other) ASMJIT_NOTHROW :
     Operand(other) {}
 
@@ -951,9 +1018,11 @@ struct ASMJIT_HIDDEN Imm : public Operand
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+  //! @brief Assign a signed value @a val to the immediate operand.
   inline Imm& operator=(sysint_t val) ASMJIT_NOTHROW
   { setValue(val); return *this; }
 
+  //! @brief Assign @a other to the immediate operand.
   inline Imm& operator=(const Imm& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 };
@@ -1025,11 +1094,13 @@ struct ASMJIT_HIDDEN Label : public Operand
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline Label& operator=(const Label& other)
   { _copy(other); return *this; }
 
   inline bool operator==(const Label& other) const ASMJIT_NOTHROW { return _base.id == other._base.id; }
   inline bool operator!=(const Label& other) const ASMJIT_NOTHROW { return _base.id != other._base.id; }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -1223,6 +1294,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline Mem& operator=(const Mem& other) ASMJIT_NOTHROW { _copy(other); return *this; }
 
   inline bool operator==(const Mem& other) ASMJIT_NOTHROW
@@ -1239,14 +1311,20 @@ struct ASMJIT_HIDDEN Mem : public Operand
   }
 
   inline bool operator!=(const Mem& other) ASMJIT_NOTHROW { return *this == other; }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
 // [AsmJit::BaseVar]
 // ============================================================================
 
+//! @internal
 ASMJIT_API Mem _baseVarMem(const BaseVar& var, uint32_t ptrSize) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _baseVarMem(const BaseVar& var, uint32_t ptrSize, sysint_t disp) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _baseVarMem(const BaseVar& var, uint32_t ptrSize, const GPVar& index, uint32_t shift, sysint_t disp) ASMJIT_NOTHROW;
 
 //! @brief Base class for all variables.
@@ -1256,10 +1334,12 @@ struct ASMJIT_HIDDEN BaseVar : public Operand
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline BaseVar(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
     Operand(dontInitialize)
   {
   }
+#endif // ASMJIT_NODOC
 
   inline BaseVar() ASMJIT_NOTHROW :
     Operand(_DontInitialize())
@@ -1369,11 +1449,13 @@ struct ASMJIT_HIDDEN BaseVar : public Operand
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline BaseVar& operator=(const BaseVar& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
   inline bool operator==(const BaseVar& other) const ASMJIT_NOTHROW { return _base.id == other._base.id && _var.registerCode == other._var.registerCode; }
   inline bool operator!=(const BaseVar& other) const ASMJIT_NOTHROW { return _base.id != other._base.id || _var.registerCode != other._var.registerCode; }
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Private]
@@ -1425,11 +1507,13 @@ struct ASMJIT_HIDDEN X87Var : public BaseVar
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline X87Var& operator=(const X87Var& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
   inline bool operator==(const X87Var& other) const ASMJIT_NOTHROW { return _base.id == other._base.id; }
   inline bool operator!=(const X87Var& other) const ASMJIT_NOTHROW { return _base.id != other._base.id; }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -1511,11 +1595,13 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline GPVar& operator=(const GPVar& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
   inline bool operator==(const GPVar& other) const ASMJIT_NOTHROW { return _base.id == other._base.id && _var.registerCode == other._var.registerCode; }
   inline bool operator!=(const GPVar& other) const ASMJIT_NOTHROW { return _base.id != other._base.id || _var.registerCode != other._var.registerCode; }
+#endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
   // [Private]
@@ -1573,11 +1659,13 @@ struct ASMJIT_HIDDEN MMVar : public BaseVar
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline MMVar& operator=(const MMVar& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
   inline bool operator==(const MMVar& other) const ASMJIT_NOTHROW { return _base.id == other._base.id; }
   inline bool operator!=(const MMVar& other) const ASMJIT_NOTHROW { return _base.id != other._base.id; }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
@@ -1618,19 +1706,26 @@ struct ASMJIT_HIDDEN XMMVar : public BaseVar
   // [Overloaded Operators]
   // --------------------------------------------------------------------------
 
+#if !defined(ASMJIT_NODOC)
   inline XMMVar& operator=(const XMMVar& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
   inline bool operator==(const XMMVar& other) const ASMJIT_NOTHROW { return _base.id == other._base.id; }
   inline bool operator!=(const XMMVar& other) const ASMJIT_NOTHROW { return _base.id != other._base.id; }
+#endif // ASMJIT_NODOC
 };
 
 // ============================================================================
 // [AsmJit::Mem - ptr[displacement]]
 // ============================================================================
 
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const Label& label, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const Label& label, const GPReg& index, uint32_t shift, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const Label& label, const GPVar& index, uint32_t shift, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
 
 
@@ -1775,11 +1870,13 @@ static inline Mem sysint_ptr(const Label& label, const GPVar& index, uint32_t sh
 // [AsmJit::Mem - Absolute Addressing]
 // ============================================================================
 
+//! @internal
 ASMJIT_API Mem _MemPtrAbs(
   void* target,
   sysint_t disp,
   uint32_t segmentPrefix, uint32_t ptrSize) ASMJIT_NOTHROW;
 
+//! @internal
 ASMJIT_API Mem _MemPtrAbs(
   void* target,
   const GPReg& index, uint32_t shift, sysint_t disp,
@@ -1881,7 +1978,10 @@ static inline Mem sysint_ptr_abs(void* target, const GPReg& index, uint32_t shif
 // [AsmJit::Mem - ptr[base + displacement]]
 // ============================================================================
 
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const GPReg& base, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const GPVar& base, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
 
 
@@ -1980,7 +2080,10 @@ static inline Mem sysint_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHRO
 // [AsmJit::Mem - ptr[base + (index << shift) + displacement]]
 // ============================================================================
 
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const GPReg& base, const GPReg& index, uint32_t shift, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
+
+//! @internal
 ASMJIT_API Mem _MemPtrBuild(const GPVar& base, const GPVar& index, uint32_t shift, sysint_t disp, uint32_t ptrSize) ASMJIT_NOTHROW;
 
 

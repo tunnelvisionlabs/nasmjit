@@ -2637,7 +2637,7 @@ void AssemblerCore::align(uint32_t m) ASMJIT_NOTHROW
     const uint8_t* p;
     sysint_t n;
 
-    if (ci->vendorId == CpuInfo::Vendor_INTEL && 
+    if (ci->vendorId == CPU_VENDOR_INTEL && 
        ((ci->family & 0x0F) == 6 || 
         (ci->family & 0x0F) == 15)
        )
@@ -2663,7 +2663,7 @@ void AssemblerCore::align(uint32_t m) ASMJIT_NOTHROW
       return;
     }
 
-    if (ci->vendorId == CpuInfo::Vendor_AMD && 
+    if (ci->vendorId == CPU_VENDOR_AMD && 
         ci->family >= 0x0F)
     {
       do {

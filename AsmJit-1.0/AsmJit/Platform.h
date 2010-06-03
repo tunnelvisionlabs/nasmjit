@@ -50,6 +50,7 @@ namespace AsmJit {
 // [AsmJit::Assert]
 // ============================================================================
 
+//! @brief Called on assertion failure (through @ref ASMJIT_ASSERT).
 ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 
 // ============================================================================
@@ -66,6 +67,7 @@ struct ASMJIT_HIDDEN Lock
   typedef pthread_mutex_t Handle;
 #endif // ASMJIT_POSIX
 
+  //! @brief Create a new @ref Lock instance.
   inline Lock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
@@ -77,6 +79,7 @@ struct ASMJIT_HIDDEN Lock
 #endif // ASMJIT_POSIX
   }
 
+  //! @brief Destroy the @ref Lock instance.
   inline ~Lock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
@@ -87,16 +90,19 @@ struct ASMJIT_HIDDEN Lock
 #endif // ASMJIT_POSIX
   }
 
+  //! @brief Get handle.
   inline Handle& getHandle() ASMJIT_NOTHROW
   {
     return _handle;
   }
 
+  //! @overload
   inline const Handle& getHandle() const ASMJIT_NOTHROW
   {
     return _handle;
   }
 
+  //! @brief Lock.
   inline void lock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
@@ -107,6 +113,7 @@ struct ASMJIT_HIDDEN Lock
 #endif // ASMJIT_POSIX
   }
 
+  //! @brief Unlock.
   inline void unlock() ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_WINDOWS)
@@ -118,6 +125,7 @@ struct ASMJIT_HIDDEN Lock
   }
 
 private:
+  //! @brief Handle.
   Handle _handle;
 
   // Disable copy.

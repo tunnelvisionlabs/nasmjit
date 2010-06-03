@@ -85,8 +85,7 @@
 //! - http://www.ragestorm.net/distorm/ (Disassembling)
 
 
-//! @defgroup AsmJit_Core Assembler - Operands, intrinsics and low-level
-//! code generation.
+//! @defgroup AsmJit_Core Assembler (operands, intrinsics and low-level code generation).
 //!
 //! Contains classes related to @c AsmJit::Assembler that're directly used 
 //! to generate machine code stream. It's one of oldest and fastest method 
@@ -156,7 +155,7 @@
 //! @sa @c AsmJit::Serializer.
 
 
-//! @defgroup AsmJit_Compiler Compiler - high-level code generation.
+//! @defgroup AsmJit_Compiler Compiler (high-level code generation).
 //!
 //! Contains classes related to @c AsmJit::Compiler that can be used
 //! to generate code using high-level constructs.
@@ -165,14 +164,12 @@
 //!   documentation - calling conventions, function declaration
 //!   and variables management.
 
-//! @defgroup AsmJit_Config Configuration - macros used to configure AsmJit.
-//! library.
+//! @defgroup AsmJit_Config Configuration.
 //!
 //! Contains macros that can be redefined to fit into any project.
 
 
-//! @defgroup AsmJit_CpuInfo Cpu informations - Get informations about host 
-//! processor.
+//! @defgroup AsmJit_CpuInfo CPU information.
 //!
 //! X86 or x64 cpuid instruction allows to get information about processor 
 //! vendor and it's features. It's always used to detect features like MMX, 
@@ -255,12 +252,12 @@
 //! @sa AsmJit::cpuid, @c AsmJit::cpuInfo.
 
 
-//! @defgroup AsmJit_Defs Definitions - registers and instructions constants.
+//! @defgroup AsmJit_Defs Registers and instructions constants.
 //!
 //! Contains constants used in AsmJit library.
 
 
-//! @defgroup AsmJit_Logging Logging - logging and error handling.
+//! @defgroup AsmJit_Logging Logging and error handling.
 //!
 //! Contains classes related to loging assembler output. Currently logging
 //! is implemented in @c AsmJit::Logger class.You can override
@@ -286,11 +283,6 @@
 //! correct order.
 //!
 //! @sa @c AsmJit::Logger, @c AsmJit::FileLogger.
-
-
-//! @defgroup AsmJit_Util Utilities - Utilities and helper classes.
-//!
-//! Contains some helper classes that's used by AsmJit library.
 
 
 //! @defgroup AsmJit_MemoryManagement Virtual memory management.
@@ -322,6 +314,18 @@
 //! @c AsmJit::MemoryManager class.
 //!
 //! @sa @c AsmJit::VirtualMemory, @ AsmJit::MemoryManager.
+
+
+//! @defgroup AsmJit_Util Utilities and helper classes.
+//!
+//! Contains some helper classes that's used by AsmJit library.
+
+
+
+//! @defgroup AsmJit_Platform Platform specific classes.
+//!
+//! Contains platform specific classes and functions.
+
 
 
 //! @addtogroup AsmJit_Config

@@ -1908,7 +1908,7 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
   // Emit standard epilog leave code (if needed).
   if (!_isNaked)
   {
-    if (cpuInfo->vendorId == CpuInfo::Vendor_AMD)
+    if (cpuInfo->vendorId == CPU_VENDOR_AMD)
     {
       // AMD seems to prefer LEAVE instead of MOV/POP sequence.
       _compiler->emit(INST_LEAVE);
@@ -3773,7 +3773,7 @@ void CompilerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) AS
   }
 }
 
-void CompilerCore::_emitReturn(const Operand* val)
+void CompilerCore::_emitReturn(const Operand* val) ASMJIT_NOTHROW
 {
   // TODO.
 }
@@ -4048,7 +4048,7 @@ uint32_t CompilerCore::getPriority(BaseVar& var) const ASMJIT_NOTHROW
   return vdata->priority;
 }
 
-void CompilerCore::setPriority(BaseVar& var, uint priority) ASMJIT_NOTHROW
+void CompilerCore::setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW
 {
   if (var.getId() == INVALID_VALUE) return;
 

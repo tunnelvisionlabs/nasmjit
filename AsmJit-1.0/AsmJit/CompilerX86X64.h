@@ -56,7 +56,7 @@ namespace AsmJit {
 // ============================================================================
 
 // Skip documenting this.
-#if !defined(ASMJIT_DOXYGEN)
+#if !defined(ASMJIT_NODOC)
 
 ASMJIT_DECLARE_TYPE_AS_ID(int8_t, VARIABLE_TYPE_GPD);
 ASMJIT_DECLARE_TYPE_AS_ID(uint8_t, VARIABLE_TYPE_GPD);
@@ -75,7 +75,7 @@ ASMJIT_DECLARE_TYPE_AS_ID(uint64_t, VARIABLE_TYPE_GPQ);
 ASMJIT_DECLARE_TYPE_AS_ID(float, VARIABLE_TYPE_FLOAT);
 ASMJIT_DECLARE_TYPE_AS_ID(double, VARIABLE_TYPE_DOUBLE);
 
-#endif // !ASMJIT_DOXYGEN
+#endif // !ASMJIT_NODOC
 
 // ============================================================================
 // [AsmJit::FunctionPrototype]
@@ -749,11 +749,25 @@ protected:
   //! emitting mfence.
   bool _emitLFence;
 
+  //! @brief Bitfield containing modified and preserved GP registers.
   uint32_t _modifiedAndPreservedGP;
+
+  //! @brief Bitfield containing modified and preserved XMM registers.
   uint32_t _modifiedAndPreservedXMM;
+
+  //! @brief ID mov movdqa instruction (@c INST_MOVDQA or @c INST_MOVDQU).
+  //!
+  //! The value is based on stack alignment. If it's guaranteed that stack
+  //! is aligned to 16-bytes then @c INST_MOVDQA instruction is used, otherwise
+  //! the @c INST_MOVDQU instruction is used for 16-byte mov.
   uint32_t _movDqaInstruction;
 
+  //! @brief Stack size of prolog and epilog.
+  //!
+  //! Stack size that is needed to save or restore registers using push/pop or
+  //! mov instructions.
   int32_t _prologEpilogStackSize;
+  //! @brief Stack size of prolog and epilog aligned to 16-bytes.
   int32_t _prologEpilogStackSizeAligned16;
   int32_t _memStackSize;
   int32_t _memStackSizeAligned16;
@@ -788,7 +802,9 @@ struct ASMJIT_API EProlog : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EProlog instance.
   EProlog(Compiler* c, EFunction* f) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EProlog instance.
   virtual ~EProlog() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -828,7 +844,9 @@ struct ASMJIT_API EEpilog : public Emittable
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EEpilog instance.
   EEpilog(Compiler* c, EFunction* f) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EProlog instance.
   virtual ~EEpilog() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -861,13 +879,18 @@ private:
 // [AsmJit::CompilerContext]
 // ============================================================================
 
+//! @internal
+//!
+//! @brief Compiler context is used by @ref Compiler.
 struct ASMJIT_API CompilerContext
 {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref CompilerContext instance.
   CompilerContext(Compiler* compiler) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref CompilerContext instance.
   ~CompilerContext() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -1211,73 +1234,117 @@ struct ASMJIT_API CompilerCore
 
   //! @brief Emit instruction with no operand.
   void _emitInstruction(uint32_t code) ASMJIT_NOTHROW;
+
   //! @brief Emit instruction with one operand.
   void _emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOTHROW;
+
   //! @brief Emit instruction with two operands.
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1) ASMJIT_NOTHROW;
+
   //! @brief Emit instruction with three operands.
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW;
+
   //! @brief Emit instruction with four operands (Compiler specific).
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW;
 
   //! @brief Private method for emitting jcc.
-  //! @internal This should be probably private.
   void _emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW;
 
-  void _emitReturn(const Operand* val);
+  void _emitReturn(const Operand* val) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Embed]
   // --------------------------------------------------------------------------
 
+  //! @brief Embed data into instruction stream.
   void embed(const void* data, sysuint_t len) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Align]
   // --------------------------------------------------------------------------
 
+  //! @brief Align target buffer to @a m bytes.
+  //!
+  //! Typical usage of this is to align labels at start of the inner loops.
+  //!
+  //! Inserts @c nop() instructions or CPU optimized NOPs.
   void align(uint32_t m) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Label]
   // --------------------------------------------------------------------------
 
+  //! @brief Create and return new label.
   Label newLabel() ASMJIT_NOTHROW;
+
+  //! @brief Bind label to the current offset.
+  //!
+  //! @note Label can be bound only once!
   void bind(const Label& label) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Variables]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //!
+  //! @brief Create a new variable data.
   VarData* _newVarData(const char* name, uint32_t type, uint32_t size) ASMJIT_NOTHROW;
-  VarData* _getVarData(uint32_t id) const ASMJIT_NOTHROW { return _varData[id & OPERAND_ID_VALUE_MASK]; }
 
+  //! @internal
+  //!
+  //! @brief Get variable data.
+  inline VarData* _getVarData(uint32_t id) const ASMJIT_NOTHROW
+  { return _varData[id & OPERAND_ID_VALUE_MASK]; }
+
+  //! @brief Create a new general-purpose variable.
   GPVar newGP(uint32_t variableType = VARIABLE_TYPE_GPN, const char* name = NULL) ASMJIT_NOTHROW;
+  //! @brief Get argument as general-purpose variable.
   GPVar argGP(uint32_t index) ASMJIT_NOTHROW;
 
+  //! @brief Create a new MM variable.
   MMVar newMM(uint32_t variableType = VARIABLE_TYPE_MM, const char* name = NULL) ASMJIT_NOTHROW;
+  //! @brief Get argument as MM variable.
   MMVar argMM(uint32_t index) ASMJIT_NOTHROW;
 
+  //! @brief Create a new XMM variable.
   XMMVar newXMM(uint32_t variableType = VARIABLE_TYPE_XMM, const char* name = NULL) ASMJIT_NOTHROW;
+  //! @brief Get argument as XMM variable.
   XMMVar argXMM(uint32_t index) ASMJIT_NOTHROW;
 
+  //! @internal
+  //!
+  //! @brief Serialize variable hint.
   void _vhint(BaseVar& var, uint32_t hintId, uint32_t hintValue) ASMJIT_NOTHROW;
 
+  //! @brief Alloc variable @a var.
   void alloc(BaseVar& var) ASMJIT_NOTHROW;
+  //! @brief Alloc variable @a var using @a regIndex as a register index.
   void alloc(BaseVar& var, uint32_t regIndex) ASMJIT_NOTHROW;
+  //! @brief Alloc variable @a var using @a reg as a demanded register.
   void alloc(BaseVar& var, const BaseReg& reg) ASMJIT_NOTHROW;
+  //! @brief Spill variable @a var.
   void spill(BaseVar& var) ASMJIT_NOTHROW;
+  //! @brief Unuse variable @a var.
   void unuse(BaseVar& var) ASMJIT_NOTHROW;
 
+  //! @brief Get priority of variable @a var.
   uint32_t getPriority(BaseVar& var) const ASMJIT_NOTHROW;
+  //! @brief Set priority of variable @a var to @a priority.
   void setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW;
 
+  //! @brief Rename variable @a var to @a name.
+  //!
+  //! @note Only new name will appear in the logger.
   void rename(BaseVar& var, const char* name) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [State]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //!
+  //! @brief Create a new @ref StateData instance.
   StateData* _newStateData() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -1309,6 +1376,9 @@ struct ASMJIT_API CompilerCore
   // [Data]
   // --------------------------------------------------------------------------
 
+  //! @internal
+  //!
+  //! @brief Get target (emittable) from operand @a id (label id).
   inline ETarget* _getTarget(uint32_t id)
   {
     ASMJIT_ASSERT((id & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_LABEL);
@@ -1476,36 +1546,57 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   // [Embed]
   // --------------------------------------------------------------------------
 
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void db(uint8_t  x) ASMJIT_NOTHROW { embed(&x, 1); }
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void dw(uint16_t x) ASMJIT_NOTHROW { embed(&x, 2); }
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void dd(uint32_t x) ASMJIT_NOTHROW { embed(&x, 4); }
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void dq(uint64_t x) ASMJIT_NOTHROW { embed(&x, 8); }
 
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void dint8(int8_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int8_t)); }
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void duint8(uint8_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint8_t)); }
 
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void dint16(int16_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int16_t)); }
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void duint16(uint16_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint16_t)); }
 
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void dint32(int32_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int32_t)); }
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void duint32(uint32_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint32_t)); }
 
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void dint64(int64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int64_t)); }
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void duint64(uint64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint64_t)); }
 
+  //! @brief Add system-integer data to the instuction stream.
   inline void dsysint(sysint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysint_t)); }
+  //! @brief Add system-integer data to the instuction stream.
   inline void dsysuint(sysuint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysuint_t)); }
 
+  //! @brief Add float data to the instuction stream.
   inline void dfloat(float x) ASMJIT_NOTHROW { embed(&x, sizeof(float)); }
+  //! @brief Add double data to the instuction stream.
   inline void ddouble(double x) ASMJIT_NOTHROW { embed(&x, sizeof(double)); }
 
+  //! @brief Add pointer data to the instuction stream.
   inline void dptr(void* x) ASMJIT_NOTHROW { embed(&x, sizeof(void*)); }
 
+  //! @brief Add MM data to the instuction stream.
   inline void dmm(const MMData& x) ASMJIT_NOTHROW { embed(&x, sizeof(MMData)); }
+  //! @brief Add XMM data to the instuction stream.
   inline void dxmm(const XMMData& x) ASMJIT_NOTHROW { embed(&x, sizeof(XMMData)); }
 
+  //! @brief Add data to the instuction stream.
   inline void data(const void* data, sysuint_t size) ASMJIT_NOTHROW { embed(data, size); }
 
+  //! @brief Add data in a given structure instance to the instuction stream.
   template<typename T>
   inline void dstruct(const T& x) ASMJIT_NOTHROW { embed(&x, sizeof(T)); }
 
@@ -7355,7 +7446,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! - This type of memory management is called 'zone memory management'.
 //!
 //! This means that you can't use any @c Compiler object after destructing it,
-//! it also means that each object like @c Label, @c Var nad others are created 
+//! it also means that each object like @c Label, @c Var and others are created 
 //! and managed by @c Compiler itself. These objects contain ID which is used
 //! internally by Compiler to store additional information about these objects.
 //!
@@ -7394,7 +7485,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! <b>Differences summary to @c AsmJit::Assembler</b>
 //!
 //! - Instructions are not translated to machine code immediately, they are
-//!   stored as emmitables (see @c AsmJit::Emittable, @c AsmJit::Instruction).
+//!   stored as emmitables (see @c AsmJit::Emittable, @c AsmJit::EInstruction).
 //! - Contains function builder.
 //! - Contains register allocator and variables management.
 //! - Contains a lot of helper methods to simplify code generation not 

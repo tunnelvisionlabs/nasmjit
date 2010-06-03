@@ -355,7 +355,6 @@ struct ASMJIT_API AssemblerCore
   void _emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW;
 
   //! @brief Emit MODR/M byte.
-  //! @internal
   inline void _emitMod(uint8_t m, uint8_t o, uint8_t r) ASMJIT_NOTHROW
   { _emitByte(((m & 0x03) << 6) | ((o & 0x07) << 3) | (r & 0x07)); }
 
@@ -478,18 +477,21 @@ struct ASMJIT_API AssemblerCore
 
   //! @brief Emit X86/FPU or MM/XMM instruction.
   void _emitInstruction(uint32_t code) ASMJIT_NOTHROW;
+
   //! @brief Emit X86/FPU or MM/XMM instruction.
   void _emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOTHROW;
+
   //! @brief Emit X86/FPU or MM/XMM instruction.
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1) ASMJIT_NOTHROW;
+
   //! @brief Emit X86/FPU or MM/XMM instruction.
   //!
   //! Operands @a o1, @a o2 or @a o3 can be @c NULL if they are not used.
   //!
   //! Hint: Use @c emitX86() helpers to emit instructions.
   void _emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW;
+
   //! @brief Private method for emitting jcc.
-  //! @internal This should be probably private.
   void _emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -634,36 +636,57 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   // [Embed]
   // --------------------------------------------------------------------------
 
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void db(uint8_t  x) ASMJIT_NOTHROW { embed(&x, 1); }
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void dw(uint16_t x) ASMJIT_NOTHROW { embed(&x, 2); }
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void dd(uint32_t x) ASMJIT_NOTHROW { embed(&x, 4); }
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void dq(uint64_t x) ASMJIT_NOTHROW { embed(&x, 8); }
 
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void dint8(int8_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int8_t)); }
+  //! @brief Add 8-bit integer data to the instuction stream.
   inline void duint8(uint8_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint8_t)); }
 
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void dint16(int16_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int16_t)); }
+  //! @brief Add 16-bit integer data to the instuction stream.
   inline void duint16(uint16_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint16_t)); }
 
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void dint32(int32_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int32_t)); }
+  //! @brief Add 32-bit integer data to the instuction stream.
   inline void duint32(uint32_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint32_t)); }
 
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void dint64(int64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(int64_t)); }
+  //! @brief Add 64-bit integer data to the instuction stream.
   inline void duint64(uint64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint64_t)); }
 
+  //! @brief Add system-integer data to the instuction stream.
   inline void dsysint(sysint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysint_t)); }
+  //! @brief Add system-integer data to the instuction stream.
   inline void dsysuint(sysuint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysuint_t)); }
 
+  //! @brief Add float data to the instuction stream.
   inline void dfloat(float x) ASMJIT_NOTHROW { embed(&x, sizeof(float)); }
+  //! @brief Add double data to the instuction stream.
   inline void ddouble(double x) ASMJIT_NOTHROW { embed(&x, sizeof(double)); }
 
+  //! @brief Add pointer data to the instuction stream.
   inline void dptr(void* x) ASMJIT_NOTHROW { embed(&x, sizeof(void*)); }
 
+  //! @brief Add MM data to the instuction stream.
   inline void dmm(const MMData& x) ASMJIT_NOTHROW { embed(&x, sizeof(MMData)); }
+  //! @brief Add XMM data to the instuction stream.
   inline void dxmm(const XMMData& x) ASMJIT_NOTHROW { embed(&x, sizeof(XMMData)); }
 
+  //! @brief Add data to the instuction stream.
   inline void data(const void* data, sysuint_t size) ASMJIT_NOTHROW { embed(data, size); }
 
+  //! @brief Add data in a given structure instance to the instuction stream.
   template<typename T>
   inline void dstruct(const T& x) ASMJIT_NOTHROW { embed(&x, sizeof(T)); }
 
