@@ -2207,7 +2207,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   {
     _emitInstruction(INST_ENTER, &imm16, &imm8);
   }
-#endif
+#endif // ASMJIT_NOT_SUPPORTED_BY_COMPILER
 
   //! @brief Signed divide.
   //!
@@ -2439,7 +2439,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   {
     _emitInstruction(INST_LEAVE);
   }
-#endif
+#endif // ASMJIT_NOT_SUPPORTED_BY_COMPILER
 
   //! @brief Assert LOCK# Signal Prefix.
   //
@@ -6222,7 +6222,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   {
     _emitInstruction(INST_FISTTP, &dst);
   }
-#endif
+#endif // ASMJIT_NOT_SUPPORTED_BY_COMPILER
 
   //! @brief Packed DP-FP Horizontal Add (SSE3).
   inline void haddpd(const XMMVar& dst, const XMMVar& src)
@@ -6274,11 +6274,13 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_LDDQU, &dst, &src);
   }
 
+#if ASMJIT_NOT_SUPPORTED_BY_COMPILER
   //! @brief Set Up Monitor Address (SSE3).
   inline void monitor()
   {
     _emitInstruction(INST_MONITOR);
   }
+#endif // ASMJIT_NOT_SUPPORTED_BY_COMPILER
 
   //! @brief Move One DP-FP and Duplicate (SSE3).
   inline void movddup(const XMMVar& dst, const XMMVar& src)
@@ -6313,11 +6315,13 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_MOVSLDUP, &dst, &src);
   }
 
+#if ASMJIT_NOT_SUPPORTED_BY_COMPILER
   //! @brief Monitor Wait (SSE3).
   inline void mwait()
   {
     _emitInstruction(INST_MWAIT);
   }
+#endif // ASMJIT_NOT_SUPPORTED_BY_COMPILER
 
   // --------------------------------------------------------------------------
   // [SSSE3]

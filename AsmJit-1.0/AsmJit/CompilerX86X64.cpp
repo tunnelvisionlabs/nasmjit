@@ -706,6 +706,24 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
         // Special...
         break;
 
+      case INST_RCL:
+      case INST_RCR:
+      case INST_ROL:
+      case INST_ROR:
+      case INST_SAL:
+      case INST_SAR:
+      case INST_SHL:
+      case INST_SHR:
+        // Rot instruction is special only if last operand is variable (register).
+        _isSpecial = _operands[1].isVar();
+        break;
+
+      case INST_SHLD:
+      case INST_SHRD:
+        // Shld/Shrd instruction is special only if last operand is variable (register).
+        _isSpecial = _operands[2].isVar();
+        break;
+
       case INST_RDTSC:
       case INST_RDTSCP:
         // Special...
@@ -1003,10 +1021,13 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
           case INST_MONITOR:
           case INST_MWAIT:
-            // TODO: SPECIAL INSTRUCTION.
+            // TODO: MONITOR/MWAIT (COMPILER).
             break;
 
           case INST_POP:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
           case INST_POPAD:
           case INST_POPFD:
           case INST_POPFQ:
@@ -1014,10 +1035,61 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
             break;
 
           case INST_PUSH:
+            // TODO: SPECIAL INSTRUCTION.
+            break;
+
           case INST_PUSHAD:
           case INST_PUSHFD:
           case INST_PUSHFQ:
             // TODO: SPECIAL INSTRUCTION.
+            break;
+
+          case INST_RCL:
+          case INST_RCR:
+          case INST_ROL:
+          case INST_ROR:
+          case INST_SAL:
+          case INST_SAR:
+          case INST_SHL:
+          case INST_SHR:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_SHLD:
+          case INST_SHRD:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                break;
+              case 2:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
             break;
 
           case INST_RDTSC:
@@ -1352,7 +1424,7 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
 
       case INST_MONITOR:
       case INST_MWAIT:
-        // TODO: SPECIAL INSTRUCTION.
+        // TODO: MONITOR/MWAIT (COMPILER).
         break;
 
       case INST_POP:
@@ -1368,6 +1440,22 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
       case INST_PUSHFQ:
         // TODO: SPECIAL INSTRUCTION.
         break;
+
+      case INST_RCL:
+      case INST_RCR:
+      case INST_ROL:
+      case INST_ROR:
+      case INST_SAL:
+      case INST_SAR:
+      case INST_SHL:
+      case INST_SHR:
+        a._emitInstruction(_code, &_operands[0], &cl);
+        return;
+
+      case INST_SHLD:
+      case INST_SHRD:
+        a._emitInstruction(_code, &_operands[0], &_operands[1], &cl);
+        return;
 
       case INST_RDTSC:
       case INST_RDTSCP:
