@@ -7583,6 +7583,8 @@ struct ASMJIT_API Compiler : public CompilerIntrinsics
 
 } // AsmJit namespace
 
+#undef ASMJIT_NOT_SUPPORTED_BY_COMPILER
+
 // [Api-End]
 #include "ApiEnd.h"
 

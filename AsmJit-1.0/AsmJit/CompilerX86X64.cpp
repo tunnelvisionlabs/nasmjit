@@ -1331,7 +1331,7 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
       case INST_MUL:
       case INST_IDIV:
       case INST_DIV:
-        // INST dst_lo (implicid), dst_hi (implicid), src (explicit)
+        // INST dst_lo (implicit), dst_hi (implicit), src (explicit)
         ASMJIT_ASSERT(_operandsCount == 3);
         a._emitInstruction(_code, &_operands[2]);
         return;
