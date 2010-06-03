@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// Test variable scope detection in loop.
+// Test special instruction generation.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,9 +62,8 @@ int main(int argc, char* argv[])
 
     c.mov(dword_ptr(dst0_lo), v0_lo);
     c.mov(dword_ptr(dst0_hi), v0_hi);
+    c.endFunction();
   }
-
-  c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
@@ -83,8 +82,8 @@ int main(int argc, char* argv[])
 
     fn(&out_lo, &out_hi, v0, v1);
 
-    printf("out_lo=%d (should be %d)\n", out_lo, expected_lo);
-    printf("out_hi=%d (should be %d)\n", out_hi, expected_hi);
+    printf("out_lo=%d (expected %d)\n", out_lo, expected_lo);
+    printf("out_hi=%d (expected %d)\n", out_hi, expected_hi);
 
     printf("Status: %s\n", (out_lo == expected_lo && out_hi == expected_hi) 
       ? "Success" 

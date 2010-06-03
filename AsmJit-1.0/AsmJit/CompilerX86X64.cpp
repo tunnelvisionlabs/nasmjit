@@ -1293,7 +1293,16 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
     for (i = 0; i < variablesCount; i++)
     {
       VarAllocRecord& r = _variables[i];
-      c.allocVar(r.vdata, r.regIndex, r.vflags);
+      // Alloc variables with specific register first.
+      if (r.regIndex != INVALID_VALUE) 
+        c.allocVar(r.vdata, r.regIndex, r.vflags);
+    }
+    for (i = 0; i < variablesCount; i++)
+    {
+      VarAllocRecord& r = _variables[i];
+      // Alloc variables without specific register last.
+      if (r.regIndex == INVALID_VALUE)
+        c.allocVar(r.vdata, r.regIndex, r.vflags);
     }
 
     // Translate variables to registers.

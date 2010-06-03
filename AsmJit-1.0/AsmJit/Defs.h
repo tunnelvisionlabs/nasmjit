@@ -285,7 +285,9 @@ enum VARIABLE_STATE
 //! @brief Variable alloc mode.
 enum VARIABLE_ALLOC
 {
+  //! @brief Variable can be allocated in register.
   VARIABLE_ALLOC_REGISTER = 0x10,
+  //! @brief Variable can be allocated in memory.
   VARIABLE_ALLOC_MEMORY = 0x20,
 
   //! @brief Allocating variable to read only.

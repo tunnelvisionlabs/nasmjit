@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// Test variable scope detection in loop.
+// Test special instruction generation.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef void (*MyFn)(uint32_t*);
+typedef void (*MyFn)(int32_t*, int32_t, int32_t, int32_t);
 
 int main(int argc, char* argv[])
 {
@@ -49,36 +49,15 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<uint32_t*>());
+    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<int32_t*, int32_t, int32_t, int32_t>());
 
-    GPVar var[32];
-    int i;
+    GPVar dst0(c.argGP(0));
+    GPVar v0(c.argGP(1));
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      var[i] = c.newGP(VARIABLE_TYPE_GPD);
-      c.xor_(var[i], var[i]);
-    }
-
-    GPVar v0(c.newGP(VARIABLE_TYPE_GPD));
-    Label L(c.newLabel());
-
-    c.mov(v0, imm(32));
-    c.bind(L);
-
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      c.add(var[i], imm(i));
-    }
-
-    c.dec(v0);
-    c.jnz(L);
-
-    GPVar a0(c.argGP(0));
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      c.mov(dword_ptr(a0, i * 4), var[i]);
-    }
+    c.shl(v0, c.argGP(2));
+    c.ror(v0, c.argGP(3));
+    
+    c.mov(dword_ptr(dst0), v0);
     c.endFunction();
   }
   // ==========================================================================
@@ -88,19 +67,14 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   {
-    uint32_t out[32];
-    int i;
-    bool success = true;
+    int32_t out;
+    int32_t v0 = 0x000000FF;
+    int32_t expected = 0x0000FF00;
 
-    fn(out);
+    fn(&out, v0, 16, 8);
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(out); i++)
-    {
-      printf("out[%d]=%u (expected %d)\n", i, out[i], i * 32);
-      if (out[i] != i * 32) success = false;
-    }
-
-    printf("Status: %s\n", (success) ? "Success" : "Failure");
+    printf("out=%d (expected %d)\n", out, expected);
+    printf("Status: %s\n", (out == expected) ? "Success" : "Failure");
   }
 
   // If function is not needed again it should be freed.
