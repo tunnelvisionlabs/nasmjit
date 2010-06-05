@@ -2907,7 +2907,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FSTP, &dst);
   }
 
-  //! @brief Store Floating Point Value and Pop Register Stack  (FPU).
+  //! @brief Store Floating Point Value and Pop Register Stack (FPU).
   //!
   //! Store st(0) to !a reg and pop register stack.
   inline void fstp(const X87Reg& reg)
