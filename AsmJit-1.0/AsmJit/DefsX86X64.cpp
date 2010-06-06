@@ -576,6 +576,34 @@ const char instructionName[] =
   "rcr\0"
   "rdtsc\0"
   "rdtscp\0"
+  "rep lodsb\0"
+  "rep lodsd\0"
+  "rep lodsq\0"
+  "rep lodsw\0"
+  "rep movsb\0"
+  "rep movsd\0"
+  "rep movsq\0"
+  "rep movsw\0"
+  "rep stosb\0"
+  "rep stosd\0"
+  "rep stosq\0"
+  "rep stosw\0"
+  "repe cmpsb\0"
+  "repe cmpsd\0"
+  "repe cmpsq\0"
+  "repe cmpsw\0"
+  "repe scasb\0"
+  "repe scasd\0"
+  "repe scasq\0"
+  "repe scasw\0"
+  "repne cmpsb\0"
+  "repne cmpsd\0"
+  "repne cmpsq\0"
+  "repne cmpsw\0"
+  "repne scasb\0"
+  "repne scasd\0"
+  "repne scasq\0"
+  "repne scasw\0"
   "ret\0"
   "rol\0"
   "ror\0"
@@ -1126,81 +1154,109 @@ const char instructionName[] =
 #define INST_RCR_INDEX 3153
 #define INST_RDTSC_INDEX 3157
 #define INST_RDTSCP_INDEX 3163
-#define INST_RET_INDEX 3170
-#define INST_ROL_INDEX 3174
-#define INST_ROR_INDEX 3178
-#define INST_ROUNDPD_INDEX 3182
-#define INST_ROUNDPS_INDEX 3190
-#define INST_ROUNDSD_INDEX 3198
-#define INST_ROUNDSS_INDEX 3206
-#define INST_RSQRTPS_INDEX 3214
-#define INST_RSQRTSS_INDEX 3222
-#define INST_SAHF_INDEX 3230
-#define INST_SAL_INDEX 3235
-#define INST_SAR_INDEX 3239
-#define INST_SBB_INDEX 3243
-#define INST_SETA_INDEX 3247
-#define INST_SETAE_INDEX 3252
-#define INST_SETB_INDEX 3258
-#define INST_SETBE_INDEX 3263
-#define INST_SETC_INDEX 3269
-#define INST_SETE_INDEX 3274
-#define INST_SETG_INDEX 3279
-#define INST_SETGE_INDEX 3284
-#define INST_SETL_INDEX 3290
-#define INST_SETLE_INDEX 3295
-#define INST_SETNA_INDEX 3301
-#define INST_SETNAE_INDEX 3307
-#define INST_SETNB_INDEX 3314
-#define INST_SETNBE_INDEX 3320
-#define INST_SETNC_INDEX 3327
-#define INST_SETNE_INDEX 3333
-#define INST_SETNG_INDEX 3339
-#define INST_SETNGE_INDEX 3345
-#define INST_SETNL_INDEX 3352
-#define INST_SETNLE_INDEX 3358
-#define INST_SETNO_INDEX 3365
-#define INST_SETNP_INDEX 3371
-#define INST_SETNS_INDEX 3377
-#define INST_SETNZ_INDEX 3383
-#define INST_SETO_INDEX 3389
-#define INST_SETP_INDEX 3394
-#define INST_SETPE_INDEX 3399
-#define INST_SETPO_INDEX 3405
-#define INST_SETS_INDEX 3411
-#define INST_SETZ_INDEX 3416
-#define INST_SFENCE_INDEX 3421
-#define INST_SHL_INDEX 3428
-#define INST_SHLD_INDEX 3432
-#define INST_SHR_INDEX 3437
-#define INST_SHRD_INDEX 3441
-#define INST_SHUFPD_INDEX 3446
-#define INST_SHUFPS_INDEX 3453
-#define INST_SQRTPD_INDEX 3460
-#define INST_SQRTPS_INDEX 3467
-#define INST_SQRTSD_INDEX 3474
-#define INST_SQRTSS_INDEX 3481
-#define INST_STC_INDEX 3488
-#define INST_STD_INDEX 3492
-#define INST_STMXCSR_INDEX 3496
-#define INST_SUB_INDEX 3504
-#define INST_SUBPD_INDEX 3508
-#define INST_SUBPS_INDEX 3514
-#define INST_SUBSD_INDEX 3520
-#define INST_SUBSS_INDEX 3526
-#define INST_TEST_INDEX 3532
-#define INST_UCOMISD_INDEX 3537
-#define INST_UCOMISS_INDEX 3545
-#define INST_UD2_INDEX 3553
-#define INST_UNPCKHPD_INDEX 3557
-#define INST_UNPCKHPS_INDEX 3566
-#define INST_UNPCKLPD_INDEX 3575
-#define INST_UNPCKLPS_INDEX 3584
-#define INST_XADD_INDEX 3593
-#define INST_XCHG_INDEX 3598
-#define INST_XOR_INDEX 3603
-#define INST_XORPD_INDEX 3607
-#define INST_XORPS_INDEX 3613
+#define INST_REP_LODSB_INDEX 3170
+#define INST_REP_LODSD_INDEX 3180
+#define INST_REP_LODSQ_INDEX 3190
+#define INST_REP_LODSW_INDEX 3200
+#define INST_REP_MOVSB_INDEX 3210
+#define INST_REP_MOVSD_INDEX 3220
+#define INST_REP_MOVSQ_INDEX 3230
+#define INST_REP_MOVSW_INDEX 3240
+#define INST_REP_STOSB_INDEX 3250
+#define INST_REP_STOSD_INDEX 3260
+#define INST_REP_STOSQ_INDEX 3270
+#define INST_REP_STOSW_INDEX 3280
+#define INST_REPE_CMPSB_INDEX 3290
+#define INST_REPE_CMPSD_INDEX 3301
+#define INST_REPE_CMPSQ_INDEX 3312
+#define INST_REPE_CMPSW_INDEX 3323
+#define INST_REPE_SCASB_INDEX 3334
+#define INST_REPE_SCASD_INDEX 3345
+#define INST_REPE_SCASQ_INDEX 3356
+#define INST_REPE_SCASW_INDEX 3367
+#define INST_REPNE_CMPSB_INDEX 3378
+#define INST_REPNE_CMPSD_INDEX 3390
+#define INST_REPNE_CMPSQ_INDEX 3402
+#define INST_REPNE_CMPSW_INDEX 3414
+#define INST_REPNE_SCASB_INDEX 3426
+#define INST_REPNE_SCASD_INDEX 3438
+#define INST_REPNE_SCASQ_INDEX 3450
+#define INST_REPNE_SCASW_INDEX 3462
+#define INST_RET_INDEX 3474
+#define INST_ROL_INDEX 3478
+#define INST_ROR_INDEX 3482
+#define INST_ROUNDPD_INDEX 3486
+#define INST_ROUNDPS_INDEX 3494
+#define INST_ROUNDSD_INDEX 3502
+#define INST_ROUNDSS_INDEX 3510
+#define INST_RSQRTPS_INDEX 3518
+#define INST_RSQRTSS_INDEX 3526
+#define INST_SAHF_INDEX 3534
+#define INST_SAL_INDEX 3539
+#define INST_SAR_INDEX 3543
+#define INST_SBB_INDEX 3547
+#define INST_SETA_INDEX 3551
+#define INST_SETAE_INDEX 3556
+#define INST_SETB_INDEX 3562
+#define INST_SETBE_INDEX 3567
+#define INST_SETC_INDEX 3573
+#define INST_SETE_INDEX 3578
+#define INST_SETG_INDEX 3583
+#define INST_SETGE_INDEX 3588
+#define INST_SETL_INDEX 3594
+#define INST_SETLE_INDEX 3599
+#define INST_SETNA_INDEX 3605
+#define INST_SETNAE_INDEX 3611
+#define INST_SETNB_INDEX 3618
+#define INST_SETNBE_INDEX 3624
+#define INST_SETNC_INDEX 3631
+#define INST_SETNE_INDEX 3637
+#define INST_SETNG_INDEX 3643
+#define INST_SETNGE_INDEX 3649
+#define INST_SETNL_INDEX 3656
+#define INST_SETNLE_INDEX 3662
+#define INST_SETNO_INDEX 3669
+#define INST_SETNP_INDEX 3675
+#define INST_SETNS_INDEX 3681
+#define INST_SETNZ_INDEX 3687
+#define INST_SETO_INDEX 3693
+#define INST_SETP_INDEX 3698
+#define INST_SETPE_INDEX 3703
+#define INST_SETPO_INDEX 3709
+#define INST_SETS_INDEX 3715
+#define INST_SETZ_INDEX 3720
+#define INST_SFENCE_INDEX 3725
+#define INST_SHL_INDEX 3732
+#define INST_SHLD_INDEX 3736
+#define INST_SHR_INDEX 3741
+#define INST_SHRD_INDEX 3745
+#define INST_SHUFPD_INDEX 3750
+#define INST_SHUFPS_INDEX 3757
+#define INST_SQRTPD_INDEX 3764
+#define INST_SQRTPS_INDEX 3771
+#define INST_SQRTSD_INDEX 3778
+#define INST_SQRTSS_INDEX 3785
+#define INST_STC_INDEX 3792
+#define INST_STD_INDEX 3796
+#define INST_STMXCSR_INDEX 3800
+#define INST_SUB_INDEX 3808
+#define INST_SUBPD_INDEX 3812
+#define INST_SUBPS_INDEX 3818
+#define INST_SUBSD_INDEX 3824
+#define INST_SUBSS_INDEX 3830
+#define INST_TEST_INDEX 3836
+#define INST_UCOMISD_INDEX 3841
+#define INST_UCOMISS_INDEX 3849
+#define INST_UD2_INDEX 3857
+#define INST_UNPCKHPD_INDEX 3861
+#define INST_UNPCKHPS_INDEX 3870
+#define INST_UNPCKLPD_INDEX 3879
+#define INST_UNPCKLPS_INDEX 3888
+#define INST_XADD_INDEX 3897
+#define INST_XCHG_INDEX 3902
+#define INST_XOR_INDEX 3907
+#define INST_XORPD_INDEX 3911
+#define INST_XORPS_INDEX 3917
 // ${INSTRUCTION_DATA_END}
 
 // ============================================================================
@@ -1690,6 +1746,34 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_RCR              , "rcr"              , G(ROT)           , F(SPECIAL)       , O(GQDWB_MEM)        , O(GB)|O(IMM)        , 3, 0         , 0),
   MAKE_INST(INST_RDTSC            , "rdtsc"            , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x00000F31, 0),
   MAKE_INST(INST_RDTSCP           , "rdtscp"           , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x000F01F9, 0),
+  MAKE_INST(INST_REP_LODSB        , "rep lodsb"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AC, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSD        , "rep lodsd"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AC, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSQ        , "rep lodsq"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AC, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_LODSW        , "rep lodsw"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AC, 2 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSB        , "rep movsb"        , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A4, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSD        , "rep movsd"        , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A4, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSQ        , "rep movsq"        , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A4, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_MOVSW        , "rep movsw"        , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A4, 2 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSB        , "rep stosb"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AA, 1 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSD        , "rep stosd"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AA, 4 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSQ        , "rep stosq"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AA, 8 /* Size of mem */),
+  MAKE_INST(INST_REP_STOSW        , "rep stosw"        , G(REP)           , F(SPECIAL)       , O(MEM)              , 0                   , 0, 0xF30000AA, 2 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSB       , "repe cmpsb"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A6, 1 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSD       , "repe cmpsd"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A6, 4 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSQ       , "repe cmpsq"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A6, 8 /* Size of mem */),
+  MAKE_INST(INST_REPE_CMPSW       , "repe cmpsw"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000A6, 2 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASB       , "repe scasb"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000AE, 1 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASD       , "repe scasd"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000AE, 4 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASQ       , "repe scasq"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000AE, 8 /* Size of mem */),
+  MAKE_INST(INST_REPE_SCASW       , "repe scasw"       , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF30000AE, 2 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSB      , "repne cmpsb"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000A6, 1 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSD      , "repne cmpsd"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000A6, 4 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSQ      , "repne cmpsq"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000A6, 8 /* Size of mem */),
+  MAKE_INST(INST_REPNE_CMPSW      , "repne cmpsw"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000A6, 2 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASB      , "repne scasb"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000AE, 1 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASD      , "repne scasd"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000AE, 4 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASQ      , "repne scasq"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000AE, 8 /* Size of mem */),
+  MAKE_INST(INST_REPNE_SCASW      , "repne scasw"      , G(REP)           , F(SPECIAL)       , O(MEM)              , O(MEM)              , 0, 0xF20000AE, 2 /* Size of mem */),
   MAKE_INST(INST_RET              , "ret"              , G(RET)           , F(SPECIAL)       , 0                   , 0                   , 0, 0         , 0),
   MAKE_INST(INST_ROL              , "rol"              , G(ROT)           , F(SPECIAL)       , O(GQDWB_MEM)        , O(GB)|O(IMM)        , 0, 0         , 0),
   MAKE_INST(INST_ROR              , "ror"              , G(ROT)           , F(SPECIAL)       , O(GQDWB_MEM)        , O(GB)|O(IMM)        , 1, 0         , 0),

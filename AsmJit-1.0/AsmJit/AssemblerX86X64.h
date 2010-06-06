@@ -42,7 +42,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Core
+//! @addtogroup AsmJit_Assembler
 //! @{
 
 // ============================================================================
@@ -472,8 +472,8 @@ struct ASMJIT_API AssemblerCore
   void _emitJmpOrCallReloc(uint32_t instruction, void* target) ASMJIT_NOTHROW;
 
   // Helpers to decrease binary code size. These four emit methods are just
-  // helpers thats used by serializer. They call emitX86() adding NULLs
-  // to first, second and third operand if needed.
+  // helpers thats used by assembler. They call emitX86() adding NULLs
+  // to first, second and third operand, if needed.
 
   //! @brief Emit X86/FPU or MM/XMM instruction.
   void _emitInstruction(uint32_t code) ASMJIT_NOTHROW;
@@ -1809,6 +1809,188 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   inline void rdtscp()
   {
     _emitInstruction(INST_RDTSCP);
+  }
+
+  //! @brief Load ECX/RCX BYTEs from DS:[ESI/RSI] to AL.
+  inline void rep_lodsb()
+  {
+    _emitInstruction(INST_REP_LODSB);
+  }
+
+  //! @brief Load ECX/RCX DWORDs from DS:[ESI/RSI] to EAX.
+  inline void rep_lodsd()
+  {
+    _emitInstruction(INST_REP_LODSD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Load ECX/RCX QWORDs from DS:[ESI/RSI] to RAX.
+  inline void rep_lodsq()
+  {
+    _emitInstruction(INST_REP_LODSQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Load ECX/RCX WORDs from DS:[ESI/RSI] to AX.
+  inline void rep_lodsw()
+  {
+    _emitInstruction(INST_REP_LODSW);
+  }
+
+  //! @brief Move ECX/RCX BYTEs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsb()
+  {
+    _emitInstruction(INST_REP_MOVSB);
+  }
+
+  //! @brief Move ECX/RCX DWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsd()
+  {
+    _emitInstruction(INST_REP_MOVSD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Move ECX/RCX QWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsq()
+  {
+    _emitInstruction(INST_REP_MOVSQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Move ECX/RCX WORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsw()
+  {
+    _emitInstruction(INST_REP_MOVSW);
+  }
+
+  //! @brief Fill ECX/RCX BYTEs at ES:[EDI/RDI] with AL.
+  inline void rep_stosb()
+  {
+    _emitInstruction(INST_REP_STOSB);
+  }
+
+  //! @brief Fill ECX/RCX DWORDs at ES:[EDI/RDI] with EAX.
+  inline void rep_stosd()
+  {
+    _emitInstruction(INST_REP_STOSD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Fill ECX/RCX QWORDs at ES:[EDI/RDI] with RAX.
+  inline void rep_stosq()
+  {
+    _emitInstruction(INST_REP_STOSQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Fill ECX/RCX WORDs at ES:[EDI/RDI] with AX.
+  inline void rep_stosw()
+  {
+    _emitInstruction(INST_REP_STOSW);
+  }
+
+  //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsb()
+  {
+    _emitInstruction(INST_REPE_CMPSB);
+  }
+  
+  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsd()
+  {
+    _emitInstruction(INST_REPE_CMPSD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsq()
+  {
+    _emitInstruction(INST_REPE_CMPSQ);
+  }
+#endif // ASMJIT_X64
+  
+  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsw()
+  {
+    _emitInstruction(INST_REPE_CMPSW);
+  }
+
+  //! @brief Find non-AL BYTE starting at ES:[EDI/RDI].
+  inline void repe_scasb()
+  {
+    _emitInstruction(INST_REPE_SCASB);
+  }
+  
+  //! @brief Find non-EAX DWORD starting at ES:[EDI/RDI].
+  inline void repe_scasd()
+  {
+    _emitInstruction(INST_REPE_SCASD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Find non-RAX QWORD starting at ES:[EDI/RDI].
+  inline void repe_scasq()
+  {
+    _emitInstruction(INST_REPE_SCASQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Find non-AX WORD starting at ES:[EDI/RDI].
+  inline void repe_scasw()
+  {
+    _emitInstruction(INST_REPE_SCASW);
+  }
+
+  //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repne_cmpsb()
+  {
+    _emitInstruction(INST_REPNE_CMPSB);
+  }
+
+  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repne_cmpsd()
+  {
+    _emitInstruction(INST_REPNE_CMPSD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repne_cmpsq()
+  {
+    _emitInstruction(INST_REPNE_CMPSQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repne_cmpsw()
+  {
+    _emitInstruction(INST_REPNE_CMPSW);
+  }
+
+  //! @brief Find AL, starting at ES:[EDI/RDI].
+  inline void repne_scasb()
+  {
+    _emitInstruction(INST_REPNE_SCASB);
+  }
+
+  //! @brief Find EAX, starting at ES:[EDI/RDI].
+  inline void repne_scasd()
+  {
+    _emitInstruction(INST_REPNE_SCASD);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Find RAX, starting at ES:[EDI/RDI].
+  inline void repne_scasq()
+  {
+    _emitInstruction(INST_REPNE_SCASQ);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Find AX, starting at ES:[EDI/RDI].
+  inline void repne_scasw()
+  {
+    _emitInstruction(INST_REPNE_SCASW);
   }
 
   //! @brief Return from Procedure.
@@ -7159,11 +7341,11 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! @brief Assembler - low level code generation.
 //!
 //! @c Assembler is the main class in AsmJit for generating low level x86/x64
-//! binary. It creates internal buffer, where opcodes are stored and contains
-//! methods that mimics x86/x64 assembler instructions. Because
-//! @c AsmJit::Assembler is based on @c AsmJit::Serializer it supports also
-//! type checking by C++ compiler. It's nearly impossible to create invalid
-//! instruction (for example <code>mov [eax], [eax]</code>).
+//! binary stream. It creates internal buffer where opcodes are stored and
+//! contains methods that mimics x86/x64 assembler instructions. Code generation
+//! should be safe, because basic type-checks are done by the C++ compiler. It's
+//! nearly impossible to create invalid instruction (for example
+//! <code>mov [eax], [eax]</code> that will not be detected at compile time.
 //!
 //! Each call to assembler intrinsics directly emits instruction to internal
 //! binary stream. Instruction emitting also contains runtime checks so it's

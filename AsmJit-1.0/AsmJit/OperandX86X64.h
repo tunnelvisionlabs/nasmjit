@@ -57,7 +57,7 @@ struct X87Var;
 struct XMMReg;
 struct XMMVar;
 
-//! @addtogroup AsmJit_Core
+//! @addtogroup AsmJit_Assembler
 //! @{
 
 // ============================================================================
@@ -1046,8 +1046,8 @@ ASMJIT_API Imm uimm(sysuint_t i) ASMJIT_NOTHROW;
 //! Label represents locations typically used as jump targets, but may be also
 //! used as position where are stored constants or static variables. If you 
 //! want to use @c Label you need first to associate it with @c Assembler or
-//! @c Compiler instance. To create new label use @c Assembler::newLabel(),
-//! @c Compiler::newLabel() or @c Label(const Serializer& serializer) constructor.
+//! @c Compiler instance. To create new label use @c Assembler::newLabel() or
+//! @c Compiler::newLabel().
 //!
 //! Example of using labels:
 //!
@@ -1060,12 +1060,13 @@ ASMJIT_API Imm uimm(sysuint_t i) ASMJIT_NOTHROW;
 //!
 //! // ... your code ...
 //!
-//! // Using label, see @c AsmJit::Serializer instrinsics.
+//! // Using label, see @c AsmJit::Assembler or @c AsmJit::Compiler.
 //! a.jump(L_1);
 //!
 //! // ... your code ...
 //!
-//! // Bind label to current position, see @c AsmJit::Serializer::bind().
+//! // Bind label to current position, see @c AsmJit::Assembler::bind() or
+//! // @c AsmJit::Compiler::bind().
 //! a.bind(L_1);
 //! @endcode
 struct ASMJIT_HIDDEN Label : public Operand

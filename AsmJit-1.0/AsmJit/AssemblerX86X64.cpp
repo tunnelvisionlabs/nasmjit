@@ -1698,6 +1698,25 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       break;
     }
 
+    case InstructionDescription::G_REP:
+    {
+      uint32_t opCode = id->opCode[0];
+      uint32_t opSize = id->opCode[1];
+
+      // Emit REP prefix (1 BYTE).
+      _emitByte(opCode >> 24);
+
+      if (opSize != 1) opCode++; // D, Q and W form.
+      if (opSize == 2) _emitByte(0x66); // 16-bit prefix.
+#if defined(ASMJIT_X64)
+      else if (opSize == 8) _emitByte(0x48); // REX.W prefix.
+#endif // ASMJIT_X64
+
+      // Emit opcode (1 BYTE).
+      _emitByte(opCode & 0xFF);
+      goto end;
+    }
+
     case InstructionDescription::G_RET:
     {
       if (o0->isNone())
@@ -2738,7 +2757,7 @@ void AssemblerCore::registerLabels(sysuint_t count) ASMJIT_NOTHROW
 
 void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
 {
-  // Only labels created by newLabel() can be used by Serializer.
+  // Only labels created by newLabel() can be used by Assembler.
   ASMJIT_ASSERT(label.getId() != INVALID_VALUE);
   // Never go out of bounds.
   ASMJIT_ASSERT((label.getId() & OPERAND_ID_VALUE_MASK) < _labelData.getLength());

@@ -50,14 +50,21 @@ namespace AsmJit {
 // [AsmJit::Assert]
 // ============================================================================
 
-//! @brief Called on assertion failure (through @ref ASMJIT_ASSERT).
+//! @brief Called in debug build on assertion failure.
+//! @param file Source file name where it happened.
+//! @param line Line in the source file.
+//! @param exp Expression what failed.
+//!
+//! If you have problems with assertions simply put a breakpoint into
+//! AsmJit::assertionFailure() method (see AsmJit/Platform.cpp file) and see
+//! call stack.
 ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 
 // ============================================================================
 // [AsmJit::Lock]
 // ============================================================================
 
-//! @brief Lock.
+//! @brief Lock - used in thread-safe code for locking.
 struct ASMJIT_HIDDEN Lock
 {
 #if defined(ASMJIT_WINDOWS)
@@ -136,7 +143,7 @@ private:
 // [AsmJit::AutoLock]
 // ============================================================================
 
-//! @brief Brief Scope auto locker.
+//! @brief Scope auto locker.
 struct ASMJIT_HIDDEN AutoLock
 {
   //! @brief Locks @a target.

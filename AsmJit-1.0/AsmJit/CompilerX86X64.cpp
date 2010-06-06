@@ -97,24 +97,25 @@ struct VariableInfo
   uint32_t code;
   uint8_t size;
   uint8_t clazz;
-  uint8_t reserved;
-  char name[9];
+  uint8_t reserved_0;
+  uint8_t reserved_1;
+  char name[8];
 };
 
 #define C(c) VariableInfo::CLASS_##c
 static const VariableInfo variableInfo[] =
 {
-  /*  0 */ { REG_TYPE_GPD   , 4 , C(GP)                        , 0, "GP.D"        },
-  /*  1 */ { REG_TYPE_GPQ   , 8 , C(GP)                        , 0, "GP.Q"        },
-  /*  2 */ { REG_TYPE_X87   , 4 , C(X87) | C(SP_FP)            , 0, "X87"         },
-  /*  3 */ { REG_TYPE_X87   , 4 , C(X87) | C(SP_FP)            , 0, "X87.F"       },
-  /*  4 */ { REG_TYPE_X87   , 8 , C(X87) | C(DP_FP)            , 0, "X87.D"       },
-  /*  5 */ { REG_TYPE_MM    , 8 , C(MM)                        , 0, "MM"          },
-  /*  6 */ { REG_TYPE_XMM   , 16, C(XMM)                       , 0, "XMM"         },
-  /*  7 */ { REG_TYPE_XMM   , 4 , C(XMM) | C(SP_FP)            , 0, "XMM.1F"      },
-  /*  8 */ { REG_TYPE_XMM   , 8 , C(XMM) | C(DP_FP)            , 0, "XMM.1D"      },
-  /*  9 */ { REG_TYPE_XMM   , 16, C(XMM) | C(SP_FP) | C(VECTOR), 0, "XMM.4F"      },
-  /* 10 */ { REG_TYPE_XMM   , 16, C(XMM) | C(DP_FP) | C(VECTOR), 0, "XMM.2D"      }
+  /*  0 */ { REG_TYPE_GPD   , 4 , C(GP)                        , 0, 0, "GP.D"        },
+  /*  1 */ { REG_TYPE_GPQ   , 8 , C(GP)                        , 0, 0, "GP.Q"        },
+  /*  2 */ { REG_TYPE_X87   , 4 , C(X87) | C(SP_FP)            , 0, 0, "X87"         },
+  /*  3 */ { REG_TYPE_X87   , 4 , C(X87) | C(SP_FP)            , 0, 0, "X87.F"       },
+  /*  4 */ { REG_TYPE_X87   , 8 , C(X87) | C(DP_FP)            , 0, 0, "X87.D"       },
+  /*  5 */ { REG_TYPE_MM    , 8 , C(MM)                        , 0, 0, "MM"          },
+  /*  6 */ { REG_TYPE_XMM   , 16, C(XMM)                       , 0, 0, "XMM"         },
+  /*  7 */ { REG_TYPE_XMM   , 4 , C(XMM) | C(SP_FP)            , 0, 0, "XMM.1F"      },
+  /*  8 */ { REG_TYPE_XMM   , 8 , C(XMM) | C(DP_FP)            , 0, 0, "XMM.1D"      },
+  /*  9 */ { REG_TYPE_XMM   , 16, C(XMM) | C(SP_FP) | C(VECTOR), 0, 0, "XMM.4F"      },
+  /* 10 */ { REG_TYPE_XMM   , 16, C(XMM) | C(DP_FP) | C(VECTOR), 0, 0, "XMM.2D"      }
 };
 #undef C
 
@@ -729,6 +730,37 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
         // Special...
         break;
 
+      case INST_REP_LODSB:
+      case INST_REP_LODSD:
+      case INST_REP_LODSQ:
+      case INST_REP_LODSW:
+      case INST_REP_MOVSB:
+      case INST_REP_MOVSD:
+      case INST_REP_MOVSQ:
+      case INST_REP_MOVSW:
+      case INST_REP_STOSB:
+      case INST_REP_STOSD:
+      case INST_REP_STOSQ:
+      case INST_REP_STOSW:
+      case INST_REPE_CMPSB:
+      case INST_REPE_CMPSD:
+      case INST_REPE_CMPSQ:
+      case INST_REPE_CMPSW:
+      case INST_REPE_SCASB:
+      case INST_REPE_SCASD:
+      case INST_REPE_SCASQ:
+      case INST_REPE_SCASW:
+      case INST_REPNE_CMPSB:
+      case INST_REPNE_CMPSD:
+      case INST_REPNE_CMPSQ:
+      case INST_REPNE_CMPSW:
+      case INST_REPNE_SCASB:
+      case INST_REPNE_SCASD:
+      case INST_REPNE_SCASQ:
+      case INST_REPNE_SCASW:
+        // Special...
+        break;
+
       default:
         ASMJIT_ASSERT(0);
     }
@@ -1118,6 +1150,122 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
             }
             break;
 
+          case INST_REP_LODSB:
+          case INST_REP_LODSD:
+          case INST_REP_LODSQ:
+          case INST_REP_LODSW:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_ESI;
+                break;
+              case 2:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_REP_MOVSB:
+          case INST_REP_MOVSD:
+          case INST_REP_MOVSQ:
+          case INST_REP_MOVSW:
+          case INST_REPE_CMPSB:
+          case INST_REPE_CMPSD:
+          case INST_REPE_CMPSQ:
+          case INST_REPE_CMPSW:
+          case INST_REPNE_CMPSB:
+          case INST_REPNE_CMPSD:
+          case INST_REPNE_CMPSQ:
+          case INST_REPNE_CMPSW:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EDI;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_ESI;
+                break;
+              case 2:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_REP_STOSB:
+          case INST_REP_STOSD:
+          case INST_REP_STOSQ:
+          case INST_REP_STOSW:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EDI;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 2:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case INST_REPE_SCASB:
+          case INST_REPE_SCASD:
+          case INST_REPE_SCASQ:
+          case INST_REPE_SCASW:
+          case INST_REPNE_SCASB:
+          case INST_REPNE_SCASD:
+          case INST_REPNE_SCASQ:
+          case INST_REPNE_SCASW:
+            switch (i)
+            {
+              case 0:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EDI;
+                break;
+              case 1:
+                var->vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EAX;
+                break;
+              case 2:
+                var->vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE;
+                var->regIndex = REG_INDEX_ECX;
+                break;
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
           default:
             ASMJIT_ASSERT(0);
         }
@@ -1468,6 +1616,37 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
 
       case INST_RDTSC:
       case INST_RDTSCP:
+        a._emitInstruction(_code);
+        return;
+
+      case INST_REP_LODSB:
+      case INST_REP_LODSD:
+      case INST_REP_LODSQ:
+      case INST_REP_LODSW:
+      case INST_REP_MOVSB:
+      case INST_REP_MOVSD:
+      case INST_REP_MOVSQ:
+      case INST_REP_MOVSW:
+      case INST_REP_STOSB:
+      case INST_REP_STOSD:
+      case INST_REP_STOSQ:
+      case INST_REP_STOSW:
+      case INST_REPE_CMPSB:
+      case INST_REPE_CMPSD:
+      case INST_REPE_CMPSQ:
+      case INST_REPE_CMPSW:
+      case INST_REPE_SCASB:
+      case INST_REPE_SCASD:
+      case INST_REPE_SCASQ:
+      case INST_REPE_SCASW:
+      case INST_REPNE_CMPSB:
+      case INST_REPNE_CMPSD:
+      case INST_REPNE_CMPSQ:
+      case INST_REPNE_CMPSW:
+      case INST_REPNE_SCASB:
+      case INST_REPNE_SCASD:
+      case INST_REPNE_SCASQ:
+      case INST_REPNE_SCASW:
         a._emitInstruction(_code);
         return;
 
@@ -3719,6 +3898,8 @@ void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
 
 void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
 {
+  // 16 + 8 + 16 = GP + MMX + XMM registers.
+
   StateData* fromState = &_state;
   StateData* toState = state;
 

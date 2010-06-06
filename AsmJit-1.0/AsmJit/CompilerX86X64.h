@@ -225,7 +225,7 @@ private:
 // [AsmJit::VarData]
 // ============================================================================
 
-//! @brief Variable data.
+//! @brief Variable data (used internally by @c Compiler).
 struct VarData
 {
   // --------------------------------------------------------------------------
@@ -235,7 +235,11 @@ struct VarData
   //! @brief Scope (NULL if variable is global).
   EFunction* scope;
 
+  //! @brief First emittable where the variable is accessed.
+  //!
+  //! @note If this member is @c NULL then variable is unused.
   Emittable* firstEmittable;
+  //! @brief Last emittable where the variable is accessed.
   Emittable* lastEmittable;
 
   // --------------------------------------------------------------------------
@@ -588,6 +592,7 @@ private:
 // [AsmJit::EJmpInstruction]
 // ============================================================================
 
+//! @brief Emittable that represents single instruction that can jump somewhere.
 struct ASMJIT_API EJmpInstruction : public EInstruction
 {
   // --------------------------------------------------------------------------
@@ -808,6 +813,7 @@ protected:
   //! @brief Dummy emittable, signalizes end of function.
   EDummy* _end;
 
+private:
   friend struct CompilerContext;
   friend struct CompilerCore;
   friend struct EProlog;
@@ -848,10 +854,11 @@ struct ASMJIT_API EProlog : public Emittable
   // [Members]
   // --------------------------------------------------------------------------
 
-private:
+protected:
   //! @brief Prolog owner function.
   EFunction* _function;
 
+private:
   friend struct CompilerCore;
   friend struct EFunction;
 };
@@ -890,10 +897,11 @@ struct ASMJIT_API EEpilog : public Emittable
   // [Members]
   // --------------------------------------------------------------------------
 
-private:
+protected:
   //! @brief Epilog owner function.
   EFunction* _function;
 
+private:
   friend struct CompilerCore;
   friend struct EFunction;
 };
@@ -2808,6 +2816,271 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
                   dst_eax.getId() != dst_ecx.getId());
 
     _emitInstruction(INST_RDTSCP, &dst_edx, &dst_eax, &dst_ecx);
+  }
+
+  //! @brief Load ECX/RCX BYTEs from DS:[ESI/RSI] to AL.
+  inline void rep_lodsb(const GPVar& dst_val, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=EAX,RAX, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_val.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_LODSB, &dst_val, &src_addr, &cnt_ecx);
+  }
+
+  //! @brief Load ECX/RCX DWORDs from DS:[ESI/RSI] to EAX.
+  inline void rep_lodsd(const GPVar& dst_val, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=EAX,RAX, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_val.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_LODSD, &dst_val, &src_addr, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Load ECX/RCX QWORDs from DS:[ESI/RSI] to RAX.
+  inline void rep_lodsq(const GPVar& dst_val, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=EAX,RAX, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_val.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_LODSQ, &dst_val, &src_addr, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+  //! @brief Load ECX/RCX WORDs from DS:[ESI/RSI] to AX.
+  inline void rep_lodsw(const GPVar& dst_val, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=EAX,RAX, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_val.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_LODSW, &dst_val, &src_addr, &cnt_ecx);
+  }
+
+  //! @brief Move ECX/RCX BYTEs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsb(const GPVar& dst_addr, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_MOVSB, &dst_addr, &src_addr, &cnt_ecx);
+  }
+
+  //! @brief Move ECX/RCX DWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsd(const GPVar& dst_addr, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_MOVSD, &dst_addr, &src_addr, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Move ECX/RCX QWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsq(const GPVar& dst_addr, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_MOVSQ, &dst_addr, &src_addr, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Move ECX/RCX WORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  inline void rep_movsw(const GPVar& dst_addr, const GPVar& src_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_addr.getId() && src_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_MOVSW, &dst_addr, &src_addr, &cnt_ecx);
+  }
+
+  //! @brief Fill ECX/RCX BYTEs at ES:[EDI/RDI] with AL.
+  inline void rep_stosb(const GPVar& dst_addr, const GPVar& src_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=EAX/RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_val.getId() && src_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_STOSB, &dst_addr, &src_val, &cnt_ecx);
+  }
+
+  //! @brief Fill ECX/RCX DWORDs at ES:[EDI/RDI] with EAX.
+  inline void rep_stosd(const GPVar& dst_addr, const GPVar& src_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=EAX/RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_val.getId() && src_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_STOSD, &dst_addr, &src_val, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Fill ECX/RCX QWORDs at ES:[EDI/RDI] with RAX.
+  inline void rep_stosq(const GPVar& dst_addr, const GPVar& src_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=EAX/RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_val.getId() && src_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_STOSQ, &dst_addr, &src_val, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Fill ECX/RCX WORDs at ES:[EDI/RDI] with AX.
+  inline void rep_stosw(const GPVar& dst_addr, const GPVar& src_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=EAX/RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(dst_addr.getId() != src_val.getId() && src_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REP_STOSW, &dst_addr, &src_val, &cnt_ecx);
+  }
+
+  //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsb(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_CMPSB, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsd(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_CMPSD, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsq(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_CMPSQ, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  inline void repe_cmpsw(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_CMPSW, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+  //! @brief Find non-AL BYTE starting at ES:[EDI/RDI].
+  inline void repe_scasb(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=AL, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_SCASB, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+
+  //! @brief Find non-EAX DWORD starting at ES:[EDI/RDI].
+  inline void repe_scasd(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=EAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_SCASD, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Find non-RAX QWORD starting at ES:[EDI/RDI].
+  inline void repe_scasq(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_SCASQ, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Find non-AX WORD starting at ES:[EDI/RDI].
+  inline void repe_scasw(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=AX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPE_SCASW, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+
+  //! @brief Find matching BYTEs in [RDI] and [RSI].
+  inline void repne_cmpsb(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_CMPSB, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+  //! @brief Find matching DWORDs in [RDI] and [RSI].
+  inline void repne_cmpsd(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_CMPSD, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Find matching QWORDs in [RDI] and [RSI].
+  inline void repne_cmpsq(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_CMPSQ, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Find matching WORDs in [RDI] and [RSI].
+  inline void repne_cmpsw(const GPVar& cmp1_addr, const GPVar& cmp2_addr, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, cmp2=ES:[EDI/RDI], cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_addr.getId() && cmp2_addr.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_CMPSW, &cmp1_addr, &cmp2_addr, &cnt_ecx);
+  }
+
+  //! @brief Find AL, starting at ES:[EDI/RDI].
+  inline void repne_scasb(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=AL, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_SCASB, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+
+  //! @brief Find EAX, starting at ES:[EDI/RDI].
+  inline void repne_scasd(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=EAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_SCASD, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+
+#if defined(ASMJIT_X64)
+  //! @brief Find RAX, starting at ES:[EDI/RDI].
+  inline void repne_scasq(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=RAX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_SCASQ, &cmp1_addr, &cmp2_val, &cnt_ecx);
+  }
+#endif // ASMJIT_X64
+
+  //! @brief Find AX, starting at ES:[EDI/RDI].
+  inline void repne_scasw(const GPVar& cmp1_addr, const GPVar& cmp2_val, const GPVar& cnt_ecx)
+  {
+    // All registers must be unique, they will be reallocated to cmp1=ES:EDI,RDI, src=AX, cnt=ECX/RCX.
+    ASMJIT_ASSERT(cmp1_addr.getId() != cmp2_val.getId() && cmp2_val.getId() != cnt_ecx.getId());
+
+    _emitInstruction(INST_REPNE_SCASW, &cmp1_addr, &cmp2_val, &cnt_ecx);
   }
 
   //! @brief Return from Procedure.
@@ -7519,6 +7792,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for 
 //! more complete examples.
 //!
+
 //! <b>Memory Management</b>
 //!
 //! @c Compiler Memory management follows these rules:
@@ -7577,7 +7851,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //!   available in @c AsmJit::Assembler.
 struct ASMJIT_API Compiler : public CompilerIntrinsics
 {
-  //! @brief Create a new @c Compiler instance.
+  //! @brief Create the @c Compiler instance.
   Compiler() ASMJIT_NOTHROW;
   //! @brief Destroy the @c Compiler instance.
   virtual ~Compiler() ASMJIT_NOTHROW;

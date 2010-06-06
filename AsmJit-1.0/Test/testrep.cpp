@@ -58,8 +58,7 @@ int main(int argc, char* argv[])
     c.alloc(src, nsi);
     c.alloc(cnt, ncx);
 
-    // TODO:
-    //c.rep_movsb();
+    c.rep_movsb(dst, src, cnt);
     c.endFunction();
   }
   // ==========================================================================

@@ -64,7 +64,7 @@ def processFile(fileName):
   dpos = 0
   for m in r.finditer(din):
     inst = m.group("INST")
-    dinst.append(inst);
+    dinst.append(inst)
     daddr.append(dpos)
     dpos += len(inst) + 1
 
@@ -76,7 +76,7 @@ def processFile(fileName):
   dout += "\n"
 
   for i in xrange(len(dinst)):
-    dout += "#define INST_" + dinst[i].upper() + "_INDEX" + " " + str(daddr[i]) + "\n"
+    dout += "#define INST_" + dinst[i].upper().replace(" ", "_") + "_INDEX" + " " + str(daddr[i]) + "\n"
 
   mb_string = "// ${INSTRUCTION_DATA_BEGIN}\n"
   me_string = "// ${INSTRUCTION_DATA_END}\n"

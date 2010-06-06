@@ -81,9 +81,10 @@ struct ASMJIT_API MemoryManager
 //! arrays to manage it.
 struct ASMJIT_API DefaultMemoryManager : public MemoryManager
 {
-  //! @brief Create memory manager instance.
+  //! @brief Create the @c DefaultMemoryManager instance.
   DefaultMemoryManager() ASMJIT_NOTHROW;
-  //! @brief Destroy memory manager instance, this means also to free all blocks.
+  //! @brief Destroy the @c DefaultMemoryManager instance, this means also to
+  //! free all blocks.
   virtual ~DefaultMemoryManager() ASMJIT_NOTHROW;
 
   virtual void* alloc(sysuint_t size, uint32_t type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;

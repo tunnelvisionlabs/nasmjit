@@ -32,7 +32,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Core
+//! @addtogroup AsmJit_Assembler
 //! @{
 
 // ============================================================================

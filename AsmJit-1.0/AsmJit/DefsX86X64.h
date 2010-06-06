@@ -43,7 +43,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Defs
+//! @addtogroup AsmJit_Definitions
 //! @{
 
 // ============================================================================
@@ -96,13 +96,21 @@ enum REG_INDEX
 
 #if defined(ASMJIT_X64)
   ,
+  //! @brief ID for r8 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R8 = 8,
+  //! @brief ID for R9 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R9 = 9,
+  //! @brief ID for R10 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R10 = 10,
+  //! @brief ID for R11 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R11 = 11,
+  //! @brief ID for R12 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R12 = 12,
+  //! @brief ID for R13 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R13 = 13,
+  //! @brief ID for R14 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R14 = 14,
+  //! @brief ID for R15 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R15 = 15
 #endif // ASMJIT_X64
 };
@@ -535,7 +543,8 @@ enum SCALE
 // [AsmJit::HINT]
 // ============================================================================
 
-//! @brief Condition hint, see @c AsmJit::Serializer::jz() and friends.
+//! @brief Condition hint, see @c AsmJit::Assembler::jz(), @c AsmJit::Compiler::jz()
+//! and friends.
 enum HINT
 {
   //! @brief No hint.
@@ -1089,6 +1098,34 @@ enum INST_CODE
   INST_RCR,           // X86/X64
   INST_RDTSC,         // X86/X64
   INST_RDTSCP,        // X86/X64
+  INST_REP_LODSB,     // X86/X64 (REP)
+  INST_REP_LODSD,     // X86/X64 (REP)
+  INST_REP_LODSQ,     // X64 only (REP)
+  INST_REP_LODSW,     // X86/X64 (REP)
+  INST_REP_MOVSB,     // X86/X64 (REP)
+  INST_REP_MOVSD,     // X86/X64 (REP)
+  INST_REP_MOVSQ,     // X64 only (REP)
+  INST_REP_MOVSW,     // X86/X64 (REP)
+  INST_REP_STOSB,     // X86/X64 (REP)
+  INST_REP_STOSD,     // X86/X64 (REP)
+  INST_REP_STOSQ,     // X64 only (REP)
+  INST_REP_STOSW,     // X86/X64 (REP)
+  INST_REPE_CMPSB,    // X86/X64 (REP)
+  INST_REPE_CMPSD,    // X86/X64 (REP)
+  INST_REPE_CMPSQ,    // X64 only (REP)
+  INST_REPE_CMPSW,    // X86/X64 (REP)
+  INST_REPE_SCASB,    // X86/X64 (REP)
+  INST_REPE_SCASD,    // X86/X64 (REP)
+  INST_REPE_SCASQ,    // X64 only (REP)
+  INST_REPE_SCASW,    // X86/X64 (REP)
+  INST_REPNE_CMPSB,   // X86/X64 (REP)
+  INST_REPNE_CMPSD,   // X86/X64 (REP)
+  INST_REPNE_CMPSQ,   // X64 only (REP)
+  INST_REPNE_CMPSW,   // X86/X64 (REP)
+  INST_REPNE_SCASB,   // X86/X64 (REP)
+  INST_REPNE_SCASD,   // X86/X64 (REP)
+  INST_REPNE_SCASQ,   // X64 only (REP)
+  INST_REPNE_SCASW,   // X86/X64 (REP)
   INST_RET,           // X86/X64
   INST_ROL,           // X86/X64
   INST_ROR,           // X86/X64
@@ -1187,7 +1224,9 @@ struct InstructionDescription
 
   //! @brief Instruction groups.
   //!
-  //! This should be only used by assembler, because it's AsmJit specific.
+  //! This should be only used by assembler, because it's @c AsmJit::Assembler
+  //! specific grouping. Each group represents one 'case' in
+  //! @c AsmJit::Assembler::_emitX86() method.
   enum G
   {
     // Gloup categories.
@@ -1215,6 +1254,7 @@ struct InstructionDescription
     G_RM_B,
     G_RM,
     G_RM_R,
+    G_REP,
     G_RET,
     G_ROT,
     G_SHLD_SHRD,
