@@ -237,11 +237,6 @@ void AssemblerCore::_emitImmediate(const Imm& imm, uint32_t size) ASMJIT_NOTHROW
   uint8_t isUnsigned = imm.isUnsigned();
   sysint_t i = imm.getValue();
 
-  if (imm.relocMode() != RELOC_NONE) 
-  {
-    // TODO: I don't know why there is this condition.
-  }
-
   if (size == 1 && !isUnsigned) _emitByte ((int8_t  )i);
   else if (size == 1 &&  isUnsigned) _emitByte ((uint8_t )i);
   else if (size == 2 && !isUnsigned) _emitWord ((int16_t )i);
@@ -1181,7 +1176,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         {
           const Imm& imm = reinterpret_cast<const Imm&>(*o1);
 
-          if (Util::isInt8(imm.getValue()) && imm.relocMode() == RELOC_NONE)
+          if (Util::isInt8(imm.getValue()))
           {
             _emitX86RM(0x6B,
               dst.isRegType(REG_TYPE_GPW),
@@ -1208,7 +1203,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         const Operand& src = reinterpret_cast<const Operand&>(*o1);
         const Imm& imm = reinterpret_cast<const Imm&>(*o2);
 
-        if (Util::isInt8(imm.getValue()) && imm.relocMode() == RELOC_NONE)
+        if (Util::isInt8(imm.getValue()))
         {
           _emitX86RM(0x6B,
             dst.isRegType(REG_TYPE_GPW),
@@ -1469,7 +1464,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 #if defined(ASMJIT_X64)
           // Optimize instruction size by using 32 bit immediate if value can
           // fit to it.
-          if (immSize == 8 && Util::isInt32(src.getValue()) && src.relocMode() == RELOC_NONE)
+          if (immSize == 8 && Util::isInt32(src.getValue()))
           {
             _emitX86RM(0xC7,
               dst.isRegType(REG_TYPE_GPW),
@@ -1603,7 +1598,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         const Imm& imm = reinterpret_cast<const Imm&>(*o0);
 
-        if (Util::isInt8(imm.getValue()) && imm.relocMode() == RELOC_NONE)
+        if (Util::isInt8(imm.getValue()))
         {
           _emitByte(0x6A);
           _emitImmediate(imm, 1);
@@ -1729,7 +1724,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         const Imm& imm = reinterpret_cast<const Imm&>(*o0);
         ASMJIT_ASSERT(Util::isUInt16(imm.getValue()));
 
-        if (imm.getValue() == 0 && imm.relocMode() == RELOC_NONE)
+        if (imm.getValue() == 0)
         {
           _emitByte(0xC3);
         }
@@ -1749,9 +1744,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isRegMem() && (o1->isRegCode(REG_CL) || o1->isImm()))
       {
         // generate opcode. For these operations is base 0xC0 or 0xD0.
-        bool useImm8 = (o1->isImm() &&
-                       (reinterpret_cast<const Imm&>(*o1).getValue() != 1 ||
-                        reinterpret_cast<const Imm&>(*o1).relocMode() != RELOC_NONE));
+        bool useImm8 = o1->isImm() && reinterpret_cast<const Imm&>(*o1).getValue() != 1;
         uint32_t opCode = useImm8 ? 0xC0 : 0xD0;
 
         // size and operand type modifies the opcode

@@ -288,7 +288,7 @@ struct ASMJIT_HIDDEN Operand
     //! @brief @c true if immediate is unsigned.
     uint8_t isUnsigned;
     //! @brief Not used.
-    uint8_t relocMode;
+    uint8_t reserved;
 
     //! @brief Operand ID.
     uint32_t id;
@@ -952,7 +952,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.op = OPERAND_IMM;
     _imm.size = 0;
     _imm.isUnsigned = false;
-    _imm.relocMode = RELOC_NONE;
+    _imm.reserved = 0;
 
     _imm.id = INVALID_VALUE;
     _imm.value = 0;
@@ -965,7 +965,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.op = OPERAND_IMM;
     _imm.size = 0;
     _imm.isUnsigned = false;
-    _imm.relocMode = RELOC_NONE;
+    _imm.reserved = 0;
 
     _imm.id = INVALID_VALUE;
     _imm.value = i;
@@ -978,7 +978,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
     _imm.op = OPERAND_IMM;
     _imm.size = 0;
     _imm.isUnsigned = isUnsigned;
-    _imm.relocMode = RELOC_NONE;
+    _imm.reserved = 0;
 
     _imm.id = INVALID_VALUE;
     _imm.value = i;
@@ -994,9 +994,6 @@ struct ASMJIT_HIDDEN Imm : public Operand
 
   //! @brief Get whether an immediate is unsigned value.
   inline bool isUnsigned() const ASMJIT_NOTHROW { return _imm.isUnsigned != 0; }
-
-  //! @brief Get relocation mode.
-  inline uint32_t relocMode() const ASMJIT_NOTHROW { return _imm.relocMode; }
 
   //! @brief Get signed immediate value.
   inline sysint_t getValue() const ASMJIT_NOTHROW { return _imm.value; }

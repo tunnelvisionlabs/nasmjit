@@ -45,8 +45,9 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
 {
   Compiler c;
 
-  //FileLogger logger(stderr);
-  //c.setLogger(&logger);
+  // Not enabled by default...
+  // FileLogger logger(stderr);
+  // c.setLogger(&logger);
 
   switch (args)
   {
