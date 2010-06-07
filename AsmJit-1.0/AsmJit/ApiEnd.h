@@ -33,4 +33,3 @@
 #undef snprintf
 
 #endif // _MSC_VER
-

@@ -50,11 +50,12 @@ int main(int argc, char* argv[])
 
   {
     c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<int32_t*, int32_t*, int32_t, int32_t>());
+    c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
     GPVar dst0_lo(c.argGP(0));
     GPVar dst0_hi(c.argGP(1));
 
-    GPVar v0_lo(c.newGP());
+    GPVar v0_lo(c.newGP(VARIABLE_TYPE_GPD));
     GPVar v0_hi(c.argGP(2));
     GPVar src0(c.argGP(3));
 

@@ -584,7 +584,8 @@ void EVariableHint::translate(CompilerContext& c) ASMJIT_NOTHROW
       c.allocVar(_vdata, _hintValue, VARIABLE_ALLOC_READWRITE);
       break;
     case VARIABLE_HINT_SPILL:
-      c.spillVar(_vdata);
+      if (_vdata->state == VARIABLE_STATE_REGISTER)
+        c.spillVar(_vdata);
       break;
     case VARIABLE_HINT_UNUSE:
       c.unuseVar(_vdata, VARIABLE_STATE_UNUSED);
@@ -2140,6 +2141,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   // ESP.
   if (_isCallee)
     _isEspAdjusted = true;
+  _isEspAdjusted = true;
 
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
     _isNaked = (bool)_hints[FUNCTION_HINT_NAKED];
@@ -2172,28 +2174,29 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   // How many bytes to add to stack to make it aligned to 16 bytes.
   if (_isNaked)
   {
-    // TODO:
-    //_stackAdjust = ((sizeof(sysint_t) == 8) ? 8 : 12);
-    // stackAdjust = sizeof(sysint_t); //((sizeof(sysint_t) == 8) ? 8 : 4);
     _stackAdjust = 0; 
 
     c._argumentsBaseReg = REG_INDEX_ESP;
     c._variablesBaseReg = REG_INDEX_ESP;
 
-    c._argumentsBaseOffset = _prologEpilogStackSize + _stackAdjust;
-    c._variablesBaseOffset = -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
+    c._argumentsBaseOffset = 
+      (_isEspAdjusted) ? (_prologEpilogStackSizeAligned16 + _memStackSizeAligned16)
+                       : (_prologEpilogStackSize);
+    c._variablesBaseOffset =
+      (_isEspAdjusted) ? 0
+                       : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
   }
   else
   {
-    // TODO:
-    //((sizeof(sysint_t) == 8) ? 0 : 8);
     _stackAdjust = sizeof(sysint_t);
 
     c._argumentsBaseReg = REG_INDEX_EBP;
     c._variablesBaseReg = REG_INDEX_ESP;
 
     c._argumentsBaseOffset = (int32_t)(_stackAdjust);
-    c._variablesBaseOffset = -(int32_t)(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16) + (int32_t)_stackAdjust;
+    c._variablesBaseOffset = 
+      (_isEspAdjusted) ? 0
+                       : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
   }
 }
 
@@ -2388,14 +2391,12 @@ void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
 
 void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
 {
-  const CpuInfo* cpuInfo = getCpuInfo();
-
   uint32_t preservedGP  = _modifiedAndPreservedGP;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
   // Calculate stack size with stack adjustment. This will give us proper
   // count of bytes to subtract from esp/rsp.
-  int32_t stackSize = _prologEpilogStackSize + _memStackSize; //_legacy_getStackSize(_stackAdjust);
+  int32_t stackSize = _prologEpilogStackSize + _memStackSize;
   int32_t stackSubtract = stackSize;
 
   uint32_t i, mask;
@@ -2432,29 +2433,22 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
     stackSubtract -= bitCount(preservedGP) * sizeof(sysint_t);
   }
 
-  if (!_isNaked)
+  if (_isNaked)
   {
     if (_isEspAdjusted)
     {
-      if (stackSubtract)
-        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
-
-#if defined(ASMJIT_X86)
-      // TODO:
-      //
-      // Manual alignment. This is a bit complicated if we don't want to pollute
-      // ebp/rpb register and standard prolog.
-      if (stackSize && 0)
-      {
-        // stackAlignmentSize can be 8 or 16
-        _compiler->emit(INST_AND, nsp, imm(-16));
-        // _isStackAlignedTo16Bytes = true;
-      }
-#endif // ASMJIT_X86
+      if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+    }
+  }
+  else
+  {
+    if (_isEspAdjusted)
+    {
+      if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
     }
   }
 
-  sysint_t nspPos = _memStackSizeAligned16; // alignTo16Bytes( _legacy_variablesStackSize());
+  int32_t nspPos = _memStackSizeAligned16;
   if (_isNaked) nspPos -= stackSize + _stackAdjust;
 
   // Save XMM registers using MOVDQA/MOVDQU.
@@ -2496,30 +2490,28 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
   uint32_t preservedGP  = _modifiedAndPreservedGP;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
-  // In 64-bit mode the stack is aligned to 16 bytes by default.
-  // bool isStackAlignedTo16Bytes = sizeof(sysint_t) == 8;
-
   // Calculate stack size with stack adjustment. This will give us proper
   // count of bytes to subtract from esp/rsp.
-  int32_t stackSize = _prologEpilogStackSize + _memStackSize; //_legacy_getStackSize(_stackAdjust);
+  int32_t stackSize = _prologEpilogStackSize + _memStackSize;
 
   uint32_t i, mask;
-
-  // TODO:
-//#if defined(ASMJIT_X86)
-//  if (!_isNaked && stackSize && f->stackAlignmentSize())
-//  {
-//    isStackAlignedTo16Bytes = true;
-//  }
-//#endif // ASMJIT_X86
 
   if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
   {
     _compiler->comment("Function epilog");
   }
 
-  sysint_t nspPos = _memStackSizeAligned16; //alignTo16Bytes(_legacy_variablesStackSize());
+  int32_t nspPos = _memStackSizeAligned16;
   if (_isNaked) nspPos -= stackSize + _stackAdjust;
+
+  if (!_prologEpilogPushPop)
+  {
+    if (_isEspAdjusted)
+    {
+      int32_t stackAdd = stackSize;
+      if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
+    }
+  }
 
   // Restore XMM registers using MOV.
   if (preservedXMM)
@@ -2535,20 +2527,28 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
   }
 
   // Restore GP registers.
-  if (preservedGP)
+  if (_prologEpilogPushPop)
   {
-    if (_prologEpilogPushPop)
+    // Restore GP registers using MOV.
+    if (_isNaked)
     {
-      // Restore GP registers using MOV.
-      if (!_isNaked)
+      if (_isEspAdjusted)
       {
-        if (_isEspAdjusted)
-        {
-          int32_t stackAdd = stackSize - bitCount(preservedGP) * sizeof(sysint_t);
-          if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
-        }
+        int32_t stackAdd = stackSize - bitCount(preservedGP) * sizeof(sysint_t);
+        if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
       }
+    }
+    else
+    {
+      if (_isEspAdjusted)
+      {
+        int32_t stackAdd = stackSize - bitCount(preservedGP) * sizeof(sysint_t);
+        if (stackAdd != 0) _compiler->emit(INST_ADD, nsp, imm(stackAdd));
+      }
+    }
 
+    if (preservedGP)
+    {
       for (i = REG_NUM - 1, mask = 1 << i; (int32_t)i >= 0; i--, mask >>= 1)
       {
         if (preservedGP & mask)
@@ -2557,7 +2557,10 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
         }
       }
     }
-    else
+  }
+  else
+  {
+    if (preservedGP)
     {
       // Restore GP registers using PUSH/POP.
       for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
@@ -2889,7 +2892,15 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
     VarData* other = _state.gp[newIndex];
 
     emitExchangeVar(vdata, pref, vflags, other);
-    _allocatedVariable(vdata);
+    if (other) other->registerIndex = oldIndex;
+
+    // Update VarData.
+    vdata->state = VARIABLE_STATE_REGISTER;
+    vdata->registerIndex = newIndex;
+    vdata->homeRegisterIndex = newIndex;
+
+    _state.gp[oldIndex] = other;
+    _state.gp[newIndex] = vdata;
     return;
   }
 
@@ -4879,7 +4890,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       VarData* vdata = c._active;
       do {
         EVariableHint* e = Compiler_newObject<EVariableHint>(this, vdata, (uint32_t)VARIABLE_HINT_UNUSE, (uint32_t)INVALID_VALUE);
-        addEmittableAfter(e, vdata->lastEmittable);
+        if (vdata->lastEmittable) addEmittableAfter(e, vdata->lastEmittable);
 
         vdata = vdata->nextActive;
       } while (vdata != c._active);

@@ -77,6 +77,7 @@ EndIf(ASMJIT_BUILD_LIBRARY)
 # Build AsmJit test executables?
 If(ASMJIT_BUILD_TEST)
   Set(ASMJIT_TEST_FILES
+    testalign
     testbasics
     testcpu
     testdummy

@@ -50,13 +50,12 @@ int main(int argc, char* argv[])
 
   {
     c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<void*, void*, sysuint_t>());
+    c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+    c.setProperty(PROPERTY_LOG_BINARY, true);
+
     GPVar dst(c.argGP(0));
     GPVar src(c.argGP(1));
     GPVar cnt(c.argGP(2));
-
-    c.alloc(dst, ndi);
-    c.alloc(src, nsi);
-    c.alloc(cnt, ncx);
 
     c.rep_movsb(dst, src, cnt);
     c.endFunction();
