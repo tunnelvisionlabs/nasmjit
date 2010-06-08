@@ -395,7 +395,7 @@ void AssemblerCore::_emitModM(
     // X64 uses relative addressing model
     if (mem.getMemType() == OPERAND_MEM_LABEL)
     {
-      LabelData& l_data = _labelData[mem._mem.base];
+      LabelData& l_data = _labelData[mem._mem.base & OPERAND_ID_VALUE_MASK];
 
       if (mem.hasIndex())
       {

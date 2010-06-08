@@ -1248,14 +1248,16 @@ struct ASMJIT_API CompilerCore
     if (code >= INST_J && code <= INST_JMP)
     {
       void* addr = _zone.zalloc(sizeof(EJmpInstruction));
-      return new(addr) EJmpInstruction(reinterpret_cast<Compiler*>(this),
-        code, operandsData, operandsCount);
+
+      return new(addr) EJmpInstruction(
+        reinterpret_cast<Compiler*>(this), code, operandsData, operandsCount);
     }
     else
     {
       void* addr = _zone.zalloc(sizeof(EInstruction) + operandsCount * sizeof(Operand));
-      return new(addr) EInstruction(reinterpret_cast<Compiler*>(this),
-        code, operandsData, operandsCount);
+
+      return new(addr) EInstruction(
+        reinterpret_cast<Compiler*>(this), code, operandsData, operandsCount);
     }
   }
 
@@ -1329,7 +1331,10 @@ struct ASMJIT_API CompilerCore
   //!
   //! @brief Get variable data.
   inline VarData* _getVarData(uint32_t id) const ASMJIT_NOTHROW
-  { return _varData[id & OPERAND_ID_VALUE_MASK]; }
+  {
+    ASMJIT_ASSERT(id != INVALID_VALUE);
+    return _varData[id & OPERAND_ID_VALUE_MASK];
+  }
 
   //! @brief Create a new general-purpose variable.
   GPVar newGP(uint32_t variableType = VARIABLE_TYPE_GPN, const char* name = NULL) ASMJIT_NOTHROW;

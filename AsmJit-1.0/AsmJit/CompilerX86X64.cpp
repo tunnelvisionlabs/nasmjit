@@ -815,6 +815,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
     if (o.isVar())
     {
+      ASMJIT_ASSERT(o.getId() != INVALID_VALUE);
       VarData* vdata = _compiler->_getVarData(o.getId());
       ASMJIT_ASSERT(vdata != NULL);
 
@@ -1982,151 +1983,6 @@ void EFunction::_allocVariables(CompilerContext& c) ASMJIT_NOTHROW
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-// TODO:
-void Function::prepare(CompilerContext& c)
-{
-  // Prepare variables
-  static const UInt32 sizes[] = { 16, 8, 4, 2, 1 };
-
-  SysUInt i, v;
-
-  SysInt sp = 0;       // Stack offset
-  SysInt pe;           // Prolog / epilog size
-  SysInt peGp;         // Prolog / epilog for GP registers size
-  SysInt peXmm;        // Prolog / epilog for XMM registers size
-
-  UInt8 argMemBase;    // Address base register for function arguments
-  UInt8 varMemBase;    // Address base register for function variables
-  SysInt argDisp = 0;  // Displacement for arguments
-  SysInt varDisp = 0;  // Displacement for variables
-  UInt32 alignSize = 0;// Maximum alignment stack size
-
-  // This is simple optimization to do 16 byte aligned variables first and
-  // all others next.
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(sizes); i++)
-  {
-    // See sizes declaration. We allocate variables on the stack in ordered way:
-    // 16 byte variables (xmm) first,
-    // 8 byte variables (mmx, gpq) second,
-    // 4,2,1 (these not needs to be aligned)
-    UInt32 size = sizes[i];
-
-    for (v = 0; v < _variables.length(); v++)
-    {
-      Variable* var = _variables[v];
-
-      // Use only variable with size 'size' and function arguments that was
-      // passed through registers.
-      if (var->size() == size && !var->stackArgument() && var->_globalMemoryAccessCount > 0)
-      {
-        // X86 stack is aligned to 32 bits (4 bytes) in 32-bit mode (Is this
-        // correct?) and for 128-bits (16 bytes) in 64-bit mode.
-        //
-        // For MMX and SSE  programming we need 8 or 16 bytes alignment. For
-        // MMX/SSE memory operands we can be adjusted by 4 or 12 bytes.
-#if defined(ASMJIT_X86)
-        if (size ==  8 && alignSize <  8) alignSize =  8;
-        if (size == 16 && alignSize < 16) alignSize = 16;
-#endif // ASMJIT_X86
-
-        _variables[v]->_stackOffset = sp;
-        sp += size;
-      }
-    }
-  }
-
-  // Align to 16 bytes.
-  sp = (sp + 15) & ~15;
-
-  // Get prolog/epilog push/pop size on the stack.
-  peGp = countOfGpRegistersToBeSaved() * sizeof(SysInt);
-  peXmm = countOfXmmRegistersToBeSaved() * 16;
-  pe = peGp + peXmm;
-
-  _prologEpilogStackSize = pe;
-  _variablesStackSize = sp;
-  _stackAlignmentSize = alignSize;
-
-  // Calculate displacements.
-  if (naked())
-  {
-    // Naked functions are using always esp/rsp.
-    argMemBase = RID_ESP;
-    argDisp = prologEpilogPushPop() ? peGp : 0;
-
-    varMemBase = RID_ESP;
-    varDisp = -sp - sizeof(SysInt);
-  }
-  else
-  {
-    // Functions with prolog/epilog are using ebp/rbp for variables.
-    argMemBase = RID_EBP;
-    // Push ebp/rpb size (return address is already in arguments stack offset).
-    argDisp = sizeof(SysInt);
-
-    varMemBase = RID_ESP;
-    varDisp = 0;
-  }
-
-  // Patch all variables to point to correct address in memory
-  for (v = 0; v < _variables.length(); v++)
-  {
-    Variable* var = _variables[v];
-    Mem* memop = var->_memoryOperand;
-
-    // Different stack home for function arguments and variables.
-    //
-    // NOTE: Function arguments given in registers can be relocated onto the
-    // stack without problems. This code doest something different, it will
-    // not change stack arguments location. So only stack based arguments needs
-    // this special handling
-    if (var->stackArgument())
-    {
-      memop->_mem.base = argMemBase;
-      memop->_mem.displacement = var->stackOffset() + argDisp;
-    }
-    else
-    {
-      memop->_mem.base = varMemBase;
-      memop->_mem.displacement = var->stackOffset() + varDisp;
-    }
-  }
-}
-#endif
-
-/*
-TODO:
-static uint32_t getStackSize(EFunction* f, uint32_t stackAdjust)
-{
-  // Get stack size needed for store all variables and to save all used
-  // registers. AlignedStackSize is stack size adjusted for aligning.
-  uint32_t variables = alignTo16Bytes(f->variablesStackSize());
-  uint32_t prologEpilog = alignTo16Bytes(f->prologEpilogStackSize());
-
-  return variables + prologEpilog;
-}
-*/
 
 void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
 {
@@ -4855,6 +4711,10 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       if (start->getType() == EMITTABLE_FUNCTION)
       {
         break;
+      }
+      else
+      {
+        start->emit(a);
       }
       start = start->getNext();
     }
