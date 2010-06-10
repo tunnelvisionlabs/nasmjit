@@ -46,8 +46,8 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
   Compiler c;
 
   // Not enabled by default...
-  // FileLogger logger(stderr);
-  // c.setLogger(&logger);
+  FileLogger logger(stderr);
+  c.setLogger(&logger);
 
   switch (args)
   {
@@ -78,7 +78,7 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
   }
 
   c.alloc(gvar, nax);
-  c.mov(gvar, xvar.m());
+  c.lea(gvar, xvar.m());
   c.and_(gvar, imm(15));
   c.ret(gvar);
   c.endFunction();

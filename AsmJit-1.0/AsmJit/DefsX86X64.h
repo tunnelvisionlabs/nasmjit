@@ -1717,7 +1717,7 @@ enum VARIABLE_TYPE
 #endif
 
   //! @brief Count of variable types.
-  _VARIABLE_TYPE_COUNT
+  _VARIABLE_TYPE_COUNT = 11
 };
 
 // ============================================================================
