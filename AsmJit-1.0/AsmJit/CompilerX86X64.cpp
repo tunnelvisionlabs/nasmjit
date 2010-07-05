@@ -1834,14 +1834,17 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   _argumentVariables = NULL;
   Util::memset32(_hints, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_hints));
 
-  // Stack is always aligned to 16-bytes when using 64-bit mode.
-  _isStackAlignedTo16Bytes = (sizeof(sysuint_t) == 8);
+  // Stack is always aligned to 16-bytes when using 64-bit OS.
+  _isStackAlignedByOsTo16Bytes = (sizeof(sysuint_t) == 8);
 
   // Linux guarantees stack alignment to 16 bytes by default, I'm not sure about
   // other OSes. Windows not guarantees that and I'm not sure about BSD/MAC.
 #if defined(__linux__) || defined(__linux) || defined(linux)
-  _isStackAlignedTo16Bytes = true;
+  _isStackAlignedByOsTo16Bytes = true;
 #endif // __linux__
+  
+  // Manual aligning is autodetected by prepare() method.
+  _isStackAlignedByFnTo16Bytes = false;
 
   // Just clear to safe defaults.
   _isNaked = false;
@@ -1997,7 +2000,6 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   // ESP.
   if (_isCallee)
     _isEspAdjusted = true;
-  _isEspAdjusted = true;
 
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
     _isNaked = (bool)_hints[FUNCTION_HINT_NAKED];
@@ -2014,10 +2016,16 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   if (_hints[FUNCTION_HINT_LFENCE] != INVALID_VALUE)
     _emitLFence = (bool)_hints[FUNCTION_HINT_LFENCE];
 
-  _modifiedAndPreservedGP = c._modifiedGPRegisters  & _functionPrototype.getPreservedGP() & ~(1 << REG_INDEX_ESP);
+  if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (c._mem16BlocksCount > 0))
+  {
+    // Have to align stack to 16-bytes.
+    _isStackAlignedByFnTo16Bytes = true;
+  }
+
+  _modifiedAndPreservedGP  = c._modifiedGPRegisters  & _functionPrototype.getPreservedGP() & ~(1 << REG_INDEX_ESP);
   _modifiedAndPreservedXMM = c._modifiedXMMRegisters & _functionPrototype.getPreservedXMM();
 
-  _movDqaInstruction = _isStackAlignedTo16Bytes ? INST_MOVDQA : INST_MOVDQU;
+  _movDqaInstruction = (_isStackAlignedByOsTo16Bytes || !_isNaked) ? INST_MOVDQA : INST_MOVDQU;
 
   _prologEpilogStackSize = 
     bitCount(_modifiedAndPreservedGP ) * sizeof(sysuint_t) +
@@ -2035,12 +2043,12 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
     c._argumentsBaseReg = REG_INDEX_ESP;
     c._variablesBaseReg = REG_INDEX_ESP;
 
-    c._argumentsBaseOffset = 
-      (_isEspAdjusted) ? (_prologEpilogStackSizeAligned16 + _memStackSizeAligned16)
-                       : (_prologEpilogStackSize);
-    c._variablesBaseOffset =
-      (_isEspAdjusted) ? 0
-                       : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
+    c._argumentsBaseOffset = (_isEspAdjusted) 
+      ? (_prologEpilogStackSizeAligned16 + _memStackSizeAligned16)
+      : (_prologEpilogStackSize);
+    c._variablesBaseOffset = (_isEspAdjusted) 
+      ? 0
+      : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
   }
   else
   {
@@ -2050,9 +2058,9 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
     c._variablesBaseReg = REG_INDEX_ESP;
 
     c._argumentsBaseOffset = (int32_t)(_stackAdjust);
-    c._variablesBaseOffset = 
-      (_isEspAdjusted) ? 0
-                       : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
+    c._variablesBaseOffset = (_isEspAdjusted) 
+      ? 0
+      : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
   }
 }
 
@@ -2276,6 +2284,13 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
     _compiler->emit(INST_MOV, nbp, nsp);
   }
 
+  // Align manually stack-pointer to 16-bytes.
+  if (_isStackAlignedByFnTo16Bytes)
+  {
+    ASMJIT_ASSERT(!_isNaked);
+    _compiler->emit(INST_AND, nsp, imm(-16));
+  }
+
   // Save GP registers using PUSH/POP.
   if (preservedGP && _prologEpilogPushPop)
   {
@@ -2293,14 +2308,20 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
   {
     if (_isEspAdjusted)
     {
-      if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+      if (stackSubtract)
+      {
+        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+      }
     }
   }
   else
   {
     if (_isEspAdjusted)
     {
-      if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+      if (stackSubtract)
+      {
+        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
+      }
     }
   }
 

@@ -737,7 +737,21 @@ protected:
   //! @brief Whether the function stack is aligned by 16-bytes by OS.
   //!
   //! This is always true for 64-bit mode and for linux.
-  bool _isStackAlignedTo16Bytes;
+  bool _isStackAlignedByOsTo16Bytes;
+
+  //! @brief Whether the function stack (for variables) is aligned manually
+  //! by function to 16-bytes.
+  //!
+  //! This makes sense only if _isStackAlignedByOsTo16Bytes is false and MOVDQA
+  //! instruction or other SSE/SSE2 instructions are used to work with variable
+  //! stored on the stack.
+  //!
+  //! Value is determined automatically by these factors, expectations are:
+  //!
+  //!   1. There is 16-byte wide variable which address was used (alloc, spill,
+  //!      op).
+  //!   2. Function can't be naked.
+  bool _isStackAlignedByFnTo16Bytes;
 
   //! @brief Whether the function is using naked prolog / epilog
   //!

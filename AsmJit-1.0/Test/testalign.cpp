@@ -46,8 +46,8 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
   Compiler c;
 
   // Not enabled by default...
-  FileLogger logger(stderr);
-  c.setLogger(&logger);
+  // FileLogger logger(stderr);
+  // c.setLogger(&logger);
 
   switch (args)
   {
@@ -119,7 +119,7 @@ static bool testFunction(int args, bool naked, bool pushPopSequence, bool spillG
   testFunction(0, naked, pushPop, spillGp); \
   testFunction(1, naked, pushPop, spillGp); \
   testFunction(2, naked, pushPop, spillGp); \
-  testFunction(3, naked, pushPop, spillGp);
+  testFunction(3, naked, pushPop, spillGp)
 
 int main(int argc, char* argv[])
 {
