@@ -41,13 +41,13 @@ typedef sysint_t (*MyFn1)(sysint_t);
 typedef sysint_t (*MyFn2)(sysint_t, sysint_t);
 typedef sysint_t (*MyFn3)(sysint_t, sysint_t, sysint_t);
 
-static void* compileFunction(int args, bool naked, bool pushPopSequence, bool spillGp)
+static void* compileFunction(int args, int vars, bool naked, bool pushPopSequence)
 {
   Compiler c;
 
   // Not enabled by default...
-  // FileLogger logger(stderr);
-  // c.setLogger(&logger);
+  FileLogger logger(stderr);
+  c.setLogger(&logger);
 
   switch (args)
   {
@@ -70,11 +70,27 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
   GPVar gvar(c.newGP());
   XMMVar xvar(c.newXMM(VARIABLE_TYPE_XMM));
 
-  if (spillGp)
+  // Alloc, use and spill preserved registers.
+  if (vars)
   {
-    GPVar somevar(c.newGP());
-    c.mov(somevar, imm(0));
-    c.spill(somevar);
+    int var = 0;
+    uint32_t index = 0;
+    uint32_t mask = 1;
+    uint32_t preserved = c.getFunction()->getPrototype().getPreservedGP();
+
+    do {
+      if ((preserved & mask) != 0 && (index != REG_INDEX_ESP && index != REG_INDEX_EBP))
+      {
+        GPVar somevar(c.newGP(VARIABLE_TYPE_GPD));
+        c.alloc(somevar, index);
+        c.mov(somevar, imm(0));
+        c.spill(somevar);
+        var++;
+      }
+
+      index++;
+      mask <<= 1;
+    } while (var < vars);
   }
 
   c.alloc(gvar, nax);
@@ -86,12 +102,12 @@ static void* compileFunction(int args, bool naked, bool pushPopSequence, bool sp
   return c.make();
 }
 
-static bool testFunction(int args, bool naked, bool pushPopSequence, bool spillGp)
+static bool testFunction(int args, int vars, bool naked, bool pushPopSequence)
 {
-  void* fn = compileFunction(args, naked, pushPopSequence, spillGp);
+  void* fn = compileFunction(args, vars, naked, pushPopSequence);
   sysint_t result = 0;
 
-  printf("Test function (args=%d, naked=%d, pushPop=%d, spillGp=%d):", args, naked, pushPopSequence, spillGp);
+  printf("Function (args=%d, vars=%d, naked=%d, pushPop=%d):", args, vars, naked, pushPopSequence);
 
   switch (args)
   {
@@ -115,30 +131,29 @@ static bool testFunction(int args, bool naked, bool pushPopSequence, bool spillG
   return result == 0;
 }
 
-#define TEST_FN(naked, pushPop, spillGp) \
-  testFunction(0, naked, pushPop, spillGp); \
-  testFunction(1, naked, pushPop, spillGp); \
-  testFunction(2, naked, pushPop, spillGp); \
-  testFunction(3, naked, pushPop, spillGp)
+#define TEST_FN(naked, pushPop) \
+{ \
+  for (int _args = 0; _args < 4; _args++) \
+  { \
+    for (int _vars = 0; _vars < 4; _vars++) \
+    { \
+      testFunction(_args, _vars, naked, pushPop); \
+    } \
+  } \
+}
 
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
 
-  TEST_FN(false, false, false);
-  TEST_FN(false, false, true );
-
-  TEST_FN(false, true , false);
-  TEST_FN(false, true , true );
+  TEST_FN(false, false)
+  TEST_FN(false, true )
 
   if (sizeof(sysint_t) == 8)
   {
-    // 64-bit system, naked function must be also align variables to 16-bytes.
-    TEST_FN(true , false, false);
-    TEST_FN(true , false, true );
-
-    TEST_FN(true , true , false);
-    TEST_FN(true , true , true );
+    // 64-bit system, naked function have to also align variables to 16-bytes.
+    TEST_FN(true , false)
+    TEST_FN(true , true )
   }
 
   return 0;

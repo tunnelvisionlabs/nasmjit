@@ -807,11 +807,17 @@ protected:
   //! @brief Stack size of prolog and epilog.
   //!
   //! Stack size that is needed to save or restore registers using push/pop or
-  //! mov instructions.
+  //! mov instructions. This member contains sum for save or restore all GP, MM
+  //! or XMM registers.
   int32_t _prologEpilogStackSize;
-  //! @brief Stack size of prolog and epilog aligned to 16-bytes.
+  //! @brief Stack size of prolog and epilog needed to save or restore registers
+  //! by using PUSH/POP sequences. Zero if @c _prologEpilogPushPop is @c false.
+  int32_t _prologEpilogStackSizePushPop;
+  //! @brief Like @c _prologEpilogStackSize, but aligned to 16-bytes.
   int32_t _prologEpilogStackSizeAligned16;
+  //! @brief Size for all variables.
   int32_t _memStackSize;
+  //! @brief Like @c _memStackSize, but aligned to 16-bytes.
   int32_t _memStackSizeAligned16;
   int32_t _stackAdjust;
 

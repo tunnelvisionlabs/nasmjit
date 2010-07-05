@@ -1860,6 +1860,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   _modifiedAndPreservedXMM = 0;
 
   _prologEpilogStackSize = 0;
+  _prologEpilogStackSizePushPop = 0;
   _prologEpilogStackSizeAligned16 = 0;
   _memStackSize = 0;
   _memStackSizeAligned16 = 0;
@@ -2027,41 +2028,44 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
 
   _movDqaInstruction = (_isStackAlignedByOsTo16Bytes || !_isNaked) ? INST_MOVDQA : INST_MOVDQU;
 
-  _prologEpilogStackSize = 
-    bitCount(_modifiedAndPreservedGP ) * sizeof(sysuint_t) +
-    bitCount(_modifiedAndPreservedXMM) * 16;
+  int32_t gpStackSize = bitCount(_modifiedAndPreservedGP) * sizeof(sysint_t);
+
+  // Prolog & Epilog stack size.
+  _prologEpilogStackSize = gpStackSize + bitCount(_modifiedAndPreservedXMM) * 16;
+  _prologEpilogStackSizePushPop = 0;
   _prologEpilogStackSizeAligned16 = alignTo16Bytes(_prologEpilogStackSize);
 
+  if (_prologEpilogPushPop)
+    _prologEpilogStackSizePushPop = gpStackSize;
+
+  // Memory stack size.
   _memStackSize = c._memBytesTotal;
   _memStackSizeAligned16 = alignTo16Bytes(_memStackSize);
 
   // How many bytes to add to stack to make it aligned to 16 bytes.
+  _stackAdjust = 0; 
+
   if (_isNaked)
   {
-    _stackAdjust = 0; 
-
     c._argumentsBaseReg = REG_INDEX_ESP;
-    c._variablesBaseReg = REG_INDEX_ESP;
-
     c._argumentsBaseOffset = (_isEspAdjusted) 
       ? (_prologEpilogStackSizeAligned16 + _memStackSizeAligned16)
-      : (_prologEpilogStackSize);
-    c._variablesBaseOffset = (_isEspAdjusted) 
-      ? 0
-      : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
+      : (_prologEpilogStackSizePushPop);
   }
   else
   {
+    // TODO: Different in 32-bit linux...
     _stackAdjust = sizeof(sysint_t);
 
     c._argumentsBaseReg = REG_INDEX_EBP;
-    c._variablesBaseReg = REG_INDEX_ESP;
-
     c._argumentsBaseOffset = (int32_t)(_stackAdjust);
-    c._variablesBaseOffset = (_isEspAdjusted) 
-      ? 0
-      : -(_prologEpilogStackSizeAligned16 + _memStackSizeAligned16);
   }
+
+  c._variablesBaseReg = REG_INDEX_ESP;
+  c._variablesBaseOffset = 0;
+  if (!_isEspAdjusted) c._variablesBaseOffset = 
+    - (_prologEpilogStackSizeAligned16 + _memStackSizeAligned16)
+    + _prologEpilogStackSizePushPop;
 }
 
 void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
@@ -2260,8 +2264,8 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
 
   // Calculate stack size with stack adjustment. This will give us proper
   // count of bytes to subtract from esp/rsp.
-  int32_t stackSize = _prologEpilogStackSize + _memStackSize;
-  int32_t stackSubtract = stackSize;
+  int32_t stackSize = _prologEpilogStackSizeAligned16 + _memStackSizeAligned16 + _stackAdjust;
+  int32_t stackSubtract = alignTo16Bytes(stackSize - _stackAdjust - _prologEpilogStackSizePushPop) + _stackAdjust;
 
   uint32_t i, mask;
 
@@ -2296,37 +2300,21 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
   {
     for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
     {
-      if (preservedGP & mask)
-      {
-        _compiler->emit(INST_PUSH, gpn(i));
-      }
+      if (preservedGP & mask) _compiler->emit(INST_PUSH, gpn(i));
     }
-    stackSubtract -= bitCount(preservedGP) * sizeof(sysint_t);
   }
 
-  if (_isNaked)
+  int32_t nspPos;
+  if (_isEspAdjusted)
   {
-    if (_isEspAdjusted)
-    {
-      if (stackSubtract)
-      {
-        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
-      }
-    }
+    nspPos = _memStackSizeAligned16;
+    if (stackSubtract) _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
   }
   else
   {
-    if (_isEspAdjusted)
-    {
-      if (stackSubtract)
-      {
-        _compiler->emit(INST_SUB, nsp, imm(stackSubtract));
-      }
-    }
+    nspPos = -_prologEpilogStackSizeAligned16 + _prologEpilogStackSizePushPop;
+    if (_prologEpilogPushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
   }
-
-  int32_t nspPos = _memStackSizeAligned16;
-  if (_isNaked) nspPos -= stackSize + _stackAdjust;
 
   // Save XMM registers using MOVDQA/MOVDQU.
   if (preservedXMM)
@@ -2369,7 +2357,7 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
 
   // Calculate stack size with stack adjustment. This will give us proper
   // count of bytes to subtract from esp/rsp.
-  int32_t stackSize = _prologEpilogStackSize + _memStackSize;
+  int32_t stackSize = _prologEpilogStackSizeAligned16 + _memStackSizeAligned16 + _stackAdjust;
 
   uint32_t i, mask;
 
@@ -2378,8 +2366,17 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
     _compiler->comment("Function epilog");
   }
 
-  int32_t nspPos = _memStackSizeAligned16;
-  if (_isNaked) nspPos -= stackSize + _stackAdjust;
+  int32_t nspPos;
+  if (_isEspAdjusted)
+  {
+    nspPos = _memStackSizeAligned16;
+  }
+  else
+  {
+    nspPos = -_prologEpilogStackSizeAligned16 + _prologEpilogStackSizePushPop;
+    if (_prologEpilogPushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
+  }
+
 
   if (!_prologEpilogPushPop)
   {
@@ -4770,7 +4767,8 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     {
       VarData* vdata = c._active;
       do {
-        EVariableHint* e = Compiler_newObject<EVariableHint>(this, vdata, (uint32_t)VARIABLE_HINT_UNUSE, (uint32_t)INVALID_VALUE);
+        EVariableHint* e = Compiler_newObject<EVariableHint>(
+          this, vdata, (uint32_t)VARIABLE_HINT_UNUSE, (uint32_t)INVALID_VALUE);
         if (vdata->lastEmittable) addEmittableAfter(e, vdata->lastEmittable);
 
         vdata = vdata->nextActive;
@@ -4811,6 +4809,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // Step 2.d:
     // - Emit function prolog.
     // - Emit function epilog.
+    // - Patch memory operands (variables related).
     c._function->_preparePrologEpilog(c);
 
     _current = c._function->_prolog;
@@ -4820,9 +4819,6 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     c._function->_emitEpilog(c);
 
     _current = _last;
-
-    // Step 2.d:
-    // - Patch memory operands (variables related).
     c._patchMemoryOperands();
 
     // Step 2.e:
