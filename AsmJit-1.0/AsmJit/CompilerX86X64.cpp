@@ -247,6 +247,7 @@ void FunctionPrototype::_clear() ASMJIT_NOTHROW
   Util::memset32(_argumentsXMM, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsXMM));
 
   _preservedGP = 0;
+  _preservedMM = 0;
   _preservedXMM = 0;
 }
 
@@ -1858,6 +1859,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   _emitLFence = false;
 
   _modifiedAndPreservedGP = 0;
+  _modifiedAndPreservedMM = 0;
   _modifiedAndPreservedXMM = 0;
 
   _pePushPopStackSize = 0;
@@ -2025,6 +2027,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   }
 
   _modifiedAndPreservedGP  = c._modifiedGPRegisters  & _functionPrototype.getPreservedGP() & ~(1 << REG_INDEX_ESP);
+  _modifiedAndPreservedMM  = c._modifiedMMRegisters  & _functionPrototype.getPreservedMM();
   _modifiedAndPreservedXMM = c._modifiedXMMRegisters & _functionPrototype.getPreservedXMM();
 
   _movDqaInstruction = (_isStackAlignedByOsTo16Bytes || !_isNaked) ? INST_MOVDQA : INST_MOVDQU;
@@ -2032,17 +2035,18 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   // Prolog & Epilog stack size.
   {
     int32_t memGP = bitCount(_modifiedAndPreservedGP) * sizeof(sysint_t);
+    int32_t memMM = bitCount(_modifiedAndPreservedMM) * 8;
     int32_t memXMM = bitCount(_modifiedAndPreservedXMM) * 16;
 
     if (_pePushPop)
     {
       _pePushPopStackSize = memGP;
-      _peMovStackSize = memXMM;
+      _peMovStackSize = memXMM + alignTo16(memMM);
     }
     else
     {
       _pePushPopStackSize = 0;
-      _peMovStackSize = alignTo16(memGP + memXMM);
+      _peMovStackSize = memXMM + alignTo16(memMM + memGP);
     }
   }
 
@@ -2278,12 +2282,10 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
 {
   uint32_t i, mask;
   uint32_t preservedGP  = _modifiedAndPreservedGP;
+  uint32_t preservedMM  = _modifiedAndPreservedMM;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
   int32_t stackSubtract =_memStackSize16 + _peMovStackSize + _peAdjustStackSize;
-  //(_isStackAlignedByFnTo16Bytes)
-  //  ? (_memStackSize16 + alignTo16(_peMovStackSize)
-  //  : (_memStackSize16 + _peMovStackSize + _peAdjustStackSize);
   int32_t nspPos;
 
   if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
@@ -2345,6 +2347,19 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
     }
   }
 
+  // Save MM registers using MOVQ.
+  if (preservedMM)
+  {
+    for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
+    {
+      if (preservedMM & mask)
+      {
+        _compiler->emit(INST_MOVQ, qword_ptr(nsp, nspPos), mm(i));
+        nspPos += 8;
+      }
+    }
+  }
+
   // Save GP registers using MOV.
   if (preservedGP && !_pePushPop)
   {
@@ -2370,12 +2385,10 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
 
   uint32_t i, mask;
   uint32_t preservedGP  = _modifiedAndPreservedGP;
+  uint32_t preservedMM  = _modifiedAndPreservedMM;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
   int32_t stackAdd =_memStackSize16 + _peMovStackSize + _peAdjustStackSize;
-  //int32_t stackAdd = (_isStackAlignedByFnTo16Bytes)
-  //  ? (_memStackSize16 + alignTo16(_peMovStackSize))
-  //  : (_memStackSize16 + _peMovStackSize + _peAdjustStackSize);
   int32_t nspPos;
 
   nspPos = (_isEspAdjusted)
@@ -2387,7 +2400,7 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
     _compiler->comment("Epilog");
   }
 
-  // Restore XMM registers using MOV.
+  // Restore XMM registers using MOVDQA/MOVDQU.
   if (preservedXMM)
   {
     for (i = 0, mask = 1; i < REG_NUM; i++, mask <<= 1)
@@ -2396,6 +2409,19 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
       {
         _compiler->emit(_movDqaInstruction, xmm(i), dqword_ptr(nsp, nspPos));
         nspPos += 16;
+      }
+    }
+  }
+
+  // Restore MM registers using MOVQ.
+  if (preservedMM)
+  {
+    for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
+    {
+      if (preservedMM & mask)
+      {
+        _compiler->emit(INST_MOVQ, mm(i), qword_ptr(nsp, nspPos));
+        nspPos += 8;
       }
     }
   }
@@ -2914,8 +2940,7 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // NOTE: Currently MM variables are not preserved and there is no calling
   // convention known to me that does that. But on the other side it's possible
   // to write such calling convention.
-  // TODO: // vdata->scope->getPrototype().getPreservedMM();
-  uint32_t preservedMM = 0;
+  uint32_t preservedMM = vdata->scope->getPrototype().getPreservedMM();
 
   // Spill candidate.
   VarData* spillCandidate = NULL;
