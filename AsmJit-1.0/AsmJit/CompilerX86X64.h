@@ -279,7 +279,7 @@ struct VarData
   //! @brief Home memory address offset (valid only if @c homeMemoryVariable is set).
   int32_t homeMemoryOffset;
 
-  //! @brief Used by CompilerContext, do not touch (NULL when created).
+  //! @brief Used by @c CompilerContext, do not touch (NULL when created).
   void* homeMemoryData;
 
   // --------------------------------------------------------------------------
