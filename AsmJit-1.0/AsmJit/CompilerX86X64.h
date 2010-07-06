@@ -774,7 +774,7 @@ protected:
 
   //! @brief Whether to emit prolog / epilog sequence using push & pop 
   //! instructions (the default).
-  bool _prologEpilogPushPop;
+  bool _pePushPop;
 
   //! @brief Whether to emit EMMS instruction in epilog (auto-detected).
   bool _emitEMMS;
@@ -804,22 +804,17 @@ protected:
   //! the @c INST_MOVDQU instruction is used for 16-byte mov.
   uint32_t _movDqaInstruction;
 
-  //! @brief Stack size of prolog and epilog.
-  //!
-  //! Stack size that is needed to save or restore registers using push/pop or
-  //! mov instructions. This member contains sum for save or restore all GP, MM
-  //! or XMM registers.
-  int32_t _prologEpilogStackSize;
-  //! @brief Stack size of prolog and epilog needed to save or restore registers
-  //! by using PUSH/POP sequences. Zero if @c _prologEpilogPushPop is @c false.
-  int32_t _prologEpilogStackSizePushPop;
-  //! @brief Like @c _prologEpilogStackSize, but aligned to 16-bytes.
-  int32_t _prologEpilogStackSizeAligned16;
-  //! @brief Size for all variables.
+  //! @brief Prolog / epilog stack size for PUSH/POP sequences.
+  int32_t _pePushPopStackSize;
+  //! @brief Prolog / epilog stack size for MOV sequences.
+  int32_t _peMovStackSize;
+  //! @brief Prolog / epilog stack adjust size (to make it 16-byte aligned).
+  int32_t _peAdjustStackSize;
+
+  //! @brief Memory stack size (for all variables and temporary memory).
   int32_t _memStackSize;
   //! @brief Like @c _memStackSize, but aligned to 16-bytes.
-  int32_t _memStackSizeAligned16;
-  int32_t _stackAdjust;
+  int32_t _memStackSize16;
 
   //! @brief Function entry label.
   Label _entryLabel;
