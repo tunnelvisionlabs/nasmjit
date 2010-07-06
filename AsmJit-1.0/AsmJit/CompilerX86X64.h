@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -48,7 +48,7 @@
 
 //! @internal
 //!
-//! @brief Mark methods not supported by @ref Compiler. These methods are 
+//! @brief Mark methods not supported by @ref Compiler. These methods are
 //! usually used only in function prologs/epilogs or to manage stack.
 #define ASMJIT_NOT_SUPPORTED_BY_COMPILER 0
 
@@ -645,7 +645,7 @@ private:
 //! @brief Function emittable used to generate C/C++ functions.
 //!
 //! Functions are base blocks for generating assembler output. Each generated
-//! assembler stream needs standard entry and leave sequences thats compatible 
+//! assembler stream needs standard entry and leave sequences thats compatible
 //! to operating system conventions - Application Binary Interface (ABI).
 //!
 //! Function class can be used to generate entry (prolog) and leave (epilog)
@@ -758,7 +758,7 @@ protected:
   //! Naked prolog / epilog means to omit saving and restoring EBP.
   bool _isNaked;
 
-  //! @brief Whether the ESP register is adjusted by the stack size needed 
+  //! @brief Whether the ESP register is adjusted by the stack size needed
   //! to save registers and function variables.
   //!
   //! Esp is adjusted by 'sub' instruction in prolog and by add function in
@@ -772,7 +772,7 @@ protected:
   //! also @c _isEspAdjusted one.
   bool _isCallee;
 
-  //! @brief Whether to emit prolog / epilog sequence using push & pop 
+  //! @brief Whether to emit prolog / epilog sequence using push & pop
   //! instructions (the default).
   bool _pePushPop;
 
@@ -1116,6 +1116,16 @@ struct ASMJIT_API CompilerContext
 };
 
 // ============================================================================
+// [AsmJit::CompilerUtil]
+// ============================================================================
+
+//! @brief Static class that contains utility methods.
+struct ASMJIT_API CompilerUtil
+{
+  static bool isStack16ByteAligned();
+};
+
+// ============================================================================
 // [AsmJit::CompilerCore]
 // ============================================================================
 
@@ -1236,7 +1246,7 @@ struct ASMJIT_API CompilerCore
   //! @param args Function arguments (see @c AsmJit::VARIABLE_TYPE).
   //! @param count Arguments count.
   //!
-  //! This method is internally called from @c newFunction() method and 
+  //! This method is internally called from @c newFunction() method and
   //! contains arguments thats used internally by @c AsmJit::Compiler.
   //!
   //! @note To get current function use @c currentFunction() method.
@@ -1527,8 +1537,8 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! This method is usually used as a first step when generating functions
   //! by @c Compiler. First parameter @a cconv specifies function calling
   //! convention to use. Second parameter @a params specifies function
-  //! arguments. To create function arguments are used templates 
-  //! @c BuildFunction0<>, @c BuildFunction1<...>, @c BuildFunction2<...>, 
+  //! arguments. To create function arguments are used templates
+  //! @c BuildFunction0<>, @c BuildFunction1<...>, @c BuildFunction2<...>,
   //! etc...
   //!
   //! Templates with BuildFunction prefix are used to generate argument IDs
@@ -1553,7 +1563,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @endcode
   //!
   //! You can see that building functions is really easy. Previous code snipped
-  //! will generate code for function with two 32 bit integer arguments. You 
+  //! will generate code for function with two 32 bit integer arguments. You
   //! can access arguments by @c AsmJit::Function::argument() method. Arguments
   //! are indexed from 0 (like everything in C).
   //!
@@ -1575,7 +1585,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! Int32Ref a0 = f.argument(0);
   //! Int32Ref a1 = f.argument(1);
   //!
-  //! // To allocate them to registers just use .alloc(), .r(), .x() or .c() 
+  //! // To allocate them to registers just use .alloc(), .r(), .x() or .c()
   //! // variable methods:
   //! c.add(a0.r(), a1.r());
   //!
@@ -1584,7 +1594,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @endcode
   //!
   //! Arguments are like variables. How to manipulate with variables is
-  //! documented in @c AsmJit::Compiler detail and @c AsmJit::VariableRef 
+  //! documented in @c AsmJit::Compiler detail and @c AsmJit::VariableRef
   //! class.
   //!
   //! @note To get current function use @c currentFunction() method or save
@@ -2173,8 +2183,8 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     const GPVar& out_edx)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(inout_eax.getId() != out_ebx.getId() && 
-                  out_ebx.getId() != out_ecx.getId() && 
+    ASMJIT_ASSERT(inout_eax.getId() != out_ebx.getId() &&
+                  out_ebx.getId() != out_ecx.getId() &&
                   out_ecx.getId() != out_edx.getId());
 
     _emitInstruction(INST_CPUID, &inout_eax, &out_ebx, &out_ecx, &out_edx);
@@ -7653,21 +7663,21 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! it on the fly. It uses different concept than @c AsmJit::Assembler class
 //! and in fact @c AsmJit::Assembler is only used as a backend. Compiler never
 //! emits machine code and each instruction you use is stored to instruction
-//! array instead. This allows to modify instruction stream later and for 
+//! array instead. This allows to modify instruction stream later and for
 //! example to reorder instructions to make better performance.
 //!
-//! Using @c AsmJit::Compiler moves code generation to higher level. Higher 
+//! Using @c AsmJit::Compiler moves code generation to higher level. Higher
 //! level constructs allows to write more abstract and extensible code that
-//! is not possible with pure @c AsmJit::Assembler class. Because 
-//! @c AsmJit::Compiler needs to create many objects and lifetime of these 
-//! objects is small (same as @c AsmJit::Compiler lifetime itself) it uses 
-//! very fast memory management model. This model allows to create object 
-//! instances in nearly zero time (compared to @c malloc() or @c new() 
+//! is not possible with pure @c AsmJit::Assembler class. Because
+//! @c AsmJit::Compiler needs to create many objects and lifetime of these
+//! objects is small (same as @c AsmJit::Compiler lifetime itself) it uses
+//! very fast memory management model. This model allows to create object
+//! instances in nearly zero time (compared to @c malloc() or @c new()
 //! operators) so overhead by creating machine code by @c AsmJit::Compiler
 //! is minimized.
 //!
 //! <b>Code Generation</b>
-//! 
+//!
 //! First that is needed to know about compiler is that compiler never emits
 //! machine code. It's used as a middleware between @c AsmJit::Assembler and
 //! your code. There is also convenience method @c make() that allows to
@@ -7675,9 +7685,9 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! instance.
 //!
 //! Example how to generate machine code using @c Assembler and @c Compiler:
-//! 
+//!
 //! @code
-//! // Assembler instance is low level code generation class that emits 
+//! // Assembler instance is low level code generation class that emits
 //! // machine code.
 //! Assembler a;
 //!
@@ -7712,7 +7722,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! emits instructions into @c AsmJit::Assembler(). This layered architecture
 //! means that each class is used for something different and there is no code
 //! duplication. For convenience there is also @c AsmJit::Compiler::make()
-//! method that can create your function using @c AsmJit::Assembler, but 
+//! method that can create your function using @c AsmJit::Assembler, but
 //! internally (this is preffered bahavior when using @c AsmJit::Compiler).
 //!
 //! @c make() allocates memory using global memory manager instance, if your
@@ -7740,9 +7750,9 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //!
 //! <b>Variables</b>
 //!
-//! Compiler is able to manage variables and function arguments. Internally 
-//! there is no difference between function argument and variable declared 
-//! inside. To get function argument you use @c argGP() method and to declare 
+//! Compiler is able to manage variables and function arguments. Internally
+//! there is no difference between function argument and variable declared
+//! inside. To get function argument you use @c argGP() method and to declare
 //! variable use @c newGP(), @c newMM() and @c newXMM() methods.
 //!
 //! @code
@@ -7776,30 +7786,30 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! MyFn fn = function_cast<MyFn>(c.make());
 //! @endcode
 //!
-//! There was presented small code snippet with variables, but it's needed to 
-//! explain it more. You can see that there are more variable types that can 
-//! be used. Most useful variables can be allocated using general purpose 
+//! There was presented small code snippet with variables, but it's needed to
+//! explain it more. You can see that there are more variable types that can
+//! be used. Most useful variables can be allocated using general purpose
 //! registers (@c GPVar), MMX registers (@c MMVar) or SSE registers (@c XMMVar).
 //!
 //! Variable states:
 //!
-//! - @c VARIABLE_STATE_UNUSED - State that is assigned to newly created 
+//! - @c VARIABLE_STATE_UNUSED - State that is assigned to newly created
 //!   variables or to not used variables (dereferenced to zero).
-//! - @c VARIABLE_STATE_REGISTER - State that means that variable is currently 
+//! - @c VARIABLE_STATE_REGISTER - State that means that variable is currently
 //!   allocated in register.
-//! - @c VARIABLE_STATE_MEMORY - State that means that variable is currently 
+//! - @c VARIABLE_STATE_MEMORY - State that means that variable is currently
 //!   only in memory location.
-//! 
+//!
 //! When you create new variable, initial state is always @c VARIABLE_STATE_UNUSED,
-//! allocating it to register or spilling to memory changes this state to 
-//! @c VARIABLE_STATE_REGISTER or @c VARIABLE_STATE_MEMORY, respectively. 
+//! allocating it to register or spilling to memory changes this state to
+//! @c VARIABLE_STATE_REGISTER or @c VARIABLE_STATE_MEMORY, respectively.
 //! During variable lifetime it's usual that its state is changed multiple
 //! times. To generate better code, you can control allocating and spilling
 //! by using up to four types of methods that allows it (see next list).
 //!
 //! Explicit variable allocating / spilling methods:
 //!
-//! - @c Compiler::alloc() - Explicit method to alloc variable into 
+//! - @c Compiler::alloc() - Explicit method to alloc variable into
 //!      register. You can use this before loops or code blocks.
 //!
 //! - @c Compiler::spill() - Explicit method to spill variable. If variable
@@ -7809,7 +7819,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! - @c Compiler::unuse() - Unuse variable (you can use this to end the
 //!      variable scope or sub-scope).
 //!
-//! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for 
+//! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for
 //! more complete examples.
 //!
 
@@ -7817,15 +7827,15 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //!
 //! @c Compiler Memory management follows these rules:
 //! - Everything created by @c Compiler is always freed by @c Compiler.
-//! - To get decent performance, compiler always uses larger memory buffer 
-//!   for objects to allocate and when compiler instance is destroyed, this 
-//!   buffer is freed. Destructors of active objects are called when 
+//! - To get decent performance, compiler always uses larger memory buffer
+//!   for objects to allocate and when compiler instance is destroyed, this
+//!   buffer is freed. Destructors of active objects are called when
 //!   destroying compiler instance. Destructors of abadonded compiler
 //!   objects are called immediately after abadonding them.
 //! - This type of memory management is called 'zone memory management'.
 //!
 //! This means that you can't use any @c Compiler object after destructing it,
-//! it also means that each object like @c Label, @c Var and others are created 
+//! it also means that each object like @c Label, @c Var and others are created
 //! and managed by @c Compiler itself. These objects contain ID which is used
 //! internally by Compiler to store additional information about these objects.
 //!
@@ -7838,12 +7848,12 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! emittables using intrinsics or higher level methods implemented by the
 //! @c AsmJit::Compiler. When you are done (all instructions serialized) you
 //! should call @c AsmJit::Compiler::make() method which will analyze your code,
-//! allocate registers and memory for local variables and serialize all emittables 
-//! to @c AsmJit::Assembler instance. Next steps shows what's done internally 
+//! allocate registers and memory for local variables and serialize all emittables
+//! to @c AsmJit::Assembler instance. Next steps shows what's done internally
 //! before code is serialized into @c AsmJit::Assembler
 //!   (implemented in @c AsmJit::Compiler::serialize() method).
 //!
-//! 1. Compiler try to match function and end-function emittables (these 
+//! 1. Compiler try to match function and end-function emittables (these
 //!    emittables define the function-body or function block).
 //!
 //! 2. For all emittables inside the function-body the virtual functions
@@ -7867,7 +7877,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //!   stored as emmitables (see @c AsmJit::Emittable, @c AsmJit::EInstruction).
 //! - Contains function builder.
 //! - Contains register allocator and variables management.
-//! - Contains a lot of helper methods to simplify code generation not 
+//! - Contains a lot of helper methods to simplify code generation not
 //!   available in @c AsmJit::Assembler.
 struct ASMJIT_API Compiler : public CompilerIntrinsics
 {

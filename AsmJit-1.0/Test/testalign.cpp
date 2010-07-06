@@ -90,7 +90,7 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
 
       index++;
       mask <<= 1;
-    } while (var < vars);
+    } while (var < vars && index < REG_NUM);
   }
 
   c.alloc(gvar, nax);
@@ -144,14 +144,12 @@ static bool testFunction(int args, int vars, bool naked, bool pushPopSequence)
 
 int main(int argc, char* argv[])
 {
-  using namespace AsmJit;
-
   TEST_FN(false, false)
   TEST_FN(false, true )
 
-  if (sizeof(sysint_t) == 8)
+  if (CompilerUtil::isStack16ByteAligned())
   {
-    // 64-bit system, naked function have to also align variables to 16-bytes.
+    // If stack is 16-byte aligned by the operating system.
     TEST_FN(true , false)
     TEST_FN(true , true )
   }

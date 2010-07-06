@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -619,7 +619,7 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
   uint32_t i;
   for (i = 0; i < operandsCount; i++)
   {
-    if (_operands[i].isMem()) 
+    if (_operands[i].isMem())
     {
       _memOp = reinterpret_cast<Mem*>(&_operands[i]);
       break;
@@ -1380,7 +1380,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
   // pcmpgt reg, reg      ; Set all bits in reg to 0.
   // pcmpeq reg, reg      ; Set all bits in reg to 1.
 
-  if (_variablesCount == 1 && 
+  if (_variablesCount == 1 &&
       _operandsCount > 1 &&
       _operands[0].isVar() &&
       _operands[1].isVar() &&
@@ -1451,7 +1451,7 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
     {
       VarAllocRecord& r = _variables[i];
       // Alloc variables with specific register first.
-      if (r.regIndex != INVALID_VALUE) 
+      if (r.regIndex != INVALID_VALUE)
         c.allocVar(r.vdata, r.regIndex, r.vflags);
     }
     for (i = 0; i < variablesCount; i++)
@@ -1484,7 +1484,7 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
           ASMJIT_ASSERT(vdata != NULL);
 
           // Memory access. We just increment here actual displacement.
-          o._mem.displacement += vdata->isMemArgument 
+          o._mem.displacement += vdata->isMemArgument
             ? c._argumentsActualDisp
             : c._variablesActualDisp;
 
@@ -1705,8 +1705,8 @@ EJmpInstruction::EJmpInstruction(Compiler* c, uint32_t code, Operand* operandsDa
 
   // The 'jmp' is always taken, conditional jump can contain hint, we detect it.
   _isTaken = (getCode() == INST_JMP) ||
-             (operandsCount > 1 && 
-              operandsData[1].isImm() && 
+             (operandsCount > 1 &&
+              operandsData[1].isImm() &&
               reinterpret_cast<Imm*>(&operandsData[1])->getValue() == HINT_TAKEN);
 }
 
@@ -1781,24 +1781,24 @@ void EJmpInstruction::_doJump(CompilerContext& c) ASMJIT_NOTHROW
   if (getCode() == INST_JMP || (isTaken() && _jumpTarget->getOffset() < getOffset()))
   {
     // Instruction type is JMP or conditional jump that should be taken (likely).
-    // We can set state here instead of jumping out, setting state and jumping 
+    // We can set state here instead of jumping out, setting state and jumping
     // to _jumpTarget.
     //
-    // NOTE: We can't use this technique if instruction is forward conditional 
+    // NOTE: We can't use this technique if instruction is forward conditional
     // jump. The reason is that when generating code we can't change state here,
     // because next instruction depends to it.
     c._restoreState(_jumpTarget->getState());
   }
   else
   {
-    // Instruction type is JMP or conditional jump that should be not normally 
-    // taken. If we need add code that will switch between different states we 
+    // Instruction type is JMP or conditional jump that should be not normally
+    // taken. If we need add code that will switch between different states we
     // add it after the end of function body (after epilog, using 'ExtraBlock').
     Compiler* compiler = c.getCompiler();
 
     Emittable* ext = c.getExtraBlock();
     Emittable* old = compiler->setCurrentEmittable(ext);
-    
+
     c._restoreState(_jumpTarget->getState());
 
     if (compiler->getCurrentEmittable() != old)
@@ -1842,14 +1842,8 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   Util::memset32(_hints, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_hints));
 
   // Stack is always aligned to 16-bytes when using 64-bit OS.
-  _isStackAlignedByOsTo16Bytes = (sizeof(sysuint_t) == 8);
+  _isStackAlignedByOsTo16Bytes = CompilerUtil::isStack16ByteAligned();
 
-  // Linux guarantees stack alignment to 16 bytes by default, I'm not sure about
-  // other OSes. Windows not guarantees that and I'm not sure about BSD/MAC.
-#if defined(__linux__) || defined(__linux) || defined(linux)
-  _isStackAlignedByOsTo16Bytes = true;
-#endif // __linux__
-  
   // Manual aligning is autodetected by prepare() method.
   _isStackAlignedByFnTo16Bytes = false;
 
@@ -1969,7 +1963,7 @@ void EFunction::_allocVariables(CompilerContext& c) ASMJIT_NOTHROW
   {
     VarData* vdata = _argumentVariables[i];
 
-    if (vdata->firstEmittable != vdata->lastEmittable || 
+    if (vdata->firstEmittable != vdata->lastEmittable ||
         vdata->isRegArgument ||
         vdata->isMemArgument)
     {
@@ -2004,8 +1998,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
   _emitSFence = false;
   _emitLFence = false;
 
-  // If another function is called by the function it's needed to adjust
-  // ESP.
+  // If another function is called by the function it's needed to adjust ESP.
   if (_isCallee)
     _isEspAdjusted = true;
 
@@ -2053,9 +2046,21 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
     }
   }
 
-  _peAdjustStackSize += (_isStackAlignedByFnTo16Bytes) 
-    ? deltaTo16(_pePushPopStackSize)
-    : deltaTo16(_pePushPopStackSize + sizeof(sysint_t));
+  if (_isStackAlignedByFnTo16Bytes)
+  {
+    _peAdjustStackSize += deltaTo16(_pePushPopStackSize);
+  }
+  else
+  {
+    int32_t v = 16 - sizeof(sysint_t);
+    if (!_isNaked) v -= sizeof(sysint_t);
+
+    v -= _pePushPopStackSize & 15;
+    if (v < 0) v += 16;
+    _peAdjustStackSize = v;
+
+    //_peAdjustStackSize += deltaTo16(_pePushPopStackSize + v);
+  }
 
   // Memory stack size.
   _memStackSize = c._memBytesTotal;
@@ -2076,7 +2081,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW
 
   c._variablesBaseReg = REG_INDEX_ESP;
   c._variablesBaseOffset = 0;
-  if (!_isEspAdjusted) 
+  if (!_isEspAdjusted)
     c._variablesBaseOffset = -_memStackSize16 - _peMovStackSize - _peAdjustStackSize;
 }
 
@@ -2292,7 +2297,7 @@ void EFunction::_emitProlog(CompilerContext& c) ASMJIT_NOTHROW
   //
   // Also see the _prologEpilogStackAdjust variable. If function is naked (so
   // prolog and epilog will not contain "push ebp" and "mov ebp, esp", we need
-  // to adjust stack by 8 bytes in 64-bit mode (this will give us that stack 
+  // to adjust stack by 8 bytes in 64-bit mode (this will give us that stack
   // will remain aligned to 16 bytes).
   if (!_isNaked)
   {
@@ -2373,7 +2378,7 @@ void EFunction::_emitEpilog(CompilerContext& c) ASMJIT_NOTHROW
   //  : (_memStackSize16 + _peMovStackSize + _peAdjustStackSize);
   int32_t nspPos;
 
-  nspPos = (_isEspAdjusted) 
+  nspPos = (_isEspAdjusted)
     ? (_memStackSize16)
     : -(_peMovStackSize + _peAdjustStackSize);
 
@@ -2512,7 +2517,7 @@ CompilerContext::CompilerContext(Compiler* compiler) ASMJIT_NOTHROW :
   _compiler = compiler;
   _clear();
 
-  _emitComments = compiler->getLogger() != NULL && 
+  _emitComments = compiler->getLogger() != NULL &&
                   compiler->getLogger()->isUsed();
 }
 
@@ -2909,7 +2914,8 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // NOTE: Currently MM variables are not preserved and there is no calling
   // convention known to me that does that. But on the other side it's possible
   // to write such calling convention.
-  uint32_t preservedMM = 0; // vdata->scope->getPrototype().getPreservedMM();
+  // TODO: // vdata->scope->getPrototype().getPreservedMM();
+  uint32_t preservedMM = 0;
 
   // Spill candidate.
   VarData* spillCandidate = NULL;
@@ -3665,7 +3671,7 @@ void CompilerContext::_allocatedVariable(VarData* vdata) ASMJIT_NOTHROW
 
 void CompilerContext::addForwardJump(EJmpInstruction* inst) ASMJIT_NOTHROW
 {
-  ForwardJumpData* j = 
+  ForwardJumpData* j =
     reinterpret_cast<ForwardJumpData*>(_zone.zalloc(sizeof(ForwardJumpData)));
   if (j == NULL) { _compiler->setError(ERROR_NO_HEAP_MEMORY); return; }
 
@@ -3784,7 +3790,7 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
       // Spill register
       if (fromVar != NULL)
       {
-        // It is possible that variable that was saved in state currently not 
+        // It is possible that variable that was saved in state currently not
         // exists.
         if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
@@ -3989,6 +3995,33 @@ void CompilerContext::_patchMemoryOperands() ASMJIT_NOTHROW
       }
     }
   }
+}
+
+// ============================================================================
+// [AsmJit::CompilerUtil]
+// ============================================================================
+
+bool CompilerUtil::isStack16ByteAligned()
+{
+  // Stack is always aligned to 16-bytes when using 64-bit OS.
+  bool result = (sizeof(sysuint_t) == 8);
+
+  // Modern Linux, APPLE and UNIX guarantees stack alignment to 16 bytes by
+  // default. I'm really not sure about all UNIX operating systems, because
+  // 16-byte alignment is an addition to the older specification.
+#if (defined(__linux__)   || \
+     defined(__linux)     || \
+     defined(linux)       || \
+     defined(__unix__)    || \
+     defined(__FreeBSD__) || \
+     defined(__NetBSD__)  || \
+     defined(__OpenBSD__) || \
+     defined(__DARWIN__)  || \
+     defined(__APPLE__)   )
+  result = true;
+#endif // __linux__
+
+  return result;
 }
 
 // ============================================================================
