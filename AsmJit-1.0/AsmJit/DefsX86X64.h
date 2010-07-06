@@ -1733,8 +1733,17 @@ enum VARIABLE_HINT
   VARIABLE_HINT_ALLOC = 0,
   //! @brief Spill variable.
   VARIABLE_HINT_SPILL = 1,
+  //! @brief Save variable if modified.
+  VARIABLE_HINT_SAVE = 2,
+  //! @brief Save variable if modified and mark it as unused.
+  VARIABLE_HINT_SAVE_AND_UNUSE = 3,
+  //! @brief Mark variable as used (memory state) if it's current state is 
+  //! unused.
+  //!
+  //! This hint is emitted by a @c CompilerCore::setMemoryHome() method.
+  VARIABLE_HINT_ASMEM = 4,
   //! @brief Mark variable as unused.
-  VARIABLE_HINT_UNUSE = 2
+  VARIABLE_HINT_UNUSE = 5
 };
 
 //! @}

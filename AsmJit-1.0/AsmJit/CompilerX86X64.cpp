@@ -562,6 +562,7 @@ EVariableHint::EVariableHint(Compiler* c, VarData* vdata, uint32_t hintId, uint3
   _hintId(hintId),
   _hintValue(hintValue)
 {
+  ASMJIT_ASSERT(_vdata != NULL);
 }
 
 EVariableHint::~EVariableHint() ASMJIT_NOTHROW
@@ -572,13 +573,39 @@ void EVariableHint::prepare(CompilerContext& c) ASMJIT_NOTHROW
 {
   _offset = c._currentOffset;
 
+  // First emittable (begin of variable scope).
+  if (_vdata->firstEmittable == NULL) _vdata->firstEmittable = this;
+
+  // Last emittable (end of variable scope).
+  _vdata->lastEmittable = this;
+
+  // Home memory variable support.
+  VarData* vhome = _vdata->homeMemoryVariable;
+  if (vhome != NULL)
+  {
+    if (vhome->firstEmittable == NULL) vhome->firstEmittable = this;
+    vhome->lastEmittable = this;
+  }
+
   switch (_hintId)
   {
     case VARIABLE_HINT_ALLOC:
     case VARIABLE_HINT_SPILL:
+    case VARIABLE_HINT_SAVE:
       if (!c._isActive(_vdata)) c._addActive(_vdata);
       break;
+    case VARIABLE_HINT_SAVE_AND_UNUSE:
+      if (!c._isActive(_vdata)) c._addActive(_vdata);
+      goto unuse;
+    case VARIABLE_HINT_ASMEM:
+      if (_vdata->state == VARIABLE_STATE_UNUSED)
+      {
+        ASMJIT_ASSERT(_vdata->homeMemoryVariable != NULL);
+        _vdata->state = VARIABLE_STATE_MEMORY;
+      }
+      break;
     case VARIABLE_HINT_UNUSE:
+unuse:
       if (c._isActive(_vdata)) c._freeActive(_vdata);
       break;
   }
@@ -586,6 +613,12 @@ void EVariableHint::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
 void EVariableHint::translate(CompilerContext& c) ASMJIT_NOTHROW
 {
+  // Home memory variable support.
+  if (_vdata->homeMemoryVariable)
+  {
+    c.allocVar(_vdata->homeMemoryVariable, INVALID_VALUE, VARIABLE_ALLOC_READ);
+  }
+
   switch (_hintId)
   {
     case VARIABLE_HINT_ALLOC:
@@ -595,7 +628,19 @@ void EVariableHint::translate(CompilerContext& c) ASMJIT_NOTHROW
       if (_vdata->state == VARIABLE_STATE_REGISTER)
         c.spillVar(_vdata);
       break;
+    case VARIABLE_HINT_SAVE:
+    case VARIABLE_HINT_SAVE_AND_UNUSE:
+      if (_vdata->state == VARIABLE_STATE_REGISTER && _vdata->changed)
+      {
+        c.emitSaveVar(_vdata, _vdata->registerIndex);
+        _vdata->changed = false;
+      }
+      if (_hintId == VARIABLE_HINT_SAVE_AND_UNUSE) goto unuse;
+      break;
+    case VARIABLE_HINT_ASMEM:
+      break;
     case VARIABLE_HINT_UNUSE:
+unuse:
       c.unuseVar(_vdata, VARIABLE_STATE_UNUSED);
       break;
   }
@@ -785,16 +830,16 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 {
   _offset = c._currentOffset;
 
-#define __GET_VARIABLE(__id__) \
+#define __GET_VARIABLE(__vardata__) \
   { \
-    VarData* candidate = _compiler->_getVarData(__id__); \
+    VarData* _candidate = __vardata__; \
     \
     for (var = cur; ;) \
     { \
       if (var == _variables) \
       { \
         var = cur++; \
-        var->vdata = candidate; \
+        var->vdata = _candidate; \
         var->vflags = 0; \
         var->regIndex = INVALID_VALUE; \
         break; \
@@ -802,7 +847,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
       \
       var--; \
       \
-      if (var->vdata == candidate) \
+      if (var->vdata == _candidate) \
       { \
         break; \
       } \
@@ -810,6 +855,28 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
     } \
     \
     ASMJIT_ASSERT(var != NULL); \
+  }
+
+#define __ADD_HOME_VAR(vdata) \
+  { \
+    VarData* _vhome = vdata->homeMemoryVariable; \
+    if (_vhome && _vhome->workOffset != _offset) \
+    { \
+      if (!c._isActive(_vhome)) c._addActive(_vhome); \
+      _vhome->workOffset = _offset; \
+      variablesCount++; \
+      /* Chaining is forbidden. */ \
+      ASMJIT_ASSERT(_vhome->homeMemoryVariable == NULL); \
+    } \
+  }
+
+// Home memory variable support.
+#define __IMP_HOME_VAR(vdata) \
+  if (vdata->homeMemoryVariable) \
+  { \
+    __GET_VARIABLE(vdata->homeMemoryVariable) \
+    var->vflags |= VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ; \
+    var->vdata->registerReadCount++; \
   }
 
   const InstructionDescription* id = &instructionDescription[_code];
@@ -830,6 +897,8 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
       if (vdata->workOffset == _offset) continue;
       if (!c._isActive(vdata)) c._addActive(vdata);
 
+      __ADD_HOME_VAR(vdata)
+
       vdata->workOffset = _offset;
       variablesCount++;
     }
@@ -842,6 +911,8 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
         c._markMemoryUsed(vdata);
         if (!c._isActive(vdata)) c._addActive(vdata);
+
+        __ADD_HOME_VAR(vdata)
         continue;
       }
       else if ((o._mem.base & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
@@ -851,6 +922,8 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
         if (vdata->workOffset == _offset) continue;
         if (!c._isActive(vdata)) c._addActive(vdata);
+
+        __ADD_HOME_VAR(vdata)
 
         vdata->workOffset = _offset;
         variablesCount++;
@@ -863,6 +936,8 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
         if (vdata->workOffset == _offset) continue;
         if (!c._isActive(vdata)) c._addActive(vdata);
+
+        __ADD_HOME_VAR(vdata)
 
         vdata->workOffset = _offset;
         variablesCount++;
@@ -895,7 +970,13 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
     if (o.isVar())
     {
-      __GET_VARIABLE(o.getId())
+      VarData* vdata = _compiler->_getVarData(o.getId());
+      ASMJIT_ASSERT(vdata != NULL);
+
+      // Home memory variable support.
+      __IMP_HOME_VAR(vdata)
+
+      __GET_VARIABLE(vdata)
       var->vflags |= VARIABLE_ALLOC_REGISTER;
 
       if (isSpecial())
@@ -1290,7 +1371,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
           // then register allocator should know that previous destination value
           // is lost (write only operation).
           if ((id->isMov()) ||
-              ((id->code == INST_MOVSS || id->code == INST_MOVSD) && _operands[1].isMem()) ||
+              ((id->code == INST_MOVSS || id->code == INST_MOVSD) /* && _operands[1].isMem() */) ||
               (id->code == INST_IMUL && _operandsCount == 3 && !isSpecial()))
           {
             // Write only case.
@@ -1322,6 +1403,9 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
         VarData* vdata = _compiler->_getVarData(o.getId());
         ASMJIT_ASSERT(vdata != NULL);
 
+        // Home memory variable support.
+        __IMP_HOME_VAR(vdata)
+
         if (i == 0)
         {
           // If variable is MOV instruction type (source replaces the destination)
@@ -1344,14 +1428,26 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
       }
       else if ((o._mem.base & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
       {
-        __GET_VARIABLE(reinterpret_cast<Mem&>(o).getBase())
+        VarData* vdata = _compiler->_getVarData(reinterpret_cast<Mem&>(o).getBase());
+        ASMJIT_ASSERT(vdata != NULL);
+
+        // Home memory variable support.
+        __IMP_HOME_VAR(vdata)
+
+        __GET_VARIABLE(vdata)
         var->vdata->registerReadCount++;
         var->vflags |= VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ;
       }
 
       if ((o._mem.index & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
       {
-        __GET_VARIABLE(reinterpret_cast<Mem&>(o).getIndex())
+        VarData* vdata = _compiler->_getVarData(reinterpret_cast<Mem&>(o).getIndex());
+        ASMJIT_ASSERT(vdata != NULL);
+
+        // Home memory variable support.
+        __IMP_HOME_VAR(vdata)
+
+        __GET_VARIABLE(vdata)
         var->vdata->registerReadCount++;
         var->vflags |= VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ;
       }
@@ -1360,7 +1456,7 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
 
   // Traverse all variables and update firstEmittable / lastEmittable. This
   // function is called from iterator that scans emittables using forward
-  // direction so we can use this knowledge to optimize process.
+  // direction so we can use this knowledge to optimize the process.
   for (i = 0; i < _variablesCount; i++)
   {
     VarData* v = _variables[i].vdata;
@@ -1427,9 +1523,11 @@ void EInstruction::prepare(CompilerContext& c) ASMJIT_NOTHROW
         break;
     }
   }
-#undef __GET_VARIABLE
-
   c._currentOffset++;
+
+#undef __GET_VARIABLE
+#undef __ADD_HOME_VAR
+#undef __IMP_HOME_VAR
 }
 
 void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
@@ -1440,8 +1538,8 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
   if (variablesCount > 0)
   {
     // These variables are used by the instruction and we set current offset
-    // to their work offsets -> getSpillCandidate never return this variable
-    // for this instruction.
+    // to their work offsets -> getSpillCandidate never return the variable
+    // used this instruction.
     for (i = 0; i < variablesCount; i++)
     {
       _variables->vdata->workOffset = c._currentOffset;
@@ -1481,16 +1579,25 @@ void EInstruction::translate(CompilerContext& c) ASMJIT_NOTHROW
       {
         if ((o.getId() & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
         {
+          // Memory access. We just increment here actual displacement.
           VarData* vdata = c._compiler->_getVarData(o.getId());
           ASMJIT_ASSERT(vdata != NULL);
 
-          // Memory access. We just increment here actual displacement.
-          o._mem.displacement += vdata->isMemArgument
-            ? c._argumentsActualDisp
-            : c._variablesActualDisp;
-
-          // NOTE: This is not enough, variable position will be patched later
-          // by CompilerContext::_patchMemoryOperands().
+          if (vdata->homeMemoryVariable)
+          {
+            // Patch operand.
+            o._mem.id = INVALID_VALUE;
+            o._mem.base = vdata->homeMemoryVariable->id;
+            o._mem.displacement += vdata->homeMemoryOffset;
+          }
+          else
+          {
+            o._mem.displacement += vdata->isMemArgument
+              ? c._argumentsActualDisp
+              : c._variablesActualDisp;
+            // NOTE: This is not enough, variable position will be patched later
+            // by CompilerContext::_patchMemoryOperands().
+          }
         }
         else if ((o._mem.base & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
         {
@@ -2177,11 +2284,9 @@ void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
       {
         memHome = _buf;
 
-        Mem memOp;
-        memOp._mem.displacement = vdata->homeMemoryOffset;
-
-        if (vdata->homeMemoryRegister == INVALID_VALUE)
+        if (vdata->homeMemoryVariable == NULL)
         {
+          Mem memOp;
           if (vdata->isMemArgument)
           {
             memOp._mem.base = c._argumentsBaseReg;
@@ -2192,12 +2297,18 @@ void EFunction::_dumpFunction(CompilerContext& c) ASMJIT_NOTHROW
             memOp._mem.base = c._variablesBaseReg;
             memOp._mem.displacement += c._variablesBaseOffset;
           }
+          dumpOperand(memHome, &memOp)[0] = '\0';
         }
         else
         {
-          memOp._mem.base = vdata->homeMemoryRegister & REG_INDEX_MASK;
+          memHome = Util::mycpy(memHome, vdata->homeMemoryVariable->name);
+
+          if (vdata->homeMemoryOffset != 0)
+          {
+            memHome = Util::mycpy(memHome, " + ", 3);
+            memHome = Util::myitoa(memHome, vdata->homeMemoryOffset);
+          }
         }
-        dumpOperand(memHome, &memOp)[0] = '\0';
       }
 
       logger->logFormat("; %-3u| %-9s| %-3u| %-16s| r=%-4uw=%-4urw=%-4u| r=%-4uw=%-4urw=%-4u|\n",
@@ -3265,9 +3376,21 @@ void CompilerContext::spillXMMVar(VarData* vdata) ASMJIT_NOTHROW
 void CompilerContext::emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTHROW
 {
   Mem m;
-  m._mem.id = vdata->id;
 
-  _markMemoryUsed(vdata);
+  VarData* hdata = vdata->homeMemoryVariable;
+  if (hdata)
+  {
+    // Must be allocated!
+    ASMJIT_ASSERT(hdata->registerIndex != INVALID_VALUE);
+
+    m._mem.base = hdata->registerIndex;
+    m._mem.displacement = vdata->homeMemoryOffset;
+  }
+  else
+  {
+    m._mem.id = vdata->id;
+    _markMemoryUsed(vdata);
+  }
 
   switch (vdata->type)
   {
@@ -3326,9 +3449,21 @@ void CompilerContext::emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTH
   ASMJIT_ASSERT(regIndex != INVALID_VALUE);
 
   Mem m;
-  m._mem.id = vdata->id;
 
-  _markMemoryUsed(vdata);
+  VarData* hdata = vdata->homeMemoryVariable;
+  if (hdata)
+  {
+    // Must be allocated!
+    ASMJIT_ASSERT(hdata->registerIndex != INVALID_VALUE);
+
+    m._mem.base = hdata->registerIndex;
+    m._mem.displacement = vdata->homeMemoryOffset;
+  }
+  else
+  {
+    m._mem.id = vdata->id;
+    _markMemoryUsed(vdata);
+  }
 
   switch (vdata->type)
   {
@@ -4467,7 +4602,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
   vdata->homeRegisterIndex = INVALID_VALUE;
   vdata->prefRegisterIndex = INVALID_VALUE;
 
-  vdata->homeMemoryRegister = INVALID_VALUE;
+  vdata->homeMemoryVariable = NULL;
   vdata->homeMemoryOffset = 0;
   vdata->homeMemoryData = NULL;
 
@@ -4484,6 +4619,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
 
   vdata->state = VARIABLE_STATE_UNUSED;
   vdata->changed = false;
+  vdata->saveOnUnuse = false;
 
   vdata->registerReadCount = 0;
   vdata->registerWriteCount = 0;
@@ -4640,6 +4776,11 @@ void CompilerCore::alloc(BaseVar& var, const BaseReg& reg) ASMJIT_NOTHROW
   _vhint(var, VARIABLE_HINT_ALLOC, reg.getRegIndex());
 }
 
+void CompilerCore::save(BaseVar& var) ASMJIT_NOTHROW
+{
+  _vhint(var, VARIABLE_HINT_SAVE, INVALID_VALUE);
+}
+
 void CompilerCore::spill(BaseVar& var) ASMJIT_NOTHROW
 {
   _vhint(var, VARIABLE_HINT_SPILL, INVALID_VALUE);
@@ -4648,6 +4789,39 @@ void CompilerCore::spill(BaseVar& var) ASMJIT_NOTHROW
 void CompilerCore::unuse(BaseVar& var) ASMJIT_NOTHROW
 {
   _vhint(var, VARIABLE_HINT_UNUSE, INVALID_VALUE);
+}
+
+void CompilerCore::getMemoryHome(BaseVar& var, GPVar* home, int* displacement)
+{
+  ASMJIT_ASSERT(home != NULL);
+  if (var.getId() == INVALID_VALUE) return;
+
+  VarData* vdata = _getVarData(var.getId());
+  if (vdata == NULL) return;
+
+  VarData* vhome = vdata->homeMemoryVariable;
+  if (vhome)
+  {
+    home->_var.id = vhome->id;
+    home->_var.size = sizeof(sysint_t);
+    home->_var.variableType = VARIABLE_TYPE_GPN;
+  }
+
+  *displacement = vdata->homeMemoryOffset;
+}
+
+void CompilerCore::setMemoryHome(BaseVar& var, const GPVar& home, int displacement)
+{
+  if (var.getId() == INVALID_VALUE) return;
+  if (home.getId() == INVALID_VALUE) return;
+
+  VarData* vdata = _getVarData(var.getId());
+  if (vdata == NULL) return;
+
+  vdata->homeMemoryVariable = _getVarData(home.getId());
+  vdata->homeMemoryOffset = displacement;
+
+  _vhint(var, VARIABLE_HINT_ASMEM, INVALID_VALUE);
 }
 
 uint32_t CompilerCore::getPriority(BaseVar& var) const ASMJIT_NOTHROW
@@ -4669,6 +4843,26 @@ void CompilerCore::setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW
 
   if (priority > 100) priority = 100;
   vdata->priority = (uint8_t)priority;
+}
+
+bool CompilerCore::getSaveOnUnuse(BaseVar& var) const ASMJIT_NOTHROW
+{
+  if (var.getId() == INVALID_VALUE) return false;
+
+  VarData* vdata = _getVarData(var.getId());
+  ASMJIT_ASSERT(vdata != NULL);
+
+  return (bool)vdata->saveOnUnuse;
+}
+
+void CompilerCore::setSaveOnUnuse(BaseVar& var, bool value) ASMJIT_NOTHROW
+{
+  if (var.getId() == INVALID_VALUE) return;
+
+  VarData* vdata = _getVarData(var.getId());
+  ASMJIT_ASSERT(vdata != NULL);
+
+  vdata->saveOnUnuse = value;
 }
 
 void CompilerCore::rename(BaseVar& var, const char* name) ASMJIT_NOTHROW
@@ -4800,10 +4994,21 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     if (c._active)
     {
       VarData* vdata = c._active;
+
       do {
-        EVariableHint* e = Compiler_newObject<EVariableHint>(
-          this, vdata, (uint32_t)VARIABLE_HINT_UNUSE, (uint32_t)INVALID_VALUE);
-        if (vdata->lastEmittable) addEmittableAfter(e, vdata->lastEmittable);
+        if (vdata->lastEmittable)
+        {
+          EVariableHint* e;
+          uint32_t hint = VARIABLE_HINT_UNUSE;
+
+          // Home memory variable support.
+          if (vdata->homeMemoryVariable && vdata->saveOnUnuse)
+            hint = VARIABLE_HINT_SAVE_AND_UNUSE;
+
+          e = Compiler_newObject<EVariableHint>(this, vdata, hint, (uint32_t)INVALID_VALUE);
+          e->_offset = vdata->lastEmittable->_offset;
+          addEmittableAfter(e, vdata->lastEmittable);
+        }
 
         vdata = vdata->nextActive;
       } while (vdata != c._active);

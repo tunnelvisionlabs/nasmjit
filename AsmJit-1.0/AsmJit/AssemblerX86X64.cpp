@@ -358,7 +358,7 @@ void AssemblerCore::_emitModM(
     // relocated to absolute ones.
     if (mem.getMemType() == OPERAND_MEM_LABEL)
     {
-      LabelData& l_data = _labelData[mem._mem.base];
+      LabelData& l_data = _labelData[mem._mem.base & OPERAND_ID_VALUE_MASK];
       RelocData r_data;
       uint32_t relocId = _relocData.getLength();
 

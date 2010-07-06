@@ -274,9 +274,9 @@ struct VarData
   //! @brief Preferred register index.
   uint32_t prefRegisterIndex;
 
-  //! @brief Home memory address register index (in most cases ESP/RSP).
-  uint32_t homeMemoryRegister;
-  //! @brief Home memory address offset (valid only if homeMemoryRegister is set).
+  //! @brief Home memory variable (in most cases NULL that means stack - ESP/RSP).
+  VarData* homeMemoryVariable;
+  //! @brief Home memory address offset (valid only if @c homeMemoryVariable is set).
   int32_t homeMemoryOffset;
 
   //! @brief Used by CompilerContext, do not touch (NULL when created).
@@ -319,6 +319,8 @@ struct VarData
   uint8_t state;
   //! @brief Whether variable was changed (connected with actual @c StateData).
   uint8_t changed;
+  //! @brief Save on unuse (at end of the variable scope).
+  uint8_t saveOnUnuse;
 
   // --------------------------------------------------------------------------
   // [Statistics]
@@ -1402,13 +1404,46 @@ struct ASMJIT_API CompilerCore
   void alloc(BaseVar& var, const BaseReg& reg) ASMJIT_NOTHROW;
   //! @brief Spill variable @a var.
   void spill(BaseVar& var) ASMJIT_NOTHROW;
+  //! @brief Save variable @a var if modified.
+  void save(BaseVar& var) ASMJIT_NOTHROW;
   //! @brief Unuse variable @a var.
   void unuse(BaseVar& var) ASMJIT_NOTHROW;
+
+  //! @brief Get memory home of variable @a var.
+  void getMemoryHome(BaseVar& var, GPVar* home, int* displacement = NULL);
+
+  //! @brief Set memory home of variable @a var.
+  //!
+  //! Default memory home location is on stack (ESP/RSP), but when needed the
+  //! bebahior can be changed by this method.
+  //!
+  //! It is an error to chaining memory home locations. For example the given 
+  //! code is invalid:
+  //!
+  //! @code
+  //! Compiler c;
+  //!
+  //! ...
+  //! GPVar v0 = c.newGP();
+  //! GPVar v1 = c.newGP();
+  //! GPVar v2 = c.newGP();
+  //! GPVar v3 = c.newGP();
+  //!
+  //! c.setMemoryHome(v1, v0, 0); // Allowed, [v0] is memory home for v1.
+  //! c.setMemoryHome(v2, v0, 4); // Allowed, [v0+4] is memory home for v2.
+  //! c.setMemoryHome(v3, v2);    // CHAINING, NOT ALLOWED!
+  //! @endcode
+  void setMemoryHome(BaseVar& var, const GPVar& home, int displacement = 0);
 
   //! @brief Get priority of variable @a var.
   uint32_t getPriority(BaseVar& var) const ASMJIT_NOTHROW;
   //! @brief Set priority of variable @a var to @a priority.
   void setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW;
+
+  //! @brief Get save-on-unuse @a var property.
+  bool getSaveOnUnuse(BaseVar& var) const ASMJIT_NOTHROW;
+  //! @brief Set save-on-unuse @a var property to @a value.
+  void setSaveOnUnuse(BaseVar& var, bool value) ASMJIT_NOTHROW;
 
   //! @brief Rename variable @a var to @a name.
   //!

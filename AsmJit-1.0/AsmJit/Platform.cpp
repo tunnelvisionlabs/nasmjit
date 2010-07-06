@@ -45,6 +45,7 @@ void assertionFailure(const char* file, int line, const char* exp)
     "File: %s\n"
     "Line: %d\n"
     "Expression: %s\n", file, line, exp);
+
   exit(1);
 }
 
