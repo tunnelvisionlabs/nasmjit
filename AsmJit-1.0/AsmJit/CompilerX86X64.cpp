@@ -5619,7 +5619,7 @@ void CompilerCore::comment(const char* fmt, ...) ASMJIT_NOTHROW
 
     va_list ap;
     va_start(ap, fmt);
-    p += vsnprintf(p, ASMJIT_ARRAY_SIZE(buf) - 1, fmt, ap);
+    p += vsnprintf(p, 100, fmt, ap);
     va_end(ap);
   }
 

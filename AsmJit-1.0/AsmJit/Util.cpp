@@ -72,7 +72,7 @@ char* Util::myhex(char* dst, const uint8_t* src, sysuint_t len) ASMJIT_NOTHROW
   return dst;
 }
 
-// not too efficient, but this is mainly for debugging:)
+// Not too efficient, but this is mainly for debugging:)
 char* Util::myutoa(char* dst, sysuint_t i, sysuint_t base) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(base <= 16);
@@ -200,7 +200,7 @@ Zone::~Zone() ASMJIT_NOTHROW
 
 void* Zone::zalloc(sysuint_t size) ASMJIT_NOTHROW
 {
-  // Align to 4 or 8 bytes
+  // Align to 4 or 8 bytes.
   size = (size + sizeof(sysint_t)-1) & ~(sizeof(sysint_t)-1);
 
   Chunk* cur = _chunks;
@@ -232,7 +232,8 @@ char* Zone::zstrdup(const char* str) ASMJIT_NOTHROW
   sysuint_t len = strlen(str);
   if (len == 0) return NULL;
 
-  len++; // Include NULL terminator.
+  // Include NULL terminator.
+  len++;
 
   // Limit string length.
   if (len > 256) len = 256;
@@ -241,7 +242,7 @@ char* Zone::zstrdup(const char* str) ASMJIT_NOTHROW
   if (!m) return NULL;
 
   memcpy(m, str, len);
-  m[len] = '\0';
+  m[len-1] = '\0';
   return m;
 }
 

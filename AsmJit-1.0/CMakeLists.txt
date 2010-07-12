@@ -59,7 +59,7 @@ EndIf(NOT WIN32)
 
 # Debugging support is indicated through _DEBUG macro, add it if needed
 If(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  Add_Definitions(-D_DEBUG)
+  Add_Definitions(-DASMJIT_DEBUG)
 EndIf(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 # Build AsmJit shared library?
