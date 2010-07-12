@@ -888,6 +888,10 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
   uint32_t bLoHiUsed = 0;
   bool forceRexPrefix = false;
 
+#if defined(ASMJIT_DEBUG)
+  bool assertIllegal = false;
+#endif // ASMJIT_DEBUG
+
   // Convert operands to OPERAND_NONE if needed.
   if (o0 == NULL) { o0 = reinterpret_cast<const Operand*>(_none); } else if (o0->isReg()) { bLoHiUsed |= o0->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_LO); }
   if (o1 == NULL) { o1 = reinterpret_cast<const Operand*>(_none); } else if (o1->isReg()) { bLoHiUsed |= o1->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_LO); }
@@ -930,8 +934,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
     if ((bLoHiUsed & REG_TYPE_GPB_HI) != 0 && forceRexPrefix)
     {
-      setError(ERROR_ILLEGAL_INSTRUCTION);
-      goto cleanup;
+      goto illegalInstruction;
     }
 #endif // ASMJIT_X64
 
@@ -1531,7 +1534,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
     {
       if ((o0->isReg() && o1->isImm()) || (o0->isImm() && o1->isReg()))
       {
-        bool reverse = o0->getType() == OPERAND_REG;
+        bool reverse = o1->getType() == OPERAND_REG;
         uint8_t opCode = !reverse ? 0xA0 : 0xA2;
         const GPReg& reg = reinterpret_cast<const GPReg&>(!reverse ? *o0 : *o1);
         const Imm& imm = reinterpret_cast<const Imm&>(!reverse ? *o1 : *o0);
@@ -2030,7 +2033,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         goto illegalInstruction;
       }
 
-      // Illegal
+      // Illegal.
       if (o0->isMem() && o1->isMem()) goto illegalInstruction;
 
       uint8_t rexw = ((id->oflags[0]|id->oflags[1]) & InstructionDescription::O_NOREX)
@@ -2385,12 +2388,16 @@ illegalInstruction:
   // must inform about invalid state.
   setError(ERROR_ILLEGAL_INSTRUCTION);
 
-  // We raise an assertion failure, because in debugging this just shouldn't
-  // happen.
-  ASMJIT_ASSERT(0);
+#if defined(ASMJIT_DEBUG)
+  assertIllegal = true;
+#endif // ASMJIT_DEBUG
 
 end:
-  if (_logger && _logger->isUsed())
+  if ((_logger && _logger->isUsed())
+#if defined(ASMJIT_DEBUG)
+      || assertIllegal
+#endif // ASMJIT_DEBUG
+     )
   {
     char bufStorage[512];
     char* buf = bufStorage;
@@ -2403,7 +2410,22 @@ end:
       buf = dumpComment(buf, (sysuint_t)(buf - bufStorage), NULL, 0, _comment);
 
     // We don't need to NULL terminate the resulting string.
-    _logger->logString(bufStorage, (sysuint_t)(buf - bufStorage));
+#if defined(ASMJIT_DEBUG)
+    if (_logger)
+#endif // ASMJIT_DEBUG
+      _logger->logString(bufStorage, (sysuint_t)(buf - bufStorage));
+
+#if defined(ASMJIT_DEBUG)
+    if (assertIllegal)
+    {
+      // Here we need to NULL terminate.
+      buf[0];
+
+      // We raise an assertion failure, because in debugging this just shouldn't
+      // happen.
+      assertionFailure(__FILE__, __LINE__, bufStorage);
+    }
+#endif // ASMJIT_DEBUG
   }
 
 cleanup:
@@ -2463,7 +2485,7 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
     // Be sure that reloc data structure is correct.
     ASMJIT_ASSERT((sysint_t)(r.offset + r.size) <= csize);
 
-    switch(r.type)
+    switch (r.type)
     {
       case RelocData::ABSOLUTE_TO_ABSOLUTE:
         val = (sysint_t)(r.address);
@@ -2490,7 +2512,7 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
         ASMJIT_ASSERT(0);
     }
 
-    switch(r.size)
+    switch (r.size)
     {
       case 4:
         *reinterpret_cast<int32_t*>(dst + r.offset) = (int32_t)val;

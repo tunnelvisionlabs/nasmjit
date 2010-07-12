@@ -81,6 +81,7 @@ If(ASMJIT_BUILD_TEST)
     testbasics
     testcpu
     testdummy
+    testfunccall1
     testfuncmanyargs
     testjit
     testmemorymanager

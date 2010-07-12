@@ -970,7 +970,7 @@ int main(int argc, char* argv[])
   // Call function (This is convenience for IDEs to go directly to disassembly).
   fn();
 
-  // If function is not needed again it should be freed.
+  // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
 

@@ -51,7 +51,6 @@ int main(int argc, char* argv[])
   {
     c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<void*, void*, sysuint_t>());
     c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
-    c.setProperty(PROPERTY_LOG_BINARY, true);
 
     GPVar dst(c.argGP(0));
     GPVar src(c.argGP(1));

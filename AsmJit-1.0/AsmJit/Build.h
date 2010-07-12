@@ -249,10 +249,15 @@ private: \
 // [AsmJit - Assert]
 // ----------------------------------------------------------------------------
 
-#if defined(DEBUG) || defined(_DEBUG)
 namespace AsmJit {
 ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 } // AsmJit namespace
+
+#if defined(DEBUG) || defined(_DEBUG)
+# define ASMJIT_DEBUG
+#endif // DEBUG
+
+#if defined(ASMJIT_DEBUG)
 # if !defined(ASMJIT_ASSERT)
 #  define ASMJIT_ASSERT(exp) do { if (!(exp)) ::AsmJit::assertionFailure(__FILE__, __LINE__, #exp); } while(0)
 # endif
@@ -262,8 +267,8 @@ ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 # endif
 #endif // DEBUG
 
-// GCC warnings fix: I can't understand why GCC hasn't interface to push/pop
-// warning
+// GCC warnings fix: I can't understand why GCC has no interface to push/pop
+// specific warnings.
 // #if defined(__GNUC__)
 // # if (__GNUC__ * 10000  + __GNUC_MINOR__ * 100  + __GNUC_PATCHLEVEL__) >= 402001
 // #  pragma GCC diagnostic ignored "-w"

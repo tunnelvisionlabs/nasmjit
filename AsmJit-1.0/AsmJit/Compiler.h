@@ -61,7 +61,7 @@ struct EData;
 struct EEpilog;
 struct EFunction;
 struct EInstruction;
-struct EJmpInstruction;
+struct EJmp;
 struct EProlog;
 
 // ============================================================================
@@ -435,9 +435,9 @@ struct ASMJIT_API Emittable
   // --------------------------------------------------------------------------
 
   //! @brief Step 1. Extract emittable variables, update statistics, ...
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   //! @brief Step 2. Translate instruction, alloc variables, ...
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
   //! @brief Step 3. Emit to @c Assembler.
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
   //! @brief Step 4. Last post step (verify, add data, etc).
@@ -685,7 +685,7 @@ struct ASMJIT_API ETarget : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -696,7 +696,7 @@ struct ASMJIT_API ETarget : public Emittable
   inline const Label& getLabel() const ASMJIT_NOTHROW { return _label; }
 
   //! @brief Get first jmp instruction.
-  inline EJmpInstruction* getFrom() const ASMJIT_NOTHROW { return _from; }
+  inline EJmp* getFrom() const ASMJIT_NOTHROW { return _from; }
 
   //! @brief Get register allocator state for this target.
   inline StateData* getState() const ASMJIT_NOTHROW { return _state; }
@@ -712,7 +712,7 @@ protected:
   //! @brief Label.
   Label _label;
   //! @brief First jump instruction that points to this target (label).
-  EJmpInstruction* _from;
+  EJmp* _from;
   //! @brief State at this location.
   StateData* _state;
 
@@ -723,7 +723,7 @@ private:
   friend struct CompilerContext;
   friend struct CompilerCore;
   friend struct EInstruction;
-  friend struct EJmpInstruction;
+  friend struct EJmp;
 
   ASMJIT_DISABLE_COPY(ETarget)
 };

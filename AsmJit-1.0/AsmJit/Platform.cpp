@@ -41,10 +41,8 @@ namespace AsmJit {
 void assertionFailure(const char* file, int line, const char* exp)
 {
   fprintf(stderr,
-    "AsmJit assertion failure:\n"
-    "File: %s\n"
-    "Line: %d\n"
-    "Expression: %s\n", file, line, exp);
+    "*** ASSERTION FAILURE at %s (line %d)\n"
+    "*** %s\n", file, line, exp);
 
   exit(1);
 }

@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
   printf("Result from jit function: %d\n", result);
   printf("Status: %s\n", result == 1024 ? "Success" : "Failure");
 
-  // If function is not needed again it should be freed.
+  // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
 

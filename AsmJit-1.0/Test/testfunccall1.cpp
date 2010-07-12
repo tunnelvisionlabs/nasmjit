@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test setcc instruction generation.
+// This file is used as a function call test (calling functions inside
+// the generated code).
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,8 +34,11 @@
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
-// This is type of function we will generate
-typedef void (*MyFn)(int, int, char*);
+// Type of generated function.
+typedef int (*MyFn)(int, int, int);
+
+// Function that is called inside the generated one.
+static int calledFn(int a, int b, int c) { return (a + b) * c; }
 
 int main(int argc, char* argv[])
 {
@@ -48,17 +52,28 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, char*>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int>());
 
-  GPVar src0(c.argGP(0));
-  GPVar src1(c.argGP(1));
-  GPVar dst0(c.argGP(2));
+  GPVar v0(c.argGP(0));
+  GPVar v1(c.argGP(1));
+  GPVar v2(c.argGP(2));
 
-  c.cmp(src0, src1);
-  c.setz(byte_ptr(dst0));
+  // Just do something;)
+  c.shl(v0, imm(1));
+  c.shl(v1, imm(1));
+  c.shl(v2, imm(1));
 
-  // Finish.
+  // Call function
+  GPVar address(c.newGP());
+  c.mov(address, imm((sysint_t)(void*)calledFn));
+
+  ECall* ctx = c.call(address);
+  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int>());
+  ctx->setArgument(0, v2);
+  ctx->setArgument(1, v1);
+  ctx->setArgument(2, v0);
+
+  c.ret();
   c.endFunction();
   // ==========================================================================
 
@@ -66,17 +81,7 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  // Results storage.
-  char r[4];
-
-  // Call it
-  fn(0, 0, &r[0]); // We are expecting 1 (0 == 0).
-  fn(0, 1, &r[1]); // We are expecting 0 (0 != 1).
-  fn(1, 0, &r[2]); // We are expecting 0 (1 != 0).
-  fn(1, 1, &r[3]); // We are expecting 1 (1 == 1).
-
-  printf("Result from JIT function: %d %d %d %d\n", r[0], r[1], r[2], r[3]);
-  printf("Status: %s\n", (r[0] == 1 && r[1] == 0 && r[2] == 0 && r[3] == 1) ? "Success" : "Failure");
+  printf("Result %u (expected 36)\n", fn(3, 2, 1));
 
   // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);

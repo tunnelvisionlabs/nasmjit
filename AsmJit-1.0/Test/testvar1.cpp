@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  // If function is not needed again it should be freed.
+  // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
 

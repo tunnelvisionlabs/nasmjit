@@ -94,7 +94,9 @@ struct ASMJIT_API FunctionPrototype
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref FunctionPrototype instance.
   FunctionPrototype() ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref FunctionPrototype instance.
   ~FunctionPrototype() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -188,7 +190,13 @@ struct ASMJIT_API FunctionPrototype
   //! number of function arguments or their types.
   inline uint32_t getPreservedXMM() const ASMJIT_NOTHROW { return _preservedXMM; }
 
-private:
+  inline uint32_t getPassedGP() const ASMJIT_NOTHROW { return _passedGP; }
+  inline uint32_t getPassedMM() const ASMJIT_NOTHROW { return _passedMM; }
+  inline uint32_t getPassedXMM() const ASMJIT_NOTHROW { return _passedXMM; }
+
+  uint32_t findArgumentByRegisterCode(uint32_t regCode) const ASMJIT_NOTHROW;
+
+protected:
 
   // --------------------------------------------------------------------------
   // [Private]
@@ -218,17 +226,26 @@ private:
   //! @brief Count of bytes consumed by arguments on the stack.
   uint32_t _argumentsStackSize;
 
-  //! @brief List of registers that's used for first INT arguments (GP registers) instead of stack.
+  //! @brief List of registers that's used for first GP arguments.
   uint32_t _argumentsGP[16];
-  //! @brief List of registers that's used for first FPU arguments (XMM registers - SSE2) instead of stack.
+  //! @brief List of registers that's used for first XMM arguments.
   uint32_t _argumentsXMM[16];
 
-  //! @brief Bitmask for preserved general purpose registers.
+  //! @brief Bitmask for preserved GP registers.
   uint32_t _preservedGP;
   //! @brief Bitmask for preserved MM registers.
   uint32_t _preservedMM;
   //! @brief Bitmask for preserved XMM registers.
   uint32_t _preservedXMM;
+
+  // Set by _setPrototype().
+
+  //! @brief Bitmask for GP registers used as function arguments.
+  uint32_t _passedGP;
+  //! @brief Bitmask for GP registers used as function arguments.
+  uint32_t _passedMM;
+  //! @brief Bitmask for GP registers used as function arguments.
+  uint32_t _passedXMM;
 };
 
 // ============================================================================
@@ -274,9 +291,7 @@ struct VarData
   //! @brief Preferred register index.
   uint32_t prefRegisterIndex;
 
-  //! @brief Home memory variable (in most cases NULL that means stack - ESP/RSP).
-  VarData* homeMemoryVariable;
-  //! @brief Home memory address offset (valid only if @c homeMemoryVariable is set).
+  //! @brief Home memory address offset.
   int32_t homeMemoryOffset;
 
   //! @brief Used by @c CompilerContext, do not touch (NULL when created).
@@ -347,6 +362,16 @@ struct VarData
   uint32_t memoryWriteCount;
   //! @brief Memory read+write statistics.
   uint32_t memoryRWCount;
+
+  // --------------------------------------------------------------------------
+  // [Temporary]
+  // --------------------------------------------------------------------------
+
+  //! @brief Temporary data that can be used in prepare/translate stage.
+  //!
+  //! Initial value is NULL and each emittable that will use it must also
+  //! clear it.
+  void* temp;
 };
 
 // ============================================================================
@@ -366,7 +391,7 @@ struct VarMemBlock
 // [AsmJit::VarAllocRecord]
 // ============================================================================
 
-//! @brief Variable record (for each instruction that uses variables).
+//! @brief Variable alloc record (for each instruction that uses variables).
 //!
 //! Variable record contains pointer to variable data and register allocation
 //! flags. These flags are important to determine the best alloc instruction.
@@ -378,6 +403,47 @@ struct VarAllocRecord
   uint32_t vflags;
   //! @brief Register index (default is @c INVALID_VALUE)
   uint32_t regIndex;
+};
+
+// ============================================================================
+// [AsmJit::VarCallRecord]
+// ============================================================================
+
+//! @brief Variable call-fn record (for each callable that uses variables).
+//!
+//! This record contains variables that are used to call a function (using 
+//! @c ECall emittable). Each variable contains the registers where it must
+//! be and registers where the value will be returned.
+struct VarCallRecord
+{
+  //! @brief Variable data (the structure owned by @c Compiler).
+  VarData* vdata;
+  uint32_t flags;
+
+  uint8_t inCount;
+  uint8_t inDone;
+
+  uint8_t outCount;
+  uint8_t outDone;
+
+  enum FLAGS
+  {
+    FLAG_IN_GP = 0x0001,
+    FLAG_IN_MM = 0x0002,
+    FLAG_IN_XMM = 0x0004,
+    FLAG_IN_STACK = 0x0008,
+
+    FLAG_OUT_EAX = 0x0010,
+    FLAG_OUT_EDX = 0x0020,
+    FLAG_OUT_ST0 = 0x0040,
+    FLAG_OUT_ST1 = 0x0080,
+    FLAG_OUT_MM0 = 0x0100,
+    FLAG_OUT_XMM0 = 0x0400,
+    FLAG_OUT_XMM1 = 0x0800,
+
+    FLAG_IN_MEM_PTR = 0x1000,
+    FLAG_CALL_OPERAND = 0x2000
+  };
 };
 
 // ============================================================================
@@ -439,7 +505,7 @@ struct StateData
 
 struct ForwardJumpData
 {
-  EJmpInstruction* inst;
+  EJmp* inst;
   StateData* state;
   ForwardJumpData* next;
 };
@@ -448,32 +514,40 @@ struct ForwardJumpData
 // [AsmJit::EVariableHint]
 // ============================================================================
 
+//! @brief Variable hint.
 struct ASMJIT_API EVariableHint : public Emittable
 {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new @ref EVariableHint instance.
   EVariableHint(Compiler* c, VarData* vdata, uint32_t hintId, uint32_t hintValue) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EVariableHInt instance.
   virtual ~EVariableHint() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Hint]
   // --------------------------------------------------------------------------
 
+  //! @brief Get assigned variable (data).
   inline VarData* getVar() const ASMJIT_NOTHROW { return _vdata; }
 
+  //! @brief Get hint it (see @ref VARIABLE_HINT).
   inline uint32_t getHintId() const ASMJIT_NOTHROW { return _hintId; }
+  //! @brief Get hint value.
   inline uint32_t getHintValue() const ASMJIT_NOTHROW { return _hintValue; }
 
+  //! @brief Set hint it (see @ref VARIABLE_HINT).
   inline void setHintId(uint32_t hintId) ASMJIT_NOTHROW { _hintId = hintId; }
+  //! @brief Set hint value.
   inline void setHintValue(uint32_t hintValue) ASMJIT_NOTHROW { _hintValue = hintValue; }
 
   VarData* _vdata;
@@ -501,8 +575,8 @@ struct ASMJIT_API EInstruction : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
@@ -601,27 +675,27 @@ private:
 };
 
 // ============================================================================
-// [AsmJit::EJmpInstruction]
+// [AsmJit::EJmp]
 // ============================================================================
 
 //! @brief Emittable that represents single instruction that can jump somewhere.
-struct ASMJIT_API EJmpInstruction : public EInstruction
+struct ASMJIT_API EJmp : public EInstruction
 {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  EJmpInstruction(Compiler* c, uint32_t code, Operand* operandsData, uint32_t operandsCount) ASMJIT_NOTHROW;
-  virtual ~EJmpInstruction() ASMJIT_NOTHROW;
+  EJmp(Compiler* c, uint32_t code, Operand* operandsData, uint32_t operandsCount) ASMJIT_NOTHROW;
+  virtual ~EJmp() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
-  void _doJump(CompilerContext& c) ASMJIT_NOTHROW;
+  void _doJump(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Jump]
@@ -629,7 +703,7 @@ struct ASMJIT_API EJmpInstruction : public EInstruction
 
   virtual ETarget* getJumpTarget() const ASMJIT_NOTHROW;
 
-  inline EJmpInstruction* getJumpNext() const ASMJIT_NOTHROW { return _jumpNext; }
+  inline EJmp* getJumpNext() const ASMJIT_NOTHROW { return _jumpNext; }
   inline bool isTaken() const ASMJIT_NOTHROW { return _isTaken; }
 
   // --------------------------------------------------------------------------
@@ -638,7 +712,7 @@ struct ASMJIT_API EJmpInstruction : public EInstruction
 
 protected:
   ETarget* _jumpTarget;
-  EJmpInstruction *_jumpNext;
+  EJmp *_jumpNext;
   StateData* _state;
   bool _isTaken;
 
@@ -647,7 +721,7 @@ protected:
   friend struct CompilerCore;
 
 private:
-  ASMJIT_DISABLE_COPY(EJmpInstruction)
+  ASMJIT_DISABLE_COPY(EJmp)
 };
 
 // ============================================================================
@@ -658,16 +732,16 @@ private:
 //!
 //! Functions are base blocks for generating assembler output. Each generated
 //! assembler stream needs standard entry and leave sequences thats compatible
-//! to operating system conventions - Application Binary Interface (ABI).
+//! to the operating system conventions - Application Binary Interface (ABI).
 //!
 //! Function class can be used to generate entry (prolog) and leave (epilog)
 //! sequences that is compatible to a given calling convention and to allocate
 //! and manage variables that can be allocated to registers or spilled.
 //!
 //! @note To create function use @c AsmJit::Compiler::newFunction() method, do
-//! not create @c Function instances by different ways.
+//! not create @c EFunction instances using other ways.
 //!
-//! @sa @c State, @c StateRef, @c Variable, @c VariableRef.
+//! @sa @c State, @c Var.
 struct ASMJIT_API EFunction : public Emittable
 {
   // --------------------------------------------------------------------------
@@ -686,7 +760,7 @@ struct ASMJIT_API EFunction : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Function Prototype (Calling Convention + Arguments) / Return Value]
@@ -712,12 +786,20 @@ struct ASMJIT_API EFunction : public Emittable
   void _prepareVariables(Emittable* first) ASMJIT_NOTHROW;
 
   //! @brief Allocate variables (setting correct state, changing masks, etc).
-  void _allocVariables(CompilerContext& c) ASMJIT_NOTHROW;
+  void _allocVariables(CompilerContext& cc) ASMJIT_NOTHROW;
 
-  void _preparePrologEpilog(CompilerContext& c) ASMJIT_NOTHROW;
-  void _dumpFunction(CompilerContext& c) ASMJIT_NOTHROW;
-  void _emitProlog(CompilerContext& c) ASMJIT_NOTHROW;
-  void _emitEpilog(CompilerContext& c) ASMJIT_NOTHROW;
+  void _preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW;
+  void _dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW;
+  void _emitProlog(CompilerContext& cc) ASMJIT_NOTHROW;
+  void _emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Function-Call]
+  // --------------------------------------------------------------------------
+
+  //! @brief Reserve stack for calling other function and mark function as
+  //! callee.
+  void reserveStackForFunctionCall(int32_t size);
 
   // --------------------------------------------------------------------------
   // [Labels]
@@ -831,6 +913,9 @@ protected:
   //! @brief Like @c _memStackSize, but aligned to 16-bytes.
   int32_t _memStackSize16;
 
+  //! @brief Stack size needed to call other functions.
+  int32_t _functionCallStackSize;
+
   //! @brief Function entry label.
   Label _entryLabel;
   //! @brief Function exit label.
@@ -870,8 +955,8 @@ struct ASMJIT_API EProlog : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -913,8 +998,8 @@ struct ASMJIT_API EEpilog : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
-  virtual void prepare(CompilerContext& c) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& c) ASMJIT_NOTHROW;
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -937,12 +1022,134 @@ private:
 };
 
 // ============================================================================
+// [AsmJit::ECall]
+// ============================================================================
+
+//! @brief Function call.
+struct ASMJIT_API ECall : public Emittable
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create a new @ref ECall instance.
+  ECall(Compiler* c, EFunction* caller, const Operand* target) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref ECall instance.
+  virtual ~ECall() ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Emit]
+  // --------------------------------------------------------------------------
+
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+
+protected:
+
+  uint32_t _findTemporaryGpRegister(CompilerContext& cc) ASMJIT_NOTHROW;
+  uint32_t _findTemporaryXmmRegister(CompilerContext& cc) ASMJIT_NOTHROW;
+
+  VarData* _getOverlappingVariable(CompilerContext& cc,
+    const FunctionPrototype::Argument& argType) const ASMJIT_NOTHROW;
+
+  void _moveAllocatedVariableToStack(CompilerContext& cc,
+    VarData* vdata, const FunctionPrototype::Argument& argType) ASMJIT_NOTHROW;
+
+  void _moveSpilledVariableToStack(CompilerContext& cc,
+    VarData* vdata, const FunctionPrototype::Argument& argType,
+    uint32_t temporaryGpReg,
+    uint32_t temporaryXmmReg) ASMJIT_NOTHROW;
+
+  void _moveSrcVariableToRegister(CompilerContext& cc,
+    VarData* vdata, const FunctionPrototype::Argument& argType) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Function Prototype (Calling Convention + Arguments) / Return Value]
+  // --------------------------------------------------------------------------
+
+public:
+
+  //! @brief Get function prototype.
+  inline const FunctionPrototype& getPrototype() const ASMJIT_NOTHROW { return _functionPrototype; }
+
+  //! @brief Set function prototype.
+  template<typename T>
+  inline void setPrototype(uint32_t cconv, ASMJIT_TYPE_TO_TYPE(T) params) ASMJIT_NOTHROW
+  { _setPrototype(cconv, params.getArgs(), params.getCount()); }
+
+  //! @brief Set function prototype (internal).
+  void _setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+
+  //! @brief Set function argument @a i to @a var.
+  bool setArgument(uint32_t i, const BaseVar& var) ASMJIT_NOTHROW;
+  //! @brief Set function argument @a i to @a imm.
+  bool setArgument(uint32_t i, const Imm& imm) ASMJIT_NOTHROW;
+
+  //! @brief Set return value to 
+  bool setReturn(const Operand& first, const Operand& second = Operand()) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Methods]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get caller.
+  inline EFunction* getCaller() const ASMJIT_NOTHROW { return _caller; }
+
+  //! @brief Get operand (function address).
+  inline Operand& getTarget() ASMJIT_NOTHROW { return _target; }
+  //! @overload
+  inline const Operand& getTarget() const ASMJIT_NOTHROW { return _target; }
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
+
+protected:
+  //! @brief Function prototype.
+  FunctionPrototype _functionPrototype;
+
+  //! @brief Callee (the function that calls me).
+  EFunction* _caller;
+
+  //! @brief Arguments (operands).
+  Operand* _args;
+
+  //! @brief Operand (address of function, register, label, ...)
+  Operand _target;
+
+  //! @brief Return value (operands)
+  Operand _ret[2];
+
+  //! @brief Mask of GP registers used as function arguments.
+  uint32_t _gpParams;
+  //! @brief Mask of MM registers used as function arguments.
+  uint32_t _mmParams;
+  //! @brief Mask of XMM registers used as function arguments.
+  uint32_t _xmmParams;
+
+  //! @brief Variables count.
+  uint32_t _variablesCount;
+
+  //! @brief Variables (extracted from operands).
+  VarCallRecord* _variables;
+  //! @brief Argument index to @c VarCallRecord.
+  VarCallRecord* _argumentToVarRecord[FUNC_MAX_ARGS];
+
+private:
+  friend struct CompilerCore;
+};
+
+// ============================================================================
 // [AsmJit::CompilerContext]
 // ============================================================================
 
 //! @internal
 //!
 //! @brief Compiler context is used by @ref Compiler.
+//!
+//! Compiler context is used during compilation and normally developer doesn't
+//! need access to it. The context is user per function (it's reset after each
+//! function is generated).
 struct ASMJIT_API CompilerContext
 {
   // --------------------------------------------------------------------------
@@ -958,37 +1165,66 @@ struct ASMJIT_API CompilerContext
   // [Clear]
   // --------------------------------------------------------------------------
 
+  //! @brief Clear context, preparing it for next function generation.
   void _clear() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Register Allocator]
   // --------------------------------------------------------------------------
 
+  //! @brief Allocate variable
+  //!
+  //! Calls @c allocGPVar, @c allocMMVar or @c allocXMMVar methods.
   void allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Save variable.
+  //!
+  //! Calls @c saveGPVar, @c saveMMVar or @c saveXMMVar methods.
   void saveVar(VarData* vdata) ASMJIT_NOTHROW;
+  //! @brief Spill variable.
+  //!
+  //! Calls @c spillGPVar, @c spillMMVar or @c spillXMMVar methods.
   void spillVar(VarData* vdata) ASMJIT_NOTHROW;
+  //! @brief Unuse variable (didn't spill, just forget about it).
   void unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW;
 
+  //! @brief Allocate variable (GP).
   void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Save variable (GP).
   void saveGPVar(VarData* vdata) ASMJIT_NOTHROW;
+  //! @brief Spill variable (GP).
   void spillGPVar(VarData* vdata) ASMJIT_NOTHROW;
 
+  //! @brief Allocate variable (MM).
   void allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Save variable (MM).
   void saveMMVar(VarData* vdata) ASMJIT_NOTHROW;
+  //! @brief Spill variable (MM).
   void spillMMVar(VarData* vdata) ASMJIT_NOTHROW;
 
+  //! @brief Allocate variable (XMM).
   void allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Save variable (XMM).
   void saveXMMVar(VarData* vdata) ASMJIT_NOTHROW;
+  //! @brief Spill variable (XMM).
   void spillXMMVar(VarData* vdata) ASMJIT_NOTHROW;
 
+  //! @brief Emit load variable instruction(s).
   void emitLoadVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTHROW;
+  //! @brief Emit save variable instruction(s).
   void emitSaveVar(VarData* vdata, uint32_t regIndex) ASMJIT_NOTHROW;
 
+  //! @brief Emit move variable instruction(s).
   void emitMoveVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Emit exchange variable instruction(s).
   void emitExchangeVar(VarData* vdata, uint32_t regIndex, uint32_t vflags, VarData* other) ASMJIT_NOTHROW;
 
+  //! @brief Called each time a variable is alloceted.
   void _postAlloc(VarData* vdata, uint32_t vflags) ASMJIT_NOTHROW;
+  //! @brief Marks variable home memory as used (must be called at least once
+  //! for each variable that uses function local memory - stack).
   void _markMemoryUsed(VarData* vdata) ASMJIT_NOTHROW;
+
+  Mem _getVarMem(VarData* vdata) ASMJIT_NOTHROW;
 
   VarData* _getSpillCandidateGP() ASMJIT_NOTHROW;
   VarData* _getSpillCandidateMM() ASMJIT_NOTHROW;
@@ -1015,6 +1251,12 @@ struct ASMJIT_API CompilerContext
   inline void _markChangedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= (1 << index); }
 
   // --------------------------------------------------------------------------
+  // [Operand Patcher]
+  // --------------------------------------------------------------------------
+
+  void translateOperands(Operand* operands, uint32_t count) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
@@ -1028,7 +1270,7 @@ struct ASMJIT_API CompilerContext
   // [Forward Jump]
   // --------------------------------------------------------------------------
 
-  void addForwardJump(EJmpInstruction* inst) ASMJIT_NOTHROW;
+  void addForwardJump(EJmp* inst) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [State]
@@ -1097,6 +1339,10 @@ struct ASMJIT_API CompilerContext
   //! Experimental, can be used only in cases that variables are never spilled
   //! into memory and function memory is not used (allocated).
   uint32_t _allocableESP;
+
+  //! @brief ESP adjust constant (changed during PUSH/POP or when using
+  //! stack.
+  int _adjustESP;
 
   //! @brief Function arguments base pointer (register).
   uint32_t _argumentsBaseReg;
@@ -1287,9 +1533,9 @@ struct ASMJIT_API CompilerCore
   {
     if (code >= INST_J && code <= INST_JMP)
     {
-      void* addr = _zone.zalloc(sizeof(EJmpInstruction));
+      void* addr = _zone.zalloc(sizeof(EJmp));
 
-      return new(addr) EJmpInstruction(
+      return new(addr) EJmp(
         reinterpret_cast<Compiler*>(this), code, operandsData, operandsCount);
     }
     else
@@ -1326,6 +1572,10 @@ struct ASMJIT_API CompilerCore
   //! @brief Private method for emitting jcc.
   void _emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW;
 
+  //! @brief Private method for emitting function call.
+  ECall* _emitCall(const Operand* o0) ASMJIT_NOTHROW;
+
+  //! @brief Private method for returning a value from the function.
   void _emitReturn(const Operand* val) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -1600,7 +1850,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! Compiler c;
   //!
   //! // Begin of function (also emits function @c Prolog)
-  //! Function& f = *c.newFunction(
+  //! c.newFunction(
   //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
   //!   CALL_CONV_DEFAULT,
   //!   // Using function builder to generate arguments list
@@ -1622,28 +1872,26 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! Compiler c;
   //!
   //! // Begin of function (also emits function @c Prolog)
-  //! Function& f = *c.newFunction(
+  //! c.newFunction(
   //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
   //!   CALL_CONV_DEFAULT,
   //!   // Using function builder to generate arguments list
   //!   BuildFunction2<int, int>());
   //!
   //! // Arguments are like other variables, you need to reference them by
-  //! // VariableRef types:
-  //! Int32Ref a0 = f.argument(0);
-  //! Int32Ref a1 = f.argument(1);
+  //! // variable operands:
+  //! GPVar a0 = c.argGP(0);
+  //! GPVar a1 = c.argGP(1);
   //!
-  //! // To allocate them to registers just use .alloc(), .r(), .x() or .c()
-  //! // variable methods:
-  //! c.add(a0.r(), a1.r());
+  //! // Use them.
+  //! c.add(a0, a1);
   //!
-  //! // End of function (also emits function @c Epilog)
+  //! // End of function (emits function epilog and return)
   //! c.endFunction();
   //! @endcode
   //!
   //! Arguments are like variables. How to manipulate with variables is
-  //! documented in @c AsmJit::Compiler detail and @c AsmJit::VariableRef
-  //! class.
+  //! documented in @c AsmJit::Compiler, variables section.
   //!
   //! @note To get current function use @c currentFunction() method or save
   //! pointer to @c AsmJit::Function returned by @c AsmJit::Compiler::newFunction<>
@@ -1939,33 +2187,32 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 
   //! @brief Call Procedure.
-  inline void call(const GPVar& dst)
+  inline ECall* call(const GPVar& dst)
   {
-    ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPN));
-    _emitInstruction(INST_CALL, &dst);
+    return _emitCall(&dst);
   }
   //! @brief Call Procedure.
-  inline void call(const Mem& dst)
+  inline ECall* call(const Mem& dst)
   {
-    _emitInstruction(INST_CALL, &dst);
+    return _emitCall(&dst);
   }
   //! @brief Call Procedure.
-  inline void call(const Imm& dst)
+  inline ECall* call(const Imm& dst)
   {
-    _emitInstruction(INST_CALL, &dst);
+    return _emitCall(&dst);
   }
-  //! @brief Jump.
+  //! @brief Call Procedure.
   //! @overload
-  inline void call(void* dst)
+  inline ECall* call(void* dst)
   {
     Imm imm((sysint_t)dst);
-    _emitInstruction(INST_CALL, &imm);
+    return _emitCall(&imm);
   }
 
   //! @brief Call Procedure.
-  inline void call(const Label& label)
+  inline ECall* call(const Label& label)
   {
-    _emitInstruction(INST_CALL, &label);
+    return _emitCall(&label);
   }
 
   //! @brief Convert Byte to Word (Sign Extend).
@@ -2743,7 +2990,6 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! or segment register.
   inline void pop(const GPVar& dst)
   {
-    ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPW) || dst.isRegType(REG_TYPE_GPN));
     _emitInstruction(INST_POP, &dst);
   }
 
@@ -2788,7 +3034,6 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! push 32 bit register/memory.
   inline void push(const GPVar& src)
   {
-    ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPW) || src.isRegType(REG_TYPE_GPN));
     _emitInstruction(INST_PUSH, &src);
   }
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
@@ -7575,13 +7820,11 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
   inline void crc32(const GPVar& dst, const GPVar& src)
   {
-    ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPD) || dst.isRegType(REG_TYPE_GPQ));
     _emitInstruction(INST_CRC32, &dst, &src);
   }
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
   inline void crc32(const GPVar& dst, const Mem& src)
   {
-    ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPD) || dst.isRegType(REG_TYPE_GPQ));
     _emitInstruction(INST_CRC32, &dst, &src);
   }
 
@@ -7643,14 +7886,11 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
   inline void popcnt(const GPVar& dst, const GPVar& src)
   {
-    // ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
-    // ASMJIT_ASSERT(src.getRegType() == dst.getRegType());
     _emitInstruction(INST_POPCNT, &dst, &src);
   }
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
   inline void popcnt(const GPVar& dst, const Mem& src)
   {
-    // ASMJIT_ASSERT(!dst.isRegType(REG_GPB));
     _emitInstruction(INST_POPCNT, &dst, &src);
   }
 

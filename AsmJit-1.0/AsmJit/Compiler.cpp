@@ -62,12 +62,12 @@ Emittable::~Emittable() ASMJIT_NOTHROW
 {
 }
 
-void Emittable::prepare(CompilerContext& c) ASMJIT_NOTHROW
+void Emittable::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 {
-  _offset = c._currentOffset;
+  _offset = cc._currentOffset;
 }
 
-void Emittable::translate(CompilerContext& c) ASMJIT_NOTHROW
+void Emittable::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
 }
 
@@ -191,19 +191,19 @@ ETarget::~ETarget() ASMJIT_NOTHROW
 {
 }
 
-void ETarget::translate(CompilerContext& c) ASMJIT_NOTHROW
+void ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
-  if (c._unrecheable)
+  if (cc._unrecheable)
   {
-    c._unrecheable = 0;
+    cc._unrecheable = 0;
 
     // Assign state to the compiler context. 
     ASMJIT_ASSERT(_state != NULL);
-    c._assignState(_state);
+    cc._assignState(_state);
   }
   else
   {
-    _state = c._saveState();
+    _state = cc._saveState();
   }
 }
 

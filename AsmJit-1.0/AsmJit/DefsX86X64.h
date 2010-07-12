@@ -58,11 +58,37 @@ namespace AsmJit {
 //! is 8, 64-bit platforms have 8 extra general purpose and xmm registers (16
 //! total).
 
+//! @brief Count of registers.
+enum REG_NUM
+{
+  //! @var REG_NUM_BASE
+  //!
+  //! Count of general purpose registers and XMM registers depends to current
+  //! bit-mode. If application is compiled for 32-bit platform then this number
+  //! is 8, 64-bit platforms have 8 extra general purpose and xmm registers (16
+  //! total).
 #if defined(ASMJIT_X86)
-enum { REG_NUM = 8 };
+  REG_NUM_BASE = 8,
 #else
-enum { REG_NUM = 16 };
+  REG_NUM_BASE = 16,
 #endif // ASMJIT
+
+  //! @brief Count of general purpose registers.
+  //!
+  //! 8 in 32-bit mode and 16 in 64-bit mode.
+  REG_NUM_GP = REG_NUM_BASE,
+
+  //! @brief Count of MM registers (always 8).
+  REG_NUM_MM = 8,
+
+  //! @brief Count of FPU stack registers (always 8).
+  REG_NUM_FPU = 8,
+
+  //! @brief Count of XMM registers.
+  //!
+  //! 8 in 32-bit mode and 16 in 64-bit mode.
+  REG_NUM_XMM = REG_NUM_BASE
+};
 
 // ============================================================================
 // [AsmJit::REG_INDEX]
@@ -92,10 +118,26 @@ enum REG_INDEX
   //! @brief ID for SI/ESI/RSI registers.
   REG_INDEX_ESI = 6,
   //! @brief ID for DI/EDI/RDI registers.
-  REG_INDEX_EDI = 7
+  REG_INDEX_EDI = 7,
 
 #if defined(ASMJIT_X64)
-  ,
+  //! @brief ID for AX/EAX/RAX registers.
+  REG_INDEX_RAX = 0,
+  //! @brief ID for CX/ECX/RCX registers.
+  REG_INDEX_RCX = 1,
+  //! @brief ID for DX/EDX/RDX registers.
+  REG_INDEX_RDX = 2,
+  //! @brief ID for BX/EBX/RBX registers.
+  REG_INDEX_RBX = 3,
+  //! @brief ID for SP/ESP/RSP registers.
+  REG_INDEX_RSP = 4,
+  //! @brief ID for BP/EBP/RBP registers.
+  REG_INDEX_RBP = 5,
+  //! @brief ID for SI/ESI/RSI registers.
+  REG_INDEX_RSI = 6,
+  //! @brief ID for DI/EDI/RDI registers.
+  REG_INDEX_RDI = 7,
+
   //! @brief ID for r8 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R8 = 8,
   //! @brief ID for R9 register (additional register introduced by 64-bit architecture).
@@ -111,7 +153,62 @@ enum REG_INDEX
   //! @brief ID for R14 register (additional register introduced by 64-bit architecture).
   REG_INDEX_R14 = 14,
   //! @brief ID for R15 register (additional register introduced by 64-bit architecture).
-  REG_INDEX_R15 = 15
+  REG_INDEX_R15 = 15,
+#endif // ASMJIT_X64
+
+  //! @brief ID for mm0 register.
+  REG_INDEX_MM0 = 0,
+  //! @brief ID for mm1 register.
+  REG_INDEX_MM1 = 1,
+  //! @brief ID for mm2 register.
+  REG_INDEX_MM2 = 2,
+  //! @brief ID for mm3 register.
+  REG_INDEX_MM3 = 3,
+  //! @brief ID for mm4 register.
+  REG_INDEX_MM4 = 4,
+  //! @brief ID for mm5 register.
+  REG_INDEX_MM5 = 5,
+  //! @brief ID for mm6 register.
+  REG_INDEX_MM6 = 6,
+  //! @brief ID for mm7 register.
+  REG_INDEX_MM7 = 7,
+
+  //! @brief ID for xmm0 register.
+  REG_INDEX_XMM0 = 0,
+  //! @brief ID for xmm1 register.
+  REG_INDEX_XMM1 = 1,
+  //! @brief ID for xmm2 register.
+  REG_INDEX_XMM2 = 2,
+  //! @brief ID for xmm3 register.
+  REG_INDEX_XMM3 = 3,
+  //! @brief ID for xmm4 register.
+  REG_INDEX_XMM4 = 4,
+  //! @brief ID for xmm5 register.
+  REG_INDEX_XMM5 = 5,
+  //! @brief ID for xmm6 register.
+  REG_INDEX_XMM6 = 6,
+  //! @brief ID for xmm7 register.
+  REG_INDEX_XMM7 = 7
+
+#if defined(ASMJIT_X64)
+  ,
+
+  //! @brief ID for xmm8 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM8 = 8,
+  //! @brief ID for xmm9 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM9 = 9,
+  //! @brief ID for xmm10 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM10 = 10,
+  //! @brief ID for xmm11 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM11 = 11,
+  //! @brief ID for xmm12 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM12 = 12,
+  //! @brief ID for xmm13 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM13 = 13,
+  //! @brief ID for xmm14 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM14 = 14,
+  //! @brief ID for xmm15 register (additional register introduced by 64-bit architecture).
+  REG_INDEX_XMM15 = 15
 #endif // ASMJIT_X64
 };
 
@@ -1371,7 +1468,7 @@ struct InstructionDescription
     O_FM_4_8_10   = O_FM_4  | O_FM_8  | O_FM_10,
 
     // Don't emit REX prefix.
-    O_NOREX       = 0x2000,
+    O_NOREX       = 0x2000
   };
 
   // --------------------------------------------------------------------------
@@ -1655,9 +1752,6 @@ enum CALL_CONV
 // ============================================================================
 
 //! @brief Variable type.
-//!
-//! Variable type is used by @c AsmJit::Function::newVariable() method and can
-//! be also retrieved by @c AsmJit::VariableRef::type().
 enum VARIABLE_TYPE
 {
   //! @brief Variable is 32 bit integer.
@@ -1665,7 +1759,7 @@ enum VARIABLE_TYPE
   //! @brief Variable is 64 bit integer.
   VARIABLE_TYPE_GPQ = 1,
 
-  //! @var VARIABLE_SYSINT
+  //! @var VARIABLE_TYPE_GPN
   //! @brief Variable is system wide integer (int32_t or int64_t).
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_GPN = VARIABLE_TYPE_GPD,
@@ -1680,10 +1774,10 @@ enum VARIABLE_TYPE
   VARIABLE_TYPE_X87 = 2,
 
   //! @brief Variable is X87 (FPU) SP-FP number (float).
-  VARIABLE_TYPE_X87_F = 3,
+  VARIABLE_TYPE_X87_1F = 3,
 
   //! @brief Variable is X87 (FPU) DP-FP number (double).
-  VARIABLE_TYPE_X87_D = 4,
+  VARIABLE_TYPE_X87_1D = 4,
 
   //! @brief Variable is MM register / memory location.
   VARIABLE_TYPE_MM = 5,
@@ -1703,8 +1797,8 @@ enum VARIABLE_TYPE
 
 #if !defined(ASMJIT_NODOC)
 #if defined(ASMJIT_X86)
-  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_F,
-  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_D,
+  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_1F,
+  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_1D,
 #else
   VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_XMM_1F,
   VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_1D,
@@ -1737,13 +1831,8 @@ enum VARIABLE_HINT
   VARIABLE_HINT_SAVE = 2,
   //! @brief Save variable if modified and mark it as unused.
   VARIABLE_HINT_SAVE_AND_UNUSE = 3,
-  //! @brief Mark variable as used (memory state) if it's current state is 
-  //! unused.
-  //!
-  //! This hint is emitted by a @c CompilerCore::setMemoryHome() method.
-  VARIABLE_HINT_ASMEM = 4,
   //! @brief Mark variable as unused.
-  VARIABLE_HINT_UNUSE = 5
+  VARIABLE_HINT_UNUSE = 4
 };
 
 //! @}

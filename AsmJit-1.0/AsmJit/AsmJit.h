@@ -83,6 +83,15 @@
 //! - http://www.mark.masmcode.com/ (Assembler Tips)
 //! - http://avisynth.org/mediawiki/Filter_SDK/Assembler_optimizing (Optimizing)
 //! - http://www.ragestorm.net/distorm/ (Disassembling)
+//!
+//! <b>Terminology</b>
+//!
+//! - <b>Non-volatile (preserved) register</b> - Register that can't be changed
+//!   by callee (callee must save and restore it if it want to use it inside).
+//!
+//! - <b>Volatile (non-preserved) register</b> - The opossite. Register that can
+//!   be freely used by callee. The caller must free all registers before calling
+//!   other function.
 
 
 //! @defgroup AsmJit_Core Assembler (operands, intrinsics and low-level code generation).

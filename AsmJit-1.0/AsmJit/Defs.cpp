@@ -43,6 +43,8 @@ const char* getErrorCodeAsString(uint32_t error) ASMJIT_NOTHROW
     "Illegal short jump",
     "Not enough registers",
     "Registers overlap",
+    "Incompatible argument",
+
     "Unknown error"
   };
 

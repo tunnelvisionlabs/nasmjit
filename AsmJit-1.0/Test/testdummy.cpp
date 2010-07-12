@@ -47,7 +47,6 @@ int main(int argc, char* argv[])
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
-  c.setProperty(PROPERTY_LOG_BINARY, true);
 
   c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
@@ -90,7 +89,7 @@ int main(int argc, char* argv[])
 
   printf("Result %u\n", fn(1, 2));
 
-  // If function is not needed again it should be freed.
+  // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
 

@@ -101,6 +101,9 @@ enum ERROR_CODE
   ERROR_ILLEGAL_SHORT_JUMP = 6,
 
   //! @brief Compiler can't allocate registers, because all of them are used.
+  //!
+  //! @note AsmJit is able to spill registers so this error really shouldn't
+  //! happen unless all registers have priority 0 (which means never spill).
   ERROR_NOT_ENOUGH_REGISTERS = 7,
 
   //! @brief Compiler can't allocate one register to multiple destinations.
@@ -108,6 +111,9 @@ enum ERROR_CODE
   //! This error can only happen using special instructions like cmpxchg8b and
   //! others where there are more destination operands (implicit).
   ERROR_REGISTERS_OVERLAP = 8,
+
+  //! @brief Tried to call function using incompatible argument.
+  ERROR_INCOMPATIBLE_ARGUMENT = 9,
 
   //! @brief Count of error codes by AsmJit. Can grow in future.
   _ERROR_COUNT
@@ -234,7 +240,9 @@ enum EMITTABLE_TYPE
   //! @brief Emittable is target (bound label).
   EMITTABLE_TARGET,
   //! @brief Emittable is jump table.
-  EMITTABLE_JUMP_TABLE
+  EMITTABLE_JUMP_TABLE,
+  //! @brief Emittable is function call.
+  EMITTABLE_CALL
 };
 
 // ============================================================================
@@ -243,13 +251,11 @@ enum EMITTABLE_TYPE
 
 //! @brief State of variable.
 //!
-//! Variable state can be retrieved by @c AsmJit::VariableRef::state().
+//! @note State of variable is used only during make process and it's not
+//! visible to the developer.
 enum VARIABLE_STATE
 {
   //! @brief Variable is currently not used.
-  //!
-  //! Variables of this state are not used or they are currently not
-  //! initialized (short time after @c AsmJit::VariableRef::alloc() call).
   VARIABLE_STATE_UNUSED = 0,
 
   //! @brief Variable is in register.
@@ -375,6 +381,11 @@ enum {
   OPERAND_ID_TYPE_LABEL = 0x40000000,
   //! @brief Variable operand mark id.
   OPERAND_ID_TYPE_VAR   = 0x80000000,
+};
+
+enum {
+  //! @brief Maximum allowed arguments per function declaration / call.
+  FUNC_MAX_ARGS = 32
 };
 
 // ============================================================================

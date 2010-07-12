@@ -1292,6 +1292,20 @@ struct ASMJIT_HIDDEN Mem : public Operand
   inline void setDisplacement(sysint_t displacement) ASMJIT_NOTHROW
   { _mem.displacement = displacement; }
 
+  //! @brief Adjust memory operand relative displacement by @a displacement.
+  inline void adjust(sysint_t displacement) ASMJIT_NOTHROW
+  {
+    _mem.displacement += displacement;
+  }
+
+  //! @brief Return new memory operand adjusted by @a displacement.
+  inline Mem adjusted(sysint_t displacement) ASMJIT_NOTHROW
+  {
+    Mem result(*this);
+    result.adjust(displacement);
+    return result;
+  }
+
   // --------------------------------------------------------------------------
   // [Overloaded Operators]
   // --------------------------------------------------------------------------

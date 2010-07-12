@@ -145,7 +145,7 @@ struct ASMJIT_API AssemblerCore
   // --------------------------------------------------------------------------
 
   //! @brief Get zone memory manager.
-  inline Zone& getZone() { return _zone; }
+  inline Zone& getZone() ASMJIT_NOTHROW { return _zone; }
 
   // --------------------------------------------------------------------------
   // [Logging]
@@ -905,7 +905,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   {
     _emitInstruction(INST_CALL, &dst);
   }
-  //! @brief Jump.
+  //! @brief Call Procedure.
   //! @overload
   inline void call(void* dst)
   {

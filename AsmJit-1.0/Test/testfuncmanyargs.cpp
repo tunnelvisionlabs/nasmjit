@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     var[8] == 8;
   printf("Status: %s\n", success ? "Success" : "Failure");
 
-  // If function is not needed again it should be freed.
+  // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);
   // ==========================================================================
 

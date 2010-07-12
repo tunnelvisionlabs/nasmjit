@@ -1572,7 +1572,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_MOVUPD           , "movupd"           , G(MMU_MOV)       , F(MOV)           , O(XMM_MEM)          , O(XMM_MEM)          , 0, 0x66000F10, 0x66000F11),
   MAKE_INST(INST_MOVUPS           , "movups"           , G(MMU_MOV)       , F(MOV)           , O(XMM_MEM)          , O(XMM_MEM)          , 0, 0x00000F10, 0x00000F11),
   MAKE_INST(INST_MOVZX            , "movzx"            , G(MOVSX_MOVZX)   , F(MOV)           , O(GQDW)             , O(GWB_MEM)          , 0, 0x00000FB6, 0),
-  MAKE_INST(INST_MOV_PTR          , "mov_ptr"          , G(MOV_PTR)       , F(MOV)           , O(GQDWB)            , O(IMM)              , 0, 0         , 0),
+  MAKE_INST(INST_MOV_PTR          , "mov_ptr"          , G(MOV_PTR)       , F(MOV)|F(SPECIAL), O(GQDWB)            , O(IMM)              , 0, 0         , 0),
   MAKE_INST(INST_MPSADBW          , "mpsadbw"          , G(MMU_RM_IMM8)   , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x660F3A42, 0),
   MAKE_INST(INST_MUL              , "mul"              , G(RM)            , F(SPECIAL)       , 0                   , 0                   , 4, 0x000000F6, 0),
   MAKE_INST(INST_MULPD            , "mulpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F59, 0),

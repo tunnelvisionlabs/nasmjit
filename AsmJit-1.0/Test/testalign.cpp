@@ -90,7 +90,7 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
 
       index++;
       mask <<= 1;
-    } while (var < vars && index < REG_NUM);
+    } while (var < vars && index < REG_NUM_GP);
   }
 
   c.alloc(gvar, nax);
