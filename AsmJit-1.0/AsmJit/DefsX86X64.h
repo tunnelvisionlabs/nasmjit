@@ -713,7 +713,8 @@ enum FP_CW
 //! Note that these instruction codes are AsmJit specific. Each instruction is
 //! unique ID into AsmJit instruction table. Instruction codes are used together
 //! with AsmJit::Assembler and you can also use instruction codes to serialize
-//! instructions by AsmJit::SerializerCore::_emitInstruction().
+//! instructions by @ref AssemblerCore::_emitInstruction() or
+//! @ref CompilerCore::_emitInstruction()
 enum INST_CODE
 {
   INST_ADC,           // X86/X64

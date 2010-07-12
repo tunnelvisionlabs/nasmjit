@@ -52,13 +52,10 @@
 //! sections.
 //!
 //! There is also class named @c AsmJit::Compiler that allows to develop 
-//! crossplatform assembler code without worring about function calling 
-//! conventions and registers allocation. It can be also used to write 32 
-//! bit and 64 bit portable code. Compiler is recommended class to use for 
-//! code generation. If you want to use pure @c AsmJit::Compiler solution,
-//! it's needed also to look at @c AsmJit::Assembler and @c AsmJit::Serializer
-//! classes to understand how AsmJit library works and how you should use
-//! its API.
+//! cross-platform assembler code without worring about function calling
+//! conventions and registers allocation. It can be also used to write 32-bit
+//! and 64-bit portable code. Compiler is recommended class to use for code
+//! generation.
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
@@ -94,23 +91,15 @@
 //!   other function.
 
 
-//! @defgroup AsmJit_Core Assembler (operands, intrinsics and low-level code generation).
+//! @defgroup AsmJit_Core Assembler (operands, intrinsics and low-level assembler).
 //!
 //! Contains classes related to @c AsmJit::Assembler that're directly used 
 //! to generate machine code stream. It's one of oldest and fastest method 
-//! to generate machine code through AsmJit library.
+//! to generate machine code using AsmJit library.
 //!
-//! - See @c AsmJit::Serializer class for intrinsics and operands
-//!   documentation.
 //! - See @c AsmJit::Assembler class for low level code generation 
 //!   documentation.
 //! - See @c AsmJit::Operand for AsmJit operand's overview.
-//! @defgroup AsmJit_Serializer Serializer - code generation intrinsics.
-//!
-//! AsmJit library uses Serializer to serialize asm instructions to
-//! @c Assembler or @c Compiler instance. Intrinsics are implemented as 
-//! overloaded methods of @c AsmJit::Serializer class. This section also
-//! contains all assembler primitives used to generate machine code.
 //!
 //! <b>Registers</b>
 //!
@@ -148,7 +137,7 @@
 //! pointer to the target with unspecified size. Unspecified size works in all
 //! intrinsics where are used registers (this means that size is specified by
 //! register operand or by instruction itself). For example @c AsmJit::ptr() 
-//! can't be used with @c AsmJit::Serializer::inc() instruction. In this case 
+//! can't be used with @c AsmJit::Assembler::inc() instruction. In this case
 //! size must be specified and it's also reason to make difference between 
 //! pointer sizes.
 //!
@@ -161,7 +150,7 @@
 //! opcode. To create such value use @c AsmJit::imm() or @c AsmJit::uimm()
 //! methods to create signed or unsigned immediate value.
 //!
-//! @sa @c AsmJit::Serializer.
+//! @sa @c AsmJit::Compiler.
 
 
 //! @defgroup AsmJit_Compiler Compiler (high-level code generation).
@@ -189,7 +178,7 @@
 //! CPU features detection. The low level function (also used by higher level 
 //! one) is @c AsmJit::cpuid().
 //!
-//! AsmJit library also contains higher level function @c AsmJit::cpuInfo()
+//! AsmJit library also contains higher level function @c AsmJit::getCpuInfo()
 //! that returns features detected by the library. The detection process is
 //! done only once and it's cached for all next calls. @c AsmJit::CpuInfo 
 //! structure not contains only informations through @c AsmJit::cpuid(), but
@@ -224,10 +213,10 @@
 //! @endcode
 //!
 //! If you want to use AsmJit::cpuid() function instead of higher level 
-//! @c AsmJit::cpuInfo(), please read processor manuals provided by Intel, 
+//! @c AsmJit::getCpuInfo(), please read processor manuals provided by Intel,
 //! AMD or other manufacturers for cpuid instruction details.
 //!
-//! Example of using @c AsmJit::cpuInfo():
+//! Example of using @c AsmJit::getCpuInfo():
 //!
 //! @code
 //! // All functions and structures are in AsmJit namesapce.
@@ -235,28 +224,28 @@
 //!
 //! // Call to cpuInfo return CpuInfo structure that shouldn't be modified.
 //! // Make it const by default.
-//! const CpuInfo *i = cpuInfo();
+//! const CpuInfo *i = getCpuInfo();
 //!
-//! // Now you are able to get specific features
+//! // Now you are able to get specific features.
 //!
 //! // Processor has SSE2
-//! if (i->features & CpuInfo::Feature_SSE2)
+//! if (i->features & CPU_FEATURE_SSE2)
 //! {
 //!   // your code...
 //! }
 //! // Processor has MMX
-//! else if (i->features & CpuInfo::Feature_MMX)
+//! else if (i->features & CPU_FEATURE__MMX)
 //! {
 //!   // your code...
 //! }
-//! // Processor is old, no SSE2 or MMX support
+//! // Processor is old, no SSE2 or MMX support.
 //! else
 //! {
 //!   // your code...
 //! }
 //! @endcode
 //!
-//! Better example is in AsmJit/test/testcpu.cpp file.
+//! Better example is in AsmJit/Test/testcpu.cpp file.
 //!
 //! @sa AsmJit::cpuid, @c AsmJit::cpuInfo.
 
