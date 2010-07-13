@@ -2404,7 +2404,7 @@ end:
     
     buf = dumpInstruction(buf, code, o0, o1, o2);
 
-    if (_properties & (1 << PROPERTY_LOG_BINARY))
+    if (_logger->getLogBinary())
       buf = dumpComment(buf, (sysuint_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _comment);
     else
       buf = dumpComment(buf, (sysuint_t)(buf - bufStorage), NULL, 0, _comment);

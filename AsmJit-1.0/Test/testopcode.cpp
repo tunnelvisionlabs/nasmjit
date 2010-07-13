@@ -48,14 +48,13 @@ int main(int argc, char* argv[])
 
   // Log assembler output.
   FileLogger logger(stderr);
+  logger.setLogBinary(true);
   a.setLogger(&logger);
-  // Log binary stream.
-  a.setProperty(PROPERTY_LOG_BINARY, true);
 
   // We don't want to crash :)
   a.ret();
 
-  // Instructions
+  // Instructions.
   a.adc(nax,nax);
   a.adc(nax,sysint_ptr(nax));
   a.adc(nax,0);

@@ -46,7 +46,8 @@ namespace AsmJit {
 
 Logger::Logger() ASMJIT_NOTHROW :
   _enabled(true),
-  _used(true)
+  _used(true),
+  _logBinary(false)
 {
 }
 

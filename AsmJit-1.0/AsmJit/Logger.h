@@ -88,7 +88,17 @@ struct ASMJIT_API Logger
   // [Used]
   // --------------------------------------------------------------------------
 
+  //! @brief Get whether the logger should be used.
   inline bool isUsed() const ASMJIT_NOTHROW { return _used; }
+
+  // --------------------------------------------------------------------------
+  // [LogBinary]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get whether logging binary output.
+  inline bool getLogBinary() const { return _logBinary; }
+  //! @brief Get whether to log binary output.
+  inline void setLogBinary(bool val) { _logBinary = val; }
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -115,6 +125,9 @@ protected:
   //!
   //! Default @c true.
   bool _used;
+
+  //! @brief Whether to log instruction in binary form.
+  bool _logBinary;
 
 private:
   ASMJIT_DISABLE_COPY(Logger)

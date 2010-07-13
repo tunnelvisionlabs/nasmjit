@@ -166,20 +166,17 @@ enum OPERAND_MEM_TYPE
 //! @brief @c Assembler/Compiler properties.
 enum PROPERTY
 {
-  //! @brief Log each instruction binary output with the instruction itself.
-  PROPERTY_LOG_BINARY = 0,
-
   //! @brief Optimize align for current processor.
   //!
   //! Default: @c true.
-  PROPERTY_OPTIMIZE_ALIGN = 1,
+  PROPERTY_OPTIMIZE_ALIGN = 0,
 
   //! @brief Emit hints added to jcc() instructions.
   //!
   //! Default: @c true.
   //!
   //! @note This is X86/X64 property only.
-  PROPERTY_JUMP_HINTS = 2
+  PROPERTY_JUMP_HINTS = 1
 };
 
 // ============================================================================

@@ -257,10 +257,6 @@ namespace AsmJit {
 ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 } // AsmJit namespace
 
-#if defined(DEBUG) || defined(_DEBUG)
-# define ASMJIT_DEBUG
-#endif // DEBUG
-
 #if defined(ASMJIT_DEBUG)
 # if !defined(ASMJIT_ASSERT)
 #  define ASMJIT_ASSERT(exp) do { if (!(exp)) ::AsmJit::assertionFailure(__FILE__, __LINE__, #exp); } while(0)
