@@ -630,96 +630,96 @@ struct ASMJIT_HIDDEN XMMReg : public BaseReg
 // ============================================================================
 
 //! @brief No register, can be used only in @c Mem operand.
-static const GPReg no_reg(_Initialize(), INVALID_VALUE);
+ASMJIT_VAR const GPReg no_reg;
 
 // ============================================================================
 // [AsmJit::Registers - 8-bit]
 // ============================================================================
 
 //! @brief 8-bit General purpose register.
-static const GPReg al(_Initialize(), REG_AL);
+ASMJIT_VAR const GPReg al;
 //! @brief 8-bit General purpose register.
-static const GPReg cl(_Initialize(), REG_CL);
+ASMJIT_VAR const GPReg cl;
 //! @brief 8-bit General purpose register.
-static const GPReg dl(_Initialize(), REG_DL);
+ASMJIT_VAR const GPReg dl;
 //! @brief 8-bit General purpose register.
-static const GPReg bl(_Initialize(), REG_BL);
+ASMJIT_VAR const GPReg bl;
 
 #if defined(ASMJIT_X64)
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg spl(_Initialize(), REG_SPL);
+ASMJIT_VAR const GPReg spl;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg bpl(_Initialize(), REG_BPL);
+ASMJIT_VAR const GPReg bpl;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg sil(_Initialize(), REG_SIL);
+ASMJIT_VAR const GPReg sil;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg dil(_Initialize(), REG_DIL);
+ASMJIT_VAR const GPReg dil;
 
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r8b(_Initialize(), REG_R8B);
+ASMJIT_VAR const GPReg r8b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r9b(_Initialize(), REG_R9B);
+ASMJIT_VAR const GPReg r9b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r10b(_Initialize(), REG_R10B);
+ASMJIT_VAR const GPReg r10b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r11b(_Initialize(), REG_R11B);
+ASMJIT_VAR const GPReg r11b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r12b(_Initialize(), REG_R12B);
+ASMJIT_VAR const GPReg r12b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r13b(_Initialize(), REG_R13B);
+ASMJIT_VAR const GPReg r13b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r14b(_Initialize(), REG_R14B);
+ASMJIT_VAR const GPReg r14b;
 //! @brief 8-bit General purpose register (64-bit mode only).
-static const GPReg r15b(_Initialize(), REG_R15B);
+ASMJIT_VAR const GPReg r15b;
 #endif // ASMJIT_X64
 
 //! @brief 8-bit General purpose register.
-static const GPReg ah(_Initialize(), REG_AH);
+ASMJIT_VAR const GPReg ah;
 //! @brief 8-bit General purpose register.
-static const GPReg ch(_Initialize(), REG_CH);
+ASMJIT_VAR const GPReg ch;
 //! @brief 8-bit General purpose register.
-static const GPReg dh(_Initialize(), REG_DH);
+ASMJIT_VAR const GPReg dh;
 //! @brief 8-bit General purpose register.
-static const GPReg bh(_Initialize(), REG_BH);
+ASMJIT_VAR const GPReg bh;
 
 // ============================================================================
 // [AsmJit::Registers - 16-bit]
 // ============================================================================
 
 //! @brief 16-bit General purpose register.
-static const GPReg ax(_Initialize(), REG_AX);
+ASMJIT_VAR const GPReg ax;
 //! @brief 16-bit General purpose register.
-static const GPReg cx(_Initialize(), REG_CX);
+ASMJIT_VAR const GPReg cx;
 //! @brief 16-bit General purpose register.
-static const GPReg dx(_Initialize(), REG_DX);
+ASMJIT_VAR const GPReg dx;
 //! @brief 16-bit General purpose register.
-static const GPReg bx(_Initialize(), REG_BX);
+ASMJIT_VAR const GPReg bx;
 //! @brief 16-bit General purpose register.
-static const GPReg sp(_Initialize(), REG_SP);
+ASMJIT_VAR const GPReg sp;
 //! @brief 16-bit General purpose register.
-static const GPReg bp(_Initialize(), REG_BP);
+ASMJIT_VAR const GPReg bp;
 //! @brief 16-bit General purpose register.
-static const GPReg si(_Initialize(), REG_SI);
+ASMJIT_VAR const GPReg si;
 //! @brief 16-bit General purpose register.
-static const GPReg di(_Initialize(), REG_DI);
+ASMJIT_VAR const GPReg di;
 
 #if defined(ASMJIT_X64)
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r8w(_Initialize(), REG_R8W);
+ASMJIT_VAR const GPReg r8w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r9w(_Initialize(), REG_R9W);
+ASMJIT_VAR const GPReg r9w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r10w(_Initialize(), REG_R10W);
+ASMJIT_VAR const GPReg r10w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r11w(_Initialize(), REG_R11W);
+ASMJIT_VAR const GPReg r11w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r12w(_Initialize(), REG_R12W);
+ASMJIT_VAR const GPReg r12w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r13w(_Initialize(), REG_R13W);
+ASMJIT_VAR const GPReg r13w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r14w(_Initialize(), REG_R14W);
+ASMJIT_VAR const GPReg r14w;
 //! @brief 16-bit General purpose register (64-bit mode only).
-static const GPReg r15w(_Initialize(), REG_R15W);
+ASMJIT_VAR const GPReg r15w;
 #endif // ASMJIT_X64
 
 // ============================================================================
@@ -727,39 +727,39 @@ static const GPReg r15w(_Initialize(), REG_R15W);
 // ============================================================================
 
 //! @brief 32-bit General purpose register.
-static const GPReg eax(_Initialize(), REG_EAX);
+ASMJIT_VAR const GPReg eax;
 //! @brief 32-bit General purpose register.
-static const GPReg ecx(_Initialize(), REG_ECX);
+ASMJIT_VAR const GPReg ecx;
 //! @brief 32-bit General purpose register.
-static const GPReg edx(_Initialize(), REG_EDX);
+ASMJIT_VAR const GPReg edx;
 //! @brief 32-bit General purpose register.
-static const GPReg ebx(_Initialize(), REG_EBX);
+ASMJIT_VAR const GPReg ebx;
 //! @brief 32-bit General purpose register.
-static const GPReg esp(_Initialize(), REG_ESP);
+ASMJIT_VAR const GPReg esp;
 //! @brief 32-bit General purpose register.
-static const GPReg ebp(_Initialize(), REG_EBP);
+ASMJIT_VAR const GPReg ebp;
 //! @brief 32-bit General purpose register.
-static const GPReg esi(_Initialize(), REG_ESI);
+ASMJIT_VAR const GPReg esi;
 //! @brief 32-bit General purpose register.
-static const GPReg edi(_Initialize(), REG_EDI);
+ASMJIT_VAR const GPReg edi;
 
 #if defined(ASMJIT_X64)
 //! @brief 32-bit General purpose register.
-static const GPReg r8d(_Initialize(), REG_R8D);
+ASMJIT_VAR const GPReg r8d;
 //! @brief 32-bit General purpose register.
-static const GPReg r9d(_Initialize(), REG_R9D);
+ASMJIT_VAR const GPReg r9d;
 //! @brief 32-bit General purpose register.
-static const GPReg r10d(_Initialize(), REG_R10D);
+ASMJIT_VAR const GPReg r10d;
 //! @brief 32-bit General purpose register.
-static const GPReg r11d(_Initialize(), REG_R11D);
+ASMJIT_VAR const GPReg r11d;
 //! @brief 32-bit General purpose register.
-static const GPReg r12d(_Initialize(), REG_R12D);
+ASMJIT_VAR const GPReg r12d;
 //! @brief 32-bit General purpose register.
-static const GPReg r13d(_Initialize(), REG_R13D);
+ASMJIT_VAR const GPReg r13d;
 //! @brief 32-bit General purpose register.
-static const GPReg r14d(_Initialize(), REG_R14D);
+ASMJIT_VAR const GPReg r14d;
 //! @brief 32-bit General purpose register.
-static const GPReg r15d(_Initialize(), REG_R15D);
+ASMJIT_VAR const GPReg r15d;
 #endif // ASMJIT_X64
 
 // ============================================================================
@@ -768,38 +768,38 @@ static const GPReg r15d(_Initialize(), REG_R15D);
 
 #if defined(ASMJIT_X64)
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rax(_Initialize(), REG_RAX);
+ASMJIT_VAR const GPReg rax;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rcx(_Initialize(), REG_RCX);
+ASMJIT_VAR const GPReg rcx;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rdx(_Initialize(), REG_RDX);
+ASMJIT_VAR const GPReg rdx;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rbx(_Initialize(), REG_RBX);
+ASMJIT_VAR const GPReg rbx;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rsp(_Initialize(), REG_RSP);
+ASMJIT_VAR const GPReg rsp;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rbp(_Initialize(), REG_RBP);
+ASMJIT_VAR const GPReg rbp;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rsi(_Initialize(), REG_RSI);
+ASMJIT_VAR const GPReg rsi;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg rdi(_Initialize(), REG_RDI);
+ASMJIT_VAR const GPReg rdi;
 
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r8(_Initialize(), REG_R8);
+ASMJIT_VAR const GPReg r8;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r9(_Initialize(), REG_R9);
+ASMJIT_VAR const GPReg r9;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r10(_Initialize(), REG_R10);
+ASMJIT_VAR const GPReg r10;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r11(_Initialize(), REG_R11);
+ASMJIT_VAR const GPReg r11;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r12(_Initialize(), REG_R12);
+ASMJIT_VAR const GPReg r12;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r13(_Initialize(), REG_R13);
+ASMJIT_VAR const GPReg r13;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r14(_Initialize(), REG_R14);
+ASMJIT_VAR const GPReg r14;
 //! @brief 64-bit General purpose register (64-bit mode only).
-static const GPReg r15(_Initialize(), REG_R15);
+ASMJIT_VAR const GPReg r15;
 #endif // ASMJIT_X64
 
 // ============================================================================
@@ -807,81 +807,81 @@ static const GPReg r15(_Initialize(), REG_R15);
 // ============================================================================
 
 //! @brief 32-bit General purpose register.
-static const GPReg nax(_Initialize(), REG_NAX);
+ASMJIT_VAR const GPReg nax;
 //! @brief 32-bit General purpose register.
-static const GPReg ncx(_Initialize(), REG_NCX);
+ASMJIT_VAR const GPReg ncx;
 //! @brief 32-bit General purpose register.
-static const GPReg ndx(_Initialize(), REG_NDX);
+ASMJIT_VAR const GPReg ndx;
 //! @brief 32-bit General purpose register.
-static const GPReg nbx(_Initialize(), REG_NBX);
+ASMJIT_VAR const GPReg nbx;
 //! @brief 32-bit General purpose register.
-static const GPReg nsp(_Initialize(), REG_NSP);
+ASMJIT_VAR const GPReg nsp;
 //! @brief 32-bit General purpose register.
-static const GPReg nbp(_Initialize(), REG_NBP);
+ASMJIT_VAR const GPReg nbp;
 //! @brief 32-bit General purpose register.
-static const GPReg nsi(_Initialize(), REG_NSI);
+ASMJIT_VAR const GPReg nsi;
 //! @brief 32-bit General purpose register.
-static const GPReg ndi(_Initialize(), REG_NDI);
+ASMJIT_VAR const GPReg ndi;
 
 // ============================================================================
 // [AsmJit::Registers - MM]
 // ============================================================================
 
 //! @brief 64-bit MM register.
-static const MMReg mm0(_Initialize(), REG_MM0);
+ASMJIT_VAR const MMReg mm0;
 //! @brief 64-bit MM register.
-static const MMReg mm1(_Initialize(), REG_MM1);
+ASMJIT_VAR const MMReg mm1;
 //! @brief 64-bit MM register.
-static const MMReg mm2(_Initialize(), REG_MM2);
+ASMJIT_VAR const MMReg mm2;
 //! @brief 64-bit MM register.
-static const MMReg mm3(_Initialize(), REG_MM3);
+ASMJIT_VAR const MMReg mm3;
 //! @brief 64-bit MM register.
-static const MMReg mm4(_Initialize(), REG_MM4);
+ASMJIT_VAR const MMReg mm4;
 //! @brief 64-bit MM register.
-static const MMReg mm5(_Initialize(), REG_MM5);
+ASMJIT_VAR const MMReg mm5;
 //! @brief 64-bit MM register.
-static const MMReg mm6(_Initialize(), REG_MM6);
+ASMJIT_VAR const MMReg mm6;
 //! @brief 64-bit MM register.
-static const MMReg mm7(_Initialize(), REG_MM7);
+ASMJIT_VAR const MMReg mm7;
 
 // ============================================================================
 // [AsmJit::Registers - XMM]
 // ============================================================================
 
 //! @brief 128-bit XMM register.
-static const XMMReg xmm0(_Initialize(), REG_XMM0);
+ASMJIT_VAR const XMMReg xmm0;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm1(_Initialize(), REG_XMM1);
+ASMJIT_VAR const XMMReg xmm1;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm2(_Initialize(), REG_XMM2);
+ASMJIT_VAR const XMMReg xmm2;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm3(_Initialize(), REG_XMM3);
+ASMJIT_VAR const XMMReg xmm3;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm4(_Initialize(), REG_XMM4);
+ASMJIT_VAR const XMMReg xmm4;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm5(_Initialize(), REG_XMM5);
+ASMJIT_VAR const XMMReg xmm5;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm6(_Initialize(), REG_XMM6);
+ASMJIT_VAR const XMMReg xmm6;
 //! @brief 128-bit XMM register.
-static const XMMReg xmm7(_Initialize(), REG_XMM7);
+ASMJIT_VAR const XMMReg xmm7;
 
 #if defined(ASMJIT_X64)
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm8(_Initialize(), REG_XMM8);
+ASMJIT_VAR const XMMReg xmm8;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm9(_Initialize(), REG_XMM9);
+ASMJIT_VAR const XMMReg xmm9;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm10(_Initialize(), REG_XMM10);
+ASMJIT_VAR const XMMReg xmm10;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm11(_Initialize(), REG_XMM11);
+ASMJIT_VAR const XMMReg xmm11;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm12(_Initialize(), REG_XMM12);
+ASMJIT_VAR const XMMReg xmm12;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm13(_Initialize(), REG_XMM13);
+ASMJIT_VAR const XMMReg xmm13;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm14(_Initialize(), REG_XMM14);
+ASMJIT_VAR const XMMReg xmm14;
 //! @brief 128-bit XMM register (64-bit mode only).
-static const XMMReg xmm15(_Initialize(), REG_XMM15);
+ASMJIT_VAR const XMMReg xmm15;
 #endif // ASMJIT_X64
 
 // ============================================================================

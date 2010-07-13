@@ -65,20 +65,22 @@ struct ASMJIT_API MemoryManager
   //! @brief Free previously allocated memory at a given @a address.
   virtual bool free(void* address) ASMJIT_NOTHROW = 0;
 
-  //! @brief Tell how many bytes are currently used.
+  //! @brief Get how many bytes are currently used.
   virtual sysuint_t getUsedBytes() ASMJIT_NOTHROW = 0;
-  //! @brief Tell how many bytes are currently allocated.
+  //! @brief Get how many bytes are currently allocated.
   virtual sysuint_t getAllocatedBytes() ASMJIT_NOTHROW = 0;
 
   //! @brief Get global memory manager instance.
   //!
-  //! Global instance is instance of @c DefaultMemoryManager class.
+  //! Global instance is instance of @c DefaultMemoryManager class. Global memory
+  //! manager is used by default by @ref Assembler::make() and @ref Compiler::make()
+  //! methods.
   static MemoryManager* getGlobal() ASMJIT_NOTHROW;
 };
 
 //! @brief Reference implementation of memory manager that uses
-//! AsmJit::VirtualMemory class to allocate chunks of virtual memory and bit
-//! arrays to manage it.
+//! @ref AsmJit::VirtualMemory class to allocate chunks of virtual memory
+//! and bit arrays to manage it.
 struct ASMJIT_API DefaultMemoryManager : public MemoryManager
 {
   //! @brief Create the @c DefaultMemoryManager instance.
@@ -94,6 +96,7 @@ struct ASMJIT_API DefaultMemoryManager : public MemoryManager
   virtual sysuint_t getAllocatedBytes() ASMJIT_NOTHROW;
 
 private:
+  //! @brief Pointer to private data hidden from the public API.
   void* _d;
 };
 

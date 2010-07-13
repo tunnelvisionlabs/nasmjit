@@ -73,7 +73,9 @@ int main(int argc, char* argv[])
   ctx->setArgument(1, v1);
   ctx->setArgument(2, v0);
 
-  c.ret();
+  //ctx->setReturn(v0);
+  //c.ret(v0);
+
   c.endFunction();
   // ==========================================================================
 

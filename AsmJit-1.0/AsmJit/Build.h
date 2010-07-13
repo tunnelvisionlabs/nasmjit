@@ -99,19 +99,23 @@
 #  if defined(__GNUC__)
 #   if __GNUC__ >= 4
 #    define ASMJIT_API __attribute__((visibility("default")))
+#    define ASMJIT_VAR extern ASMJIT_API
 #   endif // __GNUC__ >= 4
 #  endif // __GNUC__
 # endif
 #endif // ASMJIT_API
 
-// If not detected, fallback to nothing
+#if defined(ASMJIT_API)
+# define ASMJIT_VAR extern ASMJIT_API
+#else
+# define ASMJIT_API
+# define ASMJIT_VAR
+#endif // ASMJIT_API
+
+// If not detected, fallback to nothing.
 #if !defined(ASMJIT_HIDDEN)
 # define ASMJIT_HIDDEN
 #endif // ASMJIT_HIDDEN
-
-#if !defined(ASMJIT_API)
-# define ASMJIT_API
-#endif // ASMJIT_API
 
 #if !defined(ASMJIT_NOTHROW)
 #define ASMJIT_NOTHROW throw()

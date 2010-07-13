@@ -99,10 +99,10 @@ static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTH
   sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
   sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
 
-  // how many bytes process in first group
+  // How many bytes process in first group.
   sysuint_t c = BITS_PER_ENTITY - j;
 
-  // offset
+  // Offset.
   buf += i;
 
   if (c > len) 
@@ -135,10 +135,10 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
   sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
   sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
 
-  // how many bytes process in first group
+  // How many bytes process in first group.
   sysuint_t c = BITS_PER_ENTITY - j;
 
-  // offset
+  // Offset.
   buf += i;
 
   if (c > len)
@@ -173,37 +173,37 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
 
 struct ASMJIT_HIDDEN M_Node
 {
-  // Node double-linked list
-  M_Node* prev;          // Prev node in list
-  M_Node* next;          // Next node in list
+  // Node double-linked list.
+  M_Node* prev;            // Prev node in list.
+  M_Node* next;            // Next node in list.
 
-  // Node (LLRB tree, KEY is mem)
-  M_Node* nlLeft;        // Left node
-  M_Node* nlRight;       // Right node
-  uint32_t nlColor;        // Color (RED or BLACK)
+  // Node (LLRB tree, KEY is mem).
+  M_Node* nlLeft;          // Left node.
+  M_Node* nlRight;         // Right node.
+  uint32_t nlColor;        // Color (RED or BLACK).
 
-  // Chunk memory
-  uint8_t* mem;            // Virtual memory address
+  // Chunk memory.
+  uint8_t* mem;            // Virtual memory address.
 
-  // Chunk data
-  sysuint_t size;          // How many bytes contains this node
+  // Chunk data.
+  sysuint_t size;          // How many bytes contains this node.
   sysuint_t blocks;        // How many blocks are here.
   sysuint_t density;       // Minimum count of allocated bytes in this node (also alignment).
-  sysuint_t used;          // How many bytes are used in this node
-  sysuint_t largestBlock;  // Contains largest block that can be allocated
-  sysuint_t* baUsed;       // Contains bits about used blocks
-                         // (0 = unused, 1 = used)
-  sysuint_t* baCont;       // Contains bits about continuous blocks
-                         // (0 = stop, 1 = continue)
+  sysuint_t used;          // How many bytes are used in this node.
+  sysuint_t largestBlock;  // Contains largest block that can be allocated.
+  sysuint_t* baUsed;       // Contains bits about used blocks.
+                           // (0 = unused, 1 = used).
+  sysuint_t* baCont;       // Contains bits about continuous blocks.
+                           // (0 = stop, 1 = continue).
 
-  // enums
+  // Enums.
   enum NODE_COLOR
   {
     NODE_BLACK = 0,
     NODE_RED = 1
   };
 
-  // methods
+  // Methods.
   inline sysuint_t remain() const ASMJIT_NOTHROW { return size - used; }
 };
 
@@ -217,7 +217,7 @@ struct ASMJIT_HIDDEN M_PernamentNode
   uint8_t* mem;            // Base pointer (virtual memory address).
   sysuint_t size;          // Count of bytes allocated.
   sysuint_t used;          // Count of bytes used.
-  M_PernamentNode* prev; // Pointer to prev chunk or NULL
+  M_PernamentNode* prev;   // Pointer to prev chunk or NULL.
 
   // Return available space.
   inline sysuint_t available() const ASMJIT_NOTHROW { return size - used; }
@@ -263,22 +263,22 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
 
   // [Members]
 
-  Lock _lock;                // Lock for thread safety
+  Lock _lock;                  // Lock for thread safety.
 
-  sysuint_t _newChunkSize;     // Default node size
-  sysuint_t _newChunkDensity;  // Default node density
-  sysuint_t _allocated;        // How many bytes are allocated
-  sysuint_t _used;             // How many bytes are used
+  sysuint_t _newChunkSize;     // Default node size.
+  sysuint_t _newChunkDensity;  // Default node density.
+  sysuint_t _allocated;        // How many bytes are allocated.
+  sysuint_t _used;             // How many bytes are used.
 
-  // Memory nodes list
+  // Memory nodes list.
   M_Node* _first;
   M_Node* _last;
   M_Node* _optimal;
 
-  // Memory nodes tree
+  // Memory nodes tree.
   M_Node* _root;
 
-  // Pernament memory
+  // Pernament memory.
   M_PernamentNode* _pernament;
 };
 
@@ -315,7 +315,7 @@ M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJ
   sysuint_t vsize;
   uint8_t* vmem = (uint8_t*)VirtualMemory::alloc(size, &vsize, true);
 
-  // Out of memory
+  // Out of memory.
   if (vmem == NULL) return NULL;
 
   sysuint_t blocks = (vsize / density);
@@ -324,7 +324,7 @@ M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJ
 
   M_Node* node = (M_Node*)ASMJIT_MALLOC(memSize);
 
-  // Out of memory
+  // Out of memory.
   if (node == NULL)
   {
     VirtualMemory::free(vmem, vsize);
@@ -359,21 +359,21 @@ void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
 
   M_PernamentNode* node = _pernament;
 
-  // Try to find space in allocated chunks
+  // Try to find space in allocated chunks.
   while (node && alignedSize > node->available()) node = node->prev;
 
-  // Or allocate new node
+  // Or allocate new node.
   if (!node)
   {
     sysuint_t nodeSize = pernamentNodeSize;
     if (vsize > nodeSize) nodeSize = vsize;
 
     node = (M_PernamentNode*)ASMJIT_MALLOC(sizeof(M_PernamentNode));
-    // Out of memory
+    // Out of memory.
     if (node == NULL) return NULL;
 
     node->mem = (uint8_t*)VirtualMemory::alloc(nodeSize, &node->size, true);
-    // Out of memory
+    // Out of memory.
     if (node->mem == NULL) 
     {
       ASMJIT_FREE(node);
@@ -388,7 +388,7 @@ void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
   // Finally, copy function code to our space we reserved for.
   uint8_t* result = node->mem + node->used;
 
-  // Update Statistics
+  // Update Statistics.
   node->used += alignedSize;
   _used += alignedSize;
 
@@ -398,11 +398,11 @@ void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
 
 void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
 {
-  sysuint_t i;               // current index
-  sysuint_t need;            // how many we need to be freed
+  sysuint_t i;               // Current index.
+  sysuint_t need;            // How many we need to be freed.
   sysuint_t minVSize;
 
-  // align to 32 bytes (our default alignment)
+  // Align to 32 bytes (our default alignment).
   vsize = (vsize + 31) & ~(sysuint_t)31;
   if (vsize == 0) return NULL;
 
@@ -411,10 +411,10 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
 
   minVSize = _newChunkSize;
 
-  // try to find memory block in existing nodes
+  // Try to find memory block in existing nodes.
   while (node)
   {
-    // Skip this node ?
+    // Skip this node?
     if ((node->remain() < vsize) || 
         (node->largestBlock < vsize && node->largestBlock != 0))
     {
@@ -424,23 +424,23 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
       continue;
     }
 
-    sysuint_t* up = node->baUsed;    // current ubits address
-    sysuint_t ubits;                 // current ubits[0] value
-    sysuint_t bit;                   // current bit mask
-    sysuint_t blocks = node->blocks; // count of blocks in node
-    sysuint_t cont = 0;              // how many bits are currently freed in find loop
-    sysuint_t maxCont = 0;           // largest continuous block (bits count)
+    sysuint_t* up = node->baUsed;    // Current ubits address.
+    sysuint_t ubits;                 // Current ubits[0] value.
+    sysuint_t bit;                   // Current bit mask.
+    sysuint_t blocks = node->blocks; // Count of blocks in node.
+    sysuint_t cont = 0;              // How many bits are currently freed in find loop.
+    sysuint_t maxCont = 0;           // Largest continuous block (bits count).
     sysuint_t j;
 
     need = M_DIV((vsize + node->density - 1), node->density);
     i = 0;
 
-    // try to find node that is large enough
+    // Try to find node that is large enough.
     while (i < blocks)
     {
       ubits = *up++;
 
-      // Fast skip used blocks
+      // Fast skip used blocks.
       if (ubits == (sysuint_t)-1)
       { 
         if (cont > maxCont) maxCont = cont;
@@ -469,14 +469,14 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
       i += BITS_PER_ENTITY;
     }
 
-    // because we traversed entire node, we can set largest node size that 
-    // will be used to cache next traversing.
+    // Because we traversed entire node, we can set largest node size that
+    // will be used to cache next traversing..
     node->largestBlock = maxCont * node->density;
 
     node = node->next;
   }
 
-  // if we are here, we failed to find existing memory block and we must 
+  // If we are here, we failed to find existing memory block and we must
   // allocate new.
   {
     sysuint_t chunkSize = _newChunkSize;
@@ -485,7 +485,7 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
     node = createNode(chunkSize, _newChunkDensity);
     if (node == NULL) return NULL;
 
-    // link with others
+    // Link with others.
     node->prev = _last;
 
     if (_first == NULL)
@@ -501,23 +501,23 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
       _last = node;
     }
 
-    // Update binary tree
+    // Update binary tree.
     nlInsertNode(node);
 
-    // Alloc first node at start
+    // Alloc first node at start.
     i = 0;
     need = (vsize + node->density - 1) / node->density;
 
-    // Update statistics
+    // Update statistics.
     _allocated += node->size;
   }
 
 found:
-  // Update bits
+  // Update bits.
   _SetBits(node->baUsed, i, need);
   _SetBits(node->baCont, i, need-1);
 
-  // Update statistics
+  // Update statistics.
   {
     sysuint_t u = need * node->density;
     node->used += u;
@@ -525,7 +525,7 @@ found:
     _used += u;
   }
 
-  // and return pointer
+  // And return pointer to allocated memory.
   uint8_t* result = node->mem + i * node->density;
   ASMJIT_ASSERT(result >= node->mem && result < node->mem + node->size);
   return result;
@@ -545,11 +545,11 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
   sysuint_t i = (bitpos / BITS_PER_ENTITY);
   sysuint_t j = (bitpos % BITS_PER_ENTITY);
 
-  sysuint_t* up = node->baUsed + i;// current ubits address
-  sysuint_t* cp = node->baCont + i;// current cbits address
-  sysuint_t ubits = *up;           // current ubits[0] value
-  sysuint_t cbits = *cp;           // current cbits[0] value
-  sysuint_t bit = (sysuint_t)1 << j; // current bit mask
+  sysuint_t* up = node->baUsed + i;  // Current ubits address.
+  sysuint_t* cp = node->baCont + i;  // Current cbits address.
+  sysuint_t ubits = *up;             // Current ubits[0] value.
+  sysuint_t cbits = *cp;             // Current cbits[0] value.
+  sysuint_t bit = (sysuint_t)1 << j; // Current bit mask.
 
   sysuint_t cont = 0;
 
@@ -580,7 +580,7 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     }
   }
 
-  // if we freed block is fully allocated node, need to update optimal
+  // If we freed block is fully allocated node, need to update optimal
   // pointer in memory manager.
   if (node->used == node->size)
   {
@@ -592,13 +592,13 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     } while (cur);
   }
 
-  // statistics
+  // Statistics.
   cont *= node->density;
   if (node->largestBlock < cont) node->largestBlock = cont;
   node->used -= cont;
   _used -= cont;
 
-  // if page is empty, we can free it
+  // If page is empty, we can free it.
   if (node->used == 0)
   {
     _allocated -= node->size;
@@ -770,7 +770,7 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
       h = nlMoveRedRight(h);
     if (h == n)
     {
-      // Get minimum node
+      // Get minimum node.
       h = n->nlRight;
       while (h->nlLeft) h = h->nlLeft;
 

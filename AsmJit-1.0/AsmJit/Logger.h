@@ -142,7 +142,6 @@ struct ASMJIT_API FileLogger : public Logger
   // [Enabled]
   // --------------------------------------------------------------------------
 
-  //! @brief Set logging to enabled or disabled.
   virtual void setEnabled(bool enabled) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -165,7 +164,7 @@ struct ASMJIT_API FileLogger : public Logger
   // --------------------------------------------------------------------------
 
 protected:
-
+  //! @brief C file stream.
   FILE* _stream;
 
   ASMJIT_DISABLE_COPY(FileLogger)
