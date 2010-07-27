@@ -3948,35 +3948,37 @@ ERet::~ERet() ASMJIT_NOTHROW
 void ERet::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 {
   uint32_t retValType = getFunction()->getPrototype().getReturnValue();
-  uint32_t i;
-
-  for (i = 0; i < 2; i++)
+  if (retValType != INVALID_VALUE)
   {
-    Operand& o = _ret[i];
-
-    if (o.isVar())
+    uint32_t i;
+    for (i = 0; i < 2; i++)
     {
-      ASMJIT_ASSERT(o.getId() != INVALID_VALUE);
-      VarData* vdata = _compiler->_getVarData(o.getId());
-      ASMJIT_ASSERT(vdata != NULL);
+      Operand& o = _ret[i];
 
-      // First emittable (begin of variable scope).
-      if (vdata->firstEmittable == NULL) vdata->firstEmittable = this;
-
-      // Last emittable (end of variable scope).
-      vdata->lastEmittable = this;
-
-      if (vdata->workOffset == _offset) continue;
-      if (!cc._isActive(vdata)) cc._addActive(vdata);
-
-      vdata->workOffset = _offset;
-      vdata->registerReadCount++;
-
-      if (vdata->homeRegisterIndex == INVALID_VALUE)
+      if (o.isVar())
       {
-        if (isVariableInteger(vdata->type) && isVariableInteger(retValType))
+        ASMJIT_ASSERT(o.getId() != INVALID_VALUE);
+        VarData* vdata = _compiler->_getVarData(o.getId());
+        ASMJIT_ASSERT(vdata != NULL);
+
+        // First emittable (begin of variable scope).
+        if (vdata->firstEmittable == NULL) vdata->firstEmittable = this;
+
+        // Last emittable (end of variable scope).
+        vdata->lastEmittable = this;
+
+        if (vdata->workOffset == _offset) continue;
+        if (!cc._isActive(vdata)) cc._addActive(vdata);
+
+        vdata->workOffset = _offset;
+        vdata->registerReadCount++;
+
+        if (vdata->homeRegisterIndex == INVALID_VALUE)
         {
-          vdata->homeRegisterIndex = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
+          if (isVariableInteger(vdata->type) && isVariableInteger(retValType))
+          {
+            vdata->homeRegisterIndex = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
+          }
         }
       }
     }
