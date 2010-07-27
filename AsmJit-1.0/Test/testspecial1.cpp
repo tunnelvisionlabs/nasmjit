@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<int32_t*, int32_t*, int32_t, int32_t>());
+    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<Void, int32_t*, int32_t*, int32_t, int32_t>());
     c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
     GPVar dst0_lo(c.argGP(0));

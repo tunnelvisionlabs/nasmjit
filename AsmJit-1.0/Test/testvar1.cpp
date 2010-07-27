@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   c.newFunction(CALL_CONV_DEFAULT, 
-    FunctionBuilder8<sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t>());
+    FunctionBuilder8<Void, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t, sysuint_t>());
 
   GPVar p1(c.argGP(0));
   GPVar p2(c.argGP(1));

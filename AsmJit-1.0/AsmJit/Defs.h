@@ -100,20 +100,26 @@ enum ERROR_CODE
   //! @brief Short jump instruction used, but displacement is out of bounds.
   ERROR_ILLEGAL_SHORT_JUMP = 6,
 
+  //! @brief No function defined.
+  ERROR_NO_FUNCTION = 7,
+
   //! @brief Compiler can't allocate registers, because all of them are used.
   //!
   //! @note AsmJit is able to spill registers so this error really shouldn't
   //! happen unless all registers have priority 0 (which means never spill).
-  ERROR_NOT_ENOUGH_REGISTERS = 7,
+  ERROR_NOT_ENOUGH_REGISTERS = 8,
 
   //! @brief Compiler can't allocate one register to multiple destinations.
   //!
   //! This error can only happen using special instructions like cmpxchg8b and
   //! others where there are more destination operands (implicit).
-  ERROR_REGISTERS_OVERLAP = 8,
+  ERROR_REGISTERS_OVERLAP = 9,
 
   //! @brief Tried to call function using incompatible argument.
-  ERROR_INCOMPATIBLE_ARGUMENT = 9,
+  ERROR_INCOMPATIBLE_ARGUMENT = 10,
+
+  //! @brief Incompatible return value.
+  ERROR_INCOMPATIBLE_RETURN_VALUE = 11,
 
   //! @brief Count of error codes by AsmJit. Can grow in future.
   _ERROR_COUNT
@@ -214,32 +220,34 @@ enum EMITTABLE_TYPE
 {
   //! @brief Emittable is invalid (can't be used).
   EMITTABLE_NONE = 0,
-  //! @brief Emittable is dummy (used as a mark).
+  //! @brief Emittable is dummy (used as a mark) (@ref EDummy).
   EMITTABLE_DUMMY,
-  //! @brief Emittable is comment (no code).
+  //! @brief Emittable is comment (no code) (@ref EComment).
   EMITTABLE_COMMENT,
-  //! @brief Emittable is embedded data.
+  //! @brief Emittable is embedded data (@ref EData).
   EMITTABLE_EMBEDDED_DATA,
-  //! @brief Emittable is .align directive.
+  //! @brief Emittable is .align directive (@ref EAlign).
   EMITTABLE_ALIGN,
-  //! @brief Emittable is variable hint (alloc, spill, use, unuse, ...).
+  //! @brief Emittable is variable hint (alloc, spill, use, unuse, ...) (@ref EVariableHint).
   EMITTABLE_VARIABLE_HINT,
-  //! @brief Emittable is single instruction.
+  //! @brief Emittable is single instruction (@ref EInstruction).
   EMITTABLE_INSTRUCTION,
   //! @brief Emittable is block of instructions.
   EMITTABLE_BLOCK,
-  //! @brief Emittable is function declaration.
+  //! @brief Emittable is function declaration (@ref EFunction).
   EMITTABLE_FUNCTION,
-  //! @brief Emittable is function prolog.
+  //! @brief Emittable is function prolog (@ref EProlog).
   EMITTABLE_PROLOG,
-  //! @brief Emittable is function epilog.
+  //! @brief Emittable is function epilog (@ref EEpilog).
   EMITTABLE_EPILOG,
   //! @brief Emittable is target (bound label).
   EMITTABLE_TARGET,
-  //! @brief Emittable is jump table.
+  //! @brief Emittable is jump table (@ref EJmp).
   EMITTABLE_JUMP_TABLE,
-  //! @brief Emittable is function call.
-  EMITTABLE_CALL
+  //! @brief Emittable is function call (@ref ECall).
+  EMITTABLE_CALL,
+  //! @brief Emittable is return (@ref ERet).
+  EMITTABLE_RET
 };
 
 // ============================================================================

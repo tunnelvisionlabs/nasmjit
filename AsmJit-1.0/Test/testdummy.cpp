@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<uint32_t, uint32_t>());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, uint32_t, uint32_t>());
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
   GPVar var[20];

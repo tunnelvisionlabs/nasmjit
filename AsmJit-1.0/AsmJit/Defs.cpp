@@ -41,9 +41,11 @@ const char* getErrorCodeAsString(uint32_t error) ASMJIT_NOTHROW
     "Illegal instruction",
     "Illegal addressing",
     "Illegal short jump",
+    "No function defined",
     "Not enough registers",
     "Registers overlap",
     "Incompatible argument",
+    "Incompatible return value",
 
     "Unknown error"
   };

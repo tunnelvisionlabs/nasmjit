@@ -48,6 +48,8 @@ struct CompilerContext;
 struct CompilerCore;
 struct CompilerIntrinsics;
 
+struct FunctionDefinition;
+
 struct ForwardJumpData;
 
 struct VarData;
@@ -56,6 +58,7 @@ struct StateData;
 
 struct Emittable;
 struct EAlign;
+struct ECall;
 struct EComment;
 struct EData;
 struct EEpilog;
@@ -63,6 +66,7 @@ struct EFunction;
 struct EInstruction;
 struct EJmp;
 struct EProlog;
+struct ERet;
 
 // ============================================================================
 // [AsmJit::TypeToId]
@@ -115,126 +119,182 @@ struct TypeToId
   template<> \
   struct TypeToId<__T__> { enum { Id = __Id__ }; }
 
+// Declare void type and alternative.
+struct Void {};
+ASMJIT_DECLARE_TYPE_AS_ID(void, INVALID_VALUE);
+ASMJIT_DECLARE_TYPE_AS_ID(Void, INVALID_VALUE);
+
 #endif // ASMJIT_NODOC
 
 // ============================================================================
 // [AsmJit::Function Builder]
 // ============================================================================
 
-//! @brief Class used to build function without arguments.
-struct FunctionBuilder0
+struct FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  //! @brief Get function arguments IDs.
+  inline const uint32_t* getArguments() const
   {
-    return NULL;
+    return _arguments;
   }
 
-  //! @brief Get count of arguments (0).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
+  //! @brief Get function arguments count.
+  inline uint32_t getArgumentsCount() const
   {
-    return 0;
+    return _argumentsCount;
+  }
+
+  inline uint32_t getArgument(uint32_t id) const
+  {
+    ASMJIT_ASSERT(id < _argumentsCount);
+    return _arguments[id];
+  }
+
+  //! @brief Get function return value.
+  inline uint32_t getReturnValue() const
+  {
+    return _returnValue;
+  }
+
+protected:
+  inline void _setDefinition(const uint32_t* arguments, uint32_t argumentsCount, uint32_t returnValue)
+  {
+    _arguments = arguments;
+    _argumentsCount = argumentsCount;
+    _returnValue = returnValue;
+  }
+
+  const uint32_t* _arguments;
+  uint32_t _argumentsCount;
+  uint32_t _returnValue;
+};
+
+//! @brief Custom function builder for up to 32 function arguments.
+struct FunctionBuilderX : public FunctionDefinition
+{
+  inline FunctionBuilderX()
+  {
+    _setDefinition(_argumentsData, 0, INVALID_VALUE);
+  }
+
+  template<typename T>
+  inline void addArgument()
+  {
+    addArgumentRaw(ASMJIT_TYPE_TO_TYPE(T)::Id);
+  }
+
+  template<typename T>
+  inline void setArgument(uint32_t id)
+  {
+    setArgumentRaw(id, ASMJIT_TYPE_TO_TYPE(T)::Id);
+  }
+
+  template<typename T>
+  inline void setReturnValue()
+  {
+    setReturnValueRaw(ASMJIT_TYPE_TO_TYPE(T)::Id);
+  }
+
+  inline void addArgumentRaw(uint32_t type)
+  {
+    ASMJIT_ASSERT(_argumentsCount < FUNC_MAX_ARGS);
+    _argumentsData[_argumentsCount++] = type;
+  }
+
+  inline void setArgumentRaw(uint32_t id, uint32_t type)
+  {
+    ASMJIT_ASSERT(id < _argumentsCount);
+    _argumentsData[id] = type;
+  }
+
+  inline void setReturnValueRaw(uint32_t returnValue)
+  {
+    _returnValue = returnValue;
+  }
+
+protected:
+  uint32_t _argumentsData[FUNC_MAX_ARGS];
+};
+
+//! @brief Class used to build function without arguments.
+template<typename RET>
+struct FunctionBuilder0 : public FunctionDefinition
+{
+  inline FunctionBuilder0()
+  {
+    _setDefinition(NULL, 0, TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 1 argument.
-template<typename P0>
-struct FunctionBuilder1
+template<typename RET, typename P0>
+struct FunctionBuilder1 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder1()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (1).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 1;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 2 arguments.
-template<typename P0, typename P1>
-struct FunctionBuilder2
+template<typename RET, typename P0, typename P1>
+struct FunctionBuilder2 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder2()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (2).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 2;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 3 arguments.
-template<typename P0, typename P1, typename P2>
-struct FunctionBuilder3
+template<typename RET, typename P0, typename P1, typename P2>
+struct FunctionBuilder3 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder3()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
       TypeToId<P2>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (3).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 3;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 4 arguments.
-template<typename P0, typename P1, typename P2, typename P3>
-struct FunctionBuilder4
+template<typename RET, typename P0, typename P1, typename P2, typename P3>
+struct FunctionBuilder4 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder4()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
       TypeToId<P2>::Id,
       TypeToId<P3>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (4).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 4;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 5 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4>
-struct FunctionBuilder5
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4>
+struct FunctionBuilder5 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder5()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -242,24 +302,17 @@ struct FunctionBuilder5
       TypeToId<P3>::Id,
       TypeToId<P4>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (5).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 5;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 6 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
-struct FunctionBuilder6
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
+struct FunctionBuilder6 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder6()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -268,24 +321,17 @@ struct FunctionBuilder6
       TypeToId<P4>::Id,
       TypeToId<P5>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (6).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 6;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 7 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-struct FunctionBuilder7
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+struct FunctionBuilder7 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder7()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -295,24 +341,17 @@ struct FunctionBuilder7
       TypeToId<P5>::Id,
       TypeToId<P6>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (7).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 7;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 8 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-struct FunctionBuilder8
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+struct FunctionBuilder8 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder8()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -323,24 +362,17 @@ struct FunctionBuilder8
       TypeToId<P6>::Id,
       TypeToId<P7>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (8).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 8;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 9 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
-struct FunctionBuilder9
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
+struct FunctionBuilder9 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder9()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -352,24 +384,17 @@ struct FunctionBuilder9
       TypeToId<P7>::Id,
       TypeToId<P8>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (9).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 9;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 
 //! @brief Class used to build function with 9 arguments.
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-struct FunctionBuilder10
+template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
+struct FunctionBuilder10 : public FunctionDefinition
 {
-  //! @brief Get function argument IDs.
-  inline const uint32_t* getArgs() const ASMJIT_NOTHROW
+  inline FunctionBuilder10()
   {
-    static const uint32_t data[] =
+    static const uint32_t args[] =
     {
       TypeToId<P0>::Id,
       TypeToId<P1>::Id,
@@ -382,13 +407,7 @@ struct FunctionBuilder10
       TypeToId<P8>::Id,
       TypeToId<P9>::Id
     };
-    return data;
-  }
-
-  //! @brief Get count of arguments (10).
-  inline uint32_t getCount() const ASMJIT_NOTHROW
-  {
-    return 10;
+    _setDefinition(args, ASMJIT_ARRAY_SIZE(args), TypeToId<RET>::Id);
   }
 };
 

@@ -83,6 +83,7 @@ If(ASMJIT_BUILD_TEST)
     testdummy
     testfunccall1
     testfuncmanyargs
+    testfuncret
     testjit
     testmemorymanager
     testopcode

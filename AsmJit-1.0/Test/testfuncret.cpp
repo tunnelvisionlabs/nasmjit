@@ -10,10 +10,10 @@
 // copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following
 // conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used to test AsmJit register allocator.
+// This file is used to test function with many arguments. Bug originally
+// reported by Tilo Nitzsche for X64W and X64U calling conventions.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,8 +34,11 @@
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
-// This is type of function we will generate
-typedef void (*MyFn)(int*, int*);
+// This is type of function we will generate.
+typedef int (*MyFn)(int, int, int);
+
+static int FuncA(int x, int y) { return x + y; }
+static int FuncB(int x, int y) { return x * y; }
 
 int main(int argc, char* argv[])
 {
@@ -44,81 +48,65 @@ int main(int argc, char* argv[])
   // Create compiler.
   Compiler c;
 
-  // Log assembler output.
+  // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, int*, int*>());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int, int>());
+  {
+    GPVar x(c.argGP(0));
+    GPVar y(c.argGP(1));
+    GPVar op(c.argGP(2));
 
-  // Function arguments.
-  GPVar a1(c.argGP(0));
-  GPVar a2(c.argGP(1));
+    Label opAdd(c.newLabel());
+    Label opMul(c.newLabel());
 
-  // Create some variables.
-  GPVar x1(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x2(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x3(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x4(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x5(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x6(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x7(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x8(c.newGP(VARIABLE_TYPE_GPD));
+    c.cmp(op, 0);
+    c.jz(opAdd);
 
-  GPVar t(c.newGP(VARIABLE_TYPE_GPD));
+    c.cmp(op, 1);
+    c.jz(opMul);
 
-  // Setup variables (use mov with reg/imm to se if register allocator works).
-  c.mov(x1, 1);
-  c.mov(x2, 2);
-  c.mov(x3, 3);
-  c.mov(x4, 4);
-  c.mov(x5, 5);
-  c.mov(x6, 6);
-  c.mov(x7, 7);
-  c.mov(x8, 8);
+    {
+      GPVar result(c.newGP());
+      c.mov(result, imm(0));
+      c.ret(result);
+    }
 
-  // Make sum (addition)
-  c.xor_(t, t);
-  c.add(t, x1);
-  c.add(t, x2);
-  c.add(t, x3);
-  c.add(t, x4);
-  c.add(t, x5);
-  c.add(t, x6);
-  c.add(t, x7);
-  c.add(t, x8);
+    {
+      c.bind(opAdd);
 
-  // Store result to a given pointer in first argument.
-  c.mov(dword_ptr(a1), t);
+      GPVar result(c.newGP());
+      ECall* ctx = c.call((void*)FuncA);
+      ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder2<int, int, int>());
+      ctx->setArgument(0, x);
+      ctx->setArgument(1, y);
+      ctx->setReturn(result);
+      c.ret(result);
+    }
 
-  // Make sum (subtraction).
-  c.xor_(t, t);
-  c.sub(t, x1);
-  c.sub(t, x2);
-  c.sub(t, x3);
-  c.sub(t, x4);
-  c.sub(t, x5);
-  c.sub(t, x6);
-  c.sub(t, x7);
-  c.sub(t, x8);
+    {
+      c.bind(opMul);
 
-  // Store result to a given pointer in second argument.
-  c.mov(dword_ptr(a2), t);
-
-  // End of function.
+      GPVar result(c.newGP());
+      ECall* ctx = c.call((void*)FuncB);
+      ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder2<int, int, int>());
+      ctx->setArgument(0, x);
+      ctx->setArgument(1, y);
+      ctx->setReturn(result);
+      c.ret(result);
+    }
+  }
   c.endFunction();
   // ==========================================================================
 
   // ==========================================================================
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
+  int result = fn(4, 8, 1);
 
-  // Call it.
-  int x;
-  int y;
-  fn(&x, &y);
-
-  printf("\nResults from JIT function: %d %d\n", x, y);
-  printf("Status: %s\n", (x == 36 && y == -36) ? "Success" : "Failure");
+  printf("Result from JIT function: %d (Expected 32) \n", result);
+  printf("Status: %s\n", result == 32 ? "Success" : "Failure");
 
   // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);

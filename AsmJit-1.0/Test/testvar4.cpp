@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<uint32_t*>());
+    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<Void, uint32_t*>());
 
     GPVar var[32];
     int i;

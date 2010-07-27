@@ -52,16 +52,16 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
   switch (args)
   {
     case 0:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
       break;
     case 1:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<Void, sysint_t>());
       break;
     case 2:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<sysint_t, sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, sysint_t, sysint_t>());
       break;
     case 3:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<sysint_t, sysint_t, sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, sysint_t, sysint_t, sysint_t>());
       break;
   }
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, naked);

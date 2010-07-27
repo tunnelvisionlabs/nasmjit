@@ -234,12 +234,16 @@ FunctionPrototype::~FunctionPrototype() ASMJIT_NOTHROW
 {
 }
 
-void FunctionPrototype::setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
+void FunctionPrototype::setPrototype(
+  uint32_t callingConvention,
+  const uint32_t* arguments,
+  uint32_t argumentsCount,
+  uint32_t returnValue) ASMJIT_NOTHROW
 {
   _setCallingConvention(callingConvention);
 
-  if (count > 32) count = 32;
-  _setPrototype(args, count);
+  if (argumentsCount > 32) argumentsCount = 32;
+  _setPrototype(arguments, argumentsCount, returnValue);
 }
 
 uint32_t FunctionPrototype::findArgumentByRegisterCode(uint32_t regCode) const ASMJIT_NOTHROW
@@ -287,6 +291,8 @@ void FunctionPrototype::_clear() ASMJIT_NOTHROW
   _argumentsCount = 0;
   _argumentsDirection = ARGUMENT_DIR_RIGHT_TO_LEFT;
   _argumentsStackSize = 0;
+
+  _returnValue = INVALID_VALUE;
 
   Util::memset32(_argumentsGP , INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsGP ));
   Util::memset32(_argumentsXMM, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsXMM));
@@ -437,9 +443,12 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
 #endif // ASMJIT_X64
 }
 
-void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
+void FunctionPrototype::_setPrototype(
+  const uint32_t* argumentsData,
+  uint32_t argumentsCount,
+  uint32_t returnValue) ASMJIT_NOTHROW
 {
-  ASMJIT_ASSERT(count <= 32);
+  ASMJIT_ASSERT(argumentsCount <= 32);
 
   int32_t i;
 
@@ -447,15 +456,18 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
   int32_t posXMM = 0;
   int32_t stackOffset = 0;
 
-  for (i = 0; i < (sysint_t)count; i++)
+  // TODO: Are there some calculations we should do right now?
+  _returnValue = returnValue;
+
+  for (i = 0; i < (sysint_t)argumentsCount; i++)
   {
     Argument& a = _arguments[i];
-    a.variableType = args[i];
+    a.variableType = argumentsData[i];
     a.registerIndex = INVALID_VALUE;
     a.stackOffset = INVALID_VALUE;
   }
 
-  _argumentsCount = (uint32_t)count;
+  _argumentsCount = (uint32_t)argumentsCount;
   if (_argumentsCount == 0) return;
 
   // --------------------------------------------------------------------------
@@ -464,10 +476,10 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
 
 #if defined(ASMJIT_X86)
   // Register arguments (Integer), always left-to-right.
-  for (i = 0; i != count; i++)
+  for (i = 0; i != argumentsCount; i++)
   {
     Argument& a = _arguments[i];
-    if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGP[posGP] != INVALID_VALUE)
+    if (isVariableInteger(a.variableType) && posGP < 16 && _argumentsGP[posGP] != INVALID_VALUE)
     {
       a.registerIndex = _argumentsGP[posGP++];
       _passedGP |= (1 << a.registerIndex);
@@ -476,8 +488,8 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
 
   // Stack arguments.
   bool ltr = _argumentsDirection == ARGUMENT_DIR_LEFT_TO_RIGHT;
-  sysint_t istart = ltr ? 0 : (sysint_t)count - 1;
-  sysint_t iend   = ltr ? (sysint_t)count : -1;
+  sysint_t istart = ltr ? 0 : (sysint_t)argumentsCount - 1;
+  sysint_t iend   = ltr ? (sysint_t)argumentsCount : -1;
   sysint_t istep  = ltr ? 1 : -1;
 
   for (i = istart; i != iend; i += istep)
@@ -506,7 +518,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
   // Windows 64-bit specific.
   if (_callingConvention == CALL_CONV_X64W)
   {
-    sysint_t max = count < 4 ? count : 4;
+    sysint_t max = argumentsCount < 4 ? argumentsCount : 4;
 
     // Register arguments (Integer / FP), always left to right.
     for (i = 0; i != max; i++)
@@ -526,7 +538,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
     }
 
     // Stack arguments (always right-to-left).
-    for (i = count - 1; i != -1; i--)
+    for (i = argumentsCount - 1; i != -1; i--)
     {
       Argument& a = _arguments[i];
       if (a.isAssigned()) continue;
@@ -551,7 +563,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
   else
   {
     // Register arguments (Integer), always left to right.
-    for (i = 0; i != count; i++)
+    for (i = 0; i != argumentsCount; i++)
     {
       Argument& a = _arguments[i];
       if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGP[posGP] != INVALID_VALUE)
@@ -562,7 +574,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
     }
 
     // Register arguments (FP), always left to right.
-    for (i = 0; i != count; i++)
+    for (i = 0; i != argumentsCount; i++)
     {
       Argument& a = _arguments[i];
       if (isVariableFloat(a.variableType))
@@ -573,7 +585,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
     }
 
     // Stack arguments.
-    for (i = count - 1; i != -1; i--)
+    for (i = argumentsCount - 1; i != -1; i--)
     {
       Argument& a = _arguments[i];
       if (a.isAssigned()) continue;
@@ -596,7 +608,7 @@ void FunctionPrototype::_setPrototype(const uint32_t* args, uint32_t count) ASMJ
 
   // Modify stack offset (all function parameters will be in positive stack
   // offset that is never zero).
-  for (i = 0; i < (sysint_t)count; i++)
+  for (i = 0; i < (sysint_t)argumentsCount; i++)
   {
     if (_arguments[i].registerIndex == INVALID_VALUE)
       _arguments[i].stackOffset += sizeof(sysint_t) - stackOffset;
@@ -1391,26 +1403,37 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       {
         if (i == 0)
         {
-          // If variable is MOV instruction type (source replaces the destination)
-          // or variable is MOVSS/MOVSD instruction and source operand is memory,
-          // then register allocator should know that previous destination value
-          // is lost (write only operation).
-          if ((id->isMov()) ||
-              ((id->code == INST_MOVSS || id->code == INST_MOVSD) /* && _operands[1].isMem() */) ||
-              (id->code == INST_IMUL && _operandsCount == 3 && !isSpecial()))
+          // CMP/TEST instruction.
+          if (id->code == INST_CMP || id->code == INST_TEST)
           {
-            // Write only case.
+            // Read-only case.
+            vdata->registerReadCount++;
+            var->vflags |= VARIABLE_ALLOC_READ;
+          }
+          // MOV/MOVSS/MOVSD instructions.
+          //
+          // If instruction is MOV (source replaces the destination) or 
+          // MOVSS/MOVSD and source operand is memory location then register
+          // allocator should know that previous destination value is lost 
+          // (write only operation).
+          else if ((id->isMov()) ||
+                  ((id->code == INST_MOVSS || id->code == INST_MOVSD) /* && _operands[1].isMem() */) ||
+                  (id->code == INST_IMUL && _operandsCount == 3 && !isSpecial()))
+          {
+            // Write-only case.
             vdata->registerWriteCount++;
             var->vflags |= VARIABLE_ALLOC_WRITE;
           }
           else
           {
+            // Read/Write.
             vdata->registerRWCount++;
             var->vflags |= VARIABLE_ALLOC_READWRITE;
           }
         }
         else
         {
+          // Second, third, ... operands are read-only.
           vdata->registerReadCount++;
           var->vflags |= VARIABLE_ALLOC_READ;
         }
@@ -1850,7 +1873,7 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
   // Mark next code as unrecheable, cleared by a next label (ETarget).
   if (_code == INST_JMP)
   {
-    cc._unrecheable = true;
+    cc._unrecheable = 1;
   }
 }
 
@@ -1883,7 +1906,7 @@ void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
 
     cc._restoreState(_jumpTarget->getState());
 
-    if (compiler->getCurrentEmittable() != old)
+    if (compiler->getCurrentEmittable() != ext)
     {
       // Add the jump to the target.
       compiler->jmp(_jumpTarget->_label);
@@ -1969,9 +1992,13 @@ void EFunction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _offset = cc._currentOffset++;
 }
 
-void EFunction::setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
+void EFunction::setPrototype(
+  uint32_t callingConvention,
+  const uint32_t* arguments,
+  uint32_t argumentsCount,
+  uint32_t returnValue) ASMJIT_NOTHROW
 {
-  _functionPrototype.setPrototype(callingConvention, args, count);
+  _functionPrototype.setPrototype(callingConvention, arguments, argumentsCount, returnValue);
 }
 
 void EFunction::setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW
@@ -2724,7 +2751,9 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < operandsCount; i++)
   {
-    Operand& o = (i < argumentsCount) ? (_args[i]) : (i == argumentsCount ? _target : _ret[argumentsCount-1]);
+    Operand& o = (i < argumentsCount) 
+      ? (_args[i])
+      : (i == argumentsCount ? _target : _ret[i - argumentsCount - 1]);
 
     if (o.isVar())
     {
@@ -2798,7 +2827,9 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < operandsCount; i++)
   {
-    Operand& o = (i < argumentsCount) ? (_args[i]) : (i == argumentsCount ? _target : _ret[argumentsCount-1]);
+    Operand& o = (i < argumentsCount) 
+      ? (_args[i])
+      : (i == argumentsCount ? _target : _ret[i - argumentsCount - 1]);
 
     if (o.isVar())
     {
@@ -2851,8 +2882,6 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       }
       else
       {
-        const FunctionPrototype::Argument& fArg = getPrototype().getArguments()[i];
-
         switch (vdata->type)
         {
           case VARIABLE_TYPE_GPD:
@@ -3818,13 +3847,17 @@ void ECall::_moveSrcVariableToRegister(CompilerContext& cc,
 }
 
 // Prototype & Arguments Management.
-void ECall::_setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
+void ECall::_setPrototype(
+  uint32_t callingConvention,
+  const uint32_t* arguments,
+  uint32_t argumentsCount,
+  uint32_t returnValue) ASMJIT_NOTHROW
 {
-  _functionPrototype.setPrototype(callingConvention, args, count);
+  _functionPrototype.setPrototype(callingConvention, arguments, argumentsCount, returnValue);
 
   _args = reinterpret_cast<Operand*>(
-    getCompiler()->getZone().zalloc(sizeof(Operand) * count));
-  memset(_args, 0, sizeof(Operand) * count);
+    getCompiler()->getZone().zalloc(sizeof(Operand) * argumentsCount));
+  memset(_args, 0, sizeof(Operand) * argumentsCount);
 }
 
 bool ECall::setArgument(uint32_t i, const BaseVar& var) ASMJIT_NOTHROW
@@ -3851,6 +3884,295 @@ bool ECall::setReturn(const Operand& first, const Operand& second) ASMJIT_NOTHRO
   _ret[1] = second;
 
   return true;
+}
+
+// ============================================================================
+// [AsmJit::ERet]
+// ============================================================================
+
+ERet::ERet(Compiler* c, EFunction* function, const Operand* first, const Operand* second) ASMJIT_NOTHROW :
+  Emittable(c, EMITTABLE_RET),
+  _function(function)
+{
+  if (first ) _ret[0] = *first;
+  if (second) _ret[1] = *second;
+
+  // Check whether the return value is compatible.
+  uint32_t retValType = function->getPrototype().getReturnValue();
+  bool valid = false;
+
+  switch (retValType)
+  {
+    case VARIABLE_TYPE_GPD:
+    case VARIABLE_TYPE_GPQ:
+      if ((_ret[0].isVar() && (reinterpret_cast<const BaseVar&>(_ret[0]).isGPVar())) ||
+          (_ret[0].isImm()))
+      {
+        valid = true;
+      }
+      break;
+
+    case VARIABLE_TYPE_X87:
+    case VARIABLE_TYPE_X87_1F:
+    case VARIABLE_TYPE_X87_1D:
+      if ((_ret[0].isVar() && (reinterpret_cast<const BaseVar&>(_ret[0]).isX87Var() ||
+                               reinterpret_cast<const BaseVar&>(_ret[0]).isXMMVar() )) )
+      {
+        valid = true;
+      }
+      break;
+
+    case INVALID_VALUE:
+      if (_ret[0].isNone() && 
+          _ret[1].isNone())
+      {
+        valid = true;
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  // Incompatible return value.
+  if (!valid)
+  {
+    c->setError(ERROR_INCOMPATIBLE_RETURN_VALUE);
+  }
+}
+
+ERet::~ERet() ASMJIT_NOTHROW
+{
+}
+
+void ERet::prepare(CompilerContext& cc) ASMJIT_NOTHROW
+{
+  uint32_t retValType = getFunction()->getPrototype().getReturnValue();
+  uint32_t i;
+
+  for (i = 0; i < 2; i++)
+  {
+    Operand& o = _ret[i];
+
+    if (o.isVar())
+    {
+      ASMJIT_ASSERT(o.getId() != INVALID_VALUE);
+      VarData* vdata = _compiler->_getVarData(o.getId());
+      ASMJIT_ASSERT(vdata != NULL);
+
+      // First emittable (begin of variable scope).
+      if (vdata->firstEmittable == NULL) vdata->firstEmittable = this;
+
+      // Last emittable (end of variable scope).
+      vdata->lastEmittable = this;
+
+      if (vdata->workOffset == _offset) continue;
+      if (!cc._isActive(vdata)) cc._addActive(vdata);
+
+      vdata->workOffset = _offset;
+      vdata->registerReadCount++;
+
+      if (vdata->homeRegisterIndex == INVALID_VALUE)
+      {
+        if (isVariableInteger(vdata->type) && isVariableInteger(retValType))
+        {
+          vdata->homeRegisterIndex = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
+        }
+      }
+    }
+  }
+
+  cc._currentOffset++;
+}
+
+void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
+{
+  Compiler* compiler = cc.getCompiler();
+
+  // Check whether the return value is compatible.
+  uint32_t retValType = getFunction()->getPrototype().getReturnValue();
+  uint32_t i;
+
+  switch (retValType)
+  {
+    case VARIABLE_TYPE_GPD:
+    case VARIABLE_TYPE_GPQ:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isGPVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            if (srci == INVALID_VALUE)
+              compiler->emit(INST_MOV, gpn(dsti), cc._getVarMem(vdata));
+            else if (dsti != srci)
+              compiler->emit(INST_MOV, gpn(dsti), gpn(srci));
+          }
+        }
+        else if (_ret[i].isImm())
+        {
+          compiler->emit(INST_MOV, gpn(dsti), _ret[i]);
+        }
+      }
+      break;
+
+    case VARIABLE_TYPE_X87:
+    case VARIABLE_TYPE_X87_1F:
+    case VARIABLE_TYPE_X87_1D:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = i;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            if (srci == INVALID_VALUE)
+              compiler->emit(INST_MOV, gpn(dsti), cc._getVarMem(vdata));
+            else if (dsti != srci)
+              compiler->emit(INST_MOV, gpn(dsti), gpn(srci));
+          }
+        }
+      }
+      break;
+
+    case VARIABLE_TYPE_MM:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = i;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isGPVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            uint32_t inst = _ret[i].isRegType(REG_TYPE_GPQ) ? INST_MOVQ : INST_MOVD;
+
+            if (srci == INVALID_VALUE)
+              compiler->emit(inst, mm(dsti), cc._getVarMem(vdata));
+            else
+#if defined(ASMJIT_X86)
+              compiler->emit(inst, mm(dsti), gpd(srci));
+#else
+              compiler->emit(inst, mm(dsti), _ret[i].isRegType(REG_TYPE_GPQ) ? gpq(srci) : gpd(srci));
+#endif
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            uint32_t inst = INST_MOVQ;
+
+            if (srci == INVALID_VALUE)
+              compiler->emit(inst, mm(dsti), cc._getVarMem(vdata));
+            else if (dsti != srci)
+              compiler->emit(inst, mm(dsti), mm(srci));
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            uint32_t inst = INST_MOVQ;
+            if (reinterpret_cast<const BaseVar&>(_ret[i]).getVariableType() == VARIABLE_TYPE_XMM_1F) inst = INST_MOVD;
+
+            if (srci == INVALID_VALUE)
+              compiler->emit(inst, mm(dsti), cc._getVarMem(vdata));
+            else
+              compiler->emit(inst, mm(dsti), xmm(srci));
+          }
+        }
+      }
+      break;
+
+    case VARIABLE_TYPE_XMM:
+    case VARIABLE_TYPE_XMM_4F:
+    case VARIABLE_TYPE_XMM_2D:
+      break;
+
+    case VARIABLE_TYPE_XMM_1F:
+    case VARIABLE_TYPE_XMM_1D:
+      break;
+
+    case INVALID_VALUE:
+    default:
+      break;
+  }
+
+  if (emitJumpToEpilog())
+  {
+    cc._unrecheable = 1;
+  }
+}
+
+void ERet::emit(Assembler& a) ASMJIT_NOTHROW
+{
+  if (emitJumpToEpilog())
+  {
+    a.jmp(getFunction()->getExitLabel());
+  }
+}
+
+bool ERet::emitJumpToEpilog() const ASMJIT_NOTHROW
+{
+  // Iterate over next emittables. If we found emittable that emits real 
+  // instruction then we must return @c true.
+  Emittable* e = this->getNext();
+
+  while (e)
+  {
+    switch (e->getType())
+    {
+      // Non-interesting emittables.
+      case EMITTABLE_COMMENT:
+      case EMITTABLE_DUMMY:
+      case EMITTABLE_ALIGN:
+      case EMITTABLE_BLOCK:
+      case EMITTABLE_VARIABLE_HINT:
+      case EMITTABLE_TARGET:
+        break;
+
+      // Interesting emittables.
+      case EMITTABLE_EMBEDDED_DATA:
+      case EMITTABLE_INSTRUCTION:
+      case EMITTABLE_JUMP_TABLE:
+      case EMITTABLE_CALL:
+      case EMITTABLE_RET:
+        return true;
+
+      // These emittables shouldn't be here. We are inside function, after
+      // prolog.
+      case EMITTABLE_FUNCTION:
+      case EMITTABLE_PROLOG:
+        break;
+
+      // Stop station, we can't next.
+      case EMITTABLE_EPILOG:
+        return false;
+    }
+    e = e->getNext();
+  }
+
+  return false;
 }
 
 // ============================================================================
@@ -3889,7 +4211,7 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
   _forwardJumps = NULL;
 
   _currentOffset = 0;
-  _unrecheable = false;
+  _unrecheable = 0;
 
   _modifiedGPRegisters = 0;
   _modifiedMMRegisters = 0;
@@ -5197,7 +5519,8 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
         // exists.
         if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
-          // TODO:
+          // TODO: Implement it.
+
           // Optimization, do not spill it, we can simply abandon it
           // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
         }
@@ -5633,12 +5956,16 @@ void CompilerCore::comment(const char* fmt, ...) ASMJIT_NOTHROW
 // [AsmJit::CompilerCore - Function Builder]
 // ============================================================================
 
-EFunction* CompilerCore::newFunction_(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW
+EFunction* CompilerCore::newFunction_(
+  uint32_t callingConvention,
+  const uint32_t* arguments,
+  uint32_t argumentsCount,
+  uint32_t returnValue) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(_function == NULL);
   EFunction* f = _function = Compiler_newObject<EFunction>(this);
 
-  f->setPrototype(callingConvention, args, count);
+  f->setPrototype(callingConvention, arguments, argumentsCount, returnValue);
   addEmittable(f);
 
   bind(f->_entryLabel);
@@ -5765,15 +6092,25 @@ void CompilerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) AS
 
 ECall* CompilerCore::_emitCall(const Operand* o0) ASMJIT_NOTHROW
 {
-  ECall* eCall = Compiler_newObject<ECall>(this, getFunction(), o0);
-  addEmittable(eCall);
+  EFunction* fn = getFunction();
+  if (!fn) { setError(ERROR_NO_FUNCTION); return NULL; }
 
+  ECall* eCall = Compiler_newObject<ECall>(this, fn, o0);
+  if (!eCall) { setError(ERROR_NO_HEAP_MEMORY); return NULL; }
+
+  addEmittable(eCall);
   return eCall;
 }
 
-void CompilerCore::_emitReturn(const Operand* val) ASMJIT_NOTHROW
+void CompilerCore::_emitReturn(const Operand* first, const Operand* second) ASMJIT_NOTHROW
 {
-  // TODO.
+  EFunction* fn = getFunction();
+  if (!fn) { setError(ERROR_NO_FUNCTION); return; }
+
+  ERet* eRet = Compiler_newObject<ERet>(this, fn, first, second);
+  if (!eRet) { setError(ERROR_NO_HEAP_MEMORY); return; }
+
+  addEmittable(eRet);
 }
 
 // ============================================================================

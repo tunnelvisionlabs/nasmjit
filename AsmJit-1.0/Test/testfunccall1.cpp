@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int>());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, int, int, int>());
 
   GPVar v0(c.argGP(0));
   GPVar v1(c.argGP(1));
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
   c.mov(address, imm((sysint_t)(void*)calledFn));
 
   ECall* ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int>());
+  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<Void, int, int, int>());
   ctx->setArgument(0, v2);
   ctx->setArgument(1, v1);
   ctx->setArgument(2, v0);

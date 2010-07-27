@@ -115,6 +115,7 @@ struct ASMJIT_API FunctionPrototype
     //! @c INVALID_VALUE.
     int32_t stackOffset;
 
+    //! @brief Get whether the argument is assigned, for private use only.
     inline bool isAssigned() const ASMJIT_NOTHROW
     { return registerIndex != INVALID_VALUE || stackOffset != (int32_t)INVALID_VALUE; }
   };
@@ -128,7 +129,11 @@ struct ASMJIT_API FunctionPrototype
   //! This will set function calling convention and setup arguments variables.
   //!
   //! @note This function will allocate variables, it can be called only once.
-  void setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+  void setPrototype(
+    uint32_t callingConvention,
+    const uint32_t* arguments, 
+    uint32_t argumentsCount,
+    uint32_t returnValue) ASMJIT_NOTHROW;
 
   //! @brief Get function calling convention, see @c CALL_CONV.
   inline uint32_t getCallingConvention() const ASMJIT_NOTHROW { return _callingConvention; }
@@ -143,6 +148,9 @@ struct ASMJIT_API FunctionPrototype
 
   //! @brief Get count of arguments.
   inline uint32_t getArgumentsCount() const ASMJIT_NOTHROW { return _argumentsCount; }
+
+  //! @brief Get function return value or @ref INVALID_VALUE if it's void.
+  inline uint32_t getReturnValue() const ASMJIT_NOTHROW { return _returnValue; }
 
   //! @brief Get direction of arguments passed on the stack.
   //!
@@ -190,10 +198,15 @@ struct ASMJIT_API FunctionPrototype
   //! number of function arguments or their types.
   inline uint32_t getPreservedXMM() const ASMJIT_NOTHROW { return _preservedXMM; }
 
+  //! @brief Get mask of all GP registers used to pass function arguments.
   inline uint32_t getPassedGP() const ASMJIT_NOTHROW { return _passedGP; }
+  //! @brief Get mask of all MM registers used to pass function arguments.
   inline uint32_t getPassedMM() const ASMJIT_NOTHROW { return _passedMM; }
+  //! @brief Get mask of all XMM registers used to pass function arguments.
   inline uint32_t getPassedXMM() const ASMJIT_NOTHROW { return _passedXMM; }
 
+  //! @brief Find argument (id) by the register code. Used mainly by @ref ECall
+  //! emittable.
   uint32_t findArgumentByRegisterCode(uint32_t regCode) const ASMJIT_NOTHROW;
 
 protected:
@@ -204,7 +217,10 @@ protected:
 
   void _clear() ASMJIT_NOTHROW;
   void _setCallingConvention(uint32_t callingConvention) ASMJIT_NOTHROW;
-  void _setPrototype(const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+  void _setPrototype(
+    const uint32_t* arguments,
+    uint32_t argumentsCount,
+    uint32_t returnValue) ASMJIT_NOTHROW;
   void _setReturnValue(uint32_t valueId) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -217,7 +233,10 @@ protected:
   uint32_t _calleePopsStack;
 
   //! @brief List of arguments, their register codes or stack locations.
-  Argument _arguments[32];
+  Argument _arguments[FUNC_MAX_ARGS];
+
+  //! @brief Function return value.
+  uint32_t _returnValue;
 
   //! @brief Count of arguments (in @c _argumentsList).
   uint32_t _argumentsCount;
@@ -769,7 +788,11 @@ struct ASMJIT_API EFunction : public Emittable
   inline const FunctionPrototype& getPrototype() const ASMJIT_NOTHROW { return _functionPrototype; }
   inline uint32_t getHint(uint32_t hint) ASMJIT_NOTHROW { return _hints[hint]; }
 
-  void setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+  void setPrototype(
+    uint32_t callingConvention, 
+    const uint32_t* arguments, 
+    uint32_t argumentsCount,
+    uint32_t returnValue) ASMJIT_NOTHROW;
   void setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW;
 
   inline EProlog* getProlog() const ASMJIT_NOTHROW { return _prolog; }
@@ -1073,12 +1096,21 @@ public:
   inline const FunctionPrototype& getPrototype() const ASMJIT_NOTHROW { return _functionPrototype; }
 
   //! @brief Set function prototype.
-  template<typename T>
-  inline void setPrototype(uint32_t cconv, ASMJIT_TYPE_TO_TYPE(T) params) ASMJIT_NOTHROW
-  { _setPrototype(cconv, params.getArgs(), params.getCount()); }
+  inline void setPrototype(uint32_t cconv, const FunctionDefinition& def) ASMJIT_NOTHROW
+  {
+    _setPrototype(
+      cconv,
+      def.getArguments(), 
+      def.getArgumentsCount(), 
+      def.getReturnValue());
+  }
 
   //! @brief Set function prototype (internal).
-  void _setPrototype(uint32_t callingConvention, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+  void _setPrototype(
+    uint32_t callingConvention,
+    const uint32_t* arguments,
+    uint32_t argumentsCount,
+    uint32_t returnValue) ASMJIT_NOTHROW;
 
   //! @brief Set function argument @a i to @a var.
   bool setArgument(uint32_t i, const BaseVar& var) ASMJIT_NOTHROW;
@@ -1134,6 +1166,63 @@ protected:
   VarCallRecord* _variables;
   //! @brief Argument index to @c VarCallRecord.
   VarCallRecord* _argumentToVarRecord[FUNC_MAX_ARGS];
+
+private:
+  friend struct CompilerCore;
+};
+
+// ============================================================================
+// [AsmJit::ERet]
+// ============================================================================
+
+//! @brief Function return.
+struct ASMJIT_API ERet : public Emittable
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create a new @ref ERet instance.
+  ERet(Compiler* c, EFunction* function, const Operand* first, const Operand* second) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref ERet instance.
+  virtual ~ERet() ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Emit]
+  // --------------------------------------------------------------------------
+
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Methods]
+  // --------------------------------------------------------------------------
+
+  //! @Brief Get function.
+  inline EFunction* getFunction() ASMJIT_NOTHROW { return _function; }
+
+  //! @brief Get operand (function address).
+  inline Operand& getFirst() ASMJIT_NOTHROW { return _ret[0]; }
+  //! @brief Get operand (function address).
+  inline Operand& getSecond() ASMJIT_NOTHROW { return _ret[1]; }
+  //! @overload
+  inline const Operand& getFirst() const ASMJIT_NOTHROW { return _ret[0]; }
+  //! @overload
+  inline const Operand& getSecond() const ASMJIT_NOTHROW { return _ret[1]; }
+
+  //! @brief Get whether jump to epilog have to be emitted.
+  bool emitJumpToEpilog() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
+
+protected:
+  //! @brief Function.
+  EFunction* _function;
+  //! @brief Return value (operands)
+  Operand _ret[2];
 
 private:
   friend struct CompilerCore;
@@ -1501,6 +1590,86 @@ struct ASMJIT_API CompilerCore
   // [Function Builder]
   // --------------------------------------------------------------------------
 
+  //! @brief Create a new function.
+  //!
+  //! @param cconv Calling convention to use (see @c CALL_CONV enum)
+  //! @param params Function arguments prototype.
+  //!
+  //! This method is usually used as a first step when generating functions
+  //! by @c Compiler. First parameter @a cconv specifies function calling
+  //! convention to use. Second parameter @a params specifies function
+  //! arguments. To create function arguments are used templates
+  //! @c BuildFunction0<>, @c BuildFunction1<...>, @c BuildFunction2<...>,
+  //! etc...
+  //!
+  //! Templates with BuildFunction prefix are used to generate argument IDs
+  //! based on real C++ types. See next example how to generate function with
+  //! two 32 bit integer arguments.
+  //!
+  //! @code
+  //! // Building function using AsmJit::Compiler example.
+  //!
+  //! // Compiler instance
+  //! Compiler c;
+  //!
+  //! // Begin of function (also emits function @c Prolog)
+  //! c.newFunction(
+  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   CALL_CONV_DEFAULT,
+  //!   // Using function builder to generate arguments list
+  //!   BuildFunction2<int, int>());
+  //!
+  //! // End of function (also emits function @c Epilog)
+  //! c.endFunction();
+  //! @endcode
+  //!
+  //! You can see that building functions is really easy. Previous code snipped
+  //! will generate code for function with two 32 bit integer arguments. You
+  //! can access arguments by @c AsmJit::Function::argument() method. Arguments
+  //! are indexed from 0 (like everything in C).
+  //!
+  //! @code
+  //! // Accessing function arguments through AsmJit::Function example.
+  //!
+  //! // Compiler instance
+  //! Compiler c;
+  //!
+  //! // Begin of function (also emits function @c Prolog)
+  //! c.newFunction(
+  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   CALL_CONV_DEFAULT,
+  //!   // Using function builder to generate arguments list
+  //!   BuildFunction2<int, int>());
+  //!
+  //! // Arguments are like other variables, you need to reference them by
+  //! // variable operands:
+  //! GPVar a0 = c.argGP(0);
+  //! GPVar a1 = c.argGP(1);
+  //!
+  //! // Use them.
+  //! c.add(a0, a1);
+  //!
+  //! // End of function (emits function epilog and return)
+  //! c.endFunction();
+  //! @endcode
+  //!
+  //! Arguments are like variables. How to manipulate with variables is
+  //! documented in @c AsmJit::Compiler, variables section.
+  //!
+  //! @note To get current function use @c currentFunction() method or save
+  //! pointer to @c AsmJit::Function returned by @c AsmJit::Compiler::newFunction<>
+  //! method. Recommended is to save the pointer.
+  //!
+  //! @sa @c BuildFunction0, @c BuildFunction1, @c BuildFunction2, ...
+  inline EFunction* newFunction(uint32_t cconv, const FunctionDefinition& def) ASMJIT_NOTHROW
+  {
+    return newFunction_(
+      cconv,
+      def.getArguments(),
+      def.getArgumentsCount(),
+      def.getReturnValue());
+  }
+
   //! @brief Create a new function (low level version).
   //!
   //! @param cconv Function calling convention (see @c AsmJit::CALL_CONV).
@@ -1511,7 +1680,11 @@ struct ASMJIT_API CompilerCore
   //! contains arguments thats used internally by @c AsmJit::Compiler.
   //!
   //! @note To get current function use @c currentFunction() method.
-  EFunction* newFunction_(uint32_t cconv, const uint32_t* args, uint32_t count) ASMJIT_NOTHROW;
+  EFunction* newFunction_(
+    uint32_t cconv,
+    const uint32_t* arguments,
+    uint32_t argumentsCount,
+    uint32_t returnValue) ASMJIT_NOTHROW;
 
   //! @brief Get current function.
   //!
@@ -1576,7 +1749,7 @@ struct ASMJIT_API CompilerCore
   ECall* _emitCall(const Operand* o0) ASMJIT_NOTHROW;
 
   //! @brief Private method for returning a value from the function.
-  void _emitReturn(const Operand* val) ASMJIT_NOTHROW;
+  void _emitReturn(const Operand* first, const Operand* second) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Embed]
@@ -1822,85 +1995,6 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 
   //! @brief Create @c CompilerIntrinsics instance. Always use @c AsmJit::Compiler.
   inline CompilerIntrinsics() ASMJIT_NOTHROW {}
-
-  // --------------------------------------------------------------------------
-  // [Function Builder]
-  // --------------------------------------------------------------------------
-
-  //! @brief Create a new function.
-  //!
-  //! @param cconv Calling convention to use (see @c CALL_CONV enum)
-  //! @param params Function arguments prototype.
-  //!
-  //! This method is usually used as a first step when generating functions
-  //! by @c Compiler. First parameter @a cconv specifies function calling
-  //! convention to use. Second parameter @a params specifies function
-  //! arguments. To create function arguments are used templates
-  //! @c BuildFunction0<>, @c BuildFunction1<...>, @c BuildFunction2<...>,
-  //! etc...
-  //!
-  //! Templates with BuildFunction prefix are used to generate argument IDs
-  //! based on real C++ types. See next example how to generate function with
-  //! two 32 bit integer arguments.
-  //!
-  //! @code
-  //! // Building function using AsmJit::Compiler example.
-  //!
-  //! // Compiler instance
-  //! Compiler c;
-  //!
-  //! // Begin of function (also emits function @c Prolog)
-  //! c.newFunction(
-  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
-  //!   CALL_CONV_DEFAULT,
-  //!   // Using function builder to generate arguments list
-  //!   BuildFunction2<int, int>());
-  //!
-  //! // End of function (also emits function @c Epilog)
-  //! c.endFunction();
-  //! @endcode
-  //!
-  //! You can see that building functions is really easy. Previous code snipped
-  //! will generate code for function with two 32 bit integer arguments. You
-  //! can access arguments by @c AsmJit::Function::argument() method. Arguments
-  //! are indexed from 0 (like everything in C).
-  //!
-  //! @code
-  //! // Accessing function arguments through AsmJit::Function example.
-  //!
-  //! // Compiler instance
-  //! Compiler c;
-  //!
-  //! // Begin of function (also emits function @c Prolog)
-  //! c.newFunction(
-  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
-  //!   CALL_CONV_DEFAULT,
-  //!   // Using function builder to generate arguments list
-  //!   BuildFunction2<int, int>());
-  //!
-  //! // Arguments are like other variables, you need to reference them by
-  //! // variable operands:
-  //! GPVar a0 = c.argGP(0);
-  //! GPVar a1 = c.argGP(1);
-  //!
-  //! // Use them.
-  //! c.add(a0, a1);
-  //!
-  //! // End of function (emits function epilog and return)
-  //! c.endFunction();
-  //! @endcode
-  //!
-  //! Arguments are like variables. How to manipulate with variables is
-  //! documented in @c AsmJit::Compiler, variables section.
-  //!
-  //! @note To get current function use @c currentFunction() method or save
-  //! pointer to @c AsmJit::Function returned by @c AsmJit::Compiler::newFunction<>
-  //! method. Recommended is to save the pointer.
-  //!
-  //! @sa @c BuildFunction0, @c BuildFunction1, @c BuildFunction2, ...
-  template<typename T>
-  inline EFunction* newFunction(uint32_t cconv, ASMJIT_TYPE_TO_TYPE(T) params) ASMJIT_NOTHROW
-  { return newFunction_(cconv, params.getArgs(), params.getCount()); }
 
   // --------------------------------------------------------------------------
   // [Embed]
@@ -3409,13 +3503,31 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Return from Procedure.
   inline void ret()
   {
-    _emitReturn(NULL);
+    _emitReturn(NULL, NULL);
   }
 
   //! @brief Return from Procedure.
-  inline void ret(const GPVar& val)
+  inline void ret(const GPVar& first)
   {
-    _emitReturn(&val);
+    _emitReturn(&first, NULL);
+  }
+
+  //! @brief Return from Procedure.
+  inline void ret(const GPVar& first, const GPVar& second)
+  {
+    _emitReturn(&first, &second);
+  }
+
+  //! @brief Return from Procedure.
+  inline void ret(const XMMVar& first)
+  {
+    _emitReturn(&first, NULL);
+  }
+
+  //! @brief Return from Procedure.
+  inline void ret(const XMMVar& first, const XMMVar& second)
+  {
+    _emitReturn(&first, &second);
   }
 
   //! @brief Rotate Bits Left.

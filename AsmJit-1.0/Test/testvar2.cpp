@@ -49,15 +49,13 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<sysint_t>());
 
   GPVar v0(c.newGP());
   GPVar v1(c.newGP());
   GPVar v2(c.newGP());
   GPVar v3(c.newGP());
   GPVar v4(c.newGP());
-
-  c.alloc(v0, nax);
 
   c.xor_(v0, v0);
 

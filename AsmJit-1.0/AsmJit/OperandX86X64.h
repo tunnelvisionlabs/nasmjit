@@ -1368,7 +1368,28 @@ struct ASMJIT_HIDDEN BaseVar : public Operand
   }
 
   inline BaseVar(const BaseVar& other) ASMJIT_NOTHROW :
-    Operand(other) {}
+    Operand(other)
+  {
+  }
+
+  // --------------------------------------------------------------------------
+  // [Type]
+  // --------------------------------------------------------------------------
+
+  inline uint32_t getVariableType() const ASMJIT_NOTHROW
+  { return _var.variableType; }
+
+  inline bool isGPVar() const ASMJIT_NOTHROW
+  { return _var.variableType <= VARIABLE_TYPE_GPQ; }
+
+  inline bool isX87Var() const ASMJIT_NOTHROW
+  { return _var.variableType >= VARIABLE_TYPE_X87 && _var.variableType <= VARIABLE_TYPE_X87_1D; }
+
+  inline bool isMMVar() const ASMJIT_NOTHROW
+  { return _var.variableType == VARIABLE_TYPE_MM; }
+
+  inline bool isXMMVar() const ASMJIT_NOTHROW
+  { return _var.variableType >= VARIABLE_TYPE_XMM && _var.variableType <= VARIABLE_TYPE_XMM_2D; }
 
   // --------------------------------------------------------------------------
   // [Memory Cast]
