@@ -3897,6 +3897,7 @@ ERet::ERet(Compiler* c, EFunction* function, const Operand* first, const Operand
   if (first ) _ret[0] = *first;
   if (second) _ret[1] = *second;
 
+/*
   // Check whether the return value is compatible.
   uint32_t retValType = function->getPrototype().getReturnValue();
   bool valid = false;
@@ -3922,6 +3923,9 @@ ERet::ERet(Compiler* c, EFunction* function, const Operand* first, const Operand
       }
       break;
 
+    case VARIABLE_TYPE_MM:
+      break;
+
     case INVALID_VALUE:
       if (_ret[0].isNone() && 
           _ret[1].isNone())
@@ -3939,6 +3943,7 @@ ERet::ERet(Compiler* c, EFunction* function, const Operand* first, const Operand
   {
     c->setError(ERROR_INCOMPATIBLE_RETURN_VALUE);
   }
+*/
 }
 
 ERet::~ERet() ASMJIT_NOTHROW
@@ -4028,26 +4033,43 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
     case VARIABLE_TYPE_X87:
     case VARIABLE_TYPE_X87_1F:
     case VARIABLE_TYPE_X87_1D:
-      for (i = 0; i < 2; i++)
-      {
+      // There is case that we need to return two values (Unix-ABI specific):
+      // - FLD #2
+      //-  FLD #1
+      i = 2;
+      do {
+        i--;
         uint32_t dsti = i;
         uint32_t srci;
 
         if (_ret[i].isVar())
         {
-          if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isX87Var())
+          {
+            // TODO: X87.
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
           {
             VarData* vdata = compiler->_getVarData(_ret[i].getId());
             ASMJIT_ASSERT(vdata != NULL);
 
             srci = vdata->registerIndex;
-            if (srci == INVALID_VALUE)
-              compiler->emit(INST_MOV, gpn(dsti), cc._getVarMem(vdata));
-            else if (dsti != srci)
-              compiler->emit(INST_MOV, gpn(dsti), gpn(srci));
+            if (srci != INVALID_VALUE) cc.saveXMMVar(vdata);
+
+            switch (vdata->type)
+            {
+              case VARIABLE_TYPE_XMM_1F:
+              case VARIABLE_TYPE_XMM_4F:
+                compiler->emit(INST_FLD, _baseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 4));
+                break;
+              case VARIABLE_TYPE_XMM_1D:
+              case VARIABLE_TYPE_XMM_2D:
+                compiler->emit(INST_FLD, _baseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 8));
+                break;
+            }
           }
         }
-      }
+      } while (i != 0);
       break;
 
     case VARIABLE_TYPE_MM:
@@ -4109,10 +4131,150 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
     case VARIABLE_TYPE_XMM:
     case VARIABLE_TYPE_XMM_4F:
     case VARIABLE_TYPE_XMM_2D:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = i;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isGPVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            uint32_t inst = _ret[i].isRegType(REG_TYPE_GPQ) ? INST_MOVQ : INST_MOVD;
+
+            if (srci == INVALID_VALUE)
+              compiler->emit(inst, xmm(dsti), cc._getVarMem(vdata));
+            else
+#if defined(ASMJIT_X86)
+              compiler->emit(inst, xmm(dsti), gpd(srci));
+#else
+              compiler->emit(inst, xmm(dsti), _ret[i].isRegType(REG_TYPE_GPQ) ? gpq(srci) : gpd(srci));
+#endif
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isX87Var())
+          {
+            // TODO: X87.
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            if (srci == INVALID_VALUE)
+              compiler->emit(INST_MOVQ, xmm(dsti), cc._getVarMem(vdata));
+            else
+              compiler->emit(INST_MOVQ, xmm(dsti), mm(srci));
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            if (srci == INVALID_VALUE)
+              compiler->emit(INST_MOVDQA, xmm(dsti), cc._getVarMem(vdata));
+            else if (dsti != srci)
+              compiler->emit(INST_MOVDQA, xmm(dsti), xmm(srci));
+          }
+        }
+      }
       break;
 
     case VARIABLE_TYPE_XMM_1F:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = i;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isX87Var())
+          {
+            // TODO: X87.
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            switch (vdata->type)
+            {
+              case VARIABLE_TYPE_XMM:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_MOVDQA, xmm(dsti), cc._getVarMem(vdata));
+                else if (dsti != srci)
+                  compiler->emit(INST_MOVDQA, xmm(dsti), xmm(srci));
+                break;
+              case VARIABLE_TYPE_XMM_1F:
+              case VARIABLE_TYPE_XMM_4F:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_MOVSS, xmm(dsti), cc._getVarMem(vdata));
+                else
+                  compiler->emit(INST_MOVSS, xmm(dsti), xmm(srci));
+                break;
+              case VARIABLE_TYPE_XMM_1D:
+              case VARIABLE_TYPE_XMM_2D:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_CVTSD2SS, xmm(dsti), cc._getVarMem(vdata));
+                else if (dsti != srci)
+                  compiler->emit(INST_CVTSD2SS, xmm(dsti), xmm(srci));
+                break;
+            }
+          }
+        }
+      }
+      break;
+
     case VARIABLE_TYPE_XMM_1D:
+      for (i = 0; i < 2; i++)
+      {
+        uint32_t dsti = i;
+        uint32_t srci;
+
+        if (_ret[i].isVar())
+        {
+          if (reinterpret_cast<const BaseVar&>(_ret[i]).isX87Var())
+          {
+            // TODO: X87.
+          }
+          else if (reinterpret_cast<const BaseVar&>(_ret[i]).isXMMVar())
+          {
+            VarData* vdata = compiler->_getVarData(_ret[i].getId());
+            ASMJIT_ASSERT(vdata != NULL);
+
+            srci = vdata->registerIndex;
+            switch (vdata->type)
+            {
+              case VARIABLE_TYPE_XMM:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_MOVDQA, xmm(dsti), cc._getVarMem(vdata));
+                else if (dsti != srci)
+                  compiler->emit(INST_MOVDQA, xmm(dsti), xmm(srci));
+                break;
+              case VARIABLE_TYPE_XMM_1F:
+              case VARIABLE_TYPE_XMM_4F:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_CVTSS2SD, xmm(dsti), cc._getVarMem(vdata));
+                else
+                  compiler->emit(INST_CVTSS2SD, xmm(dsti), xmm(srci));
+                break;
+              case VARIABLE_TYPE_XMM_1D:
+              case VARIABLE_TYPE_XMM_2D:
+                if (srci == INVALID_VALUE)
+                  compiler->emit(INST_MOVSD, xmm(dsti), cc._getVarMem(vdata));
+                else
+                  compiler->emit(INST_MOVSD, xmm(dsti), xmm(srci));
+                break;
+            }
+          }
+        }
+      }
       break;
 
     case INVALID_VALUE:
