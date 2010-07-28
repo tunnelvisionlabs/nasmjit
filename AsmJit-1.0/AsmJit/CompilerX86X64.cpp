@@ -6838,7 +6838,10 @@ void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJI
   void* result = a.make(memoryManager, allocType);
   if (_logger && _logger->isUsed())
   {
-    _logger->logFormat("*** COMPILER SUCCESS (wrote %u bytes).\n\n", (unsigned int)a.getCodeSize());
+    _logger->logFormat("*** COMPILER SUCCESS - Wrote %u bytes, code: %u, trampolines: %u.\n\n",
+      (unsigned int)a.getCodeSize(),
+      (unsigned int)a.getOffset(),
+      (unsigned int)a.getTrampolineSize());
   }
   return result;
 }
