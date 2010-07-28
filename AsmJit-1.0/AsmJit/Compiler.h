@@ -180,19 +180,19 @@ struct FunctionBuilderX : public FunctionDefinition
   template<typename T>
   inline void addArgument()
   {
-    addArgumentRaw(ASMJIT_TYPE_TO_TYPE(T)::Id);
+    addArgumentRaw(TypeToId<ASMJIT_TYPE_TO_TYPE(T)>::Id);
   }
 
   template<typename T>
   inline void setArgument(uint32_t id)
   {
-    setArgumentRaw(id, ASMJIT_TYPE_TO_TYPE(T)::Id);
+    setArgumentRaw(id, TypeToId<ASMJIT_TYPE_TO_TYPE(T)>::Id);
   }
 
   template<typename T>
   inline void setReturnValue()
   {
-    setReturnValueRaw(ASMJIT_TYPE_TO_TYPE(T)::Id);
+    setReturnValueRaw(TypeToId<ASMJIT_TYPE_TO_TYPE(T)>::Id);
   }
 
   inline void addArgumentRaw(uint32_t type)
