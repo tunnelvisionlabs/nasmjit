@@ -1377,7 +1377,7 @@ struct ASMJIT_API CompilerContext
   void _freeMemBlock(VarMemBlock* mem) ASMJIT_NOTHROW;
 
   void _allocMemoryOperands() ASMJIT_NOTHROW;
-  void _patchMemoryOperands() ASMJIT_NOTHROW;
+  void _patchMemoryOperands(Emittable* start, Emittable* stop) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -1959,6 +1959,9 @@ protected:
 
   //! @brief Variable name id (used to generate unique names per function).
   int _varNameId;
+
+  //! @brief Compiler context instance, only available after prepare().
+  CompilerContext* _cc;
 
   friend struct BaseVar;
   friend struct CompilerContext;

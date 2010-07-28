@@ -5909,11 +5909,11 @@ void CompilerContext::_allocMemoryOperands() ASMJIT_NOTHROW
   }
 }
 
-void CompilerContext::_patchMemoryOperands() ASMJIT_NOTHROW
+void CompilerContext::_patchMemoryOperands(Emittable* start, Emittable* stop) ASMJIT_NOTHROW
 {
   Emittable* cur;
 
-  for (cur = _compiler->getFirstEmittable(); cur; cur = cur->getNext())
+  for (cur = start;; cur = cur->getNext())
   {
     if (cur->getType() == EMITTABLE_INSTRUCTION)
     {
@@ -5941,6 +5941,7 @@ void CompilerContext::_patchMemoryOperands() ASMJIT_NOTHROW
         }
       }
     }
+    if (cur == stop) break;
   }
 }
 
@@ -5985,7 +5986,8 @@ CompilerCore::CompilerCore() ASMJIT_NOTHROW :
   _last(NULL),
   _current(NULL),
   _function(NULL),
-  _varNameId(0)
+  _varNameId(0),
+  _cc(NULL)
 {
 }
 
@@ -6052,6 +6054,8 @@ void CompilerCore::clear() ASMJIT_NOTHROW
   _zone.freeAll();
   _targetData.clear();
   _varData.clear();
+
+  _cc = NULL;
 
   if (_error) setError(ERROR_NONE);
 }
@@ -6221,6 +6225,7 @@ void CompilerCore::_emitInstruction(uint32_t code) ASMJIT_NOTHROW
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOTHROW
@@ -6234,6 +6239,7 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOT
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1) ASMJIT_NOTHROW
@@ -6248,6 +6254,7 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Oper
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
@@ -6263,6 +6270,7 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Oper
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3) ASMJIT_NOTHROW
@@ -6279,6 +6287,7 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Oper
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2, const Operand* o3, const Operand* o4) ASMJIT_NOTHROW
@@ -6296,6 +6305,7 @@ void CompilerCore::_emitInstruction(uint32_t code, const Operand* o0, const Oper
   if (!e) return;
 
   addEmittable(e);
+  if (_cc) { e->_offset = _cc->_currentOffset; e->prepare(*_cc); }
 }
 
 void CompilerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW
@@ -6728,6 +6738,8 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
   // Make code.
   for (;;)
   {
+    _cc = NULL;
+
     // ------------------------------------------------------------------------
     // Find function.
     for (;;)
@@ -6790,6 +6802,10 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     }
     // ------------------------------------------------------------------------
 
+    // Stage 2, we set compiler context also to Compiler so new emitted 
+    // instructions can call prepare() to itself.
+    _cc = &cc;
+
     // ------------------------------------------------------------------------
     // Step 2.a:
     // - Alloc registers.
@@ -6833,7 +6849,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     cc._function->_emitEpilog(cc);
 
     _current = _last;
-    cc._patchMemoryOperands();
+    cc._patchMemoryOperands(start, stop);
 
     // Step 2.e:
     // - Dump function prototype and variable statistics if logging is enabled.
