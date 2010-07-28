@@ -824,9 +824,12 @@ static char* dumpComment(char* buf, sysuint_t len, const uint8_t* binaryData, sy
       char* bufBegin = buf;
 
       // Append align.
-      if (currentLength < align) buf = Util::myfill(buf, ' ', align -= currentLength);
+      if (currentLength < align) 
+      {
+        buf = Util::myfill(buf, ' ', align - currentLength);
+      }
 
-      // append separator.
+      // Append separator.
       if (sep)
       {
         *buf++ = sep;
@@ -845,7 +848,7 @@ static char* dumpComment(char* buf, sysuint_t len, const uint8_t* binaryData, sy
       }
 
       currentLength += (sysuint_t)(buf - bufBegin);
-      align += 34;
+      align += 18;
       sep = '|';
     }
   }
