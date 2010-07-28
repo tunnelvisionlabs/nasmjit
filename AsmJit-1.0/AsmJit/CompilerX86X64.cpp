@@ -3406,6 +3406,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
           ? REG_INDEX_EAX
           : REG_INDEX_EDX,
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
+        vdata->changed = true;
       }
     }
 
@@ -3415,6 +3416,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       {
         cc.allocMMVar(vdata, REG_INDEX_MM0,
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
+        vdata->changed = true;
       }
     }
 
@@ -3426,6 +3428,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
           ? REG_INDEX_XMM0
           : REG_INDEX_XMM1,
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
+        vdata->changed = true;
       }
     }
 
@@ -3842,6 +3845,74 @@ void ECall::_moveSrcVariableToRegister(CompilerContext& cc,
             return;
         }
         break;
+
+      case VARIABLE_TYPE_XMM:
+      case VARIABLE_TYPE_XMM_4F:
+      case VARIABLE_TYPE_XMM_2D:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_GPD:
+            compiler->emit(INST_MOVD, xmm(dst), gpd(src));
+            return;
+#if defined(ASMJIT_X64)
+          case VARIABLE_TYPE_GPQ:
+            compiler->emit(INST_MOVQ, xmm(dst), gpq(src));
+            return;
+#endif // ASMJIT_X64
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mm(src));
+            return;
+          case VARIABLE_TYPE_XMM:
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_MOVDQA, xmm(dst), xmm(src));
+            return;
+        }
+        break;
+
+      case VARIABLE_TYPE_XMM_1F:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mm(src));
+            return;
+
+          case VARIABLE_TYPE_XMM:
+            compiler->emit(INST_MOVDQA, xmm(dst), xmm(src));
+            return;
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+            compiler->emit(INST_MOVSS, xmm(dst), xmm(src));
+            return;
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_CVTSD2SS, xmm(dst), xmm(src));
+            return;
+        }
+        break;
+
+      case VARIABLE_TYPE_XMM_1D:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mm(src));
+            return;
+
+          case VARIABLE_TYPE_XMM:
+            compiler->emit(INST_MOVDQA, xmm(dst), xmm(src));
+            return;
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+            compiler->emit(INST_CVTSS2SD, xmm(dst), xmm(src));
+            return;
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_MOVSD, xmm(dst), xmm(src));
+            return;
+        }
+        break;
     }
   }
   else
@@ -3895,6 +3966,74 @@ void ECall::_moveSrcVariableToRegister(CompilerContext& cc,
 #endif // ASMJIT_X64
           case VARIABLE_TYPE_MM:
             compiler->emit(INST_MOVQ, mm(dst), mem);
+            return;
+        }
+        break;
+
+      case VARIABLE_TYPE_XMM:
+      case VARIABLE_TYPE_XMM_4F:
+      case VARIABLE_TYPE_XMM_2D:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_GPD:
+            compiler->emit(INST_MOVD, xmm(dst), mem);
+            return;
+#if defined(ASMJIT_X64)
+          case VARIABLE_TYPE_GPQ:
+            compiler->emit(INST_MOVQ, xmm(dst), mem);
+            return;
+#endif // ASMJIT_X64
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mem);
+            return;
+          case VARIABLE_TYPE_XMM:
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_MOVDQA, xmm(dst), mem);
+            return;
+        }
+        break;
+
+      case VARIABLE_TYPE_XMM_1F:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mem);
+            return;
+
+          case VARIABLE_TYPE_XMM:
+            compiler->emit(INST_MOVDQA, xmm(dst), mem);
+            return;
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+            compiler->emit(INST_MOVSS, xmm(dst), mem);
+            return;
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_CVTSD2SS, xmm(dst), mem);
+            return;
+        }
+        break;
+
+      case VARIABLE_TYPE_XMM_1D:
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_MM:
+            compiler->emit(INST_MOVQ, xmm(dst), mem);
+            return;
+
+          case VARIABLE_TYPE_XMM:
+            compiler->emit(INST_MOVDQA, xmm(dst), mem);
+            return;
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+            compiler->emit(INST_CVTSS2SD, xmm(dst), mem);
+            return;
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+            compiler->emit(INST_MOVSD, xmm(dst), mem);
             return;
         }
         break;
@@ -6681,6 +6820,8 @@ void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJI
 {
   Assembler a;
   a._properties = _properties;
+  a.setLogger(_logger);
+
   serialize(a);
 
   if (this->getError())
@@ -6694,39 +6835,16 @@ void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJI
     return NULL;
   }
 
+  void* result = a.make(memoryManager, allocType);
   if (_logger && _logger->isUsed())
   {
     _logger->logFormat("*** COMPILER SUCCESS (wrote %u bytes).\n\n", (unsigned int)a.getCodeSize());
   }
-
-  return a.make(memoryManager, allocType);
+  return result;
 }
-
-// Logger switcher used in Compiler::serialize().
-struct ASMJIT_HIDDEN LoggerSwitcher
-{
-  LoggerSwitcher(Assembler* a, Compiler* c) ASMJIT_NOTHROW :
-    a(a),
-    logger(a->getLogger())
-  {
-    // Set compiler logger.
-    if (!logger && c->getLogger()) a->setLogger(c->getLogger());
-  }
-
-  ~LoggerSwitcher() ASMJIT_NOTHROW
-  {
-    // Restore logger.
-    a->setLogger(logger);
-  }
-
-  Assembler* a;
-  Logger* logger;
-};
 
 void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
 {
-  LoggerSwitcher loggerSwitcher(&a, reinterpret_cast<Compiler*>(this));
-
   // Context.
   CompilerContext cc(reinterpret_cast<Compiler*>(this));
 
