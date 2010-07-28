@@ -342,13 +342,13 @@ struct ASMJIT_API Buffer
   //! @brief Get maximum pointer in code buffer for growing.
   inline uint8_t* getMax() const ASMJIT_NOTHROW { return _max; }
 
-  //! @brief Return current offset in buffer (same as codeSize()).
+  //! @brief Get current offset in buffer (same as codeSize()).
   inline sysint_t getOffset() const ASMJIT_NOTHROW { return (sysint_t)(_cur - _data); }
 
-  //! @brief Return capacity of buffer.
+  //! @brief Get capacity of buffer.
   inline sysint_t getCapacity() const ASMJIT_NOTHROW { return _capacity; }
 
-  //! @brief Return grow threshold.
+  //! @brief Get grow threshold.
   inline sysint_t getGrowThreshold() const ASMJIT_NOTHROW { return _growThreshold; }
 
   //! @brief Ensure space for next instruction
@@ -385,7 +385,7 @@ struct ASMJIT_API Buffer
   //! @brief Free buffer and NULL all pointers.
   void free() ASMJIT_NOTHROW;
 
-  //! @brief Return buffer and NULL all pointers.
+  //! @brief Take ownership of the buffer data and purge @c Buffer instance.
   uint8_t* take() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -543,13 +543,13 @@ struct PodVector
   // [Data]
   // --------------------------------------------------------------------------
 
-  //! @brief Return vector data.
+  //! @brief Get vector data.
   inline T* getData() ASMJIT_NOTHROW { return _data; }
   //! @overload
   inline const T* getData() const ASMJIT_NOTHROW { return _data; }
-  //! @brief Return vector length.
+  //! @brief Get vector length.
   inline sysuint_t getLength() const ASMJIT_NOTHROW { return _length; }
-  //! @brief Return vector capacity (allocation capacity).
+  //! @brief get vector capacity (allocation capacity).
   inline sysuint_t getCapacity() const ASMJIT_NOTHROW { return _capacity; }
 
   // --------------------------------------------------------------------------
@@ -611,7 +611,7 @@ struct PodVector
     return true;
   }
 
-  //! @brief Return index of @a val or (sysuint_t)-1 if not found.
+  //! @brief Get index of @a val or (sysuint_t)-1 if not found.
   sysuint_t indexOf(const T& val) const ASMJIT_NOTHROW
   {
     sysuint_t i = 0, len = _length;
@@ -620,7 +620,7 @@ struct PodVector
   }
 
   //! @brief Remove element at index @a i.
-  void removeAt(sysuint_t i)
+  void removeAt(sysuint_t i) ASMJIT_NOTHROW
   {
     ASMJIT_ASSERT(i < _length);
 
@@ -629,8 +629,8 @@ struct PodVector
     memmove(dst, dst + 1, _length - i);
   }
 
-  //! @brief Swap this pod vertor with @a other.
-  void swap(PodVector<T>& other)
+  //! @brief Swap this pod-vector with @a other.
+  void swap(PodVector<T>& other) ASMJIT_NOTHROW
   {
     T* _tmp_data = _data;
     sysuint_t _tmp_length = _length;
