@@ -1280,6 +1280,10 @@ struct ASMJIT_HIDDEN Mem : public Operand
   inline void* getTarget() const ASMJIT_NOTHROW
   { return _mem.target; }
 
+  //! @brief Set memory operand size.
+  inline void setSize(uint32_t size) ASMJIT_NOTHROW
+  { _mem.size = size; }
+
   //! @brief Set absolute target address.
   inline void setTarget(void* target) ASMJIT_NOTHROW
   { _mem.target = target; }

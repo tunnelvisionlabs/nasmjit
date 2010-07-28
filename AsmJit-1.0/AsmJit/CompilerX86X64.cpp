@@ -2391,7 +2391,11 @@ void EFunction::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedMM  = _modifiedAndPreservedMM;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
-  int32_t stackSubtract =_memStackSize16 + _peMovStackSize + _peAdjustStackSize;
+  int32_t stackSubtract =
+    _memStackSize16 + 
+    _peMovStackSize + 
+    _peAdjustStackSize + 
+    _functionCallStackSize;
   int32_t nspPos;
 
   if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
@@ -2494,7 +2498,11 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedMM  = _modifiedAndPreservedMM;
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
-  int32_t stackAdd =_memStackSize16 + _peMovStackSize + _peAdjustStackSize;
+  int32_t stackAdd =
+    _memStackSize16 +
+    _peMovStackSize +
+    _peAdjustStackSize +
+    _functionCallStackSize;
   int32_t nspPos;
 
   nspPos = (_isEspAdjusted)
@@ -2895,28 +2903,45 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           case VARIABLE_TYPE_X87:
           case VARIABLE_TYPE_X87_1F:
           case VARIABLE_TYPE_X87_1D:
-            ASMJIT_ASSERT(i == argumentsCount+1);
+#if defined(ASMJIT_X86)
             if (i == argumentsCount+1)
               var->flags |= VarCallRecord::FLAG_OUT_ST0;
             else
               var->flags |= VarCallRecord::FLAG_OUT_ST1;
-            break;
-
-          case VARIABLE_TYPE_MM:
-            ASMJIT_ASSERT(i == argumentsCount+1);
-            var->flags |= VarCallRecord::FLAG_OUT_MM0;
-            break;
-
-          case VARIABLE_TYPE_XMM:
-          case VARIABLE_TYPE_XMM_1F:
-          case VARIABLE_TYPE_XMM_4F:
-          case VARIABLE_TYPE_XMM_1D:
-          case VARIABLE_TYPE_XMM_2D:
-            ASMJIT_ASSERT(i == argumentsCount+1);
+#else
             if (i == argumentsCount+1)
               var->flags |= VarCallRecord::FLAG_OUT_XMM0;
             else
               var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+#endif
+            break;
+
+          case VARIABLE_TYPE_MM:
+            var->flags |= VarCallRecord::FLAG_OUT_MM0;
+            break;
+
+          case VARIABLE_TYPE_XMM:
+          case VARIABLE_TYPE_XMM_4F:
+          case VARIABLE_TYPE_XMM_2D:
+            if (i == argumentsCount+1)
+              var->flags |= VarCallRecord::FLAG_OUT_XMM0;
+            else
+              var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+            break;
+
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_1D:
+#if defined(ASMJIT_X86)
+            if (i == argumentsCount+1)
+              var->flags |= VarCallRecord::FLAG_OUT_ST0;
+            else
+              var->flags |= VarCallRecord::FLAG_OUT_ST1;
+#else
+            if (i == argumentsCount+1)
+              var->flags |= VarCallRecord::FLAG_OUT_XMM0;
+            else
+              var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+#endif
             break;
 
           default:
@@ -3400,6 +3425,38 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
           ? REG_INDEX_XMM0
           : REG_INDEX_XMM1,
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
+      }
+    }
+
+    if (rec->flags & (VarCallRecord::FLAG_OUT_ST0 | VarCallRecord::FLAG_OUT_ST1))
+    {
+      if (getVariableClass(vdata->type) & VariableInfo::CLASS_XMM)
+      {
+        Mem mem(cc._getVarMem(vdata));
+        cc.unuseVar(vdata, VARIABLE_STATE_MEMORY);
+
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_4F:
+          {
+            mem.setSize(4);
+            compiler->emit(INST_FSTP, mem);
+            break;
+          }
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_2D:
+          {
+            mem.setSize(8);
+            compiler->emit(INST_FSTP, mem);
+            break;
+          }
+          default:
+          {
+            compiler->comment("*** WARNING: Can't convert float return value to untyped XMM\n");
+            break;
+          }
+        }
       }
     }
 
@@ -6615,20 +6672,23 @@ void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJI
   a._properties = _properties;
   serialize(a);
 
+  if (this->getError())
+  {
+    return NULL;
+  }
+
   if (a.getError())
   {
     setError(a.getError());
     return NULL;
   }
-  else
-  {
-    if (_logger && _logger->isUsed())
-    {
-      _logger->logFormat("*** COMPILER SUCCESS (wrote %u bytes).\n\n", (unsigned int)a.getCodeSize());
-    }
 
-    return a.make(memoryManager, allocType);
+  if (_logger && _logger->isUsed())
+  {
+    _logger->logFormat("*** COMPILER SUCCESS (wrote %u bytes).\n\n", (unsigned int)a.getCodeSize());
   }
+
+  return a.make(memoryManager, allocType);
 }
 
 // Logger switcher used in Compiler::serialize().

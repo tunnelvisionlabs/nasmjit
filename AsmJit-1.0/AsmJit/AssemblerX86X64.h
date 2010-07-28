@@ -3073,7 +3073,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Store Floating Point Value (FPU).
   //!
-  //! Store st(0) to !a reg.
+  //! Store st(0) to @a reg.
   inline void fst(const X87Reg& reg)
   {
     _emitInstruction(INST_FST, &reg);
@@ -3091,7 +3091,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Store Floating Point Value and Pop Register Stack (FPU).
   //!
-  //! Store st(0) to !a reg and pop register stack.
+  //! Store st(0) to @a reg and pop register stack.
   inline void fstp(const X87Reg& reg)
   {
     _emitInstruction(INST_FSTP, &reg);
