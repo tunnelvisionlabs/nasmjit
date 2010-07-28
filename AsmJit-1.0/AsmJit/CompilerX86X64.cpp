@@ -2184,7 +2184,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   {
     cc._argumentsBaseReg = REG_INDEX_ESP;
     cc._argumentsBaseOffset = (_isEspAdjusted)
-      ? (alignTo16(_functionCallStackSize) + _memStackSize16 + _peMovStackSize + _pePushPopStackSize + _peAdjustStackSize)
+      ? (_functionCallStackSize + _memStackSize16 + _peMovStackSize + _pePushPopStackSize + _peAdjustStackSize)
       : (_pePushPopStackSize);
   }
   else
@@ -2196,7 +2196,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   cc._variablesBaseReg = REG_INDEX_ESP;
   cc._variablesBaseOffset = 0;
   if (!_isEspAdjusted)
-    cc._variablesBaseOffset = -alignTo16(_functionCallStackSize) - _memStackSize16 - _peMovStackSize - _peAdjustStackSize;
+    cc._variablesBaseOffset = -_functionCallStackSize - _memStackSize16 - _peMovStackSize - _peAdjustStackSize;
 }
 
 void EFunction::_dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW
@@ -2392,10 +2392,10 @@ void EFunction::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
   int32_t stackSubtract =
+    _functionCallStackSize +
     _memStackSize16 + 
     _peMovStackSize + 
-    _peAdjustStackSize + 
-    _functionCallStackSize;
+    _peAdjustStackSize;
   int32_t nspPos;
 
   if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
@@ -2499,10 +2499,10 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedXMM = _modifiedAndPreservedXMM;
 
   int32_t stackAdd =
+    _functionCallStackSize +
     _memStackSize16 +
     _peMovStackSize +
-    _peAdjustStackSize +
-    _functionCallStackSize;
+    _peAdjustStackSize;
   int32_t nspPos;
 
   nspPos = (_isEspAdjusted)
@@ -2553,13 +2553,9 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  // Restore GP registers.
+  // Restore GP registers using POP.
   if (preservedGP && _pePushPop)
   {
-    // Restore GP registers using MOV.
-    if (_isEspAdjusted && stackAdd != 0)
-      _compiler->emit(INST_ADD, nsp, imm(stackAdd));
-
     for (i = REG_NUM_GP - 1, mask = 1 << i; (int32_t)i >= 0; i--, mask >>= 1)
     {
       if (preservedGP & mask)
@@ -2568,6 +2564,9 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
       }
     }
   }
+
+  if (_isEspAdjusted && stackAdd != 0)
+    _compiler->emit(INST_ADD, nsp, imm(stackAdd));
 
   // Emit Emms.
   if (_emitEMMS) _compiler->emit(INST_EMMS);
@@ -2601,6 +2600,8 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
 
 void EFunction::reserveStackForFunctionCall(int32_t size)
 {
+  size = alignTo16(size);
+
   if (size > _functionCallStackSize) _functionCallStackSize = size;
   _isCallee = true;
 }
