@@ -887,7 +887,7 @@ protected:
   //! If another function is called from this function, it's needed to prepare
   //! stack for it. If this member is true then it's likely that true will be
   //! also @c _isEspAdjusted one.
-  bool _isCallee;
+  bool _isCaller;
 
   //! @brief Whether to emit prolog / epilog sequence using push & pop
   //! instructions (the default).

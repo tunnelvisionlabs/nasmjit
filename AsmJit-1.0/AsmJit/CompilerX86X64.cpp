@@ -1955,7 +1955,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   // Just clear to safe defaults.
   _isNaked = false;
   _isEspAdjusted = false;
-  _isCallee = false;
+  _isCaller = false;
 
   _pePushPop = true;
   _emitEMMS = false;
@@ -2111,7 +2111,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   _emitLFence = false;
 
   // If another function is called by the function it's needed to adjust ESP.
-  if (_isCallee)
+  if (_isCaller)
     _isEspAdjusted = true;
 
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
@@ -2603,7 +2603,7 @@ void EFunction::reserveStackForFunctionCall(int32_t size)
   size = alignTo16(size);
 
   if (size > _functionCallStackSize) _functionCallStackSize = size;
-  _isCallee = true;
+  _isCaller = true;
 }
 
 // ============================================================================
@@ -4761,6 +4761,10 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // Spill candidate.
   VarData* spillCandidate = NULL;
 
+  // Whether to alloc non-preserved first or last.
+  bool nonPreservedFirst = true;
+  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+
   // --------------------------------------------------------------------------
   // [Already Allocated]
   // --------------------------------------------------------------------------
@@ -4828,13 +4832,22 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
           (i != REG_INDEX_EBP || _allocableEBP) &&
           (i != REG_INDEX_ESP || _allocableESP))
       {
-        // Convenience to alloc non-preserved first.
-        if (idx != INVALID_VALUE && (preservedGP & mask) != 0) continue;
-        idx = i;
-
-        // If current register is preserved, we should try to find different
-        // one that is not. This can save one push / pop in prolog / epilog.
-        if ((preservedGP & mask) == 0) break;
+        // Convenience to alloc non-preserved first or non-preserved last.
+        if (nonPreservedFirst)
+        {
+          if (idx != INVALID_VALUE && (preservedGP & mask) != 0) continue;
+          idx = i;
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((preservedGP & mask) == 0) break;
+        }
+        else
+        {
+          if (idx != INVALID_VALUE && (preservedGP & mask) == 0) continue;
+          idx = i;
+          // The opposite.
+          if ((preservedGP & mask) != 0) break;
+        }
       }
     }
   }
@@ -4950,6 +4963,10 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // Spill candidate.
   VarData* spillCandidate = NULL;
 
+  // Whether to alloc non-preserved first or last.
+  bool nonPreservedFirst = true;
+  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+
   // --------------------------------------------------------------------------
   // [Already Allocated]
   // --------------------------------------------------------------------------
@@ -5008,13 +5025,22 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
     {
       if ((_state.usedMM & mask) == 0)
       {
-        // Convenience to alloc non-preserved first.
-        if (idx != INVALID_VALUE && (preservedMM & mask) != 0) continue;
-        idx = i;
-
-        // If current register is preserved, we should try to find different
-        // one that is not. This can save one push / pop in prolog / epilog.
-        if ((preservedMM & mask) == 0) break;
+        // Convenience to alloc non-preserved first or non-preserved last.
+        if (nonPreservedFirst)
+        {
+          if (idx != INVALID_VALUE && (preservedMM & mask) != 0) continue;
+          idx = i;
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((preservedMM & mask) == 0) break;
+        }
+        else
+        {
+          if (idx != INVALID_VALUE && (preservedMM & mask) == 0) continue;
+          idx = i;
+          // The opposite.
+          if ((preservedMM & mask) != 0) break;
+        }
       }
     }
   }
@@ -5117,6 +5143,10 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   // Spill candidate.
   VarData* spillCandidate = NULL;
 
+  // Whether to alloc non-preserved first or last.
+  bool nonPreservedFirst = true;
+  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+
   // --------------------------------------------------------------------------
   // [Already Allocated]
   // --------------------------------------------------------------------------
@@ -5175,13 +5205,22 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
     {
       if ((_state.usedXMM & mask) == 0)
       {
-        // Convenience to alloc non-preserved first.
-        if (idx != INVALID_VALUE && (preservedXMM & mask) != 0) continue;
-        idx = i;
-
-        // If current register is preserved, we should try to find different
-        // one that is not. This can save one push / pop in prolog / epilog.
-        if ((preservedXMM & mask) == 0) break;
+        // Convenience to alloc non-preserved first or non-preserved last.
+        if (nonPreservedFirst)
+        {
+          if (idx != INVALID_VALUE && (preservedXMM & mask) != 0) continue;
+          idx = i;
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((preservedXMM & mask) == 0) break;
+        }
+        else
+        {
+          if (idx != INVALID_VALUE && (preservedXMM & mask) == 0) continue;
+          idx = i;
+          // The opposite.
+          if ((preservedXMM & mask) != 0) break;
+        }
       }
     }
   }
