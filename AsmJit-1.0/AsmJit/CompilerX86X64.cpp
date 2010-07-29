@@ -2194,9 +2194,9 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   }
 
   cc._variablesBaseReg = REG_INDEX_ESP;
-  cc._variablesBaseOffset = 0;
+  cc._variablesBaseOffset = _functionCallStackSize;
   if (!_isEspAdjusted)
-    cc._variablesBaseOffset = -_functionCallStackSize - _memStackSize16 - _peMovStackSize - _peAdjustStackSize;
+    cc._variablesBaseOffset = -_memStackSize16 - _peMovStackSize - _peAdjustStackSize;
 }
 
 void EFunction::_dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW
@@ -2553,6 +2553,9 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
+  if (_isEspAdjusted && stackAdd != 0)
+    _compiler->emit(INST_ADD, nsp, imm(stackAdd));
+
   // Restore GP registers using POP.
   if (preservedGP && _pePushPop)
   {
@@ -2564,9 +2567,6 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
       }
     }
   }
-
-  if (_isEspAdjusted && stackAdd != 0)
-    _compiler->emit(INST_ADD, nsp, imm(stackAdd));
 
   // Emit Emms.
   if (_emitEMMS) _compiler->emit(INST_EMMS);
