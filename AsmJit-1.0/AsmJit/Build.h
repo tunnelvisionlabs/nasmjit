@@ -186,7 +186,7 @@ namespace AsmJit {
 // [AsmJit - Types]
 // ----------------------------------------------------------------------------
 
-#if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1500)
+#if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
 // Use <stdint.h>
 #include <stdint.h>
