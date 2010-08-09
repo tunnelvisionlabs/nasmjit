@@ -33,6 +33,7 @@
 #include "CpuInfo.h"
 #include "Defs.h"
 #include "Logger.h"
+#include "Make.h"
 #include "MemoryManager.h"
 #include "Platform.h"
 #include "Util_p.h"
@@ -2453,7 +2454,7 @@ void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) A
 // [AsmJit::AssemblerCore - Relocation helpers]
 // ============================================================================
 
-void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
+void AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
@@ -2462,7 +2463,7 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
   sysint_t csize = getCodeSize();
 
   // We are copying exactly size of generated code. Extra code for trampolines
-  // is generated on-the-fly by relocator (this code not exists at now).
+  // is generated on-the-fly by relocator (this code not exists at this moment).
   memcpy(dst, _buffer.getData(), coff);
 
 #if defined(ASMJIT_X64)
@@ -2470,7 +2471,7 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
   uint8_t* tramp = dst + coff;
 #endif // ASMJIT_X64
 
-  // Relocate recorded locations.
+  // Relocate all recorded locations.
   sysint_t i;
   sysint_t len = _relocData.getLength();
 
@@ -2495,17 +2496,17 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
         break;
 
       case RelocData::RELATIVE_TO_ABSOLUTE:
-        val = (sysint_t)(dst + r.destination);
+        val = (sysint_t)(addressBase + r.destination);
         break;
 
       case RelocData::ABSOLUTE_TO_RELATIVE:
       case RelocData::ABSOLUTE_TO_RELATIVE_TRAMPOLINE:
-        val = (sysint_t)( (sysuint_t)r.address - ((sysuint_t)dst + (sysuint_t)r.offset + 4) );
+        val = (sysint_t)( (sysuint_t)r.address - ((sysuint_t)addressBase + (sysuint_t)r.offset + 4) );
 
 #if defined(ASMJIT_X64)
         if (r.type == RelocData::ABSOLUTE_TO_RELATIVE_TRAMPOLINE && !Util::isInt32(val))
         {
-          val = (sysint_t)( (sysuint_t)tramp - ((sysuint_t)dst + (sysuint_t)r.offset + 4) );
+          val = (sysint_t)( (sysuint_t)tramp - ((sysuint_t)addressBase + (sysuint_t)r.offset + 4) );
           useTrampoline = true;
         }
 #endif // ASMJIT_X64
@@ -2534,7 +2535,7 @@ void AssemblerCore::relocCode(void* _dst) const ASMJIT_NOTHROW
     {
       if (getLogger() && getLogger()->isUsed())
       {
-        getLogger()->logFormat("; Trampoline from %p -> %p\n", dst + r.offset, r.address);
+        getLogger()->logFormat("; Trampoline from %p -> %p\n", (int8_t*)addressBase + r.offset, r.address);
       }
 
       TrampolineWriter::writeTrampoline(tramp, r.address);
@@ -2855,25 +2856,31 @@ void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Make]
 // ============================================================================
 
-void* AssemblerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJIT_NOTHROW
+void* AssemblerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
 {
   // Do nothing on error state or when no instruction was emitted.
   if (_error || getCodeSize() == 0) return NULL;
 
-  // Switch to global memory manager if not provided.
-  if (memoryManager == NULL) memoryManager = MemoryManager::getGlobal();
+  void* addressPtr = NULL;
+  sysuint_t addressBase = 0;
+  sysuint_t codeSize = getCodeSize();
 
-  // Try to allocate memory and check if everything is ok.
-  void* p = memoryManager->alloc(getCodeSize(), allocType);
-  if (p == NULL)
+  if (makeOptions == NULL)
   {
-    setError(ERROR_NO_VIRTUAL_MEMORY);
-    return NULL;
+    MakeOptions _defaultOptions;
+    _error = _defaultOptions.alloc(&addressPtr, &addressBase, codeSize);
+  }
+  else
+  {
+    _error = makeOptions->alloc(&addressPtr, &addressBase, codeSize);
   }
 
+  // Return on error.
+  if (_error) return NULL;
+
   // This is last step. Relocate code and return generated code.
-  relocCode(p);
-  return p;
+  relocCode(addressPtr, addressBase);
+  return addressPtr;
 }
 
 // ============================================================================

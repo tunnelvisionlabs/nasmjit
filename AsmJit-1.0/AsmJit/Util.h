@@ -342,7 +342,7 @@ struct ASMJIT_API Buffer
   //! @brief Get maximum pointer in code buffer for growing.
   inline uint8_t* getMax() const ASMJIT_NOTHROW { return _max; }
 
-  //! @brief Get current offset in buffer (same as codeSize()).
+  //! @brief Get current offset in buffer.
   inline sysint_t getOffset() const ASMJIT_NOTHROW { return (sysint_t)(_cur - _data); }
 
   //! @brief Get capacity of buffer.

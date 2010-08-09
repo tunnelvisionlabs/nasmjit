@@ -369,6 +369,7 @@
 #include "CpuInfo.h"
 #include "Defs.h"
 #include "Logger.h"
+#include "Make.h"
 #include "MemoryManager.h"
 #include "Operand.h"
 #include "Platform.h"

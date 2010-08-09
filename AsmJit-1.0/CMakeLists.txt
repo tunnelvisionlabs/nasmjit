@@ -19,6 +19,7 @@ Set(ASMJIT_SOURCES
   AsmJit/Defs.cpp
   AsmJit/DefsX86X64.cpp
   AsmJit/Logger.cpp
+  AsmJit/Make.cpp
   AsmJit/MemoryManager.cpp
   AsmJit/Operand.cpp
   AsmJit/OperandX86X64.cpp
@@ -41,6 +42,7 @@ Set(ASMJIT_HEADERS
   AsmJit/Defs.h
   AsmJit/DefsX86X64.h
   AsmJit/Logger.h
+  AsmJit/Make.h
   AsmJit/MemoryManager.h
   AsmJit/Operand.h
   AsmJit/OperandX86X64.h

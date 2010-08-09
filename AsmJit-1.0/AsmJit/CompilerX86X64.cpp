@@ -32,6 +32,7 @@
 #include "Assembler.h"
 #include "Compiler.h"
 #include "CpuInfo.h"
+#include "Make.h"
 #include "Logger.h"
 #include "Util_p.h"
 
@@ -6855,7 +6856,7 @@ StateData* CompilerCore::_newStateData() ASMJIT_NOTHROW
 // [AsmJit::CompilerCore - Make]
 // ============================================================================
 
-void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJIT_NOTHROW
+void* CompilerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
 {
   Assembler a;
   a._properties = _properties;
@@ -6874,7 +6875,7 @@ void* CompilerCore::make(MemoryManager* memoryManager, uint32_t allocType) ASMJI
     return NULL;
   }
 
-  void* result = a.make(memoryManager, allocType);
+  void* result = a.make(makeOptions);
   if (_logger && _logger->isUsed())
   {
     _logger->logFormat("*** COMPILER SUCCESS - Wrote %u bytes, code: %u, trampolines: %u.\n\n",
