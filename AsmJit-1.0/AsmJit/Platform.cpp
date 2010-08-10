@@ -117,12 +117,23 @@ static VirtualMemoryLocal& vm() ASMJIT_NOTHROW
 void* VirtualMemory::alloc(sysuint_t length, sysuint_t* allocated, bool canExecute)
   ASMJIT_NOTHROW
 {
+  return allocProcessMemory(GetCurrentProcess(), length, allocated, canExecute);
+}
+
+void VirtualMemory::free(void* addr, sysuint_t length)
+  ASMJIT_NOTHROW
+{
+  return freeProcessMemory(GetCurrentProcess(), addr, length);
+}
+
+void* VirtualMemory::allocProcessMemory(HANDLE hProcess, sysuint_t length, sysuint_t* allocated, bool canExecute) ASMJIT_NOTHROW
+{
   // VirtualAlloc rounds allocated size to page size automatically.
   sysuint_t msize = roundUp(length, vm().pageSize);
 
   // Windows XP SP2 / Vista allows Data Excution Prevention (DEP).
   WORD protect = canExecute ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
-  LPVOID mbase = VirtualAlloc(NULL, msize, MEM_COMMIT | MEM_RESERVE, protect);
+  LPVOID mbase = VirtualAllocEx(hProcess, NULL, msize, MEM_COMMIT | MEM_RESERVE, protect);
   if (mbase == NULL) return NULL;
 
   ASMJIT_ASSERT(isAligned(reinterpret_cast<sysuint_t>(mbase), vm().alignment));
@@ -131,10 +142,9 @@ void* VirtualMemory::alloc(sysuint_t length, sysuint_t* allocated, bool canExecu
   return mbase;
 }
 
-void VirtualMemory::free(void* addr, sysuint_t /* length */)
-  ASMJIT_NOTHROW
+void VirtualMemory::freeProcessMemory(HANDLE hProcess, void* addr, sysuint_t /* length */) ASMJIT_NOTHROW
 {
-  VirtualFree(addr, 0, MEM_RELEASE);
+  VirtualFreeEx(hProcess, addr, 0, MEM_RELEASE);
 }
 
 sysuint_t VirtualMemory::getAlignment()

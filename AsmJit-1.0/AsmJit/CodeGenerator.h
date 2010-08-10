@@ -47,7 +47,7 @@ struct MemoryManager;
 //! by @c Assembler or @c Compiler.
 struct ASMJIT_API CodeGenerator
 {
-  //! @brief Create a @c CodeGenerator instance.
+  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c CodeGenerator instance.
   CodeGenerator();
   //! @brief Destroy the @c CodeGenerator instance.
   virtual ~CodeGenerator();
@@ -87,9 +87,9 @@ private:
 
 struct JitCodeGenerator : public CodeGenerator
 {
-  //! @brief Create a @c CodeGenerator instance.
+  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c JitCodeGenerator instance.
   JitCodeGenerator();
-  //! @brief Destroy the @c CodeGenerator instance.
+  //! @brief Destroy the @c JitCodeGenerator instance.
   virtual ~JitCodeGenerator();
 
   // --------------------------------------------------------------------------
@@ -115,19 +115,6 @@ struct JitCodeGenerator : public CodeGenerator
   // [Interface]
   // --------------------------------------------------------------------------
 
-  //! @brief Allocate memory for code of @a codeSize size.
-  //!
-  //! @param addressPtr Target address where to store the code. This address
-  //! is used to store the generated assembler into.
-  //! @param addressBase Base address used for displacement. AsmJit default
-  //! memory manager will always return the same value as @a addressPtr, but
-  //! when patching already running process this might be different.
-  //! @param codeSize Size of generated code (bytes needed to alloc).
-  //!
-  //! This method was designed in extensibility in mind. It can be used to
-  //! allocate memory used by JIT compiler, remote process patcher or linker.
-  //!
-  //! @retrurn Error value, see @c ERROR_CODE.
   virtual uint32_t alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize);
 
   // --------------------------------------------------------------------------

@@ -197,6 +197,18 @@ struct ASMJIT_API VirtualMemory
   //! @brief Free memory allocated by @c alloc()
   static void free(void* addr, sysuint_t length) ASMJIT_NOTHROW;
 
+#if defined(ASMJIT_WINDOWS)
+  //! @brief Allocate virtual memory of @a hProcess.
+  //!
+  //! @note This function is windows specific and unportable.
+  static void* allocProcessMemory(HANDLE hProcess, sysuint_t length, sysuint_t* allocated, bool canExecute) ASMJIT_NOTHROW;
+
+  //! @brief Free virtual memory of @a hProcess.
+  //!
+  //! @note This function is windows specific and unportable.
+  static void freeProcessMemory(HANDLE hProcess, void* addr, sysuint_t length) ASMJIT_NOTHROW;
+#endif // ASMJIT_WINDOWS
+
   //! @brief Get the alignment guaranteed by alloc().
   static sysuint_t getAlignment() ASMJIT_NOTHROW;
 

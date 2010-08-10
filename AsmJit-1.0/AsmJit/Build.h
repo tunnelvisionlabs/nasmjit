@@ -275,5 +275,9 @@ ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 // # endif
 // #endif // __GNUC__
 
+#if defined(ASMJIT_WINDOWS)
+#include <Windows.h>
+#endif // ASMJIT_WINDOWS
+
 // [Guard]
 #endif // _ASMJIT_BUILD_H
