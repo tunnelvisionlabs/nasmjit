@@ -2862,18 +2862,9 @@ void* AssemblerCore::make() ASMJIT_NOTHROW
   // Do nothing on error state or when no instruction was emitted.
   if (_error || getCodeSize() == 0) return NULL;
 
-  void* addressPtr = NULL;
-  sysuint_t addressBase = 0;
-  sysuint_t codeSize = getCodeSize();
-
-  _error = _codeGenerator->alloc(&addressPtr, &addressBase, codeSize);
-
-  // Return on error.
-  if (_error) return NULL;
-
-  // This is last step. Relocate code and return generated code.
-  relocCode(addressPtr, addressBase);
-  return addressPtr;
+  void* p;
+  _error = _codeGenerator->generate(&p, reinterpret_cast<Assembler*>(this));
+  return p;
 }
 
 // ============================================================================

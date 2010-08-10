@@ -24,6 +24,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
+#include "Assembler.h"
 #include "CodeGenerator.h"
 #include "Defs.h"
 #include "MemoryManager.h"
@@ -62,22 +63,32 @@ JitCodeGenerator::~JitCodeGenerator()
 {
 }
 
-uint32_t JitCodeGenerator::alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize)
+uint32_t JitCodeGenerator::generate(void** dest, Assembler* assembler)
 {
-  ASMJIT_ASSERT(addressPtr != NULL);
-  ASMJIT_ASSERT(addressBase != NULL);
-  ASMJIT_ASSERT(codeSize > 0);
+  // Disallow empty code generation.
+  sysuint_t codeSize = assembler->getCodeSize();
+  if (codeSize == 0)
+  {
+    *dest = NULL;
+    return AsmJit::ERROR_NO_FUNCTION;
+  }
 
-  MemoryManager* memmgr = getMemoryManager();
   // Switch to global memory manager if not provided.
+  MemoryManager* memmgr = getMemoryManager();
   if (memmgr == NULL) memmgr = MemoryManager::getGlobal();
 
   void* p = memmgr->alloc(codeSize, getAllocType());
+  if (p == NULL)
+  {
+    *dest = NULL;
+    return ERROR_NO_VIRTUAL_MEMORY;
+  }
 
-  *addressPtr = p;
-  *addressBase = (sysuint_t)p;
+  // This is the last step. Relocate the code and return it.
+  assembler->relocCode(p);
 
-  return p ? ERROR_NONE : ERROR_NO_VIRTUAL_MEMORY;
+  *dest = p;
+  return ERROR_NONE;
 }
 
 } // AsmJit namespace
