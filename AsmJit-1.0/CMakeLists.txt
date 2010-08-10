@@ -13,13 +13,13 @@ EndIf(NOT ASMJIT_DIR)
 Set(ASMJIT_SOURCES
   AsmJit/Assembler.cpp
   AsmJit/AssemblerX86X64.cpp
+  AsmJit/CodeGenerator.cpp
   AsmJit/Compiler.cpp
   AsmJit/CompilerX86X64.cpp
   AsmJit/CpuInfo.cpp
   AsmJit/Defs.cpp
   AsmJit/DefsX86X64.cpp
   AsmJit/Logger.cpp
-  AsmJit/Make.cpp
   AsmJit/MemoryManager.cpp
   AsmJit/Operand.cpp
   AsmJit/OperandX86X64.cpp
@@ -35,6 +35,7 @@ Set(ASMJIT_HEADERS
   AsmJit/Assembler.h
   AsmJit/AssemblerX86X64.h
   AsmJit/Build.h
+  AsmJit/CodeGenerator.h
   AsmJit/Compiler.h
   AsmJit/CompilerX86X64.h
   AsmJit/Config.h
@@ -42,7 +43,6 @@ Set(ASMJIT_HEADERS
   AsmJit/Defs.h
   AsmJit/DefsX86X64.h
   AsmJit/Logger.h
-  AsmJit/Make.h
   AsmJit/MemoryManager.h
   AsmJit/Operand.h
   AsmJit/OperandX86X64.h

@@ -24,8 +24,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJIT_MAKE_H
-#define _ASMJIT_MAKE_H
+#ifndef _ASMJIT_CODEGENERATOR_H
+#define _ASMJIT_CODEGENERATOR_H
 
 // [Dependencies]
 #include "Build.h"
@@ -36,54 +36,27 @@ namespace AsmJit {
 // [Forward Declarations]
 // ============================================================================
 
+struct JitCodeGenerator;
 struct MemoryManager;
 
 // ============================================================================
-// [AsmJit::MakeOptions]
+// [AsmJit::CodeGenerator]
 // ============================================================================
 
-//! @brief Options that may be used by @c Assembler::make() or
-//! @c Compiler::make() methods.
-//!
-//! Normally when @c MakeOptions instance is not provided then the default one
-//! is temporarily created and used. Temporary instance will use default memory
-//! allocator and freeable memory - memory which can be freed by using the
-//! default memory manager - @c MemoryManager::getDefault().
-//!
-//! Default allocation type is @c MEMORY_ALLOC_FREEABLE. If you need pernament
-//! allocation you should use @c MEMORY_ALLOC_PERNAMENT instead. Notice that
-//! not all memory managers support pernament memory allocation, in this case
-//! the memory manager must allocate freeable memory.
-struct ASMJIT_API MakeOptions
+//! @brief Code generator is core class for changing behavior of code generated
+//! by @c Assembler or @c Compiler.
+struct ASMJIT_API CodeGenerator
 {
-  // --------------------------------------------------------------------------
-  // [Construction / Destruction]
-  // --------------------------------------------------------------------------
-
-  //! @brief Create a @c MakeOptions instance, setting all members to defaults.
-  MakeOptions();
-  //! @brief Destroy the @c MakeOptions instance.
-  virtual ~MakeOptions();
+  //! @brief Create a @c CodeGenerator instance.
+  CodeGenerator();
+  //! @brief Destroy the @c CodeGenerator instance.
+  virtual ~CodeGenerator();
 
   // --------------------------------------------------------------------------
-  // [Accessors]
+  // [Interface]
   // --------------------------------------------------------------------------
 
-  //! @brief Get the @c MemoryManager instance.
-  inline MemoryManager* getMemoryManager() const { return _memoryManager; }
-  //! @brief Set the @c MemoryManager instance.
-  inline void setMemoryManager(MemoryManager* memoryManager) { _memoryManager = memoryManager; }
-
-  //! @brief Get the type of allocation.
-  inline uint32_t getAllocType() const { return _allocType; }
-  //! @brief Set the type of allocation.
-  inline void setAllocType(uint32_t allocType) { _allocType = allocType; }
-
-  // --------------------------------------------------------------------------
-  // [Functionality]
-  // --------------------------------------------------------------------------
-
-  //! @brief Allocate memory for code of @a coreSize size.
+  //! @brief Allocate memory for code of @a codeSize size.
   //!
   //! @param addressPtr Target address where to store the code. This address
   //! is used to store generated assembler into.
@@ -96,7 +69,70 @@ struct ASMJIT_API MakeOptions
   //! allocate memory used by JIT compiler, remote process patcher or linker.
   //!
   //! @retrurn Error value, see @c ERROR_CODE.
+  virtual uint32_t alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize) = 0;
+
+  // --------------------------------------------------------------------------
+  // [Statics]
+  // --------------------------------------------------------------------------
+
+  static CodeGenerator* getGlobal();
+
+private:
+  ASMJIT_DISABLE_COPY(CodeGenerator)
+};
+
+// ============================================================================
+// [AsmJit::JitCodeGenerator]
+// ============================================================================
+
+struct JitCodeGenerator : public CodeGenerator
+{
+  //! @brief Create a @c CodeGenerator instance.
+  JitCodeGenerator();
+  //! @brief Destroy the @c CodeGenerator instance.
+  virtual ~JitCodeGenerator();
+
+  // --------------------------------------------------------------------------
+  // [Memory Manager and Alloc Type]
+  // --------------------------------------------------------------------------
+
+  // Note: These members can be ignored by all derived classes. They are here
+  // only to privide default implementation. All other implementations (remote
+  // code patching or making dynamic loadable libraries/executables) ignore
+  // members accessed by these accessors.
+
+  //! @brief Get the @c MemoryManager instance.
+  inline MemoryManager* getMemoryManager() const { return _memoryManager; }
+  //! @brief Set the @c MemoryManager instance.
+  inline void setMemoryManager(MemoryManager* memoryManager) { _memoryManager = memoryManager; }
+
+  //! @brief Get the type of allocation.
+  inline uint32_t getAllocType() const { return _allocType; }
+  //! @brief Set the type of allocation.
+  inline void setAllocType(uint32_t allocType) { _allocType = allocType; }
+
+  // --------------------------------------------------------------------------
+  // [Interface]
+  // --------------------------------------------------------------------------
+
+  //! @brief Allocate memory for code of @a codeSize size.
+  //!
+  //! @param addressPtr Target address where to store the code. This address
+  //! is used to store the generated assembler into.
+  //! @param addressBase Base address used for displacement. AsmJit default
+  //! memory manager will always return the same value as @a addressPtr, but
+  //! when patching already running process this might be different.
+  //! @param codeSize Size of generated code (bytes needed to alloc).
+  //!
+  //! This method was designed in extensibility in mind. It can be used to
+  //! allocate memory used by JIT compiler, remote process patcher or linker.
+  //!
+  //! @retrurn Error value, see @c ERROR_CODE.
   virtual uint32_t alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize);
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
 
 protected:
   //! @brief Memory manager.
@@ -105,11 +141,10 @@ protected:
   uint32_t _allocType;
 
 private:
-  ASMJIT_DISABLE_COPY(MakeOptions)
+  ASMJIT_DISABLE_COPY(JitCodeGenerator)
 };
-
 
 } // AsmJit namespace
 
 // [Guard]
-#endif // _ASMJIT_MAKE_H
+#endif // _ASMJIT_CODEGENERATOR_H

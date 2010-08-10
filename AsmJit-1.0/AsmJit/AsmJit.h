@@ -365,11 +365,11 @@
 // [Includes]
 #include "Build.h"
 #include "Assembler.h"
+#include "CodeGenerator.h"
 #include "Compiler.h"
 #include "CpuInfo.h"
 #include "Defs.h"
 #include "Logger.h"
-#include "Make.h"
 #include "MemoryManager.h"
 #include "Operand.h"
 #include "Platform.h"

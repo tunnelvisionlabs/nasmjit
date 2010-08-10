@@ -30,10 +30,10 @@
 
 // [Dependencies]
 #include "Assembler.h"
+#include "CodeGenerator.h"
 #include "CpuInfo.h"
 #include "Defs.h"
 #include "Logger.h"
-#include "Make.h"
 #include "MemoryManager.h"
 #include "Platform.h"
 #include "Util_p.h"
@@ -87,7 +87,8 @@ struct ASMJIT_HIDDEN TrampolineWriter
 // [AsmJit::AssemblerCore - Construction / Destruction]
 // ============================================================================
 
-AssemblerCore::AssemblerCore() ASMJIT_NOTHROW :
+AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
+  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _zone(16384 - sizeof(Zone::Chunk) - 32),
   _logger(NULL),
   _error(0),
@@ -2856,7 +2857,7 @@ void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Make]
 // ============================================================================
 
-void* AssemblerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
+void* AssemblerCore::make() ASMJIT_NOTHROW
 {
   // Do nothing on error state or when no instruction was emitted.
   if (_error || getCodeSize() == 0) return NULL;
@@ -2865,15 +2866,7 @@ void* AssemblerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
   sysuint_t addressBase = 0;
   sysuint_t codeSize = getCodeSize();
 
-  if (makeOptions == NULL)
-  {
-    MakeOptions _defaultOptions;
-    _error = _defaultOptions.alloc(&addressPtr, &addressBase, codeSize);
-  }
-  else
-  {
-    _error = makeOptions->alloc(&addressPtr, &addressBase, codeSize);
-  }
+  _error = _codeGenerator->alloc(&addressPtr, &addressBase, codeSize);
 
   // Return on error.
   if (_error) return NULL;
@@ -2914,8 +2907,14 @@ AssemblerCore::LabelLink* AssemblerCore::_newLabelLink() ASMJIT_NOTHROW
 // [AsmJit::Assembler - Construction / Destruction]
 // ============================================================================
 
-Assembler::Assembler() ASMJIT_NOTHROW {}
-Assembler::~Assembler() ASMJIT_NOTHROW {}
+Assembler::Assembler(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
+  AssemblerIntrinsics(codeGenerator)
+{
+}
+
+Assembler::~Assembler() ASMJIT_NOTHROW
+{
+}
 
 } // AsmJit namespace
 

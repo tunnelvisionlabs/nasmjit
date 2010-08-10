@@ -30,9 +30,9 @@
 
 // [Dependencies]
 #include "Assembler.h"
+#include "CodeGenerator.h"
 #include "Compiler.h"
 #include "CpuInfo.h"
-#include "Make.h"
 #include "Logger.h"
 #include "Util_p.h"
 
@@ -6156,7 +6156,8 @@ bool CompilerUtil::isStack16ByteAligned()
 // [AsmJit::CompilerCore - Construction / Destruction]
 // ============================================================================
 
-CompilerCore::CompilerCore() ASMJIT_NOTHROW :
+CompilerCore::CompilerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
+  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _zone(16384 - sizeof(Zone::Chunk) - 32),
   _logger(NULL),
   _error(0),
@@ -6856,9 +6857,9 @@ StateData* CompilerCore::_newStateData() ASMJIT_NOTHROW
 // [AsmJit::CompilerCore - Make]
 // ============================================================================
 
-void* CompilerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
+void* CompilerCore::make() ASMJIT_NOTHROW
 {
-  Assembler a;
+  Assembler a(_codeGenerator);
   a._properties = _properties;
   a.setLogger(_logger);
 
@@ -6875,7 +6876,7 @@ void* CompilerCore::make(MakeOptions* makeOptions) ASMJIT_NOTHROW
     return NULL;
   }
 
-  void* result = a.make(makeOptions);
+  void* result = a.make();
   if (_logger && _logger->isUsed())
   {
     _logger->logFormat("*** COMPILER SUCCESS - Wrote %u bytes, code: %u, trampolines: %u.\n\n",
@@ -7058,8 +7059,14 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
 // [AsmJit::Compiler - Construction / Destruction]
 // ============================================================================
 
-Compiler::Compiler() ASMJIT_NOTHROW {}
-Compiler::~Compiler() ASMJIT_NOTHROW {}
+Compiler::Compiler(CodeGenerator* codeGenerator) ASMJIT_NOTHROW : 
+  CompilerIntrinsics(codeGenerator)
+{
+}
+
+Compiler::~Compiler() ASMJIT_NOTHROW
+{
+}
 
 } // AsmJit namespace
 

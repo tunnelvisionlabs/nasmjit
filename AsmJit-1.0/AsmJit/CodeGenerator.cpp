@@ -24,23 +24,45 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Dependencies]
+#include "CodeGenerator.h"
 #include "Defs.h"
-#include "Make.h"
 #include "MemoryManager.h"
 
 namespace AsmJit {
 
-MakeOptions::MakeOptions() :
-  _memoryManager(MemoryManager::getGlobal()),
+// ============================================================================
+// [AsmJit::CodeGenerator]
+// ============================================================================
+
+CodeGenerator::CodeGenerator()
+{
+}
+
+CodeGenerator::~CodeGenerator()
+{
+}
+
+CodeGenerator* CodeGenerator::getGlobal()
+{
+  static JitCodeGenerator global;
+  return &global;
+}
+
+// ============================================================================
+// [AsmJit::JitCodeGenerator]
+// ============================================================================
+
+JitCodeGenerator::JitCodeGenerator() :
+  _memoryManager(NULL),
   _allocType(MEMORY_ALLOC_FREEABLE)
 {
 }
 
-MakeOptions::~MakeOptions()
+JitCodeGenerator::~JitCodeGenerator()
 {
 }
 
-uint32_t MakeOptions::alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize)
+uint32_t JitCodeGenerator::alloc(void** addressPtr, sysuint_t* addressBase, sysuint_t codeSize)
 {
   ASMJIT_ASSERT(addressPtr != NULL);
   ASMJIT_ASSERT(addressBase != NULL);
