@@ -5011,9 +5011,9 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Byte Mask Write (SSE).
   //!
   //! @note The default memory location is specified by DS:EDI.
-  inline void maskmovq(const MMVar& data, const MMVar& mask)
+  inline void maskmovq(const GPVar& dst_ptr, const MMVar& data, const MMVar& mask)
   {
-    _emitInstruction(INST_MASKMOVQ, &data, &mask);
+    _emitInstruction(INST_MASKMOVQ, &dst_ptr, &data, &mask);
   }
 
   //! @brief Packed SP-FP Maximum (SSE).
@@ -5832,9 +5832,9 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Store Selected Bytes of Double Quadword (SSE2).
   //!
   //! @note Target is DS:EDI.
-  inline void maskmovdqu(const XMMVar& src, const XMMVar& mask)
+  inline void maskmovdqu(const GPVar& dst_ptr, const XMMVar& src, const XMMVar& mask)
   {
-    _emitInstruction(INST_MASKMOVDQU, &src, &mask);
+    _emitInstruction(INST_MASKMOVDQU, &dst_ptr, &src, &mask);
   }
 
   //! @brief Return Maximum Packed Double-Precision FP Values (SSE2).
@@ -8091,6 +8091,81 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! operators) so overhead by creating machine code by @c AsmJit::Compiler
 //! is minimized.
 //!
+//! <b>The Story</b>
+//!
+//! Before telling you how Compiler works I'd like to write a story. I'd like
+//! to cover reasons why this class was created and why I'm recommending to use 
+//! it. When I released the first version of AsmJit (0.1) it was a toy. The
+//! first function I wrote was function which is still available as testjit and
+//! which simply returns 1024. The reason why function works for both 32-bit/
+//! 64-bit mode and for Windows/Unix specific calling conventions is luck, no
+//! arguments usage and no registers usage except returning value in EAX/RAX.
+//!
+//! Then I started a project called BlitJit which was targetted to generating
+//! JIT code for computer graphics. After writing some lines I decided that I
+//! can't join pieces of code together without abstraction, should be
+//! pixels source pointer in ESI/RSI or EDI/RDI or it's completelly 
+//! irrellevant? What about destination pointer and SSE2 register for reading
+//! input pixels? The simple answer might be "just pick some one and use it".
+//!
+//! Another reason for abstraction is function calling-conventions. It's really
+//! not easy to write assembler code for 32-bit and 64-bit platform supporting
+//! three calling conventions (32-bit is similar between Windows and Unix, but
+//! 64-bit calling conventions are different).
+//!
+//! At this time I realized that I can't write code which uses named registers,
+//! I need to abstract it. In most cases you don't need specific register, you
+//! need to emit instruction that does something with 'virtual' register(s),
+//! memory, immediate or label.
+//!
+//! The first version of AsmJit with Compiler was 0.5 (or 0.6?, can't remember).
+//! There was support for 32-bit and 64-bit mode, function calling conventions,
+//! but when emitting instructions the developer needed to decide which 
+//! registers are changed, which are only read or completely overwritten. This
+//! model helped a lot when generating code, especially when joining more
+//! code-sections together, but there was also small possibility for mistakes.
+//! Simply the first version of Compiler was great improvement over low-level 
+//! Assembler class, but the API design wasn't perfect.
+//!
+//! The second version of Compiler, completelly rewritten and based on 
+//! different goals, is part of AsmJit starting at version 1.0. This version
+//! was designed after the first one and it contains serious improvements over
+//! the old one. The first improvement is that you just use instructions with 
+//! virtual registers - called variables. When using compiler there is no way
+//! to use native registers, there are variables instead. AsmJit is smarter 
+//! than before and it knows which register is needed only for read (r), 
+//! read/write (w) or overwrite (x). Supported are also instructions which 
+//! are using some registers in implicit way (these registers are not part of
+//! instruction definition in string form). For example to use CPUID instruction 
+//! you must give it four variables which will be automatically allocated to
+//! input/output registers (EAX, EBX, ECX, EDX).
+//! 
+//! Another improvement is algorithm used by a register allocator. In first
+//! version the registers were allocated when creating instruction stream. In
+//! new version registers are allocated after calling @c Compiler::make(). This
+//! means that register allocator has information about scope of all variables
+//! and their usage statistics. The algorithm to allocate registers is very
+//! simple and it's always called as a 'linear scan register allocator'. When
+//! you get out of registers the all possible variables are scored and the worst
+//! is spilled. Of course algorithm ignores the variables used for current
+//! instruction.
+//!
+//! In addition, because registers are allocated after the code stream is
+//! generated, the state switches between jumps are handled by Compiler too.
+//! You don't need to worry about jumps, compiler always do this dirty work 
+//! for you.
+//!
+//! The nearly last thing I'd like to present is calling other functions from 
+//! the generated code. AsmJit uses a @c FunctionPrototype class to hold
+//! the function parameters, their position in stack (or register index) and
+//! function return value. This class is used internally, but it can be
+//! used to create your own function calling-convention. All standard function
+//! calling conventions are implemented.
+//!
+//! Please enjoy the new version of Compiler, it was created for writing a
+//! low-level code using high-level API, leaving developer to concentrate to
+//! real problems and not to solving a register puzzle.
+//!
 //! <b>Code Generation</b>
 //!
 //! First that is needed to know about compiler is that compiler never emits
@@ -8238,7 +8313,6 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for
 //! more complete examples.
 //!
-
 //! <b>Memory Management</b>
 //!
 //! @c Compiler Memory management follows these rules:

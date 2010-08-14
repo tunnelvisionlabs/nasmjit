@@ -785,6 +785,11 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
         // Special...
         break;
 
+      case INST_MASKMOVQ:
+      case INST_MASKMOVDQU:
+        // Special...
+        break;
+
       case INST_ENTER:
       case INST_LEAVE:
         // Special...
@@ -1169,6 +1174,23 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             vdata->registerReadCount++;
             var->vflags |= VARIABLE_ALLOC_READ;
             var->regIndex = REG_INDEX_EAX;
+            break;
+
+          case INST_MASKMOVQ:
+          case INST_MASKMOVDQU:
+            switch (i)
+            {
+              case 0:
+                vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                var->regIndex = REG_INDEX_EDI;
+                break;
+              case 1:
+              case 2:
+                vdata->registerReadCount++;
+                var->vflags |= VARIABLE_ALLOC_READ;
+                break;
+            }
             break;
 
           case INST_ENTER:
@@ -1683,6 +1705,11 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
       case INST_LAHF:
       case INST_SAHF:
         a._emitInstruction(_code);
+        return;
+
+      case INST_MASKMOVQ:
+      case INST_MASKMOVDQU:
+        a._emitInstruction(_code, &_operands[1], &_operands[2]);
         return;
 
       case INST_ENTER:
