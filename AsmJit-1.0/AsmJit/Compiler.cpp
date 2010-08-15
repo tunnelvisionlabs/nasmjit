@@ -191,6 +191,11 @@ ETarget::~ETarget() ASMJIT_NOTHROW
 {
 }
 
+void ETarget::prepare(CompilerContext& cc) ASMJIT_NOTHROW
+{
+  _offset = cc._currentOffset++;
+}
+
 void ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   if (cc._unrecheable)

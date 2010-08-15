@@ -659,10 +659,8 @@ void EVariableHint::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       break;
     case VARIABLE_HINT_SAVE_AND_UNUSE:
       if (!cc._isActive(_vdata)) cc._addActive(_vdata);
-      goto unuse;
+      // ... fall through ...
     case VARIABLE_HINT_UNUSE:
-unuse:
-      if (cc._isActive(_vdata)) cc._freeActive(_vdata);
       break;
   }
 }
@@ -690,8 +688,10 @@ void EVariableHint::translate(CompilerContext& cc) ASMJIT_NOTHROW
     case VARIABLE_HINT_UNUSE:
 unuse:
       cc.unuseVar(_vdata, VARIABLE_STATE_UNUSED);
-      break;
+      return;
   }
+
+  cc.unuseVarOnEndOdScope(this, _vdata);
 }
 
 // ============================================================================
@@ -1651,6 +1651,11 @@ void EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
         break;
     }
   }
+
+  for (i = 0; i < variablesCount; i++)
+  {
+    cc.unuseVarOnEndOdScope(this, _variables[i].vdata);
+  }
 }
 
 void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
@@ -1903,6 +1908,18 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
   {
     cc._unrecheable = 1;
   }
+
+  // Need to traverse all active variables, because they h ::prepare() 
+  if (cc._active)
+  {
+    VarData* first = cc._active;
+    VarData* var = first;
+
+    do {
+      cc.unuseVarOnEndOdScope(this, var);
+      var = var->nextActive;
+    } while (var != first);
+  }
 }
 
 void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
@@ -1920,7 +1937,7 @@ void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
     // NOTE: We can't use this technique if instruction is forward conditional
     // jump. The reason is that when generating code we can't change state here,
     // because next instruction depends to it.
-    cc._restoreState(_jumpTarget->getState());
+    cc._restoreState(_jumpTarget->getState(), _jumpTarget->getOffset());
   }
   else
   {
@@ -1932,7 +1949,7 @@ void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
     Emittable* ext = cc.getExtraBlock();
     Emittable* old = compiler->setCurrentEmittable(ext);
 
-    cc._restoreState(_jumpTarget->getState());
+    cc._restoreState(_jumpTarget->getState(), _jumpTarget->getOffset());
 
     if (compiler->getCurrentEmittable() != ext)
     {
@@ -2103,7 +2120,7 @@ void EFunction::_allocVariables(CompilerContext& cc) ASMJIT_NOTHROW
   {
     VarData* vdata = _argumentVariables[i];
 
-    if (vdata->firstEmittable != vdata->lastEmittable ||
+    if (vdata->firstEmittable != NULL ||
         vdata->isRegArgument ||
         vdata->isMemArgument)
     {
@@ -3495,6 +3512,12 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     // Cleanup.
     vdata->temp = NULL;
   }
+
+  for (i = 0; i < variablesCount; i++)
+  {
+    VarData* v = _variables[i].vdata;
+    cc.unuseVarOnEndOdScope(this, _variables[i].vdata);
+  }
 }
 
 uint32_t ECall::_findTemporaryGpRegister(CompilerContext& cc) ASMJIT_NOTHROW
@@ -4123,6 +4146,8 @@ ERet::ERet(Compiler* c, EFunction* function, const Operand* first, const Operand
   if (second) _ret[1] = *second;
 
 /*
+  // TODO:?
+
   // Check whether the return value is compatible.
   uint32_t retValType = function->getPrototype().getReturnValue();
   bool valid = false;
@@ -4177,6 +4202,8 @@ ERet::~ERet() ASMJIT_NOTHROW
 
 void ERet::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 {
+  _offset = cc._currentOffset;
+
   uint32_t retValType = getFunction()->getPrototype().getReturnValue();
   if (retValType != INVALID_VALUE)
   {
@@ -4510,6 +4537,15 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
   if (emitJumpToEpilog())
   {
     cc._unrecheable = 1;
+  }
+
+  for (i = 0; i < 2; i++)
+  {
+    if (_ret[i].isVar())
+    {
+      VarData* vdata = compiler->_getVarData(_ret[i].getId());
+      cc.unuseVarOnEndOdScope(this, vdata);
+    }
   }
 }
 
@@ -5914,7 +5950,7 @@ void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
   }
 }
 
-void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
+void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASMJIT_NOTHROW
 {
   // 16 + 8 + 16 = GP + MMX + XMM registers.
 
@@ -5940,7 +5976,7 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
     {
       uint32_t regIndex = i - base;
 
-      // Spill register
+      // Spill the register.
       if (fromVar != NULL)
       {
         // It is possible that variable that was saved in state currently not
@@ -5948,14 +5984,20 @@ void CompilerContext::_restoreState(StateData* state) ASMJIT_NOTHROW
         if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
           // TODO: Implement it.
-
-          // Optimization, do not spill it, we can simply abandon it
-          // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
+          unuseVar(fromVar, VARIABLE_STATE_UNUSED);
         }
         else
         {
-          // Variables match, do normal spill
-          spillVar(fromVar);
+          if (targetOffset != INVALID_VALUE && fromVar->lastEmittable->getOffset() < targetOffset)
+          {
+            // Do not spill a variable that is out of scope.
+            unuseVar(fromVar, VARIABLE_STATE_UNUSED);
+          }
+          else
+          {
+            // Normal state change, spill...
+            spillVar(fromVar);
+          }
         }
       }
     }
@@ -6958,7 +7000,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
-    // Step 1.a:
+    // Step 1:
     // - Assign offset to each emittable.
     // - Extract variables from instructions.
     // - Prepare variables for register allocator, doing:
@@ -6970,6 +7012,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       if (cur == stop) break;
     }
 
+    /*
     // Step 1.b:
     // - Add "VARIABLE_HINT_UNUSE" hint to the end of each variable scope.
     if (cc._active)
@@ -6990,10 +7033,11 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
         vdata = vdata->nextActive;
       } while (vdata != cc._active);
     }
+    */
     // ------------------------------------------------------------------------
 
-    // Stage 2, we set compiler context also to Compiler so new emitted 
-    // instructions can call prepare() to itself.
+    // We set compiler context also to Compiler so new emitted  instructions 
+    // can call prepare() to itself.
     _cc = &cc;
 
     // ------------------------------------------------------------------------

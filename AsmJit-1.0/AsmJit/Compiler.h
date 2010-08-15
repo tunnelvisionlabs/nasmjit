@@ -704,6 +704,7 @@ struct ASMJIT_API ETarget : public Emittable
   // [Emit]
   // --------------------------------------------------------------------------
 
+  virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 

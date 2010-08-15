@@ -1282,6 +1282,9 @@ struct ASMJIT_API CompilerContext
   //! @brief Unuse variable (didn't spill, just forget about it).
   void unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW;
 
+  //! @brief Helper method that is called for each variable per emittable.
+  inline void unuseVarOnEndOdScope(Emittable* e, VarData* v) { if (v->lastEmittable == e) unuseVar(v, VARIABLE_STATE_UNUSED); }
+
   //! @brief Allocate variable (GP).
   void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
   //! @brief Save variable (GP).
@@ -1373,7 +1376,7 @@ struct ASMJIT_API CompilerContext
 
   StateData* _saveState() ASMJIT_NOTHROW;
   void _assignState(StateData* state) ASMJIT_NOTHROW;
-  void _restoreState(StateData* state) ASMJIT_NOTHROW;
+  void _restoreState(StateData* state, uint32_t targetOffset = INVALID_VALUE) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Memory Allocator]
