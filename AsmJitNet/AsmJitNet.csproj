@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{03B87F76-C672-449A-9272-A866C6B62481}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AsmJitNet</RootNamespace>
+    <AssemblyName>AsmJitNet</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;ASMJIT_X86</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Debug\AsmJitNet.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE;ASMJIT_X86</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Release\AsmJitNet.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;ASMJIT_X64</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Debug\AsmJitNet.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;ASMJIT_X64</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Release\AsmJitNet.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ArgumentsDirection.cs" />
+    <Compile Include="ArraySegment.cs" />
+    <Compile Include="Assembler.cs" />
+    <Compile Include="BaseReg.cs" />
+    <Compile Include="BaseVar.cs" />
+    <Compile Include="Buffer.cs" />
+    <Compile Include="Call.cs" />
+    <Compile Include="CallingConvention.cs" />
+    <Compile Include="Comment.cs" />
+    <Compile Include="Compiler.cs" />
+    <Compile Include="CompilerContext.cs" />
+    <Compile Include="CompilerProperty.cs" />
+    <Compile Include="CompilerUtil.cs" />
+    <Compile Include="CpuInfo.cs" />
+    <Compile Include="CpuVendor.cs" />
+    <Compile Include="DefaultMemoryManager.cs" />
+    <Compile Include="Dummy.cs" />
+    <Compile Include="Emittable.cs" />
+    <Compile Include="EmittableType.cs" />
+    <Compile Include="Epilog.cs" />
+    <Compile Include="Errors.cs" />
+    <Compile Include="FileLogger.cs" />
+    <Compile Include="ForwardJumpData.cs" />
+    <Compile Include="Function.cs" />
+    <Compile Include="FunctionHint.cs" />
+    <Compile Include="FunctionPrototype.cs" />
+    <Compile Include="GPReg.cs" />
+    <Compile Include="GPVar.cs" />
+    <Compile Include="Hint.cs" />
+    <Compile Include="HintByteValue.cs" />
+    <Compile Include="Imm.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="InstructionCode.cs" />
+    <Compile Include="InstructionDescription.cs" />
+    <Compile Include="InstructionFlags.cs" />
+    <Compile Include="InstructionGroup.cs" />
+    <Compile Include="Jmp.cs" />
+    <Compile Include="Label.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Mem.cs" />
+    <Compile Include="MemoryAllocType.cs" />
+    <Compile Include="MemoryManager.cs" />
+    <Compile Include="MemoryType.cs" />
+    <Compile Include="MMReg.cs" />
+    <Compile Include="Operand.cs" />
+    <Compile Include="OperandFlags.cs" />
+    <Compile Include="OperandType.cs" />
+    <Compile Include="Prolog.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegCode.cs" />
+    <Compile Include="RegData.cs" />
+    <Compile Include="RegIndex.cs" />
+    <Compile Include="Register.cs" />
+    <Compile Include="RegNum.cs" />
+    <Compile Include="RegType.cs" />
+    <Compile Include="RelocationData.cs" />
+    <Compile Include="RelocationType.cs" />
+    <Compile Include="Ret.cs" />
+    <Compile Include="SegmentPrefix.cs" />
+    <Compile Include="Size.cs" />
+    <Compile Include="StateData.cs" />
+    <Compile Include="Target.cs" />
+    <Compile Include="Util.cs" />
+    <Compile Include="VarAllocRecord.cs" />
+    <Compile Include="VarCallFlags.cs" />
+    <Compile Include="VarCallRecord.cs" />
+    <Compile Include="VarData.cs" />
+    <Compile Include="VariableAlloc.cs" />
+    <Compile Include="VariableClass.cs" />
+    <Compile Include="VariableFlags.cs" />
+    <Compile Include="VariableHint.cs" />
+    <Compile Include="VariableHintKind.cs" />
+    <Compile Include="VariableInfo.cs" />
+    <Compile Include="VariableState.cs" />
+    <Compile Include="VariableType.cs" />
+    <Compile Include="VarMemBlock.cs" />
+    <Compile Include="VirtualMemory.cs" />
+    <Compile Include="X87Reg.cs" />
+    <Compile Include="XMMReg.cs" />
+    <Compile Include="XMMVar.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
