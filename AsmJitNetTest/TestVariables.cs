@@ -151,7 +151,7 @@
 
             MyFn2 fn = (MyFn2)Marshal.GetDelegateForFunctionPointer(c.Make(), typeof(MyFn2));
             var result = fn(1, 2);
-            Assert.AreEqual(760, result);
+            Assert.AreEqual(760U, result);
         }
 
         [TestMethod]
