@@ -119,6 +119,23 @@ namespace AsmJitNet2
             }
         }
 
+        public bool IsExtendedRegisterUsed
+        {
+            get
+            {
+                // Hacky, but correct.
+                // - If operand type is register then extended register is register with
+                //   index 8 and higher (8 to 15 inclusive).
+                // - If operand type is memory operand then we need to take care about
+                //   label (in _mem.base) and INVALID_VALUE, we just decrement the value
+                //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there
+                //   then it's extended register.
+                return (IsReg && (((BaseReg)this).Code & (int)RegIndex.Mask) >= 8) ||
+                       (IsMem && (((uint)((Mem)this).Base - 8U) < 8U) ||
+                                   (((uint)((Mem)this).Index - 8U) < 8U));
+            }
+        }
+
         public bool IsRegType(RegType regType)
         {
             return IsReg && ((BaseReg)this).RegisterType == regType;

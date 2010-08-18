@@ -27,5 +27,19 @@
             get;
             set;
         }
+
+        [Obsolete]
+        public IntPtr Address
+        {
+            get
+            {
+                return Destination;
+            }
+
+            set
+            {
+                Destination = value;
+            }
+        }
     }
 }

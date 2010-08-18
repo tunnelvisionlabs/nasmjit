@@ -416,10 +416,10 @@
                             else
                                 var.Flags |= VarCallFlags.OUT_ST1;
 #else
-            if (i == argumentsCount+1)
-              var->flags |= VarCallRecord.FLAG_OUT_XMM0;
-            else
-              var->flags |= VarCallRecord.FLAG_OUT_XMM1;
+                            if (i == argumentsCount + 1)
+                                var.Flags |= VarCallFlags.OUT_XMM0;
+                            else
+                                var.Flags |= VarCallFlags.OUT_XMM1;
 #endif
                             break;
 
@@ -444,10 +444,10 @@
                             else
                                 var.Flags |= VarCallFlags.OUT_ST1;
 #else
-            if (i == argumentsCount+1)
-              var->flags |= VarCallFlags.FLAG_OUT_XMM0;
-            else
-              var->flags |= VarCallFlags.FLAG_OUT_XMM1;
+                            if (i == argumentsCount + 1)
+                                var.Flags |= VarCallFlags.OUT_XMM0;
+                            else
+                                var.Flags |= VarCallFlags.OUT_XMM1;
 #endif
                             break;
 
@@ -941,9 +941,9 @@
                     }
                 }
 
-                if ((rec.Flags & (VarCallFlags.OUT_XMM0 | VarCallFlags.OUT_XMM1))!=0)
+                if ((rec.Flags & (VarCallFlags.OUT_XMM0 | VarCallFlags.OUT_XMM1)) != 0)
                 {
-                    if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM)!=0)
+                    if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM) != 0)
                     {
                         cc.AllocXMMVar(vdata, (rec.Flags & VarCallFlags.OUT_XMM0) != 0
                           ? RegIndex.Xmm0
@@ -953,9 +953,9 @@
                     }
                 }
 
-                if ((rec.Flags & (VarCallFlags.OUT_ST0 | VarCallFlags.OUT_ST1))!=0)
+                if ((rec.Flags & (VarCallFlags.OUT_ST0 | VarCallFlags.OUT_ST1)) != 0)
                 {
-                    if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM)!=0)
+                    if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM) != 0)
                     {
                         Mem mem = cc.GetVarMem(vdata);
                         cc.UnuseVar(vdata, VariableState.Memory);
@@ -1009,29 +1009,29 @@
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(src));
                     return;
 #if ASMJIT_X64
-        case VariableType.GPQ:
-        case VariableType.MM:
-          compiler->emit(INST_MOV, dst, gpq(src));
-          return;
+                case VariableType.GPQ:
+                case VariableType.MM:
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpq(src));
+                    return;
 #endif // ASMJIT_X64
                 }
                 break;
 
 #if ASMJIT_X64
-    case VariableType.GPQ:
-      switch (argType.variableType)
-      {
-        case VariableType.GPD:
-          compiler->emit(INST_MOV, dst, gpd(src));
-          return;
-        case VariableType.GPQ:
-          compiler->emit(INST_MOV, dst, gpq(src));
-          return;
-        case VariableType.MM:
-          compiler->emit(INST_MOVQ, dst, gpq(src));
-          return;
-      }
-      break;
+            case VariableType.GPQ:
+                switch (argType._variableType)
+                {
+                case VariableType.GPD:
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpd(src));
+                    return;
+                case VariableType.GPQ:
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpq(src));
+                    return;
+                case VariableType.MM:
+                    compiler.Emit(InstructionCode.Movq, dst, Register.gpq(src));
+                    return;
+                }
+                break;
 #endif // ASMJIT_X64
 
             case VariableType.MM:
@@ -1151,30 +1151,30 @@
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(temporaryGpReg));
                     return;
 #if ASMJIT_X64
-        case VariableType.GPQ:
-        case VariableType.MM:
-          compiler->emit(INST_MOV, gpd(temporaryGpReg), src);
-          compiler->emit(INST_MOV, dst, gpq(temporaryGpReg));
-          return;
+                case VariableType.GPQ:
+                case VariableType.MM:
+                    compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpq(temporaryGpReg));
+                    return;
 #endif // ASMJIT_X64
                 }
                 break;
 
 #if ASMJIT_X64
-    case VariableType.GPQ:
-      switch (argType.variableType)
-      {
-        case VariableType.GPD:
-          compiler->emit(INST_MOV, gpd(temporaryGpReg), src);
-          compiler->emit(INST_MOV, dst, gpd(temporaryGpReg));
-          return;
-        case VariableType.GPQ:
-        case VariableType.MM:
-          compiler->emit(INST_MOV, gpq(temporaryGpReg), src);
-          compiler->emit(INST_MOV, dst, gpq(temporaryGpReg));
-          return;
-      }
-      break;
+            case VariableType.GPQ:
+                switch (argType._variableType)
+                {
+                case VariableType.GPD:
+                    compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpd(temporaryGpReg));
+                    return;
+                case VariableType.GPQ:
+                case VariableType.MM:
+                    compiler.Emit(InstructionCode.Mov, Register.gpq(temporaryGpReg), src);
+                    compiler.Emit(InstructionCode.Mov, dst, Register.gpq(temporaryGpReg));
+                    return;
+                }
+                break;
 #endif // ASMJIT_X64
 
             case VariableType.MM:

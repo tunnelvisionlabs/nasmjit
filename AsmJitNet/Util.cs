@@ -16,6 +16,11 @@
             return value >= ushort.MinValue && value <= ushort.MaxValue;
         }
 
+        internal static bool IsInt32(long value)
+        {
+            return value >= int.MinValue && value <= int.MaxValue;
+        }
+
         internal static void myhex(StringBuilder buf, IList<byte> binaryData)
         {
             throw new NotImplementedException();

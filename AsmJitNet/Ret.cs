@@ -213,7 +213,7 @@
 #if ASMJIT_X86
                                 compiler.Emit(inst, Register.mm(dsti), Register.gpd(srci));
 #else
-                                compiler->emit(inst, mm(dsti), _ret[i].isRegType(REG_TYPE_GPQ) ? gpq(srci) : gpd(srci));
+                                compiler.Emit(inst, Register.mm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
 #endif
                             }
                         }
@@ -279,7 +279,7 @@
 #if ASMJIT_X86
                                 compiler.Emit(inst, Register.xmm(dsti), Register.gpd(srci));
 #else
-                                compiler->emit(inst, xmm(dsti), _ret[i].isRegType(REG_TYPE_GPQ) ? gpq(srci) : gpd(srci));
+                                compiler.Emit(inst, Register.xmm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
 #endif
                             }
                         }

@@ -73,7 +73,7 @@
                 case InstructionCode.Cmpxchg:
                 case InstructionCode.Cmpxchg8b:
 #if ASMJIT_X64
-      case INST_CMPXCHG16B:
+                case InstructionCode.Cmpxchg16b:
 #endif // ASMJIT_X64
                     // Special...
                     break;
@@ -457,7 +457,7 @@
 
                         case InstructionCode.Cmpxchg8b:
 #if ASMJIT_X64
-          case INST_CMPXCHG16B:
+                        case InstructionCode.Cmpxchg16b:
 #endif // ASMJIT_X64
                             switch (i)
                             {

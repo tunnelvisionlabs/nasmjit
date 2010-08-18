@@ -240,95 +240,97 @@ namespace AsmJitNet2
             // --------------------------------------------------------------------------
 
 #if ASMJIT_X64
-  // Windows 64-bit specific.
-  if (_callingConvention == CALL_CONV_X64W)
-  {
-    sysint_t max = argumentsCount < 4 ? argumentsCount : 4;
+            // Windows 64-bit specific.
+            if (_callingConvention == CallingConvention.X64W)
+            {
+                int max = Math.Min(arguments.Length, 4);
 
-    // Register arguments (Integer / FP), always left to right.
-    for (i = 0; i != max; i++)
-    {
-      Argument& a = _arguments[i];
+                // Register arguments (Integer / FP), always left to right.
+                for (i = 0; i != max; i++)
+                {
+                    Argument a = _arguments[i];
 
-      if (isVariableInteger(a.variableType))
-      {
-        a.registerIndex = _argumentsGP[i];
-        _passedGP |= (1 << a.registerIndex);
-      }
-      else if (isVariableFloat(a.variableType))
-      {
-        a.registerIndex = _argumentsXMM[i];
-        _passedXMM |= (1 << a.registerIndex);
-      }
-    }
+                    if (VariableInfo.IsVariableInteger(a._variableType))
+                    {
+                        a._registerIndex = _argumentsGP[i];
+                        _passedGP |= (1 << (int)a._registerIndex);
+                    }
+                    else if (VariableInfo.IsVariableFloat(a._variableType))
+                    {
+                        a._registerIndex = _argumentsXMM[i];
+                        _passedXMM |= (1 << (int)a._registerIndex);
+                    }
+                }
 
-    // Stack arguments (always right-to-left).
-    for (i = argumentsCount - 1; i != -1; i--)
-    {
-      Argument& a = _arguments[i];
-      if (a.isAssigned()) continue;
+                // Stack arguments (always right-to-left).
+                for (i = arguments.Length - 1; i != -1; i--)
+                {
+                    Argument a = _arguments[i];
+                    if (a.IsAssigned)
+                        continue;
 
-      if (isVariableInteger(a.variableType))
-      {
-        stackOffset -= 8; // Always 8 bytes.
-        a.stackOffset = stackOffset;
-      }
-      else if (isVariableFloat(a.variableType))
-      {
-        int32_t size = (int32_t)variableInfo[a.variableType].size;
-        stackOffset -= size;
-        a.stackOffset = stackOffset;
-      }
-    }
+                    if (VariableInfo.IsVariableInteger(a._variableType))
+                    {
+                        stackOffset -= 8; // Always 8 bytes.
+                        a._stackOffset = stackOffset;
+                    }
+                    else if (VariableInfo.IsVariableFloat(a._variableType))
+                    {
+                        int size = VariableInfo.GetVariableInfo(a._variableType).Size;
+                        stackOffset -= size;
+                        a._stackOffset = stackOffset;
+                    }
+                }
 
-    // 32 bytes shadow space (X64W calling convention specific).
-    stackOffset -= 4 * 8;
-  }
-  // Linux/Unix 64-bit (AMD64 calling convention).
-  else
-  {
-    // Register arguments (Integer), always left to right.
-    for (i = 0; i != argumentsCount; i++)
-    {
-      Argument& a = _arguments[i];
-      if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGP[posGP] != INVALID_VALUE)
-      {
-        a.registerIndex = _argumentsGP[posGP++];
-        _passedGP |= (1 << a.registerIndex);
-      }
-    }
+                // 32 bytes shadow space (X64W calling convention specific).
+                stackOffset -= 4 * 8;
+            }
+            // Linux/Unix 64-bit (AMD64 calling convention).
+            else
+            {
+                // Register arguments (Integer), always left to right.
+                for (i = 0; i != arguments.Length; i++)
+                {
+                    Argument a = _arguments[i];
+                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && _argumentsGP[posGP] != RegIndex.Invalid)
+                    {
+                        a._registerIndex = _argumentsGP[posGP++];
+                        _passedGP |= (1 << (int)a._registerIndex);
+                    }
+                }
 
-    // Register arguments (FP), always left to right.
-    for (i = 0; i != argumentsCount; i++)
-    {
-      Argument& a = _arguments[i];
-      if (isVariableFloat(a.variableType))
-      {
-        a.registerIndex = _argumentsXMM[posXMM++];
-        _passedXMM |= (1 << a.registerIndex);
-      }
-    }
+                // Register arguments (FP), always left to right.
+                for (i = 0; i != arguments.Length; i++)
+                {
+                    Argument a = _arguments[i];
+                    if (VariableInfo.IsVariableFloat(a._variableType))
+                    {
+                        a._registerIndex = _argumentsXMM[posXMM++];
+                        _passedXMM |= (1 << (int)a._registerIndex);
+                    }
+                }
 
-    // Stack arguments.
-    for (i = argumentsCount - 1; i != -1; i--)
-    {
-      Argument& a = _arguments[i];
-      if (a.isAssigned()) continue;
+                // Stack arguments.
+                for (i = arguments.Length - 1; i != -1; i--)
+                {
+                    Argument a = _arguments[i];
+                    if (a.IsAssigned)
+                        continue;
 
-      if (isVariableInteger(a.variableType))
-      {
-        stackOffset -= 8;
-        a.stackOffset = stackOffset;
-      }
-      else if (isVariableFloat(a.variableType))
-      {
-        int32_t size = (int32_t)variableInfo[a.variableType].size;
+                    if (VariableInfo.IsVariableInteger(a._variableType))
+                    {
+                        stackOffset -= 8;
+                        a._stackOffset = stackOffset;
+                    }
+                    else if (VariableInfo.IsVariableFloat(a._variableType))
+                    {
+                        int size = VariableInfo.GetVariableInfo(a._variableType).Size;
 
-        stackOffset -= size;
-        a.stackOffset = stackOffset;
-      }
-    }
-  }
+                        stackOffset -= size;
+                        a._stackOffset = stackOffset;
+                    }
+                }
+            }
 #endif // ASMJIT_X64
 
             // Modify stack offset (all function parameters will be in positive stack

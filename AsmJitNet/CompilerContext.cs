@@ -714,9 +714,9 @@
                 _compiler.Emit(InstructionCode.Xchg, Register.gpd(regIndex), Register.gpd(vdata.RegisterIndex));
                 break;
 #if ASMJIT_X64
-    case VARIABLE_TYPE_GPQ:
-      _compiler->emit(INST_XCHG, gpq(regIndex), gpq(vdata->registerIndex));
-      break;
+            case VariableType.GPQ:
+                _compiler.Emit(InstructionCode.Xchg, Register.gpq(regIndex), Register.gpq(vdata.RegisterIndex));
+                break;
 #endif // ASMJIT_X64
 
             case VariableType.X87:
@@ -1106,9 +1106,9 @@
                 _compiler.Emit(InstructionCode.Mov, Register.gpd(regIndex), Register.gpd(vdata.RegisterIndex));
                 break;
 #if ASMJIT_X64
-    case VariableType.GPQ:
-      _compiler->emit(INST_MOV, gpq(regIndex), gpq(vdata.registerIndex));
-      break;
+            case VariableType.GPQ:
+                _compiler.Emit(InstructionCode.Mov, Register.gpq(regIndex), Register.gpq(vdata.RegisterIndex));
+                break;
 #endif // ASMJIT_X64
 
             case VariableType.X87:

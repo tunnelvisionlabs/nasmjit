@@ -149,6 +149,7 @@
     <Compile Include="Size.cs" />
     <Compile Include="StateData.cs" />
     <Compile Include="Target.cs" />
+    <Compile Include="TrampolineWriter.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="VarAllocRecord.cs" />
     <Compile Include="VarCallFlags.cs" />
