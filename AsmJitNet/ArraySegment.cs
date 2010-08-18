@@ -33,19 +33,44 @@
             _count = count;
         }
 
-        public int IndexOf(T item)
+        public int Count
         {
-            return Array.IndexOf(_array, item, _offset, _count) - _offset;
+            get
+            {
+                return _count;
+            }
         }
 
-        void IList<T>.Insert(int index, T item)
+        public bool IsReadOnly
         {
-            throw new NotSupportedException();
+            get
+            {
+                return false;
+            }
         }
 
-        void IList<T>.RemoveAt(int index)
+        public bool IsFixedSize
         {
-            throw new NotSupportedException();
+            get
+            {
+                return true;
+            }
+        }
+
+        bool ICollection.IsSynchronized
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        object ICollection.SyncRoot
+        {
+            get
+            {
+                return this;
+            }
         }
 
         public T this[int index]
@@ -70,12 +95,30 @@
             }
         }
 
-        void ICollection<T>.Add(T item)
+        object IList.this[int index]
+        {
+            get
+            {
+                return this[index];
+            }
+
+            set
+            {
+                this[index] = (T)value;
+            }
+        }
+
+        public int IndexOf(T item)
+        {
+            return Array.IndexOf(_array, item, _offset, _count) - _offset;
+        }
+
+        void IList<T>.Insert(int index, T item)
         {
             throw new NotSupportedException();
         }
 
-        void ICollection<T>.Clear()
+        void IList<T>.RemoveAt(int index)
         {
             throw new NotSupportedException();
         }
@@ -90,27 +133,6 @@
             Array.Copy(_array, _offset, array, arrayIndex, _count);
         }
 
-        public int Count
-        {
-            get
-            {
-                return _count;
-            }
-        }
-
-        public bool IsReadOnly
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        bool ICollection<T>.Remove(T item)
-        {
-            throw new NotSupportedException();
-        }
-
         public IEnumerator<T> GetEnumerator()
         {
             for (int i = 0; i < _count; i++)
@@ -120,16 +142,6 @@
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
-        }
-
-        int IList.Add(object value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList.Clear()
-        {
-            throw new NotSupportedException();
         }
 
         bool IList.Contains(object value)
@@ -142,17 +154,39 @@
             return Array.IndexOf(_array, value, _offset, _count) - _offset;
         }
 
-        void IList.Insert(int index, object value)
+        void ICollection.CopyTo(Array array, int index)
+        {
+            Array.Copy(_array, _offset, array, index, _count);
+        }
+
+        void ICollection<T>.Add(T item)
         {
             throw new NotSupportedException();
         }
 
-        public bool IsFixedSize
+        void ICollection<T>.Clear()
         {
-            get
-            {
-                return true;
-            }
+            throw new NotSupportedException();
+        }
+
+        bool ICollection<T>.Remove(T item)
+        {
+            throw new NotSupportedException();
+        }
+
+        int IList.Add(object value)
+        {
+            throw new NotSupportedException();
+        }
+
+        void IList.Clear()
+        {
+            throw new NotSupportedException();
+        }
+
+        void IList.Insert(int index, object value)
+        {
+            throw new NotSupportedException();
         }
 
         void IList.Remove(object value)
@@ -163,40 +197,6 @@
         void IList.RemoveAt(int index)
         {
             throw new NotSupportedException();
-        }
-
-        object IList.this[int index]
-        {
-            get
-            {
-                return this[index];
-            }
-
-            set
-            {
-                this[index] = (T)value;
-            }
-        }
-
-        void ICollection.CopyTo(Array array, int index)
-        {
-            Array.Copy(_array, _offset, array, index, _count);
-        }
-
-        bool ICollection.IsSynchronized
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        object ICollection.SyncRoot
-        {
-            get
-            {
-                return this;
-            }
         }
     }
 }
