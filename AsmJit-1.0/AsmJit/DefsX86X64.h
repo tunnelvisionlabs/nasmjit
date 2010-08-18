@@ -969,6 +969,40 @@ enum INST_CODE
   INST_JZ,            // X86/X64 (jcc)
   INST_JMP,           // X86/X64 (jmp)
 
+  INST_J_SHORT,       // Begin (jcc_short)
+
+  INST_JA_SHORT = INST_J_SHORT, // X86/X64 (jcc_short)
+  INST_JAE_SHORT,     // X86/X64 (jcc_short)
+  INST_JB_SHORT,      // X86/X64 (jcc_short)
+  INST_JBE_SHORT,     // X86/X64 (jcc_short)
+  INST_JC_SHORT,      // X86/X64 (jcc_short)
+  INST_JE_SHORT,      // X86/X64 (jcc_short)
+  INST_JG_SHORT,      // X86/X64 (jcc_short)
+  INST_JGE_SHORT,     // X86/X64 (jcc_short)
+  INST_JL_SHORT,      // X86/X64 (jcc_short)
+  INST_JLE_SHORT,     // X86/X64 (jcc_short)
+  INST_JNA_SHORT,     // X86/X64 (jcc_short)
+  INST_JNAE_SHORT,    // X86/X64 (jcc_short)
+  INST_JNB_SHORT,     // X86/X64 (jcc_short)
+  INST_JNBE_SHORT,    // X86/X64 (jcc_short)
+  INST_JNC_SHORT,     // X86/X64 (jcc_short)
+  INST_JNE_SHORT,     // X86/X64 (jcc_short)
+  INST_JNG_SHORT,     // X86/X64 (jcc_short)
+  INST_JNGE_SHORT,    // X86/X64 (jcc_short)
+  INST_JNL_SHORT,     // X86/X64 (jcc_short)
+  INST_JNLE_SHORT,    // X86/X64 (jcc_short)
+  INST_JNO_SHORT,     // X86/X64 (jcc_short)
+  INST_JNP_SHORT,     // X86/X64 (jcc_short)
+  INST_JNS_SHORT,     // X86/X64 (jcc_short)
+  INST_JNZ_SHORT,     // X86/X64 (jcc_short)
+  INST_JO_SHORT,      // X86/X64 (jcc_short)
+  INST_JP_SHORT,      // X86/X64 (jcc_short)
+  INST_JPE_SHORT,     // X86/X64 (jcc_short)
+  INST_JPO_SHORT,     // X86/X64 (jcc_short)
+  INST_JS_SHORT,      // X86/X64 (jcc_short)
+  INST_JZ_SHORT,      // X86/X64 (jcc_short)
+  INST_JMP_SHORT,     // X86/X64 (jmp_short)
+
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LAHF,          // X86/X64 (CPUID NEEDED)
@@ -1301,7 +1335,17 @@ enum INST_CODE
   INST_XORPD,
   INST_XORPS,
 
-  _INST_COUNT
+  _INST_COUNT,
+
+  _INST_J_ANY_BEGIN = INST_J,
+  _INST_J_ANY_END = INST_JMP_SHORT,
+
+  _INST_J_LONG_BEGIN = INST_J,
+  _INST_J_LONG_END = INST_JMP,
+
+  _INST_J_SHORT_BEGIN = INST_J_SHORT,
+  _INST_J_SHORT_END = INST_JMP_SHORT,
+  _INST_J_SHORT_OFFSET = INST_J_SHORT - INST_J
 };
 
 // ============================================================================

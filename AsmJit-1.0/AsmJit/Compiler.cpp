@@ -79,6 +79,12 @@ void Emittable::post(Assembler& a) ASMJIT_NOTHROW
 {
 }
 
+int Emittable::getMaxSize() const ASMJIT_NOTHROW
+{
+  // Default maximum size is -1 which means that it's not known.
+  return -1;
+}
+
 void Emittable::setComment(const char* str) ASMJIT_NOTHROW
 {
   _comment = _compiler->getZone().zstrdup(str);
@@ -114,6 +120,11 @@ EDummy::~EDummy() ASMJIT_NOTHROW
 {
 }
 
+int EDummy::getMaxSize() const ASMJIT_NOTHROW
+{
+  return 0;
+}
+
 // ============================================================================
 // [AsmJit::EComment]
 // ============================================================================
@@ -136,6 +147,11 @@ void EComment::emit(Assembler& a) ASMJIT_NOTHROW
   }
 }
 
+int EComment::getMaxSize() const ASMJIT_NOTHROW
+{
+  return 0;
+}
+
 // ============================================================================
 // [AsmJit::EData]
 // ============================================================================
@@ -156,6 +172,11 @@ void EData::emit(Assembler& a) ASMJIT_NOTHROW
   a.embed(_data, _length);
 }
 
+int EData::getMaxSize() const ASMJIT_NOTHROW
+{
+  return (int)_length;;
+}
+
 // ============================================================================
 // [AsmJit::EAlign]
 // ============================================================================
@@ -172,6 +193,11 @@ EAlign::~EAlign() ASMJIT_NOTHROW
 void EAlign::emit(Assembler& a) ASMJIT_NOTHROW
 {
   a.align(_size);
+}
+
+int EAlign::getMaxSize() const ASMJIT_NOTHROW
+{
+  return (_size > 0) ? (int)_size - 1 : 0;
 }
 
 // ============================================================================
@@ -215,6 +241,11 @@ void ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 void ETarget::emit(Assembler& a) ASMJIT_NOTHROW
 {
   a.bind(_label);
+}
+
+int ETarget::getMaxSize() const ASMJIT_NOTHROW
+{
+  return 0;
 }
 
 } // AsmJit namespace

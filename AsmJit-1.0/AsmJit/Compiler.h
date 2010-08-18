@@ -463,6 +463,13 @@ struct ASMJIT_API Emittable
   virtual void post(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get maximum size in bytes of this emittable (in binary).
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Type / Offset]
   // --------------------------------------------------------------------------
 
@@ -551,6 +558,12 @@ struct ASMJIT_API EDummy : public Emittable
   //! @brief Destroy the @ref EDummy instance.
   virtual ~EDummy() ASMJIT_NOTHROW;
 
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
 private:
   ASMJIT_DISABLE_COPY(EDummy)
 };
@@ -583,6 +596,12 @@ struct ASMJIT_API EComment : public Emittable
 
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
 private:
   friend struct CompilerCore;
 
@@ -612,6 +631,12 @@ struct ASMJIT_API EData : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Data]
@@ -662,6 +687,12 @@ struct ASMJIT_API EAlign : public Emittable
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Align Size]
   // --------------------------------------------------------------------------
 
@@ -707,6 +738,12 @@ struct ASMJIT_API ETarget : public Emittable
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Methods]

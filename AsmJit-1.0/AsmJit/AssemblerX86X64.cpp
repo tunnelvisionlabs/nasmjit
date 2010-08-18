@@ -1269,7 +1269,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         LabelData& l_data = _labelData[reinterpret_cast<const Label*>(o0)->getId() & OPERAND_ID_VALUE_MASK];
 
         uint32_t hint = (uint32_t)(o1->isImm() ? reinterpret_cast<const Imm&>(*o1).getValue() : 0);
-        bool isShortJump = false;
+        bool isShortJump = (code >= _INST_J_SHORT_BEGIN && code <= _INST_J_SHORT_END);
 
         // Emit jump hint if configured for that.
         if ((hint & (HINT_TAKEN | HINT_NOT_TAKEN)) && (_properties & (1 << PROPERTY_JUMP_HINTS)))
@@ -1293,6 +1293,9 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           {
             _emitByte(0x70 | (uint8_t)id->opCode[0]);
             _emitByte((uint8_t)(int8_t)(offs - rel8_size));
+
+            // Change the instruction code so logger can log instruction correctly.
+            code += _INST_J_SHORT_OFFSET;
           }
           else
           {
@@ -1351,7 +1354,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isLabel())
       {
         LabelData& l_data = _labelData[reinterpret_cast<const Label*>(o0)->getId() & OPERAND_ID_VALUE_MASK];
-        bool isShortJump = false;
+        bool isShortJump = (code >= _INST_J_SHORT_BEGIN && code <= _INST_J_SHORT_END);
 
         if (l_data.offset != -1)
         {
@@ -1364,6 +1367,9 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           {
             _emitByte(0xEB);
             _emitByte((uint8_t)(int8_t)(offs - rel8_size));
+
+            // Change the instruction code so logger can log instruction correctly.
+            code += _INST_J_SHORT_OFFSET;
           }
           else
           {
@@ -1371,7 +1377,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
             {
               if (_logger && _logger->isUsed())
               {
-                _logger->logString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!");
+                _logger->logString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!\n");
               }
             }
 

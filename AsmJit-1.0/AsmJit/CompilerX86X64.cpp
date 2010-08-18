@@ -694,6 +694,13 @@ unuse:
   cc.unuseVarOnEndOdScope(this, _vdata);
 }
 
+int EVariableHint::getMaxSize() const ASMJIT_NOTHROW
+{
+  // Variable hint is NOP, but it can generate other emittables which can do
+  // something.
+  return 0;
+}
+
 // ============================================================================
 // [AsmJit::EInstruction]
 // ============================================================================
@@ -1823,6 +1830,12 @@ void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
   }
 }
 
+int EInstruction::getMaxSize() const ASMJIT_NOTHROW
+{
+  // TODO: Do something more exact.
+  return 15;
+}
+
 ETarget* EInstruction::getJumpTarget() const ASMJIT_NOTHROW
 {
   return NULL;
@@ -1842,7 +1855,8 @@ EJmp::EJmp(Compiler* c, uint32_t code, Operand* operandsData, uint32_t operandsC
   _jumpTarget->_from = this;
 
   // The 'jmp' is always taken, conditional jump can contain hint, we detect it.
-  _isTaken = (getCode() == INST_JMP) ||
+  _isTaken = (getCode() == INST_JMP) || 
+             (getCode() == INST_JMP_SHORT) ||
              (operandsCount > 1 &&
               operandsData[1].isImm() &&
               reinterpret_cast<Imm*>(&operandsData[1])->getValue() == HINT_TAKEN);
@@ -1858,7 +1872,9 @@ void EJmp::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
   // Update _isTaken to true if this is conditional backward jump. This behavior
   // can be overriden by using HINT_NOT_TAKEN when using the instruction.
-  if (getCode() != INST_JMP && _operandsCount == 1 && _jumpTarget->getOffset() < getOffset())
+  if ((getCode() != INST_JMP || getCode() != INST_JMP_SHORT) &&
+      _operandsCount == 1 &&
+      _jumpTarget->getOffset() < getOffset())
   {
     _isTaken = true;
   }
@@ -1904,12 +1920,13 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
   }
 
   // Mark next code as unrecheable, cleared by a next label (ETarget).
-  if (_code == INST_JMP)
+  if (_code == INST_JMP || _code == INST_JMP_SHORT)
   {
     cc._unrecheable = 1;
   }
 
-  // Need to traverse all active variables, because they h ::prepare() 
+  // Need to traverse all active variables and unuse them if their scope ends
+  // here. 
   if (cc._active)
   {
     VarData* first = cc._active;
@@ -1922,13 +1939,57 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
   }
 }
 
+void EJmp::emit(Assembler& a) ASMJIT_NOTHROW
+{
+  static const uint MAXIMUM_SHORT_JMP_SIZE = 127;
+
+  // Try to minimize size of jump using SHORT jump (8-bit displacement) by 
+  // traversing into the target and calculating the maximum code size. We
+  // end when code size reaches MAXIMUM_SHORT_JMP_SIZE.
+  if (_code >= _INST_J_LONG_BEGIN && 
+      _code <= _INST_J_LONG_END &&
+      getJumpTarget()->getOffset() > getOffset())
+  {
+    // Calculate the code size.
+    uint codeSize = 0;
+    Emittable* cur = this->getNext();
+    Emittable* target = getJumpTarget();
+
+    while (cur)
+    {
+      if (cur == target)
+      {
+        // Target found, we can tell assembler to generate short form of jump.
+
+        // Okay, this looks ugly, but I'd like to call EInstruction::emit()
+        // without changing the instruction code after returned from EJmp::emit().
+        _code += _INST_J_SHORT_OFFSET;
+        EInstruction::emit(a);
+        _code -= _INST_J_SHORT_OFFSET;
+        return;
+      }
+
+      int s = cur->getMaxSize();
+      if (s == -1) break;
+
+      codeSize += (uint)s;
+      if (codeSize > MAXIMUM_SHORT_JMP_SIZE) break;
+
+      cur = cur->getNext();
+    }
+  }
+
+  // No modification...
+  EInstruction::emit(a);
+}
+
 void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
 {
   // The state have to be already known. The _doJump() method is called by
   // translate() or by Compiler in case that it's forward jump.
   ASMJIT_ASSERT(_jumpTarget->getState());
 
-  if (getCode() == INST_JMP || (isTaken() && _jumpTarget->getOffset() < getOffset()))
+  if ((getCode() == INST_JMP || getCode() == INST_JMP_SHORT) || (isTaken() && _jumpTarget->getOffset() < getOffset()))
   {
     // Instruction type is JMP or conditional jump that should be taken (likely).
     // We can set state here instead of jumping out, setting state and jumping
@@ -2035,6 +2096,12 @@ EFunction::~EFunction() ASMJIT_NOTHROW
 void EFunction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 {
   _offset = cc._currentOffset++;
+}
+
+int EFunction::getMaxSize() const ASMJIT_NOTHROW
+{
+  // EFunction is NOP.
+  return 0;
 }
 
 void EFunction::setPrototype(
@@ -3520,6 +3587,12 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   }
 }
 
+int ECall::getMaxSize() const ASMJIT_NOTHROW
+{
+  // TODO: Not optimal.
+  return 15;
+}
+
 uint32_t ECall::_findTemporaryGpRegister(CompilerContext& cc) ASMJIT_NOTHROW
 {
   uint32_t i;
@@ -4534,7 +4607,7 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
       break;
   }
 
-  if (emitJumpToEpilog())
+  if (shouldEmitJumpToEpilog())
   {
     cc._unrecheable = 1;
   }
@@ -4551,13 +4624,18 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
 void ERet::emit(Assembler& a) ASMJIT_NOTHROW
 {
-  if (emitJumpToEpilog())
+  if (shouldEmitJumpToEpilog())
   {
     a.jmp(getFunction()->getExitLabel());
   }
 }
 
-bool ERet::emitJumpToEpilog() const ASMJIT_NOTHROW
+int ERet::getMaxSize() const ASMJIT_NOTHROW
+{
+  return shouldEmitJumpToEpilog() ? 15 : 0;
+}
+
+bool ERet::shouldEmitJumpToEpilog() const ASMJIT_NOTHROW
 {
   // Iterate over next emittables. If we found emittable that emits real 
   // instruction then we must return @c true.

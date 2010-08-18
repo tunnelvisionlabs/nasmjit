@@ -559,6 +559,12 @@ struct ASMJIT_API EVariableHint : public Emittable
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Hint]
   // --------------------------------------------------------------------------
 
@@ -604,6 +610,12 @@ struct ASMJIT_API EInstruction : public Emittable
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Instruction Code]
@@ -719,6 +731,7 @@ struct ASMJIT_API EJmp : public EInstruction
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   void _doJump(CompilerContext& cc) ASMJIT_NOTHROW;
 
@@ -786,6 +799,12 @@ struct ASMJIT_API EFunction : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Function Prototype (Calling Convention + Arguments) / Return Value]
@@ -1073,6 +1092,16 @@ struct ASMJIT_API ECall : public Emittable
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
+  // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Internal]
+  // --------------------------------------------------------------------------
+
 protected:
 
   uint32_t _findTemporaryGpRegister(CompilerContext& cc) ASMJIT_NOTHROW;
@@ -1202,6 +1231,12 @@ struct ASMJIT_API ERet : public Emittable
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Utilities]
+  // --------------------------------------------------------------------------
+
+  virtual int getMaxSize() const ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Methods]
   // --------------------------------------------------------------------------
 
@@ -1218,7 +1253,7 @@ struct ASMJIT_API ERet : public Emittable
   inline const Operand& getSecond() const ASMJIT_NOTHROW { return _ret[1]; }
 
   //! @brief Get whether jump to epilog have to be emitted.
-  bool emitJumpToEpilog() const ASMJIT_NOTHROW;
+  bool shouldEmitJumpToEpilog() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -1722,7 +1757,7 @@ struct ASMJIT_API CompilerCore
 
   inline EInstruction* newInstruction(uint32_t code, Operand* operandsData, uint32_t operandsCount) ASMJIT_NOTHROW
   {
-    if (code >= INST_J && code <= INST_JMP)
+    if (code >= _INST_J_ANY_BEGIN && code <= _INST_J_ANY_END)
     {
       void* addr = _zone.zalloc(sizeof(EJmp));
 
