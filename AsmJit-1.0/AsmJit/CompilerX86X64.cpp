@@ -457,7 +457,6 @@ void FunctionPrototype::_setPrototype(
   int32_t posXMM = 0;
   int32_t stackOffset = 0;
 
-  // TODO: Are there some calculations we should do right now?
   _returnValue = returnValue;
 
   for (i = 0; i < (sysint_t)argumentsCount; i++)
@@ -709,6 +708,9 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
   Emittable(c, EMITTABLE_INSTRUCTION)
 {
   _code = code;
+  _emitOptions = c->_emitOptions;
+  // Each created instruction takes emit options and clears it.
+  c->_emitOptions = 0;
 
   _operands = operandsData;
   _operandsCount = operandsCount;
@@ -1474,8 +1476,6 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         }
       }
 
-      // TODO: Is this correct? 
-      //
       // If variable must be in specific register here we could add some hint
       // to allocator to alloc it to this register on first alloc.
       if (var->regIndex != INVALID_VALUE && vdata->homeRegisterIndex == INVALID_VALUE)
@@ -1667,7 +1667,8 @@ void EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
 void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
 {
-  if (_comment) a._comment = _comment;
+  a._comment = _comment;
+  a._emitOptions = _emitOptions;
 
   if (isSpecial())
   {
@@ -3236,28 +3237,32 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
       if (rec->outCount)
       {
-        // TODO: Unuse.
+        // Variable will be rewritten by function return value, it's not needed
+        // to spill it. It will be allocated again by ECall.
+        cc.unuseVar(rec->vdata, VARIABLE_STATE_UNUSED);
       }
-
-      switch (vdata->type)
+      else
       {
-        case VARIABLE_TYPE_GPD:
-        case VARIABLE_TYPE_GPQ:
-          if ((getPrototype().getPreservedGP() & (1 << vdata->registerIndex)) == 0)
-            cc.spillGPVar(vdata);
-          break;
-        case VARIABLE_TYPE_MM:
-          if ((getPrototype().getPreservedMM() & (1 << vdata->registerIndex)) == 0)
-            cc.spillMMVar(vdata);
-          break;
-        case VARIABLE_TYPE_XMM:
-        case VARIABLE_TYPE_XMM_1F:
-        case VARIABLE_TYPE_XMM_1D:
-        case VARIABLE_TYPE_XMM_4F:
-        case VARIABLE_TYPE_XMM_2D:
-          if ((getPrototype().getPreservedXMM() & (1 << vdata->registerIndex)) == 0)
-            cc.spillXMMVar(vdata);
-          break;
+        switch (vdata->type)
+        {
+          case VARIABLE_TYPE_GPD:
+          case VARIABLE_TYPE_GPQ:
+            if ((getPrototype().getPreservedGP() & (1 << vdata->registerIndex)) == 0)
+              cc.spillGPVar(vdata);
+            break;
+          case VARIABLE_TYPE_MM:
+            if ((getPrototype().getPreservedMM() & (1 << vdata->registerIndex)) == 0)
+              cc.spillMMVar(vdata);
+            break;
+          case VARIABLE_TYPE_XMM:
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_4F:
+          case VARIABLE_TYPE_XMM_2D:
+            if ((getPrototype().getPreservedXMM() & (1 << vdata->registerIndex)) == 0)
+              cc.spillXMMVar(vdata);
+            break;
+        }
       }
     }
   }
@@ -6031,20 +6036,21 @@ void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
 void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASMJIT_NOTHROW
 {
   // 16 + 8 + 16 = GP + MMX + XMM registers.
+  static const uint STATE_REGS_COUNT = 16 + 8 + 16;
 
   StateData* fromState = &_state;
   StateData* toState = state;
 
   if (fromState == toState) return;
 
-  uint32_t base;
-  uint32_t i;
-
-  // TODO: 16 + 8 + 16 is cryptic, make constants instead!
+  uint base;
+  uint i;
 
   // Spill.
-  for (base = 0, i = 0; i < 16 + 8 + 16; i++)
+  for (base = 0, i = 0; i < STATE_REGS_COUNT; i++)
   {
+    // Change the base offset (from base offset the register index can be
+    // calculated).
     if (i == 16 || i == 16 + 8) base = i;
 
     VarData* fromVar = fromState->regs[i];
@@ -6061,7 +6067,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
         // exists.
         if (fromVar->state == VARIABLE_STATE_UNUSED)
         {
-          // TODO: Implement it.
+          // TODO: I don't know why unusing unused variable...
           unuseVar(fromVar, VARIABLE_STATE_UNUSED);
         }
         else
@@ -6091,7 +6097,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   }
 
   // Alloc.
-  for (base = 0, i = 0; i < 16 + 8 + 16; i++)
+  for (base = 0, i = 0; i < STATE_REGS_COUNT; i++)
   {
     if (i == 16 || i == 24) base = i;
 
@@ -6120,6 +6126,11 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   _state.usedGP = state->usedGP;
   _state.usedMM = state->usedMM;
   _state.usedXMM = state->usedXMM;
+
+  // TODO: What about changed flags?
+  //_state.changedGP = state->changedGP;
+  //_state.changedMM = state->changedMM;
+  //_state.changedXMM = state->changedXMM;
 }
 
 VarMemBlock* CompilerContext::_allocMemBlock(uint32_t size) ASMJIT_NOTHROW
@@ -6309,6 +6320,7 @@ CompilerCore::CompilerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
   _logger(NULL),
   _error(0),
   _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
+  _emitOptions(0),
   _finished(false),
   _first(NULL),
   _last(NULL),

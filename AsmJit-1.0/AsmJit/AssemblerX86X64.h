@@ -607,7 +607,7 @@ protected:
   uint32_t _properties;
 
   //! @brief Emit flags for next instruction (cleared after emit).
-  uint32_t _emitFlags;
+  uint32_t _emitOptions;
 
   //! @brief Binary code buffer.
   Buffer _buffer;
@@ -1550,26 +1550,6 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   inline void leave()
   {
     _emitInstruction(INST_LEAVE);
-  }
-
-  //! @brief Assert LOCK# Signal Prefix.
-  //!
-  //! This instruction causes the processor�s LOCK# signal to be asserted
-  //! during execution of the accompanying instruction (turns the
-  //! instruction into an atomic instruction). In a multiprocessor environment,
-  //! the LOCK# signal insures that the processor has exclusive use of any shared
-  //! memory while the signal is asserted.
-  //!
-  //! The LOCK prefix can be prepended only to the following instructions and
-  //! to those forms of the instructions that use a memory operand: ADD, ADC,
-  //! AND, BTC, BTR, BTS, CMPXCHG, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR, XADD,
-  //! and XCHG. An undefined opcode exception will be generated if the LOCK
-  //! prefix is used with any other instruction. The XCHG instruction always
-  //! asserts the LOCK# signal regardless of the presence or absence of the LOCK
-  //! prefix.
-  inline void lock()
-  {
-    _emitInstruction(INST_LOCK);
   }
 
   //! @brief Move.
@@ -7430,6 +7410,46 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   {
     ASMJIT_ASSERT(!src.isGPB());
     _emitInstruction(INST_MOVBE, &dst, &src);
+  }
+
+  // -------------------------------------------------------------------------
+  // [Emit Options]
+  // -------------------------------------------------------------------------
+
+  //! @brief Assert LOCK# Signal Prefix.
+  //!
+  //! This instruction causes the processor's LOCK# signal to be asserted
+  //! during execution of the accompanying instruction (turns the
+  //! instruction into an atomic instruction). In a multiprocessor environment,
+  //! the LOCK# signal insures that the processor has exclusive use of any shared
+  //! memory while the signal is asserted.
+  //!
+  //! The LOCK prefix can be prepended only to the following instructions and
+  //! to those forms of the instructions that use a memory operand: ADD, ADC,
+  //! AND, BTC, BTR, BTS, CMPXCHG, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR, XADD,
+  //! and XCHG. An undefined opcode exception will be generated if the LOCK
+  //! prefix is used with any other instruction. The XCHG instruction always
+  //! asserts the LOCK# signal regardless of the presence or absence of the LOCK
+  //! prefix.
+  //!
+  //! @sa @c EMIT_OPTION_LOCK_PREFIX.
+  inline void lock()
+  {
+    _emitOptions |= EMIT_OPTION_LOCK_PREFIX;
+  }
+
+  //! @brief Force REX prefix to be emitted.
+  //!
+  //! This option should be used carefully, because there are unencodable
+  //! combinations. If you want to access ah, bh, ch or dh registers then you
+  //! can't emit REX prefix and it will cause an illegal instruction error.
+  //!
+  //! @note REX prefix is only valid for X64/AMD64 platform.
+  //!
+  //! @sa @c EMIT_OPTION_REX_PREFIX.
+  inline void rex()
+  {
+    _emitOptions |= EMIT_OPTION_REX_PREFIX;
   }
 };
 

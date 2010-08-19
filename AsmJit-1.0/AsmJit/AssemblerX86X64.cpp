@@ -93,7 +93,7 @@ AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
   _logger(NULL),
   _error(0),
   _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
-  _emitFlags(0),
+  _emitOptions(0),
   _buffer(32), // Max instruction length is 15, but we can align up to 32 bytes.
   _trampolineSize(0),
   _unusedLinks(NULL),
@@ -891,7 +891,11 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
 {
   uint32_t bLoHiUsed = 0;
-  bool forceRexPrefix = false;
+#if defined(ASMJIT_X86)
+  uint32_t forceRexPrefix = false;
+#else
+  uint32_t forceRexPrefix = _emitOptions & EMIT_OPTION_REX_PREFIX;
+#endif
 
 #if defined(ASMJIT_DEBUG)
   bool assertIllegal = false;
@@ -913,7 +917,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
   // Check if register operand is BPL, SPL, SIL, DIL and do action that depends
   // to current mode:
-  //   - 64-bit: - Force rex prefix.
+  //   - 64-bit: - Force REX prefix.
   //
   // Check if register operand is AH, BH, CH or DH and do action that depends
   // to current mode:
@@ -924,7 +928,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
   //
   // NOTE: This is a hit hacky, but I added this to older code-base and I have
   // no energy to rewrite it. Maybe in future all of this can be cleaned up!
-  if (bLoHiUsed)
+  if (bLoHiUsed | forceRexPrefix)
   {
 #if defined(ASMJIT_X64)
     // Check if there is register that makes this instruction un-encodable.
@@ -954,6 +958,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
   // Check for buffer space (and grow if needed).
   if (!canEmit()) goto cleanup;
+
+  if (_emitOptions & EMIT_OPTION_LOCK_PREFIX)
+  {
+    if (!id->isLockable()) goto illegalInstruction;
+    _emitByte(0xF0);
+  }
 
   switch (id->group)
   {
@@ -2030,16 +2040,16 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       ASMJIT_ASSERT(id->oflags[1] != 0);
 
       // Check parameters (X)MM|GP32_64 <- (X)MM|GP32_64|Mem|Imm
-      if ((o0->isMem()            && (id->oflags[0] & InstructionDescription::O_MEM) == 0) ||
+      if ((o0->isMem()                 && (id->oflags[0] & InstructionDescription::O_MEM) == 0) ||
           (o0->isRegType(REG_TYPE_MM ) && (id->oflags[0] & InstructionDescription::O_MM ) == 0) ||
           (o0->isRegType(REG_TYPE_XMM) && (id->oflags[0] & InstructionDescription::O_XMM) == 0) ||
-          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD) == 0) ||
-          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ ) == 0) ||
           (o1->isRegType(REG_TYPE_MM ) && (id->oflags[1] & InstructionDescription::O_MM ) == 0) ||
           (o1->isRegType(REG_TYPE_XMM) && (id->oflags[1] & InstructionDescription::O_XMM) == 0) ||
-          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD) == 0) ||
-          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ) == 0) ||
-          (o1->isMem()            && (id->oflags[1] & InstructionDescription::O_MEM) == 0) )
+          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD ) == 0) ||
+          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ ) == 0) ||
+          (o1->isMem()                 && (id->oflags[1] & InstructionDescription::O_MEM) == 0) )
       {
         goto illegalInstruction;
       }
@@ -2271,14 +2281,14 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (!o0->isReg() ||
           (o0->isRegType(REG_TYPE_MM ) && (id->oflags[0] & InstructionDescription::O_MM ) == 0) ||
           (o0->isRegType(REG_TYPE_XMM) && (id->oflags[0] & InstructionDescription::O_XMM) == 0) ||
-          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD) == 0) ||
-          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ ) == 0) ||
           (o1->isRegType(REG_TYPE_MM ) && (id->oflags[1] & InstructionDescription::O_MM ) == 0) ||
           (o1->isRegType(REG_TYPE_XMM) && (id->oflags[1] & InstructionDescription::O_XMM) == 0) ||
-          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD) == 0) ||
-          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ) == 0) ||
-          (o1->isMem()            && (id->oflags[1] & InstructionDescription::O_MEM) == 0) ||
-          (o1->isImm()            && (id->oflags[1] & InstructionDescription::O_IMM) == 0))
+          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD ) == 0) ||
+          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ ) == 0) ||
+          (o1->isMem()                 && (id->oflags[1] & InstructionDescription::O_MEM) == 0) ||
+          (o1->isImm()                 && (id->oflags[1] & InstructionDescription::O_IMM) == 0))
       {
         goto illegalInstruction;
       }
@@ -2334,13 +2344,13 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (!o0->isReg() ||
           (o0->isRegType(REG_TYPE_MM ) && (id->oflags[0] & InstructionDescription::O_MM ) == 0) ||
           (o0->isRegType(REG_TYPE_XMM) && (id->oflags[0] & InstructionDescription::O_XMM) == 0) ||
-          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD) == 0) ||
-          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPD) && (id->oflags[0] & InstructionDescription::O_GD ) == 0) ||
+          (o0->isRegType(REG_TYPE_GPQ) && (id->oflags[0] & InstructionDescription::O_GQ ) == 0) ||
           (o1->isRegType(REG_TYPE_MM ) && (id->oflags[1] & InstructionDescription::O_MM ) == 0) ||
           (o1->isRegType(REG_TYPE_XMM) && (id->oflags[1] & InstructionDescription::O_XMM) == 0) ||
-          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD) == 0) ||
-          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ) == 0) ||
-          (o1->isMem()            && (id->oflags[1] & InstructionDescription::O_MEM) == 0) ||
+          (o1->isRegType(REG_TYPE_GPD) && (id->oflags[1] & InstructionDescription::O_GD ) == 0) ||
+          (o1->isRegType(REG_TYPE_GPQ) && (id->oflags[1] & InstructionDescription::O_GQ ) == 0) ||
+          (o1->isMem()                 && (id->oflags[1] & InstructionDescription::O_MEM) == 0) ||
           !o2->isImm())
       {
         goto illegalInstruction;
@@ -2441,7 +2451,7 @@ end:
 
 cleanup:
   _comment = NULL;
-  _emitFlags = 0;
+  _emitOptions = 0;
 }
 
 void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW

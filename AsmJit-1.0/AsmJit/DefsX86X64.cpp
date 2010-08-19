@@ -386,7 +386,6 @@ const char instructionName[] =
   "lea\0"
   "leave\0"
   "lfence\0"
-  "lock\0"
   "maskmovdqu\0"
   "maskmovq\0"
   "maxpd\0"
@@ -995,330 +994,329 @@ const char instructionName[] =
 #define INST_LEA_INDEX 1872
 #define INST_LEAVE_INDEX 1876
 #define INST_LFENCE_INDEX 1882
-#define INST_LOCK_INDEX 1889
-#define INST_MASKMOVDQU_INDEX 1894
-#define INST_MASKMOVQ_INDEX 1905
-#define INST_MAXPD_INDEX 1914
-#define INST_MAXPS_INDEX 1920
-#define INST_MAXSD_INDEX 1926
-#define INST_MAXSS_INDEX 1932
-#define INST_MFENCE_INDEX 1938
-#define INST_MINPD_INDEX 1945
-#define INST_MINPS_INDEX 1951
-#define INST_MINSD_INDEX 1957
-#define INST_MINSS_INDEX 1963
-#define INST_MONITOR_INDEX 1969
-#define INST_MOV_INDEX 1977
-#define INST_MOVAPD_INDEX 1981
-#define INST_MOVAPS_INDEX 1988
-#define INST_MOVBE_INDEX 1995
-#define INST_MOVD_INDEX 2001
-#define INST_MOVDDUP_INDEX 2006
-#define INST_MOVDQ2Q_INDEX 2014
-#define INST_MOVDQA_INDEX 2022
-#define INST_MOVDQU_INDEX 2029
-#define INST_MOVHLPS_INDEX 2036
-#define INST_MOVHPD_INDEX 2044
-#define INST_MOVHPS_INDEX 2051
-#define INST_MOVLHPS_INDEX 2058
-#define INST_MOVLPD_INDEX 2066
-#define INST_MOVLPS_INDEX 2073
-#define INST_MOVMSKPD_INDEX 2080
-#define INST_MOVMSKPS_INDEX 2089
-#define INST_MOVNTDQ_INDEX 2098
-#define INST_MOVNTDQA_INDEX 2106
-#define INST_MOVNTI_INDEX 2115
-#define INST_MOVNTPD_INDEX 2122
-#define INST_MOVNTPS_INDEX 2130
-#define INST_MOVNTQ_INDEX 2138
-#define INST_MOVQ_INDEX 2145
-#define INST_MOVQ2DQ_INDEX 2150
-#define INST_MOVSD_INDEX 2158
-#define INST_MOVSHDUP_INDEX 2164
-#define INST_MOVSLDUP_INDEX 2173
-#define INST_MOVSS_INDEX 2182
-#define INST_MOVSX_INDEX 2188
-#define INST_MOVSXD_INDEX 2194
-#define INST_MOVUPD_INDEX 2201
-#define INST_MOVUPS_INDEX 2208
-#define INST_MOVZX_INDEX 2215
-#define INST_MOV_PTR_INDEX 2221
-#define INST_MPSADBW_INDEX 2229
-#define INST_MUL_INDEX 2237
-#define INST_MULPD_INDEX 2241
-#define INST_MULPS_INDEX 2247
-#define INST_MULSD_INDEX 2253
-#define INST_MULSS_INDEX 2259
-#define INST_MWAIT_INDEX 2265
-#define INST_NEG_INDEX 2271
-#define INST_NOP_INDEX 2275
-#define INST_NOT_INDEX 2279
-#define INST_OR_INDEX 2283
-#define INST_ORPD_INDEX 2286
-#define INST_ORPS_INDEX 2291
-#define INST_PABSB_INDEX 2296
-#define INST_PABSD_INDEX 2302
-#define INST_PABSW_INDEX 2308
-#define INST_PACKSSDW_INDEX 2314
-#define INST_PACKSSWB_INDEX 2323
-#define INST_PACKUSDW_INDEX 2332
-#define INST_PACKUSWB_INDEX 2341
-#define INST_PADDB_INDEX 2350
-#define INST_PADDD_INDEX 2356
-#define INST_PADDQ_INDEX 2362
-#define INST_PADDSB_INDEX 2368
-#define INST_PADDSW_INDEX 2375
-#define INST_PADDUSB_INDEX 2382
-#define INST_PADDUSW_INDEX 2390
-#define INST_PADDW_INDEX 2398
-#define INST_PALIGNR_INDEX 2404
-#define INST_PAND_INDEX 2412
-#define INST_PANDN_INDEX 2417
-#define INST_PAUSE_INDEX 2423
-#define INST_PAVGB_INDEX 2429
-#define INST_PAVGW_INDEX 2435
-#define INST_PBLENDVB_INDEX 2441
-#define INST_PBLENDW_INDEX 2450
-#define INST_PCMPEQB_INDEX 2458
-#define INST_PCMPEQD_INDEX 2466
-#define INST_PCMPEQQ_INDEX 2474
-#define INST_PCMPEQW_INDEX 2482
-#define INST_PCMPESTRI_INDEX 2490
-#define INST_PCMPESTRM_INDEX 2500
-#define INST_PCMPGTB_INDEX 2510
-#define INST_PCMPGTD_INDEX 2518
-#define INST_PCMPGTQ_INDEX 2526
-#define INST_PCMPGTW_INDEX 2534
-#define INST_PCMPISTRI_INDEX 2542
-#define INST_PCMPISTRM_INDEX 2552
-#define INST_PEXTRB_INDEX 2562
-#define INST_PEXTRD_INDEX 2569
-#define INST_PEXTRQ_INDEX 2576
-#define INST_PEXTRW_INDEX 2583
-#define INST_PF2ID_INDEX 2590
-#define INST_PF2IW_INDEX 2596
-#define INST_PFACC_INDEX 2602
-#define INST_PFADD_INDEX 2608
-#define INST_PFCMPEQ_INDEX 2614
-#define INST_PFCMPGE_INDEX 2622
-#define INST_PFCMPGT_INDEX 2630
-#define INST_PFMAX_INDEX 2638
-#define INST_PFMIN_INDEX 2644
-#define INST_PFMUL_INDEX 2650
-#define INST_PFNACC_INDEX 2656
-#define INST_PFPNACC_INDEX 2663
-#define INST_PFRCP_INDEX 2671
-#define INST_PFRCPIT1_INDEX 2677
-#define INST_PFRCPIT2_INDEX 2686
-#define INST_PFRSQIT1_INDEX 2695
-#define INST_PFRSQRT_INDEX 2704
-#define INST_PFSUB_INDEX 2712
-#define INST_PFSUBR_INDEX 2718
-#define INST_PHADDD_INDEX 2725
-#define INST_PHADDSW_INDEX 2732
-#define INST_PHADDW_INDEX 2740
-#define INST_PHMINPOSUW_INDEX 2747
-#define INST_PHSUBD_INDEX 2758
-#define INST_PHSUBSW_INDEX 2765
-#define INST_PHSUBW_INDEX 2773
-#define INST_PI2FD_INDEX 2780
-#define INST_PI2FW_INDEX 2786
-#define INST_PINSRB_INDEX 2792
-#define INST_PINSRD_INDEX 2799
-#define INST_PINSRQ_INDEX 2806
-#define INST_PINSRW_INDEX 2813
-#define INST_PMADDUBSW_INDEX 2820
-#define INST_PMADDWD_INDEX 2830
-#define INST_PMAXSB_INDEX 2838
-#define INST_PMAXSD_INDEX 2845
-#define INST_PMAXSW_INDEX 2852
-#define INST_PMAXUB_INDEX 2859
-#define INST_PMAXUD_INDEX 2866
-#define INST_PMAXUW_INDEX 2873
-#define INST_PMINSB_INDEX 2880
-#define INST_PMINSD_INDEX 2887
-#define INST_PMINSW_INDEX 2894
-#define INST_PMINUB_INDEX 2901
-#define INST_PMINUD_INDEX 2908
-#define INST_PMINUW_INDEX 2915
-#define INST_PMOVMSKB_INDEX 2922
-#define INST_PMOVSXBD_INDEX 2931
-#define INST_PMOVSXBQ_INDEX 2940
-#define INST_PMOVSXBW_INDEX 2949
-#define INST_PMOVSXDQ_INDEX 2958
-#define INST_PMOVSXWD_INDEX 2967
-#define INST_PMOVSXWQ_INDEX 2976
-#define INST_PMOVZXBD_INDEX 2985
-#define INST_PMOVZXBQ_INDEX 2994
-#define INST_PMOVZXBW_INDEX 3003
-#define INST_PMOVZXDQ_INDEX 3012
-#define INST_PMOVZXWD_INDEX 3021
-#define INST_PMOVZXWQ_INDEX 3030
-#define INST_PMULDQ_INDEX 3039
-#define INST_PMULHRSW_INDEX 3046
-#define INST_PMULHUW_INDEX 3055
-#define INST_PMULHW_INDEX 3063
-#define INST_PMULLD_INDEX 3070
-#define INST_PMULLW_INDEX 3077
-#define INST_PMULUDQ_INDEX 3084
-#define INST_POP_INDEX 3092
-#define INST_POPAD_INDEX 3096
-#define INST_POPCNT_INDEX 3102
-#define INST_POPFD_INDEX 3109
-#define INST_POPFQ_INDEX 3115
-#define INST_POR_INDEX 3121
-#define INST_PREFETCH_INDEX 3125
-#define INST_PSADBW_INDEX 3134
-#define INST_PSHUFB_INDEX 3141
-#define INST_PSHUFD_INDEX 3148
-#define INST_PSHUFW_INDEX 3155
-#define INST_PSHUFHW_INDEX 3162
-#define INST_PSHUFLW_INDEX 3170
-#define INST_PSIGNB_INDEX 3178
-#define INST_PSIGND_INDEX 3185
-#define INST_PSIGNW_INDEX 3192
-#define INST_PSLLD_INDEX 3199
-#define INST_PSLLDQ_INDEX 3205
-#define INST_PSLLQ_INDEX 3212
-#define INST_PSLLW_INDEX 3218
-#define INST_PSRAD_INDEX 3224
-#define INST_PSRAW_INDEX 3230
-#define INST_PSRLD_INDEX 3236
-#define INST_PSRLDQ_INDEX 3242
-#define INST_PSRLQ_INDEX 3249
-#define INST_PSRLW_INDEX 3255
-#define INST_PSUBB_INDEX 3261
-#define INST_PSUBD_INDEX 3267
-#define INST_PSUBQ_INDEX 3273
-#define INST_PSUBSB_INDEX 3279
-#define INST_PSUBSW_INDEX 3286
-#define INST_PSUBUSB_INDEX 3293
-#define INST_PSUBUSW_INDEX 3301
-#define INST_PSUBW_INDEX 3309
-#define INST_PSWAPD_INDEX 3315
-#define INST_PTEST_INDEX 3322
-#define INST_PUNPCKHBW_INDEX 3328
-#define INST_PUNPCKHDQ_INDEX 3338
-#define INST_PUNPCKHQDQ_INDEX 3348
-#define INST_PUNPCKHWD_INDEX 3359
-#define INST_PUNPCKLBW_INDEX 3369
-#define INST_PUNPCKLDQ_INDEX 3379
-#define INST_PUNPCKLQDQ_INDEX 3389
-#define INST_PUNPCKLWD_INDEX 3400
-#define INST_PUSH_INDEX 3410
-#define INST_PUSHAD_INDEX 3415
-#define INST_PUSHFD_INDEX 3422
-#define INST_PUSHFQ_INDEX 3429
-#define INST_PXOR_INDEX 3436
-#define INST_RCL_INDEX 3441
-#define INST_RCPPS_INDEX 3445
-#define INST_RCPSS_INDEX 3451
-#define INST_RCR_INDEX 3457
-#define INST_RDTSC_INDEX 3461
-#define INST_RDTSCP_INDEX 3467
-#define INST_REP_LODSB_INDEX 3474
-#define INST_REP_LODSD_INDEX 3484
-#define INST_REP_LODSQ_INDEX 3494
-#define INST_REP_LODSW_INDEX 3504
-#define INST_REP_MOVSB_INDEX 3514
-#define INST_REP_MOVSD_INDEX 3524
-#define INST_REP_MOVSQ_INDEX 3534
-#define INST_REP_MOVSW_INDEX 3544
-#define INST_REP_STOSB_INDEX 3554
-#define INST_REP_STOSD_INDEX 3564
-#define INST_REP_STOSQ_INDEX 3574
-#define INST_REP_STOSW_INDEX 3584
-#define INST_REPE_CMPSB_INDEX 3594
-#define INST_REPE_CMPSD_INDEX 3605
-#define INST_REPE_CMPSQ_INDEX 3616
-#define INST_REPE_CMPSW_INDEX 3627
-#define INST_REPE_SCASB_INDEX 3638
-#define INST_REPE_SCASD_INDEX 3649
-#define INST_REPE_SCASQ_INDEX 3660
-#define INST_REPE_SCASW_INDEX 3671
-#define INST_REPNE_CMPSB_INDEX 3682
-#define INST_REPNE_CMPSD_INDEX 3694
-#define INST_REPNE_CMPSQ_INDEX 3706
-#define INST_REPNE_CMPSW_INDEX 3718
-#define INST_REPNE_SCASB_INDEX 3730
-#define INST_REPNE_SCASD_INDEX 3742
-#define INST_REPNE_SCASQ_INDEX 3754
-#define INST_REPNE_SCASW_INDEX 3766
-#define INST_RET_INDEX 3778
-#define INST_ROL_INDEX 3782
-#define INST_ROR_INDEX 3786
-#define INST_ROUNDPD_INDEX 3790
-#define INST_ROUNDPS_INDEX 3798
-#define INST_ROUNDSD_INDEX 3806
-#define INST_ROUNDSS_INDEX 3814
-#define INST_RSQRTPS_INDEX 3822
-#define INST_RSQRTSS_INDEX 3830
-#define INST_SAHF_INDEX 3838
-#define INST_SAL_INDEX 3843
-#define INST_SAR_INDEX 3847
-#define INST_SBB_INDEX 3851
-#define INST_SETA_INDEX 3855
-#define INST_SETAE_INDEX 3860
-#define INST_SETB_INDEX 3866
-#define INST_SETBE_INDEX 3871
-#define INST_SETC_INDEX 3877
-#define INST_SETE_INDEX 3882
-#define INST_SETG_INDEX 3887
-#define INST_SETGE_INDEX 3892
-#define INST_SETL_INDEX 3898
-#define INST_SETLE_INDEX 3903
-#define INST_SETNA_INDEX 3909
-#define INST_SETNAE_INDEX 3915
-#define INST_SETNB_INDEX 3922
-#define INST_SETNBE_INDEX 3928
-#define INST_SETNC_INDEX 3935
-#define INST_SETNE_INDEX 3941
-#define INST_SETNG_INDEX 3947
-#define INST_SETNGE_INDEX 3953
-#define INST_SETNL_INDEX 3960
-#define INST_SETNLE_INDEX 3966
-#define INST_SETNO_INDEX 3973
-#define INST_SETNP_INDEX 3979
-#define INST_SETNS_INDEX 3985
-#define INST_SETNZ_INDEX 3991
-#define INST_SETO_INDEX 3997
-#define INST_SETP_INDEX 4002
-#define INST_SETPE_INDEX 4007
-#define INST_SETPO_INDEX 4013
-#define INST_SETS_INDEX 4019
-#define INST_SETZ_INDEX 4024
-#define INST_SFENCE_INDEX 4029
-#define INST_SHL_INDEX 4036
-#define INST_SHLD_INDEX 4040
-#define INST_SHR_INDEX 4045
-#define INST_SHRD_INDEX 4049
-#define INST_SHUFPD_INDEX 4054
-#define INST_SHUFPS_INDEX 4061
-#define INST_SQRTPD_INDEX 4068
-#define INST_SQRTPS_INDEX 4075
-#define INST_SQRTSD_INDEX 4082
-#define INST_SQRTSS_INDEX 4089
-#define INST_STC_INDEX 4096
-#define INST_STD_INDEX 4100
-#define INST_STMXCSR_INDEX 4104
-#define INST_SUB_INDEX 4112
-#define INST_SUBPD_INDEX 4116
-#define INST_SUBPS_INDEX 4122
-#define INST_SUBSD_INDEX 4128
-#define INST_SUBSS_INDEX 4134
-#define INST_TEST_INDEX 4140
-#define INST_UCOMISD_INDEX 4145
-#define INST_UCOMISS_INDEX 4153
-#define INST_UD2_INDEX 4161
-#define INST_UNPCKHPD_INDEX 4165
-#define INST_UNPCKHPS_INDEX 4174
-#define INST_UNPCKLPD_INDEX 4183
-#define INST_UNPCKLPS_INDEX 4192
-#define INST_XADD_INDEX 4201
-#define INST_XCHG_INDEX 4206
-#define INST_XOR_INDEX 4211
-#define INST_XORPD_INDEX 4215
-#define INST_XORPS_INDEX 4221
+#define INST_MASKMOVDQU_INDEX 1889
+#define INST_MASKMOVQ_INDEX 1900
+#define INST_MAXPD_INDEX 1909
+#define INST_MAXPS_INDEX 1915
+#define INST_MAXSD_INDEX 1921
+#define INST_MAXSS_INDEX 1927
+#define INST_MFENCE_INDEX 1933
+#define INST_MINPD_INDEX 1940
+#define INST_MINPS_INDEX 1946
+#define INST_MINSD_INDEX 1952
+#define INST_MINSS_INDEX 1958
+#define INST_MONITOR_INDEX 1964
+#define INST_MOV_INDEX 1972
+#define INST_MOVAPD_INDEX 1976
+#define INST_MOVAPS_INDEX 1983
+#define INST_MOVBE_INDEX 1990
+#define INST_MOVD_INDEX 1996
+#define INST_MOVDDUP_INDEX 2001
+#define INST_MOVDQ2Q_INDEX 2009
+#define INST_MOVDQA_INDEX 2017
+#define INST_MOVDQU_INDEX 2024
+#define INST_MOVHLPS_INDEX 2031
+#define INST_MOVHPD_INDEX 2039
+#define INST_MOVHPS_INDEX 2046
+#define INST_MOVLHPS_INDEX 2053
+#define INST_MOVLPD_INDEX 2061
+#define INST_MOVLPS_INDEX 2068
+#define INST_MOVMSKPD_INDEX 2075
+#define INST_MOVMSKPS_INDEX 2084
+#define INST_MOVNTDQ_INDEX 2093
+#define INST_MOVNTDQA_INDEX 2101
+#define INST_MOVNTI_INDEX 2110
+#define INST_MOVNTPD_INDEX 2117
+#define INST_MOVNTPS_INDEX 2125
+#define INST_MOVNTQ_INDEX 2133
+#define INST_MOVQ_INDEX 2140
+#define INST_MOVQ2DQ_INDEX 2145
+#define INST_MOVSD_INDEX 2153
+#define INST_MOVSHDUP_INDEX 2159
+#define INST_MOVSLDUP_INDEX 2168
+#define INST_MOVSS_INDEX 2177
+#define INST_MOVSX_INDEX 2183
+#define INST_MOVSXD_INDEX 2189
+#define INST_MOVUPD_INDEX 2196
+#define INST_MOVUPS_INDEX 2203
+#define INST_MOVZX_INDEX 2210
+#define INST_MOV_PTR_INDEX 2216
+#define INST_MPSADBW_INDEX 2224
+#define INST_MUL_INDEX 2232
+#define INST_MULPD_INDEX 2236
+#define INST_MULPS_INDEX 2242
+#define INST_MULSD_INDEX 2248
+#define INST_MULSS_INDEX 2254
+#define INST_MWAIT_INDEX 2260
+#define INST_NEG_INDEX 2266
+#define INST_NOP_INDEX 2270
+#define INST_NOT_INDEX 2274
+#define INST_OR_INDEX 2278
+#define INST_ORPD_INDEX 2281
+#define INST_ORPS_INDEX 2286
+#define INST_PABSB_INDEX 2291
+#define INST_PABSD_INDEX 2297
+#define INST_PABSW_INDEX 2303
+#define INST_PACKSSDW_INDEX 2309
+#define INST_PACKSSWB_INDEX 2318
+#define INST_PACKUSDW_INDEX 2327
+#define INST_PACKUSWB_INDEX 2336
+#define INST_PADDB_INDEX 2345
+#define INST_PADDD_INDEX 2351
+#define INST_PADDQ_INDEX 2357
+#define INST_PADDSB_INDEX 2363
+#define INST_PADDSW_INDEX 2370
+#define INST_PADDUSB_INDEX 2377
+#define INST_PADDUSW_INDEX 2385
+#define INST_PADDW_INDEX 2393
+#define INST_PALIGNR_INDEX 2399
+#define INST_PAND_INDEX 2407
+#define INST_PANDN_INDEX 2412
+#define INST_PAUSE_INDEX 2418
+#define INST_PAVGB_INDEX 2424
+#define INST_PAVGW_INDEX 2430
+#define INST_PBLENDVB_INDEX 2436
+#define INST_PBLENDW_INDEX 2445
+#define INST_PCMPEQB_INDEX 2453
+#define INST_PCMPEQD_INDEX 2461
+#define INST_PCMPEQQ_INDEX 2469
+#define INST_PCMPEQW_INDEX 2477
+#define INST_PCMPESTRI_INDEX 2485
+#define INST_PCMPESTRM_INDEX 2495
+#define INST_PCMPGTB_INDEX 2505
+#define INST_PCMPGTD_INDEX 2513
+#define INST_PCMPGTQ_INDEX 2521
+#define INST_PCMPGTW_INDEX 2529
+#define INST_PCMPISTRI_INDEX 2537
+#define INST_PCMPISTRM_INDEX 2547
+#define INST_PEXTRB_INDEX 2557
+#define INST_PEXTRD_INDEX 2564
+#define INST_PEXTRQ_INDEX 2571
+#define INST_PEXTRW_INDEX 2578
+#define INST_PF2ID_INDEX 2585
+#define INST_PF2IW_INDEX 2591
+#define INST_PFACC_INDEX 2597
+#define INST_PFADD_INDEX 2603
+#define INST_PFCMPEQ_INDEX 2609
+#define INST_PFCMPGE_INDEX 2617
+#define INST_PFCMPGT_INDEX 2625
+#define INST_PFMAX_INDEX 2633
+#define INST_PFMIN_INDEX 2639
+#define INST_PFMUL_INDEX 2645
+#define INST_PFNACC_INDEX 2651
+#define INST_PFPNACC_INDEX 2658
+#define INST_PFRCP_INDEX 2666
+#define INST_PFRCPIT1_INDEX 2672
+#define INST_PFRCPIT2_INDEX 2681
+#define INST_PFRSQIT1_INDEX 2690
+#define INST_PFRSQRT_INDEX 2699
+#define INST_PFSUB_INDEX 2707
+#define INST_PFSUBR_INDEX 2713
+#define INST_PHADDD_INDEX 2720
+#define INST_PHADDSW_INDEX 2727
+#define INST_PHADDW_INDEX 2735
+#define INST_PHMINPOSUW_INDEX 2742
+#define INST_PHSUBD_INDEX 2753
+#define INST_PHSUBSW_INDEX 2760
+#define INST_PHSUBW_INDEX 2768
+#define INST_PI2FD_INDEX 2775
+#define INST_PI2FW_INDEX 2781
+#define INST_PINSRB_INDEX 2787
+#define INST_PINSRD_INDEX 2794
+#define INST_PINSRQ_INDEX 2801
+#define INST_PINSRW_INDEX 2808
+#define INST_PMADDUBSW_INDEX 2815
+#define INST_PMADDWD_INDEX 2825
+#define INST_PMAXSB_INDEX 2833
+#define INST_PMAXSD_INDEX 2840
+#define INST_PMAXSW_INDEX 2847
+#define INST_PMAXUB_INDEX 2854
+#define INST_PMAXUD_INDEX 2861
+#define INST_PMAXUW_INDEX 2868
+#define INST_PMINSB_INDEX 2875
+#define INST_PMINSD_INDEX 2882
+#define INST_PMINSW_INDEX 2889
+#define INST_PMINUB_INDEX 2896
+#define INST_PMINUD_INDEX 2903
+#define INST_PMINUW_INDEX 2910
+#define INST_PMOVMSKB_INDEX 2917
+#define INST_PMOVSXBD_INDEX 2926
+#define INST_PMOVSXBQ_INDEX 2935
+#define INST_PMOVSXBW_INDEX 2944
+#define INST_PMOVSXDQ_INDEX 2953
+#define INST_PMOVSXWD_INDEX 2962
+#define INST_PMOVSXWQ_INDEX 2971
+#define INST_PMOVZXBD_INDEX 2980
+#define INST_PMOVZXBQ_INDEX 2989
+#define INST_PMOVZXBW_INDEX 2998
+#define INST_PMOVZXDQ_INDEX 3007
+#define INST_PMOVZXWD_INDEX 3016
+#define INST_PMOVZXWQ_INDEX 3025
+#define INST_PMULDQ_INDEX 3034
+#define INST_PMULHRSW_INDEX 3041
+#define INST_PMULHUW_INDEX 3050
+#define INST_PMULHW_INDEX 3058
+#define INST_PMULLD_INDEX 3065
+#define INST_PMULLW_INDEX 3072
+#define INST_PMULUDQ_INDEX 3079
+#define INST_POP_INDEX 3087
+#define INST_POPAD_INDEX 3091
+#define INST_POPCNT_INDEX 3097
+#define INST_POPFD_INDEX 3104
+#define INST_POPFQ_INDEX 3110
+#define INST_POR_INDEX 3116
+#define INST_PREFETCH_INDEX 3120
+#define INST_PSADBW_INDEX 3129
+#define INST_PSHUFB_INDEX 3136
+#define INST_PSHUFD_INDEX 3143
+#define INST_PSHUFW_INDEX 3150
+#define INST_PSHUFHW_INDEX 3157
+#define INST_PSHUFLW_INDEX 3165
+#define INST_PSIGNB_INDEX 3173
+#define INST_PSIGND_INDEX 3180
+#define INST_PSIGNW_INDEX 3187
+#define INST_PSLLD_INDEX 3194
+#define INST_PSLLDQ_INDEX 3200
+#define INST_PSLLQ_INDEX 3207
+#define INST_PSLLW_INDEX 3213
+#define INST_PSRAD_INDEX 3219
+#define INST_PSRAW_INDEX 3225
+#define INST_PSRLD_INDEX 3231
+#define INST_PSRLDQ_INDEX 3237
+#define INST_PSRLQ_INDEX 3244
+#define INST_PSRLW_INDEX 3250
+#define INST_PSUBB_INDEX 3256
+#define INST_PSUBD_INDEX 3262
+#define INST_PSUBQ_INDEX 3268
+#define INST_PSUBSB_INDEX 3274
+#define INST_PSUBSW_INDEX 3281
+#define INST_PSUBUSB_INDEX 3288
+#define INST_PSUBUSW_INDEX 3296
+#define INST_PSUBW_INDEX 3304
+#define INST_PSWAPD_INDEX 3310
+#define INST_PTEST_INDEX 3317
+#define INST_PUNPCKHBW_INDEX 3323
+#define INST_PUNPCKHDQ_INDEX 3333
+#define INST_PUNPCKHQDQ_INDEX 3343
+#define INST_PUNPCKHWD_INDEX 3354
+#define INST_PUNPCKLBW_INDEX 3364
+#define INST_PUNPCKLDQ_INDEX 3374
+#define INST_PUNPCKLQDQ_INDEX 3384
+#define INST_PUNPCKLWD_INDEX 3395
+#define INST_PUSH_INDEX 3405
+#define INST_PUSHAD_INDEX 3410
+#define INST_PUSHFD_INDEX 3417
+#define INST_PUSHFQ_INDEX 3424
+#define INST_PXOR_INDEX 3431
+#define INST_RCL_INDEX 3436
+#define INST_RCPPS_INDEX 3440
+#define INST_RCPSS_INDEX 3446
+#define INST_RCR_INDEX 3452
+#define INST_RDTSC_INDEX 3456
+#define INST_RDTSCP_INDEX 3462
+#define INST_REP_LODSB_INDEX 3469
+#define INST_REP_LODSD_INDEX 3479
+#define INST_REP_LODSQ_INDEX 3489
+#define INST_REP_LODSW_INDEX 3499
+#define INST_REP_MOVSB_INDEX 3509
+#define INST_REP_MOVSD_INDEX 3519
+#define INST_REP_MOVSQ_INDEX 3529
+#define INST_REP_MOVSW_INDEX 3539
+#define INST_REP_STOSB_INDEX 3549
+#define INST_REP_STOSD_INDEX 3559
+#define INST_REP_STOSQ_INDEX 3569
+#define INST_REP_STOSW_INDEX 3579
+#define INST_REPE_CMPSB_INDEX 3589
+#define INST_REPE_CMPSD_INDEX 3600
+#define INST_REPE_CMPSQ_INDEX 3611
+#define INST_REPE_CMPSW_INDEX 3622
+#define INST_REPE_SCASB_INDEX 3633
+#define INST_REPE_SCASD_INDEX 3644
+#define INST_REPE_SCASQ_INDEX 3655
+#define INST_REPE_SCASW_INDEX 3666
+#define INST_REPNE_CMPSB_INDEX 3677
+#define INST_REPNE_CMPSD_INDEX 3689
+#define INST_REPNE_CMPSQ_INDEX 3701
+#define INST_REPNE_CMPSW_INDEX 3713
+#define INST_REPNE_SCASB_INDEX 3725
+#define INST_REPNE_SCASD_INDEX 3737
+#define INST_REPNE_SCASQ_INDEX 3749
+#define INST_REPNE_SCASW_INDEX 3761
+#define INST_RET_INDEX 3773
+#define INST_ROL_INDEX 3777
+#define INST_ROR_INDEX 3781
+#define INST_ROUNDPD_INDEX 3785
+#define INST_ROUNDPS_INDEX 3793
+#define INST_ROUNDSD_INDEX 3801
+#define INST_ROUNDSS_INDEX 3809
+#define INST_RSQRTPS_INDEX 3817
+#define INST_RSQRTSS_INDEX 3825
+#define INST_SAHF_INDEX 3833
+#define INST_SAL_INDEX 3838
+#define INST_SAR_INDEX 3842
+#define INST_SBB_INDEX 3846
+#define INST_SETA_INDEX 3850
+#define INST_SETAE_INDEX 3855
+#define INST_SETB_INDEX 3861
+#define INST_SETBE_INDEX 3866
+#define INST_SETC_INDEX 3872
+#define INST_SETE_INDEX 3877
+#define INST_SETG_INDEX 3882
+#define INST_SETGE_INDEX 3887
+#define INST_SETL_INDEX 3893
+#define INST_SETLE_INDEX 3898
+#define INST_SETNA_INDEX 3904
+#define INST_SETNAE_INDEX 3910
+#define INST_SETNB_INDEX 3917
+#define INST_SETNBE_INDEX 3923
+#define INST_SETNC_INDEX 3930
+#define INST_SETNE_INDEX 3936
+#define INST_SETNG_INDEX 3942
+#define INST_SETNGE_INDEX 3948
+#define INST_SETNL_INDEX 3955
+#define INST_SETNLE_INDEX 3961
+#define INST_SETNO_INDEX 3968
+#define INST_SETNP_INDEX 3974
+#define INST_SETNS_INDEX 3980
+#define INST_SETNZ_INDEX 3986
+#define INST_SETO_INDEX 3992
+#define INST_SETP_INDEX 3997
+#define INST_SETPE_INDEX 4002
+#define INST_SETPO_INDEX 4008
+#define INST_SETS_INDEX 4014
+#define INST_SETZ_INDEX 4019
+#define INST_SFENCE_INDEX 4024
+#define INST_SHL_INDEX 4031
+#define INST_SHLD_INDEX 4035
+#define INST_SHR_INDEX 4040
+#define INST_SHRD_INDEX 4044
+#define INST_SHUFPD_INDEX 4049
+#define INST_SHUFPS_INDEX 4056
+#define INST_SQRTPD_INDEX 4063
+#define INST_SQRTPS_INDEX 4070
+#define INST_SQRTSD_INDEX 4077
+#define INST_SQRTSS_INDEX 4084
+#define INST_STC_INDEX 4091
+#define INST_STD_INDEX 4095
+#define INST_STMXCSR_INDEX 4099
+#define INST_SUB_INDEX 4107
+#define INST_SUBPD_INDEX 4111
+#define INST_SUBPS_INDEX 4117
+#define INST_SUBSD_INDEX 4123
+#define INST_SUBSS_INDEX 4129
+#define INST_TEST_INDEX 4135
+#define INST_UCOMISD_INDEX 4140
+#define INST_UCOMISS_INDEX 4148
+#define INST_UD2_INDEX 4156
+#define INST_UNPCKHPD_INDEX 4160
+#define INST_UNPCKHPS_INDEX 4169
+#define INST_UNPCKLPD_INDEX 4178
+#define INST_UNPCKLPS_INDEX 4187
+#define INST_XADD_INDEX 4196
+#define INST_XCHG_INDEX 4201
+#define INST_XOR_INDEX 4206
+#define INST_XORPD_INDEX 4210
+#define INST_XORPS_INDEX 4216
 // ${INSTRUCTION_DATA_END}
 
 // ============================================================================
@@ -1335,8 +1333,8 @@ const char instructionName[] =
 const InstructionDescription instructionDescription[] =
 {
   // Instruction code (enum)      | instruction name   | instruction group| instruction flags| oflags[0]           | oflags[1]           | r| opCode[0] | opcode[1]
-  MAKE_INST(INST_ADC              , "adc"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 2, 0x00000010, 0x00000080),
-  MAKE_INST(INST_ADD              , "add"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 0, 0x00000000, 0x00000080),
+  MAKE_INST(INST_ADC              , "adc"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 2, 0x00000010, 0x00000080),
+  MAKE_INST(INST_ADD              , "add"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 0, 0x00000000, 0x00000080),
   MAKE_INST(INST_ADDPD            , "addpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F58, 0),
   MAKE_INST(INST_ADDPS            , "addps"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F58, 0),
   MAKE_INST(INST_ADDSD            , "addsd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000F58, 0),
@@ -1345,7 +1343,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_ADDSUBPS         , "addsubps"         , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000FD0, 0),
   MAKE_INST(INST_AMD_PREFETCH     , "amd_prefetch"     , G(M)             , F(NONE)          , O(MEM)              , 0                   , 0, 0x00000F0D, 0),
   MAKE_INST(INST_AMD_PREFETCHW    , "amd_prefetchw"    , G(M)             , F(NONE)          , O(MEM)              , 0                   , 1, 0x00000F0D, 0),
-  MAKE_INST(INST_AND              , "and"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 4, 0x00000020, 0x00000080),
+  MAKE_INST(INST_AND              , "and"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 4, 0x00000020, 0x00000080),
   MAKE_INST(INST_ANDNPD           , "andnpd"           , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F55, 0),
   MAKE_INST(INST_ANDNPS           , "andnps"           , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F55, 0),
   MAKE_INST(INST_ANDPD            , "andpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F54, 0),
@@ -1358,9 +1356,9 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_BSR              , "bsr"              , G(R_RM)          , F(NONE)          , O(GQDW)             , O(GQDW_MEM)         , 0, 0x00000FBD, 0),
   MAKE_INST(INST_BSWAP            , "bswap"            , G(BSWAP)         , F(NONE)          , O(GQD)              , 0                   , 0, 0         , 0),
   MAKE_INST(INST_BT               , "bt"               , G(BT)            , F(NONE)          , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 4, 0x00000FA3, 0x00000FBA),
-  MAKE_INST(INST_BTC              , "btc"              , G(BT)            , F(NONE)          , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 7, 0x00000FBB, 0x00000FBA),
-  MAKE_INST(INST_BTR              , "btr"              , G(BT)            , F(NONE)          , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 6, 0x00000FB3, 0x00000FBA),
-  MAKE_INST(INST_BTS              , "bts"              , G(BT)            , F(NONE)          , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 5, 0x00000FAB, 0x00000FBA),
+  MAKE_INST(INST_BTC              , "btc"              , G(BT)            , F(LOCKABLE)      , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 7, 0x00000FBB, 0x00000FBA),
+  MAKE_INST(INST_BTR              , "btr"              , G(BT)            , F(LOCKABLE)      , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 6, 0x00000FB3, 0x00000FBA),
+  MAKE_INST(INST_BTS              , "bts"              , G(BT)            , F(LOCKABLE)      , O(GQDW)|O(MEM)      , O(GQDW)|O(IMM)      , 5, 0x00000FAB, 0x00000FBA),
   MAKE_INST(INST_CALL             , "call"             , G(CALL)          , F(JUMP)          , O(GQD)|O(MEM)       , 0                   , 0, 0         , 0),
   MAKE_INST(INST_CBW              , "cbw"              , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x66000099, 0),
   MAKE_INST(INST_CDQE             , "cdqe"             , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x48000099, 0),
@@ -1403,7 +1401,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_CMPPS            , "cmpps"            , G(MMU_RM_IMM8)   , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000FC2, 0),
   MAKE_INST(INST_CMPSD            , "cmpsd"            , G(MMU_RM_IMM8)   , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000FC2, 0),
   MAKE_INST(INST_CMPSS            , "cmpss"            , G(MMU_RM_IMM8)   , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF3000FC2, 0),
-  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , G(RM_R)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x00000FB0, 0),
+  MAKE_INST(INST_CMPXCHG          , "cmpxchg"          , G(RM_R)          , F(SPECIAL)|F(LOCKABLE), 0              , 0                   , 0, 0x00000FB0, 0),
   MAKE_INST(INST_CMPXCHG16B       , "cmpxchg16b"       , G(M)             , F(SPECIAL)       , O(MEM)              , 0                   , 1, 0x00000FC7, 1 /* RexW */),
   MAKE_INST(INST_CMPXCHG8B        , "cmpxchg8b"        , G(M)             , F(SPECIAL)       , O(MEM)              , 0                   , 1, 0x00000FC7, 0),
   MAKE_INST(INST_COMISD           , "comisd"           , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F2F, 0),
@@ -1435,7 +1433,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_CWDE             , "cwde"             , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x00000099, 0),
   MAKE_INST(INST_DAA              , "daa"              , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x00000027, 0),
   MAKE_INST(INST_DAS              , "das"              , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x0000002F, 0),
-  MAKE_INST(INST_DEC              , "dec"              , G(INC_DEC)       , F(NONE)          , O(GQDWB_MEM)        , 0                   , 1, 0x00000048, 0x000000FE),
+  MAKE_INST(INST_DEC              , "dec"              , G(INC_DEC)       , F(LOCKABLE)      , O(GQDWB_MEM)        , 0                   , 1, 0x00000048, 0x000000FE),
   MAKE_INST(INST_DIV              , "div"              , G(RM)            , F(SPECIAL)       , 0                   , 0                   , 6, 0x000000F6, 0),
   MAKE_INST(INST_DIVPD            , "divpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F5E, 0),
   MAKE_INST(INST_DIVPS            , "divps"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F5E, 0),
@@ -1548,7 +1546,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_HSUBPS           , "hsubps"           , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000F7D, 0),
   MAKE_INST(INST_IDIV             , "idiv"             , G(RM)            , F(SPECIAL)       , 0                   , 0                   , 7, 0x000000F6, 0),
   MAKE_INST(INST_IMUL             , "imul"             , G(IMUL)          , F(SPECIAL)       , 0                   , 0                   , 0, 0         , 0),
-  MAKE_INST(INST_INC              , "inc"              , G(INC_DEC)       , F(NONE)          , O(GQDWB_MEM)        , 0                   , 0, 0x00000040, 0x000000FE),
+  MAKE_INST(INST_INC              , "inc"              , G(INC_DEC)       , F(LOCKABLE)      , O(GQDWB_MEM)        , 0                   , 0, 0x00000040, 0x000000FE),
   MAKE_INST(INST_INT3             , "int3"             , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000000CC, 0),
 
   MAKE_INST(INST_JA               , "ja"               , G(J)             , F(JUMP)          , 0                   , 0                   , 0, 0x7       , 0),
@@ -1621,7 +1619,6 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_LEA              , "lea"              , G(LEA)           , F(NONE)          , O(GQD)              , O(MEM)              , 0, 0         , 0),
   MAKE_INST(INST_LEAVE            , "leave"            , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x000000C9, 0),
   MAKE_INST(INST_LFENCE           , "lfence"           , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000FAEE8, 0),
-  MAKE_INST(INST_LOCK             , "lock"             , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000000F0, 0),
   MAKE_INST(INST_MASKMOVDQU       , "maskmovdqu"       , G(MMU_RMI)       , F(SPECIAL)       , O(XMM)              , O(XMM)              , 0, 0x66000F57, 0),
   MAKE_INST(INST_MASKMOVQ         , "maskmovq"         , G(MMU_RMI)       , F(SPECIAL)       , O(MM)               , O(MM)               , 0, 0x00000FF7, 0),
   MAKE_INST(INST_MAXPD            , "maxpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F5F, 0),
@@ -1676,10 +1673,10 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_MULSD            , "mulsd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000F59, 0),
   MAKE_INST(INST_MULSS            , "mulss"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF3000F59, 0),
   MAKE_INST(INST_MWAIT            , "mwait"            , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x000F01C9, 0),
-  MAKE_INST(INST_NEG              , "neg"              , G(RM)            , F(NONE)          , O(GQDWB_MEM)        , 0                   , 3, 0x000000F6, 0),
+  MAKE_INST(INST_NEG              , "neg"              , G(RM)            , F(LOCKABLE)      , O(GQDWB_MEM)        , 0                   , 3, 0x000000F6, 0),
   MAKE_INST(INST_NOP              , "nop"              , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x00000090, 0),
-  MAKE_INST(INST_NOT              , "not"              , G(RM)            , F(NONE)          , O(GQDWB_MEM)        , 0                   , 2, 0x000000F6, 0),
-  MAKE_INST(INST_OR               , "or"               , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 1, 0x00000008, 0x00000080),
+  MAKE_INST(INST_NOT              , "not"              , G(RM)            , F(LOCKABLE)      , O(GQDWB_MEM)        , 0                   , 2, 0x000000F6, 0),
+  MAKE_INST(INST_OR               , "or"               , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 1, 0x00000008, 0x00000080),
   MAKE_INST(INST_ORPD             , "orpd"             , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F56, 0),
   MAKE_INST(INST_ORPS             , "orps"             , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F56, 0),
   MAKE_INST(INST_PABSB            , "pabsb"            , G(MMU_RMI)       , F(NONE)          , O(MM_XMM)           , O(MM_XMM_MEM)       , 0, 0x000F381C, 0),
@@ -1882,7 +1879,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_SAHF             , "sahf"             , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x0000009E, 0),
   MAKE_INST(INST_SAL              , "sal"              , G(ROT)           , F(SPECIAL)       , O(GQDWB_MEM)        , O(GB)|O(IMM)        , 4, 0         , 0),
   MAKE_INST(INST_SAR              , "sar"              , G(ROT)           , F(SPECIAL)       , O(GQDWB_MEM)        , O(GB)|O(IMM)        , 7, 0         , 0),
-  MAKE_INST(INST_SBB              , "sbb"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 3, 0x00000018, 0x00000080),
+  MAKE_INST(INST_SBB              , "sbb"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 3, 0x00000018, 0x00000080),
   MAKE_INST(INST_SETA             , "seta"             , G(RM_B)          , F(NONE)          , O(GB_MEM)           , 0                   , 0, 0x00000F97, 0),
   MAKE_INST(INST_SETAE            , "setae"            , G(RM_B)          , F(NONE)          , O(GB_MEM)           , 0                   , 0, 0x00000F93, 0),
   MAKE_INST(INST_SETB             , "setb"             , G(RM_B)          , F(NONE)          , O(GB_MEM)           , 0                   , 0, 0x00000F92, 0),
@@ -1927,7 +1924,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_STC              , "stc"              , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000000F9, 0),
   MAKE_INST(INST_STD              , "std"              , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000000FD, 0),
   MAKE_INST(INST_STMXCSR          , "stmxcsr"          , G(M)             , F(NONE)          , O(MEM)              , 0                   , 3, 0x00000FAE, 0),
-  MAKE_INST(INST_SUB              , "sub"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 5, 0x00000028, 0x00000080),
+  MAKE_INST(INST_SUB              , "sub"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 5, 0x00000028, 0x00000080),
   MAKE_INST(INST_SUBPD            , "subpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F5C, 0),
   MAKE_INST(INST_SUBPS            , "subps"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F5C, 0),
   MAKE_INST(INST_SUBSD            , "subsd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0xF2000F5C, 0),
@@ -1940,9 +1937,9 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_UNPCKHPS         , "unpckhps"         , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F15, 0),
   MAKE_INST(INST_UNPCKLPD         , "unpcklpd"         , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F14, 0),
   MAKE_INST(INST_UNPCKLPS         , "unpcklps"         , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F14, 0),
-  MAKE_INST(INST_XADD             , "xadd"             , G(RM_R)          , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB)            , 0, 0x00000FC0, 0),
-  MAKE_INST(INST_XCHG             , "xchg"             , G(XCHG)          , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB)            , 0, 0         , 0),
-  MAKE_INST(INST_XOR              , "xor"              , G(ALU)           , F(NONE)          , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 6, 0x00000030, 0x00000080),
+  MAKE_INST(INST_XADD             , "xadd"             , G(RM_R)          , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB)            , 0, 0x00000FC0, 0),
+  MAKE_INST(INST_XCHG             , "xchg"             , G(XCHG)          , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB)            , 0, 0         , 0),
+  MAKE_INST(INST_XOR              , "xor"              , G(ALU)           , F(LOCKABLE)      , O(GQDWB_MEM)        , O(GQDWB_MEM)|O(IMM) , 6, 0x00000030, 0x00000080),
   MAKE_INST(INST_XORPD            , "xorpd"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x66000F57, 0),
   MAKE_INST(INST_XORPS            , "xorps"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(XMM_MEM)          , 0, 0x00000F57, 0)
 };

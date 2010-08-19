@@ -1009,7 +1009,6 @@ enum INST_CODE
   INST_LEA,           // X86/X64
   INST_LEAVE,         // X86/X64
   INST_LFENCE,
-  INST_LOCK,          // X86/X64
   INST_MASKMOVDQU,
   INST_MASKMOVQ,      // MMX Extensions
   INST_MAXPD,
@@ -1446,9 +1445,10 @@ struct InstructionDescription
   };
 
   // --------------------------------------------------------------------------
-  // [Instruction Type Flags]
+  // [Instruction Core Flags]
   // --------------------------------------------------------------------------
 
+  //! @brief Instruction core flags.
   enum F
   {
     //! @brief No flags.
@@ -1459,8 +1459,17 @@ struct InstructionDescription
     F_MOV = 0x02,
     //! @brief Instruction is X87 FPU.
     F_FPU = 0x04,
-    //! @brief Instruction is special, this is for Compiler.
-    F_SPECIAL = 0x08
+    //! @brief Instruction can be prepended using LOCK prefix
+    //! (usable for multithreaded applications).
+    F_LOCKABLE = 0x08,
+
+    //! @brief Instruction is special, this is for @c Compiler.
+    F_SPECIAL = 0x10,
+    //! @brief Instruction always performs memory access.
+    //!
+    //! This flag is always combined with @c F_SPECIAL and signalizes that
+    //! there is implicit address which is accessed (usually EDI/RDI or ESI/EDI).
+    F_SPECIAL_MEM = 0x20
   };
 
   // --------------------------------------------------------------------------
@@ -1540,18 +1549,32 @@ struct InstructionDescription
   inline bool isJump() const { return (flags & F_JUMP) != 0; }
   inline bool isMov() const { return (flags & F_MOV) != 0; }
   inline bool isFPU() const { return (flags & F_FPU) != 0; }
+  inline bool isLockable() const { return (flags & F_LOCKABLE) != 0; }
+
   inline bool isSpecial() const { return (flags & F_SPECIAL) != 0; }
+  inline bool isSpecialMem() const { return (flags & F_SPECIAL_MEM) != 0; }
 };
 
 ASMJIT_API extern const InstructionDescription instructionDescription[];
 
 // ============================================================================
-// [AsmJit::EMIT_FLAG]
+// [AsmJit::EMIT_OPTIONS]
 // ============================================================================
 
-enum EMIT_FLAG
+//! @brief Emit options, mainly for internal purposes.
+enum EMIT_OPTIONS
 {
-  EMIT_LOCK_PREFIX = (1 << 0)
+  //! @brief Tell @c Assembler or @c Compiler to emit and validate lock prefix.
+  //!
+  //! If this option is used and instruction doesn't support LOCK prefix then
+  //! invalid instruction error is generated.
+  EMIT_OPTION_LOCK_PREFIX = (1 << 0),
+  //! @brief Force REX prefix to be emitted.
+  //!
+  //! This option should be used carefully, because there are unencodable
+  //! combinations. If you want to access ah, bh, ch or dh registers then you
+  //! can't emit REX prefix and it will cause an illegal instruction error.
+  EMIT_OPTION_REX_PREFIX = (1 << 1)
 };
 
 // ============================================================================
@@ -1594,7 +1617,7 @@ enum CALL_CONV
 
   // [X64 Calling Conventions]
 
-  //! @brief X64 calling convention for Windows platform.
+  //! @brief X64 calling convention for Windows platform (WIN64 ABI).
   //!
   //! For first four arguments are used these registers:
   //! - 1. 32/64 bit integer or floating point argument - rcx/xmm0
