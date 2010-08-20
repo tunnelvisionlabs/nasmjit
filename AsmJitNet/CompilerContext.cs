@@ -11,7 +11,7 @@
         private Emittable _start;
         private Emittable _stop;
         private Emittable _extraBlock;
-        private readonly StateData _state = new StateData();
+        private readonly StateData _state = new StateData(0);
         private VarData _active;
         private ForwardJumpData _forwardJumps;
         private int _currentOffset;
@@ -1384,9 +1384,23 @@
 
         internal StateData SaveState()
         {
-            StateData state = new StateData(_state);
-            //memcpy(state, &_state, sizeof(StateData));
+            // Get count of variables stored in memory.
+            int memVarsCount = 0;
+            VarData cur = _active;
+            if (cur != null)
+            {
+                do
+                {
+                    if (cur.State == VariableState.Memory)
+                        memVarsCount++;
+                    cur = cur.NextActive;
+                } while (cur != _active);
+            }
 
+            // Alloc StateData structure (using zone allocator) and copy current state into it.
+            StateData state = new StateData(_state, memVarsCount);
+
+            // Clear changed flags.
             state.ChangedGP = 0;
             state.ChangedMM = 0;
             state.ChangedXMM = 0;
@@ -1394,6 +1408,7 @@
             int i;
             int mask;
 
+            // Save variables stored in REGISTERs and CHANGE flag.
             for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
             {
                 if (state.GP[i] != null && state.GP[i].Changed)
@@ -1412,59 +1427,79 @@
                     state.ChangedXMM |= mask;
             }
 
+            // Save variables stored in MEMORY.
+            memVarsCount = 0;
+
+            cur = _active;
+            if (cur != null)
+            {
+                do
+                {
+                    if (cur.State == VariableState.Memory)
+                        state.MemVarsData[memVarsCount++] = cur;
+                    cur = cur.NextActive;
+                } while (cur != _active);
+            }
+
+            // Finished.
             return state;
         }
 
-        internal void AssignState(StateData stateData)
+        internal void AssignState(StateData state)
         {
             Compiler compiler = Compiler;
-            _state.CopyFrom(stateData);
-            //memcpy(&_state, state, sizeof(StateData));
+            _state.CopyFrom(state);
+            _state.MemVarsData = new VarData[0];
 
             int i;
-            int len;
             int mask;
+            VarData vdata;
 
-            // Clear all variables in registers.
-            for (i = 0, len = compiler.Variables.Count; i < len; i++)
+            // Unuse all variables first.
+            vdata = _active;
+            if (vdata != null)
             {
-                VarData varData = compiler.Variables[i];
-                if (varData.State == VariableState.Register)
+                do
                 {
-                    varData.State = VariableState.Memory;
-                }
+                    vdata.State = VariableState.Unused;
+                    vdata = vdata.NextActive;
+                } while (vdata != _active);
             }
 
+            // Assign variables stored in memory which are not unused.
+            for (i = 0; i < state.MemVarsData.Length; i++)
+            {
+                state.MemVarsData[i].State = VariableState.Memory;
+            }
+
+            // Assign allocated variables.
             for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
             {
-                VarData varData = _state.GP[i];
-                if (varData != null)
+                if ((vdata = _state.GP[i]) != null)
                 {
-                    varData.State = VariableState.Register;
-                    varData.RegisterIndex = (RegIndex)i;
-                    varData.Changed = (_state.ChangedGP & mask) != 0;
+                    vdata.State = VariableState.Register;
+                    vdata.RegisterIndex = (RegIndex)i;
+                    vdata.Changed = (_state.ChangedGP & mask) != 0;
                 }
             }
 
             for (i = 0, mask = 1; i < (int)RegNum.MM; i++, mask <<= 1)
             {
-                VarData varData = _state.MM[i];
-                if (varData != null)
+                if ((vdata = _state.MM[i]) != null)
                 {
-                    varData.State = VariableState.Register;
-                    varData.RegisterIndex = (RegIndex)i;
-                    varData.Changed = (_state.ChangedMM & mask) != 0;
+                    vdata.State = VariableState.Register;
+                    vdata.RegisterIndex = (RegIndex)i;
+                    vdata.Changed = (_state.ChangedMM & mask) != 0;
                 }
             }
 
             for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
             {
-                VarData varData = _state.XMM[i];
-                if (varData != null)
+                if ((vdata = _state.XMM[i]) != null)
                 {
-                    varData.State = VariableState.Register;
-                    varData.RegisterIndex = (RegIndex)i;
-                    varData.Changed = (_state.ChangedXMM & mask) != 0;
+                    vdata.State = VariableState.Register;
+                    vdata.RegisterIndex = (RegIndex)i;
+                    vdata.Changed = (_state.ChangedXMM & mask) != 0;
                 }
             }
         }
@@ -1477,6 +1512,7 @@
             StateData fromState = _state;
             StateData toState = state;
 
+            // No change, rare...
             if (fromState == toState)
                 return;
 
@@ -1484,6 +1520,34 @@
             int i;
 
             // TODO: 16 + 8 + 16 is cryptic, make constants instead!
+
+            // Set target state to all variables. vdata->tempInt is target state in this
+            // function.
+            {
+                // UNUSED.
+                VarData vdata = _active;
+                if (vdata != null)
+                {
+                    do
+                    {
+                        vdata.Temp = VariableState.Unused;
+                        vdata = vdata.NextActive;
+                    } while (vdata != _active);
+                }
+
+                // MEMORY.
+                for (i = 0; i < toState.MemVarsData.Length; i++)
+                {
+                    toState.MemVarsData[i].Temp = VariableState.Memory;
+                }
+
+                // REGISTER.
+                for (i = 0; i < StateData.RegisterCount; i++)
+                {
+                    if ((vdata = toState.Registers[i]) != null)
+                        vdata.Temp = VariableState.Register;
+                }
+            }
 
             // Spill.
             for (@base = 0, i = 0; i < STATE_REGS_COUNT; i++)
@@ -1504,23 +1568,13 @@
                     {
                         // It is possible that variable that was saved in state currently not
                         // exists.
-                        if (fromVar.State == VariableState.Unused)
+                        if ((fromVar.Temp is VariableState) && ((VariableState)fromVar.Temp) == VariableState.Unused)
                         {
-                            // TODO: I don't know why unusing unused variable...
                             UnuseVar(fromVar, VariableState.Unused);
                         }
                         else
                         {
-                            if (targetOffset != Operand.InvalidValue && fromVar.LastEmittable.Offset < targetOffset)
-                            {
-                                // Do not spill a variable that is out of scope.
-                                UnuseVar(fromVar, VariableState.Unused);
-                            }
-                            else
-                            {
-                                // Normal state change, spill...
-                                SpillVar(fromVar);
-                            }
+                            SpillVar(fromVar);
                         }
                     }
                 }
@@ -1567,10 +1621,24 @@
             _state.UsedMM = state.UsedMM;
             _state.UsedXMM = state.UsedXMM;
 
-            // TODO: What about changed flags?
-            //_state.changedGP = state->changedGP;
-            //_state.changedMM = state->changedMM;
-            //_state.changedXMM = state->changedXMM;
+            // Cleanup.
+            {
+                VarData vdata = _active;
+                if (vdata != null)
+                {
+                    do
+                    {
+                        if (!((vdata.Temp is VariableState) && ((VariableState)vdata.Temp) == VariableState.Register))
+                        {
+                            vdata.State = (VariableState)vdata.Temp;
+                            vdata.Changed = false;
+                        }
+
+                        vdata.Temp = null;
+                        vdata = vdata.NextActive;
+                    } while (vdata != _active);
+                }
+            }
         }
     }
 }

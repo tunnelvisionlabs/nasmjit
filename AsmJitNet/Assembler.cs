@@ -2385,7 +2385,7 @@
     if (assertIllegal)
     {
       // Here we need to null terminate.
-      buf[0];
+      buf[0] = '\0';
 
       // We raise an assertion failure, because in debugging this just shouldn't
       // happen.

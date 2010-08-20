@@ -352,7 +352,7 @@
                 cc.Function = (Function)start;
                 cc.Start = start;
                 cc.Stop = stop = cc.Function.End;
-                cc.ExtraBlock = stop;
+                cc.ExtraBlock = stop.Previous;
                 // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------
@@ -1058,7 +1058,7 @@
                 { typeof(ulong), VariableType.GPQ },
                 { typeof(float), VariableType.FLOAT },
                 { typeof(double), VariableType.DOUBLE },
-                { typeof(IntPtr), VariableType.PTR },
+                { typeof(IntPtr), VariableType.INTPTR },
             };
 
         internal static VariableType TypeToId(Type type)
