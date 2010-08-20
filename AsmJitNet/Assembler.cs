@@ -267,19 +267,23 @@
             if (_error != 0 || CodeSize == 0)
                 return IntPtr.Zero;
 
-            IntPtr addressPtr = IntPtr.Zero;
-            IntPtr addressBase = IntPtr.Zero;
-            long codeSize = CodeSize;
+            IntPtr p;
+            _error = _codeGenerator.Generate(out p, this);
 
-            _error = _codeGenerator.Alloc(out addressPtr, out addressBase, codeSize);
+            return p;
+            //IntPtr addressPtr = IntPtr.Zero;
+            //IntPtr addressBase = IntPtr.Zero;
+            //long codeSize = CodeSize;
 
-            // Return on error.
-            if (_error != 0)
-                return IntPtr.Zero;
+            //_error = _codeGenerator.Alloc(out addressPtr, out addressBase, codeSize);
 
-            // This is last step. Relocate code and return generated code.
-            RelocCode(addressPtr, addressBase);
-            return addressPtr;
+            //// Return on error.
+            //if (_error != 0)
+            //    return IntPtr.Zero;
+
+            //// This is last step. Relocate code and return generated code.
+            //RelocCode(addressPtr, addressBase);
+            //return addressPtr;
         }
 
         public void RelocCode(IntPtr destination)

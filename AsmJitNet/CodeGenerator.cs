@@ -14,6 +14,6 @@
             }
         }
 
-        public abstract int Alloc(out IntPtr addressPtr, out IntPtr addressBase, long codeSize);
+        public abstract int Generate(out IntPtr destination, Assembler assembler);
     }
 }

@@ -30,19 +30,31 @@
             }
         }
 
-        public override int Alloc(out IntPtr addressPtr, out IntPtr addressBase, long codeSize)
+        public override int Generate(out IntPtr destination, Assembler assembler)
         {
-            Debug.Assert(codeSize > 0);
+            // Disallow empty code generation.
+            long codeSize = assembler.CodeSize;
+            if (codeSize == 0)
+            {
+                destination = IntPtr.Zero;
+                return Errors.NoFunction;
+            }
 
             // Switch to global memory manager if not provided.
             MemoryManager memmgr = MemoryManager ?? MemoryManager.Global;
 
             IntPtr p = memmgr.Alloc(codeSize, AllocType);
+            if (p == IntPtr.Zero)
+            {
+                destination = IntPtr.Zero;
+                return Errors.NoVirtualMemory;
+            }
 
-            addressPtr = p;
-            addressBase = p;
+            // This is the last step. Relocate the code and return it.
+            assembler.RelocCode(p);
 
-            return p != IntPtr.Zero ? Errors.None : Errors.NoVirtualMemory;
+            destination = p;
+            return Errors.None;
         }
     }
 }
