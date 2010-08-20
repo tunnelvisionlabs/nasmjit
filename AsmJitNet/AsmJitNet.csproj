@@ -8,7 +8,7 @@
     <ProjectGuid>{03B87F76-C672-449A-9272-A866C6B62481}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsmJitNet</RootNamespace>
+    <RootNamespace>AsmJitNet2</RootNamespace>
     <AssemblyName>AsmJitNet</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -96,6 +96,7 @@
     <Compile Include="Buffer.cs" />
     <Compile Include="Call.cs" />
     <Compile Include="CallingConvention.cs" />
+    <Compile Include="CodeGenerator.cs" />
     <Compile Include="Comment.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="CompilerContext.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="InstructionDescription.cs" />
     <Compile Include="InstructionFlags.cs" />
     <Compile Include="InstructionGroup.cs" />
+    <Compile Include="JitCodeGenerator.cs" />
     <Compile Include="Jmp.cs" />
     <Compile Include="Label.cs" />
     <Compile Include="Logger.cs" />

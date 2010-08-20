@@ -1,15 +1,17 @@
 ﻿namespace AsmJitNet2
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Collections.Generic;
-    using Debug = System.Diagnostics.Debug;
-    using Marshal = System.Runtime.InteropServices.Marshal;
+    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
+    using Debug = System.Diagnostics.Debug;
+    using Marshal = System.Runtime.InteropServices.Marshal;
 
     public class Assembler
     {
+        private CodeGenerator _codeGenerator;
+
         /// <summary>
         /// Last error code
         /// </summary>
@@ -43,6 +45,11 @@
 
         private string _comment;
 
+        public Assembler(CodeGenerator codeGenerator = null)
+        {
+            _codeGenerator = codeGenerator ?? CodeGenerator.Global;
+        }
+
         /// <summary>
         /// Gets or sets the logger
         /// </summary>
@@ -50,6 +57,14 @@
         {
             get;
             set;
+        }
+
+        public CodeGenerator CodeGenerator
+        {
+            get
+            {
+                return _codeGenerator;
+            }
         }
 
         /// <summary>
@@ -246,29 +261,33 @@
             l_data.Links = null;
         }
 
-        public IntPtr Make(MemoryManager memoryManager = null, MemoryAllocType allocType = MemoryAllocType.Freeable)
+        public IntPtr Make()
         {
             // Do nothing on error state or when no instruction was emitted.
             if (_error != 0 || CodeSize == 0)
                 return IntPtr.Zero;
 
-            // Switch to global memory manager if not provided.
-            memoryManager = memoryManager ?? MemoryManager.Global;
+            IntPtr addressPtr = IntPtr.Zero;
+            IntPtr addressBase = IntPtr.Zero;
+            long codeSize = CodeSize;
 
-            // Try to allocate memory and check if everything is ok.
-            IntPtr p = memoryManager.Alloc(CodeSize, allocType);
-            if (p == IntPtr.Zero)
-            {
-                Error = Errors.NoVirtualMemory;
+            _error = _codeGenerator.Alloc(out addressPtr, out addressBase, codeSize);
+
+            // Return on error.
+            if (_error != 0)
                 return IntPtr.Zero;
-            }
 
             // This is last step. Relocate code and return generated code.
-            RelocCode(p);
-            return p;
+            RelocCode(addressPtr, addressBase);
+            return addressPtr;
         }
 
         public void RelocCode(IntPtr destination)
+        {
+            RelocCode(destination, destination);
+        }
+
+        public void RelocCode(IntPtr destination, IntPtr addressBase)
         {
             // Copy code to virtual memory (this is a given destination pointer).
 
@@ -307,17 +326,17 @@
                     break;
 
                 case RelocationType.RelativeToAbsolute:
-                    val = (IntPtr)(destination.ToInt64() + r.Destination.ToInt64());
+                    val = (IntPtr)(addressBase.ToInt64() + r.Destination.ToInt64());
                     break;
 
                 case RelocationType.AbsoluteToRelative:
                 case RelocationType.AbsoluteToRelativeTrampoline:
-                    val = (IntPtr)(r.Destination.ToInt64() - (destination.ToInt64() + r.Offset + 4));
+                    val = (IntPtr)(r.Destination.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
 
 #if ASMJIT_X64
                     if (r.Type == RelocationType.AbsoluteToRelativeTrampoline && !Util.IsInt32(val.ToInt64()))
                     {
-                        val = (IntPtr)(tramp.ToInt64() - (destination.ToInt64() + r.Offset + 4));
+                        val = (IntPtr)(tramp.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
                         useTrampoline = true;
                     }
 #endif // ASMJIT_X64
@@ -348,7 +367,7 @@
                 {
                     if (Logger != null && Logger.IsUsed)
                     {
-                        Logger.LogFormat("; Trampoline from 0x{0:x} -> 0x{1:x}"+ Environment.NewLine, destination.ToInt64() + r.Offset, r.Destination);
+                        Logger.LogFormat("; Trampoline from 0x{0:x} -> 0x{1:x}"+ Environment.NewLine, addressBase.ToInt64() + r.Offset, r.Destination);
                     }
 
                     TrampolineWriter.WriteTrampoline(tramp, r.Destination);

@@ -2,6 +2,7 @@
 {
     internal static class Errors
     {
+        public static readonly int None = 0;
         public static readonly int NoHeapMemory = 1;
         public static readonly int NoVirtualMemory = 2;
         public static readonly int UnknownInstruction = 3;

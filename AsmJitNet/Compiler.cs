@@ -8,6 +8,7 @@
 
     public class Compiler
     {
+        private CodeGenerator _codeGenerator;
         private Function _function;
         private int _varNameId;
         private readonly List<Target> _targetData = new List<Target>();
@@ -20,6 +21,11 @@
         private int _error;
         private CompilerProperties _properties;
 
+        public Compiler(CodeGenerator codeGenerator = null)
+        {
+            _codeGenerator = codeGenerator ?? CodeGenerator.Global;
+        }
+
         public Logger Logger
         {
             get
@@ -30,6 +36,14 @@
             set
             {
                 _logger = value;
+            }
+        }
+
+        public CodeGenerator CodeGenerator
+        {
+            get
+            {
+                return _codeGenerator;
             }
         }
 
@@ -256,9 +270,9 @@
             return f;
         }
 
-        public IntPtr Make(MemoryManager memoryManager = null, MemoryAllocType allocType = MemoryAllocType.Freeable)
+        public IntPtr Make()
         {
-            Assembler a = new Assembler();
+            Assembler a = new Assembler(_codeGenerator);
             a.Properties = _properties;
             a.Logger = _logger;
 
@@ -273,7 +287,7 @@
                 return IntPtr.Zero;
             }
 
-            IntPtr result = a.Make(memoryManager, allocType);
+            IntPtr result = a.Make();
             if (_logger != null && _logger.IsUsed)
             {
                 _logger.LogFormat("*** COMPILER SUCCESS - Wrote {0} bytes, code: {1}, trampolines: {2}." + Environment.NewLine + Environment.NewLine,
