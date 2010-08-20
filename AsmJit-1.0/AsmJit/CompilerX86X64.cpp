@@ -1873,7 +1873,8 @@ void EJmp::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
   // Update _isTaken to true if this is conditional backward jump. This behavior
   // can be overriden by using HINT_NOT_TAKEN when using the instruction.
-  if ((getCode() != INST_JMP || getCode() != INST_JMP_SHORT) &&
+  if (getCode() != INST_JMP &&
+      getCode() != INST_JMP_SHORT &&
       _operandsCount == 1 &&
       _jumpTarget->getOffset() < getOffset())
   {
@@ -6178,11 +6179,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   _state.usedMM = state->usedMM;
   _state.usedXMM = state->usedXMM;
 
-  // Update changed masks.
-  
-  
-
-  // Cleanup.
+  // Update changed masks and cleanup.
   {
     VarData* vdata = _active;
     if (vdata)
