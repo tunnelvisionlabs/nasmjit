@@ -6125,7 +6125,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
       if (fromVar != NULL)
       {
         // It is possible that variable that was saved in state currently not
-        // exists (tempInt is target scope!)
+        // exists (tempInt is target scope!).
         if (fromVar->tempInt == VARIABLE_STATE_UNUSED)
         {
           unuseVar(fromVar, VARIABLE_STATE_UNUSED);
@@ -6173,10 +6173,14 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
     //}
   }
 
-  // Update masks
+  // Update used masks.
   _state.usedGP = state->usedGP;
   _state.usedMM = state->usedMM;
   _state.usedXMM = state->usedXMM;
+
+  // Update changed masks.
+  
+  
 
   // Cleanup.
   {
@@ -6262,9 +6266,9 @@ void CompilerContext::_allocMemoryOperands() ASMJIT_NOTHROW
   VarMemBlock* mem;
 
   // Variables are allocated in this order:
-  // 1. 16-bytes variables.
-  // 2. 8-bytes variables.
-  // 3. 4-bytes variables.
+  // 1. 16-byte variables.
+  // 2. 8-byte variables.
+  // 3. 4-byte variables.
   // 4. All others.
 
   uint32_t start16 = 0;
@@ -7161,29 +7165,6 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       cur->prepare(cc);
       if (cur == stop) break;
     }
-
-    /*
-    // Step 1.b:
-    // - Add "VARIABLE_HINT_UNUSE" hint to the end of each variable scope.
-    if (cc._active)
-    {
-      VarData* vdata = cc._active;
-
-      do {
-        if (vdata->lastEmittable)
-        {
-          EVariableHint* e;
-          uint32_t hint = VARIABLE_HINT_UNUSE;
-
-          e = Compiler_newObject<EVariableHint>(this, vdata, hint, (uint32_t)INVALID_VALUE);
-          e->_offset = vdata->lastEmittable->_offset;
-          addEmittableAfter(e, vdata->lastEmittable);
-        }
-
-        vdata = vdata->nextActive;
-      } while (vdata != cc._active);
-    }
-    */
     // ------------------------------------------------------------------------
 
     // We set compiler context also to Compiler so new emitted  instructions 

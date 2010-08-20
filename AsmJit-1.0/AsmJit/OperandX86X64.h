@@ -268,7 +268,7 @@ struct ASMJIT_HIDDEN Operand
     //! @brief Index register index or variable.
     uint32_t index;
 
-    //! @brief Target (for 32 bit, absolute address).
+    //! @brief Target (for 32-bit, absolute address).
     void* target;
 
     //! @brief Displacement.
@@ -453,7 +453,7 @@ struct ASMJIT_HIDDEN BaseReg : public Operand
 
 //! @brief General purpose register.
 //!
-//! This class is for all general purpose registers (64, 32, 16 and 8 bit).
+//! This class is for all general purpose registers (64, 32, 16 and 8-bit).
 struct ASMJIT_HIDDEN GPReg : public BaseReg
 {
   // --------------------------------------------------------------------------
@@ -905,7 +905,7 @@ static inline GPReg gpd(uint32_t index) ASMJIT_NOTHROW
 { return GPReg(_Initialize(), static_cast<uint32_t>(index | REG_TYPE_GPD)); }
 
 #if defined(ASMJIT_X64)
-//! @brief Get general purpose register of qword size (64 bit only).
+//! @brief Get general purpose register of qword size (64-bit only).
 static inline GPReg gpq(uint32_t index) ASMJIT_NOTHROW
 { return GPReg(_Initialize(), static_cast<uint32_t>(index | REG_TYPE_GPQ)); }
 #endif
@@ -1791,7 +1791,7 @@ static inline Mem dword_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHRO
 static inline Mem qword_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, disp, SIZE_TWORD); }
 
@@ -1811,7 +1811,7 @@ static inline Mem mmword_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHR
 static inline Mem xmmword_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const Label& label, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, disp, sizeof(sysint_t)); }
 
@@ -1837,7 +1837,7 @@ static inline Mem dword_ptr(const Label& label, const GPReg& index, uint32_t shi
 static inline Mem qword_ptr(const Label& label, const GPReg& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const Label& label, const GPReg& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_TWORD); }
 
@@ -1857,7 +1857,7 @@ static inline Mem mmword_ptr(const Label& label, const GPReg& index, uint32_t sh
 static inline Mem xmmword_ptr(const Label& label, const GPReg& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const Label& label, const GPReg& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, sizeof(sysint_t)); }
 
@@ -1883,7 +1883,7 @@ static inline Mem dword_ptr(const Label& label, const GPVar& index, uint32_t shi
 static inline Mem qword_ptr(const Label& label, const GPVar& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const Label& label, const GPVar& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_TWORD); }
 
@@ -1903,7 +1903,7 @@ static inline Mem mmword_ptr(const Label& label, const GPVar& index, uint32_t sh
 static inline Mem xmmword_ptr(const Label& label, const GPVar& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const Label& label, const GPVar& index, uint32_t shift, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(label, index, shift, disp, sizeof(sysint_t)); }
 
@@ -1945,7 +1945,7 @@ static inline Mem dword_ptr_abs(void* target, sysint_t disp = 0, uint32_t segmen
 static inline Mem qword_ptr_abs(void* target, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, disp, segmentPrefix, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr_abs(void* target, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, disp, segmentPrefix, SIZE_TWORD); }
 
@@ -1965,7 +1965,7 @@ static inline Mem mmword_ptr_abs(void* target, sysint_t disp = 0, uint32_t segme
 static inline Mem xmmword_ptr_abs(void* target, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, disp, segmentPrefix, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr_abs(void* target, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, disp, segmentPrefix, sizeof(sysint_t)); }
 
@@ -1991,7 +1991,7 @@ static inline Mem dword_ptr_abs(void* target, const GPReg& index, uint32_t shift
 static inline Mem qword_ptr_abs(void* target, const GPReg& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr_abs(void* target, const GPReg& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_TWORD); }
 
@@ -2011,7 +2011,7 @@ static inline Mem mmword_ptr_abs(void* target, const GPReg& index, uint32_t shif
 static inline Mem xmmword_ptr_abs(void* target, const GPReg& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr_abs(void* target, const GPReg& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, index, shift, disp, segmentPrefix, sizeof(sysint_t)); }
 
@@ -2047,7 +2047,7 @@ static inline Mem dword_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHROW
 static inline Mem qword_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_TWORD); }
 
@@ -2067,7 +2067,7 @@ static inline Mem mmword_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHRO
 static inline Mem xmmword_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const GPReg& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, sizeof(sysint_t)); }
 
@@ -2093,7 +2093,7 @@ static inline Mem dword_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHROW
 static inline Mem qword_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_TWORD); }
 
@@ -2113,7 +2113,7 @@ static inline Mem mmword_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHRO
 static inline Mem xmmword_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const GPVar& base, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, disp, sizeof(sysint_t)); }
 
@@ -2149,7 +2149,7 @@ static inline Mem dword_ptr(const GPReg& base, const GPReg& index, uint32_t shif
 static inline Mem qword_ptr(const GPReg& base, const GPReg& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const GPReg& base, const GPReg& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_TWORD); }
 
@@ -2169,7 +2169,7 @@ static inline Mem mmword_ptr(const GPReg& base, const GPReg& index, uint32_t shi
 static inline Mem xmmword_ptr(const GPReg& base, const GPReg& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const GPReg& base, const GPReg& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, sizeof(sysint_t)); }
 
@@ -2195,7 +2195,7 @@ static inline Mem dword_ptr(const GPVar& base, const GPVar& index, uint32_t shif
 static inline Mem qword_ptr(const GPVar& base, const GPVar& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_QWORD); }
 
-//! @brief Create tword (10 Bytes) pointer operand (used for 80 bit floating points).
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
 static inline Mem tword_ptr(const GPVar& base, const GPVar& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_TWORD); }
 
@@ -2215,7 +2215,7 @@ static inline Mem mmword_ptr(const GPVar& base, const GPVar& index, uint32_t shi
 static inline Mem xmmword_ptr(const GPVar& base, const GPVar& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, SIZE_DQWORD); }
 
-//! @brief Create system dependent pointer operand (32 bit or 64 bit).
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr(const GPVar& base, const GPVar& index, uint32_t shift = 0, sysint_t disp = 0) ASMJIT_NOTHROW
 { return _MemPtrBuild(base, index, shift, disp, sizeof(sysint_t)); }
 

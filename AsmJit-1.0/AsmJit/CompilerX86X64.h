@@ -1522,11 +1522,11 @@ struct ASMJIT_API CompilerContext
   VarMemBlock* _memUsed;
   //! @brief Free memory blocks (freed, prepared for another allocation).
   VarMemBlock* _memFree;
-  //! @brief Count of 4-bytes memory blocks used by the function.
+  //! @brief Count of 4-byte memory blocks used by the function.
   uint32_t _mem4BlocksCount;
-  //! @brief Count of 8-bytes memory blocks used by the function.
+  //! @brief Count of 8-byte memory blocks used by the function.
   uint32_t _mem8BlocksCount;
-  //! @brief Count of 16-bytes memory blocks used by the function.
+  //! @brief Count of 16-byte memory blocks used by the function.
   uint32_t _mem16BlocksCount;
   //! @brief Count of total bytes of stack memory used by the function.
   uint32_t _memBytesTotal;
@@ -1683,7 +1683,7 @@ struct ASMJIT_API CompilerCore
   //!
   //! Templates with BuildFunction prefix are used to generate argument IDs
   //! based on real C++ types. See next example how to generate function with
-  //! two 32 bit integer arguments.
+  //! two 32-bit integer arguments.
   //!
   //! @code
   //! // Building function using AsmJit::Compiler example.
@@ -1693,7 +1693,7 @@ struct ASMJIT_API CompilerCore
   //!
   //! // Begin of function (also emits function @c Prolog)
   //! c.newFunction(
-  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   // Default calling convention (32-bit cdecl or 64-bit for host OS)
   //!   CALL_CONV_DEFAULT,
   //!   // Using function builder to generate arguments list
   //!   BuildFunction2<int, int>());
@@ -1703,7 +1703,7 @@ struct ASMJIT_API CompilerCore
   //! @endcode
   //!
   //! You can see that building functions is really easy. Previous code snipped
-  //! will generate code for function with two 32 bit integer arguments. You
+  //! will generate code for function with two 32-bit integer arguments. You
   //! can access arguments by @c AsmJit::Function::argument() method. Arguments
   //! are indexed from 0 (like everything in C).
   //!
@@ -1715,7 +1715,7 @@ struct ASMJIT_API CompilerCore
   //!
   //! // Begin of function (also emits function @c Prolog)
   //! c.newFunction(
-  //!   // Default calling convention (32 bit cdecl or 64 bit for host OS)
+  //!   // Default calling convention (32-bit cdecl or 64-bit for host OS)
   //!   CALL_CONV_DEFAULT,
   //!   // Using function builder to generate arguments list
   //!   BuildFunction2<int, int>());
@@ -2271,7 +2271,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_BSR, &dst, &src);
   }
 
-  //! @brief Byte swap (32 bit or 64 bit registers only) (i486).
+  //! @brief Byte swap (32-bit or 64-bit registers only) (i486).
   inline void bswap(const GPVar& dst)
   {
     // ASMJIT_ASSERT(dst.getRegType() == REG_GPD || dst.getRegType() == REG_GPQ);
@@ -3011,7 +3011,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //!
   //! This instruction copies the contents of the source operand (register
   //! or memory location) to the destination operand (register) and sign
-  //! extends the value to 16, 32 or 64 bits.
+  //! extends the value to 16, 32 or 64-bits.
   //!
   //! @sa movsxd().
   void movsx(const GPVar& dst, const GPVar& src)
@@ -3043,7 +3043,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //!
   //! This instruction copies the contents of the source operand (register
   //! or memory location) to the destination operand (register) and zero
-  //! extends the value to 16 or 32 bits. The size of the converted value
+  //! extends the value to 16 or 32-bits. The size of the converted value
   //! depends on the operand-size attribute.
   inline void movzx(const GPVar& dst, const GPVar& src)
   {
@@ -3165,7 +3165,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 #endif // ASMJIT_X86
 
-  //! @brief Pop Stack into EFLAGS Register (32 bit or 64 bit).
+  //! @brief Pop Stack into EFLAGS Register (32-bit or 64-bit).
   inline void popf()
   {
 #if defined(ASMJIT_X86)
@@ -3176,18 +3176,18 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 
 #if defined(ASMJIT_X86)
-  //! @brief Pop Stack into EFLAGS Register (32 bit).
+  //! @brief Pop Stack into EFLAGS Register (32-bit).
   inline void popfd() { _emitInstruction(INST_POPFD); }
 #else
-  //! @brief Pop Stack into EFLAGS Register (64 bit).
+  //! @brief Pop Stack into EFLAGS Register (64-bit).
   inline void popfq() { _emitInstruction(INST_POPFQ); }
 #endif
 
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
   //!
-  //! @note 32 bit architecture pushed DWORD while 64 bit
-  //! pushes QWORD. 64 bit mode not provides instruction to
-  //! push 32 bit register/memory.
+  //! @note 32-bit architecture pushed DWORD while 64-bit
+  //! pushes QWORD. 64-bit mode not provides instruction to
+  //! push 32-bit register/memory.
   inline void push(const GPVar& src)
   {
     _emitInstruction(INST_PUSH, &src);
@@ -3214,7 +3214,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 #endif // ASMJIT_X86
 
-  //! @brief Push EFLAGS Register (32 bit or 64 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (32-bit or 64-bit) onto the Stack.
   inline void pushf()
   {
 #if defined(ASMJIT_X86)
@@ -3225,10 +3225,10 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 
 #if defined(ASMJIT_X86)
-  //! @brief Push EFLAGS Register (32 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (32-bit) onto the Stack.
   inline void pushfd() { _emitInstruction(INST_PUSHFD); }
 #else
-  //! @brief Push EFLAGS Register (64 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (64-bit) onto the Stack.
   inline void pushfq() { _emitInstruction(INST_PUSHFQ); }
 #endif // ASMJIT_X86
 

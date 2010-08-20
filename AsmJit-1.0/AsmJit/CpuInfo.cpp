@@ -73,7 +73,7 @@ static uint32_t detectNumberOfProcessors(void)
 
 // This is messy, I know. cpuid is implemented as intrinsic in VS2005, but
 // we should support other compilers as well. Main problem is that MS compilers
-// in 64 bit mode not allows to use inline assembler, so we need intrinsic and
+// in 64-bit mode not allows to use inline assembler, so we need intrinsic and
 // we need also asm version.
 
 // cpuid() and detectCpuInfo() for x86 and x64 platforms begins here.
@@ -83,7 +83,7 @@ void cpuid(uint32_t in, CpuId* out) ASMJIT_NOTHROW
 #if defined(_MSC_VER)
 
 // 2009-02-05: Thanks to Mike Tajmajer for supporting VC7.1 compiler.
-// ASMJIT_X64 is here only for readibility, only VS2005 can compile 64 bit code.
+// ASMJIT_X64 is here only for readibility, only VS2005 can compile 64-bit code.
 # if _MSC_VER >= 1400 || defined(ASMJIT_X64)
   // done by intrinsics
   __cpuid(reinterpret_cast<int*>(out->i), in);

@@ -338,8 +338,8 @@ void AssemblerCore::_emitModM(
   // [index * scale + displacemnt] |   ABSOLUTE  | ABSOLUTE (ZERO EXTENDED)
   else
   {
-    // - In 32 bit mode is used absolute addressing model.
-    // - In 64 bit mode is used relative addressing model together with
+    // - In 32-bit mode is used absolute addressing model.
+    // - In 64-bit mode is used relative addressing model together with
     //   absolute addressing one. Main problem is that if instruction
     //   contains SIB then relative addressing (RIP) is not possible.
 
@@ -401,12 +401,12 @@ void AssemblerCore::_emitModM(
 
       if (mem.hasIndex())
       {
-        // Indexing is not possible
+        // Indexing is not possible.
         setError(ERROR_ILLEGAL_ADDRESING);
         return;
       }
 
-      // Relative address (RIP +/- displacement)
+      // Relative address (RIP +/- displacement).
       _emitMod(0, opReg, 5);
 
       disp -= (4 + immSize);
@@ -427,8 +427,8 @@ void AssemblerCore::_emitModM(
     }
     else
     {
-      // Absolute address (truncated to 32 bits), this kind of address requires
-      // SIB byte (4)
+      // Absolute address (truncated to 32-bits), this kind of address requires
+      // SIB byte (4).
       _emitMod(0, opReg, 4);
 
       if (mem.hasIndex())
@@ -441,14 +441,14 @@ void AssemblerCore::_emitModM(
         _emitSib(0, 4, 5);
       }
 
-      // truncate to 32 bits
+      // Truncate to 32-bits.
       sysuint_t target = (sysuint_t)((uint8_t*)mem._mem.target + disp);
 
       if (target > (sysuint_t)0xFFFFFFFF)
       {
         if (_logger && _logger->isUsed())
         {
-          _logger->logString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits\n");
+          _logger->logString("*** ASSEMBER WARNING - Absolute address truncated to 32-bits\n");
         }
         target &= 0xFFFFFFFF;
       }
@@ -475,18 +475,18 @@ void AssemblerCore::_emitModRM(
 void AssemblerCore::_emitX86Inl(
   uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t reg, bool forceRexPrefix) ASMJIT_NOTHROW
 {
-  // 16 bit prefix
+  // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
 
-  // instruction prefix
+  // Instruction prefix.
   if (opCode & 0xFF000000) _emitByte((uint8_t)((opCode & 0xFF000000) >> 24));
 
-  // rex prefix
+  // REX prefix.
 #if defined(ASMJIT_X64)
   _emitRexR(rexw, 0, reg, forceRexPrefix);
 #endif // ASMJIT_X64
 
-  // instruction opcodes
+  // Instruction opcodes.
   if (opCode & 0x00FF0000) _emitByte((uint8_t)((opCode & 0x00FF0000) >> 16));
   if (opCode & 0x0000FF00) _emitByte((uint8_t)((opCode & 0x0000FF00) >>  8));
 
@@ -497,7 +497,7 @@ void AssemblerCore::_emitX86RM(
   uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t o,
   const Operand& op, sysint_t immSize, bool forceRexPrefix) ASMJIT_NOTHROW
 {
-  // 16 bit prefix.
+  // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
 
   // Segment prefix.
@@ -527,25 +527,25 @@ void AssemblerCore::_emitFpu(uint32_t opCode) ASMJIT_NOTHROW
 
 void AssemblerCore::_emitFpuSTI(uint32_t opCode, uint32_t sti) ASMJIT_NOTHROW
 {
-  // illegal stack offset
+  // Illegal stack offset.
   ASMJIT_ASSERT(0 <= sti && sti < 8);
   _emitOpCode(opCode + sti);
 }
 
 void AssemblerCore::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem) ASMJIT_NOTHROW
 {
-  // segment prefix
+  // Segment prefix.
   _emitSegmentPrefix(mem);
 
-  // instruction prefix
+  // Instruction prefix.
   if (opCode & 0xFF000000) _emitByte((uint8_t)((opCode & 0xFF000000) >> 24));
 
-  // rex prefix
+  // REX prefix.
 #if defined(ASMJIT_X64)
   _emitRexRM(0, opReg, mem, false);
 #endif // ASMJIT_X64
 
-  // instruction opcodes
+  // Instruction opcodes.
   if (opCode & 0x00FF0000) _emitByte((uint8_t)((opCode & 0x00FF0000) >> 16));
   if (opCode & 0x0000FF00) _emitByte((uint8_t)((opCode & 0x0000FF00) >>  8));
 
@@ -562,7 +562,7 @@ void AssemblerCore::_emitMmu(uint32_t opCode, uint8_t rexw, uint8_t opReg,
   // Instruction prefix.
   if (opCode & 0xFF000000) _emitByte((uint8_t)((opCode & 0xFF000000) >> 24));
 
-  // Rex prefix
+  // REX prefix.
 #if defined(ASMJIT_X64)
   _emitRexRM(rexw, opReg, src, false);
 #endif // ASMJIT_X64
@@ -1006,9 +1006,9 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isRegIndex(0) && o1->isImm())
       {
         if (o0->getSize() == 2)
-          _emitByte(0x66); // 16 bit
+          _emitByte(0x66); // 16-bit.
         else if (o0->getSize() == 8)
-          _emitByte(0x48); // REX.W
+          _emitByte(0x48); // REX.W.
 
         _emitByte((opReg << 3) | (0x04 + (o0->getSize() != 1)));
         _emitImmediate(
@@ -1250,7 +1250,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         const Operand& dst = reinterpret_cast<const Operand&>(*o0);
 
-        // INC [r16|r32] in 64 bit mode is not encodable.
+        // INC [r16|r32] in 64-bit mode is not encodable.
 #if defined(ASMJIT_X86)
         if ((dst.isReg()) && (dst.isRegType(REG_TYPE_GPW) || dst.isRegType(REG_TYPE_GPD)))
         {
@@ -1481,12 +1481,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           const GPReg& dst = reinterpret_cast<const GPReg&>(*o0);
           const Imm& src = reinterpret_cast<const Imm&>(*o1);
 
-          // In 64 bit mode immediate can be 64-bits long if destination operand
+          // In 64-bit mode immediate can be 64-bits long if destination operand
           // is register (otherwise 32-bits).
           int32_t immSize = dst.getSize();
 
 #if defined(ASMJIT_X64)
-          // Optimize instruction size by using 32 bit immediate if value can
+          // Optimize instruction size by using 32-bit immediate if value can
           // fit to it.
           if (immSize == 8 && Util::isInt32(src.getValue()))
           {
@@ -1828,7 +1828,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         int32_t immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
 
-        if (o0->getSize() == 2) _emitByte(0x66); // 16 bit
+        if (o0->getSize() == 2) _emitByte(0x66); // 16-bit.
 #if defined(ASMJIT_X64)
         _emitRexRM(o0->getSize() == 8, 0, reinterpret_cast<const Operand&>(*o0), forceRexPrefix);
 #endif // ASMJIT_X64
@@ -1841,8 +1841,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         int32_t immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
 
-        if (o0->getSize() == 2) _emitByte(0x66); // 16 bit
-        _emitSegmentPrefix(reinterpret_cast<const Operand&>(*o0)); // segment prefix
+        if (o0->getSize() == 2) _emitByte(0x66); // 16-bit.
+        _emitSegmentPrefix(reinterpret_cast<const Operand&>(*o0)); // Segment prefix.
 #if defined(ASMJIT_X64)
         _emitRexRM(o0->getSize() == 8, 0, reinterpret_cast<const Operand&>(*o0), forceRexPrefix);
 #endif // ASMJIT_X64
@@ -1862,13 +1862,13 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         const Operand& dst = reinterpret_cast<const Operand&>(*o0);
         const GPReg& src = reinterpret_cast<const GPReg&>(*o1);
 
-        if (src.isRegType(REG_TYPE_GPW)) _emitByte(0x66); // 16 bit
+        if (src.isRegType(REG_TYPE_GPW)) _emitByte(0x66); // 16-bit.
         _emitSegmentPrefix(dst); // segment prefix
 #if defined(ASMJIT_X64)
         _emitRexRM(src.isRegType(REG_TYPE_GPQ), src.getRegCode(), dst, forceRexPrefix);
 #endif // ASMJIT_X64
 
-        // Special opcode for index 0 registers (AX, EAX, RAX vs register)
+        // Special opcode for index 0 registers (AX, EAX, RAX vs register).
         if ((dst.getType() == OPERAND_REG && dst.getSize() > 1) &&
             (reinterpret_cast<const GPReg&>(dst).getRegCode() == 0 ||
              reinterpret_cast<const GPReg&>(src).getRegCode() == 0 ))

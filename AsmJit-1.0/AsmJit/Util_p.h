@@ -48,17 +48,17 @@ namespace Util
   // [AsmJit::isIntX]
   // --------------------------------------------------------------------------
 
-  //! @brief Returns @c true if a given integer @a x is signed 8 bit integer
+  //! @brief Returns @c true if a given integer @a x is signed 8-bit integer
   inline bool isInt8(sysint_t x) ASMJIT_NOTHROW { return x >= -128 && x <= 127; }
-  //! @brief Returns @c true if a given integer @a x is unsigned 8 bit integer
+  //! @brief Returns @c true if a given integer @a x is unsigned 8-bit integer
   inline bool isUInt8(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 255; }
 
-  //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
+  //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
   inline bool isInt16(sysint_t x) ASMJIT_NOTHROW { return x >= -32768 && x <= 32767; }
-  //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
+  //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
   inline bool isUInt16(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 65535; }
 
-  //! @brief Returns @c true if a given integer @a x is signed 16 bit integer
+  //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
   inline bool isInt32(sysint_t x) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X86)
@@ -67,7 +67,7 @@ namespace Util
     return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647);
 #endif
   }
-  //! @brief Returns @c true if a given integer @a x is unsigned 16 bit integer
+  //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
   inline bool isUInt32(sysint_t x) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X86)
@@ -83,27 +83,27 @@ namespace Util
 
   //! @internal
   //!
-  //! @brief used to cast float to 32 bit integer and vica versa.
+  //! @brief used to cast from float to 32-bit integer and vica versa.
   union I32FPUnion
   {
-    //! @brief 32 bit signed integer value.
+    //! @brief 32-bit signed integer value.
     int32_t i;
-    //! @brief 32 bit SP-FP value.
+    //! @brief 32-bit SP-FP value.
     float f;
   };
 
   //! @internal
   //!
-  //! @brief used to cast double to 64 bit integer and vica versa.
+  //! @brief used to cast from double to 64-bit integer and vica versa.
   union I64FPUnion
   {
-    //! @brief 64 bit signed integer value.
+    //! @brief 64-bit signed integer value.
     int64_t i;
-    //! @brief 64 bit DP-FP value.
+    //! @brief 64-bit DP-FP value.
     double f;
   };
 
-  //! @brief Binary cast 32 bit integer to SP-FP value (@c float).
+  //! @brief Binary cast from 32-bit integer to SP-FP value (@c float).
   inline float int32AsFloat(int32_t i) ASMJIT_NOTHROW
   {
     I32FPUnion u;
@@ -111,7 +111,7 @@ namespace Util
     return u.f;
   }
 
-  //! @brief Binary cast SP-FP value (@c float) to 32 bit integer.
+  //! @brief Binary cast SP-FP value (@c float) to 32-bit integer.
   inline int32_t floatAsInt32(float f) ASMJIT_NOTHROW
   {
     I32FPUnion u;
@@ -119,7 +119,7 @@ namespace Util
     return u.i;
   }
 
-  //! @brief Binary cast 64 bit integer to DP-FP value (@c double).
+  //! @brief Binary cast from 64-bit integer to DP-FP value (@c double).
   inline double int64AsDouble(int64_t i) ASMJIT_NOTHROW
   {
     I64FPUnion u;
@@ -127,7 +127,7 @@ namespace Util
     return u.f;
   }
 
-  //! @brief Binary cast DP-FP value (@c double) to 64 bit integer.
+  //! @brief Binary cast from DP-FP value (@c double) to 64-bit integer.
   inline int64_t doubleAsInt64(double f) ASMJIT_NOTHROW
   {
     I64FPUnion u;

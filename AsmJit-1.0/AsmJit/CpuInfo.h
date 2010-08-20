@@ -105,7 +105,7 @@ enum CPU_FEATURE
   CPU_FEATURE_CMOV = 1U << 2,
   //! @brief Cpu has CMPXCHG8B instruction
   CPU_FEATURE_CMPXCHG8B = 1U << 3,
-  //! @brief Cpu has CMPXCHG16B instruction (64 bit processors)
+  //! @brief Cpu has CMPXCHG16B instruction (64-bit processors)
   CPU_FEATURE_CMPXCHG16B = 1U << 4,
   //! @brief Cpu has CLFUSH instruction
   CPU_FEATURE_CLFLUSH = 1U << 5,
@@ -156,7 +156,7 @@ enum CPU_FEATURE
   CPU_FEATURE_MULTI_THREADING = 1U << 29,
   //! @brief Cpu supports execute disable bit (execute protection).
   CPU_FEATURE_EXECUTE_DISABLE_BIT = 1U << 30,
-  //! @brief Cpu supports 64 bits.
+  //! @brief 64-bit CPU.
   CPU_FEATURE_64_BIT = 1U << 31
 };
 

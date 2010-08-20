@@ -66,7 +66,7 @@ static inline T function_cast(Z* p) ASMJIT_NOTHROW { return (T)p; }
 // [AsmJit::(X)MMData]
 // ============================================================================
 
-//! @brief Structure used for MMX specific data (64 bits).
+//! @brief Structure used for MMX specific data (64-bit).
 //!
 //! This structure can be used to load / store data from / to MMX register.
 union ASMJIT_HIDDEN MMData
@@ -163,7 +163,7 @@ union ASMJIT_HIDDEN MMData
   float sf[2];
 };
 
-//! @brief Structure used for SSE specific data (128 bits).
+//! @brief Structure used for SSE specific data (128-bit).
 //!
 //! This structure can be used to load / store data from / to SSE register.
 //!
@@ -252,26 +252,26 @@ union ASMJIT_HIDDEN XMMData
   // [Members]
   // --------------------------------------------------------------------------
 
-  //! @brief Array of sixteen signed 8 bit integers.
+  //! @brief Array of sixteen signed 8-bit integers.
   int8_t sb[16];
-  //! @brief Array of sixteen unsigned 8 bit integers.
+  //! @brief Array of sixteen unsigned 8-bit integers.
   uint8_t ub[16];
-  //! @brief Array of eight signed 16 bit integers.
+  //! @brief Array of eight signed 16-bit integers.
   int16_t sw[8];
-  //! @brief Array of eight unsigned 16 bit integers.
+  //! @brief Array of eight unsigned 16-bit integers.
   uint16_t uw[8];
-  //! @brief Array of four signed 32 bit integers.
+  //! @brief Array of four signed 32-bit integers.
   int32_t sd[4];
-  //! @brief Array of four unsigned 32 bit integers.
+  //! @brief Array of four unsigned 32-bit integers.
   uint32_t ud[4];
-  //! @brief Array of two signed 64 bit integers.
+  //! @brief Array of two signed 64-bit integers.
   int64_t sq[2];
-  //! @brief Array of two unsigned 64 bit integers.
+  //! @brief Array of two unsigned 64-bit integers.
   uint64_t uq[2];
 
-  //! @brief Array of four SP-FP values.
+  //! @brief Array of four 32-bit single precision floating points.
   float sf[4];
-  //! @brief Array of two DP-FP values.
+  //! @brief Array of two 64-bit double precision floating points.
   double df[2];
 };
 

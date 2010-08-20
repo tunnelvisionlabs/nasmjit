@@ -241,7 +241,7 @@ enum REG_TYPE
   REG_TYPE_GPQ = 0x3000,
 
   //! @var REG_GPN
-  //! @brief 32-bit or 64 bit general purpose register type.
+  //! @brief 32-bit or 64-bit general purpose register type.
 
   // native 32-bit or 64-bit register type (depends to x86 or x64 mode).
 #if defined(ASMJIT_X86)
@@ -261,14 +261,14 @@ enum REG_TYPE
   // [MM Register Type]
   // --------------------------------------------------------------------------
 
-  //! @brief 64 bit MM register type.
+  //! @brief 64-bit MM register type.
   REG_TYPE_MM = 0x6000,
 
   // --------------------------------------------------------------------------
   // [XMM Register Type]
   // --------------------------------------------------------------------------
 
-  //! @brief 128 bit XMM register type.
+  //! @brief 128-bit XMM register type.
   REG_TYPE_XMM = 0x7000
 };
 
@@ -419,7 +419,7 @@ enum REG_CODE
 #endif // ASMJIT_X64
 
   // --------------------------------------------------------------------------
-  // [Native registers (depends if processor runs in 32 bit or 64 bit mode)]
+  // [Native registers (depends if processor runs in 32-bit or 64-bit mode)]
   // --------------------------------------------------------------------------
 
   REG_NAX = REG_TYPE_GPN,
@@ -1601,7 +1601,7 @@ enum EMIT_OPTIONS
 //! it's needed to always comply with function calling conventions, because
 //! even small inconsistency can cause undefined behavior or crash.
 //!
-//! List of calling conventions for 32 bit x86 mode:
+//! List of calling conventions for 32-bit x86 mode:
 //! - @c CALL_CONV_CDECL - Calling convention for C runtime.
 //! - @c CALL_CONV_STDCALL - Calling convention for WinAPI functions.
 //! - @c CALL_CONV_MSTHISCALL - Calling convention for C++ members under 
@@ -1614,9 +1614,9 @@ enum EMIT_OPTIONS
 //! - @c CALL_CONV_GCCFASTCALL_3 - GCC fastcall convention with 3 register
 //!      arguments.
 //!
-//! List of calling conventions for 64 bit x86 mode (x64):
-//! - @c CALL_CONV_X64W - Windows 64 bit calling convention (WIN64 ABI).
-//! - @c CALL_CONV_X64U - Unix 64 bit calling convention (AMD64 ABI).
+//! List of calling conventions for 64-bit x86 mode (x64):
+//! - @c CALL_CONV_X64W - Windows 64-bit calling convention (WIN64 ABI).
+//! - @c CALL_CONV_X64U - Unix 64-bit calling convention (AMD64 ABI).
 //!
 //! There is also @c CALL_CONV_DEFAULT that is defined to fit best to your 
 //! compiler.
@@ -1633,18 +1633,18 @@ enum CALL_CONV
   //! @brief X64 calling convention for Windows platform (WIN64 ABI).
   //!
   //! For first four arguments are used these registers:
-  //! - 1. 32/64 bit integer or floating point argument - rcx/xmm0
-  //! - 2. 32/64 bit integer or floating point argument - rdx/xmm1
-  //! - 3. 32/64 bit integer or floating point argument - r8/xmm2
-  //! - 4. 32/64 bit integer or floating point argument - r9/xmm3
+  //! - 1. 32/64-bit integer or floating point argument - rcx/xmm0
+  //! - 2. 32/64-bit integer or floating point argument - rdx/xmm1
+  //! - 3. 32/64-bit integer or floating point argument - r8/xmm2
+  //! - 4. 32/64-bit integer or floating point argument - r9/xmm3
   //!
   //! Note first four arguments here means arguments at positions from 1 to 4
   //! (included). For example if second argument is not passed by register then
   //! rdx/xmm1 register is unused.
   //!
   //! All other arguments are pushed on the stack in right-to-left direction.
-  //! Stack is aligned by 16 bytes. There is 32 bytes shadow space on the stack
-  //! that can be used to save up to four 64 bit registers (probably designed to
+  //! Stack is aligned by 16 bytes. There is 32-byte shadow space on the stack
+  //! that can be used to save up to four 64-bit registers (probably designed to
   //! be used to save first four arguments passed in registers).
   //!
   //! Arguments direction:
@@ -1665,7 +1665,7 @@ enum CALL_CONV
 
   //! @brief X64 calling convention for Unix platforms (AMD64 ABI).
   //!
-  //! First six 32 or 64 bit integer arguments are passed in rdi, rsi, rdx, 
+  //! First six 32 or 64-bit integer arguments are passed in rdi, rsi, rdx, 
   //! rcx, r8, r9 registers. First eight floating point or XMM arguments 
   //! are passed in xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 registers.
   //! This means that in registers can be transferred up to 14 arguments total.

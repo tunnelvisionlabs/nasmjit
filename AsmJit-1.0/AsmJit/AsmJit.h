@@ -38,8 +38,8 @@
 //!
 //! AsmJit is crossplatform library that supports various compilers and
 //! operating systems. Currently only limitation is x86 (32-bit) or x64 (64-bit)
-//! processor. Currently tested operating systems are Windows (32 bit and 64 bit),
-//! Linux (32 bit and 64 bit) and MacOSX (32 bit). 
+//! processor. Currently tested operating systems are Windows (32-bit and 64-bit),
+//! Linux (32-bit and 64-bit) and MacOSX (32-bit).
 //!
 //! @section AsmJit_Main_Introduction Introduction
 //!
@@ -70,7 +70,6 @@
 //! @section AsmJit_Main_Configuration Configuration, Definitions and Utilities
 //!
 //! - @ref AsmJit_Config "Configuration" - Macros used to configure AsmJit.
-//! - @ref AsmJit_Platform "Platform" - Platform specific classes.
 //! - @ref AsmJit_Util "Utilities" - Utilities and helper classes.
 //!
 //! @section AsmJit_Main_HomePage AsmJit Homepage
@@ -314,12 +313,6 @@
 //! @defgroup AsmJit_Util Utilities and helper classes.
 //!
 //! Contains some helper classes that's used by AsmJit library.
-
-
-
-//! @defgroup AsmJit_Platform Platform specific classes.
-//!
-//! Contains platform specific classes and functions.
 
 
 

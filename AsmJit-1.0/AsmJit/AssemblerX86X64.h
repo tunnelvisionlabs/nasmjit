@@ -377,14 +377,14 @@ struct ASMJIT_API AssemblerCore
   inline void _emitSib(uint8_t s, uint8_t i, uint8_t b) ASMJIT_NOTHROW
   { _emitByte(((s & 0x03) << 6) | ((i & 0x07) << 3) | (b & 0x07)); }
 
-  //! @brief Emit REX prefix (64 bit mode only).
+  //! @brief Emit REX prefix (64-bit mode only).
   inline void _emitRexR(uint8_t w, uint8_t opReg, uint8_t regCode, bool forceRexPrefix) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X64)
     uint8_t r = (opReg & 0x8) != 0;
     uint8_t b = (regCode & 0x8) != 0;
 
-    // w Default operand size(0=Default, 1=64 bits).
+    // w Default operand size(0=Default, 1=64-bit).
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field not used in RexR
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
@@ -400,7 +400,7 @@ struct ASMJIT_API AssemblerCore
 #endif // ASMJIT_X64
   }
 
-  //! @brief Emit REX prefix (64 bit mode only).
+  //! @brief Emit REX prefix (64-bit mode only).
   inline void _emitRexRM(uint8_t w, uint8_t opReg, const Operand& rm, bool forceRexPrefix) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X64)
@@ -418,7 +418,7 @@ struct ASMJIT_API AssemblerCore
       b = ((reinterpret_cast<const Mem&>(rm).getBase() & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).getBase() != INVALID_VALUE);
     }
 
-    // w Default operand size(0=Default, 1=64 bits).
+    // w Default operand size(0=Default, 1=64-bit).
     // r Register field (1=high bit extension of the ModR/M REG field).
     // x Index field (1=high bit extension of the SIB Index field).
     // b Base field (1=high bit extension of the ModR/M or SIB Base field).
@@ -822,7 +822,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_BSR, &dst, &src);
   }
 
-  //! @brief Byte swap (32 bit or 64 bit registers only) (i486).
+  //! @brief Byte swap (32-bit or 64-bit registers only) (i486).
   inline void bswap(const GPReg& dst)
   {
     ASMJIT_ASSERT(dst.getRegType() == REG_TYPE_GPD || dst.getRegType() == REG_TYPE_GPQ);
@@ -1200,7 +1200,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //! This instruction adjusts the sum of two packed BCD values to create
   //! a packed BCD result.
   //!
-  //! @note This instruction is only available in 32 bit mode.
+  //! @note This instruction is only available in 32-bit mode.
   inline void daa()
   {
     _emitInstruction(INST_DAA);
@@ -1213,7 +1213,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //! This instruction adjusts the result of the subtraction of two packed
   //! BCD values to create a packed BCD result.
   //!
-  //! @note This instruction is only available in 32 bit mode.
+  //! @note This instruction is only available in 32-bit mode.
   inline void das()
   {
     _emitInstruction(INST_DAS);
@@ -1615,7 +1615,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //!
   //! This instruction copies the contents of the source operand (register
   //! or memory location) to the destination operand (register) and sign
-  //! extends the value to 16, 32 or 64 bits.
+  //! extends the value to 16, 32 or 64-bits.
   //!
   //! @sa movsxd().
   void movsx(const GPReg& dst, const GPReg& src)
@@ -1647,7 +1647,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //!
   //! This instruction copies the contents of the source operand (register
   //! or memory location) to the destination operand (register) and zero
-  //! extends the value to 16 or 32 bits. The size of the converted value
+  //! extends the value to 16 or 32-bits. The size of the converted value
   //! depends on the operand-size attribute.
   inline void movzx(const GPReg& dst, const GPReg& src)
   {
@@ -1764,7 +1764,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 #endif // ASMJIT_X86
 
-  //! @brief Pop Stack into EFLAGS Register (32 bit or 64 bit).
+  //! @brief Pop Stack into EFLAGS Register (32-bit or 64-bit).
   inline void popf()
   {
 #if defined(ASMJIT_X86)
@@ -1775,18 +1775,18 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 
 #if defined(ASMJIT_X86)
-  //! @brief Pop Stack into EFLAGS Register (32 bit).
+  //! @brief Pop Stack into EFLAGS Register (32-bit).
   inline void popfd() { _emitInstruction(INST_POPFD); }
 #else
-  //! @brief Pop Stack into EFLAGS Register (64 bit).
+  //! @brief Pop Stack into EFLAGS Register (64-bit).
   inline void popfq() { _emitInstruction(INST_POPFQ); }
 #endif
 
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.
   //!
-  //! @note 32 bit architecture pushed DWORD while 64 bit
-  //! pushes QWORD. 64 bit mode not provides instruction to
-  //! push 32 bit register/memory.
+  //! @note 32-bit architecture pushed DWORD while 64-bit
+  //! pushes QWORD. 64-bit mode not provides instruction to
+  //! push 32-bit register/memory.
   inline void push(const GPReg& src)
   {
     ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPW) || src.isRegType(REG_TYPE_GPN));
@@ -1814,7 +1814,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 #endif // ASMJIT_X86
 
-  //! @brief Push EFLAGS Register (32 bit or 64 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (32-bit or 64-bit) onto the Stack.
   inline void pushf()
   {
 #if defined(ASMJIT_X86)
@@ -1825,10 +1825,10 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 
 #if defined(ASMJIT_X86)
-  //! @brief Push EFLAGS Register (32 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (32-bit) onto the Stack.
   inline void pushfd() { _emitInstruction(INST_PUSHFD); }
 #else
-  //! @brief Push EFLAGS Register (64 bit) onto the Stack.
+  //! @brief Push EFLAGS Register (64-bit) onto the Stack.
   inline void pushfq() { _emitInstruction(INST_PUSHFQ); }
 #endif // ASMJIT_X86
 
@@ -2671,7 +2671,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   {
     _emitInstruction(INST_FCOM, &reg);
   }
-  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a src (FPU).
+  //! @brief Compare st(0) with 4-byte or 8-byte FP at @a src (FPU).
   inline void fcom(const Mem& src)
   {
     _emitInstruction(INST_FCOM, &src);
@@ -2682,7 +2682,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   {
     _emitInstruction(INST_FCOMP, &reg);
   }
-  //! @brief Compare st(0) with 4 byte or 8 byte FP at @a adr and pop the
+  //! @brief Compare st(0) with 4-byte or 8-byte FP at @a adr and pop the
   //! stack (FPU).
   inline void fcomp(const Mem& mem)
   {
@@ -2736,7 +2736,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     ASMJIT_ASSERT(dst.getRegIndex() == 0 || src.getRegIndex() == 0);
     _emitInstruction(INST_FDIV, &dst, &src);
   }
-  //! @brief Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  //! @brief Divide st(0) by 32-bit or 64-bit FP value (FPU).
   inline void fdiv(const Mem& src)
   {
     _emitInstruction(INST_FDIV, &src);
@@ -2756,7 +2756,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     ASMJIT_ASSERT(dst.getRegIndex() == 0 || src.getRegIndex() == 0);
     _emitInstruction(INST_FDIVR, &dst, &src);
   }
-  //! @brief Reverse Divide st(0) by 32 bit or 64 bit FP value (FPU).
+  //! @brief Reverse Divide st(0) by 32-bit or 64-bit FP value (FPU).
   inline void fdivr(const Mem& src)
   {
     _emitInstruction(INST_FDIVR, &src);
@@ -2778,42 +2778,42 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FFREE, &reg);
   }
 
-  //! @brief Add 16 bit or 32 bit integer to st(0) (FPU).
+  //! @brief Add 16-bit or 32-bit integer to st(0) (FPU).
   inline void fiadd(const Mem& src)
   {
     ASMJIT_ASSERT(src.getSize() == 2 || src.getSize() == 4);
     _emitInstruction(INST_FIADD, &src);
   }
 
-  //! @brief Compare st(0) with 16 bit or 32 bit Integer (FPU).
+  //! @brief Compare st(0) with 16-bit or 32-bit Integer (FPU).
   inline void ficom(const Mem& src)
   {
     ASMJIT_ASSERT(src.getSize() == 2 || src.getSize() == 4);
     _emitInstruction(INST_FICOM, &src);
   }
 
-  //! @brief Compare st(0) with 16 bit or 32 bit Integer and pop the stack (FPU).
+  //! @brief Compare st(0) with 16-bit or 32-bit Integer and pop the stack (FPU).
   inline void ficomp(const Mem& src)
   {
     ASMJIT_ASSERT(src.getSize() == 2 || src.getSize() == 4);
     _emitInstruction(INST_FICOMP, &src);
   }
 
-  //! @brief Divide st(0) by 32 bit or 16 bit integer (@a src) (FPU).
+  //! @brief Divide st(0) by 32-bit or 16-bit integer (@a src) (FPU).
   inline void fidiv(const Mem& src)
   {
     ASMJIT_ASSERT(src.getSize() == 2 || src.getSize() == 4);
     _emitInstruction(INST_FIDIV, &src);
   }
 
-  //! @brief Reverse Divide st(0) by 32 bit or 16 bit integer (@a src) (FPU).
+  //! @brief Reverse Divide st(0) by 32-bit or 16-bit integer (@a src) (FPU).
   inline void fidivr(const Mem& src)
   {
     ASMJIT_ASSERT(src.getSize() == 2 || src.getSize() == 4);
     _emitInstruction(INST_FIDIVR, &src);
   }
 
-  //! @brief Load 16 bit, 32 bit or 64 bit Integer and push it to the stack (FPU).
+  //! @brief Load 16-bit, 32-bit or 64-bit Integer and push it to the stack (FPU).
   //!
   //! Converts the signed-integer source operand into double extended-precision
   //! floating point format and pushes the value onto the FPU register stack.
@@ -2826,7 +2826,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FILD, &src);
   }
 
-  //! @brief Multiply st(0) by 16 bit or 32 bit integer and store it
+  //! @brief Multiply st(0) by 16-bit or 32-bit integer and store it
   //! to st(0) (FPU).
   inline void fimul(const Mem& src)
   {
@@ -2856,7 +2856,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FINIT);
   }
 
-  //! @brief Subtract 16 bit or 32 bit integer from st(0) and store result to
+  //! @brief Subtract 16-bit or 32-bit integer from st(0) and store result to
   //! st(0) (FPU).
   inline void fisub(const Mem& src)
   {
@@ -2864,7 +2864,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FISUB, &src);
   }
 
-  //! @brief Reverse Subtract 16 bit or 32 bit integer from st(0) and
+  //! @brief Reverse Subtract 16-bit or 32-bit integer from st(0) and
   //! store result to  st(0) (FPU).
   inline void fisubr(const Mem& src)
   {
@@ -2881,14 +2881,14 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FNINIT);
   }
 
-  //! @brief Store st(0) as 16 bit or 32 bit Integer to @a dst (FPU).
+  //! @brief Store st(0) as 16-bit or 32-bit Integer to @a dst (FPU).
   inline void fist(const Mem& dst)
   {
     ASMJIT_ASSERT(dst.getSize() == 2 || dst.getSize() == 4);
     _emitInstruction(INST_FIST, &dst);
   }
 
-  //! @brief Store st(0) as 16 bit, 32 bit or 64 bit Integer to @a dst and pop
+  //! @brief Store st(0) as 16-bit, 32-bit or 64-bit Integer to @a dst and pop
   //! stack (FPU).
   inline void fistp(const Mem& dst)
   {
@@ -2896,7 +2896,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_FISTP, &dst);
   }
 
-  //! @brief Push 32 bit, 64 bit or 80 bit Floating Point Value onto the FPU
+  //! @brief Push 32-bit, 64-bit or 80-bit Floating Point Value onto the FPU
   //! register stack (FPU).
   inline void fld(const Mem& src)
   {
@@ -3091,7 +3091,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Restore FPU State (FPU).
   //!
-  //! Load FPU state from src (94 bytes or 108 bytes).
+  //! Load FPU state from src (94 or 108 bytes).
   inline void frstor(const Mem& src)
   {
     _emitInstruction(INST_FRSTOR, &src);
@@ -3099,7 +3099,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Save FPU State (FPU).
   //!
-  //! Store FPU state to 94 or 108 bytes after checking for
+  //! Store FPU state to 94 or 108-bytes after checking for
   //! pending unmasked FP exceptions. Then reinitialize
   //! the FPU.
   inline void fsave(const Mem& dst)
@@ -3143,7 +3143,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Store Floating Point Value (FPU).
   //!
-  //! Store st(0) as 32 bit or 64 bit floating point value to @a dst.
+  //! Store st(0) as 32-bit or 64-bit floating point value to @a dst.
   inline void fst(const Mem& dst)
   {
     ASMJIT_ASSERT(dst.getSize() == 4 || dst.getSize() == 8);
@@ -3160,7 +3160,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Store Floating Point Value and Pop Register Stack (FPU).
   //!
-  //! Store st(0) as 32 bit or 64 bit floating point value to @a dst
+  //! Store st(0) as 32-bit or 64-bit floating point value to @a dst
   //! and pop register stack.
   inline void fstp(const Mem& dst)
   {
@@ -7647,60 +7647,60 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! copy function (in DWORD entities).
 //!
 //! @code
-//! // Example: Usage of Label (32 bit code).
+//! // Example: Usage of Label (32-bit code).
 //! //
 //! // Create simple DWORD memory copy function:
 //! // ASMJIT_STDCALL void copy32(uint32_t* dst, const uint32_t* src, sysuint_t count);
 //! using namespace AsmJit;
 //!
-//! // Assembler instance
+//! // Assembler instance.
 //! Assembler a;
 //!
-//! // Constants
-//! const int arg_offset = 8; // Arguments offset (STDCALL EBP)
-//! const int arg_size = 12;  // Arguments size
+//! // Constants.
+//! const int arg_offset = 8; // Arguments offset (STDCALL EBP).
+//! const int arg_size = 12;  // Arguments size.
 //!
-//! // Labels
+//! // Labels.
 //! Label L_Loop = a.newLabel();
 //!
-//! // Prolog
+//! // Prolog.
 //! a.push(ebp);
 //! a.mov(ebp, esp);
 //! a.push(esi);
 //! a.push(edi);
 //!
 //! // Fetch arguments
-//! a.mov(esi, dword_ptr(ebp, arg_offset + 0)); // get dst
-//! a.mov(edi, dword_ptr(ebp, arg_offset + 4)); // get src
-//! a.mov(ecx, dword_ptr(ebp, arg_offset + 8)); // get count
+//! a.mov(esi, dword_ptr(ebp, arg_offset + 0)); // Get dst.
+//! a.mov(edi, dword_ptr(ebp, arg_offset + 4)); // Get src.
+//! a.mov(ecx, dword_ptr(ebp, arg_offset + 8)); // Get count.
 //!
-//! // Bind L_Loop label to here
+//! // Bind L_Loop label to here.
 //! a.bind(L_Loop);
 //!
-//! Copy 4 bytes
+//! Copy 4 bytes.
 //! a.mov(eax, dword_ptr(esi));
 //! a.mov(dword_ptr(edi), eax);
 //!
-//! // Increment pointers
+//! // Increment pointers.
 //! a.add(esi, 4);
 //! a.add(edi, 4);
 //!
-//! // Repeat loop until ecx != 0
+//! // Repeat loop until ecx != 0.
 //! a.dec(ecx);
 //! a.jz(L_Loop);
 //!
-//! // Epilog
+//! // Epilog.
 //! a.pop(edi);
 //! a.pop(esi);
 //! a.mov(esp, ebp);
 //! a.pop(ebp);
 //!
-//! // Return: STDCALL convention is to pop stack in called function
+//! // Return: STDCALL convention is to pop stack in called function.
 //! a.ret(arg_size);
 //! @endcode
 //!
 //! If you need more abstraction for generating assembler code and you want
-//! to hide calling conventions between 32 bit and 64 bit operating systems,
+//! to hide calling conventions between 32-bit and 64-bit operating systems,
 //! look at @c Compiler class that is designed for higher level code
 //! generation.
 //!

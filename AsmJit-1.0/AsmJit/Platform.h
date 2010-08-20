@@ -43,7 +43,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Platform
+//! @addtogroup AsmJit_Util
 //! @{
 
 // ============================================================================

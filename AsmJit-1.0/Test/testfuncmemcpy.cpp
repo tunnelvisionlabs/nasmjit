@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// Create simple DWORD memory copy function for 32/64 bit x86 platform, this
+// Create simple DWORD memory copy function for 32/64-bit x86 platform, this
 // is enchanced version that's using Compiler class:
 //
 // void memcpy32(uint32_t* dst, const uint32_t* src, sysuint_t len);
