@@ -155,6 +155,19 @@
             return Realloc(to);
         }
 
+        public void EmitData(byte[] data)
+        {
+            int max = Capacity - Offset;
+            if (max < data.Length)
+            {
+                if (!Realloc(Offset + data.Length))
+                    return;
+            }
+
+            Array.Copy(data, 0, _data, _cur, data.Length);
+            _cur += data.Length;
+        }
+
         private bool Realloc(int to)
         {
             if (Capacity < to)

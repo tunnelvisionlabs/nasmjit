@@ -88,6 +88,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Align.cs" />
     <Compile Include="ArgumentsDirection.cs" />
     <Compile Include="ArraySegment.cs" />
     <Compile Include="Assembler.cs" />
@@ -102,8 +103,10 @@
     <Compile Include="CompilerContext.cs" />
     <Compile Include="CompilerProperty.cs" />
     <Compile Include="CompilerUtil.cs" />
+    <Compile Include="Condition.cs" />
     <Compile Include="CpuInfo.cs" />
     <Compile Include="CpuVendor.cs" />
+    <Compile Include="EmbeddedData.cs" />
     <Compile Include="MMVar.cs" />
     <Compile Include="VirtualMemoryManager.cs" />
     <Compile Include="Dummy.cs" />

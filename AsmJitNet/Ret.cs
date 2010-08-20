@@ -25,6 +25,14 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                return ShouldEmitJumpToEpilog() ? 15 : 0;
+            }
+        }
+
         public Function Function
         {
             get
@@ -419,7 +427,7 @@
                 break;
             }
 
-            if (EmitJumpToEpilog())
+            if (ShouldEmitJumpToEpilog())
             {
                 cc.Unreachable = true;
             }
@@ -456,11 +464,11 @@
 
         public override void Emit(Assembler a)
         {
-            if (EmitJumpToEpilog())
+            if (ShouldEmitJumpToEpilog())
                 a.Jmp(Function.ExitLabel);
         }
 
-        public bool EmitJumpToEpilog()
+        public bool ShouldEmitJumpToEpilog()
         {
             // Iterate over next emittables. If we found emittable that emits real 
             // instruction then we must return @c true.

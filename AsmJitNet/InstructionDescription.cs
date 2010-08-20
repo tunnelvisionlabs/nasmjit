@@ -5,6 +5,14 @@
 
     public sealed class InstructionDescription
     {
+        public const int JumpShortOffset = (int)InstructionCode.JShort - (int)InstructionCode.J;
+        public const InstructionCode JumpLongBegin = InstructionCode.J;
+        public const InstructionCode JumpLongEnd = InstructionCode.Jmp;
+        public const InstructionCode JumpShortBegin = InstructionCode.JShort;
+        public const InstructionCode JumpShortEnd = InstructionCode.JmpShort;
+        public const InstructionCode JumpAnyBegin = JumpLongBegin;
+        public const InstructionCode JumpAnyEnd = JumpShortEnd;
+
         private static readonly InstructionDescription[] instructionDescriptions;
 
         /// <summary>
@@ -247,6 +255,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Imul             , "imul"             , InstructionGroup.IMUL          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0         , 0),
   MAKE_INST(InstructionCode.Inc              , "inc"              , InstructionGroup.INC_DEC       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 0, 0x00000040, 0x000000FE),
   MAKE_INST(InstructionCode.Int3             , "int3"             , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000CC, 0),
+
   MAKE_INST(InstructionCode.Ja               , "ja"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x7       , 0),
   MAKE_INST(InstructionCode.Jae              , "jae"              , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x3       , 0),
   MAKE_INST(InstructionCode.Jb               , "jb"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x2       , 0),
@@ -278,6 +287,39 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Js               , "js"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x8       , 0),
   MAKE_INST(InstructionCode.Jz               , "jz"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x4       , 0),
   MAKE_INST(InstructionCode.Jmp              , "jmp"              , InstructionGroup.JMP           , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0         , 0),
+
+  MAKE_INST(InstructionCode.JaShort          , "ja short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x7       , 0),
+  MAKE_INST(InstructionCode.JaeShort         , "jae short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x3       , 0),
+  MAKE_INST(InstructionCode.JbShort          , "jb short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x2       , 0),
+  MAKE_INST(InstructionCode.JbeShort         , "jbe short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x6       , 0),
+  MAKE_INST(InstructionCode.JcShort          , "jc short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x2       , 0),
+  MAKE_INST(InstructionCode.JeShort          , "je short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x4       , 0),
+  MAKE_INST(InstructionCode.JgShort          , "jg short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xF       , 0),
+  MAKE_INST(InstructionCode.JgeShort         , "jge short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xD       , 0),
+  MAKE_INST(InstructionCode.JlShort          , "jl short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xC       , 0),
+  MAKE_INST(InstructionCode.JleShort         , "jle short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xE       , 0),
+  MAKE_INST(InstructionCode.JnaShort         , "jna short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x6       , 0),
+  MAKE_INST(InstructionCode.JnaeShort        , "jnae short"       , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x2       , 0),
+  MAKE_INST(InstructionCode.JnbShort         , "jnb short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x3       , 0),
+  MAKE_INST(InstructionCode.JnbeShort        , "jnbe short"       , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x7       , 0),
+  MAKE_INST(InstructionCode.JncShort         , "jnc short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x3       , 0),
+  MAKE_INST(InstructionCode.JneShort         , "jne short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x5       , 0),
+  MAKE_INST(InstructionCode.JngShort         , "jng short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xE       , 0),
+  MAKE_INST(InstructionCode.JngeShort        , "jnge short"       , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xC       , 0),
+  MAKE_INST(InstructionCode.JnlShort         , "jnl short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xD       , 0),
+  MAKE_INST(InstructionCode.JnleShort        , "jnle short"       , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xF       , 0),
+  MAKE_INST(InstructionCode.JnoShort         , "jno short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x1       , 0),
+  MAKE_INST(InstructionCode.JnpShort         , "jnp short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xB       , 0),
+  MAKE_INST(InstructionCode.JnsShort         , "jns short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x9       , 0),
+  MAKE_INST(InstructionCode.JnzShort         , "jnz short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x5       , 0),
+  MAKE_INST(InstructionCode.JoShort          , "jo short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x0       , 0),
+  MAKE_INST(InstructionCode.JpShort          , "jp short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xA       , 0),
+  MAKE_INST(InstructionCode.JpeShort         , "jpe short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xA       , 0),
+  MAKE_INST(InstructionCode.JpoShort         , "jpo short"        , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0xB       , 0),
+  MAKE_INST(InstructionCode.JsShort          , "js short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x8       , 0),
+  MAKE_INST(InstructionCode.JzShort          , "jz short"         , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x4       , 0),
+  MAKE_INST(InstructionCode.JmpShort         , "jmp short"        , InstructionGroup.JMP           , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0         , 0),
+
   MAKE_INST(InstructionCode.Lddqu            , "lddqu"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF2000FF0, 0),
   MAKE_INST(InstructionCode.Ldmxcsr          , "ldmxcsr"          , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 2, 0x00000FAE, 0),
   MAKE_INST(InstructionCode.Lea              , "lahf"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x0000009F, 0),

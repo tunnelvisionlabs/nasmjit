@@ -90,6 +90,15 @@ namespace AsmJitNet2
             get;
         }
 
+        public virtual int MaxSize
+        {
+            get
+            {
+                // Default maximum size is -1 which means that it's not known
+                return -1;
+            }
+        }
+
         public virtual void Prepare(CompilerContext cc)
         {
             _offset = cc.CurrentOffset;

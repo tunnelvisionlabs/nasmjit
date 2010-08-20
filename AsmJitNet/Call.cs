@@ -44,6 +44,15 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                // TODO: Not optimal
+                return 15;
+            }
+        }
+
         public Function Caller
         {
             get

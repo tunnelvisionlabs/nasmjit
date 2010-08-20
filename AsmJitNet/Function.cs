@@ -75,6 +75,15 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                // Function is NOP
+                return 0;
+            }
+        }
+
         public FunctionPrototype Prototype
         {
             get

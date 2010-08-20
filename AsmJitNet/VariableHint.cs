@@ -29,6 +29,15 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                // Variable hint is NOP, but it can generate other emittables which can do something
+                return 0;
+            }
+        }
+
         public VariableHintKind HintKind
         {
             get

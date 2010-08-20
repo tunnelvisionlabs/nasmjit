@@ -15,6 +15,22 @@
             _label = label;
         }
 
+        public override EmittableType EmittableType
+        {
+            get
+            {
+                return EmittableType.Target;
+            }
+        }
+
+        public override int MaxSize
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
         public Label Label
         {
             get
@@ -59,14 +75,6 @@
             internal set
             {
                 _jumpsCount = value;
-            }
-        }
-
-        public override EmittableType EmittableType
-        {
-            get
-            {
-                return EmittableType.Target;
             }
         }
 

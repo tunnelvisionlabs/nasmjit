@@ -16,6 +16,14 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
         public override void Emit(Assembler a)
         {
             if (a.Logger != null && a.Logger.IsUsed)

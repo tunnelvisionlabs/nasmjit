@@ -247,7 +247,7 @@
 
             // Chain unused links.
             link = l_data.Links;
-            if (link!=null)
+            if (link != null)
             {
                 if (prev == null)
                     prev = link;
@@ -381,6 +381,40 @@
             }
         }
 
+        public void Embed(byte[] data)
+        {
+            if (!CanEmit())
+                return;
+
+            int size = data.Length;
+
+            if (Logger != null && Logger.IsUsed)
+            {
+                int i;
+                int j;
+                int max;
+                StringBuilder buf = new StringBuilder(128);
+                string dot = ".data ";
+
+                buf.Append(dot);
+
+                for (i = 0; i < size; i += 16)
+                {
+                    max = (size - i < 16) ? size - i : 16;
+
+                    for (j = 0; j < max; j++)
+                        //p += sprintf(p, "%0.2X", (byte*)(data)[i + j]);
+                        buf.AppendFormat("{0:x}", data[i + j]);
+
+                    buf.AppendLine();
+
+                    Logger.LogString(buf.ToString());
+                }
+            }
+
+            _buffer.EmitData(data);
+        }
+
         public LabelLink NewLabelLink()
         {
             LabelLink link = _unusedLinks;
@@ -401,6 +435,11 @@
             link.RelocId = -1;
 
             return link;
+        }
+
+        private static InstructionCode ConditionToInstruction(Condition condition)
+        {
+            throw new NotImplementedException();
         }
 
         #region Instructions
@@ -503,6 +542,132 @@
         public void Jmp(Label label)
         {
             EmitInstruction(InstructionCode.Jmp, label);
+        }
+
+        public void JShort(Condition cc, Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(ConditionToInstruction(cc) + InstructionDescription.JumpShortOffset, label, hint);
+        }
+
+        public void JaShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JaShort, label, hint);
+        }
+        public void JaeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JaeShort, label, hint);
+        }
+        public void JbShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JbShort, label, hint);
+        }
+        public void JbeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JbeShort, label, hint);
+        }
+        public void JcShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JcShort, label, hint);
+        }
+        public void JeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JeShort, label, hint);
+        }
+        public void JgShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JgShort, label, hint);
+        }
+        public void JgeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JgeShort, label, hint);
+        }
+        public void JlShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JlShort, label, hint);
+        }
+        public void JleShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JleShort, label, hint);
+        }
+        public void JnaShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnaShort, label, hint);
+        }
+        public void JnaeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnaeShort, label, hint);
+        }
+        public void JnbShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnbShort, label, hint);
+        }
+        public void JnbeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnbeShort, label, hint);
+        }
+        public void JncShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JncShort, label, hint);
+        }
+        public void JneShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JneShort, label, hint);
+        }
+        public void JngShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JngShort, label, hint);
+        }
+        public void JngeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JngeShort, label, hint);
+        }
+        public void JnlShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnlShort, label, hint);
+        }
+        public void JnleShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnleShort, label, hint);
+        }
+        public void JnoShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnoShort, label, hint);
+        }
+        public void JnpShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnpShort, label, hint);
+        }
+        public void JnsShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnsShort, label, hint);
+        }
+        public void JnzShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JnzShort, label, hint);
+        }
+        public void JoShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JoShort, label, hint);
+        }
+        public void JpShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JpShort, label, hint);
+        }
+        public void JpeShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JpeShort, label, hint);
+        }
+        public void JpoShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JpoShort, label, hint);
+        }
+        public void JsShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JsShort, label, hint);
+        }
+        public void JzShort(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.JzShort, label, hint);
         }
 
         #endregion
@@ -1000,14 +1165,14 @@
                         AssemblerLabelData l_data = _labelData[((Label)o0).Id & Operand.OperandIdValueMask];
 
                         int hint = o1.IsImm ? (int)((Imm)o1).Value : 0;
-                        bool isShortJump = false;
+                        bool isShortJump = (code >= InstructionDescription.JumpShortBegin && code <= InstructionDescription.JumpShortEnd);
 
                         // Emit jump hint if configured for that.
                         if ((hint & (int)(Hint.Taken | Hint.NotTaken)) != 0 && (_properties & CompilerProperties.JumpHints) != 0)
                         {
-                            if ((hint & (int)Hint.Taken)!=0)
+                            if ((hint & (int)Hint.Taken) != 0)
                                 EmitByte(HintByteValue.Taken);
-                            else if ((hint & (int)Hint.NotTaken)!=0)
+                            else if ((hint & (int)Hint.NotTaken) != 0)
                                 EmitByte(HintByteValue.NotTaken);
                         }
 
@@ -1024,6 +1189,9 @@
                             {
                                 EmitByte((byte)(0x70 | id.OpCode0));
                                 EmitByte((byte)(sbyte)(offs - rel8_size));
+
+                                // Change the instruction code so logger can log instruction correctly.
+                                code += InstructionDescription.JumpShortOffset;
                             }
                             else
                             {
@@ -1082,7 +1250,7 @@
                     if (o0.IsLabel)
                     {
                         AssemblerLabelData l_data = _labelData[((Label)o0).Id & Operand.OperandIdValueMask];
-                        bool isShortJump = false;
+                        bool isShortJump = (code >= InstructionDescription.JumpShortBegin && code <= InstructionDescription.JumpShortEnd);
 
                         if (l_data.Offset != -1)
                         {
@@ -1095,6 +1263,9 @@
                             {
                                 EmitByte(0xEB);
                                 EmitByte((byte)(sbyte)(offs - rel8_size));
+
+                                // Change the instruction code so logger can log instruction correctly.
+                                code += InstructionDescription.JumpShortOffset;
                             }
                             else
                             {
@@ -1102,7 +1273,7 @@
                                 {
                                     if (Logger != null && Logger.IsUsed)
                                     {
-                                        Logger.LogString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!");
+                                        Logger.LogString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!" + Environment.NewLine);
                                     }
                                 }
 
@@ -1219,10 +1390,10 @@
                             else
                             {
 #endif // ASMJIT_X64
-                                EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
-                                  dst.IsRegType(RegType.GPW),
-                                  dst.IsRegType(RegType.GPQ),
-                                  (byte)((GPReg)dst).Code, forceRexPrefix);
+                            EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
+                              dst.IsRegType(RegType.GPW),
+                              dst.IsRegType(RegType.GPQ),
+                              (byte)((GPReg)dst).Code, forceRexPrefix);
 #if ASMJIT_X64
                             }
 #endif // ASMJIT_X64
@@ -1775,11 +1946,11 @@
 
                     // Check parameters (X)MM|GP32_64 <- (X)MM|GP32_64|Mem|Imm
                     if ((o0.IsMem && (id.OperandFlags[0] & OperandFlags.MEM) == 0) ||
-                        (o0.IsRegType(RegType.MM) &&  (id.OperandFlags[0] & OperandFlags.MM) == 0) ||
+                        (o0.IsRegType(RegType.MM) && (id.OperandFlags[0] & OperandFlags.MM) == 0) ||
                         (o0.IsRegType(RegType.XMM) && (id.OperandFlags[0] & OperandFlags.XMM) == 0) ||
                         (o0.IsRegType(RegType.GPD) && (id.OperandFlags[0] & OperandFlags.GD) == 0) ||
                         (o0.IsRegType(RegType.GPQ) && (id.OperandFlags[0] & OperandFlags.GQ) == 0) ||
-                        (o1.IsRegType(RegType.MM) &&  (id.OperandFlags[1] & OperandFlags.MM) == 0) ||
+                        (o1.IsRegType(RegType.MM) && (id.OperandFlags[1] & OperandFlags.MM) == 0) ||
                         (o1.IsRegType(RegType.XMM) && (id.OperandFlags[1] & OperandFlags.XMM) == 0) ||
                         (o1.IsRegType(RegType.GPD) && (id.OperandFlags[1] & OperandFlags.GD) == 0) ||
                         (o1.IsRegType(RegType.GPQ) && (id.OperandFlags[1] & OperandFlags.GQ) == 0) ||
@@ -2960,36 +3131,8 @@
         // helpers thats used by assembler. They call emitX86() adding NULLs
         // to first, second and third operand, if needed.
 
-        //! @brief Emit X86/FPU or MM/XMM instruction.
-        private void EmitInstruction(int code)
-        {
-            throw new NotImplementedException();
-        }
-
-        //! @brief Emit X86/FPU or MM/XMM instruction.
-        private void EmitInstruction(int code, Operand o0)
-        {
-            throw new NotImplementedException();
-        }
-
-        //! @brief Emit X86/FPU or MM/XMM instruction.
-        private void EmitInstruction(int code, Operand o0, Operand o1)
-        {
-            throw new NotImplementedException();
-        }
-
-        //! @brief Emit X86/FPU or MM/XMM instruction.
-        //!
-        //! Operands @a o1, @a o2 or @a o3 can be @c NULL if they are not used.
-        //!
-        //! Hint: Use @c emitX86() helpers to emit instructions.
-        private void EmitInstruction(int code, Operand o0, Operand o1, Operand o2)
-        {
-            throw new NotImplementedException();
-        }
-
         //! @brief Private method for emitting jcc.
-        private void EmitJcc(int code, Label label, int hint)
+        private void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
             throw new NotImplementedException();
         }

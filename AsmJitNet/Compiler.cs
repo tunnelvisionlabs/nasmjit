@@ -925,7 +925,7 @@
             Contract.Requires(operands != null);
             Contract.Requires(operands.All(i => i != null));
 
-            if (code >= InstructionCode.J && code <= InstructionCode.Jmp)
+            if (code >= InstructionDescription.JumpAnyBegin && code <= InstructionDescription.JumpAnyEnd)
             {
                 return new Jmp(this, code, operands);
             }

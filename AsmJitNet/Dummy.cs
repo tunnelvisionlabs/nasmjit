@@ -14,5 +14,13 @@
                 return EmittableType.Dummy;
             }
         }
+
+        public override int MaxSize
+        {
+            get
+            {
+                return 0;
+            }
+        }
     }
 }

@@ -21,6 +21,7 @@
 
             _isTaken =
                 Code == InstructionCode.Jmp
+                || Code == InstructionCode.JmpShort
                 || (Operands.Length > 1 && Operands[1].IsImm && ((Imm)Operands[1]).Value == (IntPtr)Hint.Taken);
         }
 
@@ -54,7 +55,8 @@
 
             // Update _isTaken to true if this is conditional backward jump. This behavior
             // can be overriden by using HINT_NOT_TAKEN when using the instruction.
-            if (Code != InstructionCode.Jmp && Operands.Length == 1 && _jumpTarget.Offset < Offset)
+            if ((Code != InstructionCode.Jmp && Code != InstructionCode.JmpShort)
+                && Operands.Length == 1 && _jumpTarget.Offset < Offset)
             {
                 _isTaken = true;
             }
@@ -102,12 +104,12 @@
             }
 
             // Mark next code as unrecheable, cleared by a next label (ETarget).
-            if (Code == InstructionCode.Jmp)
+            if (Code == InstructionCode.Jmp || Code == InstructionCode.JmpShort)
             {
                 cc.Unreachable = true;
             }
 
-            // Need to traverse all active variables, because they h ::prepare() 
+            // Need to traverse all active variables and unuse them if their scope ends here
             if (cc.Active != null)
             {
                 VarData first = cc.Active;
@@ -121,13 +123,59 @@
             }
         }
 
+        public override void Emit(Assembler a)
+        {
+            const uint MAXIMUM_SHORT_JMP_SIZE = 127;
+
+            // Try to minimize size of jump using SHORT jump (8-bit displacement) by 
+            // traversing into the target and calculating the maximum code size. We
+            // end when code size reaches MAXIMUM_SHORT_JMP_SIZE.
+            if (Code >= InstructionDescription.JumpLongBegin &&
+                Code <= InstructionDescription.JumpLongEnd &&
+                JumpTarget.Offset > Offset)
+            {
+                // Calculate the code size.
+                uint codeSize = 0;
+                Emittable cur = this.Next;
+                Emittable target = JumpTarget;
+
+                while (cur != null)
+                {
+                    if (cur == target)
+                    {
+                        // Target found, we can tell assembler to generate short form of jump.
+
+                        // Okay, this looks ugly, but I'd like to call EInstruction::emit()
+                        // without changing the instruction code after returned from EJmp::emit().
+                        Code += InstructionDescription.JumpShortOffset;
+                        base.Emit(a);
+                        Code -= InstructionDescription.JumpShortOffset;
+                        return;
+                    }
+
+                    int s = cur.MaxSize;
+                    if (s == -1)
+                        break;
+
+                    codeSize += (uint)s;
+                    if (codeSize > MAXIMUM_SHORT_JMP_SIZE)
+                        break;
+
+                    cur = cur.Next;
+                }
+            }
+
+            // No modification...
+            base.Emit(a);
+        }
+
         internal void DoJump(CompilerContext cc)
         {
             // The state have to be already known. The _doJump() method is called by
             // translate() or by Compiler in case that it's forward jump.
             Debug.Assert(_jumpTarget.State != null);
 
-            if (Code == InstructionCode.Jmp || (IsTaken && _jumpTarget.Offset < Offset))
+            if ((Code == InstructionCode.Jmp || Code == InstructionCode.JmpShort) || (IsTaken && _jumpTarget.Offset < Offset))
             {
                 // Instruction type is JMP or conditional jump that should be taken (likely).
                 // We can set state here instead of jumping out, setting state and jumping

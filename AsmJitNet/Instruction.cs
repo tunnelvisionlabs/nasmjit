@@ -219,6 +219,15 @@
             }
         }
 
+        public override int MaxSize
+        {
+            get
+            {
+                // TODO: Do something more exact.
+                return 15;
+            }
+        }
+
         public Mem MemoryOperand
         {
             get
@@ -248,6 +257,11 @@
             get
             {
                 return _code;
+            }
+
+            protected set
+            {
+                _code = value;
             }
         }
 
