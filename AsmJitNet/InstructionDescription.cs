@@ -30,12 +30,6 @@
         #region Array initializer
         static InstructionDescription()
         {
-            Func<InstructionCode, string, InstructionGroup, InstructionFlags, OperandFlags, OperandFlags, int, uint, uint, InstructionDescription> MAKE_INST =
-                (code, name, group, flags, oflags0, oflags1, opReg, opcode0, opcode1) =>
-                {
-                    return new InstructionDescription(code, name, group, flags, new OperandFlags[] { oflags0, oflags1 }, opReg, (int)opcode0, (int)opcode1);
-                };
-
 instructionDescriptions =
     new InstructionDescription[]
 {
@@ -48,8 +42,8 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Addss            , "addss"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF3000F58, 0),
   MAKE_INST(InstructionCode.Addsubpd         , "addsubpd"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000FD0, 0),
   MAKE_INST(InstructionCode.Addsubps         , "addsubps"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000FD0, 0),
-  MAKE_INST(InstructionCode.AmdPrefetch     , "amd_prefetch"     , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0x00000F0D, 0),
-  MAKE_INST(InstructionCode.AmdPrefetchw    , "amd_prefetchw"    , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 1, 0x00000F0D, 0),
+  MAKE_INST(InstructionCode.AmdPrefetch      , "amd_prefetch"     , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0x00000F0D, 0),
+  MAKE_INST(InstructionCode.AmdPrefetchw     , "amd_prefetchw"    , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 1, 0x00000F0D, 0),
   MAKE_INST(InstructionCode.And              , "and"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 4, 0x00000020, 0x00000080),
   MAKE_INST(InstructionCode.Andnpd           , "andnpd"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F55, 0),
   MAKE_INST(InstructionCode.Andnps           , "andnps"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F55, 0),
@@ -372,7 +366,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Movupd           , "movupd"           , InstructionGroup.MMU_MOV       , InstructionFlags.MOV           , AsmJitNet2.OperandFlags.XMM_MEM          , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F10, 0x66000F11),
   MAKE_INST(InstructionCode.Movups           , "movups"           , InstructionGroup.MMU_MOV       , InstructionFlags.MOV           , AsmJitNet2.OperandFlags.XMM_MEM          , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F10, 0x00000F11),
   MAKE_INST(InstructionCode.Movzx            , "movzx"            , InstructionGroup.MOVSX_MOVZX   , InstructionFlags.MOV           , AsmJitNet2.OperandFlags.GQDW             , AsmJitNet2.OperandFlags.GWB_MEM          , 0, 0x00000FB6, 0),
-  MAKE_INST(InstructionCode.MovPtr          , "mov_ptr"          , InstructionGroup.MOV_PTR       , InstructionFlags.MOV|InstructionFlags.SPECIAL, AsmJitNet2.OperandFlags.GQDWB            , AsmJitNet2.OperandFlags.IMM              , 0, 0         , 0),
+  MAKE_INST(InstructionCode.MovPtr           , "mov_ptr"          , InstructionGroup.MOV_PTR       , InstructionFlags.MOV|InstructionFlags.SPECIAL, AsmJitNet2.OperandFlags.GQDWB            , AsmJitNet2.OperandFlags.IMM              , 0, 0         , 0),
   MAKE_INST(InstructionCode.Mpsadbw          , "mpsadbw"          , InstructionGroup.MMU_RM_IMM8   , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x660F3A42, 0),
   MAKE_INST(InstructionCode.Mul              , "mul"              , InstructionGroup.RM            , InstructionFlags.SPECIAL       , 0                   , 0                   , 4, 0x000000F6, 0),
   MAKE_INST(InstructionCode.Mulpd            , "mulpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F59, 0),
@@ -546,34 +540,34 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Rcr              , "rcr"              , InstructionGroup.ROT           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GB|AsmJitNet2.OperandFlags.IMM        , 3, 0         , 0),
   MAKE_INST(InstructionCode.Rdtsc            , "rdtsc"            , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x00000F31, 0),
   MAKE_INST(InstructionCode.Rdtscp           , "rdtscp"           , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x000F01F9, 0),
-  MAKE_INST(InstructionCode.RepLodsb        , "rep lodsb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepLodsd        , "rep lodsd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepLodsq        , "rep lodsq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepLodsw        , "rep lodsw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepMovsb        , "rep movsb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepMovsd        , "rep movsd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepMovsq        , "rep movsq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepMovsw        , "rep movsw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepStosb        , "rep stosb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepStosd        , "rep stosd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepStosq        , "rep stosq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepStosw        , "rep stosw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeCmpsb       , "repe cmpsb"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeCmpsd       , "repe cmpsd"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeCmpsq       , "repe cmpsq"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeCmpsw       , "repe cmpsw"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeScasb       , "repe scasb"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeScasd       , "repe scasd"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeScasq       , "repe scasq"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepeScasw       , "repe scasw"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneCmpsb      , "repne cmpsb"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneCmpsd      , "repne cmpsd"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneCmpsq      , "repne cmpsq"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneCmpsw      , "repne cmpsw"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 2 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneScasb      , "repne scasb"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 1 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneScasd      , "repne scasd"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 4 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneScasq      , "repne scasq"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 8 /* Size of mem */),
-  MAKE_INST(InstructionCode.RepneScasw      , "repne scasw"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepLodsb         , "rep lodsb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepLodsd         , "rep lodsd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepLodsq         , "rep lodsq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepLodsw         , "rep lodsw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AC, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepMovsb         , "rep movsb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepMovsd         , "rep movsd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepMovsq         , "rep movsq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepMovsw         , "rep movsw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A4, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepStosb         , "rep stosb"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepStosd         , "rep stosd"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepStosq         , "rep stosq"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepStosw         , "rep stosw"        , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0xF30000AA, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeCmpsb        , "repe cmpsb"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeCmpsd        , "repe cmpsd"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeCmpsq        , "repe cmpsq"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeCmpsw        , "repe cmpsw"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000A6, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeScasb        , "repe scasb"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeScasd        , "repe scasd"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeScasq        , "repe scasq"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepeScasw        , "repe scasw"       , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF30000AE, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneCmpsb       , "repne cmpsb"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneCmpsd       , "repne cmpsd"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneCmpsq       , "repne cmpsq"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneCmpsw       , "repne cmpsw"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000A6, 2 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneScasb       , "repne scasb"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 1 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneScasd       , "repne scasd"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 4 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneScasq       , "repne scasq"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 8 /* Size of mem */),
+  MAKE_INST(InstructionCode.RepneScasw       , "repne scasw"      , InstructionGroup.REP           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , AsmJitNet2.OperandFlags.MEM              , 0, 0xF20000AE, 2 /* Size of mem */),
   MAKE_INST(InstructionCode.Ret              , "ret"              , InstructionGroup.RET           , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0         , 0),
   MAKE_INST(InstructionCode.Rol              , "rol"              , InstructionGroup.ROT           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GB|AsmJitNet2.OperandFlags.IMM        , 0, 0         , 0),
   MAKE_INST(InstructionCode.Ror              , "ror"              , InstructionGroup.ROT           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GB|AsmJitNet2.OperandFlags.IMM        , 1, 0         , 0),
@@ -784,6 +778,11 @@ instructionDescriptions =
                 throw new InvalidOperationException();
 
             return description;
+        }
+
+        private static InstructionDescription MAKE_INST(InstructionCode code, string name, InstructionGroup group, InstructionFlags flags, OperandFlags oflags0, OperandFlags oflags1, int opReg, uint opcode0, uint opcode1)
+        {
+            return new InstructionDescription(code, name, group, flags, new OperandFlags[] { oflags0, oflags1 }, opReg, (int)opcode0, (int)opcode1);
         }
     }
 }

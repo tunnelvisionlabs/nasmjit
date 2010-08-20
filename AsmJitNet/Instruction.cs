@@ -1128,7 +1128,7 @@
                 case InstructionCode.Maskmovdqu:
                 case InstructionCode.Maskmovq:
                     a.EmitInstruction(_code, _operands[1], _operands[2]);
-                    break;
+                    return;
 
                 case InstructionCode.Enter:
                 case InstructionCode.Leave:
