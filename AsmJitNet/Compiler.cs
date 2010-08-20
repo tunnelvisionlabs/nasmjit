@@ -803,6 +803,16 @@
             _emitInstruction(InstructionCode.Lea, dst, src);
         }
 
+        public void Maskmovdqu(GPVar dst_ptr, XMMVar src, XMMVar mask)
+        {
+            _emitInstruction(InstructionCode.Maskmovdqu, dst_ptr, src, mask);
+        }
+
+        public void Maskmovq(GPVar dst_ptr, MMVar data, MMVar mask)
+        {
+            _emitInstruction(InstructionCode.Maskmovq, dst_ptr, data, mask);
+        }
+
         public void Mov(GPVar dst, GPVar src)
         {
             _emitInstruction(InstructionCode.Mov, dst, src);

@@ -116,6 +116,11 @@
                     // Special...
                     break;
 
+                case InstructionCode.Maskmovdqu:
+                case InstructionCode.Maskmovq:
+                    // Special...
+                    break;
+
                 case InstructionCode.Enter:
                 case InstructionCode.Leave:
                     // Special...
@@ -559,6 +564,27 @@
                             vdata.RegisterReadCount++;
                             var.VarFlags |= VariableAlloc.Read;
                             var.RegIndex = RegIndex.Eax;
+                            break;
+
+                        case InstructionCode.Maskmovdqu:
+                        case InstructionCode.Maskmovq:
+                            switch (i)
+                            {
+                            case 0:
+                                vdata.MemoryReadCount++;
+                                var.VarFlags |= VariableAlloc.Read;
+                                var.RegIndex = RegIndex.Edi;
+                                break;
+
+                            case 1:
+                            case 2:
+                                vdata.MemoryReadCount++;
+                                var.VarFlags |= VariableAlloc.Read;
+                                break;
+
+                            default:
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                            }
                             break;
 
                         case InstructionCode.Enter:
@@ -1076,6 +1102,11 @@
                 case InstructionCode.Sahf:
                     a.EmitInstruction(_code);
                     return;
+
+                case InstructionCode.Maskmovdqu:
+                case InstructionCode.Maskmovq:
+                    a.EmitInstruction(_code, _operands[1], _operands[2]);
+                    break;
 
                 case InstructionCode.Enter:
                 case InstructionCode.Leave:
