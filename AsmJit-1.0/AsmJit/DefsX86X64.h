@@ -43,7 +43,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Definitions
+//! @addtogroup AsmJit_Core
 //! @{
 
 // ============================================================================
@@ -937,7 +937,8 @@ enum INST_CODE
   INST_INT3,          // X86/X64
 
   INST_J,             // Begin (jcc)
-  INST_JA = INST_J,   // X86/X64 (jcc)
+  INST_JA = 
+    INST_J,           // X86/X64 (jcc)
   INST_JAE,           // X86/X64 (jcc)
   INST_JB,            // X86/X64 (jcc)
   INST_JBE,           // X86/X64 (jcc)
@@ -970,8 +971,8 @@ enum INST_CODE
   INST_JMP,           // X86/X64 (jmp)
 
   INST_J_SHORT,       // Begin (jcc_short)
-
-  INST_JA_SHORT = INST_J_SHORT, // X86/X64 (jcc_short)
+  INST_JA_SHORT = 
+    INST_J_SHORT,     // X86/X64 (jcc_short)
   INST_JAE_SHORT,     // X86/X64 (jcc_short)
   INST_JB_SHORT,      // X86/X64 (jcc_short)
   INST_JBE_SHORT,     // X86/X64 (jcc_short)
@@ -1351,6 +1352,9 @@ enum INST_CODE
 // [AsmJit::Instruction Name]
 // ============================================================================
 
+//! @internal
+//! 
+//! @brief Instruction names.
 ASMJIT_API extern const char instructionName[];
 
 // ============================================================================
@@ -1366,8 +1370,8 @@ struct InstructionDescription
   //! @brief Instruction groups.
   //!
   //! This should be only used by assembler, because it's @c AsmJit::Assembler
-  //! specific grouping. Each group represents one 'case' in
-  //! @c AsmJit::Assembler::_emitX86() method.
+  //! specific grouping. Each group represents one 'case' in the Assembler's 
+  //! main emit method.
   enum G
   {
     // Gloup categories.
@@ -1544,14 +1548,23 @@ struct InstructionDescription
   //! @brief Primary and secondary opcodes.
   uint32_t opCode[2];
 
+  //! @brief Get the instruction name (null terminated string).
   inline const char* getName() const { return instructionName + nameIndex; }
 
+  //! @brief Get whether the instruction is conditional or standard jump.
   inline bool isJump() const { return (flags & F_JUMP) != 0; }
+  //! @brief Get whether the instruction is MOV type.
   inline bool isMov() const { return (flags & F_MOV) != 0; }
+  //! @brief Get whether the instruction is X87 FPU type.
   inline bool isFPU() const { return (flags & F_FPU) != 0; }
+  //! @brief Get whether the instruction can be prefixed by LOCK prefix.
   inline bool isLockable() const { return (flags & F_LOCKABLE) != 0; }
 
+  //! @brief Get whether the instruction is special type (this is used by
+  //! @c Compiler to manage additional variables or functionality).
   inline bool isSpecial() const { return (flags & F_SPECIAL) != 0; }
+  //! @brief Get whether the instruction is special type and it performs
+  //! memory access.
   inline bool isSpecialMem() const { return (flags & F_SPECIAL_MEM) != 0; }
 };
 
@@ -1646,7 +1659,7 @@ enum CALL_CONV
   //!
   //! Stack is always aligned by 16 bytes.
   //!
-  //! More informations about this calling convention can be found on MSDN:
+  //! More information about this calling convention can be found on MSDN:
   //! http://msdn.microsoft.com/en-us/library/9b372w95.aspx .
   CALL_CONV_X64W = 1,
 
@@ -1822,21 +1835,22 @@ enum CALL_CONV
 //! @brief Variable type.
 enum VARIABLE_TYPE
 {
-  //! @brief Variable is 32 bit integer.
+  // --------------------------------------------------------------------------
+  // [Platform Dependent]
+  // --------------------------------------------------------------------------
+
+  //! @brief Variable is 32-bit general purpose register.
   VARIABLE_TYPE_GPD = 0,
-  //! @brief Variable is 64 bit integer.
+  //! @brief Variable is 64-bit general purpose register.
   VARIABLE_TYPE_GPQ = 1,
 
   //! @var VARIABLE_TYPE_GPN
-  //! @brief Variable is system wide integer (int32_t or int64_t).
+  //! @brief Variable is system wide general purpose register (32-bit or 64-bit).
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_GPN = VARIABLE_TYPE_GPD,
 #else
   VARIABLE_TYPE_GPN = VARIABLE_TYPE_GPQ,
 #endif
-
-  //! @brief Variable is pointer or reference to memory (to any type).
-  VARIABLE_TYPE_PTR = VARIABLE_TYPE_GPN,
 
   //! @brief Variable is X87 (FPU).
   VARIABLE_TYPE_X87 = 2,
@@ -1863,23 +1877,34 @@ enum VARIABLE_TYPE
   //! @brief Variable is SSE2 packed DP-FP number (2 doubles).
   VARIABLE_TYPE_XMM_2D = 10,
 
+  //! @brief Count of variable types.
+  _VARIABLE_TYPE_COUNT = 11,
+
+  // --------------------------------------------------------------------------
+  // [Platform Independent]
+  // --------------------------------------------------------------------------
+
+  //! @brief Variable is 32-bit integer.
+  VARIABLE_TYPE_INT32 = VARIABLE_TYPE_GPD,
+  //! @brief Variable is 64-bit integer.
+  VARIABLE_TYPE_INT64 = VARIABLE_TYPE_GPQ,
+  //! @brief Variable is system dependent integer / pointer.
+  VARIABLE_TYPE_INTPTR = VARIABLE_TYPE_GPN,
+
 #if !defined(ASMJIT_NODOC)
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_1F,
-  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_1D,
+  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_1D
 #else
   VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_XMM_1F,
-  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_1D,
+  VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_1D
 #endif
 #else
   //! @brief Variable is SP-FP (x87 or xmm).
   VARIABLE_TYPE_FLOAT = XXX,
   //! @brief Variable is DP-FP (x87 or xmm).
-  VARIABLE_TYPE_DOUBLE = XXX,
+  VARIABLE_TYPE_DOUBLE = XXX
 #endif
-
-  //! @brief Count of variable types.
-  _VARIABLE_TYPE_COUNT = 11
 };
 
 // ============================================================================

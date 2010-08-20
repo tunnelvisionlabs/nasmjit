@@ -57,7 +57,7 @@ struct X87Var;
 struct XMMReg;
 struct XMMVar;
 
-//! @addtogroup AsmJit_Assembler
+//! @addtogroup AsmJit_Core
 //! @{
 
 // ============================================================================

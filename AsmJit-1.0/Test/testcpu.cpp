@@ -65,6 +65,7 @@ static const BitDescription cFeatures[] =
   { CPU_FEATURE_SSE4_2                      , "SSE4.2" },
   { CPU_FEATURE_SSE5                        , "SSE5" },
   { CPU_FEATURE_MONITOR_MWAIT               , "MONITOR/MWAIT" },
+  { CPU_FEATURE_MOVBE                       , "MOVBE" },
   { CPU_FEATURE_POPCNT                      , "POPCNT" },
   { CPU_FEATURE_LZCNT                       , "LZCNT" },
   { CPU_FEATURE_MULTI_THREADING             , "MultiThreading" },
@@ -85,23 +86,23 @@ int main(int argc, char* argv[])
 {
   CpuInfo *i = getCpuInfo();
 
-  printf("CPUID informations\n");
-  printf("==================\n");
+  printf("CPUID Detection\n");
+  printf("===============\n");
 
-  printf("\nBasic informations\n");
-  printf("  Vendor string       : %s\n", i->vendor);
-  printf("  Family              : %u\n", i->family);
-  printf("  Model               : %u\n", i->model);
-  printf("  Stepping            : %u\n", i->stepping);
-  printf("  Number of Processors: %u\n", i->numberOfProcessors);
-  printf("  Features            : %0.8X\n", i->features);
-  printf("  Bugs                : %0.8X\n", i->bugs);
-  printf("\nX86 Extended Info:\n");
-  printf("  Processor Type      : %u\n", i->x86ExtendedInfo.processorType);
-  printf("  Brand Index         : %u\n", i->x86ExtendedInfo.brandIndex);
-  printf("  CL Flush Cache Line : %u\n", i->x86ExtendedInfo.clFlushCacheLineSize);
-  printf("  Logical Processors  : %u\n", i->x86ExtendedInfo.logicalProcessors);
-  printf("  APIC Physical ID    : %u\n", i->x86ExtendedInfo.apicPhysicalId);
+  printf("\nBasic info\n");
+  printf("  Vendor string         : %s\n", i->vendor);
+  printf("  Family                : %u\n", i->family);
+  printf("  Model                 : %u\n", i->model);
+  printf("  Stepping              : %u\n", i->stepping);
+  printf("  Number of Processors  : %u\n", i->numberOfProcessors);
+  printf("  Features              : %0.8X\n", i->features);
+  printf("  Bugs                  : %0.8X\n", i->bugs);
+  printf("\nExtended Info (X86/X64):\n");
+  printf("  Processor Type        : %u\n", i->x86ExtendedInfo.processorType);
+  printf("  Brand Index           : %u\n", i->x86ExtendedInfo.brandIndex);
+  printf("  CL Flush Cache Line   : %u\n", i->x86ExtendedInfo.flushCacheLineSize);
+  printf("  Max logical Processors: %u\n", i->x86ExtendedInfo.maxLogicalProcessors);
+  printf("  APIC Physical ID      : %u\n", i->x86ExtendedInfo.apicPhysicalId);
 
   printf("\nCpu Features:\n");
   printBits("  ", i->features, cFeatures);

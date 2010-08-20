@@ -51,7 +51,7 @@
 // so there is small know how.
 //
 // - Implementation is based on bit arrays and binary trees. Bit arrays 
-//   contains informations about allocated and unused blocks of memory. Each
+//   contains information about allocated and unused blocks of memory. Each
 //   block size describes M_Node::density member. Count of blocks are
 //   stored in M_Node::blocks member. For example if density is 64 and 
 //   count of blocks is 20, memory node contains 64*20 bytes of memory and

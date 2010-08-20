@@ -85,7 +85,7 @@ struct TypeToId
 };
 
 template<typename T>
-struct TypeToId<T*> { enum { Id = VARIABLE_TYPE_PTR }; };
+struct TypeToId<T*> { enum { Id = VARIABLE_TYPE_INTPTR }; };
 
 #else
 
@@ -108,7 +108,7 @@ struct TypeToId
   {
     // This is the hackery result.
     Id = (sizeof(char) == sizeof( TypeToId_NoPtiHelper((T(*)())0) )
-      ? VARIABLE_TYPE_PTR
+      ? VARIABLE_TYPE_INTPTR
       : INVALID_VALUE)
   };
 };
@@ -423,12 +423,12 @@ struct FunctionBuilder10 : public FunctionDefinition
 //!
 //! When you are finished serializing instructions to the @c Compiler and you
 //! call @c Compiler::make(), it will first call @c prepare() method for each
-//! emittable in list, then @c emit() and then @c post(). Prepare can be
-//! used to calculate something that can be only calculated when everything
-//! is finished (for example @c Function uses @c prepare() to relocate memory
-//! home for all memory/spilled variables). @c emit() should be used to emit
-//! instruction or multiple instructions into @a Assembler stream, and
-//! @c post() is here to allow emitting embedded data (after function
+//! emittable in list, then @c translate(), @c emit() and @c post() is the last.
+//! Prepare can be used to calculate something that can be only calculated when
+//! emitting instructions is finished (for example @c Function uses @c prepare()
+//! to relocate memory home for all memory/spilled variables). @c emit() should 
+//! be used to emit instruction or multiple instructions into @a Assembler stream,
+//! and @c post() is here to allow emitting embedded data (after function
 //! declaration), etc.
 struct ASMJIT_API Emittable
 {

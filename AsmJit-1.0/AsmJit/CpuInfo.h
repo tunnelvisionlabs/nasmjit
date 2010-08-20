@@ -146,10 +146,12 @@ enum CPU_FEATURE
   CPU_FEATURE_SSE5 = 1U << 22,
   //! @brief Cpu supports MONITOR and MWAIT instructions.
   CPU_FEATURE_MONITOR_MWAIT = 1U << 23,
+  //! @brief Cpu supports MOVBE instruction.
+  CPU_FEATURE_MOVBE = 1U << 24,
   //! @brief Cpu supports POPCNT instruction.
-  CPU_FEATURE_POPCNT = 1U << 24,
+  CPU_FEATURE_POPCNT = 1U << 25,
   //! @brief Cpu supports LZCNT instruction.
-  CPU_FEATURE_LZCNT  = 1U << 25,
+  CPU_FEATURE_LZCNT = 1U << 26,
   //! @brief Cpu supports multithreading.
   CPU_FEATURE_MULTI_THREADING = 1U << 29,
   //! @brief Cpu supports execute disable bit (execute protection).
@@ -195,15 +197,21 @@ struct ASMJIT_HIDDEN CpuInfo
   uint32_t bugs;
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-  //! @brief Extended informations for x86/x64 compatible processors.
+  //! @brief Extended information for x86/x64 compatible processors.
   struct X86ExtendedInfo
   {
+    //! @brief Processor type.
     uint32_t processorType;
+    //! @brief Brand index.
     uint32_t brandIndex;
-    uint32_t clFlushCacheLineSize;
-    uint32_t logicalProcessors;
+    //! @brief Flush cache line size in bytes.
+    uint32_t flushCacheLineSize;
+    //! @brief Maximum number of addressable IDs for logical processors.
+    uint32_t maxLogicalProcessors;
+    //! @brief Initial APIC ID.
     uint32_t apicPhysicalId;
   };
+  //! @brief Extended information for x86/x64 compatible processors.
   X86ExtendedInfo x86ExtendedInfo;
 #endif // ASMJIT_X86 || ASMJIT_X64
 };

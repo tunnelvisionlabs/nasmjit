@@ -120,7 +120,6 @@ int main(int argc, char* argv[])
   a.inc(sysint_ptr(nax));
   a.int3();
   a.lea(nax,sysint_ptr(nax));
-  a.lock();
   a.mov(nax,nax);
   a.mov(nax,sysint_ptr(nax));
   a.mov(nax,0);

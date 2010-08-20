@@ -34,7 +34,7 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef uint32_t (*MyFn)(uint32_t, uint32_t);
+typedef uint32_t (*MyFn)();
 
 int main(int argc, char* argv[])
 {
@@ -51,35 +51,10 @@ int main(int argc, char* argv[])
   c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, uint32_t, uint32_t>());
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
-  GPVar var[20];
-  int i;
-
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    var[i] = c.newGP();
-  }
-
-  c.alloc(var[0], eax);
-
-  for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-  {
-    c.mov(var[i], imm(i));
-  }
-
-  GPVar j = c.newGP();
-  Label r = c.newLabel();
-  c.mov(j, 4);
-
-  c.bind(r);
-  for (i = ASMJIT_ARRAY_SIZE(var) - 1; i > 0; i--)
-  {
-    c.add(var[0], var[i]);
-  }
-
-  c.dec(j);
-  c.jnz(r, HINT_TAKEN);
-
-  c.ret(var[0]);
+  // ...
+  GPVar var = c.newGP(VARIABLE_TYPE_GPD);
+  c.xor_(var, var);
+  c.ret(var);
   c.endFunction();
   // ==========================================================================
 
@@ -87,7 +62,8 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  printf("Result %u\n", fn(1, 2));
+  // Call it.
+  printf("Result %u\n", fn());
 
   // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);

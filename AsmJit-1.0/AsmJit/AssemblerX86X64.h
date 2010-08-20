@@ -42,7 +42,7 @@
 
 namespace AsmJit {
 
-//! @addtogroup AsmJit_Assembler
+//! @addtogroup AsmJit_Core
 //! @{
 
 // ============================================================================
@@ -7482,7 +7482,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! method to do something else with it. If you take buffer, you must free it
 //! manually by @c ASMJIT_FREE() macro.
 //!
-//! <b>Code Generation</b>
+//! @section AsmJit_Assembler_CodeGeneration Code Generation
 //!
 //! To generate code is only needed to create instance of @c AsmJit::Assembler
 //! and to use intrinsics. See example how to do that:
@@ -7561,7 +7561,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! a.dec(dword_ptr(eax));                     // dec dword ptr [eax]
 //! @endcode
 //!
-//! <b>Calling Code</b>
+//! @section AsmJit_Assembler_CallingJitCode Calling JIT Code
 //!
 //! While you are over from emitting instructions, you can make your function
 //! using @c AsmJit::Assembler::make() method. This method will use memory
@@ -7635,7 +7635,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! In real production code you will never alloc and free code for one run,
 //! you will usually use generated code many times.
 //!
-//! <b>Using labels</b>
+//! @section AsmJit_Assembler_Labels Labels
 //!
 //! While generating assembler code, you will usually need to create complex
 //! code with labels. Labels are fully supported and you can call @c jmp or

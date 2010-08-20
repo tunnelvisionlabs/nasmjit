@@ -182,11 +182,11 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
     i->model  += ((out.eax >> 16) & 0x0F) << 4;
   }
 
-  i->x86ExtendedInfo.processorType         = ((out.eax >> 12) & 0x03);
-  i->x86ExtendedInfo.brandIndex            = ((out.ebx      ) & 0xFF);
-  i->x86ExtendedInfo.clFlushCacheLineSize  = ((out.ebx >>  8) & 0xFF) * 8;
-  i->x86ExtendedInfo.logicalProcessors     = ((out.ebx >> 16) & 0xFF);
-  i->x86ExtendedInfo.apicPhysicalId        = ((out.ebx >> 24) & 0xFF);
+  i->x86ExtendedInfo.processorType        = ((out.eax >> 12) & 0x03);
+  i->x86ExtendedInfo.brandIndex           = ((out.ebx      ) & 0xFF);
+  i->x86ExtendedInfo.flushCacheLineSize   = ((out.ebx >>  8) & 0xFF) * 8;
+  i->x86ExtendedInfo.maxLogicalProcessors = ((out.ebx >> 16) & 0xFF);
+  i->x86ExtendedInfo.apicPhysicalId       = ((out.ebx >> 24) & 0xFF);
 
   if (out.ecx & 0x00000001U) i->features |= CPU_FEATURE_SSE3;
   if (out.ecx & 0x00000008U) i->features |= CPU_FEATURE_MONITOR_MWAIT;
@@ -194,6 +194,7 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   if (out.ecx & 0x00002000U) i->features |= CPU_FEATURE_CMPXCHG16B;
   if (out.ecx & 0x00080000U) i->features |= CPU_FEATURE_SSE4_1;
   if (out.ecx & 0x00100000U) i->features |= CPU_FEATURE_SSE4_2;
+  if (out.ecx & 0x00400000U) i->features |= CPU_FEATURE_MOVBE;
   if (out.ecx & 0x00800000U) i->features |= CPU_FEATURE_POPCNT;
 
   if (out.edx & 0x00000010U) i->features |= CPU_FEATURE_RDTSC;
@@ -255,7 +256,7 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 
         break;
 
-      // there are more informations that can be implemented in the future
+      // Additional features can be detected in the future.
     }
   }
 

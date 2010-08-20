@@ -41,7 +41,7 @@
 //! processor. Currently tested operating systems are Windows (32 bit and 64 bit),
 //! Linux (32 bit and 64 bit) and MacOSX (32 bit). 
 //!
-//! <b>Introduction</b>
+//! @section AsmJit_Main_Introduction Introduction
 //!
 //! AsmJit library contains two main classes for code generation with different
 //! goals. First main code generation class is called @c AsmJit::Assembler and 
@@ -59,29 +59,31 @@
 //!
 //! Everything in AsmJit library is in @c AsmJit namespace.
 //!
-//! <b>Code generation sections:</b>
+//! @section AsmJit_Main_CodeGeneration Code Generation
 //!
-//! - @ref AsmJit_Core "Core" - Operands, intrinsics and low-level assembler.
+//! - @ref AsmJit_Core "Assembler core" - Operands, intrinsics and low-level assembler.
 //! - @ref AsmJit_Compiler "Compiler" - High level code generation.
-//! - @ref AsmJit_CpuInfo "Cpu Informations" - Get informations about host processor.
+//! - @ref AsmJit_CpuInfo "Cpu Information" - Get information about host processor.
 //! - @ref AsmJit_Logging "Logging" - Logging and error handling.
 //! - @ref AsmJit_MemoryManagement "Memory Management" - Virtual memory management.
 //!
-//! <b>Configuration, definitions and utilities:</b>
+//! @section AsmJit_Main_Configuration Configuration, Definitions and Utilities
 //!
 //! - @ref AsmJit_Config "Configuration" - Macros used to configure AsmJit.
+//! - @ref AsmJit_Platform "Platform" - Platform specific classes.
 //! - @ref AsmJit_Util "Utilities" - Utilities and helper classes.
 //!
-//! <b>AsmJit homepage:</b>
+//! @section AsmJit_Main_HomePage AsmJit Homepage
+//!
 //! - http://code.google.com/p/asmjit/
 //!
-//! <b>External resources:</b>
+//! @section AsmJit_Main_X86X64Resources External X86/X64 Assembler Resources
 //! - http://www.agner.org/optimize/
 //! - http://www.mark.masmcode.com/ (Assembler Tips)
 //! - http://avisynth.org/mediawiki/Filter_SDK/Assembler_optimizing (Optimizing)
 //! - http://www.ragestorm.net/distorm/ (Disassembling)
 //!
-//! <b>Terminology</b>
+//! @section AsmJit_Main_Terminology Terminology
 //!
 //! - <b>Non-volatile (preserved) register</b> - Register that can't be changed
 //!   by callee (callee must save and restore it if it want to use it inside).
@@ -91,7 +93,7 @@
 //!   other function.
 
 
-//! @defgroup AsmJit_Core Assembler (operands, intrinsics and low-level assembler).
+//! @defgroup AsmJit_Core Assembler core (operands, intrinsics and low-level assembler).
 //!
 //! Contains classes related to @c AsmJit::Assembler that're directly used 
 //! to generate machine code stream. It's one of oldest and fastest method 
@@ -101,7 +103,7 @@
 //!   documentation.
 //! - See @c AsmJit::Operand for AsmJit operand's overview.
 //!
-//! <b>Registers</b>
+//! @section AsmJit_Core_Registers Registers
 //!
 //! There are static objects that represents X86 and X64 registers. They can 
 //! be used directly (like @c eax, @c mm, @c xmm, ...) or created through 
@@ -115,7 +117,7 @@
 //! - @c AsmJit::mk_xmm() - make sse register
 //! - @c AsmJit::st() - make x87 register
 //!
-//! <b>Addressing</b>
+//! @section AsmJit_Core_Addressing Addressing
 //!
 //! X86 and x64 architectures contains several addressing modes and most ones
 //! are possible with AsmJit library. Memory represents are represented by
@@ -144,7 +146,7 @@
 //! Supported are simple address forms (register + displacement) and complex
 //! address forms (register + (register << shift) + displacement).
 //!
-//! <b>Immediates</b>
+//! @section AsmJit_Core_Immediates Immediates
 //!
 //! Immediate values are constants thats passed directly after instruction 
 //! opcode. To create such value use @c AsmJit::imm() or @c AsmJit::uimm()
@@ -181,7 +183,7 @@
 //! AsmJit library also contains higher level function @c AsmJit::getCpuInfo()
 //! that returns features detected by the library. The detection process is
 //! done only once and it's cached for all next calls. @c AsmJit::CpuInfo 
-//! structure not contains only informations through @c AsmJit::cpuid(), but
+//! structure not contains only information through @c AsmJit::cpuid(), but
 //! there is also small multiplatform code to detect number of processors 
 //! (or cores) throught operating system API.
 //!
@@ -248,11 +250,6 @@
 //! Better example is in AsmJit/Test/testcpu.cpp file.
 //!
 //! @sa AsmJit::cpuid, @c AsmJit::cpuInfo.
-
-
-//! @defgroup AsmJit_Defs Registers and instructions constants.
-//!
-//! Contains constants used in AsmJit library.
 
 
 //! @defgroup AsmJit_Logging Logging and error handling.

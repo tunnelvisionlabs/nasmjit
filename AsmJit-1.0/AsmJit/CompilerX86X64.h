@@ -394,9 +394,17 @@ struct VarData
 
   //! @brief Temporary data that can be used in prepare/translate stage.
   //!
-  //! Initial value is NULL and each emittable that will use it must also
+  //! Initial value is NULL and each emittable/code that will use it must also
   //! clear it.
-  void* temp;
+  //!
+  //! This temporary data is designed to be used by algorithms that need to
+  //! set some state into the variables, do something and then cleanup. See
+  //! state-switch and function call.
+  union
+  {
+    void* tempPtr;
+    sysint_t tempInt;
+  };
 };
 
 // ============================================================================
@@ -488,18 +496,29 @@ struct VarHintRecord
 //! @brief State data.
 struct StateData
 {
+  enum { NUM_REGS = 16 + 8 + 16 };
+
+  inline void clear() ASMJIT_NOTHROW
+  {
+    memset(this, 0, sizeof(*this));
+  }
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
+
   union
   {
-    //! @brief All variables in one array.
-    VarData* regs[16 + 8 + 16];
+    //! @brief All allocated variables in one array.
+    VarData* regs[NUM_REGS];
 
     struct
     {
-      //! @brief Regeral purpose registers.
+      //! @brief Allocated GP registers.
       VarData* gp[16];
-      //! @brief MM registers.
+      //! @brief Allocated MM registers.
       VarData* mm[8];
-      //! @brief XMM registers.
+      //! @brief Allocated XMM registers.
       VarData* xmm[16];
     };
   };
@@ -518,10 +537,14 @@ struct StateData
   //! @brief Changed XMM registers bitmask.
   uint32_t changedXMM;
 
-  inline void clear() ASMJIT_NOTHROW
-  {
-    memset(this, 0, sizeof(*this));
-  }
+  //! @brief Count of variables in @c memVarsData.
+  uint32_t memVarsCount;
+  //! @brief Variables stored in memory (@c VARIABLE_STATE_MEMORY).
+  //!
+  //! When saving / restoring state it's important to keep registers which are
+  //! still in memory. Register is always unused when it is going out-of-scope.
+  //! All variables which are not here are unused (@c VARIABLE_STATE_UNUSED).
+  VarData* memVarsData[1];
 };
 
 // ============================================================================
@@ -1936,7 +1959,7 @@ struct ASMJIT_API CompilerCore
   //! @internal
   //!
   //! @brief Create a new @ref StateData instance.
-  StateData* _newStateData() ASMJIT_NOTHROW;
+  StateData* _newStateData(uint32_t memVarsCount) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Make]
@@ -8153,7 +8176,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! operators) so overhead by creating machine code by @c AsmJit::Compiler
 //! is minimized.
 //!
-//! <b>The Story</b>
+//! @section AsmJit_Compiler_TheStory The Story
 //!
 //! Before telling you how Compiler works I'd like to write a story. I'd like
 //! to cover reasons why this class was created and why I'm recommending to use 
@@ -8228,7 +8251,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! low-level code using high-level API, leaving developer to concentrate to
 //! real problems and not to solving a register puzzle.
 //!
-//! <b>Code Generation</b>
+//! @section AsmJit_Compiler_CodeGeneration Code Generation
 //!
 //! First that is needed to know about compiler is that compiler never emits
 //! machine code. It's used as a middleware between @c AsmJit::Assembler and
@@ -8236,7 +8259,8 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! generate machine code directly without creating @c AsmJit::Assembler
 //! instance.
 //!
-//! Example how to generate machine code using @c Assembler and @c Compiler:
+//! Comparison of generating machine code through @c Assembler and directly
+//! by @c Compiler:
 //!
 //! @code
 //! // Assembler instance is low level code generation class that emits
@@ -8247,7 +8271,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! // instructions in internal representation.
 //! Compiler c;
 //!
-//! // ... put your code using Compiler instance ...
+//! // ... put your code here ...
 //!
 //! // Final step - generate code. AsmJit::Compiler::serialize() will serialize
 //! // all instructions into Assembler and this ensures generating real machine
@@ -8264,7 +8288,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! // Compiler instance is enough.
 //! Compiler c;
 //!
-//! // ... put your code using Compiler instance ...
+//! // ... put your code here ...
 //!
 //! // Your function
 //! void* fn = c.make();
@@ -8277,10 +8301,10 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! method that can create your function using @c AsmJit::Assembler, but
 //! internally (this is preffered bahavior when using @c AsmJit::Compiler).
 //!
-//! @c make() allocates memory using @c CodeGenerator instance passed to
-//! @c Compiler constructor. If code generator is used to create JIT function
-//! then virtual memory allocated by @c MemoryManager is used. To get global
-//! memory manager use @c MemoryManager::getGlobal().
+//! The @c make() method allocates memory using @c CodeGenerator instance passed
+//! into the @c Compiler constructor. If code generator is used to create JIT
+//! function then virtual memory allocated by @c MemoryManager is used. To get
+//! global memory manager use @c MemoryManager::getGlobal().
 //!
 //! @code
 //! // Compiler instance is enough.
@@ -8296,17 +8320,22 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! MemoryManager::getGlobal()->free(fn);
 //! @endcode
 //!
-//! <b>Functions</b>
+//! @section AsmJit_Compiler_Functions Functions
 //!
 //! To build functions with @c Compiler, see @c AsmJit::Compiler::newFunction()
 //! method.
 //!
-//! <b>Variables</b>
+//! @section AsmJit_Compiler_Variables Variables
 //!
 //! Compiler is able to manage variables and function arguments. Internally
 //! there is no difference between function argument and variable declared
 //! inside. To get function argument you use @c argGP() method and to declare
-//! variable use @c newGP(), @c newMM() and @c newXMM() methods.
+//! variable use @c newGP(), @c newMM() and @c newXMM() methods. The @c newXXX()
+//! methods accept also parameter describing the variable type. For example
+//! the @c newGP() method always creates variable which size matches the target
+//! architecture size (for 32-bit target the 32-bit variable is created, for
+//! 64-bit target the variable size is 64-bit). To override this behavior the
+//! variable type must be specified.
 //!
 //! @code
 //! // Compiler and function declaration - void f(int*);
@@ -8317,8 +8346,8 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! GPVar a1(c.argGP(0));
 //!
 //! // Create your variables.
-//! GPVar x1(c.newGP(VARIABLE_TYPE_INT32));
-//! GPVar x2(c.newGP(VARIABLE_TYPE_INT32));
+//! GPVar x1(c.newGP(VARIABLE_TYPE_GPD));
+//! GPVar x2(c.newGP(VARIABLE_TYPE_GPD));
 //!
 //! // Init your variables.
 //! c.mov(x1, 1);
@@ -8339,10 +8368,42 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! MyFn fn = function_cast<MyFn>(c.make());
 //! @endcode
 //!
-//! There was presented small code snippet with variables, but it's needed to
-//! explain it more. You can see that there are more variable types that can
-//! be used. Most useful variables can be allocated using general purpose
-//! registers (@c GPVar), MMX registers (@c MMVar) or SSE registers (@c XMMVar).
+//! This code snipped needs to be explained. You can see that there are more 
+//! variable types that can be used by @c Compiler. Most useful variables can
+//! be allocated using general purpose registers (@c GPVar), MMX registers 
+//! (@c MMVar) or SSE registers (@c XMMVar).
+//!
+//! X86/X64 variable types:
+//! 
+//! - @c VARIABLE_TYPE_GPD - 32-bit general purpose register (EAX, EBX, ...).
+//! - @c VARIABLE_TYPE_GPQ - 64-bit general purpose register (RAX, RBX, ...).
+//! - @c VARIABLE_TYPE_GPN - 32-bit or 64-bit general purpose register, depends
+//!   to target architecture. Mapped to @c VARIABLE_TYPE_GPD or @c VARIABLE_TYPE_GPQ.
+//!
+//! - @c VARIABLE_TYPE_X87 - 80-bit floating point stack register st(0 to 7).
+//! - @c VARIABLE_TYPE_X87_1F - 32-bit floating point stack register st(0 to 7).
+//! - @c VARIABLE_TYPE_X87_1D - 64-bit floating point stack register st(0 to 7).
+//!
+//! - @c VARIALBE_TYPE_MM - 64-bit MMX register.
+//!
+//! - @c VARIABLE_TYPE_XMM - 128-bit SSE register.
+//! - @c VARIABLE_TYPE_XMM_1F - 128-bit SSE register which contains 
+//!   scalar 32-bit single precision floating point.
+//! - @c VARIABLE_TYPE_XMM_1D - 128-bit SSE register which contains
+//!   scalar 64-bit double precision floating point.
+//! - @c VARIABLE_TYPE_XMM_4F - 128-bit SSE register which contains
+//!   4 packed 32-bit single precision floating points.
+//! - @c VARIABLE_TYPE_XMM_2D - 128-bit SSE register which contains
+//!   2 packed 64-bit double precision floating points.
+//!
+//! Unified variable types:
+//!
+//! - @c VARIABLE_TYPE_INT32 - 32-bit general purpose register.
+//! - @c VARIABLE_TYPE_INT64 - 64-bit general purpose register.
+//! - @c VARIABLE_TYPE_INTPTR - 32-bit or 64-bit general purpose register / pointer.
+//!
+//! - @c VARIABLE_TYPE_FLOAT - 32-bit single precision floating point.
+//! - @c VARIABLE_TYPE_DOUBLE - 64-bit double precision floating point.
 //!
 //! Variable states:
 //!
@@ -8375,7 +8436,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! Please see AsmJit tutorials (testcompiler.cpp and testvariables.cpp) for
 //! more complete examples.
 //!
-//! <b>Memory Management</b>
+//! @section AsmJit_Compiler_MemoryManagement Memory Management
 //!
 //! @c Compiler Memory management follows these rules:
 //! - Everything created by @c Compiler is always freed by @c Compiler.
@@ -8391,7 +8452,290 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! and managed by @c Compiler itself. These objects contain ID which is used
 //! internally by Compiler to store additional information about these objects.
 //!
-//! <b>Compiling process details</b>
+//! @section AsmJit_Compiler_StateManagement Control-Flow and State Management.
+//!
+//! The @c Compiler automatically manages state of the variables when using
+//! control flow instructions like jumps, conditional jumps and calls. There
+//! is minimal heuristics for choosing the method how state is saved or restored.
+//!
+//! Generally the state can be changed only when using jump or conditional jump
+//! instruction. When using non-conditional jump then state change is embedded
+//! into the instruction stream before the jump. When using conditional jump
+//! the @c Compiler decides whether to restore state before the jump or whether
+//! to use another block where state is restored. The last case is that no-code
+//! have to be emitted and there is no state change (this is of course ideal).
+//!
+//! Choosing whether to embed 'restore-state' section before conditional jump
+//! is quite simple. If jump is likely to be 'taken' then code is embedded, if
+//! jump is unlikely to be taken then the small code section for state-switch
+//! will be generated instead.
+//!
+//! Next example is the situation where the extended code block is used to
+//! do state-change:
+//!
+//! @code
+//! Compiler c;
+//!
+//! c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+//! c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+//!
+//! // Labels.
+//! Label L0 = c.newLabel();
+//!
+//! // Variables.
+//! GPVar var0 = c.newGP();
+//! GPVar var1 = c.newGP();
+//!
+//! // Cleanup. After these two lines, the var0 and var1 will be always stored
+//! // in registers. Our example is very small, but in larger code the var0 can
+//! // be spilled by xor(var1, var1).
+//! c.xor_(var0, var0);
+//! c.xor_(var1, var1);
+//! c.cmp(var0, var1);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//!
+//! // We manually spill these variables.
+//! c.spill(var0);
+//! c.spill(var1);
+//! // State:
+//! //   var0 - memory.
+//! //   var1 - memory.
+//!
+//! // Conditional jump to L0. It will be always taken, but compiler thinks that
+//! // it is unlikely taken so it will embed state change code somewhere.
+//! c.je(L0);
+//!
+//! // Do something. The variables var0 and var1 will be allocated again.
+//! c.add(var0, 1);
+//! c.add(var1, 2);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//!
+//! // Bind label here, the state is not changed.
+//! c.bind(L0);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//!
+//! // We need to use var0 and var1, because if compiler detects that variables
+//! // are out of scope then it optimizes the state-change.
+//! c.sub(var0, var1);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//!
+//! c.endFunction();
+//! @endcode
+//!
+//! The output:
+//!
+//! @verbatim
+//! xor eax, eax                    ; xor var_0, var_0
+//! xor ecx, ecx                    ; xor var_1, var_1
+//! cmp eax, ecx                    ; cmp var_0, var_1
+//! mov [esp - 24], eax             ; spill var_0
+//! mov [esp - 28], ecx             ; spill var_1
+//! je L0_Switch
+//! mov eax, [esp - 24]             ; alloc var_0
+//! add eax, 1                      ; add var_0, 1
+//! mov ecx, [esp - 28]             ; alloc var_1
+//! add ecx, 2                      ; add var_1, 2
+//! L0:
+//! sub eax, ecx                    ; sub var_0, var_1
+//! ret
+//!
+//! ; state-switch begin
+//! L0_Switch0:
+//! mov eax, [esp - 24]             ; alloc var_0
+//! mov ecx, [esp - 28]             ; alloc var_1
+//! jmp short L0
+//! ; state-switch end
+//! @endverbatim
+//!
+//! You can see that the state-switch section was generated (see L0_Switch0).
+//! The compiler is unable to restore state immediately when emitting the
+//! forward jump (the code is generated from first to last instruction and
+//! the target state is simply not known at this time).
+//!
+//! To tell @c Compiler that you want to embed state-switch code before jump
+//! it's needed to create backward jump (where also processor expects that it
+//! will be taken). To demonstrate the possibility to embed state-switch before
+//! jump we use slightly modified code:
+//!
+//! @code
+//! Compiler c;
+//! 
+//! c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+//! c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+//! 
+//! // Labels.
+//! Label L0 = c.newLabel();
+//! 
+//! // Variables.
+//! GPVar var0 = c.newGP();
+//! GPVar var1 = c.newGP();
+//! 
+//! // Cleanup. After these two lines, the var0 and var1 will be always stored
+//! // in registers. Our example is very small, but in larger code the var0 can
+//! // be spilled by xor(var1, var1).
+//! c.xor_(var0, var0);
+//! c.xor_(var1, var1);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//! 
+//! // We manually spill these variables.
+//! c.spill(var0);
+//! c.spill(var1);
+//! // State:
+//! //   var0 - memory.
+//! //   var1 - memory.
+//! 
+//! // Bind our label here.
+//! c.bind(L0);
+//! 
+//! // Do something, the variables will be allocated again.
+//! c.add(var0, 1);
+//! c.add(var1, 2);
+//! // State:
+//! //   var0 - register.
+//! //   var1 - register.
+//! 
+//! // Backward conditional jump to L0. The default behavior is that it is taken
+//! // so state-change code will be embedded here.
+//! c.je(L0);
+//! 
+//! c.endFunction();
+//! @endcode
+//!
+//! The output:
+//!
+//! @verbatim
+//! xor ecx, ecx                    ; xor var_0, var_0
+//! xor edx, edx                    ; xor var_1, var_1
+//! mov [esp - 24], ecx             ; spill var_0
+//! mov [esp - 28], edx             ; spill var_1
+//! L.2:
+//! mov ecx, [esp - 24]             ; alloc var_0
+//! add ecx, 1                      ; add var_0, 1
+//! mov edx, [esp - 28]             ; alloc var_1
+//! add edx, 2                      ; add var_1, 2
+//!
+//! ; state-switch begin
+//! mov [esp - 24], ecx             ; spill var_0
+//! mov [esp - 28], edx             ; spill var_1
+//! ; state-switch end
+//!
+//! je short L.2
+//! ret
+//! @endverbatim
+//!
+//! Please notice where the state-switch section is located. The @c Compiler 
+//! decided that jump is likely to be taken so the state change is embedded
+//! before the conditional jump. To change this behavior into the previous
+//! case it's needed to add a hint (@c HINT_TAKEN or @c HINT_NOT_TAKEN).
+//!
+//! Replacing the <code>c.je(L0)</code> by <code>c.je(L0, HINT_NOT_TAKEN)
+//! will generate code like this:
+//!
+//! @verbatim
+//! xor ecx, ecx                    ; xor var_0, var_0
+//! xor edx, edx                    ; xor var_1, var_1
+//! mov [esp - 24], ecx             ; spill var_0
+//! mov [esp - 28], edx             ; spill var_1
+//! L0:
+//! mov ecx, [esp - 24]             ; alloc var_0
+//! add ecx, 1                      ; add var_0, a
+//! mov edx, [esp - 28]             ; alloc var_1
+//! add edx, 2                      ; add var_1, 2
+//! je L0_Switch, 2
+//! ret
+//!
+//! ; state-switch begin
+//! L0_Switch:
+//! mov [esp - 24], ecx             ; spill var_0
+//! mov [esp - 28], edx             ; spill var_1
+//! jmp short L0
+//! ; state-switch end
+//! @endverbatim
+//!
+//! This section provided information about how state-change works. The 
+//! behavior is deterministic and it can be overriden.
+//!
+//! @section AsmJit_Compiler_AdvancedCodeGeneration Advanced Code Generation
+//!
+//! This section describes advanced method of code generation available to
+//! @c Compiler (but also to @c Assembler). When emitting code to instruction
+//! stream the methods like @c mov(), @c add(), @c sub() can be called directly
+//! (advantage is static-type control performed also by C++ compiler) or 
+//! indirectly using @c emit() method. The @c emit() method needs only 
+//! instruction code and operands.
+//!
+//! Example of code generating by standard type-safe API:
+//!
+//! @code
+//! Compiler c;
+//! GPVar var0 = c.newGP();
+//! GPVar var1 = c.newGP();
+//!
+//! ...
+//!
+//! c.mov(var0, imm(0));
+//! c.add(var0, var1);
+//! c.sub(var0, var1);
+//! @endcode
+//!
+//! The code above can be rewritten as:
+//!
+//! @code
+//! Compiler c;
+//! GPVar var0 = c.newGP();
+//! GPVar var1 = c.newGP();
+//!
+//! ...
+//!
+//! c.emit(INST_MOV, var0, imm(0));
+//! c.emit(INST_ADD, var0, var1);
+//! c.emit(INST_SUB, var0, var1);
+//! @endcode
+//!
+//! The advantage of first snippet is very friendly API and type-safe control
+//! that is controlled by the C++ compiler. The advantage of second snippet is
+//! availability to replace or generate instruction code in different places.
+//! See the next example how the @c emit() method can be used to generate
+//! abstract code.
+//!
+//! Use case:
+//!
+//! @code
+//! bool emitArithmetic(Compiler& c, XMMVar& var0, XMMVar& var1, const char* op)
+//! {
+//!   uint code = INVALID_VALUE;
+//!
+//!   if (strcmp(op, "ADD") == 0)
+//!     code = INST_ADDSS;
+//!   else if (strcmp(op, "SUBTRACT") == 0)
+//!     code = INST_SUBSS;
+//!   else if (strcmp(op, "MULTIPLY") == 0)
+//!     code = INST_MULSS;
+//!   else if (strcmp(op, "DIVIDE") == 0)
+//!     code = INST_DIVSS;
+//!   else
+//!     // Invalid parameter?
+//!     return false;
+//!
+//!   c.emit(code, var0, var1);
+//! }
+//! @endcode
+//!
+//! Other use cases are waiting for you! Be sure that instruction you are 
+//! emitting is correct and encodable, because if not, Assembler will set
+//! error code to @c ERROR_UNKNOWN_INSTRUCTION.
+//!
+//! @section AsmJit_Compiler_CompilerDetails Compiler Details
 //!
 //! This section is here for people interested in the compiling process. There
 //! are few steps that must be done for each compiled function (or your code).
@@ -8423,14 +8767,15 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! When everything here ends, @c AsmJit::Assembler contains binary stream
 //! that needs only relocation to be callable by C/C++ code.
 //!
-//! <b>Differences summary to @c AsmJit::Assembler</b>
+//! @section AsmJit_Compiler_Differences Summary of Differences between @c Assembler and @c Compiler
 //!
 //! - Instructions are not translated to machine code immediately, they are
 //!   stored as emmitables (see @c AsmJit::Emittable, @c AsmJit::EInstruction).
-//! - Contains function builder.
-//! - Contains register allocator and variables management.
-//! - Contains a lot of helper methods to simplify code generation not
-//!   available in @c AsmJit::Assembler.
+//! - Contains function builder and ability to call other functions.
+//! - Contains register allocator and variable management.
+//! - Contains a lot of helper methods to simplify the code generation not
+//!   available/possible in @c AsmJit::Assembler.
+//! - Ability to pre-process or post-process the code which is being generated.
 struct ASMJIT_API Compiler : public CompilerIntrinsics
 {
   //! @brief Create the @c Compiler instance.

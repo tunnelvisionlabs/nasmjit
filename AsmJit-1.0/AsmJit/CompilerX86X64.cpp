@@ -3151,7 +3151,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     _variables[i].vdata->workOffset = offset;
 
     // Init back-reference to VarCallRecord.
-    _variables[i].vdata->temp = &_variables[i];
+    _variables[i].vdata->tempPtr = &_variables[i];
   }
 
 
@@ -3352,7 +3352,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       }
       else if (vdst != NULL)
       {
-        VarCallRecord* rdst = reinterpret_cast<VarCallRecord*>(vdst->temp);
+        VarCallRecord* rdst = reinterpret_cast<VarCallRecord*>(vdst->tempPtr);
 
         if (rdst->inDone >= rdst->inCount)
         {
@@ -3410,7 +3410,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
       if (vdst == NULL)
       {
-        VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vsrc->temp);
+        VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vsrc->tempPtr);
 
         _moveSrcVariableToRegister(cc, vsrc, srcArgType);
 
@@ -3452,7 +3452,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarData* vdata = cc._state.gp[i];
     if (vdata && (preserved & mask) == 0)
     {
-      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->temp);
+      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->tempPtr);
       if (rec && (rec->outCount || vdata->lastEmittable == this))
         cc.unuseVar(vdata, VARIABLE_STATE_UNUSED);
       else
@@ -3466,7 +3466,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarData* vdata = cc._state.mm[i];
     if (vdata && (preserved & mask) == 0)
     {
-      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->temp);
+      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->tempPtr);
       if (rec && (rec->outCount || vdata->lastEmittable == this))
         cc.unuseVar(vdata, VARIABLE_STATE_UNUSED);
       else
@@ -3480,7 +3480,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarData* vdata = cc._state.xmm[i];
     if (vdata && (preserved & mask) == 0)
     {
-      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->temp);
+      VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->tempPtr);
       if (rec && (rec->outCount || vdata->lastEmittable == this))
         cc.unuseVar(vdata, VARIABLE_STATE_UNUSED);
       else
@@ -3582,7 +3582,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
 
     // Cleanup.
-    vdata->temp = NULL;
+    vdata->tempPtr = NULL;
   }
 
   for (i = 0; i < variablesCount; i++)
@@ -5953,9 +5953,22 @@ void CompilerContext::addForwardJump(EJmp* inst) ASMJIT_NOTHROW
 
 StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
 {
-  StateData* state = _compiler->_newStateData();
+  // Get count of variables stored in memory.
+  uint32_t memVarsCount = 0;
+  VarData* cur = _active;
+  if (cur)
+  {
+    do {
+      if (cur->state == VARIABLE_STATE_MEMORY) memVarsCount++;
+      cur = cur->nextActive;
+    } while (cur != _active);
+  }
+
+  // Alloc StateData structure (using zone allocator) and copy current state into it.
+  StateData* state = _compiler->_newStateData(memVarsCount);
   memcpy(state, &_state, sizeof(StateData));
 
+  // Clear changed flags.
   state->changedGP = 0;
   state->changedMM = 0;
   state->changedXMM = 0;
@@ -5963,6 +5976,7 @@ StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
   uint i;
   uint mask;
 
+  // Save variables stored in REGISTERs and CHANGE flag.
   for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
   {
     if (state->gp[i] && state->gp[i]->changed) state->changedGP |= mask;
@@ -5978,57 +5992,77 @@ StateData* CompilerContext::_saveState() ASMJIT_NOTHROW
     if (state->xmm[i] && state->xmm[i]->changed) state->changedXMM |= mask;
   }
 
+  // Save variables stored in MEMORY.
+  state->memVarsCount = memVarsCount;
+  memVarsCount = 0;
+
+  cur = _active;
+  if (cur)
+  {
+    do {
+      if (cur->state == VARIABLE_STATE_MEMORY) state->memVarsData[memVarsCount++] = cur;
+      cur = cur->nextActive;
+    } while (cur != _active);
+  }
+
+  // Finished.
   return state;
 }
 
 void CompilerContext::_assignState(StateData* state) ASMJIT_NOTHROW
 {
   Compiler* compiler = getCompiler();
+
   memcpy(&_state, state, sizeof(StateData));
+  _state.memVarsCount = 0;
 
-  uint i, len;
-  uint mask;
+  uint i, mask;
+  VarData* vdata;
 
-  // Clear all variables in registers.
-  for (i = 0, len = (uint)compiler->_varData.getLength(); i < len; i++)
+  // Unuse all variables first.
+  vdata = _active;
+  if (vdata)
   {
-    VarData* varData = compiler->_varData[i];
-    if (varData->state == VARIABLE_STATE_REGISTER)
-    {
-      varData->state = VARIABLE_STATE_MEMORY;
-    }
+    do {
+      vdata->state = VARIABLE_STATE_UNUSED;
+      vdata = vdata->nextActive;
+    } while (vdata != _active);
   }
 
+  // Assign variables stored in memory which are not unused.
+  for (i = 0; i < state->memVarsCount; i++)
+  {
+    state->memVarsData[i]->state = VARIABLE_STATE_MEMORY;
+  }
+
+  // Assign allocated variables.
   for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
   {
-    VarData* varData = _state.gp[i];
-    if (varData)
+    if ((vdata = _state.gp[i]) != NULL)
     {
-      varData->state = VARIABLE_STATE_REGISTER;
-      varData->registerIndex = i;
-      varData->changed = (_state.changedGP & mask) != 0;
+      vdata->state = VARIABLE_STATE_REGISTER;
+      vdata->registerIndex = i;
+      vdata->changed = (_state.changedGP & mask) != 0;
     }
   }
 
   for (i = 0, mask = 1; i < REG_NUM_MM; i++, mask <<= 1)
   {
-    VarData* varData = _state.mm[i];
-    if (varData)
+    if ((vdata = _state.mm[i]) != NULL)
     {
-      varData->state = VARIABLE_STATE_REGISTER;
-      varData->registerIndex = i;
-      varData->changed = (_state.changedMM & mask) != 0;
+      vdata->state = VARIABLE_STATE_REGISTER;
+      vdata->registerIndex = i;
+      vdata->changed = (_state.changedMM & mask) != 0;
     }
   }
 
   for (i = 0, mask = 1; i < REG_NUM_XMM; i++, mask <<= 1)
   {
-    VarData* varData = _state.xmm[i];
-    if (varData)
+    if ((vdata = _state.xmm[i]) != NULL)
     {
-      varData->state = VARIABLE_STATE_REGISTER;
-      varData->registerIndex = i;
-      varData->changed = (_state.changedXMM & mask) != 0;
+      vdata->state = VARIABLE_STATE_REGISTER;
+      vdata->registerIndex = i;
+      vdata->changed = (_state.changedXMM & mask) != 0;
     }
   }
 }
@@ -6041,10 +6075,37 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   StateData* fromState = &_state;
   StateData* toState = state;
 
+  // No change, rare...
   if (fromState == toState) return;
 
   uint base;
   uint i;
+
+  // Set target state to all variables. vdata->tempInt is target state in this
+  // function.
+  {
+    // UNUSED.
+    VarData* vdata = _active;
+    if (vdata)
+    {
+      do {
+        vdata->tempInt = VARIABLE_STATE_UNUSED;
+        vdata = vdata->nextActive;
+      } while (vdata != _active);
+    }
+
+    // MEMORY.
+    for (i = 0; i < toState->memVarsCount; i++)
+    {
+      toState->memVarsData[i]->tempInt = VARIABLE_STATE_MEMORY;
+    }
+
+    // REGISTER.
+    for (i = 0; i < StateData::NUM_REGS; i++)
+    {
+      if ((vdata = toState->regs[i]) != NULL) vdata->tempInt = VARIABLE_STATE_REGISTER;
+    }
+  }
 
   // Spill.
   for (base = 0, i = 0; i < STATE_REGS_COUNT; i++)
@@ -6064,24 +6125,14 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
       if (fromVar != NULL)
       {
         // It is possible that variable that was saved in state currently not
-        // exists.
-        if (fromVar->state == VARIABLE_STATE_UNUSED)
+        // exists (tempInt is target scope!)
+        if (fromVar->tempInt == VARIABLE_STATE_UNUSED)
         {
-          // TODO: I don't know why unusing unused variable...
           unuseVar(fromVar, VARIABLE_STATE_UNUSED);
         }
         else
         {
-          if (targetOffset != INVALID_VALUE && fromVar->lastEmittable->getOffset() < targetOffset)
-          {
-            // Do not spill a variable that is out of scope.
-            unuseVar(fromVar, VARIABLE_STATE_UNUSED);
-          }
-          else
-          {
-            // Normal state change, spill...
-            spillVar(fromVar);
-          }
+          spillVar(fromVar);
         }
       }
     }
@@ -6127,10 +6178,23 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   _state.usedMM = state->usedMM;
   _state.usedXMM = state->usedXMM;
 
-  // TODO: What about changed flags?
-  //_state.changedGP = state->changedGP;
-  //_state.changedMM = state->changedMM;
-  //_state.changedXMM = state->changedXMM;
+  // Cleanup.
+  {
+    VarData* vdata = _active;
+    if (vdata)
+    {
+      do {
+        if (vdata->tempInt != VARIABLE_STATE_REGISTER)
+        {
+          vdata->state = (int)vdata->tempInt;
+          vdata->changed = false;
+        }
+
+        vdata->tempInt = 0;
+        vdata = vdata->nextActive;
+      } while (vdata != _active);
+    }
+  }
 }
 
 VarMemBlock* CompilerContext::_allocMemBlock(uint32_t size) ASMJIT_NOTHROW
@@ -6789,7 +6853,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
   vdata->memoryWriteCount = 0;
   vdata->memoryRWCount = 0;
 
-  vdata->temp = NULL;
+  vdata->tempPtr = NULL;
 
   _varData.append(vdata);
   return vdata;
@@ -7005,10 +7069,9 @@ void CompilerCore::rename(BaseVar& var, const char* name) ASMJIT_NOTHROW
 // [AsmJit::CompilerCore - State]
 // ============================================================================
 
-StateData* CompilerCore::_newStateData() ASMJIT_NOTHROW
+StateData* CompilerCore::_newStateData(uint32_t memVarsCount) ASMJIT_NOTHROW
 {
-  StateData* state = reinterpret_cast<StateData*>(_zone.zalloc(sizeof(StateData)));
-  state->clear();
+  StateData* state = reinterpret_cast<StateData*>(_zone.zalloc(sizeof(StateData) + memVarsCount * sizeof(void*)));
   return state;
 }
 
@@ -7068,13 +7131,10 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     {
       if (start == NULL) return;
       if (start->getType() == EMITTABLE_FUNCTION)
-      {
         break;
-      }
       else
-      {
         start->emit(a);
-      }
+
       start = start->getNext();
     }
     // ------------------------------------------------------------------------
@@ -7086,7 +7146,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     cc._function = reinterpret_cast<EFunction*>(start);
     cc._start = start;
     cc._stop = stop = cc._function->getEnd();
-    cc._extraBlock = stop;
+    cc._extraBlock = stop->getPrev();
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
