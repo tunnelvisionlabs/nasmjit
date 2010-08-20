@@ -49,7 +49,7 @@
 
         public override void Emit(Assembler a)
         {
-            throw new NotImplementedException();
+            a.Align(_size);
         }
     }
 }

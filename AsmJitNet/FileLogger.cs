@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TextWriter = System.IO.TextWriter;
-
-namespace AsmJitNet2
+﻿namespace AsmJitNet2
 {
+    using TextWriter = System.IO.TextWriter;
+
     public class FileLogger : Logger
     {
         private TextWriter _stream;

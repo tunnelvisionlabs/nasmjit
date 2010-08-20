@@ -394,9 +394,8 @@
                 {
                     if ((preservedMM & mask) != 0)
                     {
-                        throw new NotImplementedException();
-                        //Compiler.Emit(InstructionCode.Movq, qword_ptr(GPReg.Nsp, nspPos), mm(i));
-                        //nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(GPReg.Nsp, nspPos), Register.mm((RegIndex)i));
+                        nspPos += 8;
                     }
                 }
             }
@@ -404,15 +403,14 @@
             // Save GP registers using MOV.
             if (preservedGP != 0 && !_pePushPop)
             {
-                throw new NotImplementedException();
-                //for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
-                //{
-                //    if ((preservedGP & mask) != 0)
-                //    {
-                //        Compiler.Emit(InstructionCode.Mov, sysint_ptr(GPReg.Nsp, nspPos), gpn(i));
-                //        nspPos += IntPtr.Size;
-                //    }
-                //}
+                for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+                {
+                    if ((preservedGP & mask) != 0)
+                    {
+                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(GPReg.Nsp, nspPos), Register.gpn((RegIndex)i));
+                        nspPos += IntPtr.Size;
+                    }
+                }
             }
 
             if (Compiler.Logger != null && Compiler.Logger.IsUsed)
@@ -450,15 +448,14 @@
             // Restore XMM registers using MOVDQA/MOVDQU.
             if (preservedXMM != 0)
             {
-                throw new NotImplementedException();
-                //for (i = 0, mask = 1; i < REG_NUM_XMM; i++, mask <<= 1)
-                //{
-                //    if ((preservedXMM & mask) != 0)
-                //    {
-                //        Compiler.Emit(_movDqaInstruction, xmm(i), dqword_ptr(nsp, nspPos));
-                //        nspPos += 16;
-                //    }
-                //}
+                for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+                {
+                    if ((preservedXMM & mask) != 0)
+                    {
+                        Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(GPReg.Nsp, nspPos));
+                        nspPos += 16;
+                    }
+                }
             }
 
             // Restore MM registers using MOVQ.
@@ -468,9 +465,8 @@
                 {
                     if ((preservedMM & mask) != 0)
                     {
-                        throw new NotImplementedException();
-                        //Compiler.Emit(InstructionCode.Movq, mm(i), qword_ptr(nsp, nspPos));
-                        //nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(GPReg.Nsp, nspPos));
+                        nspPos += 8;
                     }
                 }
             }
@@ -478,15 +474,14 @@
             // Restore GP registers using MOV.
             if (preservedGP != 0 && !_pePushPop)
             {
-                throw new NotImplementedException();
-                //for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
-                //{
-                //    if ((preservedGP & mask) != 0)
-                //    {
-                //        Compiler.Emit(InstructionCode.Mov, gpn(i), sysint_ptr(nsp, nspPos));
-                //        nspPos += IntPtr.Size;
-                //    }
-                //}
+                for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+                {
+                    if ((preservedGP & mask) != 0)
+                    {
+                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(GPReg.Nsp, nspPos));
+                        nspPos += IntPtr.Size;
+                    }
+                }
             }
 
             if (_isEspAdjusted && stackAdd != 0)
@@ -538,8 +533,7 @@
             // Emit return using correct instruction.
             if (_functionPrototype.CalleePopsStack)
             {
-                throw new NotImplementedException();
-                //Compiler.Emit(InstructionCode.Ret, imm((int16_t)_functionPrototype.ArgumentsStackSize));
+                Compiler.Emit(InstructionCode.Ret, (Imm)((short)_functionPrototype.ArgumentsStackSize));
             }
             else
             {

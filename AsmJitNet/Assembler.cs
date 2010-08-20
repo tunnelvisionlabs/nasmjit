@@ -428,6 +428,217 @@
             _buffer.EmitData(data);
         }
 
+        // Intel and AMD.
+        private static readonly byte[] _nop1 = { 0x90 };
+        private static readonly byte[] _nop2 = { 0x66, 0x90 };
+        private static readonly byte[] _nop3 = { 0x0F, 0x1F, 0x00 };
+        private static readonly byte[] _nop4 = { 0x0F, 0x1F, 0x40, 0x00 };
+        private static readonly byte[] _nop5 = { 0x0F, 0x1F, 0x44, 0x00, 0x00 };
+        private static readonly byte[] _nop6 = { 0x66, 0x0F, 0x1F, 0x44, 0x00, 0x00 };
+        private static readonly byte[] _nop7 = { 0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00 };
+        private static readonly byte[] _nop8 = { 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        private static readonly byte[] _nop9 = { 0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        // AMD.
+        private static readonly byte[] _nop10 = { 0x66, 0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        private static readonly byte[] _nop11 = { 0x66, 0x66, 0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        public void Align(int m)
+        {
+            if (m < 0)
+                throw new ArgumentOutOfRangeException("m");
+            if (m > 64)
+                throw new NotSupportedException();
+
+            if (!CanEmit())
+                return;
+
+            if (Logger != null && Logger.IsUsed)
+            {
+                Logger.LogFormat(".align {0}", m);
+            }
+
+            if (m == 0)
+                return;
+
+            int i = m - ((int)Offset % m);
+            if (i == m)
+                return;
+
+            if ((_properties & CompilerProperties.OptimizeAlign) != 0)
+            {
+                CpuInfo ci = CpuInfo.Instance;
+
+                // NOPs optimized for Intel:
+                //   Intel 64 and IA-32 Architectures Software Developer's Manual
+                //   - Volume 2B 
+                //   - Instruction Set Reference N-Z
+                //     - NOP
+
+                // NOPs optimized for AMD:
+                //   Software Optimization Guide for AMD Family 10h Processors (Quad-Core)
+                //   - 4.13 - Code Padding with Operand-Size Override and Multibyte NOP
+
+                byte[] p;
+
+                if (ci.VendorId == CpuVendor.Intel &&
+                   ((ci.Family & 0x0F) == 6 ||
+                    (ci.Family & 0x0F) == 15)
+                   )
+                {
+                    do
+                    {
+                        switch (i)
+                        {
+                        case 1:
+                            p = _nop1;
+                            break;
+
+                        case 2:
+                            p = _nop2;
+                            break;
+
+                        case 3:
+                            p = _nop3;
+                            break;
+
+                        case 4:
+                            p = _nop4;
+                            break;
+
+                        case 5:
+                            p = _nop5;
+                            break;
+
+                        case 6:
+                            p = _nop6;
+                            break;
+
+                        case 7:
+                            p = _nop7;
+                            break;
+
+                        case 8:
+                            p = _nop8;
+                            break;
+
+                        default:
+                            p = _nop9;
+                            break;
+                        }
+
+                        i -= p.Length;
+
+                        for (int j = 0; j < p.Length; j++)
+                        {
+                            EmitByte(p[j]);
+                        }
+
+                    } while (i != 0);
+
+                    return;
+                }
+
+                if (ci.VendorId == CpuVendor.Amd && ci.Family >= 0x0F)
+                {
+                    do
+                    {
+                        switch (i)
+                        {
+                        case 1:
+                            p = _nop1;
+                            break;
+
+                        case 2:
+                            p = _nop2;
+                            break;
+
+                        case 3:
+                            p = _nop3;
+                            break;
+
+                        case 4:
+                            p = _nop4;
+                            break;
+
+                        case 5:
+                            p = _nop5;
+                            break;
+
+                        case 6:
+                            p = _nop6;
+                            break;
+
+                        case 7:
+                            p = _nop7;
+                            break;
+
+                        case 8:
+                            p = _nop8;
+                            break;
+
+                        case 9:
+                            p = _nop9;
+                            break;
+
+                        case 10:
+                            p = _nop10;
+                            break;
+
+                        default:
+                            p = _nop11;
+                            break;
+                        }
+
+                        i -= p.Length;
+
+                        for (int j = 0; j < p.Length; j++)
+                        {
+                            EmitByte(p[j]);
+                        }
+
+                    } while (i != 0);
+
+                    return;
+                }
+#if ASMJIT_X86
+                // legacy NOPs, 0x90 with 0x66 prefix.
+                do
+                {
+                    switch (i)
+                    {
+                    default:
+                        EmitByte(0x66);
+                        i--;
+                        goto case 3;
+
+                    case 3:
+                        EmitByte(0x66);
+                        i--;
+                        goto case 2;
+
+                    case 2:
+                        EmitByte(0x66);
+                        i--;
+                        goto case 1;
+
+                    case 1:
+                        EmitByte(0x90);
+                        i--;
+                        break;
+                    }
+                } while (i != 0);
+#endif
+            }
+
+            // legacy NOPs, only 0x90
+            // In 64-bit mode, we can't use 0x66 prefix
+            do
+            {
+                EmitByte(0x90);
+            } while (--i != 0);
+        }
+
         public LabelLink NewLabelLink()
         {
             LabelLink link = _unusedLinks;
@@ -2770,12 +2981,12 @@
         private void EmitOpCode(int opcode)
         {
             // instruction prefix
-            if (((uint)opcode & 0xFF000000)!=0)
+            if (((uint)opcode & 0xFF000000) != 0)
                 EmitByte((byte)((opcode & 0xFF000000) >> 24));
             // instruction opcodes
-            if ((opcode & 0x00FF0000)!=0)
+            if ((opcode & 0x00FF0000) != 0)
                 EmitByte((byte)((opcode & 0x00FF0000) >> 16));
-            if ((opcode & 0x0000FF00)!=0)
+            if ((opcode & 0x0000FF00) != 0)
                 EmitByte((byte)((opcode & 0x0000FF00) >> 8));
             // last opcode is always emitted (can be also 0x00)
             EmitByte((byte)(opcode & 0x000000FF));

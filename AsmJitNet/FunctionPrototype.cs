@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AsmJitNet2
+﻿namespace AsmJitNet2
 {
+    using System;
+
     public class FunctionPrototype
     {
         private const int InvalidValue = -1;
@@ -30,12 +27,12 @@ namespace AsmJitNet2
 
         public FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
-            _clear();
-            _setCallingConvention(callingConvention);
+            Clear();
+            SetCallingConvention(callingConvention);
             if (arguments.Length > 32)
                 throw new ArgumentException();
 
-            _setPrototype(arguments, returnValue);
+            SetPrototype(arguments, returnValue);
         }
 
         public int PreservedGP
@@ -86,7 +83,55 @@ namespace AsmJitNet2
             }
         }
 
-        private void _clear()
+        public CallingConvention CallingConvention
+        {
+            get
+            {
+                return _callingConvention;
+            }
+        }
+
+        public bool CalleePopsStack
+        {
+            get
+            {
+                return _calleePopsStack;
+            }
+        }
+
+        public Argument[] Arguments
+        {
+            get
+            {
+                return _arguments;
+            }
+        }
+
+        public VariableType ReturnValue
+        {
+            get
+            {
+                return _returnValue;
+            }
+        }
+
+        public ArgumentsDirection ArgumentsDirection
+        {
+            get
+            {
+                return _argumentsDirection;
+            }
+        }
+
+        public int ArgumentsStackSize
+        {
+            get
+            {
+                return _argumentsStackSize;
+            }
+        }
+
+        private void Clear()
         {
             _callingConvention = CallingConvention.None;
             _calleePopsStack = false;
@@ -111,7 +156,7 @@ namespace AsmJitNet2
             _passedXMM = 0;
         }
 
-        private void _setCallingConvention(CallingConvention callingConvention)
+        private void SetCallingConvention(CallingConvention callingConvention)
         {
             _callingConvention = callingConvention;
 
@@ -168,7 +213,7 @@ namespace AsmJitNet2
             }
         }
 
-        private void _setPrototype(VariableType[] arguments, VariableType returnValue)
+        private void SetPrototype(VariableType[] arguments, VariableType returnValue)
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
@@ -343,52 +388,41 @@ namespace AsmJitNet2
             _argumentsStackSize = -stackOffset;
         }
 
-        public CallingConvention CallingConvention
+        internal int FindArgumentByRegisterCode(int regCode)
         {
-            get
-            {
-                return _callingConvention;
-            }
-        }
+            RegType type = (RegType)(regCode & (int)RegType.MASK);
+            RegIndex idx = (RegIndex)(regCode & (int)RegIndex.Mask);
 
-        public bool CalleePopsStack
-        {
-            get
-            {
-                return _calleePopsStack;
-            }
-        }
+            VariableClass @class;
+            int i;
 
-        public Argument[] Arguments
-        {
-            get
+            switch (type)
             {
-                return _arguments;
-            }
-        }
+            case RegType.GPD:
+            case RegType.GPQ:
+                @class = VariableClass.GP;
+                break;
 
-        public VariableType ReturnValue
-        {
-            get
-            {
-                return _returnValue;
-            }
-        }
+            case RegType.MM:
+                @class = VariableClass.MM;
+                break;
 
-        public ArgumentsDirection ArgumentsDirection
-        {
-            get
-            {
-                return _argumentsDirection;
-            }
-        }
+            case RegType.XMM:
+                @class = VariableClass.XMM;
+                break;
 
-        public int ArgumentsStackSize
-        {
-            get
-            {
-                return _argumentsStackSize;
+            default:
+                return InvalidValue;
             }
+
+            for (i = 0; i < _arguments.Length; i++)
+            {
+                Argument arg = _arguments[i];
+                if ((VariableInfo.GetVariableClass(arg._variableType) & @class) != 0 && (arg._registerIndex == idx))
+                    return i;
+            }
+
+            return InvalidValue;
         }
 
         public class Argument
@@ -406,11 +440,6 @@ namespace AsmJitNet2
                     return _registerIndex != RegIndex.Invalid || _stackOffset != InvalidValue;
                 }
             }
-        }
-
-        internal int FindArgumentByRegisterCode(object p)
-        {
-            throw new NotImplementedException();
         }
     }
 }

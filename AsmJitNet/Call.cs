@@ -775,7 +775,7 @@
                         }
                         else
                         {
-                            int x = Prototype.FindArgumentByRegisterCode(GetVariableRegisterCode(vsrc.Type, vsrc.RegisterIndex));
+                            int x = Prototype.FindArgumentByRegisterCode(VariableInfo.GetVariableRegisterCode(vsrc.Type, vsrc.RegisterIndex));
 
                             bool doSpill = true;
 
@@ -1269,19 +1269,285 @@
             compiler.Error = Errors.IncompatibleArgument;
         }
 
-        private VarData GetOverlappingVariable(CompilerContext cc, FunctionPrototype.Argument srcArgType)
+        private VarData GetOverlappingVariable(CompilerContext cc, FunctionPrototype.Argument argType)
         {
-            throw new NotImplementedException();
+            Debug.Assert(argType._variableType != VariableType.Invalid);
+
+            switch (argType._variableType)
+            {
+            case VariableType.GPD:
+            case VariableType.GPQ:
+                return cc.State.GP[(int)argType._registerIndex];
+
+            case VariableType.MM:
+                return cc.State.MM[(int)argType._registerIndex];
+
+            case VariableType.XMM:
+            case VariableType.XMM_1F:
+            case VariableType.XMM_1D:
+            case VariableType.XMM_4F:
+            case VariableType.XMM_2D:
+                return cc.State.XMM[(int)argType._registerIndex];
+            }
+
+            return null;
         }
 
-        private object GetVariableRegisterCode(VariableType variableType, RegIndex regIndex)
+        private void MoveSrcVariableToRegister(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)
         {
-            throw new NotImplementedException();
-        }
+            RegIndex dst = argType._registerIndex;
+            RegIndex src = vdata.RegisterIndex;
 
-        private void MoveSrcVariableToRegister(CompilerContext cc, VarData vsrc, FunctionPrototype.Argument srcArgType)
-        {
-            throw new NotImplementedException();
+            Compiler compiler = cc.Compiler;
+
+            if (src != RegIndex.Invalid)
+            {
+                switch (argType._variableType)
+                {
+                case VariableType.GPD:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+#endif // ASMJIT_X64
+                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), Register.gpd(src));
+                        return;
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movd, Register.gpd(dst), Register.mm(src));
+                        return;
+                    }
+                    break;
+
+#if ASMJIT_X64
+                case VariableType.GPQ:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), Register.gpd(src));
+                        return;
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Mov, Register.gpq(dst), Register.gpq(src));
+                        return;
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.gpq(dst), Register.mm(src));
+                        return;
+                    }
+                    break;
+#endif // ASMJIT_X64
+
+                case VariableType.MM:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Movd, Register.gpd(dst), Register.gpd(src));
+                        return;
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Movq, Register.gpq(dst), Register.gpq(src));
+                        return;
+#endif // ASMJIT_X64
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.mm(dst), Register.mm(src));
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM:
+                case VariableType.XMM_4F:
+                case VariableType.XMM_2D:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Movd, Register.xmm(dst), Register.gpd(src));
+                        return;
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.gpq(src));
+                        return;
+#endif // ASMJIT_X64
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.mm(src));
+                        return;
+                    case VariableType.XMM:
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM_1F:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.mm(src));
+                        return;
+
+                    case VariableType.XMM:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                        compiler.Emit(InstructionCode.Movss, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Cvtsd2ss, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM_1D:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.mm(src));
+                        return;
+
+                    case VariableType.XMM:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                        compiler.Emit(InstructionCode.Cvtss2sd, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Movsd, Register.xmm(dst), Register.xmm(src));
+                        return;
+                    }
+                    break;
+                }
+            }
+            else
+            {
+                Mem mem = cc.GetVarMem(vdata);
+
+                switch (argType._variableType)
+                {
+                case VariableType.GPD:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+#endif // ASMJIT_X64
+                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), mem);
+                        return;
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movd, Register.gpd(dst), mem);
+                        return;
+                    }
+                    break;
+
+#if ASMJIT_X64
+                case VariableType.GPQ:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), mem);
+                        return;
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Mov, Register.gpq(dst), mem);
+                        return;
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.gpq(dst), mem);
+                        return;
+                    }
+                    break;
+#endif // ASMJIT_X64
+
+                case VariableType.MM:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Movd, Register.gpd(dst), mem);
+                        return;
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Movq, Register.gpq(dst), mem);
+                        return;
+#endif // ASMJIT_X64
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.mm(dst), mem);
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM:
+                case VariableType.XMM_4F:
+                case VariableType.XMM_2D:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Movd, Register.xmm(dst), mem);
+                        return;
+#if ASMJIT_X64
+                    case VariableType.GPQ:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
+                        return;
+#endif // ASMJIT_X64
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
+                        return;
+                    case VariableType.XMM:
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), mem);
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM_1F:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
+                        return;
+
+                    case VariableType.XMM:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), mem);
+                        return;
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                        compiler.Emit(InstructionCode.Movss, Register.xmm(dst), mem);
+                        return;
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Cvtsd2ss, Register.xmm(dst), mem);
+                        return;
+                    }
+                    break;
+
+                case VariableType.XMM_1D:
+                    switch (vdata.Type)
+                    {
+                    case VariableType.MM:
+                        compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
+                        return;
+
+                    case VariableType.XMM:
+                        compiler.Emit(InstructionCode.Movdqa, Register.xmm(dst), mem);
+                        return;
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_4F:
+                        compiler.Emit(InstructionCode.Cvtss2sd, Register.xmm(dst), mem);
+                        return;
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_2D:
+                        compiler.Emit(InstructionCode.Movsd, Register.xmm(dst), mem);
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            compiler.Error = Errors.IncompatibleArgument;
         }
 
         private RegIndex FindTemporaryGpRegister(CompilerContext cc)

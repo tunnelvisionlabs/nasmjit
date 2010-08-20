@@ -1,7 +1,5 @@
 ﻿namespace AsmJitNet2
 {
-    using System;
-
     public sealed class Epilog : Emittable
     {
         private Function _function;

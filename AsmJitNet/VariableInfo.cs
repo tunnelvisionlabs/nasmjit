@@ -1,6 +1,5 @@
 ﻿namespace AsmJitNet2
 {
-    using System;
     using System.Collections.Generic;
 
     public class VariableInfo
@@ -70,14 +69,24 @@
             return (variableInfo[variableType].Class & VariableClass.GP) != 0;
         }
 
+        public static VariableInfo GetVariableInfo(VariableType variableType)
+        {
+            return variableInfo[variableType];
+        }
+
         public static int GetVariableSize(VariableType variableType)
         {
             return variableInfo[variableType].Size;
         }
 
-        public static VariableInfo GetVariableInfo(VariableType variableType)
+        public static VariableClass GetVariableClass(VariableType variableType)
         {
-            return variableInfo[variableType];
+            return variableInfo[variableType].Class;
+        }
+
+        public static int GetVariableRegisterCode(VariableType variableType, RegIndex regIndex)
+        {
+            return (int)variableInfo[variableType].Code | (int)regIndex;
         }
 
         private static readonly Dictionary<VariableType, VariableInfo> variableInfo =

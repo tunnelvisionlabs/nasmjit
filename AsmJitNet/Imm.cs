@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AsmJitNet2
+﻿namespace AsmJitNet2
 {
+    using System;
+
     public class Imm : Operand
     {
         private bool _isUnsigned;
