@@ -48,7 +48,7 @@ struct MemoryManager;
 //! by @c Assembler or @c Compiler.
 struct ASMJIT_API CodeGenerator
 {
-  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c CodeGenerator instance.
+  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c CodeGenerator instance.
   CodeGenerator();
   //! @brief Destroy the @c CodeGenerator instance.
   virtual ~CodeGenerator();
@@ -88,7 +88,7 @@ private:
 
 struct JitCodeGenerator : public CodeGenerator
 {
-  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c JitCodeGenerator instance.
+  // --------------------------------------------------------------------------  // [Construction / Destruction]  // --------------------------------------------------------------------------  //! @brief Create a @c JitCodeGenerator instance.
   JitCodeGenerator();
   //! @brief Destroy the @c JitCodeGenerator instance.
   virtual ~JitCodeGenerator();
