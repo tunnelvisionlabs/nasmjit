@@ -932,6 +932,31 @@
             _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
+        public void Xor(GPVar dst, GPVar src)
+        {
+            _emitInstruction(InstructionCode.Xor, dst, src);
+        }
+
+        public void Xor(GPVar dst, Mem src)
+        {
+            _emitInstruction(InstructionCode.Xor, dst, src);
+        }
+
+        public void Xor(GPVar dst, Imm src)
+        {
+            _emitInstruction(InstructionCode.Xor, dst, src);
+        }
+
+        public void Xor(Mem dst, GPVar src)
+        {
+            _emitInstruction(InstructionCode.Xor, dst, src);
+        }
+
+        public void Xor(Mem dst, Imm src)
+        {
+            _emitInstruction(InstructionCode.Xor, dst, src);
+        }
+
         #endregion
 
         public void Lock()

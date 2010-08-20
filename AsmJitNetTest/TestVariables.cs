@@ -14,9 +14,6 @@
         [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
         private delegate void MyFn1();
 
-        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        private delegate uint MyFn2(uint x, uint y);
-
         [TestMethod]
         public void TestVar1()
         {
@@ -106,6 +103,9 @@
             MyFn1 fn = (MyFn1)Marshal.GetDelegateForFunctionPointer(c.Make(), typeof(MyFn1));
         }
 
+        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        private delegate int TestDummyFn();
+
         [TestMethod]
         public void TestDummy()
         {
@@ -114,43 +114,18 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Func<uint, uint, uint>));
+            c.NewFunction(CallingConvention.Cdecl, typeof(Func<int>));
             c.Function.SetHint(FunctionHints.Naked, true);
 
-            GPVar[] var = new GPVar[20];
-            int i;
+            GPVar var = c.NewGP(VariableType.GPD);
+            c.Xor(var, var);
+            c.Ret(var);
 
-            for (i = 0; i < var.Length; i++)
-            {
-                var[i] = c.NewGP();
-            }
-
-            c.Alloc(var[0], GPReg.eax);
-
-            for (i = 0; i < var.Length; i++)
-            {
-                c.Mov(var[i], (Imm)i);
-            }
-
-            GPVar j = c.NewGP();
-            Label r = c.NewLabel();
-            c.Mov(j, 4);
-
-            c.Bind(r);
-            for (i = var.Length - 1; i > 0; i--)
-            {
-                c.Add(var[0], var[i]);
-            }
-
-            c.Dec(j);
-            c.Jnz(r, Hint.Taken);
-
-            c.Ret(var[0]);
             c.EndFunction();
 
-            MyFn2 fn = (MyFn2)Marshal.GetDelegateForFunctionPointer(c.Make(), typeof(MyFn2));
-            var result = fn(1, 2);
-            Assert.AreEqual(760U, result);
+            TestDummyFn fn = FunctionCast<TestDummyFn>(c.Make());
+            var result = fn();
+            Assert.AreEqual(0, result);
         }
 
         [TestMethod]
