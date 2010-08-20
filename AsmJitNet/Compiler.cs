@@ -744,6 +744,19 @@
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
+        public void Cpuid(GPVar inout_eax, GPVar out_ebx, GPVar out_ecx, GPVar out_edx)
+        {
+            // Destination variables must be different
+            if (inout_eax.Id == out_ebx.Id
+                || out_ebx.Id == out_ecx.Id
+                || out_ecx.Id == out_edx.Id)
+            {
+                throw new ArgumentException("Destination variables must be different.");
+            }
+
+            _emitInstruction(InstructionCode.Cpuid, inout_eax, out_ebx, out_ecx, out_edx);
+        }
+
         public void Dec(GPVar dst)
         {
             _emitInstruction(InstructionCode.Dec, dst);

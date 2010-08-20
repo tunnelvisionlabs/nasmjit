@@ -626,5 +626,73 @@
 
             Assert.IsTrue(srcBuffer.SequenceEqual(dstBuffer));
         }
+
+        private static readonly Tuple<CpuFeatures, string>[] _bitDescriptions =
+            {
+                Tuple.Create( CpuFeatures.RDTSC                       , "RDTSC" ),
+                Tuple.Create( CpuFeatures.RDTSCP                      , "RDTSCP" ),
+                Tuple.Create( CpuFeatures.CMOV                        , "CMOV" ),
+                Tuple.Create( CpuFeatures.CMPXCHG8B                   , "CMPXCHG8B" ),
+                Tuple.Create( CpuFeatures.CMPXCHG16B                  , "CMPXCHG16B" ),
+                Tuple.Create( CpuFeatures.CLFLUSH                     , "CLFLUSH" ),
+                Tuple.Create( CpuFeatures.PREFETCH                    , "PREFETCH" ),
+                Tuple.Create( CpuFeatures.LAHF_SAHF                   , "LAHF/SAHF" ),
+                Tuple.Create( CpuFeatures.FXSR                        , "FXSAVE/FXRSTOR" ),
+                Tuple.Create( CpuFeatures.FFXSR                       , "FXSAVE/FXRSTOR Optimizations" ),
+                Tuple.Create( CpuFeatures.MMX                         , "MMX" ),
+                Tuple.Create( CpuFeatures.MMX_EXT                     , "MMX Extensions" ),
+                Tuple.Create( CpuFeatures.AMD3DNOW                    , "3dNow!" ),
+                Tuple.Create( CpuFeatures.AMD3DNOW_EXT                , "3dNow! Extensions" ),
+                Tuple.Create( CpuFeatures.SSE                         , "SSE" ),
+                Tuple.Create( CpuFeatures.MSSE                        , "Misaligned SSE" ),
+                Tuple.Create( CpuFeatures.SSE2                        , "SSE2" ),
+                Tuple.Create( CpuFeatures.SSE3                        , "SSE3" ),
+                Tuple.Create( CpuFeatures.SSSE3                       , "Suplemental SSE3 (SSSE3)" ),
+                Tuple.Create( CpuFeatures.SSE4_A                      , "SSE4A" ),
+                Tuple.Create( CpuFeatures.SSE4_1                      , "SSE4.1" ),
+                Tuple.Create( CpuFeatures.SSE4_2                      , "SSE4.2" ),
+                Tuple.Create( CpuFeatures.SSE5                        , "SSE5" ),
+                Tuple.Create( CpuFeatures.MONITOR_MWAIT               , "MONITOR/MWAIT" ),
+                Tuple.Create( CpuFeatures.MOVBE                       , "MOVBE" ),
+                Tuple.Create( CpuFeatures.POPCNT                      , "POPCNT" ),
+                Tuple.Create( CpuFeatures.LZCNT                       , "LZCNT" ),
+                Tuple.Create( CpuFeatures.MULTI_THREADING             , "MultiThreading" ),
+                Tuple.Create( CpuFeatures.EXECUTE_DISABLE_BIT         , "Execute Disable Bit" ),
+                Tuple.Create( CpuFeatures.X64_BIT                     , "64 Bit Processor" ),
+            };
+
+        [TestMethod]
+        public void TestCpuInfo()
+        {
+            CpuInfo info = CpuInfo.Instance;
+
+            Console.Error.WriteLine("Basic Info:");
+            Console.Error.WriteLine("  Vendor String         : {0}", info.Vendor);
+            Console.Error.WriteLine("  Family                : {0}", info.Family);
+            Console.Error.WriteLine("  Model                 : {0}", info.Model);
+            Console.Error.WriteLine("  Stepping              : {0}", info.Stepping);
+            Console.Error.WriteLine("  Number of Processors  : {0}", info.NumberOfProcessors);
+            Console.Error.WriteLine("  Features              : {0:x}", info.Features);
+            Console.Error.WriteLine("  Bugs                  : {0:x}", info.Bugs);
+
+            Console.Error.WriteLine("Extended Info (X86/X64):");
+            Console.Error.WriteLine("  Processor Type        : {0}", info.ExtendedInfo.ProcessorType);
+            Console.Error.WriteLine("  Brand Index           : {0}", info.ExtendedInfo.BrandIndex);
+            Console.Error.WriteLine("  CL Flush Cache Line   : {0}", info.ExtendedInfo.FlushCacheLineSize);
+            Console.Error.WriteLine("  Max Logical Processors: {0}", info.ExtendedInfo.MaxLogicalProcessors);
+            Console.Error.WriteLine("  APIC Physical ID      : {0}", info.ExtendedInfo.ApicPhysicalId);
+
+            Console.Error.WriteLine("CPU Features:");
+            PrintBits("  ", info.Features);
+        }
+
+        private void PrintBits(string message, CpuFeatures features)
+        {
+            foreach (var description in _bitDescriptions)
+            {
+                if ((features & description.Item1) != 0)
+                    Console.Error.WriteLine("{0}{1}", message, description.Item2);
+            }
+        }
     }
 }

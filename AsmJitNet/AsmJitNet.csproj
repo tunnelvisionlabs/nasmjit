@@ -104,11 +104,14 @@
     <Compile Include="CompilerProperty.cs" />
     <Compile Include="CompilerUtil.cs" />
     <Compile Include="Condition.cs" />
+    <Compile Include="CpuBugs.cs" />
+    <Compile Include="CpuFeatures.cs" />
     <Compile Include="CpuInfo.cs" />
     <Compile Include="CpuVendor.cs" />
     <Compile Include="EmbeddedData.cs" />
     <Compile Include="EmitOptions.cs" />
     <Compile Include="MMVar.cs" />
+    <Compile Include="VendorInfo.cs" />
     <Compile Include="VirtualMemoryManager.cs" />
     <Compile Include="Dummy.cs" />
     <Compile Include="Emittable.cs" />

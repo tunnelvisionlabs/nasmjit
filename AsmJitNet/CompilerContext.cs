@@ -580,12 +580,11 @@
                 }
                 else
                 {
-                    throw new NotImplementedException();
-                    //// Spill register we need
-                    //spillCandidate = _state.gp[pref];
+                    // Spill register we need
+                    spillCandidate = _state.GP[(int)pref];
 
-                    //// Jump to spill part of allocation
-                    //goto L_Spill;
+                    // Jump to spill part of allocation
+                    goto L_Spill;
                 }
             }
 
@@ -655,9 +654,12 @@
                     _compiler.Error = Errors.NotEnoughRegisters;
                     return;
                 }
+            }
 
-            L_Spill:
+        L_Spill:
 
+            if (idx == RegIndex.Invalid)
+            {
                 // Prevented variables can't be spilled. _getSpillCandidate() never returns
                 // prevented variables, but when jumping to L_spill it can happen.
                 if (spillCandidate.WorkOffset == _currentOffset)

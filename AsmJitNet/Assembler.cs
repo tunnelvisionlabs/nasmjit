@@ -2769,7 +2769,16 @@
 
         private void EmitOpCode(int opcode)
         {
-            throw new NotImplementedException();
+            // instruction prefix
+            if (((uint)opcode & 0xFF000000)!=0)
+                EmitByte((byte)((opcode & 0xFF000000) >> 24));
+            // instruction opcodes
+            if ((opcode & 0x00FF0000)!=0)
+                EmitByte((byte)((opcode & 0x00FF0000) >> 16));
+            if ((opcode & 0x0000FF00)!=0)
+                EmitByte((byte)((opcode & 0x0000FF00) >> 8));
+            // last opcode is always emitted (can be also 0x00)
+            EmitByte((byte)(opcode & 0x000000FF));
         }
 
         private static readonly byte[] _prefixes = { 0x00, 0x2E, 0x36, 0x3E, 0x26, 0x64, 0x65 };

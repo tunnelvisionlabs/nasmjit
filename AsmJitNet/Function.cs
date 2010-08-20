@@ -11,8 +11,6 @@
         private FunctionPrototype _functionPrototype;
         internal VarData[] _argumentVariables;
 
-        private FunctionHints _setHints;
-
         private FunctionHints _hints;
 
         private bool _isStackAlignedByOsTo16Bytes;
@@ -196,7 +194,7 @@
 
         internal void PreparePrologEpilog(CompilerContext cc)
         {
-            CpuInfo cpuInfo = CpuInfo.Instance;
+            //CpuInfo cpuInfo = CpuInfo.Instance;
 
             _pePushPop = true;
             _emitEMMS = false;
@@ -207,19 +205,19 @@
             if (_isCaller)
                 _isEspAdjusted = true;
 
-            if ((_setHints & FunctionHints.Naked) != 0)
+            if ((_hints & FunctionHints.Naked) != 0)
                 _isNaked = (_hints & FunctionHints.Naked) != 0;
 
-            if ((_setHints & FunctionHints.PushPopSequence) != 0)
+            if ((_hints & FunctionHints.PushPopSequence) != 0)
                 _pePushPop = (_hints & FunctionHints.PushPopSequence) != 0;
 
-            if ((_setHints & FunctionHints.Emms) != 0)
+            if ((_hints & FunctionHints.Emms) != 0)
                 _emitEMMS = (_hints & FunctionHints.Emms) != 0;
 
-            if ((_setHints & FunctionHints.StoreFence) != 0)
+            if ((_hints & FunctionHints.StoreFence) != 0)
                 _emitSFence = (_hints & FunctionHints.StoreFence) != 0;
 
-            if ((_setHints & FunctionHints.LoadFence) != 0)
+            if ((_hints & FunctionHints.LoadFence) != 0)
                 _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
 
             if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount > 0))
@@ -425,8 +423,6 @@
 
         internal void EmitEpilog(CompilerContext cc)
         {
-            CpuInfo cpuInfo = CpuInfo.Instance;
-
             int i;
             int mask;
 
@@ -525,6 +521,8 @@
             // Emit standard epilog leave code (if needed).
             if (!_isNaked)
             {
+                CpuInfo cpuInfo = CpuInfo.Instance;
+
                 if (cpuInfo.VendorId == CpuVendor.Amd)
                 {
                     // AMD seems to prefer LEAVE instead of MOV/POP sequence.
