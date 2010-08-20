@@ -4,7 +4,7 @@
 
     public abstract class MemoryManager
     {
-        private static MemoryManager _global = new DefaultMemoryManager();
+        private static MemoryManager _global = new VirtualMemoryManager();
 
         public static MemoryManager Global
         {
@@ -27,5 +27,7 @@
         public abstract IntPtr Alloc(long CodeSize, MemoryAllocType allocType);
 
         public abstract bool Free(IntPtr address);
+
+        public abstract void FreeAll();
     }
 }

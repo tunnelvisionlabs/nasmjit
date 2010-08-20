@@ -26,6 +26,21 @@
 
         public static IntPtr Alloc(int length, out int allocated, bool canExecute)
         {
+            return AllocProcessMemory(UnsafeNativeMethods.GetCurrentProcess(), length, out allocated, canExecute);
+        }
+
+        public static void Free(IntPtr address, int length)
+        {
+            FreeProcessMemory(UnsafeNativeMethods.GetCurrentProcess(), address, length);
+        }
+
+#if ASMJIT_WINDOWS
+        /// <summary>
+        /// Allocate virtual memory of hProcess.
+        /// </summary>
+        /// <remarks>This function is Windows specific and nonportable</remarks>
+        public static IntPtr AllocProcessMemory(IntPtr hProcess, int length, out int allocated, bool canExecute)
+        {
             allocated = 0;
 
             // VirtualAlloc rounds allocated size to page size automatically.
@@ -33,7 +48,7 @@
 
             // Windows XP SP2 / Vista allows Data Excution Prevention (DEP).
             UnsafeNativeMethods.MemoryProtect protect = canExecute ? UnsafeNativeMethods.MemoryProtect.ExecuteReadwrite : UnsafeNativeMethods.MemoryProtect.Readwrite;
-            IntPtr mbase = UnsafeNativeMethods.VirtualAlloc(IntPtr.Zero, (UIntPtr)msize, UnsafeNativeMethods.AllocationType.Commit | UnsafeNativeMethods.AllocationType.Reserve, protect);
+            IntPtr mbase = UnsafeNativeMethods.VirtualAllocEx(hProcess, IntPtr.Zero, (UIntPtr)msize, UnsafeNativeMethods.AllocationType.Commit | UnsafeNativeMethods.AllocationType.Reserve, protect);
             if (mbase == IntPtr.Zero)
                 return IntPtr.Zero;
 
@@ -42,10 +57,15 @@
             return mbase;
         }
 
-        public static void Free(IntPtr address, int length)
+        /// <summary>
+        /// Free virtual memory of hProcess.
+        /// </summary>
+        /// <remarks>This function is Windows specific and nonportable</remarks>
+        public static void FreeProcessMemory(IntPtr hProcess, IntPtr address, int length)
         {
-            UnsafeNativeMethods.VirtualFree(address, UIntPtr.Zero, UnsafeNativeMethods.FreeType.Release);
+            UnsafeNativeMethods.VirtualFreeEx(hProcess, address, UIntPtr.Zero, UnsafeNativeMethods.FreeType.Release);
         }
+#endif // ASMJIT_WINDOWS
 
         private static bool IsAligned(long @base, int alignment)
         {
@@ -79,13 +99,22 @@
         private static class UnsafeNativeMethods
         {
             [DllImport("kernel32.dll")]
+            internal static extern IntPtr GetCurrentProcess();
+
+            [DllImport("kernel32.dll")]
             internal static extern void GetNativeSystemInfo(out SYSTEM_INFO info);
 
             [DllImport("kernel32.dll")]
             internal static extern IntPtr VirtualAlloc(IntPtr address, UIntPtr size, AllocationType allocationType, MemoryProtect protect);
 
             [DllImport("kernel32.dll")]
+            internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr address, UIntPtr size, AllocationType allocationType, MemoryProtect protect);
+
+            [DllImport("kernel32.dll")]
             internal static extern bool VirtualFree(IntPtr address, UIntPtr size, FreeType freeType);
+
+            [DllImport("kernel32.dll")]
+            internal static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr address, UIntPtr size, FreeType freeType);
 
             [Flags]
             public enum AllocationType : uint

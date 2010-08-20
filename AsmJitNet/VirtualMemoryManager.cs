@@ -3,15 +3,28 @@
     using System;
     using BitArray = System.Collections.BitArray;
     using Debug = System.Diagnostics.Debug;
+    using System.Runtime.InteropServices;
 
-    public class DefaultMemoryManager : MemoryManager
+    public class VirtualMemoryManager : MemoryManager
     {
         private readonly MemoryManagerPrivate _data;
 
-        public DefaultMemoryManager()
+#if ASMJIT_WINDOWS
+        public VirtualMemoryManager()
+        {
+            _data = new MemoryManagerPrivate(UnsafeNativeMethods.GetCurrentProcess());
+        }
+
+        public VirtualMemoryManager(IntPtr processHandle)
+        {
+            _data = new MemoryManagerPrivate(processHandle);
+        }
+#else
+        public VirtualMemoryManager()
         {
             _data = new MemoryManagerPrivate();
         }
+#endif
 
         public override long UsedBytes
         {
@@ -29,6 +42,19 @@
             }
         }
 
+        public bool KeepVirtualMemory
+        {
+            get
+            {
+                return _data.KeepVirtualMemory;
+            }
+
+            set
+            {
+                _data.KeepVirtualMemory = value;
+            }
+        }
+
         public override IntPtr Alloc(long size, MemoryAllocType allocType)
         {
             if (allocType == MemoryAllocType.Permanent)
@@ -42,6 +68,11 @@
             return _data.Free(address);
         }
 
+        public override void FreeAll()
+        {
+            _data.FreeAll(false);
+        }
+
         private class MemoryManagerPrivate
         {
             /// <summary>
@@ -49,14 +80,18 @@
             /// </summary>
             private readonly Lock _lock = new Lock();
 
+#if ASMJIT_WINDOWS
+            private readonly IntPtr _process;
+#endif
+
             /// <summary>
             /// Default node size
             /// </summary>
-            private int _newChunkSize;
+            private int _newChunkSize = 65536;
             /// <summary>
             /// Default node density
             /// </summary>
-            private int _newChunkDensity;
+            private int _newChunkDensity = 64;
             /// <summary>
             /// How many bytes are allocated
             /// </summary>
@@ -81,11 +116,18 @@
             /// </summary>
             private M_PermanentNode _permanent;
 
+            private bool _keepVirtualMemory;
+
+#if ASMJIT_WINDOWS
+            public MemoryManagerPrivate(IntPtr processHandle)
+            {
+                _process = processHandle;
+            }
+#else
             public MemoryManagerPrivate()
             {
-                _newChunkSize = 65536;
-                _newChunkDensity = 64;
             }
+#endif
 
             public long UsedBytes
             {
@@ -103,12 +145,25 @@
                 }
             }
 
+            public bool KeepVirtualMemory
+            {
+                get
+                {
+                    return _keepVirtualMemory;
+                }
+
+                set
+                {
+                    _keepVirtualMemory = value;
+                }
+            }
+
             // [Allocation]
 
-            public static M_Node CreateNode(long size, long density)
+            public M_Node CreateNode(long size, long density)
             {
                 int vsize;
-                IntPtr vmem = VirtualMemory.Alloc((int)size, out vsize, true);
+                IntPtr vmem = AllocVirtualMemory((int)size, out vsize);
 
                 // Out of memory.
                 if (vmem == IntPtr.Zero)
@@ -173,7 +228,7 @@
                         {
                             node = new M_PermanentNode();
                             int size;
-                            node.Memory = VirtualMemory.Alloc((int)nodeSize, out size, true);
+                            node.Memory = AllocVirtualMemory((int)nodeSize, out size);
                             node.Size = size;
                         }
                         catch (OutOfMemoryException)
@@ -392,6 +447,48 @@
                 throw new NotImplementedException();
             }
 
+            public void FreeAll(bool keepVirtualMemory)
+            {
+                M_Node node = _first;
+
+                while (node != null)
+                {
+                    M_Node next = node.Next;
+
+                    if (!keepVirtualMemory)
+                        FreeVirtualMemory(node.Memory, (int)node.Size);
+
+                    node = next;
+                }
+
+                _allocated = 0;
+                _used = 0;
+
+                _root = null;
+                _first = null;
+                _last = null;
+                _optimal = null;
+            }
+
+            // Helpers to avoid ifdefs in the code.
+            public IntPtr AllocVirtualMemory(int size, out int vsize)
+            {
+#if !ASMJIT_WINDOWS
+                return VirtualMemory.Alloc(size, out vsize, true);
+#else
+                return VirtualMemory.AllocProcessMemory(_process, size, out vsize, true);
+#endif
+            }
+
+            public void FreeVirtualMemory(IntPtr vmem, int vsize)
+            {
+#if !ASMJIT_WINDOWS
+                VirtualMemory.Free(vmem, vsize);
+#else
+                VirtualMemory.FreeProcessMemory(_process, vmem, vsize);
+#endif
+            }
+
             // [NodeList LLRB-Tree]
 
             public static bool NlIsRed(M_Node n)
@@ -599,6 +696,12 @@
                     }
                 }
             }
+        }
+
+        private static class UnsafeNativeMethods
+        {
+            [DllImport("kernel32.dll")]
+            public static extern IntPtr GetCurrentProcess();
         }
     }
 }
