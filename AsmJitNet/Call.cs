@@ -642,29 +642,32 @@
 
                     if (rec.OutCount != 0)
                     {
-                        // TODO: Unuse.
-                        throw new NotImplementedException();
+                        // Variable will be rewritten by function return value, it's not needed
+                        // to spill it. It will be allocated again by ECall.
+                        cc.UnuseVar(rec.vdata, VariableState.Unused);
                     }
-
-                    switch (vdata.Type)
+                    else
                     {
-                    case VariableType.GPD:
-                    case VariableType.GPQ:
-                        if ((Prototype.PreservedGP & (1 << (int)vdata.RegisterIndex)) == 0)
-                            cc.SpillGPVar(vdata);
-                        break;
-                    case VariableType.MM:
-                        if ((Prototype.PreservedMM & (1 << (int)vdata.RegisterIndex)) == 0)
-                            cc.SpillMMVar(vdata);
-                        break;
-                    case VariableType.XMM:
-                    case VariableType.XMM_1F:
-                    case VariableType.XMM_1D:
-                    case VariableType.XMM_4F:
-                    case VariableType.XMM_2D:
-                        if ((Prototype.PreservedXMM & (1 << (int)vdata.RegisterIndex)) == 0)
-                            cc.SpillXMMVar(vdata);
-                        break;
+                        switch (vdata.Type)
+                        {
+                        case VariableType.GPD:
+                        case VariableType.GPQ:
+                            if ((Prototype.PreservedGP & (1 << (int)vdata.RegisterIndex)) == 0)
+                                cc.SpillGPVar(vdata);
+                            break;
+                        case VariableType.MM:
+                            if ((Prototype.PreservedMM & (1 << (int)vdata.RegisterIndex)) == 0)
+                                cc.SpillMMVar(vdata);
+                            break;
+                        case VariableType.XMM:
+                        case VariableType.XMM_1F:
+                        case VariableType.XMM_1D:
+                        case VariableType.XMM_4F:
+                        case VariableType.XMM_2D:
+                            if ((Prototype.PreservedXMM & (1 << (int)vdata.RegisterIndex)) == 0)
+                                cc.SpillXMMVar(vdata);
+                            break;
+                        }
                     }
                 }
             }

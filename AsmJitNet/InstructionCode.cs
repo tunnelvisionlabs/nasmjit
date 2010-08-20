@@ -293,7 +293,6 @@
         Lea,           // X86/X64
         Leave,         // X86/X64
         Lfence,
-        Lock,          // X86/X64
         Maskmovdqu,
         Maskmovq,      // MMX Extensions
         Maxpd,

@@ -181,7 +181,6 @@ namespace AsmJitNet2
             int posXMM = 0;
             int stackOffset = 0;
 
-            // TODO: Are there some calculations we should do right now?
             _returnValue = returnValue;
 
             _arguments = Array.ConvertAll(arguments,

@@ -40,8 +40,8 @@ instructionDescriptions =
     new InstructionDescription[]
 {
   // Instruction code (enum)      | instruction name   | instruction group| instruction flags| oflags[0]           | oflags[1]           | r| opCode[0] | opcode[1]
-  MAKE_INST(InstructionCode.Adc              , "adc"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 2, 0x00000010, 0x00000080),
-  MAKE_INST(InstructionCode.Add              , "add"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 0, 0x00000000, 0x00000080),
+  MAKE_INST(InstructionCode.Adc              , "adc"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 2, 0x00000010, 0x00000080),
+  MAKE_INST(InstructionCode.Add              , "add"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 0, 0x00000000, 0x00000080),
   MAKE_INST(InstructionCode.Addpd            , "addpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F58, 0),
   MAKE_INST(InstructionCode.Addps            , "addps"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F58, 0),
   MAKE_INST(InstructionCode.Addsd            , "addsd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000F58, 0),
@@ -50,7 +50,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Addsubps         , "addsubps"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000FD0, 0),
   MAKE_INST(InstructionCode.AmdPrefetch     , "amd_prefetch"     , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 0, 0x00000F0D, 0),
   MAKE_INST(InstructionCode.AmdPrefetchw    , "amd_prefetchw"    , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 1, 0x00000F0D, 0),
-  MAKE_INST(InstructionCode.And              , "and"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 4, 0x00000020, 0x00000080),
+  MAKE_INST(InstructionCode.And              , "and"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 4, 0x00000020, 0x00000080),
   MAKE_INST(InstructionCode.Andnpd           , "andnpd"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F55, 0),
   MAKE_INST(InstructionCode.Andnps           , "andnps"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F55, 0),
   MAKE_INST(InstructionCode.Andpd            , "andpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F54, 0),
@@ -63,9 +63,9 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Bsr              , "bsr"              , InstructionGroup.R_RM          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDW             , AsmJitNet2.OperandFlags.GQDW_MEM         , 0, 0x00000FBD, 0),
   MAKE_INST(InstructionCode.Bswap            , "bswap"            , InstructionGroup.BSWAP         , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQD              , 0                   , 0, 0         , 0),
   MAKE_INST(InstructionCode.Bt               , "bt"               , InstructionGroup.BT            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 4, 0x00000FA3, 0x00000FBA),
-  MAKE_INST(InstructionCode.Btc              , "btc"              , InstructionGroup.BT            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 7, 0x00000FBB, 0x00000FBA),
-  MAKE_INST(InstructionCode.Btr              , "btr"              , InstructionGroup.BT            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 6, 0x00000FB3, 0x00000FBA),
-  MAKE_INST(InstructionCode.Bts              , "bts"              , InstructionGroup.BT            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 5, 0x00000FAB, 0x00000FBA),
+  MAKE_INST(InstructionCode.Btc              , "btc"              , InstructionGroup.BT            , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 7, 0x00000FBB, 0x00000FBA),
+  MAKE_INST(InstructionCode.Btr              , "btr"              , InstructionGroup.BT            , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 6, 0x00000FB3, 0x00000FBA),
+  MAKE_INST(InstructionCode.Bts              , "bts"              , InstructionGroup.BT            , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.MEM      , AsmJitNet2.OperandFlags.GQDW|AsmJitNet2.OperandFlags.IMM      , 5, 0x00000FAB, 0x00000FBA),
   MAKE_INST(InstructionCode.Call             , "call"             , InstructionGroup.CALL          , InstructionFlags.JUMP          , AsmJitNet2.OperandFlags.GQD|AsmJitNet2.OperandFlags.MEM       , 0                   , 0, 0         , 0),
   MAKE_INST(InstructionCode.Cbw              , "cbw"              , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x66000099, 0),
   MAKE_INST(InstructionCode.Cdqe             , "cdqe"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x48000099, 0),
@@ -108,7 +108,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Cmpps            , "cmpps"            , InstructionGroup.MMU_RM_IMM8   , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000FC2, 0),
   MAKE_INST(InstructionCode.Cmpsd            , "cmpsd"            , InstructionGroup.MMU_RM_IMM8   , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000FC2, 0),
   MAKE_INST(InstructionCode.Cmpss            , "cmpss"            , InstructionGroup.MMU_RM_IMM8   , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF3000FC2, 0),
-  MAKE_INST(InstructionCode.Cmpxchg          , "cmpxchg"          , InstructionGroup.RM_R          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x00000FB0, 0),
+  MAKE_INST(InstructionCode.Cmpxchg          , "cmpxchg"          , InstructionGroup.RM_R          , InstructionFlags.SPECIAL | InstructionFlags.LOCKABLE       , 0                   , 0                   , 0, 0x00000FB0, 0),
   MAKE_INST(InstructionCode.Cmpxchg16b       , "cmpxchg16b"       , InstructionGroup.M             , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 1, 0x00000FC7, 1 /* RexW */),
   MAKE_INST(InstructionCode.Cmpxchg8b        , "cmpxchg8b"        , InstructionGroup.M             , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MEM              , 0                   , 1, 0x00000FC7, 0),
   MAKE_INST(InstructionCode.Comisd           , "comisd"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F2F, 0),
@@ -140,7 +140,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Cwde             , "cwde"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x00000099, 0),
   MAKE_INST(InstructionCode.Daa              , "daa"              , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x00000027, 0),
   MAKE_INST(InstructionCode.Das              , "das"              , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x0000002F, 0),
-  MAKE_INST(InstructionCode.Dec              , "dec"              , InstructionGroup.INC_DEC       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 1, 0x00000048, 0x000000FE),
+  MAKE_INST(InstructionCode.Dec              , "dec"              , InstructionGroup.INC_DEC       , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 1, 0x00000048, 0x000000FE),
   MAKE_INST(InstructionCode.Div              , "div"              , InstructionGroup.RM            , InstructionFlags.SPECIAL       , 0                   , 0                   , 6, 0x000000F6, 0),
   MAKE_INST(InstructionCode.Divpd            , "divpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F5E, 0),
   MAKE_INST(InstructionCode.Divps            , "divps"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F5E, 0),
@@ -253,7 +253,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Hsubps           , "hsubps"           , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000F7D, 0),
   MAKE_INST(InstructionCode.Idiv             , "idiv"             , InstructionGroup.RM            , InstructionFlags.SPECIAL       , 0                   , 0                   , 7, 0x000000F6, 0),
   MAKE_INST(InstructionCode.Imul             , "imul"             , InstructionGroup.IMUL          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0         , 0),
-  MAKE_INST(InstructionCode.Inc              , "inc"              , InstructionGroup.INC_DEC       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 0, 0x00000040, 0x000000FE),
+  MAKE_INST(InstructionCode.Inc              , "inc"              , InstructionGroup.INC_DEC       , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 0, 0x00000040, 0x000000FE),
   MAKE_INST(InstructionCode.Int3             , "int3"             , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000CC, 0),
 
   MAKE_INST(InstructionCode.Ja               , "ja"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x7       , 0),
@@ -326,7 +326,6 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Lea              , "lea"              , InstructionGroup.LEA           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQD              , AsmJitNet2.OperandFlags.MEM              , 0, 0         , 0),
   MAKE_INST(InstructionCode.Leave            , "leave"            , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x000000C9, 0),
   MAKE_INST(InstructionCode.Lfence           , "lfence"           , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000FAEE8, 0),
-  MAKE_INST(InstructionCode.Lock             , "lock"             , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000F0, 0),
   MAKE_INST(InstructionCode.Maskmovdqu       , "maskmovdqu"       , InstructionGroup.MMU_RMI       , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM              , 0, 0x66000F57, 0),
   MAKE_INST(InstructionCode.Maskmovq         , "maskmovq"         , InstructionGroup.MMU_RMI       , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.MM               , AsmJitNet2.OperandFlags.MM               , 0, 0x00000FF7, 0),
   MAKE_INST(InstructionCode.Maxpd            , "maxpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F5F, 0),
@@ -381,10 +380,10 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Mulsd            , "mulsd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000F59, 0),
   MAKE_INST(InstructionCode.Mulss            , "mulss"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF3000F59, 0),
   MAKE_INST(InstructionCode.Mwait            , "mwait"            , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x000F01C9, 0),
-  MAKE_INST(InstructionCode.Neg              , "neg"              , InstructionGroup.RM            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 3, 0x000000F6, 0),
+  MAKE_INST(InstructionCode.Neg              , "neg"              , InstructionGroup.RM            , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 3, 0x000000F6, 0),
   MAKE_INST(InstructionCode.Nop              , "nop"              , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x00000090, 0),
-  MAKE_INST(InstructionCode.Not              , "not"              , InstructionGroup.RM            , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 2, 0x000000F6, 0),
-  MAKE_INST(InstructionCode.Or               , "or"               , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 1, 0x00000008, 0x00000080),
+  MAKE_INST(InstructionCode.Not              , "not"              , InstructionGroup.RM            , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , 0                   , 2, 0x000000F6, 0),
+  MAKE_INST(InstructionCode.Or               , "or"               , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 1, 0x00000008, 0x00000080),
   MAKE_INST(InstructionCode.Orpd             , "orpd"             , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F56, 0),
   MAKE_INST(InstructionCode.Orps             , "orps"             , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F56, 0),
   MAKE_INST(InstructionCode.Pabsb            , "pabsb"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MM_XMM           , AsmJitNet2.OperandFlags.MM_XMM_MEM       , 0, 0x000F381C, 0),
@@ -587,7 +586,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Sahf             , "sahf"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x0000009E, 0),
   MAKE_INST(InstructionCode.Sal              , "sal"              , InstructionGroup.ROT           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GB|AsmJitNet2.OperandFlags.IMM        , 4, 0         , 0),
   MAKE_INST(InstructionCode.Sar              , "sar"              , InstructionGroup.ROT           , InstructionFlags.SPECIAL       , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GB|AsmJitNet2.OperandFlags.IMM        , 7, 0         , 0),
-  MAKE_INST(InstructionCode.Sbb              , "sbb"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 3, 0x00000018, 0x00000080),
+  MAKE_INST(InstructionCode.Sbb              , "sbb"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 3, 0x00000018, 0x00000080),
   MAKE_INST(InstructionCode.Seta             , "seta"             , InstructionGroup.RM_B          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GB_MEM           , 0                   , 0, 0x00000F97, 0),
   MAKE_INST(InstructionCode.Setae            , "setae"            , InstructionGroup.RM_B          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GB_MEM           , 0                   , 0, 0x00000F93, 0),
   MAKE_INST(InstructionCode.Setb             , "setb"             , InstructionGroup.RM_B          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GB_MEM           , 0                   , 0, 0x00000F92, 0),
@@ -632,7 +631,7 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Stc              , "stc"              , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000F9, 0),
   MAKE_INST(InstructionCode.Std              , "std"              , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000FD, 0),
   MAKE_INST(InstructionCode.Stmxcsr          , "stmxcsr"          , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.MEM              , 0                   , 3, 0x00000FAE, 0),
-  MAKE_INST(InstructionCode.Sub              , "sub"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 5, 0x00000028, 0x00000080),
+  MAKE_INST(InstructionCode.Sub              , "sub"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 5, 0x00000028, 0x00000080),
   MAKE_INST(InstructionCode.Subpd            , "subpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F5C, 0),
   MAKE_INST(InstructionCode.Subps            , "subps"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F5C, 0),
   MAKE_INST(InstructionCode.Subsd            , "subsd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0xF2000F5C, 0),
@@ -645,9 +644,9 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Unpckhps         , "unpckhps"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F15, 0),
   MAKE_INST(InstructionCode.Unpcklpd         , "unpcklpd"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F14, 0),
   MAKE_INST(InstructionCode.Unpcklps         , "unpcklps"         , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F14, 0),
-  MAKE_INST(InstructionCode.Xadd             , "xadd"             , InstructionGroup.RM_R          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB            , 0, 0x00000FC0, 0),
-  MAKE_INST(InstructionCode.Xchg             , "xchg"             , InstructionGroup.XCHG          , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB            , 0, 0         , 0),
-  MAKE_INST(InstructionCode.Xor              , "xor"              , InstructionGroup.ALU           , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 6, 0x00000030, 0x00000080),
+  MAKE_INST(InstructionCode.Xadd             , "xadd"             , InstructionGroup.RM_R          , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB            , 0, 0x00000FC0, 0),
+  MAKE_INST(InstructionCode.Xchg             , "xchg"             , InstructionGroup.XCHG          , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB            , 0, 0         , 0),
+  MAKE_INST(InstructionCode.Xor              , "xor"              , InstructionGroup.ALU           , InstructionFlags.LOCKABLE          , AsmJitNet2.OperandFlags.GQDWB_MEM        , AsmJitNet2.OperandFlags.GQDWB_MEM|AsmJitNet2.OperandFlags.IMM , 6, 0x00000030, 0x00000080),
   MAKE_INST(InstructionCode.Xorpd            , "xorpd"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x66000F57, 0),
   MAKE_INST(InstructionCode.Xorps            , "xorps"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet2.OperandFlags.XMM              , AsmJitNet2.OperandFlags.XMM_MEM          , 0, 0x00000F57, 0)
 };
@@ -754,11 +753,27 @@ instructionDescriptions =
             }
         }
 
+        public bool IsLockable
+        {
+            get
+            {
+                return (Flags & InstructionFlags.LOCKABLE) != 0;
+            }
+        }
+
         public bool IsSpecial
         {
             get
             {
                 return (Flags & InstructionFlags.SPECIAL) != 0;
+            }
+        }
+
+        public bool IsSpecialMem
+        {
+            get
+            {
+                return (Flags & InstructionFlags.SPECIAL_MEM) != 0;
             }
         }
 

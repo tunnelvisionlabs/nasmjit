@@ -9,17 +9,18 @@
     public class Compiler
     {
         private CodeGenerator _codeGenerator;
-        private Function _function;
-        private int _varNameId;
-        private readonly List<Target> _targetData = new List<Target>();
-        private readonly List<VarData> _varData = new List<VarData>();
-        private Emittable _current;
-        private Emittable _first;
-        private Emittable _last;
-        private CompilerContext _cc;
         private Logger _logger;
         private int _error;
         private CompilerProperties _properties;
+        private EmitOptions _emitOptions;
+        private Emittable _first;
+        private Emittable _last;
+        private Emittable _current;
+        private Function _function;
+        private readonly List<Target> _targetData = new List<Target>();
+        private readonly List<VarData> _varData = new List<VarData>();
+        private int _varNameId;
+        private CompilerContext _cc;
 
         public Compiler(CodeGenerator codeGenerator = null)
         {
@@ -44,6 +45,19 @@
             get
             {
                 return _codeGenerator;
+            }
+        }
+
+        public EmitOptions EmitOptions
+        {
+            get
+            {
+                return _emitOptions;
+            }
+
+            set
+            {
+                _emitOptions = value;
             }
         }
 
@@ -919,6 +933,16 @@
         }
 
         #endregion
+
+        public void Lock()
+        {
+            _emitOptions |= EmitOptions.LockPrefix;
+        }
+
+        public void Rex()
+        {
+            _emitOptions |= EmitOptions.RexPrefix;
+        }
 
         private Instruction NewInstruction(InstructionCode code, Operand[] operands)
         {

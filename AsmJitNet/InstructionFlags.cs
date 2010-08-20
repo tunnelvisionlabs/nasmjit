@@ -10,6 +10,10 @@
 
         FPU = 0x04,
 
-        SPECIAL = 0x08
+        LOCKABLE = 0x08,
+
+        SPECIAL = 0x10,
+
+        SPECIAL_MEM = 0x20,
     }
 }

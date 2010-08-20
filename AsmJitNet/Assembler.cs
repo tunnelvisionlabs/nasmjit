@@ -25,7 +25,7 @@
         /// <summary>
         /// Emit flags for next instruction (cleared after emit)
         /// </summary>
-        private int _emitFlags;
+        private EmitOptions _emitOptions;
 
         /// <summary>
         /// Binary code buffer
@@ -98,6 +98,19 @@
             set
             {
                 _properties = value;
+            }
+        }
+
+        public EmitOptions EmitOptions
+        {
+            get
+            {
+                return _emitOptions;
+            }
+
+            set
+            {
+                _emitOptions = value;
             }
         }
 
@@ -672,6 +685,16 @@
 
         #endregion
 
+        public void Lock()
+        {
+            _emitOptions |= EmitOptions.LockPrefix;
+        }
+
+        public void Rex()
+        {
+            _emitOptions |= EmitOptions.RexPrefix;
+        }
+
         public sealed class LabelLink
         {
             public LabelLink Previous
@@ -761,7 +784,7 @@
         internal void EmitInstructionImpl(InstructionCode code, Operand o0, Operand o1, Operand o2)
         {
             int bLoHiUsed = 0;
-            bool forceRexPrefix = false;
+            bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
 
 #if ASMJIT_DEBUG
   bool assertIllegal = false;
@@ -815,7 +838,7 @@
             //
             // NOTE: This is a hit hacky, but I added this to older code-base and I have
             // no energy to rewrite it. Maybe in future all of this can be cleaned up!
-            if (bLoHiUsed != 0)
+            if (bLoHiUsed != 0 || forceRexPrefix)
             {
 #if ASMJIT_X64
     // Check if there is register that makes this instruction un-encodable.
@@ -850,6 +873,13 @@
             // Check for buffer space (and grow if needed).
             if (!CanEmit())
                 goto cleanup;
+
+            if ((_emitOptions & EmitOptions.LockPrefix) != 0)
+            {
+                if (!id.IsLockable)
+                    goto illegalInstruction;
+                EmitByte(0xF0);
+            }
 
             switch (id.Group)
             {
@@ -2366,7 +2396,7 @@
 
         cleanup:
             _comment = null;
-            _emitFlags = 0;
+            _emitOptions = EmitOptions.None;
         }
 
         private void DumpComment(StringBuilder buf, IList<byte> binaryData, string comment)

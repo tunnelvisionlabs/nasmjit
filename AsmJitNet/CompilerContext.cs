@@ -1472,6 +1472,7 @@
         internal void RestoreState(StateData state, int targetOffset = Operand.InvalidValue)
         {
             // 16 + 8 + 16 = GP + MMX + XMM registers.
+            const int STATE_REGS_COUNT = 16 + 8 + 16;
 
             StateData fromState = _state;
             StateData toState = state;
@@ -1485,8 +1486,9 @@
             // TODO: 16 + 8 + 16 is cryptic, make constants instead!
 
             // Spill.
-            for (@base = 0, i = 0; i < 16 + 8 + 16; i++)
+            for (@base = 0, i = 0; i < STATE_REGS_COUNT; i++)
             {
+                // Change the base offset (from base offset the register index can be calculated).
                 if (i == 16 || i == 16 + 8)
                     @base = i;
 
@@ -1504,11 +1506,8 @@
                         // exists.
                         if (fromVar.State == VariableState.Unused)
                         {
-                            // TODO: Implement it.
+                            // TODO: I don't know why unusing unused variable...
                             UnuseVar(fromVar, VariableState.Unused);
-
-                            // Optimization, do not spill it, we can simply abandon it
-                            // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
                         }
                         else
                         {
@@ -1537,7 +1536,7 @@
             }
 
             // Alloc.
-            for (@base = 0, i = 0; i < 16 + 8 + 16; i++)
+            for (@base = 0, i = 0; i < STATE_REGS_COUNT; i++)
             {
                 if (i == 16 || i == 24)
                     @base = i;
@@ -1567,6 +1566,11 @@
             _state.UsedGP = state.UsedGP;
             _state.UsedMM = state.UsedMM;
             _state.UsedXMM = state.UsedXMM;
+
+            // TODO: What about changed flags?
+            //_state.changedGP = state->changedGP;
+            //_state.changedMM = state->changedMM;
+            //_state.changedXMM = state->changedXMM;
         }
     }
 }

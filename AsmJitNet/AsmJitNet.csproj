@@ -107,6 +107,7 @@
     <Compile Include="CpuInfo.cs" />
     <Compile Include="CpuVendor.cs" />
     <Compile Include="EmbeddedData.cs" />
+    <Compile Include="EmitOptions.cs" />
     <Compile Include="MMVar.cs" />
     <Compile Include="VirtualMemoryManager.cs" />
     <Compile Include="Dummy.cs" />

@@ -7,6 +7,8 @@
     {
         private InstructionCode _code;
 
+        private EmitOptions _emitOptions;
+
         /// <summary>
         /// Operands
         /// </summary>
@@ -36,6 +38,9 @@
             : base(compiler)
         {
             _code = code;
+            _emitOptions = compiler.EmitOptions;
+            // Each created instruction takes emit options and clears it.
+            compiler.EmitOptions = EmitOptions.None;
 
             _operands = operands;
             _memoryOperand = null;
@@ -875,8 +880,6 @@
                         }
                     }
 
-                    // TODO: Is this correct? 
-                    //
                     // If variable must be in specific register here we could add some hint
                     // to allocator to alloc it to this register on first alloc.
                     if (var.RegIndex != RegIndex.Invalid && vdata.HomeRegisterIndex == RegIndex.Invalid)
@@ -1069,8 +1072,8 @@
 
         public override void Emit(Assembler a)
         {
-            if (Comment != null)
-                a.Comment = Comment;
+            a.Comment = Comment;
+            a.EmitOptions = _emitOptions;
 
             if (IsSpecial)
             {
