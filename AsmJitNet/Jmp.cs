@@ -106,6 +106,19 @@
             {
                 cc.Unreachable = true;
             }
+
+            // Need to traverse all active variables, because they h ::prepare() 
+            if (cc.Active != null)
+            {
+                VarData first = cc.Active;
+                VarData var = first;
+
+                do
+                {
+                    cc.UnuseVarOnEndOfScope(this, var);
+                    var = var.NextActive;
+                } while (var != first);
+            }
         }
 
         internal void DoJump(CompilerContext cc)
@@ -123,7 +136,7 @@
                 // NOTE: We can't use this technique if instruction is forward conditional
                 // jump. The reason is that when generating code we can't change state here,
                 // because next instruction depends to it.
-                cc.RestoreState(_jumpTarget.State);
+                cc.RestoreState(_jumpTarget.State, _jumpTarget.Offset);
             }
             else
             {
@@ -136,7 +149,7 @@
                 Emittable old = compiler.CurrentEmittable;
                 compiler.CurrentEmittable = ext;
 
-                cc.RestoreState(_jumpTarget.State);
+                cc.RestoreState(_jumpTarget.State, _jumpTarget.Offset);
 
                 if (compiler.CurrentEmittable != ext)
                 {

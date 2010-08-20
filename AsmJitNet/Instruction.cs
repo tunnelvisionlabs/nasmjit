@@ -1046,6 +1046,11 @@
                     break;
                 }
             }
+
+            for (i = 0; i < variablesCount; i++)
+            {
+                cc.UnuseVarOnEndOfScope(this, _variables[i].VarData);
+            }
         }
 
         public override void Emit(Assembler a)

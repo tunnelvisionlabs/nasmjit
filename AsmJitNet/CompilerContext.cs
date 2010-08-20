@@ -1,8 +1,8 @@
 ﻿namespace AsmJitNet2
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
     using System.Collections.Generic;
+    using Debug = System.Diagnostics.Debug;
 
     public class CompilerContext
     {
@@ -1183,6 +1183,12 @@
             vdata.RegisterIndex = RegIndex.Invalid;
         }
 
+        public void UnuseVarOnEndOfScope(Emittable e, VarData vdata)
+        {
+            if (vdata.LastEmittable == e)
+                UnuseVar(vdata, VariableState.Unused);
+        }
+
         internal void AllocatedVariable(VarData vdata)
         {
             RegIndex idx = vdata.RegisterIndex;
@@ -1463,7 +1469,7 @@
             }
         }
 
-        internal void RestoreState(StateData state)
+        internal void RestoreState(StateData state, int targetOffset = Operand.InvalidValue)
         {
             // 16 + 8 + 16 = GP + MMX + XMM registers.
 
@@ -1491,7 +1497,7 @@
                 {
                     int regIndex = i - @base;
 
-                    // Spill register
+                    // Spill the register
                     if (fromVar != null)
                     {
                         // It is possible that variable that was saved in state currently not
@@ -1499,14 +1505,23 @@
                         if (fromVar.State == VariableState.Unused)
                         {
                             // TODO: Implement it.
+                            UnuseVar(fromVar, VariableState.Unused);
 
                             // Optimization, do not spill it, we can simply abandon it
                             // _freeReg(getVariableRegisterCode(from_v->type(), regIndex));
                         }
                         else
                         {
-                            // Variables match, do normal spill
-                            SpillVar(fromVar);
+                            if (targetOffset != Operand.InvalidValue && fromVar.LastEmittable.Offset < targetOffset)
+                            {
+                                // Do not spill a variable that is out of scope.
+                                UnuseVar(fromVar, VariableState.Unused);
+                            }
+                            else
+                            {
+                                // Normal state change, spill...
+                                SpillVar(fromVar);
+                            }
                         }
                     }
                 }

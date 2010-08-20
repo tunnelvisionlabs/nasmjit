@@ -1,13 +1,12 @@
 ﻿namespace AsmJitNetTest
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Text;
     using AsmJitNet2;
-    using UnmanagedFunctionPointer = System.Runtime.InteropServices.UnmanagedFunctionPointerAttribute;
-    using Marshal = System.Runtime.InteropServices.Marshal;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Marshal = System.Runtime.InteropServices.Marshal;
+    using UnmanagedFunctionPointer = System.Runtime.InteropServices.UnmanagedFunctionPointerAttribute;
 
     [TestClass]
     public sealed class TestVariables
@@ -563,6 +562,94 @@
         private static TFunction FunctionCast<TFunction>(IntPtr ptr)
         {
             return (TFunction)(object)Marshal.GetDelegateForFunctionPointer(ptr, typeof(TFunction));
+        }
+
+        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        private delegate void TestFuncMemCpyFn([System.Runtime.InteropServices.Out] int[] destination, int[] source, IntPtr length);
+
+        [TestMethod]
+        public void TestFuncMemCpy()
+        {
+            // ==========================================================================
+            // Part 1:
+
+            // Create Compiler.
+            Compiler c = new Compiler();
+
+            FileLogger logger = new FileLogger(Console.Error);
+            c.Logger = logger;
+
+            // Tell compiler the function prototype we want. It allocates variables representing
+            // function arguments that can be accessed through Compiler or Function instance.
+            c.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr>));
+
+            // Try to generate function without prolog/epilog code:
+            c.Function.SetHint(FunctionHints.Naked, true);
+
+            // Create labels.
+            Label L_Loop = c.NewLabel();
+            Label L_Exit = c.NewLabel();
+
+            // Function arguments.
+            GPVar dst = c.ArgGP(0);
+            GPVar src = c.ArgGP(1);
+            GPVar cnt = c.ArgGP(2);
+
+            // Allocate loop variables registers (if they are not allocated already).
+            c.Alloc(dst);
+            c.Alloc(src);
+            c.Alloc(cnt);
+
+            // Exit if length is zero.
+            c.Test(cnt, cnt);
+            c.Jz(L_Exit);
+
+            // Loop.
+            c.Bind(L_Loop);
+
+            // Copy DWORD (4 bytes).
+            GPVar tmp = c.NewGP(VariableType.GPD);
+            c.Mov(tmp, Mem.dword_ptr(src));
+            c.Mov(Mem.dword_ptr(dst), tmp);
+
+            // Increment dst/src pointers.
+            c.Add(src, 4);
+            c.Add(dst, 4);
+
+            // Loop until cnt is not zero.
+            c.Dec(cnt);
+            c.Jnz(L_Loop);
+
+            // Exit.
+            c.Bind(L_Exit);
+            c.Ret();
+
+            // Finish.
+            c.EndFunction();
+            // ==========================================================================
+
+            // ==========================================================================
+            // Part 2:
+
+            // Make JIT function.
+            TestFuncMemCpyFn fn = FunctionCast<TestFuncMemCpyFn>(c.Make());
+
+            Assert.IsNotNull(fn);
+
+            // Create some data.
+            const int count = 128;
+            int[] dstBuffer = new int[count];
+            int[] srcBuffer = new int[count];
+
+            for (int i = 0; i < srcBuffer.Length; i++)
+            {
+                srcBuffer[i] = (byte)i;
+            }
+
+            // Call the JIT function.
+            fn(dstBuffer, srcBuffer, (IntPtr)count);
+
+            Assert.IsTrue(srcBuffer.SequenceEqual(dstBuffer));
         }
     }
 }

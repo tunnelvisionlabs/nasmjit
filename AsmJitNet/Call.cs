@@ -1,9 +1,6 @@
 ﻿namespace AsmJitNet2
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
     using Debug = System.Diagnostics.Debug;
 
     public class Call : Emittable
@@ -987,6 +984,12 @@
 
                 // Cleanup.
                 vdata.Temp = null;
+            }
+
+            for (i = 0; i < variablesCount; i++)
+            {
+                VarData v = _variables[i].vdata;
+                cc.UnuseVarOnEndOfScope(this, _variables[i].vdata);
             }
         }
 

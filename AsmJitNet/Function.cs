@@ -1,11 +1,10 @@
 ﻿namespace AsmJitNet2
 {
     using System;
-    using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
     using Debug = System.Diagnostics.Debug;
-    using System.Diagnostics.Contracts;
 
     public class Function : Emittable
     {
@@ -841,7 +840,7 @@
             {
                 VarData vdata = _argumentVariables[i];
 
-                if (vdata.FirstEmittable != vdata.LastEmittable ||
+                if (vdata.FirstEmittable != null ||
                     vdata.IsRegArgument ||
                     vdata.IsMemArgument)
                 {

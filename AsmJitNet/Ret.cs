@@ -51,6 +51,8 @@
 
         public override void Prepare(CompilerContext cc)
         {
+            Offset = cc.CurrentOffset;
+
             VariableType retValType = Function.Prototype.ReturnValue;
             if (retValType != VariableType.Invalid)
             {
@@ -420,6 +422,15 @@
             if (EmitJumpToEpilog())
             {
                 cc.Unreachable = true;
+            }
+
+            for (i = 0; i < 2; i++)
+            {
+                if (ret[i] != null && ret[i].IsVar)
+                {
+                    VarData vdata = compiler.GetVarData(ret[i].Id);
+                    cc.UnuseVarOnEndOfScope(this, vdata);
+                }
             }
         }
 

@@ -342,7 +342,7 @@
                 // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------
-                // Step 1.a:
+                // Step 1:
                 // - Assign offset to each emittable.
                 // - Extract variables from instructions.
                 // - Prepare variables for register allocator, doing:
@@ -355,6 +355,7 @@
                         break;
                 }
 
+                /*
                 // Step 1.b:
                 // - Add "VARIABLE_HINT_UNUSE" hint to the end of each variable scope.
                 if (cc.Active != null)
@@ -374,10 +375,11 @@
                         vdata = vdata.NextActive;
                     } while (vdata != cc.Active);
                 }
+                */
                 // ------------------------------------------------------------------------
 
-                // Stage 2, we set compiler context also to Compiler so new emitted 
-                // instructions can call prepare() to itself.
+                // We set compiler context also to Compiler so new emitted instructions
+                // can call prepare() to itself.
                 _cc = cc;
 
                 // ------------------------------------------------------------------------
@@ -894,6 +896,26 @@
         public void Sub(GPVar dst, Imm src)
         {
             _emitInstruction(InstructionCode.Sub, dst, src);
+        }
+
+        public void Test(GPVar op1, GPVar op2)
+        {
+            _emitInstruction(InstructionCode.Test, op1, op2);
+        }
+
+        public void Test(GPVar op1, Imm op2)
+        {
+            _emitInstruction(InstructionCode.Test, op1, op2);
+        }
+
+        public void Test(Mem op1, GPVar op2)
+        {
+            _emitInstruction(InstructionCode.Test, op1, op2);
+        }
+
+        public void Test(Mem op1, Imm op2)
+        {
+            _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
         #endregion

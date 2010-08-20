@@ -1,6 +1,5 @@
 ﻿namespace AsmJitNet2
 {
-    using System;
     using Debug = System.Diagnostics.Debug;
 
     public sealed class Target : Emittable
@@ -69,6 +68,11 @@
             {
                 return EmittableType.Target;
             }
+        }
+
+        public override void Prepare(CompilerContext cc)
+        {
+            Offset = cc.CurrentOffset++;
         }
 
         public override void Translate(CompilerContext cc)

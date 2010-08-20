@@ -71,8 +71,6 @@
                 goto case VariableHintKind.Unuse;
 
             case VariableHintKind.Unuse:
-                if (cc.IsActive(_varData))
-                    cc.FreeActive(_varData);
                 break;
             }
         }
@@ -105,8 +103,10 @@
 
             case VariableHintKind.Unuse:
                 cc.UnuseVar(_varData, VariableState.Unused);
-                break;
+                return;
             }
+
+            cc.UnuseVarOnEndOfScope(this, _varData);
         }
     }
 }
