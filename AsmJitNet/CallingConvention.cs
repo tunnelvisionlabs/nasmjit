@@ -35,15 +35,52 @@
     public enum CallingConvention
     {
         None,
+
+        /// <summary>
+        /// Windows 64-bit calling convention
+        /// </summary>
         X64W,
+
+        /// <summary>
+        /// Unix 64-bit calling convention
+        /// </summary>
         X64U,
+
+        /// <summary>
+        /// Calling convention for C runtime
+        /// </summary>
         Cdecl,
+
+        /// <summary>
+        /// Calling convention for WinAPI functions
+        /// </summary>
         StdCall,
+
+        /// <summary>
+        /// Calling convention for C++ members under Windows (produced by MSVC and all MSVC compatible compilers)
+        /// </summary>
         MsThisCall,
+
+        /// <summary>
+        /// Fastest calling convention that can be used by MSVC compiler
+        /// </summary>
         MsFastCall,
+
+        /// <summary>
+        /// Borland fastcall convention
+        /// </summary>
         BorlandFastCall,
+
+        /// <summary>
+        /// GCC fastcall convention with 2 register arguments
+        /// </summary>
         GccFastCall2,
+
+        /// <summary>
+        /// GCC fastcall convention with 3 register arguments
+        /// </summary>
         GccFastCall3,
+
         Default = Cdecl
     }
 }
