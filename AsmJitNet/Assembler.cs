@@ -3016,12 +3016,47 @@
 
         private void EmitRexR(bool w, byte opReg, byte regCode, bool forceRexPrefix)
         {
-            throw new NotImplementedException();
+#if ASMJIT_X64
+            bool r = (opReg & 0x8) != 0;
+            bool b = (regCode & 0x8) != 0;
+
+            // w Default operand size(0=Default, 1=64 bits).
+            // r Register field (1=high bit extension of the ModR/M REG field).
+            // x Index field not used in RexR
+            // b Base field (1=high bit extension of the ModR/M or SIB Base field).
+            if (w || r || b || forceRexPrefix)
+            {
+                EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | (b ? 1 : 0)));
+            }
+#endif
         }
 
         private void EmitRexRM(bool w, byte opReg, Operand rm, bool forceRexPrefix)
         {
-            throw new NotImplementedException();
+#if ASMJIT_X64
+            bool r = (opReg & 0x8) != 0;
+            bool x = false;
+            bool b = false;
+
+            if (rm.IsReg)
+            {
+                b = (((BaseReg)rm).Code & 0x8) != 0;
+            }
+            else if (rm.IsMem)
+            {
+                x = (((int)((Mem)rm).Index & 0x8) != 0) && (((Mem)rm).Index != RegIndex.Invalid);
+                b = (((int)((Mem)rm).Base & 0x8) != 0) && (((Mem)rm).Base != RegIndex.Invalid);
+            }
+
+            // w Default operand size(0=Default, 1=64 bits).
+            // r Register field (1=high bit extension of the ModR/M REG field).
+            // x Index field (1=high bit extension of the SIB Index field).
+            // b Base field (1=high bit extension of the ModR/M or SIB Base field).
+            if (w || r || x || b || forceRexPrefix)
+            {
+                EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | ((x ? 1 : 0) << 1) | (b ? 1 : 0)));
+            }
+#endif
         }
 
         private void EmitModR(byte opReg, byte r)

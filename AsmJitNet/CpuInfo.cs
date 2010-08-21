@@ -150,7 +150,8 @@
 
             // Get vendor string
             eax = 0;
-            CpuId(ref eax, out ebx, out ecx, out edx);
+            CpuIdMethod cpuId = CpuId;
+            cpuId(ref eax, out ebx, out ecx, out edx);
 
             BitConverter.GetBytes(ebx).CopyTo(vendor, 0);
             BitConverter.GetBytes(edx).CopyTo(vendor, 4);
@@ -300,7 +301,11 @@
         {
             Compiler compiler = new Compiler();
 
+#if ASMJIT_X86
             compiler.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr>));
+#elif ASMJIT_X64
+            compiler.NewFunction(CallingConvention.X64W, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr>));
+#endif
             compiler.Function.SetHint(FunctionHints.Naked, true);
 
             GPVar eaxPtr = compiler.ArgGP(0);

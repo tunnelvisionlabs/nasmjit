@@ -160,6 +160,7 @@
         {
             _callingConvention = callingConvention;
 
+#if ASMJIT_X86
             _preservedGP =
               (1 << (int)RegIndex.Ebx) |
               (1 << (int)RegIndex.Esp) |
@@ -211,6 +212,77 @@
             default:
                 throw new ArgumentException();
             }
+#elif ASMJIT_X64
+            switch (_callingConvention)
+            {
+            case CallingConvention.X64W:
+                _argumentsGP[0] = RegIndex.Rcx;
+                _argumentsGP[1] = RegIndex.Rdx;
+                _argumentsGP[2] = RegIndex.R8;
+                _argumentsGP[3] = RegIndex.R9;
+
+                _argumentsXMM[0] = RegIndex.Xmm0;
+                _argumentsXMM[1] = RegIndex.Xmm1;
+                _argumentsXMM[2] = RegIndex.Xmm2;
+                _argumentsXMM[3] = RegIndex.Xmm3;
+
+                _preservedGP =
+                  (1 << (int)RegIndex.Rbx) |
+                  (1 << (int)RegIndex.Rsp) |
+                  (1 << (int)RegIndex.Rbp) |
+                  (1 << (int)RegIndex.Rsi) |
+                  (1 << (int)RegIndex.Rdi) |
+                  (1 << (int)RegIndex.R12) |
+                  (1 << (int)RegIndex.R13) |
+                  (1 << (int)RegIndex.R14) |
+                  (1 << (int)RegIndex.R15);
+                _preservedXMM =
+                  (1 << (int)RegIndex.Xmm6) |
+                  (1 << (int)RegIndex.Xmm7) |
+                  (1 << (int)RegIndex.Xmm8) |
+                  (1 << (int)RegIndex.Xmm9) |
+                  (1 << (int)RegIndex.Xmm10) |
+                  (1 << (int)RegIndex.Xmm11) |
+                  (1 << (int)RegIndex.Xmm12) |
+                  (1 << (int)RegIndex.Xmm13) |
+                  (1 << (int)RegIndex.Xmm14) |
+                  (1 << (int)RegIndex.Xmm15);
+                break;
+
+            case CallingConvention.X64U:
+                _argumentsGP[0] = RegIndex.Rdi;
+                _argumentsGP[1] = RegIndex.Rsi;
+                _argumentsGP[2] = RegIndex.Rdx;
+                _argumentsGP[3] = RegIndex.Rcx;
+                _argumentsGP[4] = RegIndex.R8;
+                _argumentsGP[5] = RegIndex.R9;
+
+                _argumentsXMM[0] = RegIndex.Xmm0;
+                _argumentsXMM[1] = RegIndex.Xmm1;
+                _argumentsXMM[2] = RegIndex.Xmm2;
+                _argumentsXMM[3] = RegIndex.Xmm3;
+                _argumentsXMM[4] = RegIndex.Xmm4;
+                _argumentsXMM[5] = RegIndex.Xmm5;
+                _argumentsXMM[6] = RegIndex.Xmm6;
+                _argumentsXMM[7] = RegIndex.Xmm7;
+
+                _preservedGP =
+                  (1 << (int)RegIndex.Rbx) |
+                  (1 << (int)RegIndex.Rsp) |
+                  (1 << (int)RegIndex.Rbp) |
+                  (1 << (int)RegIndex.R12) |
+                  (1 << (int)RegIndex.R13) |
+                  (1 << (int)RegIndex.R14) |
+                  (1 << (int)RegIndex.R15);
+                _preservedXMM = 0;
+                break;
+
+            default:
+                throw new ArgumentException("Illegal calling convention.");
+            }
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         private void SetPrototype(VariableType[] arguments, VariableType returnValue)
