@@ -1,5 +1,5 @@
 ﻿#if ASMJIT_X64
-namespace AsmJitNet2
+namespace AsmJitNet
 {
     using System;
 

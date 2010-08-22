@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet2
+﻿namespace AsmJitNet
 {
     using System;
 

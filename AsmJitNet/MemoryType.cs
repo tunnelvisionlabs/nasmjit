@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet2
+﻿namespace AsmJitNet
 {
     /// <summary>
     /// Type of memory operand.

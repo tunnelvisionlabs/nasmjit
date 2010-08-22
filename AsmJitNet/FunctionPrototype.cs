@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet2
+﻿namespace AsmJitNet
 {
     using System;
 
@@ -171,24 +171,24 @@
 
             switch (_callingConvention)
             {
-            case AsmJitNet2.CallingConvention.Cdecl:
+            case AsmJitNet.CallingConvention.Cdecl:
                 break;
 
-            case AsmJitNet2.CallingConvention.StdCall:
+            case AsmJitNet.CallingConvention.StdCall:
                 _calleePopsStack = true;break;
 
-            case AsmJitNet2.CallingConvention.MsThisCall:
+            case AsmJitNet.CallingConvention.MsThisCall:
                 _calleePopsStack = true;
                 _argumentsGP[0] = RegIndex.Ecx;
                 break;
 
-            case AsmJitNet2.CallingConvention.MsFastCall:
+            case AsmJitNet.CallingConvention.MsFastCall:
                 _calleePopsStack = true;
                 _argumentsGP[0] = RegIndex.Ecx;
                 _argumentsGP[1] = RegIndex.Edx;
                 break;
 
-            case AsmJitNet2.CallingConvention.BorlandFastCall:
+            case AsmJitNet.CallingConvention.BorlandFastCall:
                 _calleePopsStack = true;
                 _argumentsDirection = ArgumentsDirection.LeftToRight;
                 _argumentsGP[0] = RegIndex.Eax;
@@ -196,13 +196,13 @@
                 _argumentsGP[2] = RegIndex.Ecx;
                 break;
 
-            case AsmJitNet2.CallingConvention.GccFastCall2:
+            case AsmJitNet.CallingConvention.GccFastCall2:
                 _calleePopsStack = false;
                 _argumentsGP[0] = RegIndex.Ecx;
                 _argumentsGP[1] = RegIndex.Edx;
                 break;
 
-            case AsmJitNet2.CallingConvention.GccFastCall3:
+            case AsmJitNet.CallingConvention.GccFastCall3:
                 _calleePopsStack = false;
                 _argumentsGP[0] = RegIndex.Edx;
                 _argumentsGP[1] = RegIndex.Ecx;

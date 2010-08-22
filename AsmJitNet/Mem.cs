@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet2
+﻿namespace AsmJitNet
 {
     using System;
     using System.Diagnostics.Contracts;
@@ -240,47 +240,47 @@
 
         public static Mem byte_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.BYTE);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.BYTE);
         }
 
         public static Mem word_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.WORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.WORD);
         }
 
         public static Mem dword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.QWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.TWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.QWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPReg @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, (AsmJitNet2.Size)IntPtr.Size);
+            return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
         }
 
         public static Mem ptr(GPVar @base, int displacement = 0)
@@ -290,47 +290,47 @@
 
         public static Mem byte_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.BYTE);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.BYTE);
         }
 
         public static Mem word_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.WORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.WORD);
         }
 
         public static Mem dword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.QWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.TWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.QWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, AsmJitNet2.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPVar @base, int displacement = 0)
         {
-            return MemPtrBuild(@base, displacement, (AsmJitNet2.Size)IntPtr.Size);
+            return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
         }
 
         private static Mem MemPtrBuild(Label label, int displacement, Size size)

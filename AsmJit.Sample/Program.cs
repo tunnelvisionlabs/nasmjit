@@ -1,7 +1,7 @@
 ﻿namespace AsmJit.Sample
 {
     using System;
-    using AsmJitNet2;
+    using AsmJitNet;
 
     internal class Program
     {
