@@ -7,6 +7,11 @@
         {
         }
 
+        public XMMReg(RegCode code)
+            : this((int)code)
+        {
+        }
+
         public XMMReg(int code)
             : base(code, 16)
         {

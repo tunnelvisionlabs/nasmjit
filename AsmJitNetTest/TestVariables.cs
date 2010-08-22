@@ -262,7 +262,7 @@
                 } while (var < vars && (int)index < (int)RegNum.GP);
             }
 
-            compiler.Alloc(gvar, GPReg.Nax);
+            compiler.Alloc(gvar, Register.nax);
             compiler.Lea(gvar, xvar.ToMem());
             compiler.And(gvar, (Imm)(15));
             compiler.Ret(gvar);

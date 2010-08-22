@@ -1166,12 +1166,12 @@
                 case InstructionCode.Sar:
                 case InstructionCode.Shl:
                 case InstructionCode.Shr:
-                    a.EmitInstruction(_code, _operands[0], GPReg.cl);
+                    a.EmitInstruction(_code, _operands[0], Register.cl);
                     return;
 
                 case InstructionCode.Shld:
                 case InstructionCode.Shrd:
-                    a.EmitInstruction(_code, _operands[0], _operands[1], GPReg.cl);
+                    a.EmitInstruction(_code, _operands[0], _operands[1], Register.cl);
                     return;
 
                 case InstructionCode.Rdtsc:

@@ -915,7 +915,7 @@
             {
                 int s = Prototype.ArgumentsStackSize;
                 if (s != 0)
-                    compiler.Emit(InstructionCode.Sub, GPReg.Nsp, (Imm)s);
+                    compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)s);
             }
 
             // STEP 10:
@@ -1013,7 +1013,7 @@
             Compiler compiler = cc.Compiler;
 
             RegIndex src = vdata.RegisterIndex;
-            Mem dst = Mem.ptr(GPReg.Nsp, -IntPtr.Size + argType._stackOffset);
+            Mem dst = Mem.ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
 
             switch (vdata.Type)
             {
@@ -1154,7 +1154,7 @@
             Compiler compiler = cc.Compiler;
 
             Mem src = cc.GetVarMem(vdata);
-            Mem dst = Mem.ptr(GPReg.Nsp, -IntPtr.Size + argType._stackOffset);
+            Mem dst = Mem.ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
 
             switch (vdata.Type)
             {

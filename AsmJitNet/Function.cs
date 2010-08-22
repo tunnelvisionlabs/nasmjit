@@ -341,15 +341,15 @@
             // will remain aligned to 16 bytes).
             if (!_isNaked)
             {
-                Compiler.Emit(InstructionCode.Push, GPReg.Nbp);
-                Compiler.Emit(InstructionCode.Mov, GPReg.Nbp, GPReg.Nsp);
+                Compiler.Emit(InstructionCode.Push, Register.nbp);
+                Compiler.Emit(InstructionCode.Mov, Register.nbp, Register.nsp);
             }
 
             // Align manually stack-pointer to 16-bytes.
             if (_isStackAlignedByFnTo16Bytes)
             {
                 Debug.Assert(!_isNaked);
-                Compiler.Emit(InstructionCode.And, GPReg.Nsp, (Imm)(-16));
+                Compiler.Emit(InstructionCode.And, Register.nsp, (Imm)(-16));
             }
 
             // Save GP registers using PUSH/POP.
@@ -366,7 +366,7 @@
             {
                 nspPos = _memStackSize16;
                 if (stackSubtract != 0)
-                    Compiler.Emit(InstructionCode.Sub, GPReg.Nsp, (Imm)(stackSubtract));
+                    Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)(stackSubtract));
             }
             else
             {
@@ -381,7 +381,7 @@
                 {
                     if ((preservedXMM & mask) != 0)
                     {
-                        Compiler.Emit(_movDqaInstruction, Mem.dqword_ptr(GPReg.Nsp, nspPos), Register.xmm((RegIndex)i));
+                        Compiler.Emit(_movDqaInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
                         nspPos += 16;
                     }
                 }
@@ -394,7 +394,7 @@
                 {
                     if ((preservedMM & mask) != 0)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(GPReg.Nsp, nspPos), Register.mm((RegIndex)i));
+                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, nspPos), Register.mm((RegIndex)i));
                         nspPos += 8;
                     }
                 }
@@ -407,7 +407,7 @@
                 {
                     if ((preservedGP & mask) != 0)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(GPReg.Nsp, nspPos), Register.gpn((RegIndex)i));
+                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, nspPos), Register.gpn((RegIndex)i));
                         nspPos += IntPtr.Size;
                     }
                 }
@@ -452,7 +452,7 @@
                 {
                     if ((preservedXMM & mask) != 0)
                     {
-                        Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(GPReg.Nsp, nspPos));
+                        Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
                         nspPos += 16;
                     }
                 }
@@ -465,7 +465,7 @@
                 {
                     if ((preservedMM & mask) != 0)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(GPReg.Nsp, nspPos));
+                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, nspPos));
                         nspPos += 8;
                     }
                 }
@@ -478,7 +478,7 @@
                 {
                     if ((preservedGP & mask) != 0)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(GPReg.Nsp, nspPos));
+                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, nspPos));
                         nspPos += IntPtr.Size;
                     }
                 }
@@ -486,7 +486,7 @@
 
             if (_isEspAdjusted && stackAdd != 0)
             {
-                Compiler.Emit(InstructionCode.Add, GPReg.Nsp, (Imm)stackAdd);
+                Compiler.Emit(InstructionCode.Add, Register.nsp, (Imm)stackAdd);
             }
 
             // Restore GP registers using POP.
@@ -525,8 +525,8 @@
                 }
                 else
                 {
-                    Compiler.Emit(InstructionCode.Mov, GPReg.Nsp, GPReg.Nbp);
-                    Compiler.Emit(InstructionCode.Pop, GPReg.Nbp);
+                    Compiler.Emit(InstructionCode.Mov, Register.nsp, Register.nbp);
+                    Compiler.Emit(InstructionCode.Pop, Register.nbp);
                 }
             }
 

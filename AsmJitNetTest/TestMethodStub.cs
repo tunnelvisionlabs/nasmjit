@@ -39,10 +39,10 @@
             Label label = assembler.NewLabel();
             assembler.Call(label);
             assembler.Bind(label);
-            assembler.Sub(Mem.sysint_ptr(GPReg.Nsp), 5);
+            assembler.Sub(Mem.sysint_ptr(Register.nsp), 5);
             assembler.Call(methodPtr);
-            assembler.Add(GPReg.Nsp, IntPtr.Size);
-            assembler.Jmp(GPReg.Nax);
+            assembler.Add(Register.nsp, IntPtr.Size);
+            assembler.Jmp(Register.nax);
             return assembler.Make();
         }
 

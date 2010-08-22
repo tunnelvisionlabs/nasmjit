@@ -7,6 +7,11 @@
         {
         }
 
+        public MMReg(RegCode code)
+            : this((int)code)
+        {
+        }
+
         public MMReg(int code)
             : base(code, 8)
         {

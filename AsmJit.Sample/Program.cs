@@ -52,7 +52,7 @@
             Assembler assembler = new Assembler();
             assembler.Logger = new FileLogger(Console.Error);
             assembler.Call(CompilerLaunchPad);
-            assembler.Jmp(GPReg.Nax);
+            assembler.Jmp(Register.nax);
             return assembler.Make();
         }
 
@@ -64,33 +64,33 @@
 
             Assembler assembler = new Assembler();
             assembler.Logger = new FileLogger(Console.Error);
-            assembler.Push(GPReg.Nbp);
-            assembler.Mov(GPReg.Nbp, GPReg.Nsp);
+            assembler.Push(Register.nbp);
+            assembler.Mov(Register.nbp, Register.nsp);
 
             if (IntPtr.Size == 4)
             {
-                assembler.Push(Mem.dword_ptr(GPReg.Nbp, 4));
-                assembler.Sub(Mem.dword_ptr(GPReg.Nsp), 5);
+                assembler.Push(Mem.dword_ptr(Register.nbp, 4));
+                assembler.Sub(Mem.dword_ptr(Register.nsp), 5);
             }
             else
             {
-                assembler.Push(GPReg.Ncx);
-                assembler.Mov(GPReg.Ncx, Mem.qword_ptr(GPReg.Nbp, 8));
-                assembler.Sub(GPReg.Ncx, 5);
+                assembler.Push(Register.ncx);
+                assembler.Mov(Register.ncx, Mem.qword_ptr(Register.nbp, 8));
+                assembler.Sub(Register.ncx, 5);
             }
 
             assembler.Call(methodPtr);
 
             if (IntPtr.Size == 4)
             {
-                assembler.Add(GPReg.Nsp, 4);
+                assembler.Add(Register.nsp, 4);
             }
             else
             {
-                assembler.Pop(GPReg.Ncx);
+                assembler.Pop(Register.ncx);
             }
 
-            assembler.Pop(GPReg.Nbp);
+            assembler.Pop(Register.nbp);
             assembler.Ret();
             return assembler.Make();
         }
