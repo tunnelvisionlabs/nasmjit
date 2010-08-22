@@ -391,7 +391,7 @@
                 {
                     if (Logger != null && Logger.IsUsed)
                     {
-                        Logger.LogFormat("; Trampoline from 0x{0:x} -> 0x{1:x}"+ Environment.NewLine, addressBase.ToInt64() + r.Offset, r.Destination);
+                        Logger.LogFormat("; Trampoline from 0x{0:x} -> 0x{1:x}" + Environment.NewLine, addressBase.ToInt64() + r.Offset, r.Destination);
                     }
 
                     TrampolineWriter.WriteTrampoline(tramp, r.Destination);
@@ -1157,6 +1157,7 @@
         {
             int bLoHiUsed = 0;
             bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
+            int bufferStartOffset = _buffer.Offset;
 
 #if ASMJIT_DEBUG
   bool assertIllegal = false;
@@ -1213,20 +1214,23 @@
             if (bLoHiUsed != 0 || forceRexPrefix)
             {
 #if ASMJIT_X64
-    // Check if there is register that makes this instruction un-encodable.
+                // Check if there is register that makes this instruction un-encodable.
 
-    forceRexPrefix |= o0.IsExtendedRegisterUsed;
-    forceRexPrefix |= o1.IsExtendedRegisterUsed;
-    forceRexPrefix |= o2.IsExtendedRegisterUsed;
+                forceRexPrefix |= o0.IsExtendedRegisterUsed;
+                forceRexPrefix |= o1.IsExtendedRegisterUsed;
+                forceRexPrefix |= o2.IsExtendedRegisterUsed;
 
-    if      (o0.IsRegType(RegType.GPB_LO) && (((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4) forceRexPrefix = true;
-    else if (o1.IsRegType(RegType.GPB_LO) && (((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4) forceRexPrefix = true;
-    else if (o2.IsRegType(RegType.GPB_LO) && (((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4) forceRexPrefix = true;
+                if (o0.IsRegType(RegType.GPB_LO) && (((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4)
+                    forceRexPrefix = true;
+                else if (o1.IsRegType(RegType.GPB_LO) && (((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4)
+                    forceRexPrefix = true;
+                else if (o2.IsRegType(RegType.GPB_LO) && (((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4)
+                    forceRexPrefix = true;
 
-    if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
-    {
-        goto illegalInstruction;
-    }
+                if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
+                {
+                    goto illegalInstruction;
+                }
 #endif // ASMJIT_X64
 
                 // Patch GPB.HI operand index.
@@ -1330,7 +1334,7 @@
                         GPReg dst = ((GPReg)o0);
 
 #if ASMJIT_X64
-        EmitRexR(dst.RegisterType == RegType.GPQ, 1, (byte)dst.Code, forceRexPrefix);
+                        EmitRexR(dst.RegisterType == RegType.GPQ, 1, (byte)dst.Code, forceRexPrefix);
 #endif // ASMJIT_X64
                         EmitByte(0x0F);
                         EmitModR(1, (byte)dst.Code);
@@ -1777,8 +1781,8 @@
                             int immSize = dst.Size;
 
 #if ASMJIT_X64
-          // Optimize instruction size by using 32 bit immediate if value can
-          // fit to it.
+                            // Optimize instruction size by using 32 bit immediate if value can
+                            // fit to it.
                             if (immSize == 8 && Util.IsInt32(((Imm)src).Value.ToInt64()))
                             {
                                 EmitX86RM(0xC7,
@@ -1792,10 +1796,10 @@
                             else
                             {
 #endif // ASMJIT_X64
-                            EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
-                              dst.IsRegType(RegType.GPW),
-                              dst.IsRegType(RegType.GPQ),
-                              (byte)((GPReg)dst).Code, forceRexPrefix);
+                                EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
+                                  dst.IsRegType(RegType.GPW),
+                                  dst.IsRegType(RegType.GPQ),
+                                  (byte)((GPReg)dst).Code, forceRexPrefix);
 #if ASMJIT_X64
                             }
 #endif // ASMJIT_X64
@@ -1857,7 +1861,7 @@
                         if (reg.IsRegType(RegType.GPW))
                             EmitByte(0x66);
 #if ASMJIT_X64
-        EmitRexR(reg.Size == 8, 0, 0, forceRexPrefix);
+                        EmitRexR(reg.Size == 8, 0, 0, forceRexPrefix);
 #endif // ASMJIT_X64
                         EmitByte((byte)(opCode + (reg.Size != 1 ? 1 : 0)));
                         EmitImmediate(imm, IntPtr.Size);
@@ -1894,21 +1898,21 @@
                 }
 
 #if ASMJIT_X64
-    case InstructionGroup.MOVSXD:
-    {
-      if (o0.IsReg && o1.IsRegMem)
-      {
-        GPReg dst = (GPReg)o0;
-        Operand src = o1;
-        EmitX86RM(0x00000063,
-          false,
-          true, (byte)dst.Code, src,
-          0, forceRexPrefix);
-        goto end;
-      }
+            case InstructionGroup.MOVSXD:
+                {
+                    if (o0.IsReg && o1.IsRegMem)
+                    {
+                        GPReg dst = (GPReg)o0;
+                        Operand src = o1;
+                        EmitX86RM(0x00000063,
+                          false,
+                          true, (byte)dst.Code, src,
+                          0, forceRexPrefix);
+                        goto end;
+                    }
 
-      break;
-    }
+                    break;
+                }
 #endif // ASMJIT_X64
 
             case InstructionGroup.PUSH:
@@ -2027,7 +2031,8 @@
                     if (opSize == 2)
                         EmitByte(0x66); // 16-bit prefix.
 #if ASMJIT_X64
-      else if (opSize == 8) EmitByte(0x48); // REX.W prefix.
+                    else if (opSize == 8)
+                        EmitByte(0x48); // REX.W prefix.
 #endif // ASMJIT_X64
 
                     // Emit opcode (1 BYTE).
@@ -2132,7 +2137,7 @@
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
 #if ASMJIT_X64
-        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
+                        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
 #endif // ASMJIT_X64
                         EmitByte((byte)(0xA8 + (o0.Size != 1 ? 1 : 0)));
                         EmitImmediate(((Imm)o1), (int)immSize);
@@ -2147,7 +2152,7 @@
                             EmitByte(0x66); // 16 bit
                         EmitSegmentPrefix(o0); // segment prefix
 #if ASMJIT_X64
-        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
+                        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
 #endif // ASMJIT_X64
                         EmitByte((byte)(0xF6 + (o0.Size != 1 ? 1 : 0)));
                         EmitModRM(0, o0, immSize);
@@ -2169,7 +2174,7 @@
                             EmitByte(0x66); // 16 bit
                         EmitSegmentPrefix(dst); // segment prefix
 #if ASMJIT_X64
-        EmitRexRM(src.IsRegType(RegType.GPQ), (byte)src.Code, dst, forceRexPrefix);
+                        EmitRexRM(src.IsRegType(RegType.GPQ), (byte)src.Code, dst, forceRexPrefix);
 #endif // ASMJIT_X64
 
                         // Special opcode for index 0 registers (AX, EAX, RAX vs register)
@@ -2502,23 +2507,23 @@
                     }
 
 #if ASMJIT_X64
-      if ((o0.IsRegType(RegType.MM) || o0.IsRegType(RegType.XMM)) && (o1.IsRegType(RegType.GPQ) || o1.IsMem))
-      {
-        EmitMmu(o0.IsRegType(RegType.XMM) ? 0x66000F6EU : 0x00000F6EU, true,
-          (byte)((BaseReg)o0).Code,
-          o1,
-          IntPtr.Zero);
-        goto end;
-      }
+                    if ((o0.IsRegType(RegType.MM) || o0.IsRegType(RegType.XMM)) && (o1.IsRegType(RegType.GPQ) || o1.IsMem))
+                    {
+                        EmitMmu(o0.IsRegType(RegType.XMM) ? 0x66000F6EU : 0x00000F6EU, true,
+                          (byte)((BaseReg)o0).Code,
+                          o1,
+                          IntPtr.Zero);
+                        goto end;
+                    }
 
-      if ((o0.IsRegType(RegType.GPQ) || o0.IsMem) && (o1.IsRegType(RegType.MM) || o1.IsRegType(RegType.XMM)))
-      {
-        EmitMmu(o1.IsRegType(RegType.XMM) ? 0x66000F7EU : 0x00000F7EU, true,
-          (byte)((BaseReg)o1).Code,
-          o0,
-          IntPtr.Zero);
-        goto end;
-      }
+                    if ((o0.IsRegType(RegType.GPQ) || o0.IsMem) && (o1.IsRegType(RegType.MM) || o1.IsRegType(RegType.XMM)))
+                    {
+                        EmitMmu(o1.IsRegType(RegType.XMM) ? 0x66000F7EU : 0x00000F7EU, true,
+                          (byte)((BaseReg)o1).Code,
+                          o0,
+                          IntPtr.Zero);
+                        goto end;
+                    }
 #endif // ASMJIT_X64
 
                     break;
@@ -2739,8 +2744,9 @@
 )
             {
                 StringBuilder buf = new StringBuilder();
+                int bufferStopOffset = _buffer.Offset;
 
-                DumpInstruction(buf, code, o0, o1, o2);
+                DumpInstruction(buf, new ArraySegment<byte>(_buffer.Data, bufferStartOffset, bufferStopOffset - bufferStartOffset), code, o0, o1, o2);
 
                 if (Logger.LogBinary)
                     DumpComment(buf, new ArraySegment<byte>(GetCode(), (int)beginOffset, (int)(Offset - beginOffset)), _comment);
@@ -2828,8 +2834,19 @@
             return _buffer.Data;
         }
 
-        private static void DumpInstruction(StringBuilder buf, InstructionCode code, Operand o0, Operand o1, Operand o2)
+        private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, Operand o0, Operand o1, Operand o2)
         {
+            Contract.Requires(buf != null);
+            Contract.Requires(o0 != null);
+            Contract.Requires(o1 != null);
+            Contract.Requires(o2 != null);
+
+            // Dump the machine code
+            for (int i = 0; i < machineCode.Count; i++)
+            {
+                buf.AppendFormat("{0:X2} ", machineCode[i]);
+            }
+
             // Dump instruction.
             DumpInstructionName(buf, code);
 
@@ -3424,7 +3441,7 @@
                     {
                         if (Logger != null && Logger.IsUsed)
                         {
-                            Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits"+ Environment.NewLine);
+                            Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits" + Environment.NewLine);
                         }
                         target = (UIntPtr)(target.ToUInt64() & uint.MaxValue);
                     }
