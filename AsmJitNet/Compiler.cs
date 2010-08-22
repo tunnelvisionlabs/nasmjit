@@ -646,76 +646,161 @@
 
         #region X86 Instructions
 
+        /// <summary>
+        /// Add with carry.
+        /// </summary>
+        public void Adc(GPVar dst, GPVar src)
+        {
+            _emitInstruction(InstructionCode.Adc, dst, src);
+        }
+
+        /// <summary>
+        /// Add with carry.
+        /// </summary>
+        public void Adc(GPVar dst, Mem src)
+        {
+            _emitInstruction(InstructionCode.Adc, dst, src);
+        }
+
+        /// <summary>
+        /// Add with carry.
+        /// </summary>
+        public void Adc(GPVar dst, Imm src)
+        {
+            _emitInstruction(InstructionCode.Adc, dst, src);
+        }
+
+        /// <summary>
+        /// Add with carry.
+        /// </summary>
+        public void Adc(Mem dst, GPVar src)
+        {
+            _emitInstruction(InstructionCode.Adc, dst, src);
+        }
+
+        /// <summary>
+        /// Add with carry.
+        /// </summary>
+        public void Adc(Mem dst, Imm src)
+        {
+            _emitInstruction(InstructionCode.Adc, dst, src);
+        }
+
+        /// <summary>
+        /// Add.
+        /// </summary>
         public void Add(GPVar dst, GPVar src)
         {
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
+        /// <summary>
+        /// Add.
+        /// </summary>
         public void Add(GPVar dst, Mem src)
         {
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
+        /// <summary>
+        /// Add.
+        /// </summary>
         public void Add(GPVar dst, Imm src)
         {
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
+        /// <summary>
+        /// Add.
+        /// </summary>
         public void Add(Mem dst, GPVar src)
         {
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
+        /// <summary>
+        /// Add.
+        /// </summary>
         public void Add(Mem dst, Imm src)
         {
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
+        /// <summary>
+        /// Logical AND.
+        /// </summary>
         public void And(GPVar dst, GPVar src)
         {
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
+        /// <summary>
+        /// Logical AND.
+        /// </summary>
         public void And(GPVar dst, Mem src)
         {
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
+        /// <summary>
+        /// Logical AND.
+        /// </summary>
         public void And(GPVar dst, Imm src)
         {
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
+        /// <summary>
+        /// Logical AND.
+        /// </summary>
         public void And(Mem dst, GPVar src)
         {
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
+        /// <summary>
+        /// Logical AND.
+        /// </summary>
         public void And(Mem dst, Imm src)
         {
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
         public Call Call(GPVar dst)
         {
             return _emitCall(dst);
         }
 
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
         public Call Call(Mem dst)
         {
             return _emitCall(dst);
         }
 
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
         public Call Call(Imm dst)
         {
             return _emitCall(dst);
         }
 
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
         public Call Call(IntPtr dst)
         {
             return _emitCall((Imm)dst);
         }
 
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
         public Call Call(Label label)
         {
             return _emitCall(label);
@@ -787,6 +872,21 @@
         public void Imul(GPVar dst, GPVar src, Imm imm)
         {
             _emitInstruction(InstructionCode.Imul, dst, src, imm);
+        }
+
+        public void Inc(GPVar dst)
+        {
+            _emitInstruction(InstructionCode.Inc, dst);
+        }
+
+        public void Inc(Mem dst)
+        {
+            _emitInstruction(InstructionCode.Inc, dst);
+        }
+
+        public void Int3()
+        {
+            _emitInstruction(InstructionCode.Int3);
         }
 
         public void Imul(GPVar dst, Mem src, Imm imm)
