@@ -301,11 +301,7 @@
         {
             Compiler compiler = new Compiler();
 
-#if ASMJIT_X86
-            compiler.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr>));
-#elif ASMJIT_X64
-            compiler.NewFunction(CallingConvention.X64W, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr>));
-#endif
+            compiler.NewFunction(CallingConvention.Default, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr>));
             compiler.Function.SetHint(FunctionHints.Naked, true);
 
             GPVar eaxPtr = compiler.ArgGP(0);

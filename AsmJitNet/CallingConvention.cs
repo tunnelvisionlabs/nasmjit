@@ -81,6 +81,10 @@
         /// </summary>
         GccFastCall3,
 
-        Default = Cdecl
+#if ASMJIT_X86
+        Default = Cdecl,
+#elif ASMJIT_X64
+        Default = X64W,
+#endif
     }
 }
