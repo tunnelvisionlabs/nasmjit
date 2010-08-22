@@ -1,10 +1,15 @@
 ﻿namespace AsmJitNet
 {
+    using System;
+    using System.Diagnostics.Contracts;
+
     public sealed class Comment : Emittable
     {
         public Comment(Compiler compiler, string comment)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+
             Comment = comment;
         }
 
@@ -27,7 +32,7 @@
         public override void Emit(Assembler a)
         {
             if (a.Logger != null && a.Logger.IsUsed)
-                a.Logger.LogString(Comment);
+                a.Logger.LogFormat("; {0}" + Environment.NewLine, Comment);
         }
     }
 }
