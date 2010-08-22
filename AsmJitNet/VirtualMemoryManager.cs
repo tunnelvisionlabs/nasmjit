@@ -493,28 +493,46 @@
 
             public static bool NlIsRed(M_Node n)
             {
-                throw new NotImplementedException();
+                return n != null && n.NlColor == NodeColor.Red;
             }
+
             public static M_Node NlRotateLeft(M_Node n)
             {
-                throw new NotImplementedException();
+                M_Node x = n.NlRight;
+                n.NlRight = x.NlLeft;
+                x.NlLeft = n;
+                x.NlColor = x.NlLeft.NlColor;
+                x.NlLeft.NlColor = NodeColor.Red;
+                return x;
             }
+
             public static M_Node NlRotateRight(M_Node n)
             {
-                throw new NotImplementedException();
+                M_Node x = n.NlLeft;
+                n.NlLeft = x.NlRight;
+                x.NlRight = n;
+                x.NlColor = x.NlRight.NlColor;
+                x.NlRight.NlColor = NodeColor.Red;
+                return x;
             }
+
             public static void NlFlipColor(M_Node n)
             {
-                throw new NotImplementedException();
+                n.NlColor = (n.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
+                n.NlLeft.NlColor = (n.NlLeft.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
+                n.NlRight.NlColor = (n.NlRight.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
             }
+
             public static M_Node NlMoveRedLeft(M_Node h)
             {
                 throw new NotImplementedException();
             }
+
             public static M_Node NlMoveRedRight(M_Node h)
             {
                 throw new NotImplementedException();
             }
+
             public static M_Node NlFixUp(M_Node h)
             {
                 throw new NotImplementedException();

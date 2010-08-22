@@ -250,15 +250,15 @@
             return var;
         }
 
-        //public MMVar NewMM(VariableType variableType = VariableType.MM, string name = null)
-        //{
-        //    if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
-        //        throw new ArgumentException();
+        public MMVar NewMM(VariableType variableType = VariableType.MM, string name = null)
+        {
+            if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
+                throw new ArgumentException();
 
-        //    VarData vdata = NewVarData(name, variableType, 16);
-        //    MMVar var = new MMVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
-        //    return var;
-        //}
+            VarData vdata = NewVarData(name, variableType, 16);
+            MMVar var = new MMVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            return var;
+        }
 
         public XMMVar NewXMM(VariableType variableType = VariableType.XMM, string name = null)
         {
@@ -596,7 +596,9 @@
 
         internal Target GetTarget(int id)
         {
-            Debug.Assert((id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeLabel);
+            if ((id & Operand.OperandIdTypeMask) != Operand.OperandIdTypeLabel)
+                throw new ArgumentException("The ID is not a label.");
+
             return _targetData[id & Operand.OperandIdValueMask];
         }
 
