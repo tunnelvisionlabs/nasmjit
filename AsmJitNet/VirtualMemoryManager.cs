@@ -1,9 +1,8 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using BitArray = System.Collections.BitArray;
-    using Debug = System.Diagnostics.Debug;
     using System.Runtime.InteropServices;
+    using Debug = System.Diagnostics.Debug;
 
     public class VirtualMemoryManager : MemoryManager
     {
@@ -160,7 +159,7 @@
 
             // [Allocation]
 
-            public M_Node CreateNode(long size, long density)
+            public M_Node CreateNode(long size, int density)
             {
                 int vsize;
                 IntPtr vmem = AllocVirtualMemory((int)size, out vsize);
@@ -444,7 +443,128 @@
 
             public bool Free(IntPtr address)
             {
-                throw new NotImplementedException();
+                if (address == null)
+                    return true;
+
+                lock (_lock)
+                {
+
+                    M_Node node = NlFindPtr(address);
+                    if (node == null)
+                        return false;
+
+                    IntPtr offset = (IntPtr)(address.ToInt64() - node.Memory.ToInt64());
+                    int bitpos = (int)(offset.ToInt64() / node.Density);
+                    int i = (bitpos / BITS_PER_ENTITY);
+                    int j = (bitpos % BITS_PER_ENTITY);
+
+                    int cont = 0;
+
+                    unsafe
+                    {
+                        fixed (int* upPtr = node.BaUsed)
+                        {
+                            fixed (int* cpPtr = node.BaCont)
+                            {
+                                // current ubits address
+                                uint* up = (uint*)upPtr + i;
+                                // current cbits address
+                                uint* cp = (uint*)cpPtr + i;
+                                uint ubits = *up;             // Current ubits[0] value.
+                                uint cbits = *cp;             // Current cbits[0] value.
+                                uint bit = 1U << j; // Current bit mask.
+
+                                bool stop;
+
+                                for (; ; )
+                                {
+                                    stop = (cbits & bit) == 0;
+                                    ubits &= ~bit;
+                                    cbits &= ~bit;
+
+                                    j++;
+                                    bit <<= 1;
+                                    cont++;
+
+                                    if (stop || j == BITS_PER_ENTITY)
+                                    {
+                                        *up = ubits;
+                                        *cp = cbits;
+
+                                        if (stop)
+                                            break;
+
+                                        ubits = *++up;
+                                        cbits = *++cp;
+
+                                        j = 0;
+                                        bit = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // If we freed block is fully allocated node, need to update optimal
+                    // pointer in memory manager.
+                    if (node.Used == node.Size)
+                    {
+                        M_Node cur = _optimal;
+
+                        do
+                        {
+                            cur = cur.Previous;
+                            if (cur == node)
+                            {
+                                _optimal = node;
+                                break;
+                            }
+                        } while (cur != null);
+                    }
+
+                    // Statistics.
+                    cont *= node.Density;
+                    if (node.LargestBlock < cont)
+                        node.LargestBlock = cont;
+                    node.Used -= cont;
+                    _used -= cont;
+
+                    // If page is empty, we can free it.
+                    if (node.Used == 0)
+                    {
+                        _allocated -= node.Size;
+                        NlRemoveNode(node);
+                        FreeVirtualMemory(node.Memory, (int)node.Size);
+
+                        M_Node next = node.Next;
+                        M_Node prev = node.Previous;
+
+                        if (prev!=null)
+                        {
+                            prev.Next = next;
+                        }
+                        else
+                        {
+                            _first = next;
+                        }
+
+                        if (next!=null)
+                        {
+                            next.Previous = prev;
+                        }
+                        else
+                        {
+                            _last = prev;
+                        }
+
+                        if (_optimal == node)
+                        {
+                            _optimal = prev != null ? prev : next;
+                        }
+                    }
+                }
+
+                return true;
             }
 
             public void FreeAll(bool keepVirtualMemory)
@@ -525,24 +645,45 @@
 
             public static M_Node NlMoveRedLeft(M_Node h)
             {
-                throw new NotImplementedException();
+                NlFlipColor(h);
+                if (NlIsRed(h.NlRight.NlLeft))
+                {
+                    h.NlRight = NlRotateRight(h.NlRight);
+                    h = NlRotateLeft(h);
+                    NlFlipColor(h);
+                }
+                return h;
             }
 
             public static M_Node NlMoveRedRight(M_Node h)
             {
-                throw new NotImplementedException();
+                NlFlipColor(h);
+                if (NlIsRed(h.NlLeft.NlLeft))
+                {
+                    h = NlRotateRight(h);
+                    NlFlipColor(h);
+                }
+                return h;
             }
 
             public static M_Node NlFixUp(M_Node h)
             {
-                throw new NotImplementedException();
+                if (NlIsRed(h.NlRight))
+                    h = NlRotateLeft(h);
+                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlLeft.NlLeft))
+                    h = NlRotateRight(h);
+                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlRight))
+                    NlFlipColor(h);
+
+                return h;
             }
 
             public void NlInsertNode(M_Node n)
             {
                 _root = NlInsertNode_(_root, n);
             }
-            public M_Node NlInsertNode_(M_Node h, M_Node n)
+
+            public static M_Node NlInsertNode_(M_Node h, M_Node n)
             {
                 if (h == null)
                     return n;
@@ -565,20 +706,87 @@
 
             public void NlRemoveNode(M_Node n)
             {
-                throw new NotImplementedException();
-            }
-            public M_Node NlRemoveNode_(M_Node h, M_Node n)
-            {
-                throw new NotImplementedException();
-            }
-            public M_Node NlRemoveMin(M_Node h)
-            {
-                throw new NotImplementedException();
+                _root = NlRemoveNode_(_root, n);
+                if (_root != null)
+                    _root.NlColor = NodeColor.Black;
+
+                Debug.Assert(NlFindPtr(n.Memory) == null);
             }
 
-            public M_Node NlFindPtr(byte mem)
+            public M_Node NlRemoveNode_(M_Node h, M_Node n)
             {
-                throw new NotImplementedException();
+                if (n.Memory.ToInt64() < h.Memory.ToInt64())
+                {
+                    if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
+                        h = NlMoveRedLeft(h);
+                    h.NlLeft = NlRemoveNode_(h.NlLeft, n);
+                }
+                else
+                {
+                    if (NlIsRed(h.NlLeft))
+                        h = NlRotateRight(h);
+                    if (h == n && (h.NlRight == null))
+                        return null;
+                    if (!NlIsRed(h.NlRight) && !NlIsRed(h.NlRight.NlLeft))
+                        h = NlMoveRedRight(h);
+                    if (h == n)
+                    {
+                        // Get minimum node.
+                        h = n.NlRight;
+                        while (h.NlLeft != null)
+                            h = h.NlLeft;
+
+                        M_Node _l = n.NlLeft;
+                        M_Node _r = NlRemoveMin(n.NlRight);
+
+                        h.NlLeft = _l;
+                        h.NlRight = _r;
+                        h.NlColor = n.NlColor;
+                    }
+                    else
+                        h.NlRight = NlRemoveNode_(h.NlRight, n);
+                }
+
+                return NlFixUp(h);
+            }
+
+            public M_Node NlRemoveMin(M_Node h)
+            {
+                if (h.NlLeft == null)
+                    return null;
+                if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
+                    h = NlMoveRedLeft(h);
+                h.NlLeft = NlRemoveMin(h.NlLeft);
+                return NlFixUp(h);
+            }
+
+            public M_Node NlFindPtr(IntPtr mem)
+            {
+                M_Node cur = _root;
+                IntPtr curMem;
+                long curEnd;
+
+                while (cur != null)
+                {
+                    curMem = cur.Memory;
+                    if (mem.ToInt64() < curMem.ToInt64())
+                    {
+                        cur = cur.NlLeft;
+                        continue;
+                    }
+                    else
+                    {
+                        curEnd = curMem.ToInt64() + cur.Size;
+                        if (mem.ToInt64() >= curEnd)
+                        {
+                            cur = cur.NlRight;
+                            continue;
+                        }
+                        return cur;
+                    }
+                }
+
+                return null;
             }
 
             public sealed class M_Node
@@ -631,7 +839,7 @@
                     set;
                 }
 
-                public long Density
+                public int Density
                 {
                     get;
                     set;
