@@ -119,23 +119,13 @@
                 _args = new Operand[arguments.Length];
         }
 
-        public bool SetArgument(int i, BaseVar var)
+        public bool SetArgument(int i, Operand operand)
         {
             Debug.Assert(i < _functionPrototype.Arguments.Length);
             if (i >= _functionPrototype.Arguments.Length)
                 return false;
 
-            _args[i] = var;
-            return true;
-        }
-
-        public bool SetArgument(int i, Imm imm)
-        {
-            Debug.Assert(i < _functionPrototype.Arguments.Length);
-            if (i >= _functionPrototype.Arguments.Length)
-                return false;
-
-            _args[i] = imm;
+            _args[i] = operand;
             return true;
         }
 
