@@ -48,15 +48,17 @@
 
         private int _functionCallStackSize;
 
-        private Label _entryLabel;
-        private Label _exitLabel;
-        private Prolog _prolog;
-        private Epilog _epilog;
-        private Dummy _end;
+        private readonly Label _entryLabel;
+        private readonly Label _exitLabel;
+        private readonly Prolog _prolog;
+        private readonly Epilog _epilog;
+        private readonly Dummy _end;
 
         public Function(Compiler compiler)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+
             _entryLabel = compiler.NewLabel();
             _exitLabel = compiler.NewLabel();
 
@@ -94,6 +96,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Label>() != null);
+
                 return _entryLabel;
             }
         }
@@ -102,6 +106,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Label>() != null);
+
                 return _exitLabel;
             }
         }
@@ -110,6 +116,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Prolog>() != null);
+
                 return _prolog;
             }
         }
@@ -118,6 +126,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Epilog>() != null);
+
                 return _epilog;
             }
         }
@@ -126,6 +136,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Dummy>() != null);
+
                 return _end;
             }
         }
@@ -136,6 +148,16 @@
             {
                 return _isCaller;
             }
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_entryLabel != null);
+            Contract.Invariant(_exitLabel != null);
+            Contract.Invariant(_prolog != null);
+            Contract.Invariant(_epilog != null);
+            Contract.Invariant(_end != null);
         }
 
         public override void Prepare(CompilerContext cc)
@@ -149,6 +171,16 @@
                 _hints |= hint;
             else
                 _hints &= ~hint;
+        }
+
+        public void SetHints(FunctionHints hints)
+        {
+            _hints |= hints;
+        }
+
+        public void ClearHints(FunctionHints hints)
+        {
+            _hints &= ~hints;
         }
 
         internal void SetPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)

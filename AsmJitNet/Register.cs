@@ -1,5 +1,7 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public static class Register
     {
         /// <summary>
@@ -515,6 +517,8 @@
         /// </summary>
         public static GPReg gpb_lo(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPB_LO);
         }
 
@@ -523,6 +527,8 @@
         /// </summary>
         public static GPReg gpb_hi(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPB_HI);
         }
 
@@ -531,6 +537,8 @@
         /// </summary>
         public static GPReg gpw(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPW);
         }
 
@@ -539,6 +547,8 @@
         /// </summary>
         public static GPReg gpd(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPD);
         }
 
@@ -548,6 +558,8 @@
         /// </summary>
         public static GPReg gpq(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPQ);
         }
 #endif
@@ -557,6 +569,8 @@
         /// </summary>
         public static GPReg gpn(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<GPReg>() != null);
+
             return new GPReg((int)index | (int)RegType.GPN);
         }
 
@@ -565,6 +579,8 @@
         /// </summary>
         public static X87Reg st(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<X87Reg>() != null);
+
             return new X87Reg((int)index | (int)RegType.X87);
         }
 
@@ -573,6 +589,8 @@
         /// </summary>
         public static MMReg mm(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<MMReg>() != null);
+
             return new MMReg((int)index | (int)RegType.MM);
         }
 
@@ -581,6 +599,8 @@
         /// </summary>
         public static XMMReg xmm(RegIndex index)
         {
+            Contract.Ensures(Contract.Result<XMMReg>() != null);
+
             return new XMMReg((int)index | (int)RegType.XMM);
         }
     }

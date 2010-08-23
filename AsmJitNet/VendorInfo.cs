@@ -1,6 +1,7 @@
 ﻿namespace AsmJitNet
 {
     using System.Collections.ObjectModel;
+    using System.Diagnostics.Contracts;
 
     public class VendorInfo
     {
@@ -9,6 +10,8 @@
 
         public VendorInfo(CpuVendor vendorId, char[] text)
         {
+            Contract.Requires(text != null);
+
             _vendorId = vendorId;
             _text = text;
         }
@@ -25,6 +28,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<ReadOnlyCollection<char>>() != null);
+
                 return new ReadOnlyCollection<char>(_text);
             }
         }

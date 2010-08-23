@@ -1,10 +1,12 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public abstract class Emittable
     {
         protected internal const int InvalidValue = -1;
 
-        private Compiler _compiler;
+        private readonly Compiler _compiler;
 
         private int _offset;
 
@@ -14,8 +16,10 @@
 
         private string _comment;
 
-        public Emittable(Compiler compiler)
+        protected Emittable(Compiler compiler)
         {
+            Contract.Requires(compiler != null);
+
             this._compiler = compiler;
             this._offset = InvalidValue;
         }
@@ -24,6 +28,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Compiler>() != null);
+
                 return _compiler;
             }
         }
@@ -94,21 +100,32 @@
             }
         }
 
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_compiler != null);
+        }
+
         public virtual void Prepare(CompilerContext cc)
         {
+            Contract.Requires(cc != null);
+
             _offset = cc.CurrentOffset;
         }
 
         public virtual void Translate(CompilerContext cc)
         {
+            Contract.Requires(cc != null);
         }
 
         public virtual void Emit(Assembler a)
         {
+            Contract.Requires(a != null);
         }
 
         public virtual void Post(Assembler a)
         {
+            Contract.Requires(a != null);
         }
     }
 }

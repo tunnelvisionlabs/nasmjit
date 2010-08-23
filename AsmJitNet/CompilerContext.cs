@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class CompilerContext
     {
@@ -89,6 +90,8 @@
 
         public CompilerContext(Compiler compiler)
         {
+            Contract.Requires(compiler != null);
+
             _compiler = compiler;
             Clear();
 
@@ -445,11 +448,15 @@
 
         internal bool IsActive(VarData varData)
         {
+            Contract.Requires(varData != null);
+
             return varData.NextActive != null;
         }
 
         internal void AddActive(VarData varData)
         {
+            Contract.Requires(varData != null);
+
             if (varData.NextActive != null)
                 throw new ArgumentException();
             if (varData.PreviousActive != null)
@@ -473,11 +480,15 @@
 
         internal void FreeActive(VarData varData)
         {
+            Contract.Requires(varData != null);
+
             throw new NotImplementedException();
         }
 
         public void AllocVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
         {
+            Contract.Requires(varData != null);
+
             switch (varData.Type)
             {
             case VariableType.GPD:
@@ -511,11 +522,15 @@
 
         public void SaveVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             throw new NotImplementedException();
         }
 
         public void AllocGPVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
         {
+            Contract.Requires(varData != null);
+
             int i;
 
             // Preferred register code.
@@ -692,6 +707,9 @@
 
         public void EmitExchangeVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags, VarData other)
         {
+            Contract.Requires(vdata != null);
+            Contract.Requires(other != null);
+
             // Caller must ensure that variable is allocated.
             Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
 
@@ -831,6 +849,8 @@
 
         private static int GetSpillScore(VarData vdata, int currentOffset)
         {
+            Contract.Requires(vdata != null);
+
             int score = 0;
 
             Debug.Assert(vdata.LastEmittable != null);
@@ -853,6 +873,8 @@
 
         public void SpillGPVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             // Can't spill variable that isn't allocated.
             Debug.Assert(vdata.State == VariableState.Register);
             Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
@@ -874,21 +896,29 @@
 
         public void SaveMMVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             throw new NotImplementedException();
         }
 
         public void SpillMMVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             throw new NotImplementedException();
         }
 
         public void SaveXMMVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             throw new NotImplementedException();
         }
 
         public void SpillXMMVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             throw new NotImplementedException();
         }
 
@@ -909,6 +939,8 @@
 
         public void EmitLoadVar(VarData varData, RegIndex regIndex)
         {
+            Contract.Requires(varData != null);
+
             Mem m = GetVarMem(varData);
 
             switch (varData.Type)
@@ -972,6 +1004,9 @@
 
         internal Mem GetVarMem(VarData varData)
         {
+            Contract.Requires(varData != null);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
             Mem m = new Mem();
             m.Id = varData.Id;
             if (!varData.IsMemArgument)
@@ -983,22 +1018,30 @@
 
         public void AllocMMVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
         {
+            Contract.Requires(varData != null);
+
             throw new NotImplementedException();
         }
 
         public void AllocXMMVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
         {
+            Contract.Requires(varData != null);
+
             throw new NotImplementedException();
         }
 
         private void PostAlloc(VarData varData, VariableAlloc variableAlloc)
         {
+            Contract.Requires(varData != null);
+
             if ((variableAlloc & VariableAlloc.Write) != 0)
                 varData.Changed = true;
         }
 
         public void SpillVar(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             switch (vdata.Type)
             {
             case VariableType.GPD:
@@ -1030,6 +1073,8 @@
 
         public void EmitSaveVar(VarData vdata, RegIndex regIndex)
         {
+            Contract.Requires(vdata != null);
+
             // Caller must ensure that variable is allocated.
             Debug.Assert(regIndex != RegIndex.Invalid);
 

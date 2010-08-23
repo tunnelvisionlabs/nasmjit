@@ -1,6 +1,7 @@
 ﻿namespace AsmJitNet
 {
     using System;
+    using System.Diagnostics.Contracts;
 
     internal sealed class Buffer
     {
@@ -170,6 +171,8 @@
 
         private bool Realloc(int to)
         {
+            Contract.Requires(to >= 0);
+
             if (Capacity < to)
             {
                 int len = Offset;

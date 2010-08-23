@@ -1,8 +1,9 @@
 ﻿namespace AsmJitNet
 {
     using System;
+    using System.Diagnostics.Contracts;
 
-    public class Imm : Operand
+    public sealed class Imm : Operand
     {
         private bool _isUnsigned;
         private IntPtr _value;
@@ -39,11 +40,15 @@
 
         public static implicit operator Imm(int i)
         {
+            Contract.Ensures(Contract.Result<Imm>() != null);
+
             return new Imm((IntPtr)i);
         }
 
         public static implicit operator Imm(IntPtr i)
         {
+            Contract.Ensures(Contract.Result<Imm>() != null);
+
             return new Imm(i);
         }
     }

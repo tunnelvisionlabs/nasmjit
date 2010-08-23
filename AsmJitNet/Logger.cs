@@ -1,5 +1,7 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public abstract class Logger
     {
         private bool _enabled;
@@ -56,6 +58,9 @@
 
         public virtual void LogFormat(string format, params object[] args)
         {
+            Contract.Requires(format != null);
+            Contract.Requires(args != null);
+
             LogString(string.Format(format, args));
         }
 

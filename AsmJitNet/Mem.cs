@@ -357,6 +357,8 @@
 
         private static Mem MemPtrBuild(GPReg @base, GPReg index, int shift, int displacement, Size size)
         {
+            Contract.Requires(shift >= 0 && shift <= 3);
+
             return new Mem(@base, index, shift, (IntPtr)displacement, (int)size);
         }
 
@@ -367,6 +369,8 @@
 
         private static Mem MemPtrBuild(GPVar @base, GPVar index, int shift, int displacement, Size size)
         {
+            Contract.Requires(shift >= 0 && shift <= 3);
+
             return new Mem(@base, index, shift, (IntPtr)displacement, (int)size);
         }
     }
