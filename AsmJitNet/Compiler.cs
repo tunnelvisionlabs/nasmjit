@@ -109,6 +109,8 @@
 
         public Function NewFunction(CallingConvention callingConvention, Type delegateType)
         {
+            Contract.Ensures(Contract.Result<Function>() != null);
+
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
 
@@ -142,6 +144,8 @@
 
         public Function NewFunction(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
+            Contract.Ensures(Contract.Result<Function>() != null);
+
             if (_function != null)
                 throw new InvalidOperationException();
 
@@ -160,6 +164,8 @@
 
         public Label NewLabel()
         {
+            Contract.Ensures(Contract.Result<Label>() != null);
+
             Label label = new Label(_targetData.Count);
             _targetData.Add(new Target(this, label));
             return label;
@@ -167,6 +173,8 @@
 
         public VarData NewVarData(string name, VariableType variableType, int size)
         {
+            Contract.Ensures(Contract.Result<VarData>() != null);
+
             VarData varData = new VarData();
 
             if (name == null)
@@ -225,19 +233,16 @@
                 throw new ArgumentOutOfRangeException("index");
 
             Function f = Function;
+            if (f == null)
+                throw new InvalidOperationException("No function.");
 
-            if (f != null)
-            {
-                FunctionPrototype prototype = f.Prototype;
-                if (index >= prototype.Arguments.Length)
-                    throw new ArgumentException();
+            FunctionPrototype prototype = f.Prototype;
+            if (index >= prototype.Arguments.Length)
+                throw new ArgumentException();
 
-                VarData varData = Function._argumentVariables[index];
-                GPVar var = new GPVar(varData.Id, varData.Size, VariableInfo.GetVariableInfo(varData.Type).Code, varData.Type);
-                return var;
-            }
-
-            return new GPVar();
+            VarData vdata = Function._argumentVariables[index];
+            GPVar var = new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            return var;
         }
 
         public GPVar NewGP(VariableType variableType = VariableType.GPN, string name = null)
@@ -250,6 +255,24 @@
             return var;
         }
 
+        public MMVar ArgMM(int index)
+        {
+            if (index < 0)
+                throw new ArgumentOutOfRangeException("index");
+
+            Function f = Function;
+            if (f == null)
+                throw new InvalidOperationException("No function.");
+
+            FunctionPrototype prototype = f.Prototype;
+            if (index >= prototype.Arguments.Length)
+                throw new ArgumentException();
+
+            VarData vdata = Function._argumentVariables[index];
+            MMVar var = new MMVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            return var;
+        }
+
         public MMVar NewMM(VariableType variableType = VariableType.MM, string name = null)
         {
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
@@ -257,6 +280,24 @@
 
             VarData vdata = NewVarData(name, variableType, 16);
             MMVar var = new MMVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            return var;
+        }
+
+        public XMMVar ArgXMM(int index)
+        {
+            if (index < 0)
+                throw new ArgumentOutOfRangeException("index");
+
+            Function f = Function;
+            if (f == null)
+                throw new InvalidOperationException("No function.");
+
+            FunctionPrototype prototype = f.Prototype;
+            if (index >= prototype.Arguments.Length)
+                throw new ArgumentException();
+
+            VarData vdata = Function._argumentVariables[index];
+            XMMVar var = new XMMVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
             return var;
         }
 
@@ -273,7 +314,7 @@
         public Function EndFunction()
         {
             if (_function == null)
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("No function.");
 
             Function f = _function;
             Bind(f.ExitLabel);
@@ -487,6 +528,8 @@
 
         public void AddEmittable(Emittable emittable)
         {
+            Contract.Requires(emittable != null);
+
             if (emittable == null)
                 throw new ArgumentNullException("emittable");
             if (emittable.Previous != null)
@@ -549,6 +592,9 @@
 
         public void Comment(string format, params object[] args)
         {
+            Contract.Requires(format != null);
+            Contract.Requires(args != null);
+
             string text = string.Format(format, args);
             AddEmittable(new Comment(this, text));
         }
@@ -651,6 +697,9 @@
         /// </summary>
         public void Adc(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Adc, dst, src);
         }
 
@@ -659,6 +708,9 @@
         /// </summary>
         public void Adc(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Adc, dst, src);
         }
 
@@ -667,6 +719,9 @@
         /// </summary>
         public void Adc(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Adc, dst, src);
         }
 
@@ -675,6 +730,9 @@
         /// </summary>
         public void Adc(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Adc, dst, src);
         }
 
@@ -683,6 +741,9 @@
         /// </summary>
         public void Adc(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Adc, dst, src);
         }
 
@@ -691,6 +752,9 @@
         /// </summary>
         public void Add(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
@@ -699,6 +763,9 @@
         /// </summary>
         public void Add(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
@@ -707,6 +774,9 @@
         /// </summary>
         public void Add(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
@@ -715,6 +785,9 @@
         /// </summary>
         public void Add(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
@@ -723,6 +796,9 @@
         /// </summary>
         public void Add(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Add, dst, src);
         }
 
@@ -731,6 +807,9 @@
         /// </summary>
         public void And(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
@@ -739,6 +818,9 @@
         /// </summary>
         public void And(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
@@ -747,6 +829,9 @@
         /// </summary>
         public void And(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
@@ -755,6 +840,9 @@
         /// </summary>
         public void And(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
@@ -763,6 +851,9 @@
         /// </summary>
         public void And(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.And, dst, src);
         }
 
@@ -771,6 +862,9 @@
         /// </summary>
         public Call Call(GPVar dst)
         {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             return _emitCall(dst);
         }
 
@@ -779,6 +873,9 @@
         /// </summary>
         public Call Call(Mem dst)
         {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             return _emitCall(dst);
         }
 
@@ -787,6 +884,9 @@
         /// </summary>
         public Call Call(Imm dst)
         {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             return _emitCall(dst);
         }
 
@@ -795,6 +895,8 @@
         /// </summary>
         public Call Call(IntPtr dst)
         {
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             return _emitCall((Imm)dst);
         }
 
@@ -803,36 +905,219 @@
         /// </summary>
         public Call Call(Label label)
         {
+            Contract.Requires(label != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             return _emitCall(label);
+        }
+
+        public void Call(JitAction function)
+        {
+            Contract.Requires(function != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+        }
+
+        public void Call<T>(JitAction<T> function, Operand arg0)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+        }
+
+        public void Call<T1, T2>(JitAction<T1, T2> function, Operand arg0, Operand arg1)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+        }
+
+        public void Call<T1, T2, T3>(JitAction<T1, T2, T3> function, Operand arg0, Operand arg1, Operand arg2)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+            Contract.Requires(arg2 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+            call.SetArgument(2, arg2);
+        }
+
+        public void Call<T1, T2, T3, T4>(JitAction<T1, T2, T3, T4> function, Operand arg0, Operand arg1, Operand arg2, Operand arg3)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+            Contract.Requires(arg2 != null);
+            Contract.Requires(arg3 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+            call.SetArgument(2, arg2);
+            call.SetArgument(3, arg3);
+        }
+
+        public void Call<TResult>(JitFunction<TResult> function, Operand returnOperand0, Operand returnOperand1 = null)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(returnOperand0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
+        }
+
+        public void Call<T, TResult>(JitFunction<T, TResult> function, Operand arg0, Operand returnOperand0, Operand returnOperand1 = null)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(returnOperand0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
+        }
+
+        public void Call<T1, T2, TResult>(JitFunction<T1, T2, TResult> function, Operand arg0, Operand arg1, Operand returnOperand0, Operand returnOperand1 = null)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+            Contract.Requires(returnOperand0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+            call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
+        }
+
+        public void Call<T1, T2, T3, TResult>(JitFunction<T1, T2, T3, TResult> function, Operand arg0, Operand arg1, Operand arg2, Operand returnOperand0, Operand returnOperand1 = null)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+            Contract.Requires(arg2 != null);
+            Contract.Requires(returnOperand0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+            call.SetArgument(2, arg2);
+            call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
+        }
+
+        public void Call<T1, T2, T3, T4, TResult>(JitFunction<T1, T2, T3, T4, TResult> function, Operand arg0, Operand arg1, Operand arg2, Operand arg3, Operand returnOperand0, Operand returnOperand1 = null)
+        {
+            Contract.Requires(function != null);
+            Contract.Requires(arg0 != null);
+            Contract.Requires(arg1 != null);
+            Contract.Requires(arg2 != null);
+            Contract.Requires(arg3 != null);
+            Contract.Requires(returnOperand0 != null);
+
+            if (!function.IsCompiled)
+                throw new NotImplementedException("The compiler doesn't support late bindings.");
+
+            Call call = Call(function.CompiledAddress);
+            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            call.SetArgument(0, arg0);
+            call.SetArgument(1, arg1);
+            call.SetArgument(2, arg2);
+            call.SetArgument(3, arg3);
+            call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
         }
 
         public void Cmp(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
         public void Cmp(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
         public void Cmp(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
         public void Cmp(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
         public void Cmp(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Cmp, dst, src);
         }
 
         public void Cpuid(GPVar inout_eax, GPVar out_ebx, GPVar out_ecx, GPVar out_edx)
         {
+            Contract.Requires(inout_eax != null);
+            Contract.Requires(out_ebx != null);
+            Contract.Requires(out_ecx != null);
+            Contract.Requires(out_edx != null);
+
             // Destination variables must be different
             if (inout_eax.Id == out_ebx.Id
                 || out_ebx.Id == out_ecx.Id
@@ -846,41 +1131,71 @@
 
         public void Dec(GPVar dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Dec, dst);
         }
 
         public void Dec(Mem dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Dec, dst);
         }
 
         public void Imul(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Imul, dst, src);
         }
 
         public void Imul(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Imul, dst, src);
         }
 
         public void Imul(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Imul, dst, src);
         }
 
         public void Imul(GPVar dst, GPVar src, Imm imm)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+            Contract.Requires(imm != null);
+
+            _emitInstruction(InstructionCode.Imul, dst, src, imm);
+        }
+
+        public void Imul(GPVar dst, Mem src, Imm imm)
+        {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+            Contract.Requires(imm != null);
+
             _emitInstruction(InstructionCode.Imul, dst, src, imm);
         }
 
         public void Inc(GPVar dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Inc, dst);
         }
 
         public void Inc(Mem dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Inc, dst);
         }
 
@@ -889,23 +1204,24 @@
             _emitInstruction(InstructionCode.Int3);
         }
 
-        public void Imul(GPVar dst, Mem src, Imm imm)
-        {
-            _emitInstruction(InstructionCode.Imul, dst, src, imm);
-        }
-
         public void Jmp(GPVar dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Jmp, dst);
         }
 
         public void Jmp(Mem dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Jmp, dst);
         }
 
         public void Jmp(Imm dst)
         {
+            Contract.Requires(dst != null);
+
             _emitInstruction(InstructionCode.Jmp, dst);
         }
 
@@ -916,61 +1232,97 @@
 
         public void Jmp(Label label)
         {
+            Contract.Requires(label != null);
+
             _emitInstruction(InstructionCode.Jmp, label);
         }
 
         public void Jnz(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             _emitJcc(InstructionCode.Jnz, label, hint);
         }
 
         public void Jz(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             _emitJcc(InstructionCode.Jz, label, hint);
         }
 
         public void Lea(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Lea, dst, src);
         }
 
         public void Maskmovdqu(GPVar dst_ptr, XMMVar src, XMMVar mask)
         {
+            Contract.Requires(dst_ptr != null);
+            Contract.Requires(src != null);
+            Contract.Requires(mask != null);
+
             _emitInstruction(InstructionCode.Maskmovdqu, dst_ptr, src, mask);
         }
 
         public void Maskmovq(GPVar dst_ptr, MMVar data, MMVar mask)
         {
+            Contract.Requires(dst_ptr != null);
+            Contract.Requires(data != null);
+            Contract.Requires(mask != null);
+
             _emitInstruction(InstructionCode.Maskmovq, dst_ptr, data, mask);
         }
 
         public void Mov(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Mov, dst, src);
         }
 
         public void Mov(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Mov, dst, src);
         }
 
         public void Mov(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Mov, dst, src);
         }
 
         public void Mov(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Mov, dst, src);
         }
 
         public void Mov(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Mov, dst, src);
         }
 
         public void RepMovsb(GPVar dst_addr, GPVar src_addr, GPVar cnt_ecx)
         {
+            Contract.Requires(dst_addr != null);
+            Contract.Requires(src_addr != null);
+            Contract.Requires(cnt_ecx != null);
+
             // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
             Debug.Assert(dst_addr.Id != src_addr.Id && src_addr.Id != cnt_ecx.Id);
 
@@ -984,91 +1336,143 @@
 
         public void Ret(GPVar first)
         {
+            Contract.Requires(first != null);
+
             _emitReturn(first, null);
         }
 
         public void Ret(GPVar first, GPVar second)
         {
+            Contract.Requires(first != null);
+            Contract.Requires(second != null);
+
             _emitReturn(first, second);
         }
 
         public void Ret(XMMVar first)
         {
+            Contract.Requires(first != null);
+
             _emitReturn(first, null);
         }
 
         public void Ret(XMMVar first, XMMVar second)
         {
+            Contract.Requires(first != null);
+            Contract.Requires(second != null);
+
             _emitReturn(first, second);
         }
 
         public void Shl(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Shl, dst, src);
         }
 
         public void Shl(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Shl, dst, src);
         }
 
         public void Shl(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Shl, dst, src);
         }
 
         public void Shl(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Shl, dst, src);
         }
 
         public void Sub(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Sub, dst, src);
         }
 
         public void Test(GPVar op1, GPVar op2)
         {
+            Contract.Requires(op1 != null);
+            Contract.Requires(op2 != null);
+
             _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
         public void Test(GPVar op1, Imm op2)
         {
+            Contract.Requires(op1 != null);
+            Contract.Requires(op2 != null);
+
             _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
         public void Test(Mem op1, GPVar op2)
         {
+            Contract.Requires(op1 != null);
+            Contract.Requires(op2 != null);
+
             _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
         public void Test(Mem op1, Imm op2)
         {
+            Contract.Requires(op1 != null);
+            Contract.Requires(op2 != null);
+
             _emitInstruction(InstructionCode.Test, op1, op2);
         }
 
         public void Xor(GPVar dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Xor, dst, src);
         }
 
         public void Xor(GPVar dst, Mem src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Xor, dst, src);
         }
 
         public void Xor(GPVar dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Xor, dst, src);
         }
 
         public void Xor(Mem dst, GPVar src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Xor, dst, src);
         }
 
         public void Xor(Mem dst, Imm src)
         {
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             _emitInstruction(InstructionCode.Xor, dst, src);
         }
 
@@ -1087,7 +1491,8 @@
         private Instruction NewInstruction(InstructionCode code, Operand[] operands)
         {
             Contract.Requires(operands != null);
-            Contract.Requires(operands.All(i => i != null));
+            //Contract.Requires(operands.All(i => i != null));
+            Contract.Ensures(Contract.Result<Instruction>() != null);
 
             if (code >= InstructionDescription.JumpAnyBegin && code <= InstructionDescription.JumpAnyEnd)
             {
@@ -1113,7 +1518,7 @@
         private void _emitInstruction(InstructionCode instructionCode, params Operand[] operands)
         {
             Contract.Requires(operands != null);
-            Contract.Requires(operands.All(i => i != null));
+            //Contract.Requires(operands.All(i => i != null));
 
             Instruction e = NewInstruction(instructionCode, operands);
             AddEmittable(e);
@@ -1139,25 +1544,14 @@
 
         private Call _emitCall(Operand o0)
         {
+            Contract.Requires(o0 != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
             Function fn = Function;
             if (fn == null)
-            {
-                Error = Errors.NoFunction;
-                return null;
-            }
+                throw new InvalidOperationException("No function.");
 
-            Call call;
-
-            try
-            {
-                call = new Call(this, fn, o0);
-            }
-            catch (OutOfMemoryException)
-            {
-                Error = Errors.NoHeapMemory;
-                return null;
-            }
-
+            Call call = new Call(this, fn, o0);
             AddEmittable(call);
             return call;
         }
