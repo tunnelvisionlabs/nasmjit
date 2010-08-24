@@ -95,6 +95,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestJitFunctions.cs" />
+    <Compile Include="TestJumps.cs" />
     <Compile Include="TestMethodStub.cs" />
     <Compile Include="TestVariables.cs" />
   </ItemGroup>
