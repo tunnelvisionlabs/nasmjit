@@ -2,6 +2,8 @@
 {
     public sealed class Label : Operand
     {
+        public static readonly Label Empty = new Label();
+
         public Label()
         {
         }
