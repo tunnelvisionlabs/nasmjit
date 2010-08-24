@@ -2058,12 +2058,28 @@ protected:
 struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 {
   // Special X86 instructions:
-  // - cbw, cwde, cdqe,
-  // - cmpxchg8b, cmpxchg16b,
   // - cpuid,
+  // - cbw, cwde, cdqe,
+  // - cmpxchg
+  // - cmpxchg8b, cmpxchg16b,
   // - daa, das,
-  // - div, idiv,
-  // - mul, imul,
+  // - imul, mul, idiv, div,
+  // - mov_ptr
+  // - lahf, sahf
+  // - maskmovq, maskmovdqu
+  // - enter, leave
+  // - ret
+  // - monitor, mwait
+  // - pop, popad, popfd, popfq,
+  // - push, pushad, pushfd, pushfq
+  // - rcl, rcr, rol, ror, sal, sar, shl, shr
+  // - shld, shrd
+  // - rdtsc. rdtscp
+  // - lodsb, lodsd, lodsq, lodsw
+  // - movsb, movsd, movsq, movsw
+  // - stosb, stosd, stosq, stosw
+  // - cmpsb, cmpsd, cmpsq, cmpsw
+  // - scasb, scasd, scasq, scasw
   //
   // Special X87 instructions:
   // - fisttp
@@ -2394,20 +2410,20 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! @brief Convert Byte to Word (Sign Extend).
   inline void cbw(const GPVar& dst)
   {
-    _emitInstruction(INST_CBW);
+    _emitInstruction(INST_CBW, &dst);
   }
 
   //! @brief Convert Word to DWord (Sign Extend).
   inline void cwde(const GPVar& dst)
   {
-    _emitInstruction(INST_CWDE);
+    _emitInstruction(INST_CWDE, &dst);
   }
 
 #if defined(ASMJIT_X64)
   //! @brief Convert DWord to QWord (Sign Extend).
   inline void cdqe(const GPVar& dst)
   {
-    _emitInstruction(INST_CDQE);
+    _emitInstruction(INST_CDQE, &dst);
   }
 #endif // ASMJIT_X64
 
