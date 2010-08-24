@@ -7491,6 +7491,9 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! method to do something else with it. If you take buffer, you must free it
 //! manually by @c ASMJIT_FREE() macro.
 //!
+//! @note Always use this class and never use @c AssemblerCore or
+//! @c AssemblerIntrinsics classes directly.
+//!
 //! @section AsmJit_Assembler_CodeGeneration Code Generation
 //!
 //! To generate code is only needed to create instance of @c AsmJit::Assembler
@@ -7694,7 +7697,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! a.add(esi, 4);
 //! a.add(edi, 4);
 //!
-//! // Repeat loop until ecx != 0.
+//! // Repeat loop until (--ecx != 0).
 //! a.dec(ecx);
 //! a.jz(L_Loop);
 //!
@@ -7713,8 +7716,55 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! look at @c Compiler class that is designed for higher level code
 //! generation.
 //!
-//! @note Always use this class and never use @c AssemblerCore or
-//! @c AssemblerIntrinsics classes directly.
+//! @section AsmJit_Assembler_AdvancedCodeGeneration Advanced Code Generation
+//!
+//! This section describes some advanced generation features of @c Assembler
+//! class which can be simply overlooked. The first thing that is very likely
+//! needed is generic register support. In previous example the named registers
+//! were used. AsmJit contains functions which can convert register index into
+//! operand and back.
+//!
+//! Let's define function which can be used to generate some abstract code:
+//!
+//! @code
+//! // Simple function that generates dword copy.
+//! void genCopyDWord(
+//!   Assembler& a,
+//!   const GPReg& dst, const GPReg& src, const GPReg& tmp)
+//! {
+//!   a.mov(tmp, dword_ptr(src));
+//!   a.mov(dword_ptr(dst), tmp);
+//! }
+//! @endcode
+//!
+//! This function can be called like <code>genCopyDWord(a, edi, esi, ebx)</code>
+//! or by using existing @ref GPReg instances. This abstraction allows to join
+//! more code sections together without rewriting each to use specific registers.
+//! You need to take care only about implicit registers which may be used by 
+//! several instructions (like mul, imul, div, idiv, shifting, etc...).
+//!
+//! Next, more advanced, but often needed technique is that you can build your
+//! own registers allocator. X86 architecture contains 8 general purpose registers,
+//! 8 MMX (MM) registers and 8 SSE (XMM) registers. The X64 (AMD64) architecture
+//! extends count of general purpose registers and SSE2 registers to 16. Use the
+//! @c REG_NUM_BASE constant to get count of GP or XMM registers or @c REG_NUM_GP,
+//! @c REG_NUM_MM and @c REG_NUM_XMM constants individually.
+//!
+//! To build register from index (value from 0 inclusive to REG_NUM_XXX 
+//! exclusive) use @ref gpd(), @ref gpq() or @ref gpn() functions. To create
+//! a 8 or 16-bit register use @ref gpw(), @ref gpb_lo() or @ref gpb_hi(). 
+//! To create other registers there are similar methods @ref mm(), @ref xmm() and
+//! @ref st().
+//!
+//! So our function call to genCopyDWord can be also used like this:
+//!
+//! @code
+//! genCopyDWord(a, gpd(REG_INDEX_EDI), gpd(REG_INDEX_ESI), gpd(REG_INDEX_EBX));
+//! @endcode
+//!
+//! REG_INDEX_XXX are constants defined by @ref REG_INDEX enum. You can use your
+//! own register allocator (or register slot manager) to alloc / free registers
+//! so REG_INDEX_XXX values can be replaced by your variables (0 to REG_NUM_XXX-1).
 //!
 //! @sa @c AssemblerCore, @c AssemblerIntrinsics, @c Operand, @c Compiler.
 struct ASMJIT_API Assembler : public AssemblerIntrinsics
