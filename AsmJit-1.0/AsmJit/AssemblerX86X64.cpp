@@ -792,10 +792,15 @@ ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
 
 static char* dumpInstruction(char* buf,
   uint32_t code,
+  uint32_t emitOptions,
   const Operand* o0,
   const Operand* o1,
   const Operand* o2) ASMJIT_NOTHROW
 {
+  if (emitOptions & EMIT_OPTION_REX_PREFIX ) buf = Util::mycpy(buf, "rex ", 4);
+  if (emitOptions & EMIT_OPTION_LOCK_PREFIX) buf = Util::mycpy(buf, "lock ", 5);
+  if (emitOptions & EMIT_OPTION_SHORT_JUMP ) buf = Util::mycpy(buf, "short ", 6);
+
   // Dump instruction.
   buf = dumpInstructionName(buf, code);
 
@@ -1279,7 +1284,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         LabelData& l_data = _labelData[reinterpret_cast<const Label*>(o0)->getId() & OPERAND_ID_VALUE_MASK];
 
         uint32_t hint = (uint32_t)(o1->isImm() ? reinterpret_cast<const Imm&>(*o1).getValue() : 0);
-        bool isShortJump = (code >= _INST_J_SHORT_BEGIN && code <= _INST_J_SHORT_END);
+        bool isShortJump = (_emitOptions & EMIT_OPTION_SHORT_JUMP) != 0;
 
         // Emit jump hint if configured for that.
         if ((hint & (HINT_TAKEN | HINT_NOT_TAKEN)) && (_properties & (1 << PROPERTY_JUMP_HINTS)))
@@ -1304,14 +1309,15 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
             _emitByte(0x70 | (uint8_t)id->opCode[0]);
             _emitByte((uint8_t)(int8_t)(offs - rel8_size));
 
-            // Change the instruction code so logger can log instruction correctly.
-            code += _INST_J_SHORT_OFFSET;
+            // Change the emit options so logger can log instruction correctly.
+            _emitOptions |= EMIT_OPTION_SHORT_JUMP;
           }
           else
           {
             if (isShortJump && _logger)
             {
               _logger->logString("*** ASSEMBLER WARNING: Emitting long conditional jump, but short jump instruction forced!\n");
+              _emitOptions &= ~EMIT_OPTION_SHORT_JUMP;
             }
 
             _emitByte(0x0F);
@@ -1364,7 +1370,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isLabel())
       {
         LabelData& l_data = _labelData[reinterpret_cast<const Label*>(o0)->getId() & OPERAND_ID_VALUE_MASK];
-        bool isShortJump = (code >= _INST_J_SHORT_BEGIN && code <= _INST_J_SHORT_END);
+        bool isShortJump = (_emitOptions & EMIT_OPTION_SHORT_JUMP) != 0;
 
         if (l_data.offset != -1)
         {
@@ -1378,8 +1384,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
             _emitByte(0xEB);
             _emitByte((uint8_t)(int8_t)(offs - rel8_size));
 
-            // Change the instruction code so logger can log instruction correctly.
-            code += _INST_J_SHORT_OFFSET;
+            // Change the emit options so logger can log instruction correctly.
+            _emitOptions |= EMIT_OPTION_SHORT_JUMP;
           }
           else
           {
@@ -1388,6 +1394,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
               if (_logger && _logger->isUsed())
               {
                 _logger->logString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!\n");
+                _emitOptions &= ~EMIT_OPTION_SHORT_JUMP;
               }
             }
 
@@ -2423,7 +2430,7 @@ end:
     char bufStorage[512];
     char* buf = bufStorage;
     
-    buf = dumpInstruction(buf, code, o0, o1, o2);
+    buf = dumpInstruction(buf, code, _emitOptions, o0, o1, o2);
 
     if (_logger->getLogBinary())
       buf = dumpComment(buf, (sysuint_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _comment);

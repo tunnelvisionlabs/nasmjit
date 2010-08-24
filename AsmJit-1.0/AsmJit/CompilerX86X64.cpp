@@ -1857,7 +1857,6 @@ EJmp::EJmp(Compiler* c, uint32_t code, Operand* operandsData, uint32_t operandsC
 
   // The 'jmp' is always taken, conditional jump can contain hint, we detect it.
   _isTaken = (getCode() == INST_JMP) || 
-             (getCode() == INST_JMP_SHORT) ||
              (operandsCount > 1 &&
               operandsData[1].isImm() &&
               reinterpret_cast<Imm*>(&operandsData[1])->getValue() == HINT_TAKEN);
@@ -1874,7 +1873,6 @@ void EJmp::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   // Update _isTaken to true if this is conditional backward jump. This behavior
   // can be overriden by using HINT_NOT_TAKEN when using the instruction.
   if (getCode() != INST_JMP &&
-      getCode() != INST_JMP_SHORT &&
       _operandsCount == 1 &&
       _jumpTarget->getOffset() < getOffset())
   {
@@ -1922,7 +1920,7 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
   }
 
   // Mark next code as unrecheable, cleared by a next label (ETarget).
-  if (_code == INST_JMP || _code == INST_JMP_SHORT)
+  if (_code == INST_JMP)
   {
     cc._unrecheable = 1;
   }
@@ -1948,9 +1946,7 @@ void EJmp::emit(Assembler& a) ASMJIT_NOTHROW
   // Try to minimize size of jump using SHORT jump (8-bit displacement) by 
   // traversing into the target and calculating the maximum code size. We
   // end when code size reaches MAXIMUM_SHORT_JMP_SIZE.
-  if (_code >= _INST_J_LONG_BEGIN && 
-      _code <= _INST_J_LONG_END &&
-      getJumpTarget()->getOffset() > getOffset())
+  if (!(_emitOptions & EMIT_OPTION_SHORT_JUMP) && getJumpTarget()->getOffset() > getOffset())
   {
     // Calculate the code size.
     uint codeSize = 0;
@@ -1962,13 +1958,8 @@ void EJmp::emit(Assembler& a) ASMJIT_NOTHROW
       if (cur == target)
       {
         // Target found, we can tell assembler to generate short form of jump.
-
-        // Okay, this looks ugly, but I'd like to call EInstruction::emit()
-        // without changing the instruction code after returned from EJmp::emit().
-        _code += _INST_J_SHORT_OFFSET;
-        EInstruction::emit(a);
-        _code -= _INST_J_SHORT_OFFSET;
-        return;
+        _emitOptions |= EMIT_OPTION_SHORT_JUMP;
+        goto end;
       }
 
       int s = cur->getMaxSize();
@@ -1981,7 +1972,7 @@ void EJmp::emit(Assembler& a) ASMJIT_NOTHROW
     }
   }
 
-  // No modification...
+end:
   EInstruction::emit(a);
 }
 
@@ -1991,7 +1982,7 @@ void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
   // translate() or by Compiler in case that it's forward jump.
   ASMJIT_ASSERT(_jumpTarget->getState());
 
-  if ((getCode() == INST_JMP || getCode() == INST_JMP_SHORT) || (isTaken() && _jumpTarget->getOffset() < getOffset()))
+  if (getCode() == INST_JMP || (isTaken() && _jumpTarget->getOffset() < getOffset()))
   {
     // Instruction type is JMP or conditional jump that should be taken (likely).
     // We can set state here instead of jumping out, setting state and jumping

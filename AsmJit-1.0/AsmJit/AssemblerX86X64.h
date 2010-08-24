@@ -509,6 +509,13 @@ struct ASMJIT_API AssemblerCore
   //! @brief Private method for emitting jcc.
   void _emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW;
 
+  //! @brief Private method for emitting short jcc.
+  inline void _emitShortJcc(uint32_t code, const Label* label, uint32_t hint)
+  {
+    _emitOptions |= EMIT_OPTION_SHORT_JUMP;
+    _emitJcc(code, label, hint);
+  }
+
   // --------------------------------------------------------------------------
   // [Relocation helpers]
   // --------------------------------------------------------------------------
@@ -1423,71 +1430,72 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Short jump to label @a label if condition @a cc is met.
   //! @sa j()
-  inline void j_short(CONDITION cc, const Label& label, uint32_t hint = HINT_NONE)
+  inline void short_j(CONDITION cc, const Label& label, uint32_t hint = HINT_NONE)
   {
-    _emitJcc(ConditionToInstruction::toJCC(cc) + _INST_J_SHORT_OFFSET, &label, hint);
+    _emitOptions |= EMIT_OPTION_SHORT_JUMP;
+    j(cc, label, hint);
   }
 
   //! @brief Short jump to label @a label if condition is met.
-  inline void ja_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JA_SHORT  , &label, hint); }
+  inline void short_ja  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JA  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jae_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JAE_SHORT , &label, hint); }
+  inline void short_jae (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JAE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jb_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JB_SHORT  , &label, hint); }
+  inline void short_jb  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JB  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jbe_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JBE_SHORT , &label, hint); }
+  inline void short_jbe (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JBE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jc_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JC_SHORT  , &label, hint); }
+  inline void short_jc  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JC  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void je_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JE_SHORT  , &label, hint); }
+  inline void short_je  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JE  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jg_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JG_SHORT  , &label, hint); }
+  inline void short_jg  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JG  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jge_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JGE_SHORT , &label, hint); }
+  inline void short_jge (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JGE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jl_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JL_SHORT  , &label, hint); }
+  inline void short_jl  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JL  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jle_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JLE_SHORT , &label, hint); }
+  inline void short_jle (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JLE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jna_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNA_SHORT , &label, hint); }
+  inline void short_jna (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNA , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnae_short(const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNAE_SHORT, &label, hint); }
+  inline void short_jnae(const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNAE, &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnb_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNB_SHORT , &label, hint); }
+  inline void short_jnb (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNB , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnbe_short(const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNBE_SHORT, &label, hint); }
+  inline void short_jnbe(const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNBE, &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnc_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNC_SHORT , &label, hint); }
+  inline void short_jnc (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNC , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jne_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNE_SHORT , &label, hint); }
+  inline void short_jne (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jng_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNG_SHORT , &label, hint); }
+  inline void short_jng (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNG , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnge_short(const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNGE_SHORT, &label, hint); }
+  inline void short_jnge(const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNGE, &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnl_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNL_SHORT , &label, hint); }
+  inline void short_jnl (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNL , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnle_short(const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNLE_SHORT, &label, hint); }
+  inline void short_jnle(const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNLE, &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jno_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNO_SHORT , &label, hint); }
+  inline void short_jno (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNO , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnp_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNP_SHORT , &label, hint); }
+  inline void short_jnp (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNP , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jns_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNS_SHORT , &label, hint); }
+  inline void short_jns (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNS , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jnz_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JNZ_SHORT , &label, hint); }
+  inline void short_jnz (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JNZ , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jo_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JO_SHORT  , &label, hint); }
+  inline void short_jo  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JO  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jp_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JP_SHORT  , &label, hint); }
+  inline void short_jp  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JP  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jpe_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JPE_SHORT , &label, hint); }
+  inline void short_jpe (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JPE , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jpo_short (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JPO_SHORT , &label, hint); }
+  inline void short_jpo (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JPO , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void js_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JS_SHORT  , &label, hint); }
+  inline void short_js  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JS  , &label, hint); }
   //! @brief Short jump to label @a label if condition is met.
-  inline void jz_short  (const Label& label, uint32_t hint = HINT_NONE) { _emitJcc(INST_JZ_SHORT  , &label, hint); }
+  inline void short_jz  (const Label& label, uint32_t hint = HINT_NONE) { _emitShortJcc(INST_JZ  , &label, hint); }
 
   //! @brief Jump.
   //! @overload
@@ -1529,9 +1537,10 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 
   //! @brief Short jump.
   //! @sa jmp()
-  inline void jmp_short(const Label& label)
+  inline void short_jmp(const Label& label)
   {
-    _emitInstruction(INST_JMP_SHORT, &label);
+    _emitOptions |= EMIT_OPTION_SHORT_JUMP;
+    _emitInstruction(INST_JMP, &label);
   }
 
   //! @brief Load Effective Address

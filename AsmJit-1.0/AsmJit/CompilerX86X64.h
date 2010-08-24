@@ -1783,7 +1783,7 @@ struct ASMJIT_API CompilerCore
 
   inline EInstruction* newInstruction(uint32_t code, Operand* operandsData, uint32_t operandsCount) ASMJIT_NOTHROW
   {
-    if (code >= _INST_J_ANY_BEGIN && code <= _INST_J_ANY_END)
+    if (code >= _INST_J_BEGIN && code <= _INST_J_END)
     {
       void* addr = _zone.zalloc(sizeof(EJmp));
 

@@ -935,7 +935,6 @@ enum INST_CODE
   INST_IMUL,          // X86/X64
   INST_INC,           // X86/X64
   INST_INT3,          // X86/X64
-
   INST_J,             // Begin (jcc)
   INST_JA = 
     INST_J,           // X86/X64 (jcc)
@@ -969,41 +968,6 @@ enum INST_CODE
   INST_JS,            // X86/X64 (jcc)
   INST_JZ,            // X86/X64 (jcc)
   INST_JMP,           // X86/X64 (jmp)
-
-  INST_J_SHORT,       // Begin (jcc_short)
-  INST_JA_SHORT = 
-    INST_J_SHORT,     // X86/X64 (jcc_short)
-  INST_JAE_SHORT,     // X86/X64 (jcc_short)
-  INST_JB_SHORT,      // X86/X64 (jcc_short)
-  INST_JBE_SHORT,     // X86/X64 (jcc_short)
-  INST_JC_SHORT,      // X86/X64 (jcc_short)
-  INST_JE_SHORT,      // X86/X64 (jcc_short)
-  INST_JG_SHORT,      // X86/X64 (jcc_short)
-  INST_JGE_SHORT,     // X86/X64 (jcc_short)
-  INST_JL_SHORT,      // X86/X64 (jcc_short)
-  INST_JLE_SHORT,     // X86/X64 (jcc_short)
-  INST_JNA_SHORT,     // X86/X64 (jcc_short)
-  INST_JNAE_SHORT,    // X86/X64 (jcc_short)
-  INST_JNB_SHORT,     // X86/X64 (jcc_short)
-  INST_JNBE_SHORT,    // X86/X64 (jcc_short)
-  INST_JNC_SHORT,     // X86/X64 (jcc_short)
-  INST_JNE_SHORT,     // X86/X64 (jcc_short)
-  INST_JNG_SHORT,     // X86/X64 (jcc_short)
-  INST_JNGE_SHORT,    // X86/X64 (jcc_short)
-  INST_JNL_SHORT,     // X86/X64 (jcc_short)
-  INST_JNLE_SHORT,    // X86/X64 (jcc_short)
-  INST_JNO_SHORT,     // X86/X64 (jcc_short)
-  INST_JNP_SHORT,     // X86/X64 (jcc_short)
-  INST_JNS_SHORT,     // X86/X64 (jcc_short)
-  INST_JNZ_SHORT,     // X86/X64 (jcc_short)
-  INST_JO_SHORT,      // X86/X64 (jcc_short)
-  INST_JP_SHORT,      // X86/X64 (jcc_short)
-  INST_JPE_SHORT,     // X86/X64 (jcc_short)
-  INST_JPO_SHORT,     // X86/X64 (jcc_short)
-  INST_JS_SHORT,      // X86/X64 (jcc_short)
-  INST_JZ_SHORT,      // X86/X64 (jcc_short)
-  INST_JMP_SHORT,     // X86/X64 (jmp_short)
-
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LAHF,          // X86/X64 (CPUID NEEDED)
@@ -1337,15 +1301,8 @@ enum INST_CODE
 
   _INST_COUNT,
 
-  _INST_J_ANY_BEGIN = INST_J,
-  _INST_J_ANY_END = INST_JMP_SHORT,
-
-  _INST_J_LONG_BEGIN = INST_J,
-  _INST_J_LONG_END = INST_JMP,
-
-  _INST_J_SHORT_BEGIN = INST_J_SHORT,
-  _INST_J_SHORT_END = INST_JMP_SHORT,
-  _INST_J_SHORT_OFFSET = INST_J_SHORT - INST_J
+  _INST_J_BEGIN = INST_J,
+  _INST_J_END = INST_JMP
 };
 
 // ============================================================================
@@ -1577,17 +1534,22 @@ ASMJIT_API extern const InstructionDescription instructionDescription[];
 //! @brief Emit options, mainly for internal purposes.
 enum EMIT_OPTIONS
 {
-  //! @brief Tell @c Assembler or @c Compiler to emit and validate lock prefix.
-  //!
-  //! If this option is used and instruction doesn't support LOCK prefix then
-  //! invalid instruction error is generated.
-  EMIT_OPTION_LOCK_PREFIX = (1 << 0),
   //! @brief Force REX prefix to be emitted.
   //!
   //! This option should be used carefully, because there are unencodable
   //! combinations. If you want to access ah, bh, ch or dh registers then you
   //! can't emit REX prefix and it will cause an illegal instruction error.
-  EMIT_OPTION_REX_PREFIX = (1 << 1)
+  EMIT_OPTION_REX_PREFIX = (1 << 0),
+
+  //! @brief Tell @c Assembler or @c Compiler to emit and validate lock prefix.
+  //!
+  //! If this option is used and instruction doesn't support LOCK prefix then
+  //! invalid instruction error is generated.
+  EMIT_OPTION_LOCK_PREFIX = (1 << 1),
+
+  //! @brief Emit short/near jump or conditional jump instead of far one, 
+  //! saving some bytes.
+  EMIT_OPTION_SHORT_JUMP = (1 << 2)
 };
 
 // ============================================================================
