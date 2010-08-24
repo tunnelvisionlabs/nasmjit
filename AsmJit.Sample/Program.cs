@@ -22,6 +22,9 @@
 
         private static void Main(string[] args)
         {
+            TestExceptionHandling test = new TestExceptionHandling();
+            test.RunTest();
+
             Compiler compiler = new Compiler();
             CallingConvention callingConvention = CallingConvention.Default;
             compiler.NewFunction(callingConvention, typeof(Func<int>));
