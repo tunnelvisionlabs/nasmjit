@@ -728,21 +728,21 @@
                 InstructionCode.Setg
             };
 
-        private static InstructionCode ConditionToJump(Condition condition)
+        internal static InstructionCode ConditionToJump(Condition condition)
         {
             Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
 
             return _jcctable[(int)condition];
         }
 
-        private static InstructionCode ConditionToMovCC(Condition condition)
+        internal static InstructionCode ConditionToMovCC(Condition condition)
         {
             Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
 
             return _cmovcctable[(int)condition];
         }
 
-        private static InstructionCode ConditionToSetCC(Condition condition)
+        internal static InstructionCode ConditionToSetCC(Condition condition)
         {
             Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
 

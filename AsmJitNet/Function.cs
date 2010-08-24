@@ -185,6 +185,8 @@
 
         internal void SetPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
+            Contract.Requires(arguments != null);
+
             _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
         }
 

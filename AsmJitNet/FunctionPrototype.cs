@@ -1,6 +1,7 @@
 ﻿namespace AsmJitNet
 {
     using System;
+    using System.Diagnostics.Contracts;
 
     public class FunctionPrototype
     {
@@ -25,8 +26,10 @@
         private int _passedMM;
         private int _passedXMM;
 
-        public FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        internal FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
+            Contract.Requires(arguments != null);
+
             Clear();
             SetCallingConvention(callingConvention);
             if (arguments.Length > 32)

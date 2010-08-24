@@ -2,6 +2,7 @@
 {
     using System;
     using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class Call : Emittable
     {
@@ -84,7 +85,7 @@
 
             if (delegateType == typeof(Action))
             {
-                SetPrototype(callingConvention, null, VariableType.Invalid);
+                SetPrototype(callingConvention, new VariableType[0], VariableType.Invalid);
             }
 
             if (!delegateType.IsGenericType)
@@ -114,19 +115,21 @@
 
         public void SetPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
+            Contract.Requires(arguments != null);
+
             _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
             if (arguments != null && arguments.Length > 0)
                 _args = new Operand[arguments.Length];
         }
 
-        public bool SetArgument(int i, Operand operand)
+        public void SetArgument(int i, Operand operand)
         {
-            Debug.Assert(i < _functionPrototype.Arguments.Length);
+            if (i < 0)
+                throw new ArgumentOutOfRangeException("i");
             if (i >= _functionPrototype.Arguments.Length)
-                return false;
+                throw new ArgumentException();
 
             _args[i] = operand;
-            return true;
         }
 
         public bool SetReturn(Operand first)
@@ -264,19 +267,10 @@
                 }
             }
 
+            _variables = new VarCallRecord[variablesCount];
+
             if (variablesCount == 0)
             {
-                cc.CurrentOffset++;
-                return;
-            }
-
-            try
-            {
-                _variables = new VarCallRecord[variablesCount];
-            }
-            catch (OutOfMemoryException)
-            {
-                Compiler.Error = Errors.NoHeapMemory;
                 cc.CurrentOffset++;
                 return;
             }
