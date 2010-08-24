@@ -49,15 +49,24 @@
 
         private static IntPtr CreateMethodStub()
         {
+            IntPtr launchPad = CompilerLaunchPad;
+
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("Creating the method stub:");
+            Console.Error.WriteLine();
+
             Assembler assembler = new Assembler();
             assembler.Logger = new FileLogger(Console.Error);
-            assembler.Call(CompilerLaunchPad);
+            assembler.Call(launchPad);
             assembler.Jmp(Register.nax);
             return assembler.Make();
         }
 
         private static IntPtr CreateCompilerLaunchPad()
         {
+            Console.Error.WriteLine("Creating the compiler launch pad:");
+            Console.Error.WriteLine();
+
             MethodCompiler methodCompiler = CreateMethod;
             _unmanagedDelegates.Add(methodCompiler);
             IntPtr methodPtr = Marshal.GetFunctionPointerForDelegate(methodCompiler);
@@ -97,13 +106,13 @@
 
         private static IntPtr CreateMethod(IntPtr stubAddress)
         {
-            Compiler compiler = new Compiler();
-            compiler.NewFunction(CallingConvention.Default, typeof(Func<int>));
+            JitFunction<int> jitFunction = new JitFunction<int>();
+            Compiler compiler = jitFunction.GetCompiler();
             GPVar x = compiler.NewGP(VariableType.INT32);
             compiler.Mov(x, 2);
             compiler.Ret(x);
-            compiler.EndFunction();
-            return compiler.Make();
+            jitFunction.Compile();
+            return jitFunction.CompiledAddress;
         }
     }
 }
