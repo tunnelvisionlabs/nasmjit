@@ -668,9 +668,85 @@
             return link;
         }
 
-        private static InstructionCode ConditionToInstruction(Condition condition)
+        private static readonly InstructionCode[] _jcctable =
+            {
+                InstructionCode.Jo,
+                InstructionCode.Jno,
+                InstructionCode.Jb,
+                InstructionCode.Jae,
+                InstructionCode.Je,
+                InstructionCode.Jne,
+                InstructionCode.Jbe,
+                InstructionCode.Ja,
+                InstructionCode.Js,
+                InstructionCode.Jns,
+                InstructionCode.Jpe,
+                InstructionCode.Jpo,
+                InstructionCode.Jl,
+                InstructionCode.Jge,
+                InstructionCode.Jle,
+                InstructionCode.Jg
+            };
+
+        private static readonly InstructionCode[] _cmovcctable =
+            {
+                InstructionCode.Cmovo,
+                InstructionCode.Cmovno,
+                InstructionCode.Cmovb,
+                InstructionCode.Cmovae,
+                InstructionCode.Cmove,
+                InstructionCode.Cmovne,
+                InstructionCode.Cmovbe,
+                InstructionCode.Cmova,
+                InstructionCode.Cmovs,
+                InstructionCode.Cmovns,
+                InstructionCode.Cmovpe,
+                InstructionCode.Cmovpo,
+                InstructionCode.Cmovl,
+                InstructionCode.Cmovge,
+                InstructionCode.Cmovle,
+                InstructionCode.Cmovg
+            };
+
+        private static readonly InstructionCode[] _setcctable =
+            {
+                InstructionCode.Seto,
+                InstructionCode.Setno,
+                InstructionCode.Setb,
+                InstructionCode.Setae,
+                InstructionCode.Sete,
+                InstructionCode.Setne,
+                InstructionCode.Setbe,
+                InstructionCode.Seta,
+                InstructionCode.Sets,
+                InstructionCode.Setns,
+                InstructionCode.Setpe,
+                InstructionCode.Setpo,
+                InstructionCode.Setl,
+                InstructionCode.Setge,
+                InstructionCode.Setle,
+                InstructionCode.Setg
+            };
+
+        private static InstructionCode ConditionToJump(Condition condition)
         {
-            throw new NotImplementedException();
+            Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
+
+            return _jcctable[(int)condition];
+        }
+
+        private static InstructionCode ConditionToMovCC(Condition condition)
+        {
+            Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
+
+            return _cmovcctable[(int)condition];
+        }
+
+        private static InstructionCode ConditionToSetCC(Condition condition)
+        {
+            Contract.Requires(condition >= 0 && condition <= (Condition)0xF);
+
+            return _setcctable[(int)condition];
         }
 
         #region Instructions
@@ -805,7 +881,7 @@
 
         public void JShort(Condition cc, Label label, Hint hint = Hint.None)
         {
-            EmitJcc(ConditionToInstruction(cc) + InstructionDescription.JumpShortOffset, label, hint);
+            EmitJcc(ConditionToJump(cc) + InstructionDescription.JumpShortOffset, label, hint);
         }
 
         public void JaShort(Label label, Hint hint = Hint.None)
@@ -1796,10 +1872,10 @@
                             else
                             {
 #endif // ASMJIT_X64
-                                EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
-                                  dst.IsRegType(RegType.GPW),
-                                  dst.IsRegType(RegType.GPQ),
-                                  (byte)((GPReg)dst).Code, forceRexPrefix);
+                            EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
+                              dst.IsRegType(RegType.GPW),
+                              dst.IsRegType(RegType.GPQ),
+                              (byte)((GPReg)dst).Code, forceRexPrefix);
 #if ASMJIT_X64
                             }
 #endif // ASMJIT_X64
@@ -2847,6 +2923,8 @@
                 buf.AppendFormat("{0:X2} ", machineCode[i]);
             }
 
+            buf.Append(new string(' ', 3 * Math.Max(0, 6 - machineCode.Count)));
+
             // Dump instruction.
             DumpInstructionName(buf, code);
 
@@ -2979,7 +3057,7 @@
             else if (op.IsImm)
             {
                 Imm i = ((Imm)op);
-                buf.Append(i.Value);
+                buf.AppendFormat(string.Format("0x{{0:X{0}}}", IntPtr.Size * 2), i.Value.ToInt64());
                 return;
             }
             else if (op.IsLabel)
@@ -3244,7 +3322,7 @@
 
         private void EmitModR(byte opReg, BaseReg r)
         {
-            throw new NotImplementedException();
+            EmitMod(3, opReg, (byte)r.Code);
         }
 
         private void EmitModM(byte opReg, Mem mem, int immSize)
@@ -3520,25 +3598,68 @@
         //! @brief Emit FPU instruction with no operands.
         private void EmitFpu(int opCode)
         {
-            throw new NotImplementedException();
+            EmitOpCode(opCode);
         }
 
         //! @brief Emit FPU instruction with one operand @a sti (index of FPU register).
         private void EmitFpuSTI(int opCode, int sti)
         {
-            throw new NotImplementedException();
+            Contract.Requires(sti >= 0 && sti < 8);
+            EmitOpCode(opCode + sti);
         }
 
         //! @brief Emit FPU instruction with one operand @a opReg and memory operand @a mem.
         private void EmitFpuMEM(int opCode, byte opReg, Mem mem)
         {
-            throw new NotImplementedException();
+            // segment prefix
+            EmitSegmentPrefix(mem);
+
+            // instruction prefix
+            if ((opCode & 0xFF000000) != 0)
+                EmitByte((byte)((opCode & 0xFF000000) >> 24));
+
+            // rex prefix
+#if ASMJIT_X64
+            EmitRexRM(0, opReg, mem, false);
+#endif // ASMJIT_X64
+
+            // instruction opcodes
+            if ((opCode & 0x00FF0000) != 0)
+                EmitByte((byte)((opCode & 0x00FF0000) >> 16));
+            if ((opCode & 0x0000FF00) != 0)
+                EmitByte((byte)((opCode & 0x0000FF00) >> 8));
+
+            EmitByte((byte)((opCode & 0x000000FF)));
+            EmitModM(opReg, mem, 0);
         }
 
         //! @brief Emit MMX/SSE instruction.
         private void EmitMmu(uint opCode, bool rexw, byte opReg, Operand src, IntPtr immSize)
         {
-            throw new NotImplementedException();
+            // Segment prefix.
+            EmitSegmentPrefix(src);
+
+            // Instruction prefix.
+            if ((opCode & 0xFF000000) != 0)
+                EmitByte((byte)((opCode & 0xFF000000) >> 24));
+
+            // Rex prefix
+#if ASMJIT_X64
+            EmitRexRM(rexw, opReg, src, false);
+#endif // ASMJIT_X64
+
+            // Instruction opcodes.
+            if ((opCode & 0x00FF0000) != 0)
+                EmitByte((byte)((opCode & 0x00FF0000) >> 16));
+
+            // No checking, MMX/SSE instructions have always two opcodes or more.
+            EmitByte((byte)((opCode & 0x0000FF00) >> 8));
+            EmitByte((byte)((opCode & 0x000000FF)));
+
+            if (src.IsReg)
+                EmitModR(opReg, (byte)((BaseReg)src).Code);
+            else
+                EmitModM(opReg, (Mem)src, (int)immSize);
         }
 
         //! @brief Emit displacement.
@@ -3597,7 +3718,15 @@
         //! @brief Private method for emitting jcc.
         private void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
-            throw new NotImplementedException();
+            if (hint == 0)
+            {
+                EmitInstruction(code, label);
+            }
+            else
+            {
+                Imm imm = (Imm)(int)hint;
+                EmitInstruction(code, label, imm);
+            }
         }
     }
 }

@@ -478,11 +478,27 @@
             }
         }
 
-        internal void FreeActive(VarData varData)
+        internal void FreeActive(VarData vdata)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            VarData next = vdata.NextActive;
+            VarData prev = vdata.PreviousActive;
+
+            if (prev == next)
+            {
+                _active = null;
+            }
+            else
+            {
+                if (_active == vdata)
+                    _active = next;
+                prev.NextActive = next;
+                next.PreviousActive = prev;
+            }
+
+            vdata.NextActive = null;
+            vdata.PreviousActive = null;
         }
 
         public void AllocVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
@@ -524,7 +540,33 @@
         {
             Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            switch (vdata.Type)
+            {
+            case VariableType.GPD:
+#if ASMJIT_X64
+    case VARIABLETYPE.GPQ:
+#endif // ASMJIT_X64
+                SaveGPVar(vdata);
+                break;
+
+            case VariableType.X87:
+            case VariableType.X87_1F:
+            case VariableType.X87_1D:
+                // TODO: X87 VARIABLES NOT IMPLEMENTED.
+                throw new NotImplementedException("X87 variables are not yet implemented.");
+
+            case VariableType.MM:
+                SaveMMVar(vdata);
+                break;
+
+            case VariableType.XMM:
+            case VariableType.XMM_1F:
+            case VariableType.XMM_4F:
+            case VariableType.XMM_1D:
+            case VariableType.XMM_2D:
+                SaveXMMVar(vdata);
+                break;
+            }
         }
 
         public void AllocGPVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
@@ -871,6 +913,21 @@
             return score;
         }
 
+        public void SaveGPVar(VarData vdata)
+        {
+            Contract.Requires(vdata != null);
+
+            // Can't save variable that isn't allocated.
+            Debug.Assert(vdata.State == VariableState.Register);
+            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+
+            RegIndex idx = vdata.RegisterIndex;
+            EmitSaveVar(vdata, idx);
+
+            // Update VarData.
+            vdata.Changed = false;
+        }
+
         public void SpillGPVar(VarData vdata)
         {
             Contract.Requires(vdata != null);
@@ -894,32 +951,403 @@
             FreedGPRegister(idx);
         }
 
+        public void AllocMMVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
+        {
+            Contract.Requires(vdata != null);
+
+            // Preferred register code.
+            RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : vdata.PreferredRegisterIndex;
+            // Last register code (aka home).
+            RegIndex home = vdata.HomeRegisterIndex;
+            // New register code.
+            RegIndex idx = RegIndex.Invalid;
+
+            // Preserved MM variables.
+            //
+            // NOTE: Currently MM variables are not preserved and there is no calling
+            // convention known to me that does that. But on the other side it's possible
+            // to write such calling convention.
+            int preservedMM = vdata.Scope.Prototype.PreservedMM;
+
+            // Spill candidate.
+            VarData spillCandidate = null;
+
+            // Whether to alloc non-preserved first or last.
+            bool nonPreservedFirst = true;
+            if (this.Function.IsCaller)
+                nonPreservedFirst = false;
+
+            // --------------------------------------------------------------------------
+            // [Already Allocated]
+            // --------------------------------------------------------------------------
+
+            // Go away if variable is already allocated.
+            if (vdata.State == VariableState.Register)
+            {
+                RegIndex oldIndex = vdata.RegisterIndex;
+                RegIndex newIndex = pref;
+
+                // Preferred register is none or same as currently allocated one, this is
+                // best case.
+                if (pref == RegIndex.Invalid || oldIndex == newIndex)
+                    return;
+
+                VarData other = _state.MM[(int)newIndex];
+                if (other != null)
+                    SpillMMVar(other);
+
+                FreedMMRegister(oldIndex);
+                AllocatedVariable(vdata);
+
+                EmitMoveVar(vdata, pref, vflags);
+                return;
+            }
+
+            // --------------------------------------------------------------------------
+            // [Find Unused MM]
+            // --------------------------------------------------------------------------
+
+            // Preferred register.
+            if (pref != RegIndex.Invalid)
+            {
+                if ((_state.UsedMM & (1U << (int)pref)) == 0)
+                {
+                    idx = pref;
+                }
+                else
+                {
+                    // Spill register we need
+                    spillCandidate = _state.MM[(int)pref];
+
+                    // Jump to spill part of allocation
+                    goto L_Spill;
+                }
+            }
+
+            // Home register code.
+            if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
+            {
+                if ((_state.UsedMM & (1U << (int)home)) == 0)
+                    idx = home;
+            }
+
+            if (idx == RegIndex.Invalid)
+            {
+                RegIndex i;
+                int mask;
+                for (i = 0, mask = (1 << (int)i); i < (RegIndex)RegNum.MM; i++, mask <<= 1)
+                {
+                    if ((_state.UsedMM & mask) == 0)
+                    {
+                        // Convenience to alloc non-preserved first or non-preserved last.
+                        if (nonPreservedFirst)
+                        {
+                            if (idx != RegIndex.Invalid && (preservedMM & mask) != 0)
+                                continue;
+                            idx = i;
+                            // If current register is preserved, we should try to find different
+                            // one that is not. This can save one push / pop in prolog / epilog.
+                            if ((preservedMM & mask) == 0)
+                                break;
+                        }
+                        else
+                        {
+                            if (idx != RegIndex.Invalid && (preservedMM & mask) == 0)
+                                continue;
+                            idx = i;
+                            // The opposite.
+                            if ((preservedMM & mask) != 0)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // --------------------------------------------------------------------------
+            // [Spill]
+            // --------------------------------------------------------------------------
+
+            // If register is still not found, spill other variable.
+            if (idx == RegIndex.Invalid)
+            {
+                if (spillCandidate == null)
+                    spillCandidate = GetSpillCandidateMM();
+
+                // Spill candidate not found?
+                if (spillCandidate == null)
+                {
+                    _compiler.Error = Errors.NotEnoughRegisters;
+                    return;
+                }
+            }
+
+        L_Spill:
+            if (idx == RegIndex.Invalid)
+            {
+                // Prevented variables can't be spilled. _getSpillCandidate() never returns
+                // prevented variables, but when jumping to L_spill it can happen.
+                if (spillCandidate.WorkOffset == _currentOffset)
+                {
+                    _compiler.Error = Errors.RegistersOverlap;
+                    return;
+                }
+
+                idx = spillCandidate.RegisterIndex;
+                SpillMMVar(spillCandidate);
+            }
+
+            // --------------------------------------------------------------------------
+            // [Alloc]
+            // --------------------------------------------------------------------------
+
+            if (vdata.State == VariableState.Memory && (vflags & VariableAlloc.Read) != 0)
+            {
+                EmitLoadVar(vdata, idx);
+            }
+
+            // Update VarData.
+            vdata.State = VariableState.Register;
+            vdata.RegisterIndex = idx;
+            vdata.HomeRegisterIndex = idx;
+
+            // Update StateData.
+            AllocatedVariable(vdata);
+        }
+
         public void SaveMMVar(VarData vdata)
         {
             Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            // Can't save variable that isn't allocated.
+            Debug.Assert(vdata.State == VariableState.Register);
+            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+
+            RegIndex idx = vdata.RegisterIndex;
+            EmitSaveVar(vdata, idx);
+
+            // Update VarData.
+            vdata.Changed = false;
         }
 
         public void SpillMMVar(VarData vdata)
         {
             Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            // Can't spill variable that isn't allocated.
+            Debug.Assert(vdata.State == VariableState.Register);
+            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+
+            RegIndex idx = vdata.RegisterIndex;
+
+            if (vdata.Changed)
+                EmitSaveVar(vdata, idx);
+
+            // Update VarData.
+            vdata.RegisterIndex = RegIndex.Invalid;
+            vdata.State = VariableState.Memory;
+            vdata.Changed = false;
+
+            // Update StateData.
+            _state.MM[(int)idx] = null;
+            FreedMMRegister(idx);
+        }
+
+        public void AllocXMMVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
+        {
+            Contract.Requires(vdata != null);
+
+            // Preferred register code.
+            RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : vdata.PreferredRegisterIndex;
+            // Last register code (aka home).
+            RegIndex home = vdata.HomeRegisterIndex;
+            // New register code.
+            RegIndex idx = RegIndex.Invalid;
+
+            // Preserved XMM variables.
+            int preservedXMM = vdata.Scope.Prototype.PreservedXMM;
+
+            // Spill candidate.
+            VarData spillCandidate = null;
+
+            // Whether to alloc non-preserved first or last.
+            bool nonPreservedFirst = true;
+            if (this.Function.IsCaller)
+                nonPreservedFirst = false;
+
+            // --------------------------------------------------------------------------
+            // [Already Allocated]
+            // --------------------------------------------------------------------------
+
+            // Go away if variable is already allocated.
+            if (vdata.State == VariableState.Register)
+            {
+                RegIndex oldIndex = vdata.RegisterIndex;
+                RegIndex newIndex = pref;
+
+                // Preferred register is none or same as currently allocated one, this is
+                // best case.
+                if (pref == RegIndex.Invalid || oldIndex == newIndex)
+                    return;
+
+                VarData other = _state.XMM[(int)newIndex];
+                if (other != null)
+                    SpillXMMVar(other);
+
+                FreedXMMRegister(oldIndex);
+                AllocatedVariable(vdata);
+
+                EmitMoveVar(vdata, pref, vflags);
+                return;
+            }
+
+            // --------------------------------------------------------------------------
+            // [Find Unused XMM]
+            // --------------------------------------------------------------------------
+
+            // Preferred register.
+            if (pref != RegIndex.Invalid)
+            {
+                if ((_state.UsedXMM & (1U << (int)pref)) == 0)
+                {
+                    idx = pref;
+                }
+                else
+                {
+                    // Spill register we need
+                    spillCandidate = _state.XMM[(int)pref];
+
+                    // Jump to spill part of allocation
+                    goto L_Spill;
+                }
+            }
+
+            // Home register code.
+            if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
+            {
+                if ((_state.UsedXMM & (1U << (int)home)) == 0)
+                    idx = home;
+            }
+
+            if (idx == RegIndex.Invalid)
+            {
+                RegIndex i;
+                int mask;
+                for (i = 0, mask = (1 << (int)i); i < (RegIndex)RegNum.XMM; i++, mask <<= 1)
+                {
+                    if ((_state.UsedXMM & mask) == 0)
+                    {
+                        // Convenience to alloc non-preserved first or non-preserved last.
+                        if (nonPreservedFirst)
+                        {
+                            if (idx != RegIndex.Invalid && (preservedXMM & mask) != 0)
+                                continue;
+                            idx = i;
+                            // If current register is preserved, we should try to find different
+                            // one that is not. This can save one push / pop in prolog / epilog.
+                            if ((preservedXMM & mask) == 0)
+                                break;
+                        }
+                        else
+                        {
+                            if (idx != RegIndex.Invalid && (preservedXMM & mask) == 0)
+                                continue;
+                            idx = i;
+                            // The opposite.
+                            if ((preservedXMM & mask) != 0)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // --------------------------------------------------------------------------
+            // [Spill]
+            // --------------------------------------------------------------------------
+
+            // If register is still not found, spill other variable.
+            if (idx == RegIndex.Invalid)
+            {
+                if (spillCandidate == null)
+                    spillCandidate = GetSpillCandidateXMM();
+
+                // Spill candidate not found?
+                if (spillCandidate == null)
+                {
+                    _compiler.Error = Errors.NotEnoughRegisters;
+                    return;
+                }
+            }
+
+        L_Spill:
+
+            if (idx == RegIndex.Invalid)
+            {
+                // Prevented variables can't be spilled. _getSpillCandidate() never returns
+                // prevented variables, but when jumping to L_spill it can happen.
+                if (spillCandidate.WorkOffset == _currentOffset)
+                {
+                    _compiler.Error = Errors.RegistersOverlap;
+                    return;
+                }
+
+                idx = spillCandidate.RegisterIndex;
+                SpillXMMVar(spillCandidate);
+            }
+
+            // --------------------------------------------------------------------------
+            // [Alloc]
+            // --------------------------------------------------------------------------
+
+            if (vdata.State == VariableState.Memory && (vflags & VariableAlloc.Read) != 0)
+            {
+                EmitLoadVar(vdata, idx);
+            }
+
+            // Update VarData.
+            vdata.State = VariableState.Register;
+            vdata.RegisterIndex = idx;
+            vdata.HomeRegisterIndex = idx;
+
+            // Update StateData.
+            AllocatedVariable(vdata);
         }
 
         public void SaveXMMVar(VarData vdata)
         {
             Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            // Can't save variable that isn't allocated.
+            Debug.Assert(vdata.State == VariableState.Register);
+            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+
+            RegIndex idx = vdata.RegisterIndex;
+            EmitSaveVar(vdata, idx);
+
+            // Update VarData.
+            vdata.Changed = false;
         }
 
         public void SpillXMMVar(VarData vdata)
         {
             Contract.Requires(vdata != null);
 
-            throw new NotImplementedException();
+            // Can't spill variable that isn't allocated.
+            Debug.Assert(vdata.State == VariableState.Register);
+            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+
+            RegIndex idx = vdata.RegisterIndex;
+
+            if (vdata.Changed)
+                EmitSaveVar(vdata, idx);
+
+            // Update VarData.
+            vdata.RegisterIndex = RegIndex.Invalid;
+            vdata.State = VariableState.Memory;
+            vdata.Changed = false;
+
+            // Update StateData.
+            _state.XMM[(int)idx] = null;
+            FreedXMMRegister(idx);
         }
 
         private void FreedGPRegister(RegIndex index)
@@ -1016,20 +1444,6 @@
             return m;
         }
 
-        public void AllocMMVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
-        {
-            Contract.Requires(varData != null);
-
-            throw new NotImplementedException();
-        }
-
-        public void AllocXMMVar(VarData varData, RegIndex regIndex, VariableAlloc variableAlloc)
-        {
-            Contract.Requires(varData != null);
-
-            throw new NotImplementedException();
-        }
-
         private void PostAlloc(VarData varData, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
@@ -1055,7 +1469,7 @@
             case VariableType.X87_1F:
             case VariableType.X87_1D:
                 // TODO: X87 VARIABLES NOT IMPLEMENTED.
-                throw new NotImplementedException();
+                throw new NotImplementedException("X87 variables are not yet implemented.");
 
             case VariableType.MM:
                 SpillMMVar(vdata);
@@ -1162,7 +1576,7 @@
             case VariableType.X87_1F:
             case VariableType.X87_1D:
                 // TODO: X87 VARIABLES NOT IMPLEMENTED.
-                throw new NotImplementedException();
+                throw new NotImplementedException("X87 variables are not yet implemented.");
 
             case VariableType.MM:
                 _compiler.Emit(InstructionCode.Movq, Register.mm(regIndex), Register.mm(vdata.RegisterIndex));

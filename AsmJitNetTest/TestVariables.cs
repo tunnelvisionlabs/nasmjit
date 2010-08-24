@@ -489,16 +489,6 @@
             return x * y;
         }
 
-        private IntPtr TestFuncRet_CreateFuncA()
-        {
-            throw new NotImplementedException();
-        }
-
-        private IntPtr TestFuncRet_CreateFuncB()
-        {
-            throw new NotImplementedException();
-        }
-
         [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
         private delegate void TestRepFn([System.Runtime.InteropServices.Out] byte[] destination, byte[] source, IntPtr length);
 

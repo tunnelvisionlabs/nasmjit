@@ -57,6 +57,14 @@
             }
         }
 
+        public IntPtr CompiledAddress
+        {
+            get
+            {
+                return _result;
+            }
+        }
+
         public abstract ReadOnlyCollection<VariableType> ArgumentTypes
         {
             get;
@@ -80,14 +88,6 @@
             get
             {
                 return _compiler;
-            }
-        }
-
-        internal IntPtr CompiledAddress
-        {
-            get
-            {
-                return _result;
             }
         }
 

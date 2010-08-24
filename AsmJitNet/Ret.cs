@@ -168,7 +168,7 @@
                         if (((BaseVar)ret[i]).IsX87Var)
                         {
                             // TODO: X87.
-                            throw new NotImplementedException();
+                            throw new NotImplementedException("X87 support is not yet implemented.");
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
@@ -296,7 +296,7 @@
                         else if (((BaseVar)ret[i]).IsX87Var)
                         {
                             // TODO: X87.
-                            throw new NotImplementedException();
+                            throw new NotImplementedException("X87 support is not yet implemented.");
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
