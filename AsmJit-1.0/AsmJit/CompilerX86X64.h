@@ -959,6 +959,9 @@ protected:
   //! emitting mfence.
   bool _emitLFence;
 
+  //! @brief Whether the function is finished using @c Compiler::endFunction().
+  bool _finished;
+
   //! @brief Bitfield containing modified and preserved GP registers.
   uint32_t _modifiedAndPreservedGP;
 

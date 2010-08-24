@@ -2061,6 +2061,8 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
   _emitSFence = false;
   _emitLFence = false;
 
+  _finished = false;
+
   _modifiedAndPreservedGP = 0;
   _modifiedAndPreservedMM = 0;
   _modifiedAndPreservedXMM = 0;
@@ -6607,7 +6609,9 @@ EFunction* CompilerCore::endFunction() ASMJIT_NOTHROW
   addEmittable(f->_epilog);
   addEmittable(f->_end);
 
+  f->_finished = true;
   _function = NULL;
+
   return f;
 }
 
@@ -7118,7 +7122,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     _cc = NULL;
 
     // ------------------------------------------------------------------------
-    // Find function.
+    // Find a function.
     for (;;)
     {
       if (start == NULL) return;
@@ -7139,6 +7143,13 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     cc._start = start;
     cc._stop = stop = cc._function->getEnd();
     cc._extraBlock = stop->getPrev();
+
+    // Detect whether the function generation was finished.
+    if (!cc._function->_finished || cc._function->getEnd()->getPrev() == NULL)
+    {
+      setError(ERROR_INCOMPLETE_FUNCTION);
+      return;
+    }
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------

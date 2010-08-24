@@ -35,15 +35,21 @@ const char* getErrorCodeAsString(uint32_t error) ASMJIT_NOTHROW
 {
   static const char* errorMessage[] = {
     "No error",
+
     "No heap memory",
     "No virtual memory",
+
     "Unknown instruction",
     "Illegal instruction",
     "Illegal addressing",
     "Illegal short jump",
+
     "No function defined",
+    "Incomplete function",
+
     "Not enough registers",
     "Registers overlap",
+
     "Incompatible argument",
     "Incompatible return value",
 
