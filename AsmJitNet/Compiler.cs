@@ -324,6 +324,7 @@
             AddEmittable(f.Epilog);
             AddEmittable(f.End);
 
+            _function.Finished = true;
             _function = null;
             return f;
         }
@@ -374,7 +375,7 @@
                 _cc = null;
 
                 // ------------------------------------------------------------------------
-                // Find function.
+                // Find a function.
                 while (true)
                 {
                     if (start == null)
@@ -397,6 +398,13 @@
                 cc.Start = start;
                 cc.Stop = stop = cc.Function.End;
                 cc.ExtraBlock = stop.Previous;
+
+                // Detect whether the function generation was finished.
+                if (!cc.Function.Finished || cc.Function.End.Previous == null)
+                {
+                    Error = Errors.IncompleteFunction;
+                    return;
+                }
                 // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------

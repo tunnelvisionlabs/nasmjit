@@ -31,6 +31,8 @@
 
         private bool _emitLFence;
 
+        private bool _finished;
+
         private int _modifiedAndPreservedGP;
 
         private int _modifiedAndPreservedMM;
@@ -147,6 +149,19 @@
             get
             {
                 return _isCaller;
+            }
+        }
+
+        internal bool Finished
+        {
+            get
+            {
+                return _finished;
+            }
+
+            set
+            {
+                _finished = value;
             }
         }
 

@@ -10,24 +10,30 @@
         public static readonly int IllegalAddressing = 5;
         public static readonly int IllegalShortJump = 6;
         public static readonly int NoFunction = 7;
-        public static readonly int NotEnoughRegisters = 8;
-        public static readonly int RegistersOverlap = 9;
-        public static readonly int IncompatibleArgument = 10;
-        public static readonly int IncompatibleReturnValue = 11;
-
+        public static readonly int IncompleteFunction = 8;
+        public static readonly int NotEnoughRegisters = 9;
+        public static readonly int RegistersOverlap = 10;
+        public static readonly int IncompatibleArgument = 11;
+        public static readonly int IncompatibleReturnValue = 12;
 
         private static readonly string[] _errorMessages =
             {
                 "No error",
+
                 "No heap memory",
                 "No virtual memory",
+
                 "Unknown instruction",
                 "Illegal instruction",
                 "Illegal addressing",
                 "Illegal short jump",
+
                 "No function defined",
+                "Incomplete function",
+
                 "Not enough registers",
                 "Registers overlap",
+
                 "Incompatible argument",
                 "Incompatible return value",
 
