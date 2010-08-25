@@ -544,7 +544,7 @@
             {
             case VariableType.GPD:
 #if ASMJIT_X64
-    case VARIABLETYPE.GPQ:
+            case VariableType.GPQ:
 #endif // ASMJIT_X64
                 SaveGPVar(vdata);
                 break;
