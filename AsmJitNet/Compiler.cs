@@ -9423,7 +9423,7 @@
             //Contract.Requires(operands.All(i => i != null));
             Contract.Ensures(Contract.Result<Instruction>() != null);
 
-            if (code >= InstructionDescription.JumpAnyBegin && code <= InstructionDescription.JumpAnyEnd)
+            if (code >= InstructionDescription.JumpBegin && code <= InstructionDescription.JumpEnd)
             {
                 return new Jmp(this, code, operands);
             }

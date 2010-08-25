@@ -854,6 +854,317 @@
             EmitInstruction(InstructionCode.Call, dst);
         }
 
+        public void J(Condition cc, Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(ConditionToJump(cc), label, hint);
+        }
+
+        public void Ja(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Ja, label, hint);
+        }
+
+        public void Jae(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jae, label, hint);
+        }
+
+        public void Jb(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jb, label, hint);
+        }
+
+        public void Jbe(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jbe, label, hint);
+        }
+
+        public void Jc(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jc, label, hint);
+        }
+
+        public void Je(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Je, label, hint);
+        }
+
+        public void Jg(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jg, label, hint);
+        }
+
+        public void Jge(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jge, label, hint);
+        }
+
+        public void Jl(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jl, label, hint);
+        }
+
+        public void Jle(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jle, label, hint);
+        }
+
+        public void Jna(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jna, label, hint);
+        }
+
+        public void Jnae(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnae, label, hint);
+        }
+
+        public void Jnb(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnb, label, hint);
+        }
+
+        public void Jnbe(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnbe, label, hint);
+        }
+
+        public void Jnc(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnc, label, hint);
+        }
+
+        public void Jne(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jne, label, hint);
+        }
+
+        public void Jng(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jng, label, hint);
+        }
+
+        public void Jnge(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnge, label, hint);
+        }
+
+        public void Jnl(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnl, label, hint);
+        }
+
+        public void Jnle(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnle, label, hint);
+        }
+
+        public void Jno(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jno, label, hint);
+        }
+
+        public void Jnp(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnp, label, hint);
+        }
+
+        public void Jns(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jns, label, hint);
+        }
+
+        public void Jnz(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jnz, label, hint);
+        }
+
+        public void Jo(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jo, label, hint);
+        }
+
+        public void Jp(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jp, label, hint);
+        }
+
+        public void Jpe(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jpe, label, hint);
+        }
+
+        public void Jpo(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jpo, label, hint);
+        }
+
+        public void Js(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Js, label, hint);
+        }
+
+        public void Jz(Label label, Hint hint = Hint.None)
+        {
+            EmitJcc(InstructionCode.Jz, label, hint);
+        }
+
+        public void ShortJ(Condition cc, Label label, Hint hint = Hint.None)
+        {
+            _emitOptions |= EmitOptions.ShortJump;
+            J(cc, label, hint);
+        }
+
+        public void ShortJa(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Ja, label, hint);
+        }
+
+        public void ShortJae(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jae, label, hint);
+        }
+
+        public void ShortJb(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jb, label, hint);
+        }
+
+        public void ShortJbe(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jbe, label, hint);
+        }
+
+        public void ShortJc(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jc, label, hint);
+        }
+
+        public void ShortJe(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Je, label, hint);
+        }
+
+        public void ShortJg(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jg, label, hint);
+        }
+
+        public void ShortJge(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jge, label, hint);
+        }
+
+        public void ShortJl(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jl, label, hint);
+        }
+
+        public void ShortJle(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jle, label, hint);
+        }
+
+        public void ShortJna(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jna, label, hint);
+        }
+
+        public void ShortJnae(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnae, label, hint);
+        }
+
+        public void ShortJnb(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnb, label, hint);
+        }
+
+        public void ShortJnbe(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnbe, label, hint);
+        }
+
+        public void ShortJnc(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnc, label, hint);
+        }
+
+        public void ShortJne(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jne, label, hint);
+        }
+
+        public void ShortJng(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jng, label, hint);
+        }
+
+        public void ShortJnge(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnge, label, hint);
+        }
+
+        public void ShortJnl(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnl, label, hint);
+        }
+
+        public void ShortJnle(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnle, label, hint);
+        }
+
+        public void ShortJno(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jno, label, hint);
+        }
+
+        public void ShortJnp(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnp, label, hint);
+        }
+
+        public void ShortJns(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jns, label, hint);
+        }
+
+        public void ShortJnz(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jnz, label, hint);
+        }
+
+        public void ShortJo(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jo, label, hint);
+        }
+
+        public void ShortJp(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jp, label, hint);
+        }
+
+        public void ShortJpe(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jpe, label, hint);
+        }
+
+        public void ShortJpo(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jpo, label, hint);
+        }
+
+        public void ShortJs(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Js, label, hint);
+        }
+
+        public void ShortJz(Label label, Hint hint = Hint.None)
+        {
+            EmitShortJcc(InstructionCode.Jz, label, hint);
+        }
+
         public void Jmp(GPReg dst)
         {
             EmitInstruction(InstructionCode.Jmp, dst);
@@ -879,159 +1190,10 @@
             EmitInstruction(InstructionCode.Jmp, label);
         }
 
-        public void JShort(Condition cc, Label label, Hint hint = Hint.None)
+        public void ShortJmp(Label label)
         {
-            EmitJcc(ConditionToJump(cc) + InstructionDescription.JumpShortOffset, label, hint);
-        }
-
-        public void JaShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JaShort, label, hint);
-        }
-
-        public void JaeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JaeShort, label, hint);
-        }
-
-        public void JbShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JbShort, label, hint);
-        }
-
-        public void JbeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JbeShort, label, hint);
-        }
-
-        public void JcShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JcShort, label, hint);
-        }
-
-        public void JeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JeShort, label, hint);
-        }
-
-        public void JgShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JgShort, label, hint);
-        }
-
-        public void JgeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JgeShort, label, hint);
-        }
-
-        public void JlShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JlShort, label, hint);
-        }
-
-        public void JleShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JleShort, label, hint);
-        }
-
-        public void JnaShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnaShort, label, hint);
-        }
-
-        public void JnaeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnaeShort, label, hint);
-        }
-
-        public void JnbShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnbShort, label, hint);
-        }
-
-        public void JnbeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnbeShort, label, hint);
-        }
-
-        public void JncShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JncShort, label, hint);
-        }
-
-        public void JneShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JneShort, label, hint);
-        }
-
-        public void JngShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JngShort, label, hint);
-        }
-
-        public void JngeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JngeShort, label, hint);
-        }
-
-        public void JnlShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnlShort, label, hint);
-        }
-
-        public void JnleShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnleShort, label, hint);
-        }
-
-        public void JnoShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnoShort, label, hint);
-        }
-
-        public void JnpShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnpShort, label, hint);
-        }
-
-        public void JnsShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnsShort, label, hint);
-        }
-
-        public void JnzShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JnzShort, label, hint);
-        }
-
-        public void JoShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JoShort, label, hint);
-        }
-
-        public void JpShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JpShort, label, hint);
-        }
-
-        public void JpeShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JpeShort, label, hint);
-        }
-
-        public void JpoShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JpoShort, label, hint);
-        }
-
-        public void JsShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JsShort, label, hint);
-        }
-
-        public void JzShort(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.JzShort, label, hint);
+            _emitOptions |= EmitOptions.ShortJump;
+            EmitInstruction(InstructionCode.Jmp, label);
         }
 
         public void Mov(GPReg dst, GPReg src)
@@ -1647,7 +1809,7 @@
                         AssemblerLabelData l_data = _labelData[((Label)o0).Id & Operand.OperandIdValueMask];
 
                         int hint = o1.IsImm ? (int)((Imm)o1).Value : 0;
-                        bool isShortJump = (code >= InstructionDescription.JumpShortBegin && code <= InstructionDescription.JumpShortEnd);
+                        bool isShortJump = _emitOptions.HasFlag(EmitOptions.ShortJump);
 
                         // Emit jump hint if configured for that.
                         if ((hint & (int)(Hint.Taken | Hint.NotTaken)) != 0 && (_properties & CompilerProperties.JumpHints) != 0)
@@ -1672,14 +1834,15 @@
                                 EmitByte((byte)(0x70 | id.OpCode0));
                                 EmitByte((byte)(sbyte)(offs - rel8_size));
 
-                                // Change the instruction code so logger can log instruction correctly.
-                                code += InstructionDescription.JumpShortOffset;
+                                // Change the emit options so logger can log instruction correctly.
+                                _emitOptions |= EmitOptions.ShortJump;
                             }
                             else
                             {
                                 if (isShortJump && Logger != null)
                                 {
                                     Logger.LogString("*** ASSEMBLER WARNING: Emitting long conditional jump, but short jump instruction forced!" + Environment.NewLine);
+                                    _emitOptions &= ~EmitOptions.ShortJump;
                                 }
 
                                 EmitByte(0x0F);
@@ -1732,7 +1895,7 @@
                     if (o0.IsLabel)
                     {
                         AssemblerLabelData l_data = _labelData[((Label)o0).Id & Operand.OperandIdValueMask];
-                        bool isShortJump = (code >= InstructionDescription.JumpShortBegin && code <= InstructionDescription.JumpShortEnd);
+                        bool isShortJump = _emitOptions.HasFlag(EmitOptions.ShortJump);
 
                         if (l_data.Offset != -1)
                         {
@@ -1746,8 +1909,8 @@
                                 EmitByte(0xEB);
                                 EmitByte((byte)(sbyte)(offs - rel8_size));
 
-                                // Change the instruction code so logger can log instruction correctly.
-                                code += InstructionDescription.JumpShortOffset;
+                                // Change the emit options so logger can log instruction correctly.
+                                _emitOptions |= EmitOptions.ShortJump;
                             }
                             else
                             {
@@ -1756,6 +1919,7 @@
                                     if (Logger != null && Logger.IsUsed)
                                     {
                                         Logger.LogString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!" + Environment.NewLine);
+                                        _emitOptions &= ~EmitOptions.ShortJump;
                                     }
                                 }
 
@@ -2822,7 +2986,7 @@
                 StringBuilder buf = new StringBuilder();
                 int bufferStopOffset = _buffer.Offset;
 
-                DumpInstruction(buf, new ArraySegment<byte>(_buffer.Data, bufferStartOffset, bufferStopOffset - bufferStartOffset), code, o0, o1, o2);
+                DumpInstruction(buf, new ArraySegment<byte>(_buffer.Data, bufferStartOffset, bufferStopOffset - bufferStartOffset), code, _emitOptions, o0, o1, o2);
 
                 if (Logger.LogBinary)
                     DumpComment(buf, new ArraySegment<byte>(GetCode(), (int)beginOffset, (int)(Offset - beginOffset)), _comment);
@@ -2910,7 +3074,7 @@
             return _buffer.Data;
         }
 
-        private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, Operand o0, Operand o1, Operand o2)
+        private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, EmitOptions emitOptions, Operand o0, Operand o1, Operand o2)
         {
             Contract.Requires(buf != null);
             Contract.Requires(o0 != null);
@@ -2924,6 +3088,13 @@
             }
 
             buf.Append(new string(' ', 3 * Math.Max(0, 6 - machineCode.Count)));
+
+            if (emitOptions.HasFlag(EmitOptions.RexPrefix))
+                buf.Append("rex ");
+            if (emitOptions.HasFlag(EmitOptions.LockPrefix))
+                buf.Append("lock ");
+            if (emitOptions.HasFlag(EmitOptions.ShortJump))
+                buf.Append("short ");
 
             // Dump instruction.
             DumpInstructionName(buf, code);
@@ -3620,7 +3791,7 @@
 
             // rex prefix
 #if ASMJIT_X64
-            EmitRexRM(0, opReg, mem, false);
+            EmitRexRM(false, opReg, mem, false);
 #endif // ASMJIT_X64
 
             // instruction opcodes
@@ -3718,7 +3889,7 @@
         //! @brief Private method for emitting jcc.
         private void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
-            if (hint == 0)
+            if (hint == Hint.None)
             {
                 EmitInstruction(code, label);
             }
@@ -3727,6 +3898,12 @@
                 Imm imm = (Imm)(int)hint;
                 EmitInstruction(code, label, imm);
             }
+        }
+
+        private void EmitShortJcc(InstructionCode code, Label label, Hint hint)
+        {
+            _emitOptions |= EmitOptions.ShortJump;
+            EmitJcc(code, label, hint);
         }
     }
 }

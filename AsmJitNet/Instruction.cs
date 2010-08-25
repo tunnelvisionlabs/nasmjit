@@ -270,6 +270,19 @@
             }
         }
 
+        public EmitOptions EmitOptions
+        {
+            get
+            {
+                return _emitOptions;
+            }
+
+            protected set
+            {
+                _emitOptions = value;
+            }
+        }
+
         protected Operand[] Operands
         {
             get
