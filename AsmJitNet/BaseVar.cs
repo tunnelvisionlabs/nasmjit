@@ -14,6 +14,13 @@
             _variableType = variableType;
         }
 
+        protected BaseVar(int id, int size, RegType registerCode, VariableType variableType)
+            : base(id, size)
+        {
+            _registerCode = registerCode;
+            _variableType = variableType;
+        }
+
         public override sealed OperandType OperandType
         {
             get
@@ -77,19 +84,8 @@
 
         internal static Mem BaseVarMem(BaseVar var, int ptrSize)
         {
-            Mem m = new Mem();
-            m.Size = (ptrSize == InvalidValue) ? var.Size : (byte)ptrSize;
-            m.MemoryType = MemoryType.Native;
-            m.SegmentPrefix = SegmentPrefix.None;
-            m.Id = var.Id;
-
-            m.Base = RegIndex.Invalid;
-            m.Index = RegIndex.Invalid;
-            m.Shift = 0;
-
-            m.Target = IntPtr.Zero;
-            m.Displacement = IntPtr.Zero;
-
+            int memSize = (ptrSize == InvalidValue) ? var.Size : (byte)ptrSize;
+            Mem m = new Mem(var.Id, memSize);
             return m;
         }
     }

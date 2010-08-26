@@ -444,21 +444,8 @@
 
         private Mem BaseVarMem(BaseVar var, int ptrSize)
         {
-            Mem m = new Mem();
-
-            m.Size = (ptrSize == Operand.InvalidValue ? var.Size : (byte)ptrSize);
-            m.MemoryType = MemoryType.Native;
-            m.SegmentPrefix = SegmentPrefix.None;
-
-            m.Id = var.Id;
-
-            m.Base = RegIndex.Invalid;
-            m.Index = RegIndex.Invalid;
-            m.Shift = 0;
-
-            m.Target = IntPtr.Zero;
-            m.Displacement = IntPtr.Zero;
-
+            int memSize = (ptrSize == Operand.InvalidValue ? var.Size : (byte)ptrSize);
+            Mem m = new Mem(var.Id, memSize);
             return m;
         }
 

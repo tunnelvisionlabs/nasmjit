@@ -958,14 +958,20 @@
                         case VariableType.XMM_1F:
                         case VariableType.XMM_4F:
                             {
-                                mem.Size = 4;
+                                //mem.Size = 4;
+                                if (mem.Size != 4)
+                                    throw new NotImplementedException("Size is now an immutable property.");
+
                                 compiler.Emit(InstructionCode.Fstp, mem);
                                 break;
                             }
                         case VariableType.XMM_1D:
                         case VariableType.XMM_2D:
                             {
-                                mem.Size = 8;
+                                //mem.Size = 8;
+                                if (mem.Size != 4)
+                                    throw new NotImplementedException("Size is now an immutable property.");
+
                                 compiler.Emit(InstructionCode.Fstp, mem);
                                 break;
                             }

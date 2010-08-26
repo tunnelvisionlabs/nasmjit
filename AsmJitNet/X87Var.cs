@@ -8,10 +8,8 @@
         }
 
         public X87Var(int id, RegType registerCode, VariableType variableType)
-            : base(registerCode, variableType)
+            : base(id, 12, registerCode, variableType)
         {
-            Id = id;
-            Size = 12;
         }
     }
 }

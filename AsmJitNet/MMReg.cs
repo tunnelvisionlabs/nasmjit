@@ -12,6 +12,11 @@
         {
         }
 
+        public MMReg(RegType type, RegIndex index)
+            : this((int)type | (int)index)
+        {
+        }
+
         public MMReg(int code)
             : base(code, 8)
         {

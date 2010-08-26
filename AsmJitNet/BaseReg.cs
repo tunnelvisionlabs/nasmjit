@@ -4,12 +4,12 @@
 
     public class BaseReg : Operand
     {
-        private int _code;
+        private readonly int _code;
 
         public BaseReg(int code, int size)
+            : base(size: size)
         {
             _code = code;
-            Size = (byte)size;
 
             if (RegisterType == 0)
                 throw new ArgumentException();

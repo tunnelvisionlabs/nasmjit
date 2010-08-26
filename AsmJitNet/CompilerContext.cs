@@ -1435,8 +1435,7 @@
             Contract.Requires(varData != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            Mem m = new Mem();
-            m.Id = varData.Id;
+            Mem m = new Mem(varData.Id);
             if (!varData.IsMemArgument)
                 m.Displacement = (IntPtr)_adjustESP;
 

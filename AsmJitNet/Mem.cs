@@ -32,9 +32,23 @@
             _displacement = IntPtr.Zero;
         }
 
-        public Mem(Label label, IntPtr displacement, int size = 0)
+        public Mem(int id, int size = 0)
+            : base(id, size)
         {
-            Size = (byte)size;
+            _type = MemoryType.Native;
+            _segmentPrefix = SegmentPrefix.None;
+
+            _base = RegIndex.Invalid;
+            _index = RegIndex.Invalid;
+            _shift = 0;
+
+            _target = IntPtr.Zero;
+            _displacement = IntPtr.Zero;
+        }
+
+        public Mem(Label label, IntPtr displacement, int size = 0)
+            : base(size: size)
+        {
             _type = MemoryType.Label;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -47,8 +61,8 @@
         }
 
         public Mem(GPReg @base, IntPtr displacement, int size = 0)
+            : base(size: size)
         {
-            Size = (byte)size;
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -61,8 +75,8 @@
         }
 
         public Mem(GPVar @base, IntPtr displacement, int size = 0)
+            : base(size: size)
         {
-            Size = (byte)size;
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -75,12 +89,12 @@
         }
 
         public Mem(GPReg @base, GPReg index, int shift, IntPtr displacement, int size = 0)
+            : base(size: size)
         {
             if (shift < 0 || shift > 3)
                 throw new ArgumentOutOfRangeException("shift");
             Contract.EndContractBlock();
 
-            Size = (byte)size;
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -93,12 +107,12 @@
         }
 
         public Mem(GPVar @base, GPVar index, int shift, IntPtr displacement, int size = 0)
+            : base(size: size)
         {
             if (shift < 0 || shift > 3)
                 throw new ArgumentOutOfRangeException("shift");
             Contract.EndContractBlock();
 
-            Size = (byte)size;
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 

@@ -8,10 +8,8 @@
         }
 
         public XMMVar(int id, RegType registerCode, VariableType variableType)
-            : base(registerCode, variableType)
+            : base(id, 16, registerCode, variableType)
         {
-            Id = id;
-            Size = 16;
         }
     }
 }

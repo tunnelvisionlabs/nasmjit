@@ -11,12 +11,13 @@
         internal const int OperandIdTypeLabel = unchecked((int)0x40000000);
         internal const int OperandIdTypeVar = unchecked((int)0x80000000);
 
-        private byte _size;
-        private int _id;
+        private readonly byte _size;
+        private readonly int _id;
 
-        protected Operand()
+        protected Operand(int id = InvalidValue, int size = 0)
         {
-            _id = InvalidValue;
+            _id = id;
+            _size = checked((byte)size);
         }
 
         public abstract OperandType OperandType
@@ -30,11 +31,6 @@
             {
                 return _id;
             }
-
-            protected internal set
-            {
-                _id = value;
-            }
         }
 
         public byte Size
@@ -42,11 +38,6 @@
             get
             {
                 return _size;
-            }
-
-            protected internal set
-            {
-                _size = value;
             }
         }
 

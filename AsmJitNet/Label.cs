@@ -9,8 +9,8 @@
         }
 
         public Label(int id)
+            : base(id | OperandIdTypeLabel)
         {
-            Id = id | OperandIdTypeLabel;
         }
 
         public override OperandType OperandType

@@ -10,10 +10,8 @@
         }
 
         public MMVar(int id, RegType registerCode, VariableType variableType)
-            : base(registerCode, variableType)
+            : base(id, 8, registerCode, variableType)
         {
-            Id = id;
-            Size = 8;
         }
     }
 }

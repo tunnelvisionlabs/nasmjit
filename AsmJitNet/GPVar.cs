@@ -8,10 +8,8 @@
         }
 
         public GPVar(int id, int size, RegType regType, VariableType variableType)
-            : base(regType, variableType)
+            : base(id, size, regType, variableType)
         {
-            Id = id;
-            Size = checked((byte)size);
         }
     }
 }
