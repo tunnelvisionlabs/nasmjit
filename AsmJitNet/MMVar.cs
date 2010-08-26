@@ -9,13 +9,11 @@
         {
         }
 
-        public MMVar(int id, int size, RegType registerCode, VariableType variableType)
+        public MMVar(int id, RegType registerCode, VariableType variableType)
             : base(registerCode, variableType)
         {
-            Contract.Requires(size >= byte.MinValue && size <= byte.MaxValue);
-
             Id = id;
-            Size = checked((byte)size);
+            Size = 8;
         }
     }
 }

@@ -7,11 +7,11 @@
         {
         }
 
-        public XMMVar(int id, int size, RegType registerCode, VariableType variableType)
+        public XMMVar(int id, RegType registerCode, VariableType variableType)
             : base(registerCode, variableType)
         {
             Id = id;
-            Size = checked((byte)size);
+            Size = 16;
         }
     }
 }

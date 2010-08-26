@@ -133,6 +133,13 @@
     <Compile Include="CpuVendor.cs" />
     <Compile Include="EmbeddedData.cs" />
     <Compile Include="EmitOptions.cs" />
+    <Compile Include="IX86IntrinsicSupport`1.cs" />
+    <Compile Include="IIntrinsicSupport.cs" />
+    <Compile Include="IIntrinsicSupport`4.cs" />
+    <Compile Include="IMmIntrinsicSupport`1.cs" />
+    <Compile Include="Intrinsics.cs" />
+    <Compile Include="IX87IntrinsicSupport`1.cs" />
+    <Compile Include="IXmmIntrinsicSupport`1.cs" />
     <Compile Include="JitAction.cs" />
     <Compile Include="JitAction`1.cs" />
     <Compile Include="JitAction`2.cs" />
@@ -211,6 +218,7 @@
     <Compile Include="VarMemBlock.cs" />
     <Compile Include="VirtualMemory.cs" />
     <Compile Include="X87Reg.cs" />
+    <Compile Include="X87Var.cs" />
     <Compile Include="XMMReg.cs" />
     <Compile Include="XMMVar.cs" />
   </ItemGroup>

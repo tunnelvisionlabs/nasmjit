@@ -9,6 +9,11 @@
     using Marshal = System.Runtime.InteropServices.Marshal;
 
     public class Assembler
+        : IIntrinsicSupport<GPReg, X87Reg, MMReg, XMMReg>
+        , IX86IntrinsicSupport<GPReg>
+        , IX87IntrinsicSupport<X87Reg>
+        , IMmIntrinsicSupport<MMReg>
+        , IXmmIntrinsicSupport<XMMReg>
     {
         private CodeGenerator _codeGenerator;
 
@@ -423,7 +428,6 @@
                     max = (size - i < 16) ? size - i : 16;
 
                     for (j = 0; j < max; j++)
-                        //p += sprintf(p, "%0.2X", (byte*)(data)[i + j]);
                         buf.AppendFormat("{0:x}", data[i + j]);
 
                     buf.AppendLine();
@@ -751,81 +755,6 @@
 
         #region Instructions
 
-        public void Adc(GPReg dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Adc, dst, src);
-        }
-
-        public void Adc(GPReg dst, Mem src)
-        {
-            EmitInstruction(InstructionCode.Adc, dst, src);
-        }
-
-        public void Adc(GPReg dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Adc, dst, src);
-        }
-
-        public void Adc(Mem dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Adc, dst, src);
-        }
-
-        public void Adc(Mem dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Adc, dst, src);
-        }
-
-        public void Add(GPReg dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Add, dst, src);
-        }
-
-        public void Add(GPReg dst, Mem src)
-        {
-            EmitInstruction(InstructionCode.Add, dst, src);
-        }
-
-        public void Add(GPReg dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Add, dst, src);
-        }
-
-        public void Add(Mem dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Add, dst, src);
-        }
-
-        public void Add(Mem dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Add, dst, src);
-        }
-
-        public void And(GPReg dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.And, dst, src);
-        }
-
-        public void And(GPReg dst, Mem src)
-        {
-            EmitInstruction(InstructionCode.And, dst, src);
-        }
-
-        public void And(GPReg dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.And, dst, src);
-        }
-
-        public void And(Mem dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.And, dst, src);
-        }
-
-        public void And(Mem dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.And, dst, src);
-        }
-
         public void Call(GPReg dst)
         {
             if (!dst.IsRegType(RegType.GPN))
@@ -854,165 +783,10 @@
             EmitInstruction(InstructionCode.Call, dst);
         }
 
-        public void J(Condition cc, Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(ConditionToJump(cc), label, hint);
-        }
-
-        public void Ja(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Ja, label, hint);
-        }
-
-        public void Jae(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jae, label, hint);
-        }
-
-        public void Jb(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jb, label, hint);
-        }
-
-        public void Jbe(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jbe, label, hint);
-        }
-
-        public void Jc(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jc, label, hint);
-        }
-
-        public void Je(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Je, label, hint);
-        }
-
-        public void Jg(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jg, label, hint);
-        }
-
-        public void Jge(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jge, label, hint);
-        }
-
-        public void Jl(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jl, label, hint);
-        }
-
-        public void Jle(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jle, label, hint);
-        }
-
-        public void Jna(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jna, label, hint);
-        }
-
-        public void Jnae(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnae, label, hint);
-        }
-
-        public void Jnb(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnb, label, hint);
-        }
-
-        public void Jnbe(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnbe, label, hint);
-        }
-
-        public void Jnc(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnc, label, hint);
-        }
-
-        public void Jne(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jne, label, hint);
-        }
-
-        public void Jng(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jng, label, hint);
-        }
-
-        public void Jnge(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnge, label, hint);
-        }
-
-        public void Jnl(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnl, label, hint);
-        }
-
-        public void Jnle(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnle, label, hint);
-        }
-
-        public void Jno(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jno, label, hint);
-        }
-
-        public void Jnp(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnp, label, hint);
-        }
-
-        public void Jns(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jns, label, hint);
-        }
-
-        public void Jnz(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jnz, label, hint);
-        }
-
-        public void Jo(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jo, label, hint);
-        }
-
-        public void Jp(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jp, label, hint);
-        }
-
-        public void Jpe(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jpe, label, hint);
-        }
-
-        public void Jpo(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jpo, label, hint);
-        }
-
-        public void Js(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Js, label, hint);
-        }
-
-        public void Jz(Label label, Hint hint = Hint.None)
-        {
-            EmitJcc(InstructionCode.Jz, label, hint);
-        }
-
         public void ShortJ(Condition cc, Label label, Hint hint = Hint.None)
         {
             _emitOptions |= EmitOptions.ShortJump;
-            J(cc, label, hint);
+            this.J(cc, label, hint);
         }
 
         public void ShortJa(Label label, Hint hint = Hint.None)
@@ -1165,97 +939,10 @@
             EmitShortJcc(InstructionCode.Jz, label, hint);
         }
 
-        public void Jmp(GPReg dst)
-        {
-            EmitInstruction(InstructionCode.Jmp, dst);
-        }
-
-        public void Jmp(Mem dst)
-        {
-            EmitInstruction(InstructionCode.Jmp, dst);
-        }
-
-        public void Jmp(Imm dst)
-        {
-            EmitInstruction(InstructionCode.Jmp, dst);
-        }
-
-        public void Jmp(IntPtr dst)
-        {
-            EmitInstruction(InstructionCode.Jmp, (Imm)dst);
-        }
-
-        public void Jmp(Label label)
-        {
-            EmitInstruction(InstructionCode.Jmp, label);
-        }
-
         public void ShortJmp(Label label)
         {
             _emitOptions |= EmitOptions.ShortJump;
             EmitInstruction(InstructionCode.Jmp, label);
-        }
-
-        public void Mov(GPReg dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Mov, dst, src);
-        }
-
-        public void Mov(GPReg dst, Mem src)
-        {
-            EmitInstruction(InstructionCode.Mov, dst, src);
-        }
-
-        public void Mov(GPReg dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Mov, dst, src);
-        }
-
-        public void Mov(Mem dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Mov, dst, src);
-        }
-
-        public void Mov(Mem dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Mov, dst, src);
-        }
-
-        public void Pop(GPReg dst)
-        {
-            if (!dst.IsRegType(RegType.GPW) && !dst.IsRegType(RegType.GPN))
-                throw new ArgumentException();
-
-            EmitInstruction(InstructionCode.Pop, dst);
-        }
-
-        public void Pop(Mem dst)
-        {
-            if (dst.Size != 2 && dst.Size != IntPtr.Size)
-                throw new ArgumentException();
-
-            EmitInstruction(InstructionCode.Pop, dst);
-        }
-
-        public void Push(GPReg src)
-        {
-            if (!src.IsRegType(RegType.GPW) && !src.IsRegType(RegType.GPN))
-                throw new ArgumentException();
-
-            EmitInstruction(InstructionCode.Push, src);
-        }
-
-        public void Push(Mem src)
-        {
-            if (src.Size != 2 && src.Size != IntPtr.Size)
-                throw new ArgumentException();
-
-            EmitInstruction(InstructionCode.Push, src);
-        }
-
-        public void Push(Imm src)
-        {
-            EmitInstruction(InstructionCode.Push, src);
         }
 
         public void Ret()
@@ -1266,31 +953,6 @@
         public void Ret(Imm imm16)
         {
             EmitInstruction(InstructionCode.Ret, imm16);
-        }
-
-        public void Sub(GPReg dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Sub, dst, src);
-        }
-
-        public void Sub(GPReg dst, Mem src)
-        {
-            EmitInstruction(InstructionCode.Sub, dst, src);
-        }
-
-        public void Sub(GPReg dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Sub, dst, src);
-        }
-
-        public void Sub(Mem dst, GPReg src)
-        {
-            EmitInstruction(InstructionCode.Sub, dst, src);
-        }
-
-        public void Sub(Mem dst, Imm src)
-        {
-            EmitInstruction(InstructionCode.Sub, dst, src);
         }
 
         #endregion
@@ -1352,19 +1014,19 @@
             }
         }
 
-        internal void EmitInstruction(InstructionCode code)
+        public void EmitInstruction(InstructionCode code)
         {
             EmitInstructionImpl(code, null, null, null);
         }
 
-        internal void EmitInstruction(InstructionCode code, Operand operand0)
+        public void EmitInstruction(InstructionCode code, Operand operand0)
         {
             Contract.Requires(operand0 != null);
 
             EmitInstructionImpl(code, operand0, null, null);
         }
 
-        internal void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
+        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
         {
             Contract.Requires(operand0 != null);
             Contract.Requires(operand1 != null);
@@ -1372,13 +1034,34 @@
             EmitInstructionImpl(code, operand0, operand1, null);
         }
 
-        internal void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
+        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
         {
             Contract.Requires(operand0 != null);
             Contract.Requires(operand1 != null);
             Contract.Requires(operand2 != null);
 
             EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3)
+        {
+            Contract.Requires(operand0 != null);
+            Contract.Requires(operand1 != null);
+            Contract.Requires(operand2 != null);
+            Contract.Requires(operand3 != null);
+
+            throw new NotImplementedException();
+        }
+
+        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
+        {
+            Contract.Requires(operand0 != null);
+            Contract.Requires(operand1 != null);
+            Contract.Requires(operand2 != null);
+            Contract.Requires(operand3 != null);
+            Contract.Requires(operand4 != null);
+
+            throw new NotImplementedException();
         }
 
         private static readonly int _instructionCount = Enum.GetValues(typeof(InstructionCode)).Cast<int>().Max() + 1;
@@ -3887,7 +3570,7 @@
         // to first, second and third operand, if needed.
 
         //! @brief Private method for emitting jcc.
-        private void EmitJcc(InstructionCode code, Label label, Hint hint)
+        public void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
             if (hint == Hint.None)
             {
