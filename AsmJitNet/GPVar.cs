@@ -7,8 +7,8 @@
         {
         }
 
-        public GPVar(int id, int size, RegType regType, VariableType variableType)
-            : base(id, size, regType, variableType)
+        public GPVar(int id, int size, RegType registerType, VariableType variableType)
+            : base(id, size, registerType, variableType)
         {
         }
     }

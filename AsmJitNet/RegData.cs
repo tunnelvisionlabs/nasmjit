@@ -2,10 +2,10 @@
 {
     public sealed class RegData
     {
-        private byte _op;
-        private byte _size;
-        private int _id;
-        private int _code;
+        private readonly byte _op;
+        private readonly byte _size;
+        private readonly int _id;
+        private readonly int _code;
 
         public RegData(OperandType type, int size, int id, int code)
         {

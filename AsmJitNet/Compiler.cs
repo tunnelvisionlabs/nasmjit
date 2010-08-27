@@ -114,37 +114,24 @@
 
         public Function NewFunction(CallingConvention callingConvention, Type delegateType)
         {
-            Contract.Ensures(Contract.Result<Function>() != null);
-
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
+            Contract.Ensures(Contract.Result<Function>() != null);
+            Contract.EndContractBlock();
 
             if (delegateType == typeof(Action))
                 return NewFunction(callingConvention, new VariableType[0], VariableType.Invalid);
 
-            if (!delegateType.IsGenericType)
-                throw new ArgumentException();
+            Function f = new Function(this, callingConvention, delegateType);
+            _function = f;
 
-            VariableType[] arguments = null;
-            VariableType returnValue = VariableType.Invalid;
-            Type genericType = delegateType.GetGenericTypeDefinition();
-            if (genericType.FullName.StartsWith("System.Action`"))
-            {
-                arguments = Array.ConvertAll(delegateType.GetGenericArguments(), TypeToId);
-            }
-            else if (genericType.FullName.StartsWith("System.Func`"))
-            {
-                Type[] typeArguments = delegateType.GetGenericArguments();
-                returnValue = TypeToId(typeArguments[typeArguments.Length - 1]);
-                Array.Resize(ref typeArguments, typeArguments.Length - 1);
-                arguments = Array.ConvertAll(typeArguments, TypeToId);
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
+            AddEmittable(f);
+            Bind(f.EntryLabel);
+            AddEmittable(f.Prolog);
 
-            return NewFunction(callingConvention, arguments, returnValue);
+            _varNameId = 0;
+            f.CreateVariables();
+            return f;
         }
 
         public Function NewFunction(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
@@ -157,10 +144,9 @@
             if (_function != null)
                 throw new InvalidOperationException();
 
-            Function f = new Function(this);
+            Function f = new Function(this, callingConvention, arguments, returnValue);
             _function = f;
 
-            f.SetPrototype(callingConvention, arguments, returnValue);
             AddEmittable(f);
             Bind(f.EntryLabel);
             AddEmittable(f.Prolog);
@@ -249,7 +235,7 @@
                 throw new ArgumentException();
 
             VarData vdata = Function._argumentVariables[index];
-            GPVar var = new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            GPVar var = new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
 
@@ -259,7 +245,7 @@
                 throw new ArgumentException();
 
             VarData varData = NewVarData(name, variableType, IntPtr.Size);
-            GPVar var = new GPVar(varData.Id, varData.Size, VariableInfo.GetVariableInfo(varData.Type).Code, varData.Type);
+            GPVar var = new GPVar(varData.Id, varData.Size, VariableInfo.GetVariableInfo(varData.Type).RegisterType, varData.Type);
             return var;
         }
 
@@ -280,7 +266,7 @@
             if (vdata.Size != 12)
                 throw new NotSupportedException();
 
-            MMVar var = new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            MMVar var = new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
 
@@ -293,7 +279,7 @@
             if (vdata.Size != 8)
                 throw new NotSupportedException();
 
-            MMVar var = new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            MMVar var = new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
 
@@ -314,7 +300,7 @@
             if (vdata.Size != 16)
                 throw new NotSupportedException();
 
-            XMMVar var = new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            XMMVar var = new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
 
@@ -327,7 +313,7 @@
             if (vdata.Size != 16)
                 throw new NotSupportedException();
 
-            XMMVar var = new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).Code, vdata.Type);
+            XMMVar var = new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
 
@@ -751,55 +737,109 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(GPVar dst)
+        public Call Call(GPVar dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(dst != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
-            return _emitCall(dst);
+            return _emitCall(dst, callingConvention, delegateType);
         }
 
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Mem dst)
+        public Call Call(GPVar dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
-            return _emitCall(dst);
+            return _emitCall(dst, callingConvention, arguments, returnValue);
         }
 
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Imm dst)
+        public Call Call(Mem dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(dst != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
-            return _emitCall(dst);
+            return _emitCall(dst, callingConvention, delegateType);
         }
 
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(IntPtr dst)
+        public Call Call(Mem dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            return _emitCall(dst, callingConvention, arguments, returnValue);
+        }
+
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
+        public Call Call(Imm dst, CallingConvention callingConvention, Type delegateType)
+        {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            return _emitCall(dst, callingConvention, delegateType);
+        }
+
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
+        public Call Call(Imm dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        {
+            Contract.Requires(dst != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            return _emitCall(dst, callingConvention, arguments, returnValue);
+        }
+
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
+        public Call Call(IntPtr dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Ensures(Contract.Result<Call>() != null);
 
-            return _emitCall((Imm)dst);
+            return _emitCall((Imm)dst, callingConvention, delegateType);
         }
 
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Label label)
+        public Call Call(IntPtr dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        {
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            return _emitCall((Imm)dst, callingConvention, arguments, returnValue);
+        }
+
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
+        public Call Call(Label label, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(label != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
-            return _emitCall(label);
+            return _emitCall(label, callingConvention, delegateType);
+        }
+
+        /// <summary>
+        /// Call procedure.
+        /// </summary>
+        public Call Call(Label label, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        {
+            Contract.Requires(label != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            return _emitCall(label, callingConvention, arguments, returnValue);
         }
 
         public void Call(JitAction function)
@@ -809,8 +849,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
         }
 
         public void Call<T>(JitAction<T> function, Operand arg0)
@@ -821,8 +860,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
         }
 
@@ -835,8 +873,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
         }
@@ -851,8 +888,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -869,8 +905,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -885,8 +920,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
         }
 
@@ -899,8 +933,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
         }
@@ -915,8 +948,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
@@ -933,8 +965,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -953,8 +984,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress);
-            call.SetPrototype(function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -1078,7 +1108,7 @@
             }
         }
 
-        private Call _emitCall(Operand o0)
+        private Call _emitCall(Operand o0, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(o0 != null);
             Contract.Ensures(Contract.Result<Call>() != null);
@@ -1087,7 +1117,21 @@
             if (fn == null)
                 throw new InvalidOperationException("No function.");
 
-            Call call = new Call(this, fn, o0);
+            Call call = new Call(this, fn, o0, callingConvention, arguments, returnValue);
+            AddEmittable(call);
+            return call;
+        }
+
+        private Call _emitCall(Operand o0, CallingConvention callingConvention, Type delegateType)
+        {
+            Contract.Requires(o0 != null);
+            Contract.Ensures(Contract.Result<Call>() != null);
+
+            Function fn = Function;
+            if (fn == null)
+                throw new InvalidOperationException("No function.");
+
+            Call call = new Call(this, fn, o0, callingConvention, delegateType);
             AddEmittable(call);
             return call;
         }

@@ -120,6 +120,7 @@
     <Compile Include="Buffer.cs" />
     <Compile Include="Call.cs" />
     <Compile Include="CallingConvention.cs" />
+    <Compile Include="CallingConventionInfo.cs" />
     <Compile Include="CodeGenerator.cs" />
     <Compile Include="Comment.cs" />
     <Compile Include="Compiler.cs" />

@@ -1785,7 +1785,7 @@
                 {
                     VarData vdata = _compiler.GetVarData(o.Id);
                     Debug.Assert(vdata != null);
-                    operands[i] = new GPReg(((BaseVar)o).RegisterCode, vdata.RegisterIndex);
+                    operands[i] = new GPReg(((BaseVar)o).RegisterType, vdata.RegisterIndex);
                 }
                 else if (o.IsMem)
                 {

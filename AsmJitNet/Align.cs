@@ -4,7 +4,7 @@
 
     public class Align : Emittable
     {
-        private int _size;
+        private readonly int _size;
 
         public Align(Compiler compiler, int size = 0)
             : base(compiler)
@@ -36,14 +36,6 @@
             get
             {
                 return _size;
-            }
-
-            set
-            {
-                if (value < 0)
-                    throw new ArgumentOutOfRangeException("value");
-
-                _size = value;
             }
         }
 

@@ -2,17 +2,22 @@
 {
     using System;
 
-    public class BaseReg : Operand
+    public abstract class BaseReg : Operand
     {
-        private readonly int _code;
+        private readonly RegCode _code;
 
-        public BaseReg(int code, int size)
+        public BaseReg(RegCode code, int size)
             : base(size: size)
         {
             _code = code;
 
             if (RegisterType == 0)
                 throw new ArgumentException();
+        }
+
+        public BaseReg(RegType type, RegIndex index, int size)
+            : this((RegCode)type | (RegCode)index, size)
+        {
         }
 
         public override OperandType OperandType
@@ -23,7 +28,7 @@
             }
         }
 
-        public int Code
+        public RegCode Code
         {
             get
             {
@@ -35,7 +40,7 @@
         {
             get
             {
-                return (RegType)(Code & (int)RegType.MASK);
+                return (RegType)((int)Code & (int)RegType.MASK);
             }
         }
 
@@ -43,7 +48,7 @@
         {
             get
             {
-                return (RegIndex)(Code & (int)RegIndex.Mask);
+                return (RegIndex)((int)Code & (int)RegIndex.Mask);
             }
         }
     }

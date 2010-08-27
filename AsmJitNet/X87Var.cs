@@ -7,8 +7,8 @@
         {
         }
 
-        public X87Var(int id, RegType registerCode, VariableType variableType)
-            : base(id, 12, registerCode, variableType)
+        public X87Var(int id, RegType registerType, VariableType variableType)
+            : base(id, 12, registerType, variableType)
         {
         }
     }

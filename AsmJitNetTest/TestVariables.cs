@@ -305,8 +305,7 @@
             GPVar address = c.NewGP();
             c.Mov(address, (Imm)calledFn);
 
-            Call ctx = c.Call(address);
-            ctx.SetPrototype(CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
+            Call ctx = c.Call(address, CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
             ctx.SetArgument(0, v2);
             ctx.SetArgument(1, v1);
             ctx.SetArgument(2, v0);
@@ -450,8 +449,7 @@
                     c.Bind(opAdd);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcA);
-                    call.SetPrototype(CallingConvention.Cdecl, typeof(Func<int, int, int>));
+                    Call call = c.Call(funcA, CallingConvention.Cdecl, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);
@@ -462,8 +460,7 @@
                     c.Bind(opMul);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcB);
-                    call.SetPrototype(CallingConvention.Cdecl, typeof(Func<int, int, int>));
+                    Call call = c.Call(funcB, CallingConvention.Cdecl, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);

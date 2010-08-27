@@ -116,7 +116,7 @@
                 //   label (in _mem.base) and INVALID_VALUE, we just decrement the value
                 //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there
                 //   then it's extended register.
-                return (IsReg && (((BaseReg)this).Code & (int)RegIndex.Mask) >= 8) ||
+                return (IsReg && ((int)((BaseReg)this).Code & (int)RegIndex.Mask) >= 8) ||
                        (IsMem && (((uint)((Mem)this).Base - 8U) < 8U) ||
                                    (((uint)((Mem)this).Index - 8U) < 8U));
             }
@@ -129,7 +129,7 @@
 
         public bool IsRegCode(RegCode code)
         {
-            return IsReg && ((BaseReg)this).Code == (int)code;
+            return IsReg && ((BaseReg)this).Code == code;
         }
 
         public bool IsRegIndex(RegIndex regIndex)

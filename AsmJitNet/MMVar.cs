@@ -9,8 +9,8 @@
         {
         }
 
-        public MMVar(int id, RegType registerCode, VariableType variableType)
-            : base(id, 8, registerCode, variableType)
+        public MMVar(int id, RegType registerType, VariableType variableType)
+            : base(id, 8, registerType, variableType)
         {
         }
     }

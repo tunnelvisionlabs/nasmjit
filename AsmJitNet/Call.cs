@@ -11,18 +11,22 @@
         private readonly Operand[] _ret = new Operand[2];
         private Operand[] _args;
         private FunctionPrototype _functionPrototype;
+
         /// <summary>
         /// Mask of GP registers used as function arguments
         /// </summary>
         private int _gpParams;
+
         /// <summary>
         /// Mask of MM registers used as function arguments
         /// </summary>
         private int _mmParams;
+
         /// <summary>
         /// Mask of XMM registers used as function arguments
         /// </summary>
         private int _xmmParams;
+
         /// <summary>
         /// Variables (extracted from operands)
         /// </summary>
@@ -30,11 +34,28 @@
 
         private readonly VarCallRecord[] _argumentToVarRecord = new VarCallRecord[32];
 
-        public Call(Compiler compiler, Function caller, Operand target)
+        public Call(Compiler compiler, Function caller, Operand target, CallingConvention callingConvention, Type delegateType)
             : base(compiler)
         {
             _caller = caller;
             _target = target;
+
+            _functionPrototype = new FunctionPrototype(callingConvention, delegateType);
+            if (_functionPrototype.Arguments != null && _functionPrototype.Arguments.Length > 0)
+                _args = new Operand[_functionPrototype.Arguments.Length];
+        }
+
+        public Call(Compiler compiler, Function caller, Operand target, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+            : base(compiler)
+        {
+            Contract.Requires(arguments != null);
+
+            _caller = caller;
+            _target = target;
+
+            _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
+            if (arguments != null && arguments.Length > 0)
+                _args = new Operand[arguments.Length];
         }
 
         public override EmittableType EmittableType
@@ -76,50 +97,6 @@
             {
                 return _functionPrototype;
             }
-        }
-
-        public void SetPrototype(CallingConvention callingConvention, Type delegateType)
-        {
-            if (delegateType == null)
-                throw new ArgumentNullException("delegateType");
-
-            if (delegateType == typeof(Action))
-            {
-                SetPrototype(callingConvention, new VariableType[0], VariableType.Invalid);
-            }
-
-            if (!delegateType.IsGenericType)
-                throw new ArgumentException();
-
-            VariableType[] arguments = null;
-            VariableType returnValue = VariableType.Invalid;
-            Type genericType = delegateType.GetGenericTypeDefinition();
-            if (genericType.FullName.StartsWith("System.Action`"))
-            {
-                arguments = Array.ConvertAll(delegateType.GetGenericArguments(), Compiler.TypeToId);
-            }
-            else if (genericType.FullName.StartsWith("System.Func`"))
-            {
-                Type[] typeArguments = delegateType.GetGenericArguments();
-                returnValue = Compiler.TypeToId(typeArguments[typeArguments.Length - 1]);
-                Array.Resize(ref typeArguments, typeArguments.Length - 1);
-                arguments = Array.ConvertAll(typeArguments, Compiler.TypeToId);
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-
-            SetPrototype(callingConvention, arguments, returnValue);
-        }
-
-        public void SetPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
-        {
-            Contract.Requires(arguments != null);
-
-            _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
-            if (arguments != null && arguments.Length > 0)
-                _args = new Operand[arguments.Length];
         }
 
         public void SetArgument(int i, Operand operand)
@@ -282,29 +259,6 @@
             int curIndex = 0;
             int varIndex = -1;
 
-            //#define __GET_VARIABLE(__vardata__) \
-            //  { \
-            //    VarData* _candidate = __vardata__; \
-            //    \
-            //    for (var = cur; ;) \
-            //    { \
-            //      if (var == _variables) \
-            //      { \
-            //        var = cur++; \
-            //        var->vdata = _candidate; \
-            //        break; \
-            //      } \
-            //      \
-            //      var--; \
-            //      \
-            //      if (var->vdata == _candidate) \
-            //      { \
-            //        break; \
-            //      } \
-            //    } \
-            //    \
-            //    ASMJIT_ASSERT(var != NULL); \
-            //  }
             Action<VarData> __GET_VARIABLE =
                 __vardata__ =>
                 {

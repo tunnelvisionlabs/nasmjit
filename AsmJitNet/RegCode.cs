@@ -10,14 +10,11 @@
         CL,
         DL,
         BL,
-#if ASMJIT_X64
         SPL,
         BPL,
         SIL,
         DIL,
-#endif // ASMJIT_X64
 
-#if ASMJIT_X64
         R8B,
         R9B,
         R10B,
@@ -26,7 +23,6 @@
         R13B,
         R14B,
         R15B,
-#endif // ASMJIT_X64
 
         AH = (int)RegType.GPB_HI,
         CH,
@@ -45,7 +41,7 @@
         BP,
         SI,
         DI,
-#if ASMJIT_X64
+
         R8W,
         R9W,
         R10W,
@@ -54,7 +50,6 @@
         R13W,
         R14W,
         R15W,
-#endif // ASMJIT_X64
 
         // --------------------------------------------------------------------------
         // [32-bit Registers]
@@ -68,7 +63,7 @@
         EBP,
         ESI,
         EDI,
-#if ASMJIT_X64
+
         R8D,
         R9D,
         R10D,
@@ -77,13 +72,11 @@
         R13D,
         R14D,
         R15D,
-#endif // ASMJIT_X64
 
         // --------------------------------------------------------------------------
         // [64-bit Registers]
         // --------------------------------------------------------------------------
 
-#if ASMJIT_X64
         RAX = (int)RegType.GPQ,
         RCX,
         RDX,
@@ -100,7 +93,6 @@
         R13,
         R14,
         R15,
-#endif // ASMJIT_X64
 
         // --------------------------------------------------------------------------
         // [MM Registers]
@@ -127,7 +119,7 @@
         XMM5,
         XMM6,
         XMM7,
-#if ASMJIT_X64
+
         XMM8,
         XMM9,
         XMM10,
@@ -136,7 +128,6 @@
         XMM13,
         XMM14,
         XMM15,
-#endif // ASMJIT_X64
 
         // --------------------------------------------------------------------------
         // [Native registers (depends if processor runs in 32 bit or 64 bit mode)]

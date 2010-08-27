@@ -4,20 +4,20 @@
 
     public abstract class BaseVar : Operand
     {
-        private readonly RegType _registerCode;
+        private readonly RegType _registerType;
 
         private readonly VariableType _variableType;
 
-        protected BaseVar(RegType registerCode, VariableType variableType)
+        protected BaseVar(RegType registerType, VariableType variableType)
         {
-            _registerCode = registerCode;
+            _registerType = registerType;
             _variableType = variableType;
         }
 
-        protected BaseVar(int id, int size, RegType registerCode, VariableType variableType)
+        protected BaseVar(int id, int size, RegType registerType, VariableType variableType)
             : base(id, size)
         {
-            _registerCode = registerCode;
+            _registerType = registerType;
             _variableType = variableType;
         }
 
@@ -29,11 +29,11 @@
             }
         }
 
-        public RegType RegisterCode
+        public RegType RegisterType
         {
             get
             {
-                return _registerCode;
+                return _registerType;
             }
         }
 

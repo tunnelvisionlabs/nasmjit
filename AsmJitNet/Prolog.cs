@@ -2,7 +2,7 @@
 {
     public sealed class Prolog : Emittable
     {
-        private Function _function;
+        private readonly Function _function;
 
         public Prolog(Compiler compiler, Function function)
             : base(compiler)

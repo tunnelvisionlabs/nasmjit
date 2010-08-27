@@ -3,63 +3,67 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class FunctionPrototype
+    public sealed class FunctionPrototype
     {
         private const int InvalidValue = -1;
 
-        private CallingConvention _callingConvention;
-        public bool _calleePopsStack;
+        private readonly CallingConvention _callingConvention;
         private Argument[] _arguments;
-        private VariableType _returnValue;
-        private ArgumentsDirection _argumentsDirection;
+        private VariableType _returnValue = VariableType.Invalid;
         private int _argumentsStackSize;
-
-        private readonly RegIndex[] _argumentsGP = new RegIndex[16];
-
-        private readonly RegIndex[] _argumentsXMM = new RegIndex[16];
-
-        private int _preservedGP;
-        private int _preservedMM;
-        private int _preservedXMM;
 
         private int _passedGP;
         private int _passedMM;
         private int _passedXMM;
 
+        internal FunctionPrototype(CallingConvention callingConvention, Type delegateType)
+        {
+            if (delegateType == null)
+                throw new ArgumentNullException("delegateType");
+
+            _callingConvention = callingConvention;
+
+            if (delegateType == typeof(Action))
+            {
+                SetPrototype(new VariableType[0], VariableType.Invalid);
+            }
+            else
+            {
+                if (!delegateType.IsGenericType)
+                    throw new ArgumentException();
+
+                VariableType[] arguments = null;
+                VariableType returnValue = VariableType.Invalid;
+                Type genericType = delegateType.GetGenericTypeDefinition();
+                if (genericType.FullName.StartsWith("System.Action`"))
+                {
+                    arguments = Array.ConvertAll(delegateType.GetGenericArguments(), Compiler.TypeToId);
+                }
+                else if (genericType.FullName.StartsWith("System.Func`"))
+                {
+                    Type[] typeArguments = delegateType.GetGenericArguments();
+                    returnValue = Compiler.TypeToId(typeArguments[typeArguments.Length - 1]);
+                    Array.Resize(ref typeArguments, typeArguments.Length - 1);
+                    arguments = Array.ConvertAll(typeArguments, Compiler.TypeToId);
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
+
+                SetPrototype(arguments, returnValue);
+            }
+        }
+
         internal FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(arguments != null);
 
-            Clear();
-            SetCallingConvention(callingConvention);
+            _callingConvention = callingConvention;
             if (arguments.Length > 32)
                 throw new ArgumentException();
 
             SetPrototype(arguments, returnValue);
-        }
-
-        public int PreservedGP
-        {
-            get
-            {
-                return _preservedGP;
-            }
-        }
-
-        public int PreservedMM
-        {
-            get
-            {
-                return _preservedMM;
-            }
-        }
-
-        public int PreservedXMM
-        {
-            get
-            {
-                return _preservedXMM;
-            }
         }
 
         public int PassedGP
@@ -94,11 +98,51 @@
             }
         }
 
+        public CallingConventionInfo CallingConventionInfo
+        {
+            get
+            {
+                return CallingConventionInfo.GetCallingConventionInfo(_callingConvention);
+            }
+        }
+
         public bool CalleePopsStack
         {
             get
             {
-                return _calleePopsStack;
+                return CallingConventionInfo.CalleePopsStack;
+            }
+        }
+
+        public ArgumentsDirection ArgumentsDirection
+        {
+            get
+            {
+                return CallingConventionInfo.ArgumentsDirection;
+            }
+        }
+
+        public int PreservedGP
+        {
+            get
+            {
+                return CallingConventionInfo.PreservedGP;
+            }
+        }
+
+        public int PreservedMM
+        {
+            get
+            {
+                return CallingConventionInfo.PreservedMM;
+            }
+        }
+
+        public int PreservedXMM
+        {
+            get
+            {
+                return CallingConventionInfo.PreservedXMM;
             }
         }
 
@@ -118,174 +162,12 @@
             }
         }
 
-        public ArgumentsDirection ArgumentsDirection
-        {
-            get
-            {
-                return _argumentsDirection;
-            }
-        }
-
         public int ArgumentsStackSize
         {
             get
             {
                 return _argumentsStackSize;
             }
-        }
-
-        private void Clear()
-        {
-            _callingConvention = CallingConvention.None;
-            _calleePopsStack = false;
-
-            _arguments = null;
-            _argumentsDirection = ArgumentsDirection.RightToLeft;
-            _argumentsStackSize = 0;
-
-            _returnValue = VariableType.Invalid;
-
-            for (int i = 0; i < _argumentsGP.Length; i++)
-                _argumentsGP[i] = RegIndex.Invalid;
-            for (int i = 0; i < _argumentsXMM.Length; i++)
-                _argumentsXMM[i] = RegIndex.Invalid;
-
-            _preservedGP = 0;
-            _preservedMM = 0;
-            _preservedXMM = 0;
-
-            _passedGP = 0;
-            _passedMM = 0;
-            _passedXMM = 0;
-        }
-
-        private void SetCallingConvention(CallingConvention callingConvention)
-        {
-            _callingConvention = callingConvention;
-
-#if ASMJIT_X86
-            _preservedGP =
-              (1 << (int)RegIndex.Ebx) |
-              (1 << (int)RegIndex.Esp) |
-              (1 << (int)RegIndex.Ebp) |
-              (1 << (int)RegIndex.Esi) |
-              (1 << (int)RegIndex.Edi);
-            _preservedXMM = 0;
-
-            switch (_callingConvention)
-            {
-            case AsmJitNet.CallingConvention.Cdecl:
-                break;
-
-            case AsmJitNet.CallingConvention.StdCall:
-                _calleePopsStack = true;break;
-
-            case AsmJitNet.CallingConvention.MsThisCall:
-                _calleePopsStack = true;
-                _argumentsGP[0] = RegIndex.Ecx;
-                break;
-
-            case AsmJitNet.CallingConvention.MsFastCall:
-                _calleePopsStack = true;
-                _argumentsGP[0] = RegIndex.Ecx;
-                _argumentsGP[1] = RegIndex.Edx;
-                break;
-
-            case AsmJitNet.CallingConvention.BorlandFastCall:
-                _calleePopsStack = true;
-                _argumentsDirection = ArgumentsDirection.LeftToRight;
-                _argumentsGP[0] = RegIndex.Eax;
-                _argumentsGP[1] = RegIndex.Edx;
-                _argumentsGP[2] = RegIndex.Ecx;
-                break;
-
-            case AsmJitNet.CallingConvention.GccFastCall2:
-                _calleePopsStack = false;
-                _argumentsGP[0] = RegIndex.Ecx;
-                _argumentsGP[1] = RegIndex.Edx;
-                break;
-
-            case AsmJitNet.CallingConvention.GccFastCall3:
-                _calleePopsStack = false;
-                _argumentsGP[0] = RegIndex.Edx;
-                _argumentsGP[1] = RegIndex.Ecx;
-                _argumentsGP[2] = RegIndex.Eax;
-                break;
-
-            default:
-                throw new ArgumentException();
-            }
-#elif ASMJIT_X64
-            switch (_callingConvention)
-            {
-            case CallingConvention.X64W:
-                _argumentsGP[0] = RegIndex.Rcx;
-                _argumentsGP[1] = RegIndex.Rdx;
-                _argumentsGP[2] = RegIndex.R8;
-                _argumentsGP[3] = RegIndex.R9;
-
-                _argumentsXMM[0] = RegIndex.Xmm0;
-                _argumentsXMM[1] = RegIndex.Xmm1;
-                _argumentsXMM[2] = RegIndex.Xmm2;
-                _argumentsXMM[3] = RegIndex.Xmm3;
-
-                _preservedGP =
-                  (1 << (int)RegIndex.Rbx) |
-                  (1 << (int)RegIndex.Rsp) |
-                  (1 << (int)RegIndex.Rbp) |
-                  (1 << (int)RegIndex.Rsi) |
-                  (1 << (int)RegIndex.Rdi) |
-                  (1 << (int)RegIndex.R12) |
-                  (1 << (int)RegIndex.R13) |
-                  (1 << (int)RegIndex.R14) |
-                  (1 << (int)RegIndex.R15);
-                _preservedXMM =
-                  (1 << (int)RegIndex.Xmm6) |
-                  (1 << (int)RegIndex.Xmm7) |
-                  (1 << (int)RegIndex.Xmm8) |
-                  (1 << (int)RegIndex.Xmm9) |
-                  (1 << (int)RegIndex.Xmm10) |
-                  (1 << (int)RegIndex.Xmm11) |
-                  (1 << (int)RegIndex.Xmm12) |
-                  (1 << (int)RegIndex.Xmm13) |
-                  (1 << (int)RegIndex.Xmm14) |
-                  (1 << (int)RegIndex.Xmm15);
-                break;
-
-            case CallingConvention.X64U:
-                _argumentsGP[0] = RegIndex.Rdi;
-                _argumentsGP[1] = RegIndex.Rsi;
-                _argumentsGP[2] = RegIndex.Rdx;
-                _argumentsGP[3] = RegIndex.Rcx;
-                _argumentsGP[4] = RegIndex.R8;
-                _argumentsGP[5] = RegIndex.R9;
-
-                _argumentsXMM[0] = RegIndex.Xmm0;
-                _argumentsXMM[1] = RegIndex.Xmm1;
-                _argumentsXMM[2] = RegIndex.Xmm2;
-                _argumentsXMM[3] = RegIndex.Xmm3;
-                _argumentsXMM[4] = RegIndex.Xmm4;
-                _argumentsXMM[5] = RegIndex.Xmm5;
-                _argumentsXMM[6] = RegIndex.Xmm6;
-                _argumentsXMM[7] = RegIndex.Xmm7;
-
-                _preservedGP =
-                  (1 << (int)RegIndex.Rbx) |
-                  (1 << (int)RegIndex.Rsp) |
-                  (1 << (int)RegIndex.Rbp) |
-                  (1 << (int)RegIndex.R12) |
-                  (1 << (int)RegIndex.R13) |
-                  (1 << (int)RegIndex.R14) |
-                  (1 << (int)RegIndex.R15);
-                _preservedXMM = 0;
-                break;
-
-            default:
-                throw new ArgumentException("Illegal calling convention.");
-            }
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         private void SetPrototype(VariableType[] arguments, VariableType returnValue)
@@ -303,15 +185,9 @@
 
             _returnValue = returnValue;
 
-            _arguments = Array.ConvertAll(arguments,
-                a => new Argument()
-                {
-                    _variableType = a,
-                    _registerIndex = RegIndex.Invalid,
-                    _stackOffset = InvalidValue
-                });
-
-            if (_arguments.Length == 0)
+            ArgumentData[] argumentData;
+            argumentData = Array.ConvertAll(arguments, a => new ArgumentData(a, RegIndex.Invalid, InvalidValue));
+            if (argumentData.Length == 0)
                 return;
 
             // --------------------------------------------------------------------------
@@ -322,23 +198,23 @@
             // Register arguments (Integer), always left-to-right.
             for (i = 0; i != arguments.Length; i++)
             {
-                Argument a = _arguments[i];
-                if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && _argumentsGP[posGP] != RegIndex.Invalid)
+                ArgumentData a = argumentData[i];
+                if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
                 {
-                    a._registerIndex = _argumentsGP[posGP++];
+                    a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
                     _passedGP |= (1 << (int)a._registerIndex);
                 }
             }
 
             // Stack arguments.
-            bool ltr = _argumentsDirection == ArgumentsDirection.LeftToRight;
+            bool ltr = CallingConventionInfo.ArgumentsDirection == ArgumentsDirection.LeftToRight;
             int istart = ltr ? 0 : arguments.Length - 1;
             int iend = ltr ? arguments.Length : -1;
             int istep = ltr ? 1 : -1;
 
             for (i = istart; i != iend; i += istep)
             {
-                Argument a = _arguments[i];
+                ArgumentData a = argumentData[i];
 
                 if (VariableInfo.IsVariableInteger(a._variableType))
                 {
@@ -367,16 +243,16 @@
                 // Register arguments (Integer / FP), always left to right.
                 for (i = 0; i != max; i++)
                 {
-                    Argument a = _arguments[i];
+                    ArgumentData a = argumentData[i];
 
                     if (VariableInfo.IsVariableInteger(a._variableType))
                     {
-                        a._registerIndex = _argumentsGP[i];
+                        a._registerIndex = CallingConventionInfo.ArgumentsGP[i];
                         _passedGP |= (1 << (int)a._registerIndex);
                     }
                     else if (VariableInfo.IsVariableFloat(a._variableType))
                     {
-                        a._registerIndex = _argumentsXMM[i];
+                        a._registerIndex = CallingConventionInfo.ArgumentsXMM[i];
                         _passedXMM |= (1 << (int)a._registerIndex);
                     }
                 }
@@ -384,7 +260,7 @@
                 // Stack arguments (always right-to-left).
                 for (i = arguments.Length - 1; i != -1; i--)
                 {
-                    Argument a = _arguments[i];
+                    ArgumentData a = argumentData[i];
                     if (a.IsAssigned)
                         continue;
 
@@ -410,10 +286,10 @@
                 // Register arguments (Integer), always left to right.
                 for (i = 0; i != arguments.Length; i++)
                 {
-                    Argument a = _arguments[i];
-                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && _argumentsGP[posGP] != RegIndex.Invalid)
+                    ArgumentData a = argumentData[i];
+                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
                     {
-                        a._registerIndex = _argumentsGP[posGP++];
+                        a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
                         _passedGP |= (1 << (int)a._registerIndex);
                     }
                 }
@@ -421,10 +297,10 @@
                 // Register arguments (FP), always left to right.
                 for (i = 0; i != arguments.Length; i++)
                 {
-                    Argument a = _arguments[i];
+                    ArgumentData a = argumentData[i];
                     if (VariableInfo.IsVariableFloat(a._variableType))
                     {
-                        a._registerIndex = _argumentsXMM[posXMM++];
+                        a._registerIndex = CallingConventionInfo.ArgumentsXMM[posXMM++];
                         _passedXMM |= (1 << (int)a._registerIndex);
                     }
                 }
@@ -432,7 +308,7 @@
                 // Stack arguments.
                 for (i = arguments.Length - 1; i != -1; i--)
                 {
-                    Argument a = _arguments[i];
+                    ArgumentData a = argumentData[i];
                     if (a.IsAssigned)
                         continue;
 
@@ -456,11 +332,13 @@
             // offset that is never zero).
             for (i = 0; i < arguments.Length; i++)
             {
-                if (_arguments[i]._registerIndex == RegIndex.Invalid)
-                    _arguments[i]._stackOffset += IntPtr.Size - stackOffset;
+                if (argumentData[i]._registerIndex == RegIndex.Invalid)
+                    argumentData[i]._stackOffset += IntPtr.Size - stackOffset;
             }
 
             _argumentsStackSize = -stackOffset;
+
+            _arguments = Array.ConvertAll(argumentData, data => new Argument(data._variableType, data._registerIndex, data._stackOffset));
         }
 
         internal int FindArgumentByRegisterCode(int regCode)
@@ -500,13 +378,42 @@
             return InvalidValue;
         }
 
-        public class Argument
+        public sealed class Argument
         {
-            public VariableType _variableType;
+            public readonly VariableType _variableType;
 
+            public readonly RegIndex _registerIndex;
+
+            public readonly int _stackOffset;
+
+            public Argument(VariableType variableType, RegIndex registerIndex, int stackOffset)
+            {
+                _variableType = variableType;
+                _registerIndex = registerIndex;
+                _stackOffset = stackOffset;
+            }
+
+            public bool IsAssigned
+            {
+                get
+                {
+                    return _registerIndex != RegIndex.Invalid || _stackOffset != InvalidValue;
+                }
+            }
+        }
+
+        private sealed class ArgumentData
+        {
+            public readonly VariableType _variableType;
             public RegIndex _registerIndex;
-
             public int _stackOffset;
+
+            public ArgumentData(VariableType variableType, RegIndex registerIndex, int stackOffset)
+            {
+                _variableType = variableType;
+                _registerIndex = registerIndex;
+                _stackOffset = stackOffset;
+            }
 
             public bool IsAssigned
             {

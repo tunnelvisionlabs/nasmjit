@@ -56,7 +56,7 @@
         private readonly Epilog _epilog;
         private readonly Dummy _end;
 
-        public Function(Compiler compiler)
+        private Function(Compiler compiler)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -67,6 +67,18 @@
             _prolog = new Prolog(compiler, this);
             _epilog = new Epilog(compiler, this);
             _end = new Dummy(compiler);
+        }
+
+        public Function(Compiler compiler, CallingConvention callingConvention, Type delegateType)
+            : this(compiler)
+        {
+            _functionPrototype = new FunctionPrototype(callingConvention, delegateType);
+        }
+
+        public Function(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+            : this(compiler)
+        {
+            _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
         }
 
         public override EmittableType EmittableType
@@ -196,13 +208,6 @@
         public void ClearHints(FunctionHints hints)
         {
             _hints &= ~hints;
-        }
-
-        internal void SetPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
-        {
-            Contract.Requires(arguments != null);
-
-            _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
         }
 
         internal void CreateVariables()
@@ -632,7 +637,7 @@
 
                     if (a._registerIndex != RegIndex.Invalid)
                     {
-                        BaseReg regOp = new BaseReg((int)a._registerIndex | (int)RegType.GPN, 0);
+                        var regOp = new GPReg(RegType.GPN, a._registerIndex);
                         Assembler.DumpOperand(buffer, regOp);
                     }
                     else

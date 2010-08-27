@@ -24,7 +24,6 @@
         /// </summary>
         public static readonly GPReg bl = new GPReg(RegCode.BL);
 
-#if ASMJIT_X64
         /// <summary>
         /// 8-bit General purpose register (64-bit mode only).
         /// </summary>
@@ -84,7 +83,6 @@
         /// 8-bit General purpose register (64-bit mode only).
         /// </summary>
         public static readonly GPReg r15b = new GPReg(RegCode.R15B);
-#endif
 
         /// <summary>
         /// 8-bit General purpose register.
@@ -146,7 +144,6 @@
         /// </summary>
         public static readonly GPReg di = new GPReg(RegCode.DI);
 
-#if ASMJIT_X64
         /// <summary>
         /// 16-bit General purpose register (64-bit mode only).
         /// </summary>
@@ -186,7 +183,6 @@
         /// 16-bit General purpose register (64-bit mode only).
         /// </summary>
         public static readonly GPReg r15w = new GPReg(RegCode.R15W);
-#endif
 
         /// <summary>
         /// 32-bit General purpose register.
@@ -228,7 +224,6 @@
         /// </summary>
         public static readonly GPReg edi = new GPReg(RegCode.EDI);
 
-#if ASMJIT_X64
         /// <summary>
         /// 32-bit General purpose register (64-bit mode only).
         /// </summary>
@@ -348,7 +343,6 @@
         /// 64-bit General purpose register (64-bit mode only).
         /// </summary>
         public static readonly GPReg r15 = new GPReg(RegCode.R15);
-#endif
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
@@ -470,7 +464,6 @@
         /// </summary>
         public static readonly XMMReg xmm7 = new XMMReg(RegCode.XMM7);
 
-#if ASMJIT_X64
         /// <summary>
         /// 128-bit XMM register (64-bit mode only).
         /// </summary>
@@ -510,7 +503,6 @@
         /// 128-bit XMM register (64-bit mode only).
         /// </summary>
         public static readonly XMMReg xmm15 = new XMMReg(RegCode.XMM15);
-#endif
 
         /// <summary>
         /// Get general purpose register of byte size.
@@ -519,7 +511,7 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPB_LO);
+            return new GPReg(RegType.GPB_LO, index);
         }
 
         /// <summary>
@@ -529,7 +521,7 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPB_HI);
+            return new GPReg(RegType.GPB_HI, index);
         }
 
         /// <summary>
@@ -539,7 +531,7 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPW);
+            return new GPReg(RegType.GPW, index);
         }
 
         /// <summary>
@@ -549,10 +541,9 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPD);
+            return new GPReg(RegType.GPD, index);
         }
 
-#if ASMJIT_X64
         /// <summary>
         /// Get general purpose register of qword size (64-bit only).
         /// </summary>
@@ -560,9 +551,8 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPQ);
+            return new GPReg(RegType.GPQ, index);
         }
-#endif
 
         /// <summary>
         /// Get general purpose register of native (platform specific) size.
@@ -571,7 +561,7 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg((int)index | (int)RegType.GPN);
+            return new GPReg(RegType.GPN, index);
         }
 
         /// <summary>
@@ -581,7 +571,7 @@
         {
             Contract.Ensures(Contract.Result<X87Reg>() != null);
 
-            return new X87Reg((int)index | (int)RegType.X87);
+            return new X87Reg(RegType.X87, index);
         }
 
         /// <summary>
@@ -591,7 +581,7 @@
         {
             Contract.Ensures(Contract.Result<MMReg>() != null);
 
-            return new MMReg((int)index | (int)RegType.MM);
+            return new MMReg(RegType.MM, index);
         }
 
         /// <summary>
@@ -601,7 +591,7 @@
         {
             Contract.Ensures(Contract.Result<XMMReg>() != null);
 
-            return new XMMReg((int)index | (int)RegType.XMM);
+            return new XMMReg(RegType.XMM, index);
         }
     }
 }

@@ -170,8 +170,7 @@
 
         private static void GenerateWriteLine(Compiler c, GPVar value)
         {
-            Call call = c.Call(WriteIntegerFunction);
-            call.SetPrototype(CallingConvention.Default, typeof(Action<int>));
+            Call call = c.Call(WriteIntegerFunction, CallingConvention.Default, typeof(Action<int>));
             call.SetArgument(0, value);
         }
 
@@ -184,8 +183,7 @@
 
         private static void GenerateNewException(Compiler c, GPVar dst, Imm code)
         {
-            Call call = c.Call(AllocateExceptionFunction);
-            call.SetPrototype(CallingConvention.Default, typeof(Func<int, IntPtr>));
+            Call call = c.Call(AllocateExceptionFunction, CallingConvention.Default, typeof(Func<int, IntPtr>));
             GPVar var = c.NewGP();
             c.Mov(var, code);
             call.SetArgument(0, var);

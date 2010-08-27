@@ -1091,7 +1091,7 @@
             }
             else if (o0.IsReg)
             {
-                bLoHiUsed |= ((BaseReg)o0).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o0).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
             }
             if (o1 == null)
             {
@@ -1099,7 +1099,7 @@
             }
             else if (o1.IsReg)
             {
-                bLoHiUsed |= ((BaseReg)o1).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o1).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
             }
             if (o2 == null)
             {
@@ -1107,7 +1107,7 @@
             }
             else if (o2.IsReg)
             {
-                bLoHiUsed |= ((BaseReg)o2).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o2).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
             }
 
             long beginOffset = Offset;
@@ -1141,11 +1141,11 @@
                 forceRexPrefix |= o1.IsExtendedRegisterUsed;
                 forceRexPrefix |= o2.IsExtendedRegisterUsed;
 
-                if (o0.IsRegType(RegType.GPB_LO) && (((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4)
+                if (o0.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4)
                     forceRexPrefix = true;
-                else if (o1.IsRegType(RegType.GPB_LO) && (((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4)
+                else if (o1.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4)
                     forceRexPrefix = true;
-                else if (o2.IsRegType(RegType.GPB_LO) && (((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4)
+                else if (o2.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4)
                     forceRexPrefix = true;
 
                 if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
@@ -3150,7 +3150,7 @@
 
             if (rm.IsReg)
             {
-                b = (((BaseReg)rm).Code & 0x8) != 0;
+                b = ((int)((BaseReg)rm).Code & 0x8) != 0;
             }
             else if (rm.IsMem)
             {

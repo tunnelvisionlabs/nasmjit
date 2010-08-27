@@ -4,26 +4,26 @@
 
     public class VariableInfo
     {
-        private RegType _code;
-        private byte _size;
-        private VariableClass _class;
-        private VariableFlags _flags;
-        private string _name;
+        private readonly RegType _registerType;
+        private readonly byte _size;
+        private readonly VariableClass _class;
+        private readonly VariableFlags _flags;
+        private readonly string _name;
 
-        private VariableInfo(RegType code, int size, VariableClass @class, VariableFlags flags, string name)
+        private VariableInfo(RegType registerType, int size, VariableClass @class, VariableFlags flags, string name)
         {
-            this._code = code;
+            this._registerType = registerType;
             this._size = (byte)size;
             this._class = @class;
             this._flags = flags;
             this._name = name;
         }
 
-        public RegType Code
+        public RegType RegisterType
         {
             get
             {
-                return _code;
+                return _registerType;
             }
         }
 
@@ -86,7 +86,7 @@
 
         public static int GetVariableRegisterCode(VariableType variableType, RegIndex regIndex)
         {
-            return (int)variableInfo[variableType].Code | (int)regIndex;
+            return (int)variableInfo[variableType].RegisterType | (int)regIndex;
         }
 
         private static readonly Dictionary<VariableType, VariableInfo> variableInfo =
