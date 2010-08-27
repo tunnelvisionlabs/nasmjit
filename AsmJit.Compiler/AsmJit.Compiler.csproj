@@ -16,7 +16,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ASMJIT_X86; ASMJIT_WINDOWS</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisLogFile>bin\Debug\AsmJit.Compiler.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -29,7 +29,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;ASMJIT_X86; ASMJIT_WINDOWS</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -47,7 +47,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ASMJIT_X64; ASMJIT_WINDOWS</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisLogFile>bin\Debug\AsmJit.Compiler.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -63,7 +63,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;ASMJIT_X64; ASMJIT_WINDOWS</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -85,7 +85,70 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentsDirection.cs" />
+    <Compile Include="BaseVar.cs" />
+    <Compile Include="Call.cs" />
+    <Compile Include="CallingConvention.cs" />
+    <Compile Include="CallingConventionInfo.cs" />
+    <Compile Include="Comment.cs" />
+    <Compile Include="Compiler.cs" />
+    <Compile Include="CompilerContext.cs" />
+    <Compile Include="CompilerUtil.cs" />
+    <Compile Include="Dummy.cs" />
+    <Compile Include="Emittable.cs" />
+    <Compile Include="EmittableType.cs" />
+    <Compile Include="Epilog.cs" />
+    <Compile Include="ForwardJumpData.cs" />
+    <Compile Include="Function.cs" />
+    <Compile Include="FunctionHint.cs" />
+    <Compile Include="FunctionPrototype.cs" />
+    <Compile Include="GPVar.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="JitAction.cs" />
+    <Compile Include="JitAction`1.cs" />
+    <Compile Include="JitAction`2.cs" />
+    <Compile Include="JitAction`3.cs" />
+    <Compile Include="JitAction`4.cs" />
+    <Compile Include="JitFunction`1.cs" />
+    <Compile Include="JitFunction`2.cs" />
+    <Compile Include="JitFunction`3.cs" />
+    <Compile Include="JitFunction`4.cs" />
+    <Compile Include="JitFunction`5.cs" />
+    <Compile Include="JitMethodBase.cs" />
+    <Compile Include="Jmp.cs" />
+    <Compile Include="Mem2.cs" />
+    <Compile Include="MMVar.cs" />
+    <Compile Include="Prolog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegNum.cs" />
+    <Compile Include="Ret.cs" />
+    <Compile Include="StateData.cs" />
+    <Compile Include="Target.cs" />
+    <Compile Include="VarAllocRecord.cs" />
+    <Compile Include="VarCallFlags.cs" />
+    <Compile Include="VarCallRecord.cs" />
+    <Compile Include="VarData.cs" />
+    <Compile Include="VariableAlloc.cs" />
+    <Compile Include="VariableClass.cs" />
+    <Compile Include="VariableFlags.cs" />
+    <Compile Include="VariableHint.cs" />
+    <Compile Include="VariableHintKind.cs" />
+    <Compile Include="VariableInfo.cs" />
+    <Compile Include="VariableState.cs" />
+    <Compile Include="VariableType.cs" />
+    <Compile Include="VarMemBlock.cs" />
+    <Compile Include="X87Var.cs" />
+    <Compile Include="XMMVar.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsmJit.Core\AsmJit.Core.csproj">
+      <Project>{8F5C70E5-0E77-4C5C-89E0-3F572531FA6B}</Project>
+      <Name>AsmJit.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AsmJit.Intrinsics\AsmJit.Intrinsics.csproj">
+      <Project>{E3A831E8-85C8-413F-A3E1-7F6B391B1148}</Project>
+      <Name>AsmJit.Intrinsics</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
