@@ -13,7 +13,7 @@
 
         private FunctionHints _hints;
 
-        private bool _isStackAlignedByOsTo16Bytes;
+        private readonly bool _isStackAlignedByOsTo16Bytes = CompilerUtil.IsStack16ByteAligned;
 
         private bool _isStackAlignedByFnTo16Bytes;
 
@@ -23,7 +23,7 @@
 
         private bool _isCaller;
 
-        private bool _pePushPop;
+        private bool _pePushPop = true;
 
         private bool _emitEMMS;
 
@@ -61,8 +61,8 @@
         {
             Contract.Requires(compiler != null);
 
-            _entryLabel = compiler.NewLabel();
-            _exitLabel = compiler.NewLabel();
+            _entryLabel = compiler.DefineLabel();
+            _exitLabel = compiler.DefineLabel();
 
             _prolog = new Prolog(compiler, this);
             _epilog = new Epilog(compiler, this);
@@ -248,8 +248,6 @@
 
         internal void PreparePrologEpilog(CompilerContext cc)
         {
-            //CpuInfo cpuInfo = CpuInfo.Instance;
-
             _pePushPop = true;
             _emitEMMS = false;
             _emitSFence = false;
@@ -259,20 +257,11 @@
             if (_isCaller)
                 _isEspAdjusted = true;
 
-            if ((_hints & FunctionHints.Naked) != 0)
-                _isNaked = (_hints & FunctionHints.Naked) != 0;
-
-            if ((_hints & FunctionHints.PushPopSequence) != 0)
-                _pePushPop = (_hints & FunctionHints.PushPopSequence) != 0;
-
-            if ((_hints & FunctionHints.Emms) != 0)
-                _emitEMMS = (_hints & FunctionHints.Emms) != 0;
-
-            if ((_hints & FunctionHints.StoreFence) != 0)
-                _emitSFence = (_hints & FunctionHints.StoreFence) != 0;
-
-            if ((_hints & FunctionHints.LoadFence) != 0)
-                _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
+            _isNaked = (_hints & FunctionHints.Naked) != 0;
+            _pePushPop = (_hints & FunctionHints.PushPopSequence) != 0;
+            _emitEMMS = (_hints & FunctionHints.Emms) != 0;
+            _emitSFence = (_hints & FunctionHints.StoreFence) != 0;
+            _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
 
             if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount > 0))
             {
@@ -640,7 +629,7 @@
 
                     if (a._registerIndex != RegIndex.Invalid)
                     {
-                        var regOp = new GPReg(RegType.GPN, a._registerIndex);
+                        var regOp = new GPReg(Register.NativeRegisterType, a._registerIndex);
                         Assembler.DumpOperand(buffer, regOp);
                     }
                     else
@@ -761,7 +750,7 @@
                     {
                     case 0:
                         regs = cc.ModifiedGPRegisters;
-                        type = RegType.GPN;
+                        type = Register.NativeRegisterType;
                         buffer.Append("; GP : ");
                         break;
                     case 1:

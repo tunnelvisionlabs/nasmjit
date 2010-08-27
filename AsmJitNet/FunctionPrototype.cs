@@ -21,6 +21,9 @@
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
 
+            if (callingConvention == CallingConvention.Default)
+                callingConvention = CallingConventionInfo.DefaultCallingConvention;
+
             _callingConvention = callingConvention;
 
             if (delegateType == typeof(Action))
@@ -58,6 +61,9 @@
         internal FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(arguments != null);
+
+            if (callingConvention == CallingConvention.Default)
+                callingConvention = CallingConventionInfo.DefaultCallingConvention;
 
             _callingConvention = callingConvention;
             if (arguments.Length > 32)
@@ -198,139 +204,141 @@
             // [X86 Calling Conventions (32-bit)]
             // --------------------------------------------------------------------------
 
-#if ASMJIT_X86
-            // Register arguments (Integer), always left-to-right.
-            for (i = 0; i != arguments.Length; i++)
+            if (Util.IsX86)
             {
-                ArgumentData a = argumentData[i];
-                if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
-                {
-                    a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
-                    _passedGP |= (1 << (int)a._registerIndex);
-                }
-            }
-
-            // Stack arguments.
-            bool ltr = CallingConventionInfo.ArgumentsDirection == ArgumentsDirection.LeftToRight;
-            int istart = ltr ? 0 : arguments.Length - 1;
-            int iend = ltr ? arguments.Length : -1;
-            int istep = ltr ? 1 : -1;
-
-            for (i = istart; i != iend; i += istep)
-            {
-                ArgumentData a = argumentData[i];
-
-                if (VariableInfo.IsVariableInteger(a._variableType))
-                {
-                    stackOffset -= 4;
-                    a._stackOffset = stackOffset;
-                }
-                else if (VariableInfo.IsVariableFloat(a._variableType))
-                {
-                    int size = VariableInfo.GetVariableInfo(a._variableType).Size;
-                    stackOffset -= size;
-                    a._stackOffset = stackOffset;
-                }
-            }
-#endif // ASMJIT_X86
-
-            // --------------------------------------------------------------------------
-            // [X64 Calling Conventions (64-bit)]
-            // --------------------------------------------------------------------------
-
-#if ASMJIT_X64
-            // Windows 64-bit specific.
-            if (_callingConvention == CallingConvention.X64W)
-            {
-                int max = Math.Min(arguments.Length, 4);
-
-                // Register arguments (Integer / FP), always left to right.
-                for (i = 0; i != max; i++)
-                {
-                    ArgumentData a = argumentData[i];
-
-                    if (VariableInfo.IsVariableInteger(a._variableType))
-                    {
-                        a._registerIndex = CallingConventionInfo.ArgumentsGP[i];
-                        _passedGP |= (1 << (int)a._registerIndex);
-                    }
-                    else if (VariableInfo.IsVariableFloat(a._variableType))
-                    {
-                        a._registerIndex = CallingConventionInfo.ArgumentsXMM[i];
-                        _passedXMM |= (1 << (int)a._registerIndex);
-                    }
-                }
-
-                // Stack arguments (always right-to-left).
-                for (i = arguments.Length - 1; i != -1; i--)
-                {
-                    ArgumentData a = argumentData[i];
-                    if (a.IsAssigned)
-                        continue;
-
-                    if (VariableInfo.IsVariableInteger(a._variableType))
-                    {
-                        stackOffset -= 8; // Always 8 bytes.
-                        a._stackOffset = stackOffset;
-                    }
-                    else if (VariableInfo.IsVariableFloat(a._variableType))
-                    {
-                        int size = VariableInfo.GetVariableInfo(a._variableType).Size;
-                        stackOffset -= size;
-                        a._stackOffset = stackOffset;
-                    }
-                }
-
-                // 32 bytes shadow space (X64W calling convention specific).
-                stackOffset -= 4 * 8;
-            }
-            // Linux/Unix 64-bit (AMD64 calling convention).
-            else
-            {
-                // Register arguments (Integer), always left to right.
+                // Register arguments (Integer), always left-to-right.
                 for (i = 0; i != arguments.Length; i++)
                 {
                     ArgumentData a = argumentData[i];
-                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
+                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
                     {
                         a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
                         _passedGP |= (1 << (int)a._registerIndex);
                     }
                 }
 
-                // Register arguments (FP), always left to right.
-                for (i = 0; i != arguments.Length; i++)
-                {
-                    ArgumentData a = argumentData[i];
-                    if (VariableInfo.IsVariableFloat(a._variableType))
-                    {
-                        a._registerIndex = CallingConventionInfo.ArgumentsXMM[posXMM++];
-                        _passedXMM |= (1 << (int)a._registerIndex);
-                    }
-                }
-
                 // Stack arguments.
-                for (i = arguments.Length - 1; i != -1; i--)
+                bool ltr = CallingConventionInfo.ArgumentsDirection == ArgumentsDirection.LeftToRight;
+                int istart = ltr ? 0 : arguments.Length - 1;
+                int iend = ltr ? arguments.Length : -1;
+                int istep = ltr ? 1 : -1;
+
+                for (i = istart; i != iend; i += istep)
                 {
                     ArgumentData a = argumentData[i];
-                    if (a.IsAssigned)
-                        continue;
 
                     if (VariableInfo.IsVariableInteger(a._variableType))
                     {
-                        stackOffset -= 8;
+                        stackOffset -= 4;
                         a._stackOffset = stackOffset;
                     }
                     else if (VariableInfo.IsVariableFloat(a._variableType))
                     {
                         int size = VariableInfo.GetVariableInfo(a._variableType).Size;
-
                         stackOffset -= size;
                         a._stackOffset = stackOffset;
                     }
                 }
             }
-#endif // ASMJIT_X64
+
+            // --------------------------------------------------------------------------
+            // [X64 Calling Conventions (64-bit)]
+            // --------------------------------------------------------------------------
+
+            if (Util.IsX64)
+            {
+                // Windows 64-bit specific.
+                if (_callingConvention == CallingConvention.X64W)
+                {
+                    int max = Math.Min(arguments.Length, 4);
+
+                    // Register arguments (Integer / FP), always left to right.
+                    for (i = 0; i != max; i++)
+                    {
+                        ArgumentData a = argumentData[i];
+
+                        if (VariableInfo.IsVariableInteger(a._variableType))
+                        {
+                            a._registerIndex = CallingConventionInfo.ArgumentsGP[i];
+                            _passedGP |= (1 << (int)a._registerIndex);
+                        }
+                        else if (VariableInfo.IsVariableFloat(a._variableType))
+                        {
+                            a._registerIndex = CallingConventionInfo.ArgumentsXMM[i];
+                            _passedXMM |= (1 << (int)a._registerIndex);
+                        }
+                    }
+
+                    // Stack arguments (always right-to-left).
+                    for (i = arguments.Length - 1; i != -1; i--)
+                    {
+                        ArgumentData a = argumentData[i];
+                        if (a.IsAssigned)
+                            continue;
+
+                        if (VariableInfo.IsVariableInteger(a._variableType))
+                        {
+                            stackOffset -= 8; // Always 8 bytes.
+                            a._stackOffset = stackOffset;
+                        }
+                        else if (VariableInfo.IsVariableFloat(a._variableType))
+                        {
+                            int size = VariableInfo.GetVariableInfo(a._variableType).Size;
+                            stackOffset -= size;
+                            a._stackOffset = stackOffset;
+                        }
+                    }
+
+                    // 32 bytes shadow space (X64W calling convention specific).
+                    stackOffset -= 4 * 8;
+                }
+                // Linux/Unix 64-bit (AMD64 calling convention).
+                else
+                {
+                    // Register arguments (Integer), always left to right.
+                    for (i = 0; i != arguments.Length; i++)
+                    {
+                        ArgumentData a = argumentData[i];
+                        if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
+                        {
+                            a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
+                            _passedGP |= (1 << (int)a._registerIndex);
+                        }
+                    }
+
+                    // Register arguments (FP), always left to right.
+                    for (i = 0; i != arguments.Length; i++)
+                    {
+                        ArgumentData a = argumentData[i];
+                        if (VariableInfo.IsVariableFloat(a._variableType))
+                        {
+                            a._registerIndex = CallingConventionInfo.ArgumentsXMM[posXMM++];
+                            _passedXMM |= (1 << (int)a._registerIndex);
+                        }
+                    }
+
+                    // Stack arguments.
+                    for (i = arguments.Length - 1; i != -1; i--)
+                    {
+                        ArgumentData a = argumentData[i];
+                        if (a.IsAssigned)
+                            continue;
+
+                        if (VariableInfo.IsVariableInteger(a._variableType))
+                        {
+                            stackOffset -= 8;
+                            a._stackOffset = stackOffset;
+                        }
+                        else if (VariableInfo.IsVariableFloat(a._variableType))
+                        {
+                            int size = VariableInfo.GetVariableInfo(a._variableType).Size;
+
+                            stackOffset -= size;
+                            a._stackOffset = stackOffset;
+                        }
+                    }
+                }
+            }
 
             // Modify stack offset (all function parameters will be in positive stack
             // offset that is never zero).

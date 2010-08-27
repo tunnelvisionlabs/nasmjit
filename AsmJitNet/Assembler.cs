@@ -32,12 +32,10 @@
         /// </summary>
         private readonly Buffer _buffer = new Buffer();
 
-#if ASMJIT_X64
         /// <summary>
         /// Size of possible trampolines
         /// </summary>
         private long _trampolineSize;
-#endif
 
         private LabelLink _unusedLinks;
 
@@ -126,11 +124,7 @@
         {
             get
             {
-#if ASMJIT_X64
                 return _trampolineSize;
-#else
-                return 0;
-#endif
             }
         }
 
@@ -169,7 +163,7 @@
             _buffer.SetDWordAt(position, (uint)value);
         }
 
-        public Label NewLabel()
+        public Label DefineLabel()
         {
             Label label = new Label(_labelData.Count | Operand.OperandIdTypeLabel);
             _labelData.Add(new AssemblerLabelData());
@@ -189,7 +183,7 @@
         public void Bind(Label label)
         {
             if (label.Id == Operand.InvalidValue)
-                throw new ArgumentException("Only labels created by NewLabel() can be used by Assembler.");
+                throw new ArgumentException("Only labels created by DefineLabel() can be used by Assembler.");
             if ((label.Id & Operand.OperandIdValueMask) >= _labelData.Count)
                 throw new ArgumentException("The label index is out of bounds.");
 
@@ -296,10 +290,8 @@
             // is generated on-the-fly by relocator (this code not exists at now).
             Marshal.Copy(_buffer.Data, 0, destination, (int)coff);
 
-#if ASMJIT_X64
             // Trampoline pointer
             IntPtr tramp = (IntPtr)(destination.ToInt64() + coff);
-#endif // ASMJIT_X64
 
             int i;
             int len = _relocationData.Count;
@@ -309,10 +301,8 @@
                 RelocationData r = _relocationData[i];
                 IntPtr val;
 
-#if ASMJIT_X64
                 // Whether to use trampoline, can be only used if relocation type is ABSOLUTE_TO_RELATIVE_TRAMPOLINE
                 bool useTrampoline = false;
-#endif // ASMJIT_X64
 
                 // Be sure that reloc data structure is correct.
                 if (r.Offset + r.Size > csize)
@@ -332,18 +322,19 @@
                 case RelocationType.AbsoluteToRelativeTrampoline:
                     val = (IntPtr)(r.Destination.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
 
-#if ASMJIT_X64
-                    if (r.Type == RelocationType.AbsoluteToRelativeTrampoline && !Util.IsInt32(val.ToInt64()))
+                    if (Util.IsX64)
                     {
-                        val = (IntPtr)(tramp.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
-                        useTrampoline = true;
+                        if (r.Type == RelocationType.AbsoluteToRelativeTrampoline && !Util.IsInt32(val.ToInt64()))
+                        {
+                            val = (IntPtr)(tramp.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
+                            useTrampoline = true;
+                        }
                     }
-#endif // ASMJIT_X64
+
                     break;
 
                 default:
-                    Debug.Fail("");
-                    continue;
+                    throw new AssemblerException("Invalid relocation type.");
                 }
 
                 switch (r.Size)
@@ -357,11 +348,9 @@
                     break;
 
                 default:
-                    Debug.Fail("");
-                    continue;
+                    throw new AssemblerException("Invalid relocation size.");
                 }
 
-#if ASMJIT_X64
                 if (useTrampoline)
                 {
                     if (Logger != null && Logger.IsUsed)
@@ -372,7 +361,6 @@
                     TrampolineWriter.WriteTrampoline(tramp, r.Destination);
                     tramp += TrampolineWriter.TRAMPOLINE_SIZE;
                 }
-#endif // ASMJIT_X64
             }
         }
 
@@ -582,34 +570,36 @@
 
                     return;
                 }
-#if ASMJIT_X86
-                // legacy NOPs, 0x90 with 0x66 prefix.
-                do
+
+                if (Util.IsX86)
                 {
-                    switch (i)
+                    // legacy NOPs, 0x90 with 0x66 prefix.
+                    do
                     {
-                    default:
-                        EmitByte(0x66);
-                        i--;
-                        goto case 3;
+                        switch (i)
+                        {
+                        default:
+                            EmitByte(0x66);
+                            i--;
+                            goto case 3;
 
-                    case 3:
-                        EmitByte(0x66);
-                        i--;
-                        goto case 2;
+                        case 3:
+                            EmitByte(0x66);
+                            i--;
+                            goto case 2;
 
-                    case 2:
-                        EmitByte(0x66);
-                        i--;
-                        goto case 1;
+                        case 2:
+                            EmitByte(0x66);
+                            i--;
+                            goto case 1;
 
-                    case 1:
-                        EmitByte(0x90);
-                        i--;
-                        break;
-                    }
-                } while (i != 0);
-#endif
+                        case 1:
+                            EmitByte(0x90);
+                            i--;
+                            break;
+                        }
+                    } while (i != 0);
+                }
             }
 
             // legacy NOPs, only 0x90
@@ -727,7 +717,7 @@
 
         public void Call(GPReg dst)
         {
-            if (!dst.IsRegType(RegType.GPN))
+            if (!dst.IsRegType(Register.NativeRegisterType))
                 throw new ArgumentException();
 
             EmitInstruction(InstructionCode.Call, dst);
@@ -1103,25 +1093,25 @@
             // no energy to rewrite it. Maybe in future all of this can be cleaned up!
             if (bLoHiUsed != 0 || forceRexPrefix)
             {
-#if ASMJIT_X64
-                // Check if there is register that makes this instruction un-encodable.
-
-                forceRexPrefix |= o0.IsExtendedRegisterUsed;
-                forceRexPrefix |= o1.IsExtendedRegisterUsed;
-                forceRexPrefix |= o2.IsExtendedRegisterUsed;
-
-                if (o0.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4)
-                    forceRexPrefix = true;
-                else if (o1.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4)
-                    forceRexPrefix = true;
-                else if (o2.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4)
-                    forceRexPrefix = true;
-
-                if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
+                if (Util.IsX64)
                 {
-                    goto illegalInstruction;
+                    // Check if there is register that makes this instruction un-encodable.
+                    forceRexPrefix |= o0.IsExtendedRegisterUsed;
+                    forceRexPrefix |= o1.IsExtendedRegisterUsed;
+                    forceRexPrefix |= o2.IsExtendedRegisterUsed;
+
+                    if (o0.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o0).Code & (int)RegIndex.Mask) >= 4)
+                        forceRexPrefix = true;
+                    else if (o1.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o1).Code & (int)RegIndex.Mask) >= 4)
+                        forceRexPrefix = true;
+                    else if (o2.IsRegType(RegType.GPB_LO) && ((int)((BaseReg)o2).Code & (int)RegIndex.Mask) >= 4)
+                        forceRexPrefix = true;
+
+                    if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
+                    {
+                        goto illegalInstruction;
+                    }
                 }
-#endif // ASMJIT_X64
 
                 // Patch GPB.HI operand index.
                 if ((bLoHiUsed & (int)RegType.GPB_HI) != 0)
@@ -1223,9 +1213,9 @@
                     {
                         GPReg dst = ((GPReg)o0);
 
-#if ASMJIT_X64
-                        EmitRexR(dst.RegisterType == RegType.GPQ, 1, (byte)dst.Code, forceRexPrefix);
-#endif // ASMJIT_X64
+                        if (Util.IsX64)
+                            EmitRexR(dst.RegisterType == RegType.GPQ, 1, (byte)dst.Code, forceRexPrefix);
+
                         EmitByte(0x0F);
                         EmitModR(1, (byte)dst.Code);
                         goto end;
@@ -1270,7 +1260,7 @@
 
             case InstructionGroup.CALL:
                 {
-                    if (o0.IsRegTypeMem(RegType.GPN))
+                    if (o0.IsRegTypeMem(Register.NativeRegisterType))
                     {
                         Operand dst = o0;
                         EmitX86RM(0xFF,
@@ -1437,16 +1427,17 @@
                         Operand dst = o0;
 
                         // INC [r16|r32] in 64 bit mode is not encodable.
-#if ASMJIT_X86
-                        if ((dst.IsReg) && (dst.IsRegType(RegType.GPW) || dst.IsRegType(RegType.GPD)))
+                        if (Util.IsX86)
                         {
-                            EmitX86Inl(id.OpCode0,
-                              dst.IsRegType(RegType.GPW),
-                              false, (byte)((BaseReg)dst).Code,
-                              false);
-                            goto end;
+                            if ((dst.IsReg) && (dst.IsRegType(RegType.GPW) || dst.IsRegType(RegType.GPD)))
+                            {
+                                EmitX86Inl(id.OpCode0,
+                                  dst.IsRegType(RegType.GPW),
+                                  false, (byte)((BaseReg)dst).Code,
+                                  false);
+                                goto end;
+                            }
                         }
-#endif // ASMJIT_X86
 
                         EmitX86RM(id.OpCode1 + (dst.Size != 1 ? 1 : 0),
                           dst.Size == 2,
@@ -1683,10 +1674,9 @@
                             // is register (otherwise 32-bits).
                             int immSize = dst.Size;
 
-#if ASMJIT_X64
                             // Optimize instruction size by using 32 bit immediate if value can
                             // fit to it.
-                            if (immSize == 8 && Util.IsInt32(((Imm)src).Value.ToInt64()))
+                            if (Util.IsX64 && immSize == 8 && Util.IsInt32(((Imm)src).Value.ToInt64()))
                             {
                                 EmitX86RM(0xC7,
                                   dst.IsRegType(RegType.GPW),
@@ -1698,14 +1688,11 @@
                             }
                             else
                             {
-#endif // ASMJIT_X64
-                            EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
-                              dst.IsRegType(RegType.GPW),
-                              dst.IsRegType(RegType.GPQ),
-                              (byte)((GPReg)dst).Code, forceRexPrefix);
-#if ASMJIT_X64
+                                EmitX86Inl((dst.Size == 1 ? 0xB0 : 0xB8),
+                                  dst.IsRegType(RegType.GPW),
+                                  dst.IsRegType(RegType.GPQ),
+                                  (byte)((GPReg)dst).Code, forceRexPrefix);
                             }
-#endif // ASMJIT_X64
 
                             EmitImmediate((Imm)src, (int)immSize);
                             goto end;
@@ -1766,9 +1753,10 @@
 
                         if (reg.IsRegType(RegType.GPW))
                             EmitByte(0x66);
-#if ASMJIT_X64
-                        EmitRexR(reg.Size == 8, 0, 0, forceRexPrefix);
-#endif // ASMJIT_X64
+
+                        if (Util.IsX64)
+                            EmitRexR(reg.Size == 8, 0, 0, forceRexPrefix);
+
                         EmitByte((byte)(opCode + (reg.Size != 1 ? 1 : 0)));
                         EmitImmediate(imm, IntPtr.Size);
                         goto end;
@@ -1803,9 +1791,11 @@
                     break;
                 }
 
-#if ASMJIT_X64
             case InstructionGroup.MOVSXD:
                 {
+                    if (!Util.IsX64)
+                        throw new AssemblerException(string.Format("The '{0}' instruction group is only supported on X64", InstructionGroup.MOVSXD));
+
                     if (o0.IsReg && o1.IsRegMem)
                     {
                         GPReg dst = (GPReg)o0;
@@ -1819,7 +1809,6 @@
 
                     break;
                 }
-#endif // ASMJIT_X64
 
             case InstructionGroup.PUSH:
                 {
@@ -1849,7 +1838,7 @@
                 {
                     if (o0.IsReg)
                     {
-                        if (!o0.IsRegType(RegType.GPW) && !o0.IsRegType(RegType.GPN))
+                        if (!o0.IsRegType(RegType.GPW) && !o0.IsRegType(Register.NativeRegisterType))
                             throw new AssemblerException();
 
                         EmitX86Inl(id.OpCode0, o0.IsRegType(RegType.GPW), false, (byte)((GPReg)o0).Code, forceRexPrefix);
@@ -1936,13 +1925,20 @@
                     EmitByte((byte)(opCode >> 24));
 
                     if (opSize != 1)
+                    {
                         opCode++; // D, Q and W form.
+                    }
                     if (opSize == 2)
+                    {
                         EmitByte(0x66); // 16-bit prefix.
-#if ASMJIT_X64
+                    }
                     else if (opSize == 8)
+                    {
+                        if (!Util.IsX64)
+                            throw new AssemblerException("8 byte operands are only supported on X64.");
+
                         EmitByte(0x48); // REX.W prefix.
-#endif // ASMJIT_X64
+                    }
 
                     // Emit opcode (1 BYTE).
                     EmitByte((byte)(opCode & 0xFF));
@@ -2049,9 +2045,10 @@
 
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
-#if ASMJIT_X64
-                        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
-#endif // ASMJIT_X64
+
+                        if (Util.IsX64)
+                            EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
+
                         EmitByte((byte)(0xA8 + (o0.Size != 1 ? 1 : 0)));
                         EmitImmediate(((Imm)o1), (int)immSize);
                         goto end;
@@ -2064,9 +2061,10 @@
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
                         EmitSegmentPrefix(o0); // segment prefix
-#if ASMJIT_X64
-                        EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
-#endif // ASMJIT_X64
+
+                        if (Util.IsX64)
+                            EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
+
                         EmitByte((byte)(0xF6 + (o0.Size != 1 ? 1 : 0)));
                         EmitModRM(0, o0, immSize);
                         EmitImmediate((Imm)o1, (int)immSize);
@@ -2086,9 +2084,9 @@
                         if (src.IsRegType(RegType.GPW))
                             EmitByte(0x66); // 16 bit
                         EmitSegmentPrefix(dst); // segment prefix
-#if ASMJIT_X64
-                        EmitRexRM(src.IsRegType(RegType.GPQ), (byte)src.Code, dst, forceRexPrefix);
-#endif // ASMJIT_X64
+
+                        if (Util.IsX64)
+                            EmitRexRM(src.IsRegType(RegType.GPQ), (byte)src.Code, dst, forceRexPrefix);
 
                         // Special opcode for index 0 registers (AX, EAX, RAX vs register)
                         if ((dst.OperandType == OperandType.Reg && dst.Size > 1) &&
@@ -2419,25 +2417,26 @@
                         goto end;
                     }
 
-#if ASMJIT_X64
-                    if ((o0.IsRegType(RegType.MM) || o0.IsRegType(RegType.XMM)) && (o1.IsRegType(RegType.GPQ) || o1.IsMem))
+                    if (Util.IsX64)
                     {
-                        EmitMmu(o0.IsRegType(RegType.XMM) ? 0x66000F6EU : 0x00000F6EU, true,
-                          (byte)((BaseReg)o0).Code,
-                          o1,
-                          IntPtr.Zero);
-                        goto end;
-                    }
+                        if ((o0.IsRegType(RegType.MM) || o0.IsRegType(RegType.XMM)) && (o1.IsRegType(RegType.GPQ) || o1.IsMem))
+                        {
+                            EmitMmu(o0.IsRegType(RegType.XMM) ? 0x66000F6EU : 0x00000F6EU, true,
+                              (byte)((BaseReg)o0).Code,
+                              o1,
+                              IntPtr.Zero);
+                            goto end;
+                        }
 
-                    if ((o0.IsRegType(RegType.GPQ) || o0.IsMem) && (o1.IsRegType(RegType.MM) || o1.IsRegType(RegType.XMM)))
-                    {
-                        EmitMmu(o1.IsRegType(RegType.XMM) ? 0x66000F7EU : 0x00000F7EU, true,
-                          (byte)((BaseReg)o1).Code,
-                          o0,
-                          IntPtr.Zero);
-                        goto end;
+                        if ((o0.IsRegType(RegType.GPQ) || o0.IsMem) && (o1.IsRegType(RegType.MM) || o1.IsRegType(RegType.XMM)))
+                        {
+                            EmitMmu(o1.IsRegType(RegType.XMM) ? 0x66000F7EU : 0x00000F7EU, true,
+                              (byte)((BaseReg)o1).Code,
+                              o0,
+                              IntPtr.Zero);
+                            goto end;
+                        }
                     }
-#endif // ASMJIT_X64
 
                     break;
                 }
@@ -2860,7 +2859,7 @@
                 case MemoryType.Native:
                     {
                         // [base + index*scale + displacement]
-                        DumpRegister(buf, RegType.GPN, mem.Base);
+                        DumpRegister(buf, Register.NativeRegisterType, mem.Base);
                         break;
                     }
                 case MemoryType.Label:
@@ -2881,7 +2880,7 @@
                 if (mem.HasIndex)
                 {
                     buf.Append(" + ");
-                    DumpRegister(buf, RegType.GPN, mem.Index);
+                    DumpRegister(buf, Register.NativeRegisterType, mem.Index);
 
                     if (mem.Shift != 0)
                     {
@@ -3059,12 +3058,10 @@
                 EmitDWord((uint)(int)i);
             else if (size == 4 && isUnsigned)
                 EmitDWord((uint)i);
-#if ASMJIT_X64
-            else if (size == 8 && !isUnsigned)
+            else if (size == 8 && !isUnsigned && Util.IsX64)
                 EmitQWord((ulong)(long)i);
-            else if (size == 8 && isUnsigned)
+            else if (size == 8 && isUnsigned && Util.IsX64)
                 EmitQWord((ulong)i);
-#endif // ASMJIT_X64
             else
                 throw new ArgumentException();
         }
@@ -3107,47 +3104,49 @@
 
         private void EmitRexR(bool w, byte opReg, byte regCode, bool forceRexPrefix)
         {
-#if ASMJIT_X64
-            bool r = (opReg & 0x8) != 0;
-            bool b = (regCode & 0x8) != 0;
-
-            // w Default operand size(0=Default, 1=64 bits).
-            // r Register field (1=high bit extension of the ModR/M REG field).
-            // x Index field not used in RexR
-            // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-            if (w || r || b || forceRexPrefix)
+            if (Util.IsX64)
             {
-                EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | (b ? 1 : 0)));
+                bool r = (opReg & 0x8) != 0;
+                bool b = (regCode & 0x8) != 0;
+
+                // w Default operand size(0=Default, 1=64 bits).
+                // r Register field (1=high bit extension of the ModR/M REG field).
+                // x Index field not used in RexR
+                // b Base field (1=high bit extension of the ModR/M or SIB Base field).
+                if (w || r || b || forceRexPrefix)
+                {
+                    EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | (b ? 1 : 0)));
+                }
             }
-#endif
         }
 
         private void EmitRexRM(bool w, byte opReg, Operand rm, bool forceRexPrefix)
         {
-#if ASMJIT_X64
-            bool r = (opReg & 0x8) != 0;
-            bool x = false;
-            bool b = false;
+            if (Util.IsX64)
+            {
+                bool r = (opReg & 0x8) != 0;
+                bool x = false;
+                bool b = false;
 
-            if (rm.IsReg)
-            {
-                b = ((int)((BaseReg)rm).Code & 0x8) != 0;
-            }
-            else if (rm.IsMem)
-            {
-                x = (((int)((Mem)rm).Index & 0x8) != 0) && (((Mem)rm).Index != RegIndex.Invalid);
-                b = (((int)((Mem)rm).Base & 0x8) != 0) && (((Mem)rm).Base != RegIndex.Invalid);
-            }
+                if (rm.IsReg)
+                {
+                    b = ((int)((BaseReg)rm).Code & 0x8) != 0;
+                }
+                else if (rm.IsMem)
+                {
+                    x = (((int)((Mem)rm).Index & 0x8) != 0) && (((Mem)rm).Index != RegIndex.Invalid);
+                    b = (((int)((Mem)rm).Base & 0x8) != 0) && (((Mem)rm).Base != RegIndex.Invalid);
+                }
 
-            // w Default operand size(0=Default, 1=64 bits).
-            // r Register field (1=high bit extension of the ModR/M REG field).
-            // x Index field (1=high bit extension of the SIB Index field).
-            // b Base field (1=high bit extension of the ModR/M or SIB Base field).
-            if (w || r || x || b || forceRexPrefix)
-            {
-                EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | ((x ? 1 : 0) << 1) | (b ? 1 : 0)));
+                // w Default operand size(0=Default, 1=64 bits).
+                // r Register field (1=high bit extension of the ModR/M REG field).
+                // x Index field (1=high bit extension of the SIB Index field).
+                // b Base field (1=high bit extension of the ModR/M or SIB Base field).
+                if (w || r || x || b || forceRexPrefix)
+                {
+                    EmitByte((byte)(0x40 | ((w ? 1 : 0) << 3) | ((r ? 1 : 0) << 2) | ((x ? 1 : 0) << 1) | (b ? 1 : 0)));
+                }
             }
-#endif
         }
 
         private void EmitModR(byte opReg, byte r)
@@ -3247,123 +3246,121 @@
                 //   absolute addressing one. Main problem is that if instruction
                 //   contains SIB then relative addressing (RIP) is not possible.
 
-#if ASMJIT_X86
-
-                if (mem.HasIndex)
+                if (Util.IsX86)
                 {
-                    // ASMJIT_ASSERT(mem.getMemIndex() != 4); // ESP/RSP == 4
-                    EmitMod(0, opReg, 4);
-                    EmitSib((byte)shift, indexReg, 5);
-                }
-                else
-                {
-                    EmitMod(0, opReg, 5);
-                }
-
-                // X86 uses absolute addressing model, all relative addresses will be
-                // relocated to absolute ones.
-                if (mem.MemoryType == MemoryType.Label)
-                {
-                    AssemblerLabelData l_data = _labelData[(int)mem.Base & Operand.OperandIdValueMask];
-                    RelocationData r_data = new RelocationData();
-                    int relocId = _relocationData.Count;
-
-                    // Relative addressing will be relocated to absolute address.
-                    r_data.Type = RelocationType.RelativeToAbsolute;
-                    r_data.Size = 4;
-                    r_data.Offset = Offset;
-                    r_data.Destination = disp;
-
-                    if (l_data.Offset != -1)
-                    {
-                        // Bound label.
-                        r_data.Destination += l_data.Offset;
-
-                        // Add a dummy DWORD.
-                        EmitInt32(0);
-                    }
-                    else
-                    {
-                        // Non-bound label.
-                        EmitDisplacement(l_data, -4 - immSize, 4).RelocId = relocId;
-                    }
-
-                    _relocationData.Add(r_data);
-                }
-                else
-                {
-                    // Absolute address
-                    EmitInt32(mem.Target.ToInt32() + disp.ToInt32());
-                }
-
-#elif ASMJIT_X64
-
-                // X64 uses relative addressing model
-                if (mem.MemoryType == MemoryType.Label)
-                {
-                    AssemblerLabelData l_data = _labelData[(int)mem.Base & Operand.OperandIdValueMask];
-
-                    if (mem.HasIndex)
-                    {
-                        throw new AssemblerException("Illegal addressing: indexing is not possible.");
-                    }
-
-                    // Relative address (RIP +/- displacement)
-                    EmitMod(0, opReg, 5);
-
-                    disp -= (4 + immSize);
-
-                    if (l_data.Offset != -1)
-                    {
-                        // Bound label.
-                        disp = (IntPtr)(disp.ToInt64() + Offset - l_data.Offset);
-
-                        // Add a dummy DWORD.
-                        EmitInt32(disp.ToInt32());
-                    }
-                    else
-                    {
-                        // Non-bound label.
-                        EmitDisplacement(l_data, disp.ToInt64(), 4);
-                    }
-                }
-                else
-                {
-                    // Absolute address (truncated to 32 bits), this kind of address requires
-                    // SIB byte (4)
-                    EmitMod(0, opReg, 4);
-
                     if (mem.HasIndex)
                     {
                         // ASMJIT_ASSERT(mem.getMemIndex() != 4); // ESP/RSP == 4
+                        EmitMod(0, opReg, 4);
                         EmitSib((byte)shift, indexReg, 5);
                     }
                     else
                     {
-                        EmitSib(0, 4, 5);
+                        EmitMod(0, opReg, 5);
                     }
 
-                    // truncate to 32 bits
-                    UIntPtr target = (UIntPtr)(mem.Target.ToInt64() + disp.ToInt64());
-
-                    if (target.ToUInt64() > uint.MaxValue)
+                    // X86 uses absolute addressing model, all relative addresses will be
+                    // relocated to absolute ones.
+                    if (mem.MemoryType == MemoryType.Label)
                     {
-                        if (Logger != null && Logger.IsUsed)
+                        AssemblerLabelData l_data = _labelData[(int)mem.Base & Operand.OperandIdValueMask];
+                        RelocationData r_data = new RelocationData();
+                        int relocId = _relocationData.Count;
+
+                        // Relative addressing will be relocated to absolute address.
+                        r_data.Type = RelocationType.RelativeToAbsolute;
+                        r_data.Size = 4;
+                        r_data.Offset = Offset;
+                        r_data.Destination = disp;
+
+                        if (l_data.Offset != -1)
                         {
-                            Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits" + Environment.NewLine);
+                            // Bound label.
+                            r_data.Destination += l_data.Offset;
+
+                            // Add a dummy DWORD.
+                            EmitInt32(0);
                         }
-                        target = (UIntPtr)(target.ToUInt64() & uint.MaxValue);
+                        else
+                        {
+                            // Non-bound label.
+                            EmitDisplacement(l_data, -4 - immSize, 4).RelocId = relocId;
+                        }
+
+                        _relocationData.Add(r_data);
                     }
-
-                    EmitInt32((int)((uint)target));
+                    else
+                    {
+                        // Absolute address
+                        EmitInt32(mem.Target.ToInt32() + disp.ToInt32());
+                    }
                 }
+                else if (Util.IsX64)
+                {
+                    // X64 uses relative addressing model
+                    if (mem.MemoryType == MemoryType.Label)
+                    {
+                        AssemblerLabelData l_data = _labelData[(int)mem.Base & Operand.OperandIdValueMask];
 
-#else
+                        if (mem.HasIndex)
+                        {
+                            throw new AssemblerException("Illegal addressing: indexing is not possible.");
+                        }
 
-                throw new NotImplementedException();
+                        // Relative address (RIP +/- displacement)
+                        EmitMod(0, opReg, 5);
 
-#endif
+                        disp -= (4 + immSize);
 
+                        if (l_data.Offset != -1)
+                        {
+                            // Bound label.
+                            disp = (IntPtr)(disp.ToInt64() + Offset - l_data.Offset);
+
+                            // Add a dummy DWORD.
+                            EmitInt32(disp.ToInt32());
+                        }
+                        else
+                        {
+                            // Non-bound label.
+                            EmitDisplacement(l_data, disp.ToInt64(), 4);
+                        }
+                    }
+                    else
+                    {
+                        // Absolute address (truncated to 32 bits), this kind of address requires
+                        // SIB byte (4)
+                        EmitMod(0, opReg, 4);
+
+                        if (mem.HasIndex)
+                        {
+                            // ASMJIT_ASSERT(mem.getMemIndex() != 4); // ESP/RSP == 4
+                            EmitSib((byte)shift, indexReg, 5);
+                        }
+                        else
+                        {
+                            EmitSib(0, 4, 5);
+                        }
+
+                        // truncate to 32 bits
+                        UIntPtr target = (UIntPtr)(mem.Target.ToInt64() + disp.ToInt64());
+
+                        if (target.ToUInt64() > uint.MaxValue)
+                        {
+                            if (Logger != null && Logger.IsUsed)
+                            {
+                                Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits" + Environment.NewLine);
+                            }
+                            target = (UIntPtr)(target.ToUInt64() & uint.MaxValue);
+                        }
+
+                        EmitInt32((int)((uint)target));
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
@@ -3389,9 +3386,8 @@
                 EmitByte((byte)((opcode & 0xFF000000) >> 24));
 
             // rex prefix
-#if ASMJIT_X64
-            EmitRexR(rexw, 0, reg, forceRexPrefix);
-#endif // ASMJIT_X64
+            if (Util.IsX64)
+                EmitRexR(rexw, 0, reg, forceRexPrefix);
 
             // instruction opcodes
             if ((opcode & 0x00FF0000) != 0)
@@ -3416,9 +3412,8 @@
                 EmitByte((byte)((opCode & 0xFF000000) >> 24));
 
             // REX prefix.
-#if ASMJIT_X64
-            EmitRexRM(rexw, o, op, forceRexPrefix);
-#endif // ASMJIT_X64
+            if (Util.IsX64)
+                EmitRexRM(rexw, o, op, forceRexPrefix);
 
             // Instruction opcodes.
             if ((opCode & 0x00FF0000) != 0)
@@ -3455,9 +3450,8 @@
                 EmitByte((byte)((opCode & 0xFF000000) >> 24));
 
             // rex prefix
-#if ASMJIT_X64
-            EmitRexRM(false, opReg, mem, false);
-#endif // ASMJIT_X64
+            if (Util.IsX64)
+                EmitRexRM(false, opReg, mem, false);
 
             // instruction opcodes
             if ((opCode & 0x00FF0000) != 0)
@@ -3480,9 +3474,8 @@
                 EmitByte((byte)((opCode & 0xFF000000) >> 24));
 
             // Rex prefix
-#if ASMJIT_X64
-            EmitRexRM(rexw, opReg, src, false);
-#endif // ASMJIT_X64
+            if (Util.IsX64)
+                EmitRexRM(rexw, opReg, src, false);
 
             // Instruction opcodes.
             if ((opCode & 0x00FF0000) != 0)
@@ -3533,11 +3526,12 @@
 
             rd.Type = RelocationType.AbsoluteToRelativeTrampoline;
 
-#if ASMJIT_X64
-            // If we are compiling in 64-bit mode, we can use trampoline if relative jump
-            // is not possible.
-            _trampolineSize += TrampolineWriter.TRAMPOLINE_SIZE;
-#endif // ARCHITECTURE_SPECIFIC
+            if (Util.IsX64)
+            {
+                // If we are compiling in 64-bit mode, we can use trampoline if relative jump
+                // is not possible.
+                _trampolineSize += TrampolineWriter.TRAMPOLINE_SIZE;
+            }
 
             rd.Size = 4;
             rd.Offset = Offset;

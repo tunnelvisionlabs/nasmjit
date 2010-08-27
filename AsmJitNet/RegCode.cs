@@ -129,17 +129,17 @@
         XMM14,
         XMM15,
 
-        // --------------------------------------------------------------------------
-        // [Native registers (depends if processor runs in 32 bit or 64 bit mode)]
-        // --------------------------------------------------------------------------
+        //// --------------------------------------------------------------------------
+        //// [Native registers (depends if processor runs in 32 bit or 64 bit mode)]
+        //// --------------------------------------------------------------------------
 
-        NAX = (int)RegType.GPN,
-        NCX,
-        NDX,
-        NBX,
-        NSP,
-        NBP,
-        NSI,
-        NDI
+        //NAX = (int)RegType.GPN,
+        //NCX,
+        //NDX,
+        //NBX,
+        //NSP,
+        //NBP,
+        //NSI,
+        //NDI
     }
 }

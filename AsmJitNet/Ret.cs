@@ -179,7 +179,7 @@
 
                             srci = vdata.RegisterIndex;
                             if (srci != RegIndex.Invalid)
-                                cc.SaveXMMVar(vdata);
+                                cc.SaveVar(vdata);
 
                             switch (vdata.Type)
                             {
@@ -222,11 +222,12 @@
                             }
                             else
                             {
-#if ASMJIT_X86
-                                compiler.Emit(inst, Register.mm(dsti), Register.gpd(srci));
-#else
-                                compiler.Emit(inst, Register.mm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
-#endif
+                                if (Util.IsX86)
+                                    compiler.Emit(inst, Register.mm(dsti), Register.gpd(srci));
+                                else if (Util.IsX64)
+                                    compiler.Emit(inst, Register.mm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
+                                else
+                                    throw new NotImplementedException();
                             }
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
@@ -288,11 +289,12 @@
                             }
                             else
                             {
-#if ASMJIT_X86
-                                compiler.Emit(inst, Register.xmm(dsti), Register.gpd(srci));
-#else
-                                compiler.Emit(inst, Register.xmm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
-#endif
+                                if (Util.IsX86)
+                                    compiler.Emit(inst, Register.xmm(dsti), Register.gpd(srci));
+                                else if (Util.IsX64)
+                                    compiler.Emit(inst, Register.xmm(dsti), ret[i].IsRegType(RegType.GPQ) ? Register.gpq(srci) : Register.gpd(srci));
+                                else
+                                    throw new NotImplementedException();
                             }
                         }
                         else if (((BaseVar)ret[i]).IsX87Var)

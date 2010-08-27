@@ -36,7 +36,7 @@
             IntPtr methodPtr = Marshal.GetFunctionPointerForDelegate(methodCompiler);
 
             Assembler assembler = new Assembler();
-            Label label = assembler.NewLabel();
+            Label label = assembler.DefineLabel();
             assembler.Call(label);
             assembler.Bind(label);
             assembler.Sub(Mem.sysint_ptr(Register.nsp), 5);

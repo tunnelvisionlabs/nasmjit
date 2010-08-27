@@ -29,14 +29,13 @@
         /// </summary>
         GPQ = 0x3000,
 
-        /// <summary>
-        /// Native-size (platform specific) general purpose register
-        /// </summary>
-#if ASMJIT_X86
-        GPN = GPD,
-#elif ASMJIT_X64
-        GPN = GPQ,
-#endif
+//#if ASMJIT_X86
+//        // Use Register.NativeRegisterType instead
+//        GPN = GPD,
+//#elif ASMJIT_X64
+//        // Use Register.NativeRegisterType instead
+//        GPN = GPQ,
+//#endif
 
         /// <summary>
         /// X87 (FPU) register

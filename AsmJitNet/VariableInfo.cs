@@ -1,5 +1,6 @@
 ﻿namespace AsmJitNet
 {
+    using System;
     using System.Collections.Generic;
 
     public class VariableInfo
@@ -17,6 +18,45 @@
             this._class = @class;
             this._flags = flags;
             this._name = name;
+        }
+
+        public static VariableType NativeVariableType
+        {
+            get
+            {
+                if (Util.IsX86)
+                    return VariableType.GPD;
+                else if (Util.IsX64)
+                    return VariableType.GPQ;
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static VariableType FloatVariableType
+        {
+            get
+            {
+                if (Util.IsX86)
+                    return VariableType.X87_1F;
+                else if (Util.IsX64)
+                    return VariableType.XMM_1F;
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static VariableType DoubleVariableType
+        {
+            get
+            {
+                if (Util.IsX86)
+                    return VariableType.X87_1D;
+                else if (Util.IsX64)
+                    return VariableType.XMM_1D;
+                else
+                    throw new NotImplementedException();
+            }
         }
 
         public RegType RegisterType

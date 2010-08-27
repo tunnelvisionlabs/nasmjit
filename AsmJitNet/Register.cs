@@ -1,9 +1,12 @@
 ﻿namespace AsmJitNet
 {
+    using System;
     using System.Diagnostics.Contracts;
 
     public static class Register
     {
+        private static readonly RegType _nativeRegisterType = Util.IsX86 ? RegType.GPD : (Util.IsX64 ? RegType.GPQ : 0);
+
         /// <summary>
         /// 8-bit General purpose register.
         /// </summary>
@@ -347,42 +350,42 @@
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg nax = new GPReg(RegCode.NAX);
+        public static readonly GPReg nax = new GPReg(_nativeRegisterType, RegIndex.Eax);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg ncx = new GPReg(RegCode.NCX);
+        public static readonly GPReg ncx = new GPReg(_nativeRegisterType, RegIndex.Ecx);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg ndx = new GPReg(RegCode.NDX);
+        public static readonly GPReg ndx = new GPReg(_nativeRegisterType, RegIndex.Edx);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg nbx = new GPReg(RegCode.NBX);
+        public static readonly GPReg nbx = new GPReg(_nativeRegisterType, RegIndex.Ebx);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg nsp = new GPReg(RegCode.NSP);
+        public static readonly GPReg nsp = new GPReg(_nativeRegisterType, RegIndex.Esp);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg nbp = new GPReg(RegCode.NBP);
+        public static readonly GPReg nbp = new GPReg(_nativeRegisterType, RegIndex.Ebp);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg nsi = new GPReg(RegCode.NSI);
+        public static readonly GPReg nsi = new GPReg(_nativeRegisterType, RegIndex.Esi);
 
         /// <summary>
         /// Native-size (platform specific) general purpose register.
         /// </summary>
-        public static readonly GPReg ndi = new GPReg(RegCode.NDI);
+        public static readonly GPReg ndi = new GPReg(_nativeRegisterType, RegIndex.Edi);
 
         /// <summary>
         /// 64-bit MM register.
@@ -505,6 +508,22 @@
         public static readonly XMMReg xmm15 = new XMMReg(RegCode.XMM15);
 
         /// <summary>
+        /// Native-size (platform specific) general purpose register
+        /// </summary>
+        public static RegType NativeRegisterType
+        {
+            get
+            {
+                if (Util.IsX86)
+                    return RegType.GPD;
+                else if (Util.IsX64)
+                    return RegType.GPQ;
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
         /// Get general purpose register of byte size.
         /// </summary>
         public static GPReg gpb_lo(RegIndex index)
@@ -561,7 +580,7 @@
         {
             Contract.Ensures(Contract.Result<GPReg>() != null);
 
-            return new GPReg(RegType.GPN, index);
+            return new GPReg(Register.NativeRegisterType, index);
         }
 
         /// <summary>

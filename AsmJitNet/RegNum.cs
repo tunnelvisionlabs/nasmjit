@@ -1,19 +1,11 @@
 ﻿namespace AsmJitNet
 {
-    public enum RegNum
+    public static class RegNum
     {
-#if ASMJIT_X86
-        Base = 8,
-#else
-        Base = 16,
-#endif
-
-        GP = Base,
-
-        MM = 8,
-
-        FPU = 8,
-
-        XMM = Base,
+        public static readonly int Base = Util.IsX86 ? 8 : (Util.IsX64 ? 16 : 0);
+        public static readonly int GP = Base;
+        public static readonly int MM = 8;
+        public static readonly int FPU = 8;
+        public static readonly int XMM = Base;
     }
 }

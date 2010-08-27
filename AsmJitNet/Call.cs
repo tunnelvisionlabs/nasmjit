@@ -355,17 +355,25 @@
                         case VariableType.X87:
                         case VariableType.X87_1F:
                         case VariableType.X87_1D:
-#if ASMJIT_X86
-                            if (i == argumentsCount + 1)
-                                var.Flags |= VarCallFlags.OUT_ST0;
+                            if (Util.IsX86)
+                            {
+                                if (i == argumentsCount + 1)
+                                    var.Flags |= VarCallFlags.OUT_ST0;
+                                else
+                                    var.Flags |= VarCallFlags.OUT_ST1;
+                            }
+                            else if (Util.IsX64)
+                            {
+                                if (i == argumentsCount + 1)
+                                    var.Flags |= VarCallFlags.OUT_XMM0;
+                                else
+                                    var.Flags |= VarCallFlags.OUT_XMM1;
+                            }
                             else
-                                var.Flags |= VarCallFlags.OUT_ST1;
-#else
-                            if (i == argumentsCount + 1)
-                                var.Flags |= VarCallFlags.OUT_XMM0;
-                            else
-                                var.Flags |= VarCallFlags.OUT_XMM1;
-#endif
+                            {
+                                throw new NotImplementedException();
+                            }
+
                             break;
 
                         case VariableType.MM:
@@ -383,17 +391,25 @@
 
                         case VariableType.XMM_1F:
                         case VariableType.XMM_1D:
-#if ASMJIT_X86
-                            if (i == argumentsCount + 1)
-                                var.Flags |= VarCallFlags.OUT_ST0;
+                            if (Util.IsX86)
+                            {
+                                if (i == argumentsCount + 1)
+                                    var.Flags |= VarCallFlags.OUT_ST0;
+                                else
+                                    var.Flags |= VarCallFlags.OUT_ST1;
+                            }
+                            else if (Util.IsX64)
+                            {
+                                if (i == argumentsCount + 1)
+                                    var.Flags |= VarCallFlags.OUT_XMM0;
+                                else
+                                    var.Flags |= VarCallFlags.OUT_XMM1;
+                            }
                             else
-                                var.Flags |= VarCallFlags.OUT_ST1;
-#else
-                            if (i == argumentsCount + 1)
-                                var.Flags |= VarCallFlags.OUT_XMM0;
-                            else
-                                var.Flags |= VarCallFlags.OUT_XMM1;
-#endif
+                            {
+                                throw new NotImplementedException();
+                            }
+
                             break;
 
                         default:
@@ -976,17 +992,21 @@
                 case VariableType.GPD:
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(src));
                     return;
-#if ASMJIT_X64
+
                 case VariableType.GPQ:
                 case VariableType.MM:
+                    if (!Util.IsX64)
+                        throw new NotSupportedException();
+
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpq(src));
                     return;
-#endif // ASMJIT_X64
                 }
                 break;
 
-#if ASMJIT_X64
             case VariableType.GPQ:
+                if (!Util.IsX64)
+                    throw new NotSupportedException();
+
                 switch (argType._variableType)
                 {
                 case VariableType.GPD:
@@ -1000,7 +1020,6 @@
                     return;
                 }
                 break;
-#endif // ASMJIT_X64
 
             case VariableType.MM:
                 switch (argType._variableType)
@@ -1120,32 +1139,40 @@
                     compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(temporaryGpReg));
                     return;
-#if ASMJIT_X64
+
                 case VariableType.GPQ:
                 case VariableType.MM:
+                    if (!Util.IsX64)
+                        throw new NotSupportedException();
+
                     compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpq(temporaryGpReg));
                     return;
-#endif // ASMJIT_X64
-                }
-                break;
 
-#if ASMJIT_X64
+                default:
+                    throw new CompilerException();
+                }
+
             case VariableType.GPQ:
+                if (!Util.IsX64)
+                    throw new NotSupportedException();
+
                 switch (argType._variableType)
                 {
                 case VariableType.GPD:
                     compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(temporaryGpReg));
                     return;
+
                 case VariableType.GPQ:
                 case VariableType.MM:
                     compiler.Emit(InstructionCode.Mov, Register.gpq(temporaryGpReg), src);
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpq(temporaryGpReg));
                     return;
+
+                default:
+                    throw new CompilerException();
                 }
-                break;
-#endif // ASMJIT_X64
 
             case VariableType.MM:
                 switch (argType._variableType)
@@ -1156,14 +1183,17 @@
                     compiler.Emit(InstructionCode.Mov, Register.gpd(temporaryGpReg), src);
                     compiler.Emit(InstructionCode.Mov, dst, Register.gpd(temporaryGpReg));
                     return;
+
                 case VariableType.GPQ:
                 case VariableType.MM:
                 case VariableType.X87_1D:
                 case VariableType.XMM_1D:
                     // TODO
                     return;
+
+                default:
+                    throw new CompilerException();
                 }
-                break;
 
             // We allow incompatible types here, because the called can convert them
             // to correct format before function is called.
@@ -1177,18 +1207,22 @@
                     compiler.Emit(InstructionCode.Movdqu, Register.xmm(temporaryXmmReg), src);
                     compiler.Emit(InstructionCode.Movdqu, dst, Register.xmm(temporaryXmmReg));
                     return;
+
                 case VariableType.XMM_1F:
                 case VariableType.XMM_4F:
                     compiler.Emit(InstructionCode.Movups, Register.xmm(temporaryXmmReg), src);
                     compiler.Emit(InstructionCode.Movups, dst, Register.xmm(temporaryXmmReg));
                     return;
+
                 case VariableType.XMM_1D:
                 case VariableType.XMM_2D:
                     compiler.Emit(InstructionCode.Movupd, Register.xmm(temporaryXmmReg), src);
                     compiler.Emit(InstructionCode.Movupd, dst, Register.xmm(temporaryXmmReg));
                     return;
+
+                default:
+                    throw new CompilerException();
                 }
-                break;
 
             case VariableType.XMM_1F:
                 switch (argType._variableType)
@@ -1202,8 +1236,10 @@
                     compiler.Emit(InstructionCode.Movss, Register.xmm(temporaryXmmReg), src);
                     compiler.Emit(InstructionCode.Movss, dst, Register.xmm(temporaryXmmReg));
                     return;
+
+                default:
+                    throw new CompilerException();
                 }
-                break;
 
             case VariableType.XMM_1D:
                 switch (argType._variableType)
@@ -1217,11 +1253,14 @@
                     compiler.Emit(InstructionCode.Movsd, Register.xmm(temporaryXmmReg), src);
                     compiler.Emit(InstructionCode.Movsd, dst, Register.xmm(temporaryXmmReg));
                     return;
-                }
-                break;
-            }
 
-            throw new ArgumentException("Incompatible argument.");
+                default:
+                    throw new CompilerException();
+                }
+
+            default:
+                throw new CompilerException("Incompatible argument.");
+            }
         }
 
         private VarData GetOverlappingVariable(CompilerContext cc, FunctionPrototype.Argument argType)
@@ -1264,19 +1303,23 @@
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
-#if ASMJIT_X64
                     case VariableType.GPQ:
-#endif // ASMJIT_X64
+                        if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Mov, Register.gpd(dst), Register.gpd(src));
                         return;
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movd, Register.gpd(dst), Register.mm(src));
                         return;
                     }
                     break;
 
-#if ASMJIT_X64
                 case VariableType.GPQ:
+                    if (!Util.IsX64)
+                        throw new NotSupportedException();
+
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
@@ -1290,7 +1333,6 @@
                         return;
                     }
                     break;
-#endif // ASMJIT_X64
 
                 case VariableType.MM:
                     switch (vdata.Type)
@@ -1298,11 +1340,14 @@
                     case VariableType.GPD:
                         compiler.Emit(InstructionCode.Movd, Register.gpd(dst), Register.gpd(src));
                         return;
-#if ASMJIT_X64
+
                     case VariableType.GPQ:
+                        if (!Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Movq, Register.gpq(dst), Register.gpq(src));
                         return;
-#endif // ASMJIT_X64
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movq, Register.mm(dst), Register.mm(src));
                         return;
@@ -1317,11 +1362,14 @@
                     case VariableType.GPD:
                         compiler.Emit(InstructionCode.Movd, Register.xmm(dst), Register.gpd(src));
                         return;
-#if ASMJIT_X64
+
                     case VariableType.GPQ:
+                        if (!Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.gpq(src));
                         return;
-#endif // ASMJIT_X64
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movq, Register.xmm(dst), Register.mm(src));
                         return;
@@ -1388,9 +1436,10 @@
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
-#if ASMJIT_X64
                     case VariableType.GPQ:
-#endif // ASMJIT_X64
+                        if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Mov, Register.gpd(dst), mem);
                         return;
                     case VariableType.MM:
@@ -1399,8 +1448,10 @@
                     }
                     break;
 
-#if ASMJIT_X64
                 case VariableType.GPQ:
+                    if (!Util.IsX64)
+                        throw new NotSupportedException();
+
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
@@ -1414,7 +1465,6 @@
                         return;
                     }
                     break;
-#endif // ASMJIT_X64
 
                 case VariableType.MM:
                     switch (vdata.Type)
@@ -1422,11 +1472,14 @@
                     case VariableType.GPD:
                         compiler.Emit(InstructionCode.Movd, Register.gpd(dst), mem);
                         return;
-#if ASMJIT_X64
+
                     case VariableType.GPQ:
+                        if (!Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Movq, Register.gpq(dst), mem);
                         return;
-#endif // ASMJIT_X64
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movq, Register.mm(dst), mem);
                         return;
@@ -1441,11 +1494,14 @@
                     case VariableType.GPD:
                         compiler.Emit(InstructionCode.Movd, Register.xmm(dst), mem);
                         return;
-#if ASMJIT_X64
+
                     case VariableType.GPQ:
+                        if (!Util.IsX64)
+                            throw new NotSupportedException();
+
                         compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
                         return;
-#endif // ASMJIT_X64
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movq, Register.xmm(dst), mem);
                         return;

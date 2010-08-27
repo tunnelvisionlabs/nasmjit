@@ -1,5 +1,4 @@
-﻿#if ASMJIT_X64
-namespace AsmJitNet
+﻿namespace AsmJitNet
 {
     using System;
 
@@ -22,4 +21,3 @@ namespace AsmJitNet
         }
     }
 }
-#endif

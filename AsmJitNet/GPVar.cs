@@ -3,7 +3,7 @@
     public class GPVar : BaseVar
     {
         public GPVar()
-            : base(RegType.GPN, VariableType.GPN)
+            : base(Register.NativeRegisterType, VariableInfo.NativeVariableType)
         {
         }
 

@@ -63,7 +63,7 @@
             if (_isSpecial)
             {
                 // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
-                switch ((InstructionCode)_code)
+                switch (_code)
                 {
                 case InstructionCode.Cpuid:
                     // Special...
@@ -77,18 +77,20 @@
 
                 case InstructionCode.Cmpxchg:
                 case InstructionCode.Cmpxchg8b:
-#if ASMJIT_X64
                 case InstructionCode.Cmpxchg16b:
-#endif // ASMJIT_X64
                     // Special...
+                    if (_code == InstructionCode.Cmpxchg16b && !Util.IsX64)
+                        throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", _code));
+
                     break;
 
-#if ASMJIT_X86
                 case InstructionCode.Daa:
                 case InstructionCode.Das:
                     // Special...
+                    if (!Util.IsX86)
+                        throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", _code));
+
                     break;
-#endif // ASMJIT_X86
 
                 case InstructionCode.Imul:
                     switch (operands.Length)
@@ -425,7 +427,7 @@
                     if (IsSpecial)
                     {
                         // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
-                        switch ((InstructionCode)_code)
+                        switch (_code)
                         {
                         case InstructionCode.Cpuid:
                             switch (i)
@@ -452,7 +454,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -468,7 +470,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -490,14 +492,15 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
                         case InstructionCode.Cmpxchg8b:
-#if ASMJIT_X64
                         case InstructionCode.Cmpxchg16b:
-#endif // ASMJIT_X64
+                            if (_code == InstructionCode.Cmpxchg16b && !Util.IsX64)
+                                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", _code));
+
                             switch (i)
                             {
                             case 0:
@@ -522,21 +525,22 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
-#if ASMJIT_X86
                         case InstructionCode.Daa:
                         case InstructionCode.Das:
+                            if (!Util.IsX86)
+                                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", _code));
+
                             if (i != 0)
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
 
                             vdata.RegisterRWCount++;
                             var.VarFlags |= VariableAlloc.ReadWrite;
                             var.RegIndex = RegIndex.Eax;
                             break;
-#endif // ASMJIT_X86
 
                         case InstructionCode.Imul:
                         case InstructionCode.Mul:
@@ -560,7 +564,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -578,13 +582,13 @@
                                 var.RegIndex = RegIndex.Eax;
                                 break;
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
                         case InstructionCode.Lahf:
                             if (i != 0)
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
 
                             vdata.RegisterWriteCount++;
                             var.VarFlags |= VariableAlloc.Write;
@@ -593,7 +597,7 @@
 
                         case InstructionCode.Sahf:
                             if (i != 0)
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
 
                             vdata.RegisterReadCount++;
                             var.VarFlags |= VariableAlloc.Read;
@@ -617,7 +621,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -676,7 +680,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -699,7 +703,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -729,7 +733,7 @@
                                 break;
 
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -755,7 +759,7 @@
                                 var.RegIndex = RegIndex.Ecx;
                                 break;
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -789,7 +793,7 @@
                                 var.RegIndex = RegIndex.Ecx;
                                 break;
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -815,7 +819,7 @@
                                 var.RegIndex = RegIndex.Ecx;
                                 break;
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
@@ -845,12 +849,12 @@
                                 var.RegIndex = RegIndex.Ecx;
                                 break;
                             default:
-                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction((InstructionCode)_code).Name, i));
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
                             }
                             break;
 
                         default:
-                            throw new NotImplementedException(string.Format("Handling for special instruction {0} is not yet implemented.", InstructionDescription.FromInstruction((InstructionCode)_code).Name));
+                            throw new NotImplementedException(string.Format("Handling for special instruction {0} is not yet implemented.", InstructionDescription.FromInstruction(_code).Name));
                         }
                         // ${SPECIAL_INSTRUCTION_HANDLING_END}
                     }
@@ -1114,18 +1118,20 @@
                     return;
 
                 case InstructionCode.Cmpxchg8b:
-#if ASMJIT_X64||true
                 case InstructionCode.Cmpxchg16b:
-#endif // ASMJIT_X64
+                    if (_code == InstructionCode.Cmpxchg16b && !Util.IsX64)
+                        throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", _code));
+
                     a.EmitInstruction(_code, _operands[4]);
                     return;
 
-#if ASMJIT_X86||true
                 case InstructionCode.Daa:
                 case InstructionCode.Das:
+                    if (!Util.IsX86)
+                        throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", _code));
+
                     a.EmitInstruction(_code);
                     return;
-#endif // ASMJIT_X86
 
                 case InstructionCode.Imul:
                 case InstructionCode.Mul:

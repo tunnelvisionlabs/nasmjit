@@ -6,6 +6,22 @@
 
     internal static class Util
     {
+        internal static bool IsX86
+        {
+            get
+            {
+                return IntPtr.Size == 4;
+            }
+        }
+
+        internal static bool IsX64
+        {
+            get
+            {
+                return IntPtr.Size == 8;
+            }
+        }
+
         internal static bool IsInt8(long value)
         {
             return value >= sbyte.MinValue && value <= sbyte.MaxValue;

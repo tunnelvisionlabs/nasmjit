@@ -21,7 +21,7 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>));
+            c.NewFunction(CallingConvention.Default, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>));
 
             GPVar p1 = c.ArgGP(0);
             GPVar p2 = c.ArgGP(1);
@@ -114,7 +114,7 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Func<int>));
+            c.NewFunction(CallingConvention.Default, typeof(Func<int>));
             c.Function.SetHint(FunctionHints.Naked, true);
 
             GPVar var = c.NewGP(VariableType.GPD);
@@ -216,19 +216,19 @@
             switch (args)
             {
             case 0:
-                compiler.NewFunction(CallingConvention.Cdecl, typeof(Func<IntPtr>));
+                compiler.NewFunction(CallingConvention.Default, typeof(Func<IntPtr>));
                 break;
 
             case 1:
-                compiler.NewFunction(CallingConvention.Cdecl, typeof(Func<IntPtr, IntPtr>));
+                compiler.NewFunction(CallingConvention.Default, typeof(Func<IntPtr, IntPtr>));
                 break;
 
             case 2:
-                compiler.NewFunction(CallingConvention.Cdecl, typeof(Func<IntPtr, IntPtr, IntPtr>));
+                compiler.NewFunction(CallingConvention.Default, typeof(Func<IntPtr, IntPtr, IntPtr>));
                 break;
 
             case 3:
-                compiler.NewFunction(CallingConvention.Cdecl, typeof(Func<IntPtr, IntPtr, IntPtr, IntPtr>));
+                compiler.NewFunction(CallingConvention.Default, typeof(Func<IntPtr, IntPtr, IntPtr, IntPtr>));
                 break;
             }
 
@@ -290,7 +290,7 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
+            c.NewFunction(CallingConvention.Default, typeof(Func<int, int, int, int>));
 
             GPVar v0 = c.ArgGP(0);
             GPVar v1 = c.ArgGP(1);
@@ -305,7 +305,7 @@
             GPVar address = c.NewGP();
             c.Mov(address, (Imm)calledFn);
 
-            Call ctx = c.Call(address, CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
+            Call ctx = c.Call(address, CallingConvention.Default, typeof(Func<int, int, int, int>));
             ctx.SetArgument(0, v2);
             ctx.SetArgument(1, v1);
             ctx.SetArgument(2, v0);
@@ -331,7 +331,7 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
+            c.NewFunction(CallingConvention.Default, typeof(Func<int, int, int, int>));
             GPVar v0 = c.ArgGP(0);
             GPVar v1 = c.ArgGP(1);
             GPVar v2 = c.ArgGP(2);
@@ -358,7 +358,7 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>));
+            c.NewFunction(CallingConvention.Default, typeof(Action<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>));
 
             GPVar p1 = c.ArgGP(0);
             GPVar p2 = c.ArgGP(1);
@@ -423,15 +423,15 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
-            c.NewFunction(CallingConvention.Cdecl, typeof(Func<int, int, int, int>));
+            c.NewFunction(CallingConvention.Default, typeof(Func<int, int, int, int>));
 
             {
                 GPVar x = c.ArgGP(0);
                 GPVar y = c.ArgGP(1);
                 GPVar op = c.ArgGP(2);
 
-                Label opAdd = c.NewLabel();
-                Label opMul = c.NewLabel();
+                Label opAdd = c.DefineLabel();
+                Label opMul = c.DefineLabel();
 
                 c.Cmp(op, 0);
                 c.Jz(opAdd);
@@ -446,10 +446,10 @@
                 }
 
                 {
-                    c.Bind(opAdd);
+                    c.MarkLabel(opAdd);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcA, CallingConvention.Cdecl, typeof(Func<int, int, int>));
+                    Call call = c.Call(funcA, CallingConvention.Default, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);
@@ -457,10 +457,10 @@
                 }
 
                 {
-                    c.Bind(opMul);
+                    c.MarkLabel(opMul);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcB, CallingConvention.Cdecl, typeof(Func<int, int, int>));
+                    Call call = c.Call(funcB, CallingConvention.Default, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);
@@ -498,7 +498,7 @@
             c.Logger = logger;
 
             {
-                c.NewFunction(CallingConvention.Cdecl, typeof(Action<IntPtr, IntPtr, IntPtr>));
+                c.NewFunction(CallingConvention.Default, typeof(Action<IntPtr, IntPtr, IntPtr>));
                 c.Function.SetHint(FunctionHints.Naked, true);
 
                 GPVar dst = c.ArgGP(0);
@@ -549,8 +549,8 @@
             c.Function.SetHint(FunctionHints.Naked, true);
 
             // Create labels.
-            Label L_Loop = c.NewLabel();
-            Label L_Exit = c.NewLabel();
+            Label L_Loop = c.DefineLabel();
+            Label L_Exit = c.DefineLabel();
 
             // Function arguments.
             GPVar dst = c.ArgGP(0);
@@ -567,7 +567,7 @@
             c.Jz(L_Exit);
 
             // Loop.
-            c.Bind(L_Loop);
+            c.MarkLabel(L_Loop);
 
             // Copy DWORD (4 bytes).
             GPVar tmp = c.NewGP(VariableType.GPD);
@@ -583,7 +583,7 @@
             c.Jnz(L_Loop);
 
             // Exit.
-            c.Bind(L_Exit);
+            c.MarkLabel(L_Exit);
             c.Ret();
 
             // Finish.

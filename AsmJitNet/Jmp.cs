@@ -202,9 +202,9 @@
 
                     // The cc._restoreState() method emitted some instructions so we need to
                     // patch the jump.
-                    Label L = compiler.NewLabel();
+                    Label L = compiler.DefineLabel();
                     compiler.CurrentEmittable = cc.ExtraBlock;
-                    compiler.Bind(L);
+                    compiler.MarkLabel(L);
 
                     // Finally, patch the jump target.
                     if (Operands.Length == 0)

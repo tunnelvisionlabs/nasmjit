@@ -492,7 +492,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Cwde, dst);
         }
 
-#if ASMJIT_X64
         /// <summary>
         /// Convert dword to qword (sign extend)
         /// </summary>
@@ -502,9 +501,11 @@
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cdqe));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cdqe, dst);
         }
-#endif
 
         /// <summary>
         /// Clear carry flag
@@ -1005,7 +1006,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_edx, cmp_eax, cmp_ecx, cmp_ebx, dst);
         }
 
-#if ASMJIT_X64
         public static void Cmpxchg16b<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp_rdx, TGP cmp_rax, TGP cmp_rcx, TGP cmp_rbx, Mem dst)
             where TGP : Operand
         {
@@ -1016,9 +1016,11 @@
             Contract.Requires(cmp_rdx != null);
             Contract.Requires(dst != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cmpxchg8b));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_rdx, cmp_rax, cmp_rcx, cmp_rbx, dst);
         }
-#endif
 
         public static void Cpuid<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP inout_eax, TGP out_ebx, TGP out_ecx, TGP out_edx)
             where TGP : Operand
@@ -1041,12 +1043,14 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Cpuid, inout_eax, out_ebx, out_ecx, out_edx);
         }
 
-#if ASMJIT_X86
         public static void Daa<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Daa));
 
             intrinsicSupport.EmitInstruction(InstructionCode.Daa, dst);
         }
@@ -1057,9 +1061,11 @@
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
 
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Das));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Das, dst);
         }
-#endif
 
         public static void Dec<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
             where TGP : Operand
@@ -1585,13 +1591,15 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movsx, dst, src);
         }
 
-#if ASMJIT_X64
         public static void Movsxd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movsxd));
 
             intrinsicSupport.EmitInstruction(InstructionCode.Movsxd, dst, src);
         }
@@ -1603,9 +1611,11 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movsxd));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Movsxd, dst, src);
         }
-#endif
 
         public static void Movzx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
@@ -1792,45 +1802,47 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Pop, dst);
         }
 
-#if ASMJIT_X86
         public static void Popad(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Popad));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Popad);
         }
-#endif
 
         public static void Popf(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
-#if ASMJIT_X86
-            intrinsicSupport.Popfd();
-#elif ASMJIT_X64
-            intrinsicSupport.Popfq();
-#else
-            throw new NotImplementedException();
-#endif
+            if (Util.IsX86)
+                intrinsicSupport.Popfd();
+            else if (Util.IsX64)
+                intrinsicSupport.Popfq();
+            else
+                throw new NotImplementedException();
         }
 
-#if ASMJIT_X86
         public static void Popfd(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Popfd));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Popfd);
         }
-#endif
 
-#if ASMJIT_X64
         public static void Popfq(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Popfq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Popfq);
         }
-#endif
 
         public static void Push<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP src)
             where TGP : Operand
@@ -1857,45 +1869,47 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Push, src);
         }
 
-#if ASMJIT_X86
         public static void Pushad(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Pushad));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Pushad);
         }
-#endif
 
         public static void Pushf(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
-#if ASMJIT_X86
-            intrinsicSupport.Pushfd();
-#elif ASMJIT_X64
-            intrinsicSupport.Pushfq();
-#else
-            throw new NotImplementedException();
-#endif
+            if (Util.IsX86)
+                intrinsicSupport.Pushfd();
+            else if (Util.IsX64)
+                intrinsicSupport.Pushfq();
+            else
+                throw new NotImplementedException();
         }
 
-#if ASMJIT_X86
         public static void Pushfd(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Pushfd));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Pushfd);
         }
-#endif
 
-#if ASMJIT_X64
         public static void Pushfq(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Pushfq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Pushfq);
         }
-#endif
 
         public static void Rcl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
@@ -2021,7 +2035,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepLodsd, dst_val, src_addr, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepLodsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2030,9 +2043,11 @@
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepLodsq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepLodsq, dst_val, src_addr, cnt_ecx);
         }
-#endif
 
         public static void RepLodsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
             where TGP : Operand
@@ -2067,7 +2082,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepMovsd, dst_addr, src_addr, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepMovsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2076,9 +2090,11 @@
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepMovsq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepMovsq, dst_addr, src_addr, cnt_ecx);
         }
-#endif
 
         public static void RepMovsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
             where TGP : Operand
@@ -2113,7 +2129,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepStosd, dst_addr, src_val, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepStosq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2122,9 +2137,11 @@
             Contract.Requires(src_val != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepStosq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepStosq, dst_addr, src_val, cnt_ecx);
         }
-#endif
 
         public static void RepStosw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
             where TGP : Operand
@@ -2159,7 +2176,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepeCmpsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2168,9 +2184,11 @@
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeCmpsq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
         }
-#endif
 
         public static void RepeCmpsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
             where TGP : Operand
@@ -2205,7 +2223,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepeScasd, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepeScasq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2214,9 +2231,11 @@
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeScasq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepeScasq, cmp1_addr, cmp2_val, cnt_ecx);
         }
-#endif
 
         public static void RepeScasw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
             where TGP : Operand
@@ -2251,7 +2270,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepneCmpsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2260,9 +2278,11 @@
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneCmpsq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
         }
-#endif
 
         public static void RepneCmpsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
             where TGP : Operand
@@ -2297,7 +2317,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.RepneScasd, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-#if ASMJIT_X64
         public static void RepneScasq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
             where TGP : Operand
         {
@@ -2306,9 +2325,11 @@
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneScasq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.RepneScasq, cmp1_addr, cmp2_val, cnt_ecx);
         }
-#endif
 
         public static void RepneScasw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
             where TGP : Operand
@@ -2440,14 +2461,16 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Ror, dst, src);
         }
 
-#if ASMJIT_X86
         public static void Sahf<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP var)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Sahf));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Sahf, var);
         }
-#endif
 
         public static void Sal<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
@@ -3573,7 +3596,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
 
-#if ASMJIT_X64
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TMM src)
             where TGP : Operand
             where TX87 : Operand
@@ -3584,9 +3606,11 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
-#endif
 
         public static void Movq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
             where TMM : Operand
@@ -3598,7 +3622,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
 
-#if ASMJIT_X64
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TGP src)
             where TGP : Operand
             where TX87 : Operand
@@ -3609,9 +3632,11 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
-#endif
 
         public static void Packuswb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
             where TMM : Operand
@@ -5490,7 +5515,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
 
-#if ASMJIT_X64
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
             where TGP : Operand
             where TX87 : Operand
@@ -5501,9 +5525,11 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
-#endif
 
         public static void Movq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
             where TXMM : Operand
@@ -5515,7 +5541,6 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
 
-#if ASMJIT_X64
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src)
             where TGP : Operand
             where TX87 : Operand
@@ -5526,9 +5551,11 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Movq));
+
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
-#endif
 
         public static void Movntq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, Mem dst, TMM src)
             where TMM : Operand

@@ -91,16 +91,16 @@
                 c.Mov(varThreadData, (IntPtr)_threadData);
 
                 // labels
-                Label leaveTry = c.NewLabel();
-                Label enterCatch = c.NewLabel();
-                Label leaveCatch = c.NewLabel();
-                Label enterFinally = c.NewLabel();
-                Label leaveFinally = c.NewLabel();
-                Label enterThrowHandler = c.NewLabel();
-                Label enterRethrowHandler = c.NewLabel();
-                Label enterLeaveHandler = c.NewLabel();
-                Label enterEndFinallyHandler = c.NewLabel();
-                Label retLabel = c.NewLabel();
+                Label leaveTry = c.DefineLabel();
+                Label enterCatch = c.DefineLabel();
+                Label leaveCatch = c.DefineLabel();
+                Label enterFinally = c.DefineLabel();
+                Label leaveFinally = c.DefineLabel();
+                Label enterThrowHandler = c.DefineLabel();
+                Label enterRethrowHandler = c.DefineLabel();
+                Label enterLeaveHandler = c.DefineLabel();
+                Label enterEndFinallyHandler = c.DefineLabel();
+                Label retLabel = c.DefineLabel();
 
                 // try
                 c.Comment("Enter try");
@@ -110,48 +110,48 @@
                 GenerateNewException(c, nextException, (Imm)1);
                 c.Call(getInstructionPointer, position);
                 c.Jmp(enterThrowHandler);
-                c.Bind(leaveTry);
+                c.MarkLabel(leaveTry);
                 c.Jmp(enterLeaveHandler);
 
                 // catch
                 c.Comment("Enter catch");
-                c.Bind(enterCatch);
+                c.MarkLabel(enterCatch);
                 GPVar varErrorCode = c.NewGP();
                 GenerateLoadCurrentException(c, varErrorCode, varThreadData);
                 GenerateLoadExceptionMessage(c, varErrorCode, varErrorCode);
                 GenerateWriteLine(c, varErrorCode);
-                c.Bind(leaveCatch);
+                c.MarkLabel(leaveCatch);
                 c.Jmp(enterLeaveHandler);
 
                 // finally
                 c.Comment("Enter finally");
-                c.Bind(enterFinally);
+                c.MarkLabel(enterFinally);
                 GenerateWriteLine(c, (Imm)2);
-                c.Bind(leaveFinally);
+                c.MarkLabel(leaveFinally);
                 c.Jmp(enterEndFinallyHandler);
 
                 //// special epilog (throw and leave implementations)
                 //c.Jmp(retLabel);
 
                 c.Comment("Handler for 'throw' instructions");
-                c.Bind(enterThrowHandler);
+                c.MarkLabel(enterThrowHandler);
                 c.Mov(Mem.sysint_ptr(varThreadData, ThreadData_ExceptionDataOffset), nextException);
                 c.Jmp(enterCatch);
 
                 c.Comment("Handler for 'rethrow' instructions");
-                c.Bind(enterRethrowHandler);
+                c.MarkLabel(enterRethrowHandler);
                 // rethrow is not implemented and not currently used
                 c.Int3();
 
                 c.Comment("Handler for 'leave' instructions");
-                c.Bind(enterLeaveHandler);
+                c.MarkLabel(enterLeaveHandler);
                 c.Jmp(enterEndFinallyHandler);
                 //c.Mov(Mem.sysint_ptr(varThreadData, ThreadData_ExceptionDataOffset), 0);
                 //throw new NotImplementedException("TODO: check for a finally block");
                 //c.Jmp(leaveTarget);
 
                 c.Comment("Handler for 'endfinally' instructions");
-                c.Bind(enterEndFinallyHandler);
+                c.MarkLabel(enterEndFinallyHandler);
                 GenerateLoadCurrentException(c, currentException, varThreadData);
                 c.Test(currentException, currentException);
                 c.Jnz(enterRethrowHandler, Hint.NotTaken);
@@ -159,7 +159,7 @@
 
                 // return
                 c.Comment("Return");
-                c.Bind(retLabel);
+                c.MarkLabel(retLabel);
                 c.Ret();
 
                 testMethod.Compile();

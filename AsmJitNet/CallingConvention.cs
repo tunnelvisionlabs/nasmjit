@@ -81,10 +81,9 @@
         /// </summary>
         GccFastCall3,
 
-#if ASMJIT_X86
-        Default = Cdecl,
-#elif ASMJIT_X64
-        Default = X64W,
-#endif
+        /// <summary>
+        /// Specifier for the default calling convention for the current platform
+        /// </summary>
+        Default,
     }
 }

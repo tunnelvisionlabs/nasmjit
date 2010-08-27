@@ -13,16 +13,16 @@
             Compiler compiler = new Compiler();
             compiler.NewFunction(CallingConvention.Default, typeof(Action));
 
-            Label a = compiler.NewLabel();
-            Label b = compiler.NewLabel();
-            Label c = compiler.NewLabel();
+            Label a = compiler.DefineLabel();
+            Label b = compiler.DefineLabel();
+            Label c = compiler.DefineLabel();
 
             compiler.Jmp(b);
-            compiler.Bind(a);
+            compiler.MarkLabel(a);
             compiler.Jmp(c);
-            compiler.Bind(b);
+            compiler.MarkLabel(b);
             compiler.Jmp(a);
-            compiler.Bind(c);
+            compiler.MarkLabel(c);
             compiler.Ret();
             compiler.EndFunction();
 

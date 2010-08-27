@@ -108,7 +108,7 @@
             _function = f;
 
             AddEmittable(f);
-            Bind(f.EntryLabel);
+            MarkLabel(f.EntryLabel);
             AddEmittable(f.Prolog);
 
             _varNameId = 0;
@@ -130,7 +130,7 @@
             _function = f;
 
             AddEmittable(f);
-            Bind(f.EntryLabel);
+            MarkLabel(f.EntryLabel);
             AddEmittable(f.Prolog);
 
             _varNameId = 0;
@@ -138,13 +138,22 @@
             return f;
         }
 
-        public Label NewLabel()
+        public Label DefineLabel()
         {
             Contract.Ensures(Contract.Result<Label>() != null);
 
             Label label = new Label(_targetData.Count);
             _targetData.Add(new Target(this, label));
             return label;
+        }
+
+        public void MarkLabel(Label label)
+        {
+            int id = label.Id & Operand.OperandIdValueMask;
+            if (id >= _targetData.Count)
+                throw new ArgumentException();
+
+            AddEmittable(_targetData[id]);
         }
 
         public VarData NewVarData(string name, VariableType variableType, int size)
@@ -222,7 +231,12 @@
             return var;
         }
 
-        public GPVar NewGP(VariableType variableType = VariableType.GPN, string name = null)
+        public GPVar NewGP(string name = null)
+        {
+            return NewGP(VariableInfo.NativeVariableType, name);
+        }
+
+        public GPVar NewGP(VariableType variableType, string name = null)
         {
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.GP) == 0)
                 throw new ArgumentException();
@@ -306,7 +320,7 @@
                 throw new InvalidOperationException("No function.");
 
             Function f = _function;
-            Bind(f.ExitLabel);
+            MarkLabel(f.ExitLabel);
             AddEmittable(f.Epilog);
             AddEmittable(f.End);
 
@@ -584,15 +598,6 @@
 
             string text = string.Format(format, args);
             AddEmittable(new Comment(this, text));
-        }
-
-        public void Bind(Label label)
-        {
-            int id = label.Id & Operand.OperandIdValueMask;
-            if (id >= _targetData.Count)
-                throw new ArgumentException();
-
-            AddEmittable(_targetData[id]);
         }
 
         public void Alloc(BaseVar var)
@@ -1123,29 +1128,39 @@
             AddEmittable(eRet);
         }
 
-        private static readonly Dictionary<Type, VariableType> _jitTypes = new Dictionary<Type, VariableType>()
-            {
-                { typeof(void), (VariableType)(-1) },
-                { typeof(sbyte), VariableType.GPD },
-                { typeof(byte), VariableType.GPD },
-                { typeof(short), VariableType.GPD },
-                { typeof(ushort), VariableType.GPD },
-                { typeof(int), VariableType.GPD },
-                { typeof(uint), VariableType.GPD },
-                { typeof(long), VariableType.GPQ },
-                { typeof(ulong), VariableType.GPQ },
-                { typeof(float), VariableType.FLOAT },
-                { typeof(double), VariableType.DOUBLE },
-                { typeof(IntPtr), VariableType.INTPTR },
-            };
-
         internal static VariableType TypeToId(Type type)
         {
-            VariableType value;
-            if (_jitTypes.TryGetValue(type, out value))
-                return value;
+            switch (Type.GetTypeCode(type))
+            {
+            case TypeCode.Byte:
+            case TypeCode.SByte:
+            case TypeCode.Int16:
+            case TypeCode.Int32:
+            case TypeCode.UInt16:
+            case TypeCode.UInt32:
+                return VariableType.GPD;
 
-            return VariableType.Invalid;
+            case TypeCode.Int64:
+            case TypeCode.UInt64:
+                return VariableType.GPQ;
+
+            case TypeCode.Single:
+                return VariableInfo.FloatVariableType;
+
+            case TypeCode.Double:
+                return VariableInfo.DoubleVariableType;
+
+            case TypeCode.Boolean:
+                throw new NotImplementedException();
+
+            default:
+                if (type == typeof(IntPtr))
+                    return VariableInfo.NativeVariableType;
+                else if (type == typeof(void))
+                    return VariableType.Invalid;
+                else
+                    throw new ArgumentException();
+            }
         }
 
         internal VarData GetVarData(int id)

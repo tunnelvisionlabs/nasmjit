@@ -5,11 +5,15 @@
         Invalid = -1,
         GPD = 0,
         GPQ = 1,
-#if ASMJIT_X86
-        GPN = GPD,
-#elif ASMJIT_X64
-        GPN = GPQ,
-#endif
+
+//#if ASMJIT_X86
+//        // Use VariableInfo.NativeVariableType instead
+//        GPN = GPD,
+//#elif ASMJIT_X64
+//        // Use VariableInfo.NativeVariableType instead
+//        GPN = GPQ,
+//#endif
+
         X87 = 2,
         X87_1F = 3,
         X87_1D = 4,
@@ -22,14 +26,19 @@
 
         INT32 = GPD,
         INT64 = GPQ,
-        INTPTR = GPN,
+        //// Use VariableInfo.NativeVariableType instead
+        //INTPTR = GPN,
 
-#if ASMJIT_X86
-        FLOAT = X87_1F,
-        DOUBLE = X87_1D
-#elif ASMJIT_X64
-        FLOAT = XMM_1F,
-        DOUBLE = XMM_1D
-#endif
+//#if ASMJIT_X86
+//        // Use VariableInfo.FloatVariableType instead
+//        FLOAT = X87_1F,
+//        // Use VariableInfo.DoubleVariableType instead
+//        DOUBLE = X87_1D
+//#elif ASMJIT_X64
+//        // Use VariableInfo.FloatVariableType instead
+//        FLOAT = XMM_1F,
+//        // Use VariableInfo.DoubleVariableType instead
+//        DOUBLE = XMM_1D
+//#endif
     }
 }
