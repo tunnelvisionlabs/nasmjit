@@ -185,10 +185,14 @@
 
             _returnValue = returnValue;
 
+            if (arguments.Length == 0)
+            {
+                _arguments = new Argument[0];
+                return;
+            }
+
             ArgumentData[] argumentData;
             argumentData = Array.ConvertAll(arguments, a => new ArgumentData(a, RegIndex.Invalid, InvalidValue));
-            if (argumentData.Length == 0)
-                return;
 
             // --------------------------------------------------------------------------
             // [X86 Calling Conventions (32-bit)]

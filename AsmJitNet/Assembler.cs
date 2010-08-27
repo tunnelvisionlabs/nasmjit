@@ -1655,11 +1655,11 @@
 
                     case ((int)OperandType.Reg << 4) | (int)OperandType.Mem:
                         {
-                            if (!src.IsRegType(RegType.GPB_LO)
-                                && !src.IsRegType(RegType.GPB_HI)
-                                && !src.IsRegType(RegType.GPW)
-                                && !src.IsRegType(RegType.GPD)
-                                && !src.IsRegType(RegType.GPQ))
+                            if (!dst.IsRegType(RegType.GPB_LO)
+                                && !dst.IsRegType(RegType.GPB_HI)
+                                && !dst.IsRegType(RegType.GPW)
+                                && !dst.IsRegType(RegType.GPD)
+                                && !dst.IsRegType(RegType.GPQ))
                             {
                                 throw new AssemblerException();
                             }
