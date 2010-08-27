@@ -432,7 +432,8 @@
                         else
                         {
                             VarMemBlock mb = varData.HomeMemoryData;
-                            Debug.Assert(mb != null);
+                            if (mb == null)
+                                throw new CompilerException();
 
                             mem.Base = _variablesBaseReg;
                             mem.Displacement += mb.Offset;
@@ -708,8 +709,7 @@
                 // Spill candidate not found?
                 if (spillCandidate == null)
                 {
-                    _compiler.Error = Errors.NotEnoughRegisters;
-                    return;
+                    throw new CompilerException("Not enough registers.");
                 }
             }
 
@@ -721,8 +721,7 @@
                 // prevented variables, but when jumping to L_spill it can happen.
                 if (spillCandidate.WorkOffset == _currentOffset)
                 {
-                    _compiler.Error = Errors.RegistersOverlap;
-                    return;
+                    throw new CompilerException("Registers overlap.");
                 }
 
                 idx = spillCandidate.RegisterIndex;
@@ -752,8 +751,8 @@
             Contract.Requires(vdata != null);
             Contract.Requires(other != null);
 
-            // Caller must ensure that variable is allocated.
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata.RegisterIndex == RegIndex.Invalid)
+                throw new CompilerException("Caller must ensure that variable is allocated.");
 
             // If other is not valid then we can just emit MOV (or other similar instruction).
             if (other == null)
@@ -895,7 +894,9 @@
 
             int score = 0;
 
-            Debug.Assert(vdata.LastEmittable != null);
+            if (vdata.LastEmittable == null)
+                throw new ArgumentException();
+
             int lastOffset = vdata.LastEmittable.Offset;
 
             if (lastOffset >= currentOffset)
@@ -917,9 +918,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't save variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't save a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
             EmitSaveVar(vdata, idx);
@@ -932,9 +934,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't spill variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't spill a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
 
@@ -954,6 +957,9 @@
         public void AllocMMVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
+
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
 
             // Preferred register code.
             RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : vdata.PreferredRegisterIndex;
@@ -1076,8 +1082,7 @@
                 // Spill candidate not found?
                 if (spillCandidate == null)
                 {
-                    _compiler.Error = Errors.NotEnoughRegisters;
-                    return;
+                    throw new CompilerException("Not enough registers.");
                 }
             }
 
@@ -1088,8 +1093,7 @@
                 // prevented variables, but when jumping to L_spill it can happen.
                 if (spillCandidate.WorkOffset == _currentOffset)
                 {
-                    _compiler.Error = Errors.RegistersOverlap;
-                    return;
+                    throw new CompilerException("Registers overlap.");
                 }
 
                 idx = spillCandidate.RegisterIndex;
@@ -1118,9 +1122,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't save variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't save a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
             EmitSaveVar(vdata, idx);
@@ -1133,9 +1138,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't spill variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't spill a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
 
@@ -1273,8 +1279,7 @@
                 // Spill candidate not found?
                 if (spillCandidate == null)
                 {
-                    _compiler.Error = Errors.NotEnoughRegisters;
-                    return;
+                    throw new CompilerException("Not enough registers.");
                 }
             }
 
@@ -1286,8 +1291,7 @@
                 // prevented variables, but when jumping to L_spill it can happen.
                 if (spillCandidate.WorkOffset == _currentOffset)
                 {
-                    _compiler.Error = Errors.RegistersOverlap;
-                    return;
+                    throw new CompilerException("Registers overlap.");
                 }
 
                 idx = spillCandidate.RegisterIndex;
@@ -1316,9 +1320,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't save variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't save a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
             EmitSaveVar(vdata, idx);
@@ -1331,9 +1336,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Can't spill variable that isn't allocated.
-            Debug.Assert(vdata.State == VariableState.Register);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Can't spill a variable that isn't allocated.");
 
             RegIndex idx = vdata.RegisterIndex;
 
@@ -1423,6 +1429,8 @@
                 if (_emitComments)
                     goto addComment;
                 break;
+            default:
+                throw new CompilerException("Invalid variable type.");
             }
             return;
 
@@ -1481,6 +1489,8 @@
             case VariableType.XMM_2D:
                 SpillXMMVar(vdata);
                 break;
+            default:
+                throw new CompilerException("Invalid variable type.");
             }
         }
 
@@ -1488,8 +1498,10 @@
         {
             Contract.Requires(vdata != null);
 
-            // Caller must ensure that variable is allocated.
-            Debug.Assert(regIndex != RegIndex.Invalid);
+            if (vdata == null)
+                throw new ArgumentNullException("vdata");
+            if (regIndex == RegIndex.Invalid)
+                throw new ArgumentException("Caller must ensure that variable is allocated.");
 
             Mem m = GetVarMem(vdata);
 
@@ -1545,6 +1557,8 @@
                 if (_emitComments)
                     goto addComment;
                 break;
+            default:
+                throw new CompilerException("Invalid variable type.");
             }
             return;
 
@@ -1554,8 +1568,8 @@
 
         public void EmitMoveVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
         {
-            // Caller must ensure that variable is allocated.
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException("Caller must ensure that variable is allocated.");
 
             if ((vflags & VariableAlloc.Read) == 0)
                 return;
@@ -1596,12 +1610,15 @@
             case VariableType.XMM_2D:
                 _compiler.Emit(InstructionCode.Movapd, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
                 break;
+            default:
+                throw new CompilerException("Invalid variable type.");
             }
         }
 
         public void UnuseVar(VarData vdata, VariableState toState)
         {
-            Debug.Assert(toState != VariableState.Register);
+            if (toState == VariableState.Register)
+                throw new ArgumentException();
 
             if (vdata.State == VariableState.Register)
             {
@@ -1635,6 +1652,8 @@
                     _state.XMM[(int)registerIndex] = null;
                     FreedXMMRegister(registerIndex);
                     break;
+                default:
+                    throw new CompilerException("Invalid variable type.");
                 }
             }
 
@@ -1676,8 +1695,7 @@
                 break;
 
             default:
-                Debug.Assert(false);
-                break;
+                throw new CompilerException("Invalid variable type.");
             }
         }
 
@@ -1741,12 +1759,6 @@
 
             // Never mind, create new.
             mem = new VarMemBlock();
-            if (mem == null)
-            {
-                _compiler.Error = Errors.NoHeapMemory;
-                return null;
-            }
-
             mem.Offset = 0;
             mem.Size = size;
 
@@ -1785,6 +1797,7 @@
                 {
                     VarData vdata = _compiler.GetVarData(o.Id);
                     Debug.Assert(vdata != null);
+
                     operands[i] = new GPReg(((BaseVar)o).RegisterType, vdata.RegisterIndex);
                 }
                 else if (o.IsMem)
@@ -1824,21 +1837,13 @@
 
         public void AddForwardJump(Jmp instruction)
         {
-            ForwardJumpData j;
-
-            try
+            ForwardJumpData j = new ForwardJumpData()
             {
-                j = new ForwardJumpData();
-            }
-            catch (OutOfMemoryException)
-            {
-                _compiler.Error = Errors.NoHeapMemory;
-                return;
-            }
+                Inst = instruction,
+                State = SaveState(),
+                Next = _forwardJumps,
+            };
 
-            j.Inst = instruction;
-            j.State = SaveState();
-            j.Next = _forwardJumps;
             _forwardJumps = j;
         }
 

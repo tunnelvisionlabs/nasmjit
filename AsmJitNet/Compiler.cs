@@ -15,7 +15,6 @@
     {
         private CodeGenerator _codeGenerator;
         private Logger _logger;
-        private int _error;
         private CompilerProperties _properties;
         private EmitOptions _emitOptions;
         private Emittable _first;
@@ -71,23 +70,6 @@
             get
             {
                 return _function;
-            }
-        }
-
-        public int Error
-        {
-            get
-            {
-                return _error;
-            }
-
-            set
-            {
-                _error = value;
-                if (_error != 0 && _logger != null && _logger.IsUsed)
-                {
-                    _logger.LogFormat("*** COMPILER ERROR: {0} ({1})." + Environment.NewLine, Errors.GetErrorCodeAsString(value), value);
-                }
             }
         }
 
@@ -169,53 +151,54 @@
         {
             Contract.Ensures(Contract.Result<VarData>() != null);
 
-            VarData varData = new VarData();
-
             if (name == null)
             {
                 name = "var_" + _varNameId;
                 _varNameId++;
             }
 
-            varData.Scope = Function;
-            varData.FirstEmittable = default(Emittable);
-            varData.LastEmittable = default(Emittable);
+            VarData varData = new VarData()
+            {
+                Scope = Function,
+                FirstEmittable = default(Emittable),
+                LastEmittable = default(Emittable),
 
-            varData.Name = name;
-            varData.Id = _varData.Count | Operand.OperandIdTypeVar;
-            varData.Type = variableType;
-            varData.Size = size;
+                Name = name,
+                Id = _varData.Count | Operand.OperandIdTypeVar,
+                Type = variableType,
+                Size = size,
 
-            varData.HomeRegisterIndex = RegIndex.Invalid;
-            varData.PreferredRegisterIndex = RegIndex.Invalid;
+                HomeRegisterIndex = RegIndex.Invalid,
+                PreferredRegisterIndex = RegIndex.Invalid,
 
-            varData.HomeMemoryData = null;
+                HomeMemoryData = null,
 
-            varData.RegisterIndex = RegIndex.Invalid;
-            varData.WorkOffset = Operand.InvalidValue;
+                RegisterIndex = RegIndex.Invalid,
+                WorkOffset = Operand.InvalidValue,
 
-            varData.NextActive = default(VarData);
-            varData.PreviousActive = default(VarData);
+                NextActive = default(VarData),
+                PreviousActive = default(VarData),
 
-            varData.Priority = 10;
-            varData.Calculated = false;
-            varData.IsRegArgument = false;
-            varData.IsMemArgument = false;
+                Priority = 10,
+                Calculated = false,
+                IsRegArgument = false,
+                IsMemArgument = false,
 
-            varData.State = VariableState.Unused;
-            varData.Changed = false;
-            varData.SaveOnUnuse = false;
+                State = VariableState.Unused,
+                Changed = false,
+                SaveOnUnuse = false,
 
-            varData.RegisterReadCount = 0;
-            varData.RegisterWriteCount = 0;
-            varData.RegisterRWCount = 0;
+                RegisterReadCount = 0,
+                RegisterWriteCount = 0,
+                RegisterRWCount = 0,
 
-            varData.RegisterGPBLoCount = 0;
-            varData.RegisterGPBHiCount = 0;
+                RegisterGPBLoCount = 0,
+                RegisterGPBHiCount = 0,
 
-            varData.MemoryReadCount = 0;
-            varData.MemoryWriteCount = 0;
-            varData.MemoryRWCount = 0;
+                MemoryReadCount = 0,
+                MemoryWriteCount = 0,
+                MemoryRWCount = 0,
+            };
 
             _varData.Add(varData);
             return varData;
@@ -340,15 +323,6 @@
 
             Serialize(a);
 
-            if (Error != 0)
-                return IntPtr.Zero;
-
-            if (a.Error != 0)
-            {
-                Error = a.Error;
-                return IntPtr.Zero;
-            }
-
             IntPtr result = a.Make();
             if (_logger != null && _logger.IsUsed)
             {
@@ -405,8 +379,7 @@
                 // Detect whether the function generation was finished.
                 if (!cc.Function.Finished || cc.Function.End.Previous == null)
                 {
-                    Error = Errors.IncompleteFunction;
-                    return;
+                    throw new CompilerException("The compiler encountered an incomplete function.");
                 }
                 // ------------------------------------------------------------------------
 
@@ -616,8 +589,8 @@
         public void Bind(Label label)
         {
             int id = label.Id & Operand.OperandIdValueMask;
-            //Debug.Assert(id != InvalidValue);
-            Debug.Assert(id < _targetData.Count);
+            if (id >= _targetData.Count)
+                throw new ArgumentException();
 
             AddEmittable(_targetData[id]);
         }
@@ -1138,24 +1111,15 @@
 
         internal void EmitReturn(Operand first, Operand second)
         {
+            Contract.Requires(first != null);
+            Contract.Requires(second != null);
+            Contract.Requires(Function != null);
+
             Function fn = Function;
             if (fn == null)
-            {
-                Error = Errors.NoFunction;
-                return;
-            }
+                throw new InvalidOperationException("There is no function defined for the compiler.");
 
-            Ret eRet;
-            try
-            {
-                eRet = new Ret(this, fn, first, second);
-            }
-            catch (OutOfMemoryException)
-            {
-                Error = Errors.NoHeapMemory;
-                return;
-            }
-
+            Ret eRet = new Ret(this, fn, first, second);
             AddEmittable(eRet);
         }
 
@@ -1187,6 +1151,11 @@
         internal VarData GetVarData(int id)
         {
             if (id == Operand.InvalidValue)
+                throw new ArgumentException();
+            Contract.Ensures(Contract.Result<VarData>() != null);
+
+            int index = id & Operand.OperandIdValueMask;
+            if (index >= _varData.Count)
                 throw new ArgumentException();
 
             return _varData[id & Operand.OperandIdValueMask];

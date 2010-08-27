@@ -1,7 +1,7 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class JitCodeGenerator : CodeGenerator
     {
@@ -30,14 +30,18 @@
             }
         }
 
-        public override int Generate(out IntPtr destination, Assembler assembler)
+        public override void Generate(out IntPtr destination, Assembler assembler)
         {
+            if (assembler == null)
+                throw new ArgumentNullException("assembler");
+            Contract.EndContractBlock();
+
             // Disallow empty code generation.
             long codeSize = assembler.CodeSize;
             if (codeSize == 0)
             {
                 destination = IntPtr.Zero;
-                return Errors.NoFunction;
+                throw new AssemblerException("The assembler has no code to generate.");
             }
 
             // Switch to global memory manager if not provided.
@@ -47,14 +51,12 @@
             if (p == IntPtr.Zero)
             {
                 destination = IntPtr.Zero;
-                return Errors.NoVirtualMemory;
+                throw new JitException("Out of virtual memory.");
             }
 
             // This is the last step. Relocate the code and return it.
             assembler.RelocCode(p);
-
             destination = p;
-            return Errors.None;
         }
     }
 }

@@ -44,9 +44,10 @@
             }
         }
 
-        public bool EnsureSpace()
+        public void EnsureSpace()
         {
-            return (_cur >= _max) ? Grow() : true;
+            if (_cur >= _max)
+                Grow();
         }
 
         public void EmitByte(byte x)
@@ -142,7 +143,7 @@
             }
         }
 
-        private bool Grow()
+        private void Grow()
         {
             int to = _capacity;
 
@@ -153,23 +154,20 @@
             else
                 to <<= 1;
 
-            return Realloc(to);
+            Realloc(to);
         }
 
         public void EmitData(byte[] data)
         {
             int max = Capacity - Offset;
             if (max < data.Length)
-            {
-                if (!Realloc(Offset + data.Length))
-                    return;
-            }
+                Realloc(Offset + data.Length);
 
             Array.Copy(data, 0, _data, _cur, data.Length);
             _cur += data.Length;
         }
 
-        private bool Realloc(int to)
+        private void Realloc(int to)
         {
             Contract.Requires(to >= 0);
 
@@ -187,8 +185,6 @@
 
                 _capacity = to;
             }
-
-            return true;
         }
     }
 }

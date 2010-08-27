@@ -399,7 +399,9 @@
 
                     // And return pointer to allocated memory.
                     IntPtr result = (IntPtr)(node.Memory.ToInt64() + i * node.Density);
-                    Debug.Assert(result.ToInt64() >= node.Memory.ToInt64() && result.ToInt64() < node.Memory.ToInt64() + node.Size);
+                    if (result.ToInt64() < node.Memory.ToInt64() || result.ToInt64() >= node.Memory.ToInt64() + node.Size)
+                        throw new AssemblerException();
+
                     return result;
                 }
             }
@@ -710,7 +712,8 @@
                 if (_root != null)
                     _root.NlColor = NodeColor.Black;
 
-                Debug.Assert(NlFindPtr(n.Memory) == null);
+                if (NlFindPtr(n.Memory) != null)
+                    throw new AssemblerException();
             }
 
             public M_Node NlRemoveNode_(M_Node h, M_Node n)

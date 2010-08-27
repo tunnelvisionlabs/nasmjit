@@ -209,8 +209,7 @@
                     break;
 
                 default:
-                    Debug.Assert(false);
-                    break;
+                    throw new CompilerException("Instruction is marked as special but handling for it is not present.");
                 }
                 // ${SPECIAL_INSTRUCTION_HANDLING_END}
             }
@@ -309,7 +308,9 @@
                 BaseVar vo = o as BaseVar;
                 if (vo != null)
                 {
-                    Debug.Assert(o.Id != InvalidValue);
+                    if (o.Id == InvalidValue)
+                        throw new CompilerException();
+
                     VarData vdata = Compiler.GetVarData(o.Id);
                     Debug.Assert(vdata != null);
 
@@ -405,7 +406,8 @@
                     }
 
                     var = _variables[varIndex];
-                    Debug.Assert(var != null);
+                    if (var == null)
+                        throw new CompilerException();
                 };
 
             for (i = 0; i < len; i++)
@@ -710,13 +712,17 @@
                                 var.VarFlags |= VariableAlloc.Write;
                                 var.RegIndex = RegIndex.Edx;
                                 break;
+
                             case 1:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write;
                                 var.RegIndex = RegIndex.Eax;
                                 break;
+
                             case 2:
-                                Debug.Assert(_code == InstructionCode.Rdtscp);
+                                if (_code != InstructionCode.Rdtscp)
+                                    throw new CompilerException();
+
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write;
                                 var.RegIndex = RegIndex.Ecx;
@@ -1126,7 +1132,9 @@
                 case InstructionCode.Idiv:
                 case InstructionCode.Div:
                     // INST dst_lo (implicit), dst_hi (implicit), src (explicit)
-                    Debug.Assert(_operands.Length == 3);
+                    if (_operands.Length != 3)
+                        throw new NotSupportedException();
+
                     a.EmitInstruction(_code, _operands[2]);
                     return;
 
@@ -1224,8 +1232,7 @@
                     return;
 
                 default:
-                    Debug.Assert(false);
-                    return;
+                    throw new CompilerException("Instruction is marked as special but no handling for it was present.");
                 }
                 // ${SPECIAL_INSTRUCTION_HANDLING_END}
             }
@@ -1245,8 +1252,7 @@
                 a.EmitInstruction(_code, _operands[0], _operands[1], _operands[2]);
                 break;
             default:
-                Debug.Assert(false);
-                break;
+                throw new NotSupportedException();
             }
         }
     }

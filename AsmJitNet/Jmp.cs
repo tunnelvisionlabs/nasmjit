@@ -71,7 +71,9 @@
                 {
                     if (var.FirstEmittable != null)
                     {
-                        Debug.Assert(var.LastEmittable != null);
+                        if (var.LastEmittable == null)
+                            throw new CompilerException();
+
                         int start = var.FirstEmittable.Offset;
                         int end = var.LastEmittable.Offset;
 
@@ -165,7 +167,8 @@
         {
             // The state have to be already known. The _doJump() method is called by
             // translate() or by Compiler in case that it's forward jump.
-            Debug.Assert(_jumpTarget.State != null);
+            if (_jumpTarget.State == null)
+                throw new CompilerException("Cannot jump to a target without knowing its state.");
 
             if ((Code == InstructionCode.Jmp) || (IsTaken && _jumpTarget.Offset < Offset))
             {
@@ -204,7 +207,9 @@
                     compiler.Bind(L);
 
                     // Finally, patch the jump target.
-                    Debug.Assert(Operands.Length > 0);
+                    if (Operands.Length == 0)
+                        throw new CompilerException();
+
                     Operands[0] = L;                              // Operand part (Label).
                     _jumpTarget = compiler.GetTarget(L.Id); // Emittable part (ETarget).
                 }

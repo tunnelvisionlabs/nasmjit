@@ -52,7 +52,9 @@
             if (mbase == IntPtr.Zero)
                 return IntPtr.Zero;
 
-            Debug.Assert(IsAligned((long)mbase, _vm.Alignment));
+            if (!IsAligned((long)mbase, _vm.Alignment))
+                throw new AssemblerException();
+
             allocated = msize;
             return mbase;
         }

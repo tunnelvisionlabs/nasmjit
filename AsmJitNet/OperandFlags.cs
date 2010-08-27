@@ -5,6 +5,8 @@
     [Flags]
     public enum OperandFlags : short
     {
+        None = 0,
+
         // X86, MM, XMM
         GB = 0x0001,
         GW = 0x0002,

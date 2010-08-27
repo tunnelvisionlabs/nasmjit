@@ -164,8 +164,7 @@
                         _xmmParams |= (1 << (int)fArg._registerIndex);
                         break;
                     default:
-                        Debug.Assert(false);
-                        return;
+                        throw new CompilerException("Invalid variable type in function call argument.");
                     }
                 }
             }
@@ -189,7 +188,9 @@
 
                 if (o.IsVar)
                 {
-                    Debug.Assert(o.Id != InvalidValue);
+                    if (o.Id == InvalidValue)
+                        throw new CompilerException();
+
                     VarData vdata = Compiler.GetVarData(o.Id);
                     Debug.Assert(vdata != null);
 
@@ -280,7 +281,8 @@
                     }
 
                     var = _variables[varIndex];
-                    Debug.Assert(var != null);
+                    if (var == null)
+                        throw new CompilerException();
                 };
 
             for (i = 0; i < operandsCount; i++)
@@ -323,8 +325,7 @@
                                 var.InCount++;
                                 break;
                             default:
-                                Debug.Assert(false);
-                                return;
+                                throw new CompilerException("Invalid variable type in function call argument.");
                             }
                         }
                         else
@@ -396,8 +397,7 @@
                             break;
 
                         default:
-                            Debug.Assert(false);
-                            return;
+                            throw new CompilerException("Invalid variable type in function call argument.");
                         }
 
                         vdata.RegisterWriteCount++;
@@ -405,7 +405,8 @@
                 }
                 else if (o.IsMem)
                 {
-                    Debug.Assert(i == argumentsCount);
+                    if (i != argumentsCount)
+                        throw new CompilerException();
 
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
@@ -550,6 +551,7 @@
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
                     VarData vdata = compiler.GetVarData(operand.Id);
+                    Debug.Assert(vdata != null);
 
                     if (vdata.RegisterIndex != RegIndex.Invalid)
                     {
@@ -605,6 +607,8 @@
                             if ((Prototype.PreservedXMM & (1 << (int)vdata.RegisterIndex)) == 0)
                                 cc.SpillXMMVar(vdata);
                             break;
+                        default:
+                            throw new CompilerException();
                         }
                     }
                 }
@@ -652,6 +656,7 @@
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
                     VarData vdata = compiler.GetVarData(operand.Id);
+                    Debug.Assert(vdata != null);
 
                     MoveSpilledVariableToStack(cc, vdata, argType, temporaryGpReg, temporaryXmmReg);
 
@@ -684,8 +689,10 @@
                     VarCallRecord rsrc = _argumentToVarRecord[i];
 
                     Operand osrc = _args[i];
-                    Debug.Assert(osrc.IsVar);
+                    if (!osrc.IsVar)
+                        throw new CompilerException();
                     VarData vsrc = compiler.GetVarData(osrc.Id);
+                    Debug.Assert(vsrc != null);
 
                     FunctionPrototype.Argument srcArgType = targs[i];
                     VarData vdst = GetOverlappingVariable(cc, srcArgType);
@@ -951,8 +958,10 @@
 
         private void MoveAllocatedVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)
         {
-            Debug.Assert(argType._registerIndex == RegIndex.Invalid);
-            Debug.Assert(vdata.RegisterIndex != RegIndex.Invalid);
+            if (argType._registerIndex != RegIndex.Invalid)
+                throw new ArgumentException();
+            if (vdata.RegisterIndex == RegIndex.Invalid)
+                throw new ArgumentException();
 
             Compiler compiler = cc.Compiler;
 
@@ -1061,7 +1070,7 @@
                 break;
             }
 
-            compiler.Error = Errors.IncompatibleArgument;
+            throw new ArgumentException("Incompatible argument.");
         }
 
         private RegIndex FindTemporaryXmmRegister(CompilerContext cc)
@@ -1092,8 +1101,10 @@
 
         private void MoveSpilledVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType, RegIndex temporaryGpReg, RegIndex temporaryXmmReg)
         {
-            Debug.Assert(argType._registerIndex == RegIndex.Invalid);
-            Debug.Assert(vdata.RegisterIndex == RegIndex.Invalid);
+            if (argType._registerIndex != RegIndex.Invalid)
+                throw new ArgumentException();
+            if (vdata.RegisterIndex != RegIndex.Invalid)
+                throw new ArgumentException();
 
             Compiler compiler = cc.Compiler;
 
@@ -1210,12 +1221,13 @@
                 break;
             }
 
-            compiler.Error = Errors.IncompatibleArgument;
+            throw new ArgumentException("Incompatible argument.");
         }
 
         private VarData GetOverlappingVariable(CompilerContext cc, FunctionPrototype.Argument argType)
         {
-            Debug.Assert(argType._variableType != VariableType.Invalid);
+            if (argType._variableType == VariableType.Invalid)
+                throw new ArgumentException();
 
             switch (argType._variableType)
             {
@@ -1491,7 +1503,7 @@
                 }
             }
 
-            compiler.Error = Errors.IncompatibleArgument;
+            throw new ArgumentException("Incompatible argument.");
         }
 
         private RegIndex FindTemporaryGpRegister(CompilerContext cc)

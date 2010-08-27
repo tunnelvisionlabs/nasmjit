@@ -402,7 +402,9 @@
             // Align manually stack-pointer to 16-bytes.
             if (_isStackAlignedByFnTo16Bytes)
             {
-                Debug.Assert(!_isNaked);
+                if (_isNaked)
+                    throw new CompilerException();
+
                 Compiler.Emit(InstructionCode.And, Register.nsp, (Imm)(-16));
             }
 
@@ -609,7 +611,8 @@
         internal void DumpFunction(CompilerContext cc)
         {
             Logger logger = Compiler.Logger;
-            Debug.Assert(logger != null);
+            if (logger == null)
+                throw new InvalidOperationException("Cannot dump a function without a logger.");
 
             int i;
             StringBuilder buffer = new StringBuilder();
@@ -676,6 +679,7 @@
                 for (i = 0; i < variablesCount; i++)
                 {
                     VarData vdata = Compiler.GetVarData(i);
+                    Debug.Assert(vdata != null);
 
                     // If this variable is not related to this function then skip it.
                     if (vdata.Scope != this)

@@ -72,7 +72,9 @@
 
                     if (o.IsVar)
                     {
-                        Debug.Assert(o.Id != Operand.InvalidValue);
+                        if (o.Id == Operand.InvalidValue)
+                            throw new CompilerException();
+
                         VarData vdata = Compiler.GetVarData(o.Id);
                         Debug.Assert(vdata != null);
 
@@ -437,6 +439,7 @@
                 if (ret[i] != null && ret[i].IsVar)
                 {
                     VarData vdata = compiler.GetVarData(ret[i].Id);
+                    Debug.Assert(vdata != null);
                     cc.UnuseVarOnEndOfScope(this, vdata);
                 }
             }

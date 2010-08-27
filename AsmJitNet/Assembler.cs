@@ -18,11 +18,6 @@
         private CodeGenerator _codeGenerator;
 
         /// <summary>
-        /// Last error code
-        /// </summary>
-        private int _error;
-
-        /// <summary>
         /// Properties
         /// </summary>
         private CompilerProperties _properties;
@@ -37,10 +32,12 @@
         /// </summary>
         private readonly Buffer _buffer = new Buffer();
 
+#if ASMJIT_X64
         /// <summary>
         /// Size of possible trampolines
         /// </summary>
         private long _trampolineSize;
+#endif
 
         private LabelLink _unusedLinks;
 
@@ -69,27 +66,6 @@
             get
             {
                 return _codeGenerator;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the last error code
-        /// </summary>
-        public int Error
-        {
-            get
-            {
-                return _error;
-            }
-
-            set
-            {
-                _error = value;
-
-                if (_error != 0 && Logger != null && Logger.IsUsed)
-                {
-                    Logger.LogFormat("*** ASSEMBLER ERROR: {0} ({1})." + Environment.NewLine, Errors.GetErrorCodeAsString(value), value);
-                }
             }
         }
 
@@ -150,7 +126,11 @@
         {
             get
             {
+#if ASMJIT_X64
                 return _trampolineSize;
+#else
+                return 0;
+#endif
             }
         }
 
@@ -208,16 +188,17 @@
 
         public void Bind(Label label)
         {
-            // Only labels created by newLabel() can be used by Assembler.
-            Debug.Assert(label.Id != Operand.InvalidValue);
-            // Never go out of bounds.
-            Debug.Assert((label.Id & Operand.OperandIdValueMask) < _labelData.Count);
+            if (label.Id == Operand.InvalidValue)
+                throw new ArgumentException("Only labels created by NewLabel() can be used by Assembler.");
+            if ((label.Id & Operand.OperandIdValueMask) >= _labelData.Count)
+                throw new ArgumentException("The label index is out of bounds.");
 
             // Get label data based on label id.
             AssemblerLabelData l_data = _labelData[label.Id & Operand.OperandIdValueMask];
 
             // Label can be bound only once.
-            Debug.Assert(l_data.Offset == -1);
+            if (l_data.Offset != -1)
+                throw new InvalidOperationException("The label is already bound.");
 
             // Log.
             if (Logger != null && Logger.IsUsed)
@@ -246,7 +227,8 @@
                     int size = GetByteAt(offset);
 
                     // Only these size specifiers are allowed.
-                    Debug.Assert(size == 1 || size == 4);
+                    if (size != 1 && size != 4)
+                        throw new AssemblerException("Incorrect specifier size.");
 
                     if (size == 4)
                     {
@@ -261,7 +243,7 @@
                         else
                         {
                             // Fatal error.
-                            Error = Errors.IllegalShortJump;
+                            throw new AssemblerException("Illegal short jump");
                         }
                     }
                 }
@@ -289,26 +271,13 @@
         public IntPtr Make()
         {
             // Do nothing on error state or when no instruction was emitted.
-            if (_error != 0 || CodeSize == 0)
+            if (CodeSize == 0)
                 return IntPtr.Zero;
 
             IntPtr p;
-            _error = _codeGenerator.Generate(out p, this);
+            _codeGenerator.Generate(out p, this);
 
             return p;
-            //IntPtr addressPtr = IntPtr.Zero;
-            //IntPtr addressBase = IntPtr.Zero;
-            //long codeSize = CodeSize;
-
-            //_error = _codeGenerator.Alloc(out addressPtr, out addressBase, codeSize);
-
-            //// Return on error.
-            //if (_error != 0)
-            //    return IntPtr.Zero;
-
-            //// This is last step. Relocate code and return generated code.
-            //RelocCode(addressPtr, addressBase);
-            //return addressPtr;
         }
 
         public void RelocCode(IntPtr destination)
@@ -346,7 +315,8 @@
 #endif // ASMJIT_X64
 
                 // Be sure that reloc data structure is correct.
-                Debug.Assert(r.Offset + r.Size <= csize);
+                if (r.Offset + r.Size > csize)
+                    throw new AssemblerException("Incorrect reloc data structure.");
 
                 switch (r.Type)
                 {
@@ -1115,8 +1085,7 @@
 
             if ((int)code >= _instructionCount)
             {
-                Error = Errors.UnknownInstruction;
-                goto cleanup;
+                throw new AssemblerException(string.Format("Unknown instruction '{0}'", code));
             }
 
             // Check if register operand is BPL, SPL, SIL, DIL and do action that depends
@@ -1329,7 +1298,8 @@
                             const int rel32_size = 5;
                             long offs = l_data.Offset - Offset;
 
-                            Debug.Assert(offs <= 0);
+                            if (offs > 0)
+                                throw new AssemblerException();
 
                             EmitByte(0xE8);
                             EmitInt32((int)(offs - rel32_size));
@@ -1352,7 +1322,8 @@
                     {
                         GPReg dst = (GPReg)o0;
                         Operand src = o1;
-                        Debug.Assert(dst.RegisterType == RegType.GPD || dst.RegisterType == RegType.GPQ);
+                        if (dst.RegisterType != RegType.GPD && dst.RegisterType != RegType.GPQ)
+                            throw new ArgumentException("Destination register operand is not the correct size.");
 
                         EmitX86RM(id.OpCode0 + (src.Size != 1 ? 1 : 0),
                           src.Size == 2,
@@ -1391,7 +1362,9 @@
                     else if (o0.IsReg && !o1.IsNone && o2.IsNone)
                     {
                         GPReg dst = (GPReg)o0;
-                        Debug.Assert(!dst.IsRegType(RegType.GPW));
+
+                        if (dst.IsRegType(RegType.GPW))
+                            throw new ArgumentException("The destination register type is not supported for this instruction.");
 
                         if (o1.IsRegMem)
                         {
@@ -1510,7 +1483,8 @@
                             const int rel32_size = 6;
                             long offs = l_data.Offset - Offset;
 
-                            Debug.Assert(offs <= 0);
+                            if (offs > 0)
+                                throw new AssemblerException();
 
                             if (Util.IsInt8(offs - rel8_size))
                             {
@@ -1666,11 +1640,14 @@
                     // Reg <- Reg/Mem
                     case ((int)OperandType.Reg << 4) | (int)OperandType.Reg:
                         {
-                            Debug.Assert(src.IsRegType(RegType.GPB_LO) ||
-                                          src.IsRegType(RegType.GPB_HI) ||
-                                          src.IsRegType(RegType.GPW) ||
-                                          src.IsRegType(RegType.GPD) ||
-                                          src.IsRegType(RegType.GPQ));
+                            if (!src.IsRegType(RegType.GPB_LO)
+                                && !src.IsRegType(RegType.GPB_HI)
+                                && !src.IsRegType(RegType.GPW)
+                                && !src.IsRegType(RegType.GPD)
+                                && !src.IsRegType(RegType.GPQ))
+                            {
+                                throw new AssemblerException();
+                            }
 
                             // ... fall through ...
                             goto case ((int)OperandType.Reg << 4) | (int)OperandType.Mem;
@@ -1678,11 +1655,14 @@
 
                     case ((int)OperandType.Reg << 4) | (int)OperandType.Mem:
                         {
-                            Debug.Assert(dst.IsRegType(RegType.GPB_LO) ||
-                                          dst.IsRegType(RegType.GPB_HI) ||
-                                          dst.IsRegType(RegType.GPW) ||
-                                          dst.IsRegType(RegType.GPD) ||
-                                          dst.IsRegType(RegType.GPQ));
+                            if (!src.IsRegType(RegType.GPB_LO)
+                                && !src.IsRegType(RegType.GPB_HI)
+                                && !src.IsRegType(RegType.GPW)
+                                && !src.IsRegType(RegType.GPD)
+                                && !src.IsRegType(RegType.GPQ))
+                            {
+                                throw new AssemblerException();
+                            }
 
                             EmitX86RM(0x0000008A + (dst.Size != 1 ? 1 : 0),
                               dst.IsRegType(RegType.GPW),
@@ -1734,11 +1714,14 @@
                     // Mem <- Reg
                     case ((int)OperandType.Mem << 4) | (int)OperandType.Reg:
                         {
-                            Debug.Assert(src.IsRegType(RegType.GPB_LO) ||
-                                          src.IsRegType(RegType.GPB_HI) ||
-                                          src.IsRegType(RegType.GPW) ||
-                                          src.IsRegType(RegType.GPD) ||
-                                          src.IsRegType(RegType.GPQ));
+                            if (!src.IsRegType(RegType.GPB_LO)
+                                && !src.IsRegType(RegType.GPB_HI)
+                                && !src.IsRegType(RegType.GPW)
+                                && !src.IsRegType(RegType.GPD)
+                                && !src.IsRegType(RegType.GPQ))
+                            {
+                                throw new AssemblerException();
+                            }
 
                             EmitX86RM(0x88 + (src.Size != 1 ? 1 : 0),
                               src.IsRegType(RegType.GPW),
@@ -1866,7 +1849,9 @@
                 {
                     if (o0.IsReg)
                     {
-                        Debug.Assert(o0.IsRegType(RegType.GPW) || o0.IsRegType(RegType.GPN));
+                        if (!o0.IsRegType(RegType.GPW) && !o0.IsRegType(RegType.GPN))
+                            throw new AssemblerException();
+
                         EmitX86Inl(id.OpCode0, o0.IsRegType(RegType.GPW), false, (byte)((GPReg)o0).Code, forceRexPrefix);
                         goto end;
                     }
@@ -1886,7 +1871,8 @@
                     {
                         GPReg dst = (GPReg)o0;
                         Operand src = o1;
-                        Debug.Assert(dst.Size != 1);
+                        if (dst.Size == 1)
+                            throw new AssemblerException();
 
                         EmitX86RM(id.OpCode0,
                           dst.RegisterType == RegType.GPW,
@@ -1973,7 +1959,8 @@
                     else if (o0.IsImm)
                     {
                         Imm imm = (Imm)o0;
-                        Debug.Assert(Util.IsUInt16(imm.Value.ToInt64()));
+                        if (!Util.IsUInt16(imm.Value.ToInt64()))
+                            throw new AssemblerException();
 
                         if (imm.Value == IntPtr.Zero)
                         {
@@ -2025,7 +2012,8 @@
                         GPReg src1 = (GPReg)o1;
                         Operand src2 = o2;
 
-                        Debug.Assert(dst.Size == src1.Size);
+                        if (dst.Size != src1.Size)
+                            throw new AssemblerException();
 
                         EmitX86RM(id.OpCode0 + (src2.IsReg ? 1 : 0),
                           src1.IsRegType(RegType.GPW),
@@ -2044,7 +2032,9 @@
                 {
                     if (o0.IsRegMem && o1.IsReg)
                     {
-                        Debug.Assert(o0.Size == o1.Size);
+                        if (o0.Size != o1.Size)
+                            throw new AssemblerException();
+
                         EmitX86RM(0x84 + (o1.Size != 1 ? 1 : 0),
                           o1.Size == 2, o1.Size == 8,
                           (byte)((BaseReg)o1).Code,
@@ -2271,8 +2261,8 @@
 
             case InstructionGroup.MMU_MOV:
                 {
-                    Debug.Assert(id.OperandFlags[0] != 0);
-                    Debug.Assert(id.OperandFlags[1] != 0);
+                    if (id.OperandFlags[0] == OperandFlags.None || id.OperandFlags[1] == OperandFlags.None)
+                        throw new AssemblerException();
 
                     // Check parameters (X)MM|GP32_64 <- (X)MM|GP32_64|Mem|Imm
                     if ((o0.IsMem && (id.OperandFlags[0] & OperandFlags.MEM) == 0) ||
@@ -2515,8 +2505,10 @@
 
             case InstructionGroup.MMU_RMI:
                 {
-                    Debug.Assert(id.OperandFlags[0] != 0);
-                    Debug.Assert(id.OperandFlags[1] != 0);
+                    if (id.OperandFlags[0] == OperandFlags.None)
+                        throw new AssemblerException();
+                    if (id.OperandFlags[1] == OperandFlags.None)
+                        throw new AssemblerException();
 
                     // Check parameters (X)MM|GP32_64 <- (X)MM|GP32_64|Mem|Imm
                     if (!o0.IsReg ||
@@ -2581,8 +2573,10 @@
 
             case InstructionGroup.MMU_RM_IMM8:
                 {
-                    Debug.Assert(id.OperandFlags[0] != 0);
-                    Debug.Assert(id.OperandFlags[1] != 0);
+                    if (id.OperandFlags[0] == OperandFlags.None)
+                        throw new AssemblerException();
+                    if (id.OperandFlags[1] == OperandFlags.None)
+                        throw new AssemblerException();
 
                     // Check parameters (X)MM|GP32_64 <- (X)MM|GP32_64|Mem|Imm
                     if (!o0.IsReg ||
@@ -2651,9 +2645,7 @@
             }
 
         illegalInstruction:
-            // Set an error. If we run in release mode assertion will be not used, so we
-            // must inform about invalid state.
-            Error = Errors.IllegalInstruction;
+            throw new AssemblerException("Encountered an illegal instruction");
 
 #if ASMJIT_DEBUG
   assertIllegal = true;
@@ -2804,7 +2796,9 @@
 
         private static void DumpInstructionName(StringBuilder buf, InstructionCode code)
         {
-            Debug.Assert((int)code < _instructionCount);
+            if ((int)code >= _instructionCount)
+                throw new ArgumentException();
+
             buf.Append(InstructionDescription.FromInstruction(code).Name);
         }
 
@@ -3002,28 +2996,15 @@
 
         private bool CanEmit()
         {
-            // If there is an error, we can't emit another instruction until last error
-            // is cleared by calling @c setError(ERROR_NONE). If something caused an error
-            // while generating code it's probably fatal in all cases. You can't use 
-            // generated code, because you are not sure about its status.
-            if (_error != 0)
-                return false;
-
             // The ensureSpace() method returns true on success and false on failure. We
             // are catching return value and setting error code here.
-            if (EnsureSpace())
-                return true;
-
-            // If we are here, there is memory allocation error. Note that this is HEAP
-            // allocation error, virtual allocation error can be caused only by
-            // AsmJit::VirtualMemory class!
-            Error = Errors.NoHeapMemory;
-            return false;
+            EnsureSpace();
+            return true;
         }
 
-        private bool EnsureSpace()
+        private void EnsureSpace()
         {
-            return _buffer.EnsureSpace();
+            _buffer.EnsureSpace();
         }
 
         private void EmitByte(byte x)
@@ -3085,7 +3066,7 @@
                 EmitQWord((ulong)i);
 #endif // ASMJIT_X64
             else
-                Debug.Assert(false);
+                throw new ArgumentException();
         }
 
         private void EmitOpCode(int opcode)
@@ -3181,8 +3162,6 @@
 
         private void EmitModM(byte opReg, Mem mem, int immSize)
         {
-            Debug.Assert(mem.OperandType == OperandType.Mem);
-
             byte baseReg = (byte)((int)mem.Base & 0x7);
             byte indexReg = (byte)((int)mem.Index & 0x7);
             IntPtr disp = mem.Displacement;
@@ -3317,7 +3296,7 @@
                     EmitInt32(mem.Target.ToInt32() + disp.ToInt32());
                 }
 
-#else
+#elif ASMJIT_X64
 
                 // X64 uses relative addressing model
                 if (mem.MemoryType == MemoryType.Label)
@@ -3326,9 +3305,7 @@
 
                     if (mem.HasIndex)
                     {
-                        // Indexing is not possible
-                        Error = Errors.IllegalAddressing;
-                        return;
+                        throw new AssemblerException("Illegal addressing: indexing is not possible.");
                     }
 
                     // Relative address (RIP +/- displacement)
@@ -3381,14 +3358,19 @@
                     EmitInt32((int)((uint)target));
                 }
 
-#endif // ASMJIT_X64
+#else
+
+                throw new NotImplementedException();
+
+#endif
 
             }
         }
 
         private void EmitModRM(byte opReg, Operand op, int immSize)
         {
-            Debug.Assert(op.OperandType == OperandType.Reg || op.OperandType == OperandType.Mem);
+            if (op.OperandType != OperandType.Reg && op.OperandType != OperandType.Mem)
+                throw new ArgumentException();
 
             if (op.OperandType == OperandType.Reg)
                 EmitModR(opReg, (byte)((BaseReg)op).Code);
@@ -3519,8 +3501,10 @@
         //! @brief Emit displacement.
         private LabelLink EmitDisplacement(AssemblerLabelData l_data, long inlinedDisplacement, int size)
         {
-            Debug.Assert(l_data.Offset == -1);
-            Debug.Assert(size == 1 || size == 4);
+            if (l_data.Offset != -1)
+                throw new ArgumentException();
+            if (size != 1 && size != 4)
+                throw new ArgumentException();
 
             // Chain with label.
             LabelLink link = NewLabelLink();

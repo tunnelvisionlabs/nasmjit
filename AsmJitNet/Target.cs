@@ -90,7 +90,9 @@
                 cc.Unreachable = false;
 
                 // Assign state to the compiler context. 
-                Debug.Assert(_state != null);
+                if (_state == null)
+                    throw new CompilerException();
+
                 cc.AssignState(_state);
             }
             else

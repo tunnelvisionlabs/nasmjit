@@ -115,6 +115,7 @@
     <Compile Include="ArgumentsDirection.cs" />
     <Compile Include="ArraySegment.cs" />
     <Compile Include="Assembler.cs" />
+    <Compile Include="AssemblerException.cs" />
     <Compile Include="BaseReg.cs" />
     <Compile Include="BaseVar.cs" />
     <Compile Include="Buffer.cs" />
@@ -125,6 +126,7 @@
     <Compile Include="Comment.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="CompilerContext.cs" />
+    <Compile Include="CompilerException.cs" />
     <Compile Include="CompilerProperty.cs" />
     <Compile Include="CompilerUtil.cs" />
     <Compile Include="Condition.cs" />
@@ -146,6 +148,7 @@
     <Compile Include="JitAction`2.cs" />
     <Compile Include="JitAction`3.cs" />
     <Compile Include="JitAction`4.cs" />
+    <Compile Include="JitException.cs" />
     <Compile Include="JitFunction`1.cs" />
     <Compile Include="JitFunction`2.cs" />
     <Compile Include="JitFunction`3.cs" />
@@ -159,7 +162,6 @@
     <Compile Include="Emittable.cs" />
     <Compile Include="EmittableType.cs" />
     <Compile Include="Epilog.cs" />
-    <Compile Include="Errors.cs" />
     <Compile Include="FileLogger.cs" />
     <Compile Include="ForwardJumpData.cs" />
     <Compile Include="Function.cs" />

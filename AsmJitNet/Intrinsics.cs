@@ -2053,9 +2053,6 @@
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            // All registers must be unique, they will be reallocated to dst=ES:EDI,RDI, src=DS:ESI/RSI, cnt=ECX/RCX.
-            Debug.Assert(dst_addr.Id != src_addr.Id && src_addr.Id != cnt_ecx.Id);
-
             intrinsicSupport.EmitInstruction(InstructionCode.RepMovsb, dst_addr, src_addr, cnt_ecx);
         }
 
