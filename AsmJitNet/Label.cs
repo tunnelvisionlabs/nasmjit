@@ -1,10 +1,16 @@
 ﻿namespace AsmJitNet
 {
+    /// <summary>
+    /// Label (jump target or data location)
+    /// </summary>
     public sealed class Label : Operand
     {
         public static readonly Label Empty = new Label();
 
-        public Label()
+        /// <summary>
+        /// Create new, unassociated label
+        /// </summary>
+        private Label()
         {
         }
 
