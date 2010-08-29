@@ -2,6 +2,7 @@
 {
     using System;
     using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class Jmp : Instruction
     {
@@ -13,6 +14,11 @@
         public Jmp(Compiler compiler, InstructionCode code, Operand[] operands)
             : base(compiler, code, operands)
         {
+            if (code < InstructionDescription.JumpBegin || code > InstructionDescription.JumpEnd)
+                throw new ArgumentException("The specified instruction code is not a valid jump.");
+            Contract.Requires(compiler != null);
+            Contract.Requires(operands != null);
+
             _jumpTarget = compiler.GetTarget(Operands[0].Id);
             _jumpTarget.JumpsCount++;
 

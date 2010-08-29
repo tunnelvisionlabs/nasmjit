@@ -1,10 +1,11 @@
 ﻿namespace AsmJitNet
 {
-    using Debug = System.Diagnostics.Debug;
+    using System;
+    using System.Diagnostics.Contracts;
 
     public sealed class Target : Emittable
     {
-        private Label _label;
+        private readonly Label _label;
         private Jmp _from;
         private StateData _state;
         private int _jumpsCount;
@@ -12,6 +13,11 @@
         public Target(Compiler compiler, Label label)
             : base(compiler)
         {
+            if (label == null)
+                throw new ArgumentNullException("label");
+            Contract.Requires(compiler != null);
+            Contract.EndContractBlock();
+
             _label = label;
         }
 

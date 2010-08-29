@@ -2,6 +2,7 @@
 {
     using System;
     using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class Instruction : Emittable
     {
@@ -37,6 +38,8 @@
         public Instruction(Compiler compiler, InstructionCode code, Operand[] operands)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+
             _code = code;
             _emitOptions = compiler.EmitOptions;
             // Each created instruction takes emit options and clears it.

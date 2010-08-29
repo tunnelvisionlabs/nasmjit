@@ -1,5 +1,6 @@
 ﻿namespace AsmJitNet
 {
+    using System;
     using System.Diagnostics.Contracts;
 
     public abstract class Emittable
@@ -18,7 +19,9 @@
 
         protected Emittable(Compiler compiler)
         {
-            Contract.Requires(compiler != null);
+            if (compiler == null)
+                throw new ArgumentNullException("compiler");
+            Contract.EndContractBlock();
 
             this._compiler = compiler;
             this._offset = InvalidValue;
