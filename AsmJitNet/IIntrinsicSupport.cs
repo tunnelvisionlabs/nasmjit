@@ -10,10 +10,6 @@
 
         void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2);
 
-        void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3);
-
-        void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4);
-
         void EmitJcc(InstructionCode code, Label label, Hint hint);
     }
 }

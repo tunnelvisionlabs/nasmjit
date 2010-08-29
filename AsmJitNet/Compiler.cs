@@ -644,7 +644,7 @@
 
         public void Emit(InstructionCode code)
         {
-            _emitInstruction(code);
+            EmitInstructionImpl(code, Operand.EmptyOperands);
         }
 
         public void Emit(InstructionCode code, Operand operand0)
@@ -653,7 +653,7 @@
                 throw new ArgumentNullException("operand0");
             Contract.EndContractBlock();
 
-            _emitInstruction(code, operand0);
+            EmitInstructionImpl(code, operand0);
         }
 
         public void Emit(InstructionCode code, Operand operand0, Operand operand1)
@@ -664,7 +664,7 @@
                 throw new ArgumentNullException("operand1");
             Contract.EndContractBlock();
 
-            _emitInstruction(code, operand0, operand1);
+            EmitInstructionImpl(code, operand0, operand1);
         }
 
         public void Emit(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
@@ -677,7 +677,7 @@
                 throw new ArgumentNullException("operand2");
             Contract.EndContractBlock();
 
-            _emitInstruction(code, operand0, operand1, operand2);
+            EmitInstructionImpl(code, operand0, operand1, operand2);
         }
 
         public void Emit(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3)
@@ -692,7 +692,7 @@
                 throw new ArgumentNullException("operand3");
             Contract.EndContractBlock();
 
-            _emitInstruction(code, operand0, operand1, operand2, operand3);
+            EmitInstructionImpl(code, operand0, operand1, operand2, operand3);
         }
 
         public void Emit(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
@@ -709,7 +709,7 @@
                 throw new ArgumentNullException("operand4");
             Contract.EndContractBlock();
 
-            _emitInstruction(code, operand0, operand1, operand2, operand3, operand4);
+            EmitInstructionImpl(code, operand0, operand1, operand2, operand3, operand4);
         }
 
         /// <summary>
@@ -998,27 +998,16 @@
             }
         }
 
-        private void _emitInstruction(InstructionCode instructionCode)
-        {
-            Instruction e = NewInstruction(instructionCode, Operand.EmptyOperands);
-            AddEmittable(e);
-            if (_cc != null)
-            {
-                e.Offset = _cc.CurrentOffset;
-                e.Prepare(_cc);
-            }
-        }
-
         public void EmitInstruction(InstructionCode code)
         {
-            _emitInstruction(code);
+            EmitInstructionImpl(code, Operand.EmptyOperands);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0)
         {
             Contract.Requires(operand0 != null);
 
-            _emitInstruction(code, operand0);
+            EmitInstructionImpl(code, operand0);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
@@ -1026,7 +1015,7 @@
             Contract.Requires(operand0 != null);
             Contract.Requires(operand1 != null);
 
-            _emitInstruction(code, operand0, operand1);
+            EmitInstructionImpl(code, operand0, operand1);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
@@ -1035,7 +1024,7 @@
             Contract.Requires(operand1 != null);
             Contract.Requires(operand2 != null);
 
-            _emitInstruction(code, operand0, operand1, operand2);
+            EmitInstructionImpl(code, operand0, operand1, operand2);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3)
@@ -1045,7 +1034,7 @@
             Contract.Requires(operand2 != null);
             Contract.Requires(operand3 != null);
 
-            _emitInstruction(code, operand0, operand1, operand2, operand3);
+            EmitInstructionImpl(code, operand0, operand1, operand2, operand3);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
@@ -1056,10 +1045,10 @@
             Contract.Requires(operand3 != null);
             Contract.Requires(operand4 != null);
 
-            _emitInstruction(code, operand0, operand1, operand2, operand3, operand4);
+            EmitInstructionImpl(code, operand0, operand1, operand2, operand3, operand4);
         }
 
-        private void _emitInstruction(InstructionCode instructionCode, params Operand[] operands)
+        private void EmitInstructionImpl(InstructionCode instructionCode, params Operand[] operands)
         {
             Contract.Requires(operands != null);
             //Contract.Requires(operands.All(i => i != null));
@@ -1077,12 +1066,12 @@
         {
             if (hint == Hint.None)
             {
-                _emitInstruction(code, label);
+                EmitInstructionImpl(code, label);
             }
             else
             {
                 Imm imm = (int)hint;
-                _emitInstruction(code, label, imm);
+                EmitInstructionImpl(code, label, imm);
             }
         }
 

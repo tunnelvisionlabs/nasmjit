@@ -567,348 +567,406 @@
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmova, dst, src);
         }
+
         public static void Cmovae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovae, dst, src);
         }
+
         public static void Cmovae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovae, dst, src);
         }
+
         public static void Cmovb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovb, dst, src);
         }
+
         public static void Cmovb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovb, dst, src);
         }
+
         public static void Cmovbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovbe, dst, src);
         }
+
         public static void Cmovbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovbe, dst, src);
         }
+
         public static void Cmovc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovc, dst, src);
         }
+
         public static void Cmovc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovc, dst, src);
         }
+
         public static void Cmove<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmove, dst, src);
         }
+
         public static void Cmove<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmove, dst, src);
         }
+
         public static void Cmovg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovg, dst, src);
         }
+
         public static void Cmovg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovg, dst, src);
         }
+
         public static void Cmovge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovge, dst, src);
         }
+
         public static void Cmovge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovge, dst, src);
         }
+
         public static void Cmovl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovl, dst, src);
         }
+
         public static void Cmovl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovl, dst, src);
         }
+
         public static void Cmovle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovle, dst, src);
         }
+
         public static void Cmovle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovle, dst, src);
         }
+
         public static void Cmovna<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovna, dst, src);
         }
+
         public static void Cmovna<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovna, dst, src);
         }
+
         public static void Cmovnae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnae, dst, src);
         }
+
         public static void Cmovnae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnae, dst, src);
         }
+
         public static void Cmovnb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnb, dst, src);
         }
+
         public static void Cmovnb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnb, dst, src);
         }
+
         public static void Cmovnbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnbe, dst, src);
         }
+
         public static void Cmovnbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnbe, dst, src);
         }
+
         public static void Cmovnc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnc, dst, src);
         }
+
         public static void Cmovnc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnc, dst, src);
         }
+
         public static void Cmovne<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovne, dst, src);
         }
+
         public static void Cmovne<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovne, dst, src);
         }
+
         public static void Cmovng<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovng, dst, src);
         }
+
         public static void Cmovng<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovng, dst, src);
         }
+
         public static void Cmovnge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnge, dst, src);
         }
+
         public static void Cmovnge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnge, dst, src);
         }
+
         public static void Cmovnl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnl, dst, src);
         }
+
         public static void Cmovnl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnl, dst, src);
         }
+
         public static void Cmovnle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnle, dst, src);
         }
+
         public static void Cmovnle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnle, dst, src);
         }
+
         public static void Cmovno<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovno, dst, src);
         }
+
         public static void Cmovno<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovno, dst, src);
         }
+
         public static void Cmovnp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnp, dst, src);
         }
+
         public static void Cmovnp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnp, dst, src);
         }
+
         public static void Cmovns<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovns, dst, src);
         }
+
         public static void Cmovns<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovns, dst, src);
         }
+
         public static void Cmovnz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnz, dst, src);
         }
+
         public static void Cmovnz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnz, dst, src);
         }
+
         public static void Cmovo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovo, dst, src);
         }
+
         public static void Cmovo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovo, dst, src);
         }
+
         public static void Cmovp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovp, dst, src);
         }
+
         public static void Cmovp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovp, dst, src);
         }
+
         public static void Cmovpe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpe, dst, src);
         }
+
         public static void Cmovpe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpe, dst, src);
         }
+
         public static void Cmovpo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpo, dst, src);
         }
+
         public static void Cmovpo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpo, dst, src);
         }
+
         public static void Cmovs<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovs, dst, src);
         }
+
         public static void Cmovs<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovs, dst, src);
         }
+
         public static void Cmovz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovz, dst, src);
         }
+
         public static void Cmovz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
             where TGP : Operand
         {
@@ -965,10 +1023,27 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Cmp, dst, src);
         }
 
-        public static void Cmpxchg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp_1_eax, TGP cmp_2, TGP src)
-            where TGP : Operand
+        public static void Cmpxchg(this Assembler compiler, GPReg dst, GPReg src)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(compiler != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            compiler.EmitInstruction(InstructionCode.Cmpxchg, dst, src);
+        }
+
+        public static void Cmpxchg(this Assembler compiler, Mem dst, GPReg src)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            compiler.EmitInstruction(InstructionCode.Cmpxchg, dst, src);
+        }
+
+        public static void Cmpxchg(this Compiler compiler, GPVar cmp_1_eax, GPVar cmp_2, GPVar src)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp_1_eax != null);
             Contract.Requires(cmp_2 != null);
             Contract.Requires(src != null);
@@ -976,13 +1051,12 @@
             if (cmp_1_eax.Id == src.Id)
                 throw new ArgumentException();
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg, cmp_1_eax, cmp_2, src);
+            compiler.EmitInstruction(InstructionCode.Cmpxchg, cmp_1_eax, cmp_2, src);
         }
 
-        public static void Cmpxchg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp_1_eax, Mem cmp_2, TGP src)
-            where TGP : Operand
+        public static void Cmpxchg(this Compiler compiler, GPVar cmp_1_eax, Mem cmp_2, GPVar src)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp_1_eax != null);
             Contract.Requires(cmp_2 != null);
             Contract.Requires(src != null);
@@ -990,26 +1064,43 @@
             if (cmp_1_eax.Id == src.Id)
                 throw new ArgumentException();
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg, cmp_1_eax, cmp_2, src);
+            compiler.EmitInstruction(InstructionCode.Cmpxchg, cmp_1_eax, cmp_2, src);
         }
 
-        public static void Cmpxchg8b<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp_edx, TGP cmp_eax, TGP cmp_ecx, TGP cmp_ebx, Mem dst)
-            where TGP : Operand
+        public static void Cmpxchg8b(this Assembler assembler, Mem dst)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+            Contract.Requires(dst != null);
+
+            assembler.EmitInstruction(InstructionCode.Cmpxchg8b, dst);
+        }
+
+        public static void Cmpxchg8b(this Compiler compiler, GPVar cmp_edx, GPVar cmp_eax, GPVar cmp_ecx, GPVar cmp_ebx, Mem dst)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp_eax != null);
             Contract.Requires(cmp_ebx != null);
             Contract.Requires(cmp_ecx != null);
             Contract.Requires(cmp_edx != null);
             Contract.Requires(dst != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_edx, cmp_eax, cmp_ecx, cmp_ebx, dst);
+            compiler.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_edx, cmp_eax, cmp_ecx, cmp_ebx, dst);
         }
 
-        public static void Cmpxchg16b<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp_rdx, TGP cmp_rax, TGP cmp_rcx, TGP cmp_rbx, Mem dst)
-            where TGP : Operand
+        public static void Cmpxchg16b(this Assembler assembler, Mem dst)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+            Contract.Requires(dst != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cmpxchg16b));
+
+            assembler.EmitInstruction(InstructionCode.Cmpxchg8b, dst);
+        }
+
+        public static void Cmpxchg16b(this Compiler compiler, GPVar cmp_rdx, GPVar cmp_rax, GPVar cmp_rcx, GPVar cmp_rbx, Mem dst)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp_rax != null);
             Contract.Requires(cmp_rbx != null);
             Contract.Requires(cmp_rcx != null);
@@ -1017,30 +1108,27 @@
             Contract.Requires(dst != null);
 
             if (!Util.IsX64)
-                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cmpxchg8b));
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cmpxchg16b));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_rdx, cmp_rax, cmp_rcx, cmp_rbx, dst);
+            compiler.EmitInstruction(InstructionCode.Cmpxchg8b, cmp_rdx, cmp_rax, cmp_rcx, cmp_rbx, dst);
         }
 
-        public static void Cpuid<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP inout_eax, TGP out_ebx, TGP out_ecx, TGP out_edx)
-            where TGP : Operand
+        public static void Cpuid(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Cpuid);
+        }
+
+        public static void Cpuid(this Compiler compiler, GPVar inout_eax, GPVar out_ebx, GPVar out_ecx, GPVar out_edx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(inout_eax != null);
             Contract.Requires(out_ebx != null);
             Contract.Requires(out_ecx != null);
             Contract.Requires(out_edx != null);
 
-            // Destination variables must be different
-            if (inout_eax.Id == out_ebx.Id
-                || out_ebx.Id == out_ecx.Id
-                || out_ecx.Id == out_edx.Id)
-            {
-                Contract.Requires(intrinsicSupport != null);
-                throw new ArgumentException("Destination variables must be different.");
-            }
-
-            intrinsicSupport.EmitInstruction(InstructionCode.Cpuid, inout_eax, out_ebx, out_ecx, out_edx);
+            compiler.EmitInstruction(InstructionCode.Cpuid, inout_eax, out_ebx, out_ecx, out_edx);
         }
 
         public static void Daa<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
@@ -1989,56 +2077,89 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Rcr, dst, src);
         }
 
-        public static void Rdtsc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_edx, TGP dst_eax)
-            where TGP : Operand
+        public static void Rdtsc(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Rdtsc);
+        }
+
+        public static void Rdtsc(this Compiler compiler, GPVar dst_edx, GPVar dst_eax)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_edx != null);
             Contract.Requires(dst_eax != null);
 
             if (dst_edx.Id == dst_eax.Id)
                 throw new ArgumentException();
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Rdtsc, dst_edx, dst_eax);
+            compiler.EmitInstruction(InstructionCode.Rdtsc, dst_edx, dst_eax);
         }
 
-        public static void Rdtscp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_edx, TGP dst_eax, TGP dst_ecx)
-            where TGP : Operand
+        public static void Rdtscp(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Rdtscp);
+        }
+
+        public static void Rdtscp(this Compiler compiler, GPVar dst_edx, GPVar dst_eax, GPVar dst_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_edx != null);
             Contract.Requires(dst_eax != null);
             Contract.Requires(dst_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Rdtscp, dst_edx, dst_eax, dst_ecx);
+            compiler.EmitInstruction(InstructionCode.Rdtscp, dst_edx, dst_eax, dst_ecx);
         }
 
-        public static void RepLodsb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepLodsb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepLodsb);
+        }
+
+        public static void RepLodsb(this Compiler compiler, GPVar dst_val, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_val != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepLodsb, dst_val, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepLodsb, dst_val, src_addr, cnt_ecx);
         }
 
-        public static void RepLodsd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepLodsd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepLodsd);
+        }
+
+        public static void RepLodsd(this Compiler compiler, GPVar dst_val, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_val != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepLodsd, dst_val, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepLodsd, dst_val, src_addr, cnt_ecx);
         }
 
-        public static void RepLodsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepLodsq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepLodsq));
+
+            assembler.EmitInstruction(InstructionCode.RepLodsq);
+        }
+
+        public static void RepLodsq(this Compiler compiler, GPVar dst_val, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_val != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
@@ -2046,46 +2167,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepLodsq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepLodsq, dst_val, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepLodsq, dst_val, src_addr, cnt_ecx);
         }
 
-        public static void RepLodsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_val, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepLodsw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepLodsw);
+        }
+
+        public static void RepLodsw(this Compiler compiler, GPVar dst_val, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_val != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepLodsw, dst_val, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepLodsw, dst_val, src_addr, cnt_ecx);
         }
 
-        public static void RepMovsb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepMovsb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepMovsb);
+        }
+
+        public static void RepMovsb(this Compiler compiler, GPVar dst_addr, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepMovsb, dst_addr, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepMovsb, dst_addr, src_addr, cnt_ecx);
         }
 
-        public static void RepMovsd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepMovsd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepMovsd);
+        }
+
+        public static void RepMovsd(this Compiler compiler, GPVar dst_addr, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepMovsd, dst_addr, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepMovsd, dst_addr, src_addr, cnt_ecx);
         }
 
-        public static void RepMovsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepMovsq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepMovsq));
+
+            assembler.EmitInstruction(InstructionCode.RepMovsq);
+        }
+
+        public static void RepMovsq(this Compiler compiler, GPVar dst_addr, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
@@ -2093,46 +2241,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepMovsq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepMovsq, dst_addr, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepMovsq, dst_addr, src_addr, cnt_ecx);
         }
 
-        public static void RepMovsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepMovsw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepMovsw);
+        }
+
+        public static void RepMovsw(this Compiler compiler, GPVar dst_addr, GPVar src_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepMovsw, dst_addr, src_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepMovsw, dst_addr, src_addr, cnt_ecx);
         }
 
-        public static void RepStosb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepStosb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepStosb);
+        }
+
+        public static void RepStosb(this Compiler compiler, GPVar dst_addr, GPVar src_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepStosb, dst_addr, src_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepStosb, dst_addr, src_val, cnt_ecx);
         }
 
-        public static void RepStosd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepStosd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepStosd);
+        }
+
+        public static void RepStosd(this Compiler compiler, GPVar dst_addr, GPVar src_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepStosd, dst_addr, src_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepStosd, dst_addr, src_val, cnt_ecx);
         }
 
-        public static void RepStosq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepStosq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepStosq));
+
+            assembler.EmitInstruction(InstructionCode.RepStosq);
+        }
+
+        public static void RepStosq(this Compiler compiler, GPVar dst_addr, GPVar src_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_val != null);
             Contract.Requires(cnt_ecx != null);
@@ -2140,46 +2315,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepStosq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepStosq, dst_addr, src_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepStosq, dst_addr, src_val, cnt_ecx);
         }
 
-        public static void RepStosw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst_addr, TGP src_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepStosw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepStosw);
+        }
+
+        public static void RepStosw(this Compiler compiler, GPVar dst_addr, GPVar src_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst_addr != null);
             Contract.Requires(src_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepStosw, dst_addr, src_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepStosw, dst_addr, src_val, cnt_ecx);
         }
 
-        public static void RepeCmpsb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeCmpsb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeCmpsb);
+        }
+
+        public static void RepeCmpsb(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsb, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeCmpsb, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepeCmpsd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeCmpsd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeCmpsd);
+        }
+
+        public static void RepeCmpsd(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepeCmpsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeCmpsq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeCmpsq));
+
+            assembler.EmitInstruction(InstructionCode.RepeCmpsq);
+        }
+
+        public static void RepeCmpsq(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
@@ -2187,46 +2389,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeCmpsq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepeCmpsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeCmpsw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeCmpsw);
+        }
+
+        public static void RepeCmpsw(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeCmpsw, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeCmpsw, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepeScasb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeScasb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeScasb);
+        }
+
+        public static void RepeScasb(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeScasb, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeScasb, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepeScasd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeScasd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeScasd);
+        }
+
+        public static void RepeScasd(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeScasd, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeScasd, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepeScasq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeScasq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeScasq));
+
+            assembler.EmitInstruction(InstructionCode.RepeScasq);
+        }
+
+        public static void RepeScasq(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
@@ -2234,46 +2463,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepeScasq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeScasq, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeScasq, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepeScasw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepeScasw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepeScasw);
+        }
+
+        public static void RepeScasw(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepeScasw, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepeScasw, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepneCmpsb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneCmpsb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneCmpsb);
+        }
+
+        public static void RepneCmpsb(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsb, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneCmpsb, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepneCmpsd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneCmpsd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneCmpsd);
+        }
+
+        public static void RepneCmpsd(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneCmpsd, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepneCmpsq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneCmpsq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneCmpsq));
+
+            assembler.EmitInstruction(InstructionCode.RepneCmpsq);
+        }
+
+        public static void RepneCmpsq(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
@@ -2281,46 +2537,73 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneCmpsq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneCmpsq, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepneCmpsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_addr, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneCmpsw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneCmpsw);
+        }
+
+        public static void RepneCmpsw(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_addr, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_addr != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneCmpsw, cmp1_addr, cmp2_addr, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneCmpsw, cmp1_addr, cmp2_addr, cnt_ecx);
         }
 
-        public static void RepneScasb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneScasb(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneScasb);
+        }
+
+        public static void RepneScasb(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneScasb, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneScasb, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepneScasd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneScasd(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneScasd);
+        }
+
+        public static void RepneScasd(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneScasd, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneScasd, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepneScasq<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneScasq(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneScasq));
+
+            assembler.EmitInstruction(InstructionCode.RepneScasq);
+        }
+
+        public static void RepneScasq(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
@@ -2328,59 +2611,80 @@
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.RepneScasq));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneScasq, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneScasq, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void RepneScasw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP cmp1_addr, TGP cmp2_val, TGP cnt_ecx)
-            where TGP : Operand
+        public static void RepneScasw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.RepneScasw);
+        }
+
+        public static void RepneScasw(this Compiler compiler, GPVar cmp1_addr, GPVar cmp2_val, GPVar cnt_ecx)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(cmp1_addr != null);
             Contract.Requires(cmp2_val != null);
             Contract.Requires(cnt_ecx != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.RepneScasw, cmp1_addr, cmp2_val, cnt_ecx);
+            compiler.EmitInstruction(InstructionCode.RepneScasw, cmp1_addr, cmp2_val, cnt_ecx);
         }
 
-        public static void Ret(this Compiler intrinsicSupport)
+        public static void Ret(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
 
-            intrinsicSupport.EmitReturn(null, null);
+            assembler.EmitInstruction(InstructionCode.Ret);
         }
 
-        public static void Ret(this Compiler intrinsicSupport, GPVar first)
+        public static void Ret(this Assembler assembler, Imm imm16)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+            Contract.Requires(imm16 != null);
+
+            assembler.EmitInstruction(InstructionCode.Ret, imm16);
+        }
+
+        public static void Ret(this Compiler compiler)
+        {
+            Contract.Requires(compiler != null);
+
+            compiler.EmitReturn(null, null);
+        }
+
+        public static void Ret(this Compiler compiler, GPVar first)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(first != null);
 
-            intrinsicSupport.EmitReturn(first, null);
+            compiler.EmitReturn(first, null);
         }
 
-        public static void Ret(this Compiler intrinsicSupport, GPVar first, GPVar second)
+        public static void Ret(this Compiler compiler, GPVar first, GPVar second)
         {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(first != null);
-            Contract.Requires(second != null);
-
-            intrinsicSupport.EmitReturn(first, second);
-        }
-
-        public static void Ret(this Compiler intrinsicSupport, XMMVar first)
-        {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(first != null);
-
-            intrinsicSupport.EmitReturn(first, null);
-        }
-
-        public static void Ret(this Compiler intrinsicSupport, XMMVar first, XMMVar second)
-        {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(compiler != null);
             Contract.Requires(first != null);
             Contract.Requires(second != null);
 
-            intrinsicSupport.EmitReturn(first, second);
+            compiler.EmitReturn(first, second);
+        }
+
+        public static void Ret(this Compiler compiler, XMMVar first)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(first != null);
+
+            compiler.EmitReturn(first, null);
+        }
+
+        public static void Ret(this Compiler compiler, XMMVar first, XMMVar second)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(first != null);
+            Contract.Requires(second != null);
+
+            compiler.EmitReturn(first, second);
         }
 
         public static void Rol<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)

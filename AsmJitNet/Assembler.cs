@@ -1003,27 +1003,6 @@
             EmitInstructionImpl(code, operand0, operand1, operand2);
         }
 
-        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3)
-        {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
-            Contract.Requires(operand3 != null);
-
-            throw new NotImplementedException();
-        }
-
-        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
-        {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
-            Contract.Requires(operand3 != null);
-            Contract.Requires(operand4 != null);
-
-            throw new NotImplementedException();
-        }
-
         private static readonly int _instructionCount = Enum.GetValues(typeof(InstructionCode)).Cast<int>().Max() + 1;
 
         private static readonly RegData[] _patchedHiRegs =
@@ -1039,10 +1018,6 @@
             int bLoHiUsed = 0;
             bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
             int bufferStartOffset = _buffer.Offset;
-
-#if ASMJIT_DEBUG
-  bool assertIllegal = false;
-#endif // ASMJIT_DEBUG
 
             // Convert operands to OPERAND_NONE if needed.
             if (o0 == null)
@@ -1109,7 +1084,7 @@
 
                     if ((bLoHiUsed & (int)RegType.GPB_HI) != 0 && forceRexPrefix)
                     {
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     }
                 }
 
@@ -1128,12 +1103,13 @@
 
             // Check for buffer space (and grow if needed).
             if (!CanEmit())
-                goto cleanup;
+                return;
 
             if ((_emitOptions & EmitOptions.LockPrefix) != 0)
             {
                 if (!id.IsLockable)
-                    goto illegalInstruction;
+                    throw NewIllegalInstructionException();
+
                 EmitByte(0xF0);
             }
 
@@ -1749,7 +1725,7 @@
                         Imm imm = (Imm)(!reverse ? o1 : o0);
 
                         if (reg.RegisterIndex != 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
 
                         if (reg.IsRegType(RegType.GPW))
                             EmitByte(0x66);
@@ -1773,11 +1749,11 @@
                         Operand src = o1;
 
                         if (dst.Size == 1)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         if (src.Size != 1 && src.Size != 2)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         if (src.Size == 2 && dst.Size == 2)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
 
                         EmitX86RM(id.OpCode0 + (src.Size != 1 ? 1 : 0),
                           dst.IsRegType(RegType.GPW),
@@ -2143,12 +2119,12 @@
                         if (code != InstructionCode.Fcom && code != InstructionCode.Fcomp)
                         {
                             if (!o1.IsRegType(RegType.X87))
-                                goto illegalInstruction;
+                                throw NewIllegalInstructionException();
                             i2 = ((X87Reg)o1).RegisterIndex;
                         }
                         else if (i1 != 0 && i2 != 0)
                         {
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         }
 
                         EmitByte(i1 == 0
@@ -2225,7 +2201,7 @@
             case InstructionGroup.X87_MEM:
                 {
                     if (!o0.IsMem)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     Mem m = ((Mem)o0);
 
                     byte opCode = 0x00, mod = 0;
@@ -2274,12 +2250,12 @@
                         (o1.IsRegType(RegType.GPQ) && (id.OperandFlags[1] & OperandFlags.GQ) == 0) ||
                         (o1.IsMem && (id.OperandFlags[1] & OperandFlags.MEM) == 0))
                     {
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     }
 
                     // Illegal.
                     if (o0.IsMem && o1.IsMem)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
 
                     bool rexw = ((id.OperandFlags[0] | id.OperandFlags[1]) & OperandFlags.NOREX) != 0
                       ? false
@@ -2461,20 +2437,20 @@
                          (o1.IsRegType(RegType.XMM) || (code == InstructionCode.Pextrw && o1.IsRegType(RegType.MM))) &&
                           o2.IsImm))
                     {
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     }
 
                     int opCode = id.OpCode0;
                     bool isGpdGpq = o0.IsRegType(RegType.GPD) | o0.IsRegType(RegType.GPQ);
 
                     if (code == InstructionCode.Pextrb && (o0.Size != 0 && o0.Size != 1) && !isGpdGpq)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     if (code == InstructionCode.Pextrw && (o0.Size != 0 && o0.Size != 2) && !isGpdGpq)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     if (code == InstructionCode.Pextrd && (o0.Size != 0 && o0.Size != 4) && !isGpdGpq)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     if (code == InstructionCode.Pextrq && (o0.Size != 0 && o0.Size != 8) && !isGpdGpq)
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
 
                     if (o1.IsRegType(RegType.XMM))
                         opCode |= 0x66000000;
@@ -2522,7 +2498,7 @@
                         (o1.IsMem && (id.OperandFlags[1] & OperandFlags.MEM) == 0) ||
                         (o1.IsImm && (id.OperandFlags[1] & OperandFlags.IMM) == 0))
                     {
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     }
 
                     int prefix =
@@ -2538,7 +2514,7 @@
                     if (o1.IsReg)
                     {
                         if ((id.OperandFlags[1] & (OperandFlags.MM_XMM | OperandFlags.GQD)) == 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((BaseReg)o1), IntPtr.Zero);
@@ -2548,7 +2524,7 @@
                     if (o1.IsMem)
                     {
                         if ((id.OperandFlags[1] & OperandFlags.MEM) == 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((Mem)o1), IntPtr.Zero);
@@ -2558,7 +2534,7 @@
                     if (o1.IsImm)
                     {
                         if ((id.OperandFlags[1] & OperandFlags.IMM) == 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         EmitMmu((uint)id.OpCode1 | (uint)prefix, rexw,
                           (byte)id.OpCodeR,
                           ((BaseReg)o0), (IntPtr)1);
@@ -2590,7 +2566,7 @@
                         (o1.IsMem && (id.OperandFlags[1] & OperandFlags.MEM) == 0) ||
                         !o2.IsImm)
                     {
-                        goto illegalInstruction;
+                        throw NewIllegalInstructionException();
                     }
 
                     int prefix =
@@ -2606,7 +2582,7 @@
                     if (o1.IsReg)
                     {
                         if ((id.OperandFlags[1] & (OperandFlags.MM_XMM | OperandFlags.GQD)) == 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((BaseReg)o1), (IntPtr)1);
@@ -2617,7 +2593,7 @@
                     if (o1.IsMem)
                     {
                         if ((id.OperandFlags[1] & OperandFlags.MEM) == 0)
-                            goto illegalInstruction;
+                            throw NewIllegalInstructionException();
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((Mem)o1), (IntPtr)1);
@@ -2643,19 +2619,8 @@
                 }
             }
 
-        illegalInstruction:
-            throw new AssemblerException("Encountered an illegal instruction");
-
-#if ASMJIT_DEBUG
-  assertIllegal = true;
-#endif // ASMJIT_DEBUG
-
         end:
-            if ((Logger != null && Logger.IsUsed)
-#if ASMJIT_DEBUG
-      || assertIllegal
-#endif // ASMJIT_DEBUG
-)
+            if (Logger != null && Logger.IsUsed)
             {
                 StringBuilder buf = new StringBuilder();
                 int bufferStopOffset = _buffer.Offset;
@@ -2668,27 +2633,16 @@
                     DumpComment(buf, null, _comment);
 
                 // We don't need to null terminate the resulting string.
-#if ASMJIT_DEBUG
-    if (Logger)
-#endif // ASMJIT_DEBUG
                 Logger.LogString(buf.ToString());
-
-#if ASMJIT_DEBUG
-    if (assertIllegal)
-    {
-      // Here we need to null terminate.
-      buf[0] = '\0';
-
-      // We raise an assertion failure, because in debugging this just shouldn't
-      // happen.
-      assertionFailure(__FILE__, __LINE__, bufStorage);
-    }
-#endif // ASMJIT_DEBUG
             }
 
-        cleanup:
             _comment = null;
             _emitOptions = EmitOptions.None;
+        }
+
+        private Exception NewIllegalInstructionException()
+        {
+            return new AssemblerException("Encountered an illegal instruction");
         }
 
         private void DumpComment(StringBuilder buf, IList<byte> binaryData, string comment)
