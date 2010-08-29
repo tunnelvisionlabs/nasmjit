@@ -2,6 +2,7 @@
 {
     using System;
     using System.Diagnostics.Contracts;
+    using System.Linq;
 
     public sealed class FunctionPrototype
     {
@@ -173,6 +174,77 @@
             get
             {
                 return _argumentsStackSize;
+            }
+        }
+
+        public override string ToString()
+        {
+            string callingConvention = GetCallingConventionName(CallingConvention);
+            string returnValue = GetVariableTypeName(ReturnValue);
+            string arguments = string.Join(", ", Arguments.Select(i => GetVariableTypeName(i._variableType)));
+            return string.Format("[{0}] {1} function({2})", callingConvention, returnValue, arguments);
+        }
+
+        private static string GetCallingConventionName(CallingConvention callingConvention)
+        {
+            switch (callingConvention)
+            {
+            case CallingConvention.X64W:
+                return "win64";
+            case CallingConvention.X64U:
+                return "64-bit unix";
+            case CallingConvention.Cdecl:
+                return "cdecl";
+            case CallingConvention.StdCall:
+                return "stdcall";
+            case CallingConvention.MsThisCall:
+                return "thiscall";
+            case CallingConvention.MsFastCall:
+                return "fastcall";
+            case CallingConvention.BorlandFastCall:
+                return "borland fastcall";
+            case CallingConvention.GccFastCall2:
+                return "gcc fastcall 2";
+            case CallingConvention.GccFastCall3:
+                return "gcc fastcall 3";
+            case CallingConvention.Default:
+                return GetCallingConventionName(CallingConventionInfo.DefaultCallingConvention);
+            case CallingConvention.None:
+            default:
+                return "invalid";
+            }
+        }
+
+        private static string GetVariableTypeName(VariableType variableType)
+        {
+            switch (variableType)
+            {
+            case VariableType.GPD:
+                return "int";
+            case VariableType.GPQ:
+                return "long";
+            case VariableType.X87:
+                return "x87";
+            case VariableType.X87_1F:
+                return "float";
+            case VariableType.X87_1D:
+                return "double";
+            case VariableType.MM:
+                return "mm";
+            case VariableType.XMM:
+                return "xmm";
+            case VariableType.XMM_1F:
+                return "float";
+            case VariableType.XMM_4F:
+                return "floatv4";
+            case VariableType.XMM_1D:
+                return "double";
+            case VariableType.XMM_2D:
+                return "doublev2";
+            case VariableType.Invalid:
+                return "void";
+            default:
+                return "invalid";
             }
         }
 
