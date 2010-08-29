@@ -2,6 +2,9 @@
 {
     using System;
 
+    /// <summary>
+    /// Instruction operand flags
+    /// </summary>
     [Flags]
     public enum OperandFlags : short
     {

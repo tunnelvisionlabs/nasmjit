@@ -33,18 +33,32 @@
         TEST,
         XCHG,
 
-        // Group for x87 FP instructions in format mem or st(i), st(i) (fadd, fsub, fdiv, ...)
+        /// <summary>
+        /// Group for x87 FP instructions in format mem or st(i), st(i) (fadd, fsub, fdiv, ...)
+        /// </summary>
         X87_FPU,
-        // Group for x87 FP instructions in format st(i), st(i)
+
+        /// <summary>
+        /// Group for x87 FP instructions in format st(i), st(i)
+        /// </summary>
         X87_STI,
+
         // Group for fld/fst/fstp instruction, internally uses I_X87_MEM group.
         X87_MEM_STI,
-        // Group for x87 FP instructions that uses Word, DWord, QWord or TWord memory pointer.
+
+        /// <summary>
+        /// Group for x87 FP instructions that uses Word, DWord, QWord or TWord memory pointer
+        /// </summary>
         X87_MEM,
-        // Group for x87 FSTSW/FNSTSW instructions
+
+        /// <summary>
+        /// Group for x87 FSTSW/FNSTSW instructions
+        /// </summary>
         X87_FSTSW,
 
-        // Group for movbe instruction
+        /// <summary>
+        /// Group for movbe instruction
+        /// </summary>
         MOVBE,
 
         // Group for MMX/SSE instructions in format (X)MM|Reg|Mem <- (X)MM|Reg|Mem,
@@ -53,15 +67,24 @@
         // - Secondary opcode is used for instructions in (X)MM/Mem <- (X)MM format.
         MMU_MOV,
 
-        // Group for movd and movq instructions.
+        /// <summary>
+        /// Group for movd instructions
+        /// </summary>
         MMU_MOVD,
+
+        /// <summary>
+        /// Group for movq instructions
+        /// </summary>
         MMU_MOVQ,
 
-        // Group for pextrd, pextrq and pextrw instructions (it's special instruction
-        // not similar to others)
+        /// <summary>
+        /// Group for pextrd, pextrq and pextrw instructions (it's special instruction not similar to others)
+        /// </summary>
         MMU_PEXTR,
 
-        // Group for prefetch instruction
+        /// <summary>
+        /// Group for prefetch instruction
+        /// </summary>
         MMU_PREFETCH,
 
         // Group for MMX/SSE instructions in format (X)MM|Reg <- (X)MM|Reg|Mem|Imm,
@@ -71,7 +94,9 @@
         MMU_RMI,
         MMU_RM_IMM8,
 
-        // Group for 3dNow instructions
+        /// <summary>
+        /// Group for 3dNow instructions
+        /// </summary>
         MMU_RM_3DNOW
     }
 }
