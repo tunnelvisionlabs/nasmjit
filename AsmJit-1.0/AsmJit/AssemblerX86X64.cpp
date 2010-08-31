@@ -1079,8 +1079,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         const Imm& src = reinterpret_cast<const Imm&>(*o1);
 
         _emitX86RM(id->opCode[1],
-          src.getSize() == 2,
-          src.getSize() == 8,
+          dst.getSize() == 2,
+          dst.getSize() == 8,
           (uint8_t)id->opCodeR,
           dst,
           1, forceRexPrefix);
