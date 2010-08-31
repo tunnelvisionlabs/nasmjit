@@ -388,7 +388,7 @@ struct FunctionBuilder9 : public FunctionDefinition
   }
 };
 
-//! @brief Class used to build function with 9 arguments.
+//! @brief Class used to build function with 10 arguments.
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct FunctionBuilder10 : public FunctionDefinition
 {
@@ -418,7 +418,7 @@ struct FunctionBuilder10 : public FunctionDefinition
 //! @brief Emmitable.
 //!
 //! Emittable is object that can emit single or more instructions. To
-//! create your custom emittable it's needed to override abstract virtual
+//! create your custom emittable it's needed to override the abstract virtual
 //! method @c emit().
 //!
 //! When you are finished serializing instructions to the @c Compiler and you
@@ -426,9 +426,9 @@ struct FunctionBuilder10 : public FunctionDefinition
 //! emittable in list, then @c translate(), @c emit() and @c post() is the last.
 //! Prepare can be used to calculate something that can be only calculated when
 //! emitting instructions is finished (for example @c Function uses @c prepare()
-//! to relocate memory home for all memory/spilled variables). @c emit() should 
+//! to relocate memory home for all memory/spilled variables). The @c emit() should 
 //! be used to emit instruction or multiple instructions into @a Assembler stream,
-//! and @c post() is here to allow emitting embedded data (after function
+//! and the @c post() is here to allow emitting embedded data (after function
 //! declaration), etc.
 struct ASMJIT_API Emittable
 {
@@ -521,7 +521,14 @@ protected:
   Compiler* _compiler;
 
   //! @brief Type of emittable, see @c EMITTABLE_TYPE.
-  uint32_t _type;
+  uint8_t _type;
+  //! @brief Whether the emittable was translated, see @c translate().
+  uint8_t _translated;
+  //! @brief Reserved flags for future use.
+  uint8_t _reserved0;
+  //! @brief Reserved flags for future use.
+  uint8_t _reserved1;
+
   //! @brief Emittable offset.
   uint32_t _offset;
 
@@ -530,7 +537,7 @@ protected:
   //! @brief Next emittable.
   Emittable* _next;
 
-  //! @brief Embedded comment string (also used by @c Comment emittable).
+  //! @brief Embedded comment string (also used by a @c Comment emittable).
   const char* _comment;
 
 private:

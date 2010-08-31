@@ -53,7 +53,10 @@ Emittable::Emittable(Compiler* c, uint32_t type) ASMJIT_NOTHROW :
   _next(NULL),
   _prev(NULL),
   _comment(NULL),
-  _type(type),
+  _type((uint8_t)type),
+  _translated(false),
+  _reserved0(0),
+  _reserved1(0),
   _offset(INVALID_VALUE)
 {
 }

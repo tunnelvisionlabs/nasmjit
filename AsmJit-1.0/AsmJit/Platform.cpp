@@ -74,9 +74,8 @@ static sysuint_t roundUpToPowerOf2(sysuint_t base)
   base = base | (base >> 8);
   base = base | (base >> 16);
 
-#if defined(ASMJIT_X64)
-  base = base | (base >> 32);
-#endif // ASMJIT_X64
+  if (sizeof(sysuint_t) >= 8)
+    base = base | (base >> 32);
 
   return base + 1;
 }

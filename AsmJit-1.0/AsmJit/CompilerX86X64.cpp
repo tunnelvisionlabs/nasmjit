@@ -7166,7 +7166,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     }
     // ------------------------------------------------------------------------
 
-    // We set compiler context also to Compiler so new emitted  instructions 
+    // We set compiler context also to Compiler so new emitted instructions 
     // can call prepare() to itself.
     _cc = &cc;
 
