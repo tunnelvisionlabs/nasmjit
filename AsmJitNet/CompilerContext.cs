@@ -7,7 +7,7 @@
 
     public class CompilerContext
     {
-        private Compiler _compiler;
+        private readonly Compiler _compiler;
         private Function _function;
         private Emittable _start;
         private Emittable _stop;
@@ -88,9 +88,11 @@
 
         private bool _emitComments;
 
-        public CompilerContext(Compiler compiler)
+        internal CompilerContext(Compiler compiler)
         {
-            Contract.Requires(compiler != null);
+            if (compiler == null)
+                throw new ArgumentNullException("compiler");
+            Contract.EndContractBlock();
 
             _compiler = compiler;
             Clear();
