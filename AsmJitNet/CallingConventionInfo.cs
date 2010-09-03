@@ -107,7 +107,7 @@
                     break;
 
                 default:
-                    throw new ArgumentException();
+                    throw new NotSupportedException(string.Format("The calling convention '{0}' is not supported on this platform.", callingConvention));
                 }
             }
             else if (Util.IsX64)
@@ -177,7 +177,7 @@
                     break;
 
                 default:
-                    throw new ArgumentException("Illegal calling convention.");
+                    throw new NotSupportedException(string.Format("The calling convention '{0}' is not supported on this platform.", callingConvention));
                 }
             }
             else

@@ -2,11 +2,14 @@
 {
     using System;
 
+    /// <summary>
+    /// Base class for all registers.
+    /// </summary>
     public abstract class BaseReg : Operand
     {
         private readonly RegCode _code;
 
-        public BaseReg(RegCode code, int size)
+        protected BaseReg(RegCode code, int size)
             : base(size: size)
         {
             _code = code;
@@ -15,12 +18,12 @@
                 throw new ArgumentException();
         }
 
-        public BaseReg(RegType type, RegIndex index, int size)
+        protected BaseReg(RegType type, RegIndex index, int size)
             : this((RegCode)type | (RegCode)index, size)
         {
         }
 
-        public override OperandType OperandType
+        public sealed override OperandType OperandType
         {
             get
             {
@@ -28,6 +31,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets the register code.
+        /// </summary>
         public RegCode Code
         {
             get
@@ -36,6 +42,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets the register type.
+        /// </summary>
         public RegType RegisterType
         {
             get
@@ -44,6 +53,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets the register index.
+        /// </summary>
         public RegIndex RegisterIndex
         {
             get
