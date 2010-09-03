@@ -180,7 +180,7 @@
                 _labelData.Add(new AssemblerLabelData());
         }
 
-        public void Bind(Label label)
+        public void MarkLabel(Label label)
         {
             if (label.Id == Operand.InvalidValue)
                 throw new ArgumentException("Only labels created by DefineLabel() can be used by Assembler.");
@@ -449,66 +449,13 @@
                 //   - 4.13 - Code Padding with Operand-Size Override and Multibyte NOP
 
                 byte[] p;
-
-                if (ci.VendorId == CpuVendor.Intel &&
+                bool validIntel = ci.VendorId == CpuVendor.Intel &&
                    ((ci.Family & 0x0F) == 6 ||
-                    (ci.Family & 0x0F) == 15)
-                   )
-                {
-                    do
-                    {
-                        switch (i)
-                        {
-                        case 1:
-                            p = _nop1;
-                            break;
+                    (ci.Family & 0x0F) == 15);
 
-                        case 2:
-                            p = _nop2;
-                            break;
+                bool validAmd = ci.VendorId == CpuVendor.Amd && ci.Family >= 0x0F;
 
-                        case 3:
-                            p = _nop3;
-                            break;
-
-                        case 4:
-                            p = _nop4;
-                            break;
-
-                        case 5:
-                            p = _nop5;
-                            break;
-
-                        case 6:
-                            p = _nop6;
-                            break;
-
-                        case 7:
-                            p = _nop7;
-                            break;
-
-                        case 8:
-                            p = _nop8;
-                            break;
-
-                        default:
-                            p = _nop9;
-                            break;
-                        }
-
-                        i -= p.Length;
-
-                        for (int j = 0; j < p.Length; j++)
-                        {
-                            EmitByte(p[j]);
-                        }
-
-                    } while (i != 0);
-
-                    return;
-                }
-
-                if (ci.VendorId == CpuVendor.Amd && ci.Family >= 0x0F)
+                if (validIntel || validAmd)
                 {
                     do
                     {
@@ -551,21 +498,16 @@
                             break;
 
                         case 10:
-                            p = _nop10;
+                            p = validAmd ? _nop10 : _nop9;
                             break;
 
                         default:
-                            p = _nop11;
+                            p = validAmd ? _nop11 : _nop9;
                             break;
                         }
 
                         i -= p.Length;
-
-                        for (int j = 0; j < p.Length; j++)
-                        {
-                            EmitByte(p[j]);
-                        }
-
+                        _buffer.EmitData(p);
                     } while (i != 0);
 
                     return;
@@ -1222,8 +1164,8 @@
                         Imm src = (Imm)o1;
 
                         EmitX86RM(id.OpCode1,
-                          src.Size == 2,
-                          src.Size == 8,
+                          dst.Size == 2,
+                          dst.Size == 8,
                           (byte)id.OpCodeR,
                           dst,
                           1, forceRexPrefix);
@@ -1441,6 +1383,8 @@
                                 EmitByte(HintByteValue.Taken);
                             else if ((hint & (int)Hint.NotTaken) != 0)
                                 EmitByte(HintByteValue.NotTaken);
+                            else
+                                throw new AssemblerException("Invalid jump hint.");
                         }
 
                         if (l_data.Offset != -1)
@@ -2525,6 +2469,7 @@
                     {
                         if ((id.OperandFlags[1] & OperandFlags.MEM) == 0)
                             throw NewIllegalInstructionException();
+
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((Mem)o1), IntPtr.Zero);
@@ -2535,6 +2480,7 @@
                     {
                         if ((id.OperandFlags[1] & OperandFlags.IMM) == 0)
                             throw NewIllegalInstructionException();
+
                         EmitMmu((uint)id.OpCode1 | (uint)prefix, rexw,
                           (byte)id.OpCodeR,
                           ((BaseReg)o0), (IntPtr)1);

@@ -54,7 +54,7 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset;
 
@@ -84,7 +84,7 @@
             }
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             switch (_hintKind)
             {

@@ -98,6 +98,20 @@
             return value + 1;
         }
 
+        private static ulong RoundUpToPowerOf2(ulong value)
+        {
+            value -= 1;
+
+            value = value | (value >> 1);
+            value = value | (value >> 2);
+            value = value | (value >> 4);
+            value = value | (value >> 8);
+            value = value | (value >> 16);
+            value = value | (value >> 32);
+
+            return value + 1;
+        }
+
         private static class UnsafeNativeMethods
         {
             [DllImport("kernel32.dll")]

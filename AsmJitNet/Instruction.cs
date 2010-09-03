@@ -295,7 +295,7 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
 
             Offset = cc.CurrentOffset;
@@ -1038,7 +1038,7 @@
             cc.CurrentOffset++;
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             int i;
             int variablesCount = (_variables != null) ? _variables.Length : 0;
@@ -1096,7 +1096,7 @@
             }
         }
 
-        public override void Emit(Assembler a)
+        protected override void EmitImpl(Assembler a)
         {
             a.Comment = Comment;
             a.EmitOptions = _emitOptions;

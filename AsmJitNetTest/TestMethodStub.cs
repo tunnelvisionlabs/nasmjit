@@ -38,7 +38,7 @@
             Assembler assembler = new Assembler();
             Label label = assembler.DefineLabel();
             assembler.Call(label);
-            assembler.Bind(label);
+            assembler.MarkLabel(label);
             assembler.Sub(Mem.sysint_ptr(Register.nsp), 5);
             assembler.Call(methodPtr);
             assembler.Add(Register.nsp, IntPtr.Size);

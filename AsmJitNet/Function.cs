@@ -187,7 +187,7 @@
             Contract.Invariant(_end != null);
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset++;
         }
@@ -553,9 +553,9 @@
             // Emit SFence / LFence / MFence.
             if (_emitSFence && _emitLFence)
                 Compiler.Emit(InstructionCode.Mfence); // MFence == SFence & LFence.
-            if (_emitSFence && !_emitLFence)
+            else if (_emitSFence)
                 Compiler.Emit(InstructionCode.Sfence); // Only SFence.
-            if (!_emitSFence && _emitLFence)
+            else if (_emitLFence)
                 Compiler.Emit(InstructionCode.Lfence); // Only LFence.
 
             // Emit standard epilog leave code (if needed).

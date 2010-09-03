@@ -84,12 +84,12 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset++;
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             if (cc.Unreachable)
             {
@@ -107,9 +107,9 @@
             }
         }
 
-        public override void Emit(Assembler a)
+        protected override void EmitImpl(Assembler a)
         {
-            a.Bind(_label);
+            a.MarkLabel(_label);
         }
     }
 }

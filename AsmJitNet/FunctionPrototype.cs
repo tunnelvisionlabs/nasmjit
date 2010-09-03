@@ -3,10 +3,16 @@
     using System;
     using System.Diagnostics.Contracts;
     using System.Linq;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using Expression = System.Linq.Expressions.Expression;
 
     public sealed class FunctionPrototype
     {
         private const int InvalidValue = -1;
+
+        private static readonly ConcurrentDictionary<Type, List<FunctionPrototype>> _prototypes =
+            new ConcurrentDictionary<Type, List<FunctionPrototype>>();
 
         private readonly CallingConvention _callingConvention;
         private Argument[] _arguments;
@@ -71,6 +77,62 @@
                 throw new ArgumentException();
 
             SetPrototype(arguments, returnValue);
+        }
+
+        public static FunctionPrototype GetFunctionPrototype(CallingConvention callingConvention, Type delegateType)
+        {
+            if (delegateType == null)
+                throw new ArgumentNullException("delegateType");
+            Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+            Contract.EndContractBlock();
+
+            List<FunctionPrototype> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionPrototype>());
+            lock (prototypes)
+            {
+                FunctionPrototype prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
+                if (prototype == null)
+                {
+                    prototype = new FunctionPrototype(callingConvention, delegateType);
+                    prototypes.Add(prototype);
+                }
+
+                return prototype;
+            }
+        }
+
+        public static FunctionPrototype GetFunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        {
+            if (arguments == null)
+                throw new ArgumentNullException("arguments");
+            Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+            Contract.EndContractBlock();
+
+            bool isAction = returnValue == VariableType.Invalid;
+            Type delegateType;
+
+            if (isAction)
+            {
+                delegateType = Expression.GetActionType(Array.ConvertAll(arguments, i => Compiler.IdToType(i)));
+            }
+            else
+            {
+                List<Type> typeArgs = arguments.Select(i => Compiler.IdToType(i)).ToList();
+                typeArgs.Add(Compiler.IdToType(returnValue));
+                delegateType = Expression.GetFuncType(typeArgs.ToArray());
+            }
+
+            List<FunctionPrototype> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionPrototype>());
+            lock (prototypes)
+            {
+                FunctionPrototype prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
+                if (prototype == null)
+                {
+                    prototype = new FunctionPrototype(callingConvention, arguments, returnValue);
+                    prototypes.Add(prototype);
+                }
+
+                return prototype;
+            }
         }
 
         public int PassedGP
@@ -460,6 +522,13 @@
             }
 
             return InvalidValue;
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_arguments != null);
+            Contract.Invariant(_argumentsStackSize >= 0);
         }
 
         public sealed class Argument

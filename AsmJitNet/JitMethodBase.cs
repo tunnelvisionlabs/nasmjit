@@ -75,6 +75,14 @@
             get;
         }
 
+        public FunctionPrototype Prototype
+        {
+            get
+            {
+                return FunctionPrototype.GetFunctionPrototype(CallingConvention, ArgumentTypes.ToArray(), ReturnType);
+            }
+        }
+
         protected Assembler Assembler
         {
             get

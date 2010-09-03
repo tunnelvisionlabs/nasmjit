@@ -13,9 +13,9 @@
         , IMmIntrinsicSupport<MMVar>
         , IXmmIntrinsicSupport<XMMVar>
     {
-        private CodeGenerator _codeGenerator;
+        private readonly CodeGenerator _codeGenerator;
         private Logger _logger;
-        private CompilerProperties _properties;
+        private readonly CompilerProperties _properties;
         private EmitOptions _emitOptions;
         private Emittable _first;
         private Emittable _last;
@@ -26,9 +26,10 @@
         private int _varNameId;
         private CompilerContext _cc;
 
-        public Compiler(CodeGenerator codeGenerator = null)
+        public Compiler(CodeGenerator codeGenerator = null, CompilerProperties properties = CompilerProperties.None)
         {
             _codeGenerator = codeGenerator ?? CodeGenerator.Global;
+            _properties = properties;
         }
 
         public Logger Logger
@@ -383,8 +384,6 @@
 
                 // ------------------------------------------------------------------------
                 // Setup code generation context.
-                Emittable cur;
-
                 cc.Function = (Function)start;
                 cc.Start = start;
                 cc.Stop = stop = cc.Function.End;
@@ -404,7 +403,7 @@
                 // - Prepare variables for register allocator, doing:
                 //   - Update read/write statistics.
                 //   - Find scope (first/last emittable) where variable is used.
-                for (cur = start; ; cur = cur.Next)
+                for (Emittable cur = start; ; cur = cur.Next)
                 {
                     cur.Prepare(cc);
                     if (cur == stop)
@@ -442,14 +441,30 @@
                 // Step 2.a:
                 // - Alloc registers.
                 // - Translate special instructions (imul, cmpxchg8b, ...).
-                Emittable prev = null;
-                for (cur = start; ; prev = cur, cur = cur.Next)
+                Stack<Tuple<Emittable, Emittable>> translateTargets = new Stack<Tuple<Emittable, Emittable>>();
+                translateTargets.Push(Tuple.Create(default(Emittable), start));
+                while (translateTargets.Count > 0)
                 {
+                    var top = translateTargets.Pop();
+                    Emittable prev = top.Item1;
+                    Emittable cur = top.Item2;
+
+                    if (cur.Translated)
+                        continue;
+
                     _current = prev;
                     cc.CurrentOffset = cur.Offset;
                     cur.Translate(cc);
+
                     if (cur == stop)
-                        break;
+                        continue;
+
+                    Jmp jmp = cur as Jmp;
+                    if (jmp != null)
+                        translateTargets.Push(Tuple.Create((Emittable)jmp, (Emittable)jmp.JumpTarget));
+
+                    if (jmp == null || jmp.Code != InstructionCode.Jmp)
+                        translateTargets.Push(Tuple.Create(cur, cur.Next));
                 }
 
                 // Step 2.b:
@@ -503,7 +518,7 @@
 
                 // Step 3:
                 // - Emit instructions to Assembler stream.
-                for (cur = start; ; cur = cur.Next)
+                for (Emittable cur = start; ; cur = cur.Next)
                 {
                     cur.Emit(a);
                     if (cur == extraBlock)
@@ -514,7 +529,7 @@
                 // ------------------------------------------------------------------------
                 // Step 4:
                 // - Emit everything else (post action).
-                for (cur = start; ; cur = cur.Next)
+                for (Emittable cur = start; ; cur = cur.Next)
                 {
                     cur.Post(a);
                     if (cur == extraBlock)
@@ -1149,6 +1164,34 @@
                     return VariableType.Invalid;
                 else
                     throw new ArgumentException();
+            }
+        }
+
+        internal static Type IdToType(VariableType type)
+        {
+            switch (type)
+            {
+            case VariableType.Invalid:
+                return typeof(void);
+
+            case VariableType.GPD:
+                return typeof(int);
+            case VariableType.GPQ:
+                return typeof(long);
+
+            case VariableType.X87:
+            case VariableType.X87_1F:
+            case VariableType.X87_1D:
+            case VariableType.MM:
+            case VariableType.XMM:
+            case VariableType.XMM_1F:
+            case VariableType.XMM_4F:
+            case VariableType.XMM_1D:
+            case VariableType.XMM_2D:
+                throw new NotImplementedException();
+
+            default:
+                throw new ArgumentException();
             }
         }
 

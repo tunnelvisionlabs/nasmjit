@@ -9,8 +9,8 @@
         private readonly Function _caller;
         private Operand _target;
         private readonly Operand[] _ret = new Operand[2];
-        private Operand[] _args;
-        private FunctionPrototype _functionPrototype;
+        private readonly Operand[] _args;
+        private readonly FunctionPrototype _functionPrototype;
 
         /// <summary>
         /// Mask of GP registers used as function arguments
@@ -121,7 +121,7 @@
             return true;
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             // Prepare is similar to EInstruction::prepare(). We collect unique variables
             // and update statistics, but we don't use standard alloc/free register calls.
@@ -477,7 +477,7 @@
 
         private const int FUNC_MAX_ARGS = 32;
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             int i;
             int preserved;

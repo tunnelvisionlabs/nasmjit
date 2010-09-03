@@ -17,6 +17,8 @@
 
         private string _comment;
 
+        private bool _translated;
+
         protected Emittable(Compiler compiler)
         {
             if (compiler == null)
@@ -103,30 +105,67 @@
             }
         }
 
+        public bool Translated
+        {
+            get
+            {
+                return _translated;
+            }
+        }
+
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
             Contract.Invariant(_compiler != null);
         }
 
-        public virtual void Prepare(CompilerContext cc)
+        public void Prepare(CompilerContext cc)
+        {
+            Contract.Requires(cc != null);
+
+            PrepareImpl(cc);
+        }
+
+        public void Translate(CompilerContext cc)
+        {
+            Contract.Requires(cc != null);
+
+            TranslateImpl(cc);
+            _translated = true;
+        }
+
+        public void Emit(Assembler a)
+        {
+            Contract.Requires(a != null);
+
+            EmitImpl(a);
+        }
+
+        public void Post(Assembler a)
+        {
+            Contract.Requires(a != null);
+
+            PostImpl(a);
+        }
+
+        protected virtual void PrepareImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
 
             _offset = cc.CurrentOffset;
         }
 
-        public virtual void Translate(CompilerContext cc)
+        protected virtual void TranslateImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
         }
 
-        public virtual void Emit(Assembler a)
+        protected virtual void EmitImpl(Assembler a)
         {
             Contract.Requires(a != null);
         }
 
-        public virtual void Post(Assembler a)
+        protected virtual void PostImpl(Assembler a)
         {
             Contract.Requires(a != null);
         }

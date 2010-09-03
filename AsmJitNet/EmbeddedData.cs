@@ -39,7 +39,7 @@
             }
         }
 
-        public override void Emit(Assembler a)
+        protected override void EmitImpl(Assembler a)
         {
             a.Embed(_data);
         }

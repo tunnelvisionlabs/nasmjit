@@ -26,13 +26,13 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset++;
             _function.PrepareVariables(this);
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             _function.AllocVariables(cc);
         }

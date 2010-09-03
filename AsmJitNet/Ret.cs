@@ -57,7 +57,7 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset;
 
@@ -107,7 +107,7 @@
             cc.CurrentOffset++;
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
             Compiler compiler = cc.Compiler;
             Operand[] ret = { _first, _second };
@@ -454,7 +454,7 @@
             return m;
         }
 
-        public override void Emit(Assembler a)
+        protected override void EmitImpl(Assembler a)
         {
             if (ShouldEmitJumpToEpilog())
                 a.Jmp(Function.ExitLabel);

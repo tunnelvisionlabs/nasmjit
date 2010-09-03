@@ -54,7 +54,7 @@
             }
         }
 
-        public override void Prepare(CompilerContext cc)
+        protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset;
 
@@ -93,12 +93,12 @@
             cc.CurrentOffset++;
         }
 
-        public override void Translate(CompilerContext cc)
+        protected override void TranslateImpl(CompilerContext cc)
         {
-            base.Translate(cc);
+            base.TranslateImpl(cc);
             _state = cc.SaveState();
 
-            if (_jumpTarget.Offset > Offset)
+            if (!_jumpTarget.Translated)
             {
                 // State is not known, so we need to call _doJump() later. Compiler will
                 // do it for us.
@@ -130,7 +130,7 @@
             }
         }
 
-        public override void Emit(Assembler a)
+        protected override void EmitImpl(Assembler a)
         {
             const uint MAXIMUM_SHORT_JMP_SIZE = 127;
 
@@ -166,7 +166,7 @@
             }
 
         end:
-            base.Emit(a);
+            base.EmitImpl(a);
         }
 
         internal void DoJump(CompilerContext cc)
