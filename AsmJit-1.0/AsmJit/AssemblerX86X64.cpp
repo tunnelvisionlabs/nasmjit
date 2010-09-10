@@ -907,9 +907,9 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 #endif // ASMJIT_DEBUG
 
   // Convert operands to OPERAND_NONE if needed.
-  if (o0 == NULL) { o0 = reinterpret_cast<const Operand*>(_none); } else if (o0->isReg()) { bLoHiUsed |= o0->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_LO); }
-  if (o1 == NULL) { o1 = reinterpret_cast<const Operand*>(_none); } else if (o1->isReg()) { bLoHiUsed |= o1->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_LO); }
-  if (o2 == NULL) { o2 = reinterpret_cast<const Operand*>(_none); } else if (o2->isReg()) { bLoHiUsed |= o2->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_LO); }
+  if (o0 == NULL) { o0 = reinterpret_cast<const Operand*>(_none); } else if (o0->isReg()) { bLoHiUsed |= o0->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_HI); }
+  if (o1 == NULL) { o1 = reinterpret_cast<const Operand*>(_none); } else if (o1->isReg()) { bLoHiUsed |= o1->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_HI); }
+  if (o2 == NULL) { o2 = reinterpret_cast<const Operand*>(_none); } else if (o2->isReg()) { bLoHiUsed |= o2->_reg.code & (REG_TYPE_GPB_LO | REG_TYPE_GPB_HI); }
 
   sysuint_t beginOffset = getOffset();
   const InstructionDescription* id = &instructionDescription[code];

@@ -232,7 +232,7 @@ enum REG_TYPE
   //! @brief 8-bit general purpose register type (LO).
   REG_TYPE_GPB_LO = 0x0100,
   //! @brief 8-bit general purpose register type (HI, only AH, BH, CH, DH).
-  REG_TYPE_GPB_HI = 0x0300,
+  REG_TYPE_GPB_HI = 0x0200,
   //! @brief 16-bit general purpose register type.
   REG_TYPE_GPW = 0x1000,
   //! @brief 32-bit general purpose register type.
