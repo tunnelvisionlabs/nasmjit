@@ -7226,11 +7226,17 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
         cur = cur->translate(cc);
       } while (cur);
 
+      cc._unrecheable = true;
+
       sysuint_t len = cc._backCode.getLength();
       while (cc._backPos < len)
       {
         cur = cc._backCode[cc._backPos++];
-        if (!cur->isTranslated()) break;
+        if (!cur->isTranslated()) 
+        {
+          break;
+        }
+
         cur = NULL;
       }
     } while (cur);
