@@ -59,6 +59,23 @@ static void die()
   exit(1);
 }
 
+static void shuffle(void **a, void **b, sysuint_t count)
+{
+  for (sysuint_t i = 0; i < count; ++i)
+  {
+    sysuint_t si = (sysuint_t)rand() % count;
+
+    void *ta = a[i];
+    void *tb = b[i];
+
+    a[i] = a[si];
+    b[i] = b[si];
+
+    a[si] = ta;
+    b[si] = tb;
+  }
+}
+
 int main(int argc, char* argv[])
 {
   using namespace AsmJit;
@@ -118,6 +135,9 @@ int main(int argc, char* argv[])
 
     gen(a[i], b[i], r);
   }
+
+  printf("Shuffling\n");
+  shuffle(a, b, count);
 
   printf("Verify and Free\n");
   for (i = 0; i < count; i += 2)
