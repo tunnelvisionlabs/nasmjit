@@ -123,7 +123,10 @@ int main(int argc, char* argv[])
   for (i = 0; i < count; i += 2)
   {
     verify(a[i], b[i]);
-    memmgr->free(a[i]);
+    if (!memmgr->free(a[i]))
+    {
+      printf("Failed to free %p\n", b[i]);
+    }
     free(b[i]);
   }
 
@@ -143,7 +146,10 @@ int main(int argc, char* argv[])
   for (i = 0; i < count; i++)
   {
     verify(a[i], b[i]);
-    memmgr->free(a[i]);
+    if (!memmgr->free(a[i]))
+    {
+      printf("Failed to free %p\n", b[i]);
+    }
     free(b[i]);
   }
 

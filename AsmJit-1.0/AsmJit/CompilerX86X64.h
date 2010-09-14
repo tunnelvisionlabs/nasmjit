@@ -1432,7 +1432,7 @@ struct ASMJIT_API CompilerContext
   // [Backward Code]
   // --------------------------------------------------------------------------
 
-  void addBackwardCode(Emittable* from) ASMJIT_NOTHROW;
+  void addBackwardCode(EJmp* from) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Forward Jump]
@@ -1544,7 +1544,7 @@ struct ASMJIT_API CompilerContext
 
   //! @brief List of emittables which need to be translated. These emittables
   //! are filled by @c addBackwardCode().
-  PodVector<Emittable*> _backCode;
+  PodVector<EJmp*> _backCode;
   //! @brief Backward code position (starts at 0).
   sysuint_t _backPos;
 };

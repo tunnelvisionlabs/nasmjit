@@ -5957,10 +5957,9 @@ void CompilerContext::translateOperands(Operand* operands, uint32_t count) ASMJI
   }
 }
 
-void CompilerContext::addBackwardCode(Emittable* from) ASMJIT_NOTHROW
+void CompilerContext::addBackwardCode(EJmp* from) ASMJIT_NOTHROW
 {
-  Emittable* mark = from->getNext();
-  _backCode.append(mark);
+  _backCode.append(from);
 }
 
 void CompilerContext::addForwardJump(EJmp* inst) ASMJIT_NOTHROW
@@ -7231,7 +7230,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       sysuint_t len = cc._backCode.getLength();
       while (cc._backPos < len)
       {
-        cur = cc._backCode[cc._backPos++];
+        cur = cc._backCode[cc._backPos++]->getNext();
         if (!cur->isTranslated()) 
         {
           break;
