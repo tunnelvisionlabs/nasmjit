@@ -183,7 +183,7 @@ struct ASMJIT_HIDDEN M_Node
   M_Node* next;            // Next node in list.
 
   // --------------------------------------------------------------------------
-  // [Node LLRB tree, KEY is mem].
+  // [Node LLRB (left leaning red-black) tree, KEY is mem].
   // --------------------------------------------------------------------------
 
   M_Node* nlLeft;          // Left node.
@@ -200,7 +200,7 @@ struct ASMJIT_HIDDEN M_Node
   // [Chunk Data]
   // --------------------------------------------------------------------------
 
-  sysuint_t size;          // How many bytes contains this node.
+  sysuint_t size;          // How many bytes contain this node.
   sysuint_t blocks;        // How many blocks are here.
   sysuint_t density;       // Minimum count of allocated bytes in this node (also alignment).
   sysuint_t used;          // How many bytes are used in this node.
@@ -224,7 +224,8 @@ struct ASMJIT_HIDDEN M_Node
   // [Methods]
   // --------------------------------------------------------------------------
 
-  inline sysuint_t getRemain() const ASMJIT_NOTHROW { return size - used; }
+  // Get available space.
+  inline sysuint_t getAvailable() const ASMJIT_NOTHROW { return size - used; }
 };
 
 // ============================================================================
@@ -239,8 +240,8 @@ struct ASMJIT_HIDDEN M_PermanentNode
   sysuint_t used;          // Count of bytes used.
   M_PermanentNode* prev;   // Pointer to prev chunk or NULL.
 
-  // Return available space.
-  inline sysuint_t available() const ASMJIT_NOTHROW { return size - used; }
+  // Get available space.
+  inline sysuint_t getAvailable() const ASMJIT_NOTHROW { return size - used; }
 };
 
 // ============================================================================
@@ -436,7 +437,7 @@ void* MemoryManagerPrivate::allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW
   M_PermanentNode* node = _permanent;
 
   // Try to find space in allocated chunks.
-  while (node && alignedSize > node->available()) node = node->prev;
+  while (node && alignedSize > node->getAvailable()) node = node->prev;
 
   // Or allocate new node.
   if (!node)
@@ -491,11 +492,11 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
   while (node)
   {
     // Skip this node?
-    if ((node->getRemain() < vsize) || 
+    if ((node->getAvailable() < vsize) || 
         (node->largestBlock < vsize && node->largestBlock != 0))
     {
       M_Node* next = node->next;
-      if (node->getRemain() < minVSize && node == _optimal && next) _optimal = next;
+      if (node->getAvailable() < minVSize && node == _optimal && next) _optimal = next;
       node = next;
       continue;
     }
