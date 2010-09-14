@@ -142,7 +142,7 @@ struct ASMJIT_API VirtualMemoryManager : public MemoryManager
   //! VirtualMemoryManager destructor. After destruction all internal 
   //! structures are freed, only the process virtual memory remains.
   //! 
-  //! @note Memory allocated with MEMORY_ALLOC_PERNAMENT is always kept.
+  //! @note Memory allocated with MEMORY_ALLOC_PERMANENT is always kept.
   //!
   //! @sa @c getKeepVirtualMemory().
   void setKeepVirtualMemory(bool keepVirtualMemory) ASMJIT_NOTHROW;

@@ -101,7 +101,7 @@ static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTH
   sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
   sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
 
-  // How many bytes process in first group.
+  // How many bytes process in the first group.
   sysuint_t c = BITS_PER_ENTITY - j;
 
   // Offset.
@@ -137,7 +137,7 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
   sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
   sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
 
-  // How many bytes process in first group.
+  // How many bytes process in the first group.
   sysuint_t c = BITS_PER_ENTITY - j;
 
   // Offset.
@@ -228,16 +228,16 @@ struct ASMJIT_HIDDEN M_Node
 };
 
 // ============================================================================
-// [AsmJit::M_Pernament]
+// [AsmJit::M_Permanent]
 // ============================================================================
 
-//! @brief Pernament node.
-struct ASMJIT_HIDDEN M_PernamentNode
+//! @brief Permanent node.
+struct ASMJIT_HIDDEN M_PermanentNode
 {
   uint8_t* mem;            // Base pointer (virtual memory address).
   sysuint_t size;          // Count of bytes allocated.
   sysuint_t used;          // Count of bytes used.
-  M_PernamentNode* prev;   // Pointer to prev chunk or NULL.
+  M_PermanentNode* prev;   // Pointer to prev chunk or NULL.
 
   // Return available space.
   inline sysuint_t available() const ASMJIT_NOTHROW { return size - used; }
@@ -266,7 +266,7 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
 
   M_Node* createNode(sysuint_t size, sysuint_t density) ASMJIT_NOTHROW;
 
-  void* allocPernament(sysuint_t vsize) ASMJIT_NOTHROW;
+  void* allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW;
   void* allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW;
 
   bool free(void* address) ASMJIT_NOTHROW;
@@ -334,8 +334,8 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   // Memory nodes tree.
   M_Node* _root;
 
-  // Pernament memory.
-  M_PernamentNode* _pernament;
+  // Permanent memory.
+  M_PermanentNode* _permanent;
 
   // Whether to keep virtual memory after destroy.
   bool _keepVirtualMemory;
@@ -359,7 +359,7 @@ MemoryManagerPrivate::MemoryManagerPrivate(HANDLE hProcess) ASMJIT_NOTHROW :
   _first(NULL),
   _last(NULL),
   _optimal(NULL),
-  _pernament(NULL),
+  _permanent(NULL),
   _keepVirtualMemory(false)
 {
 }
@@ -369,11 +369,11 @@ MemoryManagerPrivate::~MemoryManagerPrivate() ASMJIT_NOTHROW
   // Freeable memory cleanup - Also frees the virtual memory if configured to.
   freeAll(_keepVirtualMemory);
 
-  // Pernament memory cleanup - Never frees the virtual memory.
-  M_PernamentNode* node = _pernament;
+  // Permanent memory cleanup - Never frees the virtual memory.
+  M_PermanentNode* node = _permanent;
   while (node)
   {
-    M_PernamentNode* prev = node->prev;
+    M_PermanentNode* prev = node->prev;
     ASMJIT_FREE(node);
     node = prev;
   }
@@ -422,18 +422,18 @@ M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJ
   return node;
 }
 
-void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
+void* MemoryManagerPrivate::allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW
 {
-  static const sysuint_t pernamentAlignment = 32;
-  static const sysuint_t pernamentNodeSize  = 32768;
+  static const sysuint_t permanentAlignment = 32;
+  static const sysuint_t permanentNodeSize  = 32768;
 
-  sysuint_t over = vsize % pernamentAlignment;
-  if (over) over = pernamentAlignment - over;
+  sysuint_t over = vsize % permanentAlignment;
+  if (over) over = permanentAlignment - over;
   sysuint_t alignedSize = vsize + over;
 
   AutoLock locked(_lock);
 
-  M_PernamentNode* node = _pernament;
+  M_PermanentNode* node = _permanent;
 
   // Try to find space in allocated chunks.
   while (node && alignedSize > node->available()) node = node->prev;
@@ -441,10 +441,10 @@ void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
   // Or allocate new node.
   if (!node)
   {
-    sysuint_t nodeSize = pernamentNodeSize;
+    sysuint_t nodeSize = permanentNodeSize;
     if (vsize > nodeSize) nodeSize = vsize;
 
-    node = (M_PernamentNode*)ASMJIT_MALLOC(sizeof(M_PernamentNode));
+    node = (M_PermanentNode*)ASMJIT_MALLOC(sizeof(M_PermanentNode));
     // Out of memory.
     if (node == NULL) return NULL;
 
@@ -457,8 +457,8 @@ void* MemoryManagerPrivate::allocPernament(sysuint_t vsize) ASMJIT_NOTHROW
     }
 
     node->used = 0;
-    node->prev = _pernament;
-    _pernament = node;
+    node->prev = _permanent;
+    _permanent = node;
   }
 
   // Finally, copy function code to our space we reserved for.
@@ -748,6 +748,9 @@ inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n) ASMJIT_NOTHROW
 
 inline void MemoryManagerPrivate::nlFlipColor(M_Node* n) ASMJIT_NOTHROW
 {
+  ASMJIT_ASSERT(n->nlLeft != NULL);
+  ASMJIT_ASSERT(n->nlRight != NULL);
+
   n->nlColor = !n->nlColor;
   n->nlLeft->nlColor = !(n->nlLeft->nlColor);
   n->nlRight->nlColor = !(n->nlRight->nlColor);
@@ -977,8 +980,8 @@ void* VirtualMemoryManager::alloc(sysuint_t size, uint32_t type) ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
 
-  if (type == MEMORY_ALLOC_PERNAMENT) 
-    return d->allocPernament(size);
+  if (type == MEMORY_ALLOC_PERMANENT) 
+    return d->allocPermanent(size);
   else
     return d->allocFreeable(size);
 }
