@@ -70,8 +70,9 @@ void Emittable::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _offset = cc._currentOffset;
 }
 
-void Emittable::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* Emittable::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
+  return translated();
 }
 
 void Emittable::emit(Assembler& a) ASMJIT_NOTHROW
@@ -126,6 +127,26 @@ EDummy::~EDummy() ASMJIT_NOTHROW
 int EDummy::getMaxSize() const ASMJIT_NOTHROW
 {
   return 0;
+}
+
+// ============================================================================
+// [AsmJit::EFunctionEnd]
+// ============================================================================
+
+EFunctionEnd::EFunctionEnd(Compiler* c) ASMJIT_NOTHROW :
+  EDummy(c)
+{
+  _type = EMITTABLE_FUNCTION_END;
+}
+
+EFunctionEnd::~EFunctionEnd() ASMJIT_NOTHROW
+{
+}
+
+Emittable* EFunctionEnd::translate(CompilerContext& cc) ASMJIT_NOTHROW
+{
+  _translated = true;
+  return NULL;
 }
 
 // ============================================================================
@@ -225,7 +246,7 @@ void ETarget::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _offset = cc._currentOffset++;
 }
 
-void ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   if (cc._unrecheable)
   {
@@ -239,6 +260,8 @@ void ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
   {
     _state = cc._saveState();
   }
+
+  return translated();
 }
 
 void ETarget::emit(Assembler& a) ASMJIT_NOTHROW

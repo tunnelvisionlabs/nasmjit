@@ -1,6 +1,6 @@
 // AsmJit - Complete JIT Assembler for C++ Language.
 
-// Copyright (c) 2008-2009, Petr Kobalicek <kobalicek.petr@gmail.com>
+// Copyright (c) 2008-2010, Petr Kobalicek <kobalicek.petr@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -23,7 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// This file is used as rep-test.
+// This file is used to test crossed jumps.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,48 +33,42 @@
 #include <AsmJit/Logger.h>
 #include <AsmJit/MemoryManager.h>
 
-// This is type of function we will generate
-typedef void (*MemCopy)(void* a, void* b, sysuint_t size);
+using namespace AsmJit;
+typedef void (*VoidFn)();
 
-int main(int argc, char* argv[])
+int main(int, char**)
 {
-  using namespace AsmJit;
-
-  // ==========================================================================
-  // Create compiler.
   Compiler c;
 
-  // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+
+  Label L_A = c.newLabel();
+  Label L_B = c.newLabel();
+  Label L_C = c.newLabel();
+
+  c.jmp(L_B);
+  c.bind(L_A);
+  c.jmp(L_C);
+  c.bind(L_B);
+  c.jmp(L_A);
+  c.bind(L_C);
+  c.ret();
+  c.endFunction();
+
+  VoidFn fn = function_cast<VoidFn>(c.make());
+
+  // Ensure that everything is ok.
+  if (!fn)
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, void*, void*, sysuint_t>());
-    c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
-
-    GPVar dst(c.argGP(0));
-    GPVar src(c.argGP(1));
-    GPVar cnt(c.argGP(2));
-
-    c.rep_movsb(dst, src, cnt);
-    c.endFunction();
+    printf("Error making jit function (%u).\n", c.getError());
+    return 1;
   }
-  // ==========================================================================
 
-  // ==========================================================================
-  {
-    MemCopy copy = function_cast<MemCopy>(c.make());
-
-    char src[20] = "Hello AsmJit";
-    char dst[20];
-    
-    copy(dst, src, strlen(src) + 1);
-    printf("src=%s\n", src);
-    printf("dst=%s\n", dst);
-
-    MemoryManager::getGlobal()->free((void*)copy);
-  }
-  // ==========================================================================
+  // Free the JIT function if it's not needed anymore.
+  MemoryManager::getGlobal()->free((void*)fn);
 
   return 0;
 }

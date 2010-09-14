@@ -238,6 +238,8 @@ enum EMITTABLE_TYPE
   EMITTABLE_PROLOG,
   //! @brief Emittable is function epilog (@ref EEpilog).
   EMITTABLE_EPILOG,
+  //! @brief Emittable is end of function (@ref EFunctionEnd).
+  EMITTABLE_FUNCTION_END,
   //! @brief Emittable is target (bound label).
   EMITTABLE_TARGET,
   //! @brief Emittable is jump table (@ref EJmp).

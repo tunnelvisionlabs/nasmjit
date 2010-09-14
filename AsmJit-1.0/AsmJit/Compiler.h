@@ -63,6 +63,7 @@ struct EComment;
 struct EData;
 struct EEpilog;
 struct EFunction;
+struct EFunctionEnd;
 struct EInstruction;
 struct EJmp;
 struct EProlog;
@@ -456,7 +457,7 @@ struct ASMJIT_API Emittable
   //! @brief Step 1. Extract emittable variables, update statistics, ...
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   //! @brief Step 2. Translate instruction, alloc variables, ...
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
   //! @brief Step 3. Emit to @c Assembler.
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
   //! @brief Step 4. Last post step (verify, add data, etc).
@@ -470,11 +471,21 @@ struct ASMJIT_API Emittable
   virtual int getMaxSize() const ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Compiler]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get associated compiler instance.
+  inline Compiler* getCompiler() const ASMJIT_NOTHROW { return _compiler; }
+
+  // --------------------------------------------------------------------------
   // [Type / Offset]
   // --------------------------------------------------------------------------
 
   //! @brief Get emittable type, see @c EMITTABLE_TYPE.
   inline uint32_t getType() const ASMJIT_NOTHROW { return _type; }
+
+  //! @brief Get whether the emittable was translated.
+  inline uint8_t isTranslated() const ASMJIT_NOTHROW { return _translated; }
 
   //! @brief Get emittable offset in the stream
   //!
@@ -482,13 +493,6 @@ struct ASMJIT_API Emittable
   //! and this value is then used by register allocator. Emittable offset is
   //! set by compiler by the register allocator, don't use it in your code.
   inline uint32_t getOffset() const ASMJIT_NOTHROW { return _offset; }
-
-  // --------------------------------------------------------------------------
-  // [Compiler]
-  // --------------------------------------------------------------------------
-
-  //! @brief Get associated compiler instance.
-  inline Compiler* getCompiler() const ASMJIT_NOTHROW { return _compiler; }
 
   // --------------------------------------------------------------------------
   // [Emittables List]
@@ -513,10 +517,17 @@ struct ASMJIT_API Emittable
   void setCommentF(const char* fmt, ...) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
-  // [Members]
+  // [Protected]
   // --------------------------------------------------------------------------
 
 protected:
+  //! @brief Mark emittable as translated and return next.
+  inline Emittable* translated() ASMJIT_NOTHROW { _translated = true; return getNext(); }
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
+
   //! @brief Compiler where this emittable is connected to.
   Compiler* _compiler;
 
@@ -573,6 +584,36 @@ struct ASMJIT_API EDummy : public Emittable
 
 private:
   ASMJIT_DISABLE_COPY(EDummy)
+};
+
+// ============================================================================
+// [AsmJit::EFunctionEnd]
+// ============================================================================
+
+//! @brief End of function.
+//!
+//! This emittable does nothing and it's only used by @ref Compiler to mark 
+//! specific location in the code. The @c EFunctionEnd is similar to @c EDummy,
+//! except that it overrides @c translate() to return @c NULL.
+struct ASMJIT_API EFunctionEnd : public EDummy
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create a new @ref EDummy instance.
+  EFunctionEnd(Compiler* c) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref EDummy instance.
+  virtual ~EFunctionEnd() ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Emit and Helpers]
+  // --------------------------------------------------------------------------
+
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
+
+private:
+  ASMJIT_DISABLE_COPY(EFunctionEnd)
 };
 
 // ============================================================================
@@ -743,7 +784,7 @@ struct ASMJIT_API ETarget : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------

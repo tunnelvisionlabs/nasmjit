@@ -579,7 +579,7 @@ struct ASMJIT_API EVariableHint : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Utilities]
@@ -630,7 +630,7 @@ struct ASMJIT_API EInstruction : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
@@ -756,7 +756,7 @@ struct ASMJIT_API EJmp : public EInstruction
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   void _doJump(CompilerContext& cc) ASMJIT_NOTHROW;
@@ -849,7 +849,7 @@ struct ASMJIT_API EFunction : public Emittable
   inline EProlog* getProlog() const ASMJIT_NOTHROW { return _prolog; }
   inline EEpilog* getEpilog() const ASMJIT_NOTHROW { return _epilog; }
 
-  inline EDummy* getEnd() const ASMJIT_NOTHROW { return _end; }
+  inline EFunctionEnd* getEnd() const ASMJIT_NOTHROW { return _end; }
 
   //! @brief Create variables from FunctionPrototype declaration. This is just
   //! parsing what FunctionPrototype generated for current function calling
@@ -1003,7 +1003,7 @@ protected:
   //! @brief Function epilog emittable.
   EEpilog* _epilog;
   //! @brief Dummy emittable, signalizes end of function.
-  EDummy* _end;
+  EFunctionEnd* _end;
 
 private:
   friend struct CompilerContext;
@@ -1033,7 +1033,7 @@ struct ASMJIT_API EProlog : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -1076,7 +1076,7 @@ struct ASMJIT_API EEpilog : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -1119,7 +1119,7 @@ struct ASMJIT_API ECall : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Utilities]
@@ -1256,7 +1256,7 @@ struct ASMJIT_API ERet : public Emittable
   // --------------------------------------------------------------------------
 
   virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
-  virtual void translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  virtual Emittable* translate(CompilerContext& cc) ASMJIT_NOTHROW;
   virtual void emit(Assembler& a) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
@@ -1347,7 +1347,7 @@ struct ASMJIT_API CompilerContext
   void unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW;
 
   //! @brief Helper method that is called for each variable per emittable.
-  inline void unuseVarOnEndOdScope(Emittable* e, VarData* v) { if (v->lastEmittable == e) unuseVar(v, VARIABLE_STATE_UNUSED); }
+  inline void unuseVarOnEndOfScope(Emittable* e, VarData* v) { if (v->lastEmittable == e) unuseVar(v, VARIABLE_STATE_UNUSED); }
 
   //! @brief Allocate variable (GP).
   void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
@@ -1429,6 +1429,12 @@ struct ASMJIT_API CompilerContext
   inline void setExtraBlock(Emittable* e) ASMJIT_NOTHROW { _extraBlock = e; }
 
   // --------------------------------------------------------------------------
+  // [Backward Code]
+  // --------------------------------------------------------------------------
+
+  void addBackwardCode(Emittable* from) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Forward Jump]
   // --------------------------------------------------------------------------
 
@@ -1480,8 +1486,7 @@ struct ASMJIT_API CompilerContext
   //! @brief Forward jumps (single linked list).
   ForwardJumpData* _forwardJumps;
 
-  //! @brief Current offset, used in prepare() stage and each emittable can
-  //! increment it.
+  //! @brief Current offset, used in prepare() stage. Each emittable should increment it.
   uint32_t _currentOffset;
 
   //! @brief Whether current code is unrecheable.
@@ -1536,6 +1541,12 @@ struct ASMJIT_API CompilerContext
 
   //! @brief Whether to emit comments.
   bool _emitComments;
+
+  //! @brief List of emittables which need to be translated. These emittables
+  //! are filled by @c addBackwardCode().
+  PodVector<Emittable*> _backCode;
+  //! @brief Backward code position (starts at 0).
+  sysuint_t _backPos;
 };
 
 // ============================================================================

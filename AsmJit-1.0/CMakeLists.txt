@@ -79,23 +79,23 @@ EndIf(ASMJIT_BUILD_LIBRARY)
 # Build AsmJit test executables?
 If(ASMJIT_BUILD_TEST)
   Set(ASMJIT_TEST_FILES
-    testalign
-    testbasics
-    testcpu
+    testcorecpu
+    testcoresize
     testdummy
+    testfuncalign
     testfunccall1
     testfuncmanyargs
     testfuncmemcpy
     testfuncret
     testjit
+    testjump1
     testmemorymanager
     testopcode
-    testrep
-    testsetcc
     testspecial1
     testspecial2
+    testspecial3
+    testspecial4
     testtrampoline
-    testvar1
     testvar2
     testvar3
     testvar4

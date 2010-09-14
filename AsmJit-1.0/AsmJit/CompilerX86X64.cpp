@@ -664,7 +664,7 @@ void EVariableHint::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   }
 }
 
-void EVariableHint::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* EVariableHint::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   switch (_hintId)
   {
@@ -687,10 +687,13 @@ void EVariableHint::translate(CompilerContext& cc) ASMJIT_NOTHROW
     case VARIABLE_HINT_UNUSE:
 unuse:
       cc.unuseVar(_vdata, VARIABLE_STATE_UNUSED);
-      return;
+      goto end;
   }
 
-  cc.unuseVarOnEndOdScope(this, _vdata);
+  cc.unuseVarOnEndOfScope(this, _vdata);
+
+end:
+  return translated();
 }
 
 int EVariableHint::getMaxSize() const ASMJIT_NOTHROW
@@ -1608,7 +1611,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 #undef __GET_VARIABLE
 }
 
-void EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   uint32_t i;
   uint32_t variablesCount = _variablesCount;
@@ -1661,8 +1664,10 @@ void EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < variablesCount; i++)
   {
-    cc.unuseVarOnEndOdScope(this, _variables[i].vdata);
+    cc.unuseVarOnEndOfScope(this, _variables[i].vdata);
   }
+
+  return translated();
 }
 
 void EInstruction::emit(Assembler& a) ASMJIT_NOTHROW
@@ -1902,30 +1907,38 @@ void EJmp::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   cc._currentOffset++;
 }
 
-void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
-  EInstruction::translate(cc);
-  _state = cc._saveState();
+  // Translate using EInstruction.
+  Emittable* ret = EInstruction::translate(cc);
 
-  if (_jumpTarget->getOffset() > getOffset())
+  // We jump with emittable if its INST_JUMP (not based on condiiton) and it
+  // points into yet unknown location.
+  if (_code == INST_JMP && !_jumpTarget->isTranslated())
   {
-    // State is not known, so we need to call _doJump() later. Compiler will
-    // do it for us.
-    cc.addForwardJump(this);
-    _jumpTarget->_state = _state;
+    cc.addBackwardCode(this);
+    ret = _jumpTarget;
   }
   else
   {
-    _doJump(cc);
+    _state = cc._saveState();
+    if (_jumpTarget->isTranslated())
+    {
+      _doJump(cc);
+    }
+    else
+    {
+      // State is not known, so we need to call _doJump() later. Compiler will
+      // do it for us.
+      cc.addForwardJump(this);
+      _jumpTarget->_state = _state;
+    }
+
+    // Mark next code as unrecheable, cleared by a next label (ETarget).
+    if (_code == INST_JMP) cc._unrecheable = 1;
   }
 
-  // Mark next code as unrecheable, cleared by a next label (ETarget).
-  if (_code == INST_JMP)
-  {
-    cc._unrecheable = 1;
-  }
-
-  // Need to traverse all active variables and unuse them if their scope ends
+  // Need to traverse over all active variables and unuse them if their scope ends
   // here. 
   if (cc._active)
   {
@@ -1933,10 +1946,12 @@ void EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarData* var = first;
 
     do {
-      cc.unuseVarOnEndOdScope(this, var);
+      cc.unuseVarOnEndOfScope(this, var);
       var = var->nextActive;
     } while (var != first);
   }
+
+  return ret;
 }
 
 void EJmp::emit(Assembler& a) ASMJIT_NOTHROW
@@ -2081,7 +2096,7 @@ EFunction::EFunction(Compiler* c) ASMJIT_NOTHROW : Emittable(c, EMITTABLE_FUNCTI
 
   _prolog = Compiler_newObject<EProlog>(c, this);
   _epilog = Compiler_newObject<EEpilog>(c, this);
-  _end = Compiler_newObject<EDummy>(c);
+  _end = Compiler_newObject<EFunctionEnd>(c);
 }
 
 EFunction::~EFunction() ASMJIT_NOTHROW
@@ -2733,9 +2748,10 @@ void EProlog::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _function->_prepareVariables(this);
 }
 
-void EProlog::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* EProlog::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   _function->_allocVariables(cc);
+  return translated();
 }
 
 // ============================================================================
@@ -2757,8 +2773,9 @@ void EEpilog::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _offset = cc._currentOffset++;
 }
 
-void EEpilog::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* EEpilog::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
+  return translated();
 }
 
 // ============================================================================
@@ -3115,7 +3132,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 #undef __GET_VARIABLE
 }
 
-void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   uint32_t i;
   uint32_t preserved, mask;
@@ -3139,7 +3156,7 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   // These variables are used by the instruction and we set current offset
   // to their work offsets -> getSpillCandidate never return the variable
-  // used this instruction.
+  // used by this instruction.
   for (i = 0; i < variablesCount; i++)
   {
     _variables[i].vdata->workOffset = offset;
@@ -3582,8 +3599,10 @@ void ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   for (i = 0; i < variablesCount; i++)
   {
     VarData* v = _variables[i].vdata;
-    cc.unuseVarOnEndOdScope(this, _variables[i].vdata);
+    cc.unuseVarOnEndOfScope(this, _variables[i].vdata);
   }
+
+  return translated();
 }
 
 int ECall::getMaxSize() const ASMJIT_NOTHROW
@@ -4316,7 +4335,7 @@ void ERet::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   cc._currentOffset++;
 }
 
-void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
+Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
   Compiler* compiler = cc.getCompiler();
 
@@ -4616,9 +4635,11 @@ void ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
     if (_ret[i].isVar())
     {
       VarData* vdata = compiler->_getVarData(_ret[i].getId());
-      cc.unuseVarOnEndOdScope(this, vdata);
+      cc.unuseVarOnEndOfScope(this, vdata);
     }
   }
+
+  return translated();
 }
 
 void ERet::emit(Assembler& a) ASMJIT_NOTHROW
@@ -4667,7 +4688,7 @@ bool ERet::shouldEmitJumpToEpilog() const ASMJIT_NOTHROW
       case EMITTABLE_PROLOG:
         break;
 
-      // Stop station, we can't next.
+      // Stop station, we can't go forward from here.
       case EMITTABLE_EPILOG:
         return false;
     }
@@ -4740,6 +4761,9 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
   _mem16BlocksCount = 0;
 
   _memBytesTotal = 0;
+
+  _backCode.clear();
+  _backPos = 0;
 }
 
 // ============================================================================
@@ -5931,6 +5955,12 @@ void CompilerContext::translateOperands(Operand* operands, uint32_t count) ASMJI
       }
     }
   }
+}
+
+void CompilerContext::addBackwardCode(Emittable* from) ASMJIT_NOTHROW
+{
+  Emittable* mark = from->getNext();
+  _backCode.append(mark);
 }
 
 void CompilerContext::addForwardJump(EJmp* inst) ASMJIT_NOTHROW
@@ -7154,11 +7184,12 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
 
     // ------------------------------------------------------------------------
     // Step 1:
-    // - Assign offset to each emittable.
+    // - Assign/increment offset to each emittable.
     // - Extract variables from instructions.
-    // - Prepare variables for register allocator, doing:
-    //   - Update read/write statistics.
-    //   - Find scope (first/last emittable) where variable is used.
+    // - Prepare variables for register allocator:
+    //   - Update read(r) / write(w) / overwrite(x) statistics.
+    //   - Update register / memory usage statistics.
+    //   - Find scope (first / last emittable) of variables.
     for (cur = start; ; cur = cur->getNext())
     {
       cur->prepare(cc);
@@ -7171,20 +7202,40 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     _cc = &cc;
 
     // ------------------------------------------------------------------------
-    // Step 2.a:
-    // - Alloc registers.
+    // Step 2:
     // - Translate special instructions (imul, cmpxchg8b, ...).
-    Emittable* prev = NULL;
-    for (cur = start; ; prev = cur, cur = cur->getNext())
-    {
-      _current = prev;
-      cc._currentOffset = cur->_offset;
-      cur->translate(cc);
-      if (cur == stop) break;
-    }
-
-    // Step 2.b:
+    // - Alloc registers.
     // - Translate forward jumps.
+    // - Alloc memory operands (variables related).
+    // - Emit function prolog.
+    // - Emit function epilog.
+    // - Patch memory operands (variables related).
+    // - Dump function prototype and variable statistics (if enabled).
+
+    // Translate special instructions and run alloc registers.
+    cur = start;
+
+    do {
+      do {
+        // Assign current offset for each emittable back to CompilerContext.
+        cc._currentOffset = cur->_offset;
+        // Assign previous emittable to compiler so each variable spill/alloc will
+        // be emitted before.
+        _current = cur->getPrev();
+
+        cur = cur->translate(cc);
+      } while (cur);
+
+      sysuint_t len = cc._backCode.getLength();
+      while (cc._backPos < len)
+      {
+        cur = cc._backCode[cc._backPos++];
+        if (!cur->isTranslated()) break;
+        cur = NULL;
+      }
+    } while (cur);
+
+    // Translate forward jumps.
     {
       ForwardJumpData* j = cc._forwardJumps;
       while (j)
@@ -7196,14 +7247,10 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       }
     }
 
-    // Step 2.c:
-    // - Alloc memory operands (variables related).
+    // Alloc memory operands (variables related).
     cc._allocMemoryOperands();
 
-    // Step 2.d:
-    // - Emit function prolog.
-    // - Emit function epilog.
-    // - Patch memory operands (variables related).
+    // Emit function prolog / epilog.
     cc._function->_preparePrologEpilog(cc);
 
     _current = cc._function->_prolog;
@@ -7212,11 +7259,11 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     _current = cc._function->_epilog;
     cc._function->_emitEpilog(cc);
 
+    // Patch memory operands (variables related).
     _current = _last;
     cc._patchMemoryOperands(start, stop);
 
-    // Step 2.e:
-    // - Dump function prototype and variable statistics if logging is enabled.
+    // Dump function prototype and variable statistics (if enabled).
     if (_logger && _logger->isUsed())
     {
       cc._function->_dumpFunction(cc);
@@ -7224,7 +7271,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
-    // Hack, need to register labels that was created by the Step 2.
+    // Hack: need to register labels that was created by the Step 2.
     if (a._labelData.getLength() < _targetData.getLength())
     {
       a.registerLabels(_targetData.getLength() - a._labelData.getLength());
