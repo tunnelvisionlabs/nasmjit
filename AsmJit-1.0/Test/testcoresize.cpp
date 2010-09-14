@@ -35,8 +35,8 @@ using namespace AsmJit;
 
 int main(int argc, char* argv[])
 {
-  printf("AsmJit basics test\n");
-  printf("==================\n");
+  printf("AsmJit size test\n");
+  printf("================\n");
   printf("\n");
 
   printf("Variable sizes:\n");
@@ -58,7 +58,29 @@ int main(int argc, char* argv[])
   printf("  AsmJit::Operand::VarData  : %u\n", (uint32_t)sizeof(Operand::VarData));
   printf("\n");
 
-  
+  printf("  AsmJit::Assembler         : %u\n", (uint32_t)sizeof(Assembler));
+  printf("  AsmJit::Compiler          : %u\n", (uint32_t)sizeof(Compiler));
+  printf("  AsmJit::FunctionDefinition: %u\n", (uint32_t)sizeof(FunctionDefinition));
+  printf("\n");
+
+  printf("  AsmJit::Emittable         : %u\n", (uint32_t)sizeof(Emittable));
+  printf("  AsmJit::EAlign            : %u\n", (uint32_t)sizeof(EAlign));
+  printf("  AsmJit::ECall             : %u\n", (uint32_t)sizeof(ECall));
+  printf("  AsmJit::EComment          : %u\n", (uint32_t)sizeof(EComment));
+  printf("  AsmJit::EData             : %u\n", (uint32_t)sizeof(EData));
+  printf("  AsmJit::EEpilog           : %u\n", (uint32_t)sizeof(EEpilog));
+  printf("  AsmJit::EFunction         : %u\n", (uint32_t)sizeof(EFunction));
+  printf("  AsmJit::EFunctionEnd      : %u\n", (uint32_t)sizeof(EFunctionEnd));
+  printf("  AsmJit::EInstruction      : %u\n", (uint32_t)sizeof(EInstruction));
+  printf("  AsmJit::EJmp              : %u\n", (uint32_t)sizeof(EJmp));
+  printf("  AsmJit::EProlog           : %u\n", (uint32_t)sizeof(EProlog));
+  printf("  AsmJit::ERet              : %u\n", (uint32_t)sizeof(ERet));
+  printf("\n");
+
+  printf("  AsmJit::VarData           : %u\n", (uint32_t)sizeof(VarData));
+  printf("  AsmJit::VarAllocRecord    : %u\n", (uint32_t)sizeof(VarAllocRecord));
+  printf("  AsmJit::StateData         : %u\n", (uint32_t)sizeof(StateData));
+  printf("\n");
 
   return 0;
 }

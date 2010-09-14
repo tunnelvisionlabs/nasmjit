@@ -50,11 +50,15 @@ int main(int, char**)
   Label L_C = c.newLabel();
 
   c.jmp(L_B);
+
   c.bind(L_A);
   c.jmp(L_C);
+
   c.bind(L_B);
   c.jmp(L_A);
+
   c.bind(L_C);
+
   c.ret();
   c.endFunction();
 
