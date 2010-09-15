@@ -130,7 +130,7 @@ void* VirtualMemory::allocProcessMemory(HANDLE hProcess, sysuint_t length, sysui
   // VirtualAlloc rounds allocated size to page size automatically.
   sysuint_t msize = roundUp(length, vm().pageSize);
 
-  // Windows XP SP2 / Vista allows Data Excution Prevention (DEP).
+  // Windows XP SP2 / Vista allow Data Excution Prevention (DEP).
   WORD protect = canExecute ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
   LPVOID mbase = VirtualAllocEx(hProcess, NULL, msize, MEM_COMMIT | MEM_RESERVE, protect);
   if (mbase == NULL) return NULL;

@@ -59,6 +59,14 @@ static void die()
   exit(1);
 }
 
+static void stats()
+{
+  AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
+
+  printf("-- Used: %d\n", (int)memmgr->getUsedBytes());
+  printf("-- Allocated: %d\n", (int)memmgr->getAllocatedBytes());
+}
+
 static void shuffle(void **a, void **b, sysuint_t count)
 {
   for (sysuint_t i = 0; i < count; ++i)
@@ -78,14 +86,12 @@ static void shuffle(void **a, void **b, sysuint_t count)
 
 int main(int argc, char* argv[])
 {
-  using namespace AsmJit;
-
-  MemoryManager* memmgr = MemoryManager::getGlobal();
+  AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
 
   sysuint_t i;
   sysuint_t count = 200000;
 
-  printf("[Memory manager test - %d allocations]\n\n", (int)count);
+  printf("Memory alloc/free test - %d allocations\n\n", (int)count);
 
   void** a = (void**)malloc(sizeof(void*) * count);
   void** b = (void**)malloc(sizeof(void*) * count);
@@ -104,10 +110,10 @@ int main(int argc, char* argv[])
     memset(a[i], 0, r);
   }
 
-  printf(" done\n");
-  printf("-- Used: %d\n", (int)memmgr->getUsedBytes());
-  printf("-- Allocated: %d\n", (int)memmgr->getAllocatedBytes());
+  printf("done\n");
+  stats();
 
+  printf("\n");
   printf("Freeing virtual memory...");
 
   for (i = 0; i < count; i++)
@@ -119,12 +125,12 @@ int main(int argc, char* argv[])
   }
 
   printf("done\n");
-  printf("-- Used: %d\n", (int)memmgr->getUsedBytes());
-  printf("-- Allocated: %d\n", (int)memmgr->getAllocatedBytes());
+  stats();
 
-  printf("\n[Verified allocation test - %d allocations]\n\n", (int)count);
+  printf("\n");
+  printf("Verified alloc/free test - %d allocations\n\n", (int)count);
 
-  printf("Alloc\n");
+  printf("Alloc...");
   for (i = 0; i < count; i++)
   {
     int r = (rand() % 1000) + 4;
@@ -135,11 +141,16 @@ int main(int argc, char* argv[])
 
     gen(a[i], b[i], r);
   }
+  printf("done\n");
+  stats();
 
-  printf("Shuffling\n");
+  printf("\n");
+  printf("Shuffling...");
   shuffle(a, b, count);
+  printf("done\n");
 
-  printf("Verify and Free\n");
+  printf("\n");
+  printf("Verify and free...");
   for (i = 0; i < count; i += 2)
   {
     verify(a[i], b[i]);
@@ -149,8 +160,11 @@ int main(int argc, char* argv[])
     }
     free(b[i]);
   }
+  printf("done\n");
+  stats();
 
-  printf("Alloc\n");
+  printf("\n");
+  printf("Alloc...");
   for (i = 0; i < count; i += 2)
   {
     int r = (rand() % 1000) + 4;
@@ -161,8 +175,11 @@ int main(int argc, char* argv[])
 
     gen(a[i], b[i], r);
   }
+  printf("done\n");
+  stats();
 
-  printf("Verify and Free\n");
+  printf("\n");
+  printf("Verify and free...");
   for (i = 0; i < count; i++)
   {
     verify(a[i], b[i]);
@@ -172,11 +189,14 @@ int main(int argc, char* argv[])
     }
     free(b[i]);
   }
+  printf("done\n");
+  stats();
 
+  printf("\n");
   if (problems)
-    printf("\nStatus: Failure: %d problems found\n", problems);
+    printf("Status: Failure: %d problems found\n", problems);
   else
-    printf("\nStatus: Success\n");
+    printf("Status: Success\n");
 
   free(a);
   free(b);
