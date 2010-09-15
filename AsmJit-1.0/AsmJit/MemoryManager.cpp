@@ -94,6 +94,7 @@ static void _ClearBit(sysuint_t* buf, sysuint_t index) ASMJIT_NOTHROW
   *buf &= ~((sysuint_t)1 << j);
 }
 
+#if 0
 static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
 {
   if (len == 0) return;
@@ -103,18 +104,20 @@ static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTH
 
   // How many bytes process in the first group.
   sysuint_t c = BITS_PER_ENTITY - j;
+  if (c > len) c = len;
 
   // Offset.
   buf += i;
 
-  if (c > len) 
+  if (c >= len) 
   {
     *buf |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - len)) << j;
     return;
   }
   else
   {
-    *buf++ |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j;
+    //*buf++ |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j;
+    *buf++ |= ((sysuint_t)-1) << j;
     len -= c;
   }
 
@@ -150,9 +153,69 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
   }
   else
   {
-    *buf++ &= ~((((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j);
+    //*buf++ &= ~((((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j);
+    *buf++ &= ~(((sysuint_t)-1) << j);
     len -= c;
   }
+
+  while (len >= BITS_PER_ENTITY)
+  {
+    *buf++ = 0;
+    len -= BITS_PER_ENTITY;
+  }
+
+  if (len)
+  {
+    *buf &= ((sysuint_t)-1) << len;
+  }
+}
+#endif
+
+static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
+{
+  if (len == 0) return;
+
+  sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
+  sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
+
+  // How many bytes process in the first group.
+  sysuint_t c = BITS_PER_ENTITY - j;
+  if (c > len) c = len;
+
+  // Offset.
+  buf += i;
+
+  *buf++ |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j;
+  len -= c;
+
+  while (len >= BITS_PER_ENTITY)
+  {
+    *buf++ = (sysuint_t)-1;
+    len -= BITS_PER_ENTITY;
+  }
+
+  if (len)
+  {
+    *buf |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - len));
+  }
+}
+
+static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
+{
+  if (len == 0) return;
+
+  sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
+  sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
+
+  // How many bytes process in the first group.
+  sysuint_t c = BITS_PER_ENTITY - j;
+  if (c > len) c = len;
+
+  // Offset.
+  buf += i;
+
+  *buf++ &= ~((((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j);
+  len -= c;
 
   while (len >= BITS_PER_ENTITY)
   {
@@ -185,6 +248,9 @@ struct ASMJIT_HIDDEN M_Node
   // --------------------------------------------------------------------------
   // [Node LLRB (left leaning red-black) tree, KEY is mem].
   // --------------------------------------------------------------------------
+
+  // Implementation is based on:
+  //   Left-leaning Red-Black Trees by Robert Sedgewick.
 
   M_Node* nlLeft;          // Left node.
   M_Node* nlRight;         // Right node.
@@ -295,6 +361,8 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   // --------------------------------------------------------------------------
   // [NodeList LLRB-Tree]
   // --------------------------------------------------------------------------
+
+  static bool nlCheckTree(M_Node* node) ASMJIT_NOTHROW;
 
   static inline bool nlIsRed(M_Node* n) ASMJIT_NOTHROW;
   static M_Node* nlRotateLeft(M_Node* n) ASMJIT_NOTHROW;
@@ -590,9 +658,11 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
   }
 
 found:
+  //printf("ALLOCATED BLOCK %p (%d) \n", node->mem + i * node->density, need * node->density);
+
   // Update bits.
   _SetBits(node->baUsed, i, need);
-  _SetBits(node->baCont, i, need-1);
+  _SetBits(node->baCont, i, need - 1);
 
   // Update statistics.
   {
@@ -615,7 +685,8 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
   AutoLock locked(_lock);
 
   M_Node* node = nlFindPtr((uint8_t*)address);
-  if (node == NULL) return false;
+  if (node == NULL)
+    return false;
 
   sysuint_t offset = (sysuint_t)((uint8_t*)address - (uint8_t*)node->mem);
   sysuint_t bitpos = M_DIV(offset, node->density);
@@ -657,7 +728,7 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     }
   }
 
-  // If we freed block is fully allocated node, need to update optimal
+  // If the freed block is fully allocated node, need to update optimal
   // pointer in memory manager.
   if (node->used == node->size)
   {
@@ -668,6 +739,8 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
       if (cur == node) { _optimal = node; break; }
     } while (cur);
   }
+
+  //printf("FREEING %p (%d)\n", address, cont * node->density);
 
   // Statistics.
   cont *= node->density;
@@ -722,6 +795,21 @@ void MemoryManagerPrivate::freeAll(bool keepVirtualMemory) ASMJIT_NOTHROW
 // [AsmJit::MemoryManagerPrivate - NodeList LLRB-Tree]
 // ============================================================================
 
+bool MemoryManagerPrivate::nlCheckTree(M_Node* node) ASMJIT_NOTHROW
+{
+  bool result = true;
+  if (node == NULL) return result;
+
+  if (node->nlLeft && node->mem < node->nlLeft->mem)
+    return false;
+  if (node->nlRight && node->mem > node->nlRight->mem)
+    return false;
+
+  if (node->nlLeft) result &= nlCheckTree(node->nlLeft);
+  if (node->nlRight) result &= nlCheckTree(node->nlRight);
+  return result;
+}
+
 inline bool MemoryManagerPrivate::nlIsRed(M_Node* n) ASMJIT_NOTHROW
 {
   return n && n->nlColor == M_Node::NODE_RED;
@@ -730,20 +818,26 @@ inline bool MemoryManagerPrivate::nlIsRed(M_Node* n) ASMJIT_NOTHROW
 inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n) ASMJIT_NOTHROW
 {
   M_Node* x = n->nlRight;
+
   n->nlRight = x->nlLeft;
   x->nlLeft = n;
-  x->nlColor = x->nlLeft->nlColor;
-  x->nlLeft->nlColor = M_Node::NODE_RED;
+
+  x->nlColor = n->nlColor;
+  n->nlColor = M_Node::NODE_RED;
+
   return x;
 }
 
 inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n) ASMJIT_NOTHROW
 {
   M_Node* x = n->nlLeft;
+
   n->nlLeft = x->nlRight;
   x->nlRight = n;
-  x->nlColor = x->nlRight->nlColor;
-  x->nlRight->nlColor = M_Node::NODE_RED;
+
+  x->nlColor = n->nlColor;
+  n->nlColor = M_Node::NODE_RED;
+
   return x;
 }
 
@@ -795,13 +889,12 @@ inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h) ASMJIT_NOTHROW
 inline void MemoryManagerPrivate::nlInsertNode(M_Node* n) ASMJIT_NOTHROW
 {
   _root = nlInsertNode_(_root, n);
+  ASMJIT_ASSERT(nlCheckTree(_root));
 }
 
 M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 {
   if (h == NULL) return n;
-
-  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight)) nlFlipColor(h);
 
   if (n->mem < h->mem)
     h->nlLeft = nlInsertNode_(h->nlLeft, n);
@@ -810,6 +903,8 @@ M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 
   if (nlIsRed(h->nlRight) && !nlIsRed(h->nlLeft)) h = nlRotateLeft(h);
   if (nlIsRed(h->nlLeft) && nlIsRed(h->nlLeft->nlLeft)) h = nlRotateRight(h);
+
+  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight)) nlFlipColor(h);
 
   return h;
 }
@@ -820,6 +915,7 @@ void MemoryManagerPrivate::nlRemoveNode(M_Node* n) ASMJIT_NOTHROW
   if (_root) _root->nlColor = M_Node::NODE_BLACK;
 
   ASMJIT_ASSERT(nlFindPtr(n->mem) == NULL);
+  ASMJIT_ASSERT(nlCheckTree(_root));
 }
 
 static M_Node* findParent(M_Node* root, M_Node* n) ASMJIT_NOTHROW
@@ -885,7 +981,9 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
       h->nlColor = n->nlColor;
     }
     else
+    {
       h->nlRight = nlRemoveNode_(h->nlRight, n);
+    }
   }
 
   return nlFixUp(h);
@@ -903,12 +1001,9 @@ M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h) ASMJIT_NOTHROW
 M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
 {
   M_Node* cur = _root;
-  uint8_t* curMem;
-  uint8_t* curEnd;
-
   while (cur)
   {
-    curMem = cur->mem;
+    uint8_t* curMem = cur->mem;
     if (mem < curMem)
     {
       cur = cur->nlLeft;
@@ -916,17 +1011,16 @@ M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
     }
     else
     {
-      curEnd = curMem + cur->size;
+      uint8_t* curEnd = curMem + cur->size;
       if (mem >= curEnd)
       {
         cur = cur->nlRight;
         continue;
       }
-      return cur;
+      break;
     }
   }
-
-  return NULL;
+  return cur;
 }
 
 // ============================================================================

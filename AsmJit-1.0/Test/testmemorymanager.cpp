@@ -48,8 +48,8 @@ static void verify(void* a, void* b)
   int bi = *(int*)b;
   if (ai != bi || memcmp(a, b, ai) != 0)
   {
+    printf("Failed to verify %p\n", a);
     problems++;
-    printf("Problem found!\n");
   }
 }
 
@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
   void** b = (void**)malloc(sizeof(void*) * count);
   if (!a || !b) die();
 
-  srand(1);
+  srand(100);
   printf("Allocating virtual memory...");
 
   for (i = 0; i < count; i++)
@@ -121,6 +121,7 @@ int main(int argc, char* argv[])
     if (!memmgr->free(a[i]))
     {
       printf("Failed to free %p\n", b[i]);
+      problems++;
     }
   }
 
@@ -151,12 +152,13 @@ int main(int argc, char* argv[])
 
   printf("\n");
   printf("Verify and free...");
-  for (i = 0; i < count; i += 2)
+  for (i = 0; i < count/2; i++)
   {
     verify(a[i], b[i]);
     if (!memmgr->free(a[i]))
     {
       printf("Failed to free %p\n", b[i]);
+      problems++;
     }
     free(b[i]);
   }
@@ -165,7 +167,7 @@ int main(int argc, char* argv[])
 
   printf("\n");
   printf("Alloc...");
-  for (i = 0; i < count; i += 2)
+  for (i = 0; i < count/2; i++)
   {
     int r = (rand() % 1000) + 4;
 
@@ -186,6 +188,7 @@ int main(int argc, char* argv[])
     if (!memmgr->free(a[i]))
     {
       printf("Failed to free %p\n", b[i]);
+      problems++;
     }
     free(b[i]);
   }
