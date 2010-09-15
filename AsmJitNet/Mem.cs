@@ -46,23 +46,13 @@
             _displacement = IntPtr.Zero;
         }
 
-        public Mem(Label label, IntPtr displacement, int size = 0)
-            : base(size: size)
-        {
-            _type = MemoryType.Label;
-            _segmentPrefix = SegmentPrefix.None;
-
-            _base = (RegIndex)label.Id;
-            _index = RegIndex.Invalid;
-            _shift = 0;
-
-            _target = IntPtr.Zero;
-            _displacement = displacement;
-        }
-
         public Mem(GPReg @base, IntPtr displacement, int size = 0)
             : base(size: size)
         {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            Contract.EndContractBlock();
+
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -77,6 +67,10 @@
         public Mem(GPVar @base, IntPtr displacement, int size = 0)
             : base(size: size)
         {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            Contract.EndContractBlock();
+
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
@@ -91,6 +85,10 @@
         public Mem(GPReg @base, GPReg index, int shift, IntPtr displacement, int size = 0)
             : base(size: size)
         {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            if (index == null)
+                throw new ArgumentNullException("index");
             if (shift < 0 || shift > 3)
                 throw new ArgumentOutOfRangeException("shift");
             Contract.EndContractBlock();
@@ -99,7 +97,7 @@
             _segmentPrefix = SegmentPrefix.None;
 
             _base = @base.RegisterIndex;
-            _index = @index.RegisterIndex;
+            _index = index.RegisterIndex;
             _shift = (byte)shift;
 
             _target = IntPtr.Zero;
@@ -109,6 +107,10 @@
         public Mem(GPVar @base, GPVar index, int shift, IntPtr displacement, int size = 0)
             : base(size: size)
         {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            if (index == null)
+                throw new ArgumentNullException("index");
             if (shift < 0 || shift > 3)
                 throw new ArgumentOutOfRangeException("shift");
             Contract.EndContractBlock();
@@ -122,6 +124,53 @@
 
             _target = IntPtr.Zero;
             _displacement = displacement;
+        }
+
+        public Mem(Label label, IntPtr displacement, int size = 0)
+            : base(size: size)
+        {
+            if (label == null)
+                throw new ArgumentNullException("label");
+
+            _type = MemoryType.Label;
+            _segmentPrefix = SegmentPrefix.None;
+
+            _base = (RegIndex)label.Id;
+            _index = RegIndex.Invalid;
+            _shift = 0;
+
+            _target = IntPtr.Zero;
+            _displacement = displacement;
+        }
+
+        public Mem(Label @base, GPReg index, int shift, IntPtr displacement, int size = 0)
+            : this(@base, displacement, size)
+        {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            if (index == null)
+                throw new ArgumentNullException("index");
+            if (shift < 0 || shift > 3)
+                throw new ArgumentOutOfRangeException("shift");
+            Contract.EndContractBlock();
+
+            _index = index.RegisterIndex;
+            _shift = (byte)shift;
+        }
+
+        public Mem(Label @base, GPVar index, int shift, IntPtr displacement, int size = 0)
+            : this(@base, displacement, size)
+        {
+            if (@base == null)
+                throw new ArgumentNullException("base");
+            if (index == null)
+                throw new ArgumentNullException("index");
+            if (shift < 0 || shift > 3)
+                throw new ArgumentOutOfRangeException("shift");
+            Contract.EndContractBlock();
+
+            _index = (RegIndex)index.Id;
+            _shift = (byte)shift;
         }
 
         public override OperandType OperandType
@@ -138,11 +187,6 @@
             {
                 return _type;
             }
-
-            internal set
-            {
-                _type = value;
-            }
         }
 
         public SegmentPrefix SegmentPrefix
@@ -150,11 +194,6 @@
             get
             {
                 return _segmentPrefix;
-            }
-
-            internal set
-            {
-                _segmentPrefix = value;
             }
         }
 
@@ -213,11 +252,6 @@
             get
             {
                 return _shift;
-            }
-
-            internal set
-            {
-                _shift = checked((byte)value);
             }
         }
 
@@ -419,30 +453,20 @@
         {
             Contract.Requires(label != null);
             Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            Mem m = new Mem(label, (IntPtr)displacement, (int)size)
-            {
-                Index = index.RegisterIndex,
-                Shift = shift
-            };
-
-            return m;
+            return new Mem(label, index, shift, (IntPtr)displacement, (int)size);
         }
 
         private static Mem MemPtrBuild(Label label, GPVar index, int shift, int displacement, Size size)
         {
             Contract.Requires(label != null);
             Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            Mem m = new Mem(label, (IntPtr)displacement, (int)size)
-            {
-                Index = (RegIndex)index.Id,
-                Shift = shift
-            };
-
-            return m;
+            return new Mem(label, index, shift, (IntPtr)displacement, (int)size);
         }
 
         private static Mem MemPtrBuild(GPReg @base, int displacement, Size size)
@@ -479,6 +503,68 @@
             Contract.Ensures(Contract.Result<Mem>() != null);
 
             return new Mem(@base, index, shift, (IntPtr)displacement, (int)size);
+        }
+
+        public override string ToString()
+        {
+            if (!HasBase)
+            {
+                return string.Format("[spilled var {0}]", Id & OperandIdValueMask);
+            }
+
+            string address = _base.ToString();
+
+            if (HasIndex)
+            {
+                address += " + ";
+
+                if (HasShift)
+                    address += (int)Math.Pow(2, Shift) + "*";
+
+                address += Index.ToString();
+            }
+
+            if (Displacement != IntPtr.Zero)
+                address += " + " + Displacement.ToString();
+
+            string size = string.Empty;
+
+            switch (Size)
+            {
+            case 1:
+                size = "byte ptr";
+                break;
+
+            case 2:
+                size = "word ptr";
+                break;
+
+            case 4:
+                size = "dword ptr";
+                break;
+
+            case 8:
+                size = "qword ptr";
+                break;
+
+            case 10:
+                size = "tword ptr";
+                break;
+
+            case 16:
+                size = "dqword ptr";
+                break;
+
+            case 0:
+                size = "ptr";
+                break;
+
+            default:
+                size = "unknown ptr";
+                break;
+            }
+
+            return string.Format("{0} [{1}]", size, address);
         }
     }
 }

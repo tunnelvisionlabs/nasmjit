@@ -1,7 +1,36 @@
 ﻿namespace AsmJitNet
 {
+    using System;
+    using System.Diagnostics.Contracts;
+
     public sealed class VarData
     {
+        private readonly Function _scope;
+        private readonly int _id;
+        private readonly VariableType _type;
+        private readonly int _size;
+        private readonly string _name;
+
+        public VarData(Function scope, int id, VariableType type, int size, string name)
+        {
+            if (scope == null)
+                throw new ArgumentNullException("scope");
+            Contract.EndContractBlock();
+
+            _scope = scope;
+            _id = id;
+            _type = type;
+            _size = size;
+            _name = name;
+
+            HomeRegisterIndex = RegIndex.Invalid;
+            PreferredRegisterIndex = RegIndex.Invalid;
+            RegisterIndex = RegIndex.Invalid;
+            WorkOffset = Operand.InvalidValue;
+            Priority = 10;
+            State = VariableState.Unused;
+        }
+
         public bool IsRegArgument
         {
             get;
@@ -34,32 +63,44 @@
 
         public Function Scope
         {
-            get;
-            set;
+            get
+            {
+                Contract.Ensures(Contract.Result<Function>() != null);
+
+                return _scope;
+            }
         }
 
         public string Name
         {
-            get;
-            set;
+            get
+            {
+                return _name;
+            }
         }
 
         public int Size
         {
-            get;
-            set;
+            get
+            {
+                return _size;
+            }
         }
 
         public VariableType Type
         {
-            get;
-            set;
+            get
+            {
+                return _type;
+            }
         }
 
         public int Id
         {
-            get;
-            set;
+            get
+            {
+                return _id;
+            }
         }
 
         public RegIndex PreferredRegisterIndex
@@ -186,6 +227,12 @@
         {
             get;
             set;
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_scope != null);
         }
     }
 }
