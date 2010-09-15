@@ -32,6 +32,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<int>() >= 0);
+
                 return _cur;
             }
         }
@@ -159,6 +161,10 @@
 
         public void EmitData(byte[] data)
         {
+            if (data == null)
+                throw new ArgumentNullException("data");
+            Contract.EndContractBlock();
+
             int max = Capacity - Offset;
             if (max < data.Length)
                 Realloc(Offset + data.Length);

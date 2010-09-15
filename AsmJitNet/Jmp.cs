@@ -18,6 +18,7 @@
                 throw new ArgumentException("The specified instruction code is not a valid jump.");
             Contract.Requires(compiler != null);
             Contract.Requires(operands != null);
+            Contract.EndContractBlock();
 
             _jumpTarget = compiler.GetTarget(Operands[0].Id);
             _jumpTarget.JumpsCount++;
