@@ -75,7 +75,11 @@
 
             unsafe
             {
+                _threadData = (ThreadData*)Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ThreadData)));
+                Marshal.StructureToPtr(new ThreadData(), (IntPtr)_threadData, false);
+
                 Compiler c = testMethod.GetCompiler();
+                c.Logger = new FileLogger(Console.Error);
 
                 // arguments
                 GPVar argThrowException = c.ArgGP(0);
@@ -120,6 +124,8 @@
                 GenerateLoadCurrentException(c, varErrorCode, varThreadData);
                 GenerateLoadExceptionMessage(c, varErrorCode, varErrorCode);
                 GenerateWriteLine(c, varErrorCode);
+                c.Xor(varErrorCode, varErrorCode);
+                c.Mov(Mem.sysint_ptr(varThreadData, ThreadData_ExceptionDataOffset), varErrorCode);
                 c.MarkLabel(leaveCatch);
                 c.Jmp(enterLeaveHandler);
 
@@ -145,7 +151,7 @@
 
                 c.Comment("Handler for 'leave' instructions");
                 c.MarkLabel(enterLeaveHandler);
-                c.Jmp(enterEndFinallyHandler);
+                c.Jmp(enterFinally);
                 //c.Mov(Mem.sysint_ptr(varThreadData, ThreadData_ExceptionDataOffset), 0);
                 //throw new NotImplementedException("TODO: check for a finally block");
                 //c.Jmp(leaveTarget);
@@ -183,9 +189,9 @@
 
         private static void GenerateNewException(Compiler c, GPVar dst, Imm code)
         {
-            Call call = c.Call(AllocateExceptionFunction, CallingConvention.Default, typeof(Func<int, IntPtr>));
             GPVar var = c.NewGP();
             c.Mov(var, code);
+            Call call = c.Call(AllocateExceptionFunction, CallingConvention.Default, typeof(Func<int, IntPtr>));
             call.SetArgument(0, var);
             call.SetReturn(dst);
         }
