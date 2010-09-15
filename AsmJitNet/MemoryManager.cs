@@ -24,7 +24,7 @@
             get;
         }
 
-        public abstract IntPtr Alloc(long CodeSize, MemoryAllocType allocType);
+        public abstract IntPtr Alloc(long CodeSize, MemoryAllocType allocType = MemoryAllocType.Freeable);
 
         public abstract bool Free(IntPtr address);
 
