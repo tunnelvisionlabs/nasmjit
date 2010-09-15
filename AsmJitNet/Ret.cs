@@ -107,7 +107,7 @@
             cc.CurrentOffset++;
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             Compiler compiler = cc.Compiler;
             Operand[] ret = { _first, _second };
@@ -445,6 +445,8 @@
                     cc.UnuseVarOnEndOfScope(this, vdata);
                 }
             }
+
+            return Next;
         }
 
         private Mem BaseVarMem(BaseVar var, int ptrSize)
@@ -493,7 +495,7 @@
                 case EmittableType.Prolog:
                     break;
 
-                // Stop station, we can't next.
+                // Stop station, we can't go forward from here.
                 case EmittableType.Epilog:
                     return false;
                 }

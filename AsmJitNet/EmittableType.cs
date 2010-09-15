@@ -67,6 +67,11 @@
         Epilog,
 
         /// <summary>
+        /// Emittable is end of function
+        /// </summary>
+        FunctionEnd,
+
+        /// <summary>
         /// Emittable is target (bound label)
         /// </summary>
         Target,

@@ -392,77 +392,63 @@
 
                 // ------------------------------------------------------------------------
                 // Step 1:
-                // - Assign offset to each emittable.
+                // - Assign/increment offset to each emittable.
                 // - Extract variables from instructions.
-                // - Prepare variables for register allocator, doing:
-                //   - Update read/write statistics.
-                //   - Find scope (first/last emittable) where variable is used.
+                // - Prepare variables for register allocator:
+                //   - Update read(r) / write(w) / overwrite(x) statistics.
+                //   - Update register / memory usage statistics.
+                //   - Find scope (first / last emittable) of variables.
                 for (Emittable cur = start; ; cur = cur.Next)
                 {
                     cur.Prepare(cc);
                     if (cur == stop)
                         break;
                 }
-
-                /*
-                // Step 1.b:
-                // - Add "VARIABLE_HINT_UNUSE" hint to the end of each variable scope.
-                if (cc.Active != null)
-                {
-                    VarData vdata = cc.Active;
-
-                    do
-                    {
-                        if (vdata.LastEmittable != null)
-                        {
-                            VariableHint e;
-                            e = new VariableHint(this, vdata, VariableHintKind.Unuse, Emittable.InvalidValue);
-                            e.Offset = vdata.LastEmittable.Offset;
-                            AddEmittableAfter(e, vdata.LastEmittable);
-                        }
-
-                        vdata = vdata.NextActive;
-                    } while (vdata != cc.Active);
-                }
-                */
                 // ------------------------------------------------------------------------
 
                 // We set compiler context also to Compiler so new emitted instructions
                 // can call prepare() to itself.
                 _cc = cc;
 
-                // ------------------------------------------------------------------------
-                // Step 2.a:
-                // - Alloc registers.
-                // - Translate special instructions (imul, cmpxchg8b, ...).
-                Stack<Tuple<Emittable, Emittable>> translateTargets = new Stack<Tuple<Emittable, Emittable>>();
-                translateTargets.Push(Tuple.Create(default(Emittable), start));
-                while (translateTargets.Count > 0)
+                /* ------------------------------------------------------------------------
+                 * Step 2:
+                 * - Translate special instructions (imul, cmpxchg8b, ...).
+                 * - Alloc registers.
+                 * - Translate forward jumps.
+                 * - Alloc memory operands (variables related).
+                 * - Emit function prolog.
+                 * - Emit function epilog.
+                 * - Patch memory operands (variables related).
+                 * - Dump function prototype and variable statistics (if enabled).
+                 */
+
+                // translate special instructions and run alloc registers
                 {
-                    var top = translateTargets.Pop();
-                    Emittable prev = top.Item1;
-                    Emittable cur = top.Item2;
+                    Emittable cur = start;
+                    do
+                    {
+                        do
+                        {
+                            // assign current offset for each emittable back to CompilerContext.
+                            cc.CurrentOffset = cur.Offset;
+                            // assign previous emittable to compiler so each variable spill/alloc will be emitted before
+                            _current = cur.Previous;
+                            cur = cur.Translate(cc);
+                        } while (cur != null);
 
-                    if (cur.Translated)
-                        continue;
+                        int len = cc.BackwardsCode.Count;
+                        while (cc.BackwardsPosition < len)
+                        {
+                            cur = cc.BackwardsCode[cc.BackwardsPosition++];
+                            if (!cur.IsTranslated)
+                                break;
 
-                    _current = prev;
-                    cc.CurrentOffset = cur.Offset;
-                    cur.Translate(cc);
-
-                    if (cur == stop)
-                        continue;
-
-                    Jmp jmp = cur as Jmp;
-                    if (jmp != null)
-                        translateTargets.Push(Tuple.Create((Emittable)jmp, (Emittable)jmp.JumpTarget));
-
-                    if (jmp == null || jmp.Code != InstructionCode.Jmp)
-                        translateTargets.Push(Tuple.Create(cur, cur.Next));
+                            cur = null;
+                        }
+                    } while (cur != null);
                 }
 
-                // Step 2.b:
-                // - Translate forward jumps.
+                // Translate forward jumps.
                 {
                     ForwardJumpData j = cc.ForwardJumps;
                     while (j != null)
@@ -474,14 +460,10 @@
                     }
                 }
 
-                // Step 2.c:
-                // - Alloc memory operands (variables related).
+                // Alloc memory operands (variables related).
                 cc.AllocMemoryOperands();
 
-                // Step 2.d:
-                // - Emit function prolog.
-                // - Emit function epilog.
-                // - Patch memory operands (variables related).
+                // Emit function prolog / epilog
                 cc.Function.PreparePrologEpilog(cc);
 
                 _current = cc.Function.Prolog;
@@ -490,11 +472,11 @@
                 _current = cc.Function.Epilog;
                 cc.Function.EmitEpilog(cc);
 
+                // Patch memory operands (variables related)
                 _current = _last;
                 cc.PatchMemoryOperands(start, stop);
 
-                // Step 2.e:
-                // - Dump function prototype and variable statistics if logging is enabled.
+                // Dump function prototype and variable statistics (if enabled).
                 if (_logger != null && _logger.IsUsed)
                 {
                     cc.Function.DumpFunction(cc);
@@ -502,7 +484,7 @@
                 // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------
-                // Hack, need to register labels that was created by the Step 2.
+                // Hack: need to register labels that was created by the Step 2.
                 if (a.LabelData.Count < _targetData.Count)
                 {
                     a.RegisterLabels(_targetData.Count - a.LabelData.Count);

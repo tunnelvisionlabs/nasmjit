@@ -492,7 +492,7 @@
 
         private const int FUNC_MAX_ARGS = 32;
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             int i;
             int preserved;
@@ -517,7 +517,7 @@
 
             // These variables are used by the instruction and we set current offset
             // to their work offsets -> getSpillCandidate never return the variable
-            // used this instruction.
+            // used by this instruction.
             for (i = 0; i < variablesCount; i++)
             {
                 _variables[i].vdata.WorkOffset = offset;
@@ -1017,6 +1017,8 @@
                 VarData v = _variables[i].vdata;
                 cc.UnuseVarOnEndOfScope(this, _variables[i].vdata);
             }
+
+            return Next;
         }
 
         private void MoveAllocatedVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)

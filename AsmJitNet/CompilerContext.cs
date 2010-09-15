@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using Debug = System.Diagnostics.Debug;
     using System.Diagnostics.Contracts;
+    using System.Collections.ObjectModel;
 
     public class CompilerContext
     {
@@ -15,6 +16,10 @@
         private readonly StateData _state = new StateData(0);
         private VarData _active;
         private ForwardJumpData _forwardJumps;
+
+        /// <summary>
+        /// Current offset, used in Prepare() stage. Each Emittable should increment it.
+        /// </summary>
         private int _currentOffset;
 
         /// <summary>
@@ -65,28 +70,43 @@
         /// Used memory blocks (for variables, here is each created memory block that can be also in _memFree list)
         /// </summary>
         private VarMemBlock _memUsed;
+
         /// <summary>
         /// Free memory blocks (freed, prepared for another allocation)
         /// </summary>
         private VarMemBlock _memFree;
+
         /// <summary>
         /// Count of 4-bytes memory blocks used by the function
         /// </summary>
         private int _mem4BlocksCount;
+
         /// <summary>
         /// Count of 8-bytes memory blocks used by the function
         /// </summary>
         private int _mem8BlocksCount;
+
         /// <summary>
         /// Count of 16-bytes memory blocks used by the function
         /// </summary>
         private int _mem16BlocksCount;
+
         /// <summary>
         /// Count of total bytes of stack memory used by the function
         /// </summary>
         private int _memBytesTotal;
 
         private bool _emitComments;
+
+        /// <summary>
+        /// List of emittables which need to be translated. These emittables are filled with AddBackwardCode().
+        /// </summary>
+        private readonly List<Emittable> _backCode = new List<Emittable>();
+
+        /// <summary>
+        /// Backward code position
+        /// </summary>
+        private int _backPos;
 
         internal CompilerContext(Compiler compiler)
         {
@@ -312,6 +332,27 @@
             }
         }
 
+        internal ReadOnlyCollection<Emittable> BackwardsCode
+        {
+            get
+            {
+                return _backCode.AsReadOnly();
+            }
+        }
+
+        internal int BackwardsPosition
+        {
+            get
+            {
+                return _backPos;
+            }
+
+            set
+            {
+                _backPos = value;
+            }
+        }
+
         internal void Clear()
         {
             //_zone.clear();
@@ -353,6 +394,9 @@
             _mem16BlocksCount = 0;
 
             _memBytesTotal = 0;
+
+            _backCode.Clear();
+            _backPos = 0;
         }
 
         internal void AllocMemoryOperands()
@@ -1629,6 +1673,16 @@
                     }
                 }
             }
+        }
+
+        public void AddBackwardCode(Emittable from)
+        {
+            if (from == null)
+                throw new ArgumentNullException("from");
+            Contract.EndContractBlock();
+
+            Emittable mark = from.Next;
+            _backCode.Add(mark);
         }
 
         public void AddForwardJump(Jmp instruction)

@@ -94,30 +94,39 @@
             cc.CurrentOffset++;
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
-            base.TranslateImpl(cc);
-            _state = cc.SaveState();
+            // translate using Instruction
+            Emittable ret = base.TranslateImpl(cc);
 
-            if (!_jumpTarget.Translated)
+            // we jump with emittable if it's InstructionCode.JMP (unconditional) and points to yet unknown location.
+            if (Code == InstructionCode.Jmp && !JumpTarget.IsTranslated)
             {
-                // State is not known, so we need to call _doJump() later. Compiler will
-                // do it for us.
-                cc.AddForwardJump(this);
-                _jumpTarget.State = _state;
+                cc.AddBackwardCode(this);
+                ret = JumpTarget;
             }
             else
             {
-                DoJump(cc);
+                _state = cc.SaveState();
+                if (JumpTarget.IsTranslated)
+                {
+                    DoJump(cc);
+                }
+                else
+                {
+                    // state is not known, so we need to call DoJump() later. Compiler will do it for us.
+                    cc.AddForwardJump(this);
+                    JumpTarget.State = _state;
+                }
+
+                // Mark next code as unrecheable, cleared by a next label (ETarget).
+                if (Code == InstructionCode.Jmp)
+                {
+                    cc.Unreachable = true;
+                }
             }
 
-            // Mark next code as unrecheable, cleared by a next label (ETarget).
-            if (Code == InstructionCode.Jmp)
-            {
-                cc.Unreachable = true;
-            }
-
-            // Need to traverse all active variables and unuse them if their scope ends here
+            // Need to traverse over all active variables and unuse them if their scope ends here
             if (cc.Active != null)
             {
                 VarData first = cc.Active;
@@ -129,6 +138,8 @@
                     var = var.NextActive;
                 } while (var != first);
             }
+
+            return ret;
         }
 
         protected override void EmitImpl(Assembler a)

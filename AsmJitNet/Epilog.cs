@@ -31,8 +31,9 @@
             Offset = cc.CurrentOffset++;
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
+            return Next;
         }
     }
 }

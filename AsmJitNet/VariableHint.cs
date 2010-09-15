@@ -87,7 +87,7 @@
             }
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             switch (_hintKind)
             {
@@ -115,10 +115,13 @@
 
             case VariableHintKind.Unuse:
                 cc.UnuseVar(_varData, VariableState.Unused);
-                return;
+                goto end;
             }
 
             cc.UnuseVarOnEndOfScope(this, _varData);
+
+        end:
+            return Next;
         }
     }
 }

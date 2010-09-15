@@ -54,7 +54,7 @@
         private readonly Label _exitLabel;
         private readonly Prolog _prolog;
         private readonly Epilog _epilog;
-        private readonly Dummy _end;
+        private readonly FunctionEnd _end;
 
         private Function(Compiler compiler)
             : base(compiler)
@@ -66,7 +66,7 @@
 
             _prolog = new Prolog(compiler, this);
             _epilog = new Epilog(compiler, this);
-            _end = new Dummy(compiler);
+            _end = new FunctionEnd(compiler);
         }
 
         public Function(Compiler compiler, CallingConvention callingConvention, Type delegateType)
@@ -146,11 +146,11 @@
             }
         }
 
-        public Dummy End
+        public FunctionEnd End
         {
             get
             {
-                Contract.Ensures(Contract.Result<Dummy>() != null);
+                Contract.Ensures(Contract.Result<FunctionEnd>() != null);
 
                 return _end;
             }

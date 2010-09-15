@@ -32,9 +32,10 @@
             _function.PrepareVariables(this);
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             _function.AllocVariables(cc);
+            return Next;
         }
     }
 }

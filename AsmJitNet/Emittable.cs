@@ -105,7 +105,7 @@
             }
         }
 
-        public bool Translated
+        public bool IsTranslated
         {
             get
             {
@@ -126,12 +126,13 @@
             PrepareImpl(cc);
         }
 
-        public void Translate(CompilerContext cc)
+        public Emittable Translate(CompilerContext cc)
         {
             Contract.Requires(cc != null);
 
-            TranslateImpl(cc);
+            Emittable next = TranslateImpl(cc);
             _translated = true;
+            return next;
         }
 
         public void Emit(Assembler a)
@@ -155,9 +156,10 @@
             _offset = cc.CurrentOffset;
         }
 
-        protected virtual void TranslateImpl(CompilerContext cc)
+        protected virtual Emittable TranslateImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
+            return Next;
         }
 
         protected virtual void EmitImpl(Assembler a)

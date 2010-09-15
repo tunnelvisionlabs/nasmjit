@@ -1,6 +1,6 @@
 ﻿namespace AsmJitNet
 {
-    public sealed class Dummy : Emittable
+    public class Dummy : Emittable
     {
         public Dummy(Compiler compiler)
             : base(compiler)

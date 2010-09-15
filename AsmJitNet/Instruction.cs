@@ -1033,7 +1033,7 @@
             cc.CurrentOffset++;
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             int i;
             int variablesCount = (_variables != null) ? _variables.Length : 0;
@@ -1089,6 +1089,8 @@
             {
                 cc.UnuseVarOnEndOfScope(this, _variables[i].VarData);
             }
+
+            return Next;
         }
 
         protected override void EmitImpl(Assembler a)

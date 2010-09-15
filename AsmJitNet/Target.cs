@@ -89,7 +89,7 @@
             Offset = cc.CurrentOffset++;
         }
 
-        protected override void TranslateImpl(CompilerContext cc)
+        protected override Emittable TranslateImpl(CompilerContext cc)
         {
             if (cc.Unreachable)
             {
@@ -105,6 +105,8 @@
             {
                 _state = cc.SaveState();
             }
+
+            return Next;
         }
 
         protected override void EmitImpl(Assembler a)
