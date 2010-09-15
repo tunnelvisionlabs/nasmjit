@@ -116,6 +116,12 @@
 
         public bool SetReturn(Operand first, Operand second)
         {
+            first = first ?? Operand.None;
+            second = second ?? Operand.None;
+
+            if (!(first.IsNone || first.IsVarMem) || !(second.IsNone || second.IsVarMem))
+                throw new ArgumentException("The return value storage location must be a variable or memory location.");
+
             _ret[0] = first;
             _ret[1] = second;
             return true;
@@ -243,6 +249,11 @@
                         variablesCount++;
                     }
                 }
+                else
+                {
+                    if (o != _target)
+                        throw new NotImplementedException();
+                }
             }
 
             _variables = new VarCallRecord[variablesCount];
@@ -281,8 +292,7 @@
                     }
 
                     var = _variables[varIndex];
-                    if (var == null)
-                        throw new CompilerException();
+                    Debug.Assert(var != null);
                 };
 
             for (i = 0; i < operandsCount; i++)
@@ -452,6 +462,11 @@
                         __GET_VARIABLE(vdata);
                         var.Flags |= VarCallFlags.CALL_OPERAND;
                     }
+                }
+                else
+                {
+                    if (o != _target)
+                        throw new NotImplementedException();
                 }
             }
 
@@ -681,8 +696,40 @@
                 }
                 else if (operand.IsImm)
                 {
-                    // TODO.
-                    throw new NotImplementedException();
+                    Mem dst;
+
+                    switch (argType._variableType)
+                    {
+                    case VariableType.GPD:
+                        dst = Mem.dword_ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
+                        break;
+
+                    case VariableType.GPQ:
+                        dst = Mem.qword_ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
+                        break;
+
+                    case VariableType.X87:
+                    case VariableType.X87_1D:
+                    case VariableType.X87_1F:
+                        throw new NotImplementedException();
+
+                    case VariableType.MM:
+                        dst = Mem.mmword_ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
+                        break;
+
+                    case VariableType.XMM:
+                    case VariableType.XMM_1D:
+                    case VariableType.XMM_1F:
+                    case VariableType.XMM_2D:
+                    case VariableType.XMM_4F:
+                        dst = Mem.xmmword_ptr(Register.nsp, -IntPtr.Size + argType._stackOffset);
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                    }
+
+                    compiler.Mov(dst, (Imm)operand);
                 }
             }
 
@@ -974,6 +1021,10 @@
 
         private void MoveAllocatedVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)
         {
+            Contract.Requires(cc != null);
+            Contract.Requires(vdata != null);
+            Contract.Requires(argType != null);
+
             if (argType._registerIndex != RegIndex.Invalid)
                 throw new ArgumentException();
             if (vdata.RegisterIndex == RegIndex.Invalid)
@@ -1094,6 +1145,8 @@
 
         private RegIndex FindTemporaryXmmRegister(CompilerContext cc)
         {
+            Contract.Requires(cc != null);
+
             int i;
             int mask;
 
@@ -1120,6 +1173,10 @@
 
         private void MoveSpilledVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType, RegIndex temporaryGpReg, RegIndex temporaryXmmReg)
         {
+            Contract.Requires(cc != null);
+            Contract.Requires(vdata != null);
+            Contract.Requires(argType != null);
+
             if (argType._registerIndex != RegIndex.Invalid)
                 throw new ArgumentException();
             if (vdata.RegisterIndex != RegIndex.Invalid)
@@ -1265,6 +1322,9 @@
 
         private VarData GetOverlappingVariable(CompilerContext cc, FunctionPrototype.Argument argType)
         {
+            Contract.Requires(cc != null);
+            Contract.Requires(argType != null);
+
             if (argType._variableType == VariableType.Invalid)
                 throw new ArgumentException();
 
@@ -1283,13 +1343,18 @@
             case VariableType.XMM_4F:
             case VariableType.XMM_2D:
                 return cc.State.XMM[(int)argType._registerIndex];
-            }
 
-            return null;
+            default:
+                throw new CompilerException();
+            }
         }
 
         private void MoveSrcVariableToRegister(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)
         {
+            Contract.Requires(cc != null);
+            Contract.Requires(vdata != null);
+            Contract.Requires(argType != null);
+
             RegIndex dst = argType._registerIndex;
             RegIndex src = vdata.RegisterIndex;
 
@@ -1303,11 +1368,14 @@
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
+                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), Register.gpd(src));
+                        return;
+
                     case VariableType.GPQ:
-                        if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                        if (!Util.IsX64)
                             throw new NotSupportedException();
 
-                        compiler.Emit(InstructionCode.Mov, Register.gpd(dst), Register.gpd(src));
+                        compiler.Emit(InstructionCode.Mov, Register.gpq(dst), Register.gpq(src));
                         return;
 
                     case VariableType.MM:
@@ -1436,12 +1504,16 @@
                     switch (vdata.Type)
                     {
                     case VariableType.GPD:
-                    case VariableType.GPQ:
-                        if (vdata.Type == VariableType.GPQ && !Util.IsX64)
-                            throw new NotSupportedException();
-
                         compiler.Emit(InstructionCode.Mov, Register.gpd(dst), mem);
                         return;
+
+                    case VariableType.GPQ:
+                        if (!Util.IsX64)
+                            throw new NotSupportedException();
+
+                        compiler.Emit(InstructionCode.Mov, Register.gpq(dst), mem);
+                        return;
+
                     case VariableType.MM:
                         compiler.Emit(InstructionCode.Movd, Register.gpd(dst), mem);
                         return;
