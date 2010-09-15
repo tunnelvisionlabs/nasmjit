@@ -923,24 +923,30 @@
 
         public void EmitInstruction(InstructionCode code, Operand operand0)
         {
-            Contract.Requires(operand0 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
 
             EmitInstructionImpl(code, operand0, null, null);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
 
             EmitInstructionImpl(code, operand0, operand1, null);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
 
             EmitInstructionImpl(code, operand0, operand1, operand2);
         }
@@ -968,7 +974,7 @@
             }
             else if (o0.IsReg)
             {
-                bLoHiUsed |= (int)((BaseReg)o0).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o0).Code & (int)(RegType.GPB_LO | RegType.GPB_HI);
             }
             if (o1 == null)
             {
@@ -976,7 +982,7 @@
             }
             else if (o1.IsReg)
             {
-                bLoHiUsed |= (int)((BaseReg)o1).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o1).Code & (int)(RegType.GPB_LO | RegType.GPB_HI);
             }
             if (o2 == null)
             {
@@ -984,7 +990,7 @@
             }
             else if (o2.IsReg)
             {
-                bLoHiUsed |= (int)((BaseReg)o2).Code & (int)(RegType.GPB_LO | RegType.GPB_LO);
+                bLoHiUsed |= (int)((BaseReg)o2).Code & (int)(RegType.GPB_LO | RegType.GPB_HI);
             }
 
             long beginOffset = Offset;

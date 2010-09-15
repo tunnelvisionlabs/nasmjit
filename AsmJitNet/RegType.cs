@@ -12,7 +12,7 @@
         /// <summary>
         /// 8-bit general purpose register (high byte)
         /// </summary>
-        GPB_HI = 0x0300,
+        GPB_HI = 0x0200,
 
         /// <summary>
         /// 16-bit general purpose register
