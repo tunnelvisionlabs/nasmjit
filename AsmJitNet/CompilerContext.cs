@@ -101,7 +101,7 @@
         /// <summary>
         /// List of emittables which need to be translated. These emittables are filled with AddBackwardCode().
         /// </summary>
-        private readonly List<Emittable> _backCode = new List<Emittable>();
+        private readonly List<Jmp> _backCode = new List<Jmp>();
 
         /// <summary>
         /// Backward code position
@@ -332,7 +332,7 @@
             }
         }
 
-        internal ReadOnlyCollection<Emittable> BackwardsCode
+        internal ReadOnlyCollection<Jmp> BackwardsCode
         {
             get
             {
@@ -1675,14 +1675,13 @@
             }
         }
 
-        public void AddBackwardCode(Emittable from)
+        public void AddBackwardCode(Jmp from)
         {
             if (from == null)
                 throw new ArgumentNullException("from");
             Contract.EndContractBlock();
 
-            Emittable mark = from.Next;
-            _backCode.Add(mark);
+            _backCode.Add(from);
         }
 
         public void AddForwardJump(Jmp instruction)

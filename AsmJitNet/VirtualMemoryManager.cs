@@ -249,11 +249,11 @@
                     while (node != null)
                     {
                         // Skip this node?
-                        if ((node.Remain < vsize) ||
+                        if ((node.Available < vsize) ||
                             (node.LargestBlock < vsize && node.LargestBlock != 0))
                         {
                             M_Node next = node.Next;
-                            if (node.Remain < minVSize && node == _optimal && next != null)
+                            if (node.Available < minVSize && node == _optimal && next != null)
                                 _optimal = next;
                             node = next;
                             continue;
@@ -919,7 +919,7 @@
                     set;
                 }
 
-                public long Remain
+                public long Available
                 {
                     get
                     {

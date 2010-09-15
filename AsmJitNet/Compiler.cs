@@ -436,10 +436,12 @@
                             cur = cur.Translate(cc);
                         } while (cur != null);
 
+                        cc.Unreachable = true;
+
                         int len = cc.BackwardsCode.Count;
                         while (cc.BackwardsPosition < len)
                         {
-                            cur = cc.BackwardsCode[cc.BackwardsPosition++];
+                            cur = cc.BackwardsCode[cc.BackwardsPosition++].Next;
                             if (!cur.IsTranslated)
                                 break;
 
