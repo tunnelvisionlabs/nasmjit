@@ -13,14 +13,21 @@
         , IMmIntrinsicSupport<MMVar>
         , IXmmIntrinsicSupport<XMMVar>
     {
+        [ContractPublicPropertyName("CodeGenerator")]
         private readonly CodeGenerator _codeGenerator;
+
+        [ContractPublicPropertyName("Logger")]
         private Logger _logger;
+
         private readonly CompilerProperties _properties;
         private EmitOptions _emitOptions;
         private Emittable _first;
         private Emittable _last;
         private Emittable _current;
+
+        [ContractPublicPropertyName("Function")]
         private Function _function;
+
         private readonly List<Target> _targetData = new List<Target>();
         private readonly List<VarData> _varData = new List<VarData>();
         private int _varNameId;
@@ -99,6 +106,8 @@
         {
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
+            Contract.Requires(Function == null);
+            Contract.Ensures(_function != null);
             Contract.Ensures(Contract.Result<Function>() != null);
             Contract.EndContractBlock();
 
@@ -121,6 +130,8 @@
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
+            Contract.Requires(Function == null);
+            Contract.Ensures(_function != null);
             Contract.Ensures(Contract.Result<Function>() != null);
             Contract.EndContractBlock();
 
@@ -159,6 +170,7 @@
 
         public VarData NewVarData(string name, VariableType variableType, int size)
         {
+            Contract.Requires(Function != null);
             Contract.Ensures(Contract.Result<VarData>() != null);
 
             if (name == null)
@@ -167,49 +179,7 @@
                 _varNameId++;
             }
 
-            VarData varData = new VarData()
-            {
-                Scope = Function,
-                FirstEmittable = default(Emittable),
-                LastEmittable = default(Emittable),
-
-                Name = name,
-                Id = _varData.Count | Operand.OperandIdTypeVar,
-                Type = variableType,
-                Size = size,
-
-                HomeRegisterIndex = RegIndex.Invalid,
-                PreferredRegisterIndex = RegIndex.Invalid,
-
-                HomeMemoryData = null,
-
-                RegisterIndex = RegIndex.Invalid,
-                WorkOffset = Operand.InvalidValue,
-
-                NextActive = default(VarData),
-                PreviousActive = default(VarData),
-
-                Priority = 10,
-                Calculated = false,
-                IsRegArgument = false,
-                IsMemArgument = false,
-
-                State = VariableState.Unused,
-                Changed = false,
-                SaveOnUnuse = false,
-
-                RegisterReadCount = 0,
-                RegisterWriteCount = 0,
-                RegisterRWCount = 0,
-
-                RegisterGPBLoCount = 0,
-                RegisterGPBHiCount = 0,
-
-                MemoryReadCount = 0,
-                MemoryWriteCount = 0,
-                MemoryRWCount = 0,
-            };
-
+            VarData varData = new VarData(Function, _varData.Count | Operand.OperandIdTypeVar, variableType, size, name);
             _varData.Add(varData);
             return varData;
         }
@@ -218,6 +188,9 @@
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<GPVar>() != null);
+            Contract.EndContractBlock();
 
             Function f = Function;
             if (f == null)
@@ -234,11 +207,17 @@
 
         public GPVar NewGP(string name = null)
         {
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<GPVar>() != null);
+
             return NewGP(VariableInfo.NativeVariableType, name);
         }
 
         public GPVar NewGP(VariableType variableType, string name = null)
         {
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<GPVar>() != null);
+
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.GP) == 0)
                 throw new ArgumentException();
 
@@ -251,6 +230,9 @@
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<MMVar>() != null);
+            Contract.EndContractBlock();
 
             Function f = Function;
             if (f == null)
@@ -270,6 +252,9 @@
 
         public MMVar NewMM(VariableType variableType = VariableType.MM, string name = null)
         {
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<MMVar>() != null);
+
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
                 throw new ArgumentException();
 
@@ -285,6 +270,9 @@
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<XMMVar>() != null);
+            Contract.EndContractBlock();
 
             Function f = Function;
             if (f == null)
@@ -304,6 +292,9 @@
 
         public XMMVar NewXMM(VariableType variableType = VariableType.XMM, string name = null)
         {
+            Contract.Requires(Function != null);
+            Contract.Ensures(Contract.Result<XMMVar>() != null);
+
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.XMM) == 0)
                 throw new ArgumentException();
 
@@ -317,6 +308,9 @@
 
         public Function EndFunction()
         {
+            Contract.Requires(Function != null);
+            Contract.Ensures(Function == null);
+
             if (_function == null)
                 throw new InvalidOperationException("No function.");
 
@@ -744,6 +738,7 @@
         public Call Call(GPVar dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
@@ -766,6 +761,7 @@
         public Call Call(Mem dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
@@ -788,6 +784,7 @@
         public Call Call(Imm dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
@@ -808,6 +805,7 @@
         /// </summary>
         public Call Call(IntPtr dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall((Imm)dst, callingConvention, arguments, returnValue);
@@ -819,6 +817,7 @@
         public Call Call(Label label, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(label != null);
+            Contract.Requires(delegateType != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall(label, callingConvention, delegateType);
@@ -830,6 +829,7 @@
         public Call Call(Label label, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(label != null);
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             return _emitCall(label, callingConvention, arguments, returnValue);
@@ -1000,7 +1000,7 @@
         private Instruction NewInstruction(InstructionCode code, Operand[] operands)
         {
             Contract.Requires(operands != null);
-            //Contract.Requires(operands.All(i => i != null));
+            Contract.Requires(Contract.ForAll(operands, i => i != null));
             Contract.Ensures(Contract.Result<Instruction>() != null);
 
             if (code >= InstructionDescription.JumpBegin && code <= InstructionDescription.JumpEnd)
@@ -1020,45 +1020,62 @@
 
         public void EmitInstruction(InstructionCode code, Operand operand0)
         {
-            Contract.Requires(operand0 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
 
             EmitInstructionImpl(code, operand0);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
 
             EmitInstructionImpl(code, operand0, operand1);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
 
             EmitInstructionImpl(code, operand0, operand1, operand2);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
-            Contract.Requires(operand3 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+            if (operand3 == null)
+                throw new ArgumentNullException("operand3");
+            Contract.EndContractBlock();
 
             EmitInstructionImpl(code, operand0, operand1, operand2, operand3);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
         {
-            Contract.Requires(operand0 != null);
-            Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
-            Contract.Requires(operand3 != null);
-            Contract.Requires(operand4 != null);
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+            if (operand3 == null)
+                throw new ArgumentNullException("operand3");
+            if (operand4 == null)
+                throw new ArgumentNullException("operand4");
+            Contract.EndContractBlock();
 
             EmitInstructionImpl(code, operand0, operand1, operand2, operand3, operand4);
         }
@@ -1066,7 +1083,7 @@
         private void EmitInstructionImpl(InstructionCode instructionCode, params Operand[] operands)
         {
             Contract.Requires(operands != null);
-            //Contract.Requires(operands.All(i => i != null));
+            Contract.Requires(Contract.ForAll(operands, i => i != null));
 
             Instruction e = NewInstruction(instructionCode, operands);
             AddEmittable(e);
@@ -1079,6 +1096,9 @@
 
         public void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
+            if (label == null)
+                throw new ArgumentNullException("label");
+
             if (hint == Hint.None)
             {
                 EmitInstructionImpl(code, label);
@@ -1093,6 +1113,7 @@
         private Call _emitCall(Operand o0, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(o0 != null);
+            Contract.Requires(arguments != null);
             Contract.Ensures(Contract.Result<Call>() != null);
 
             Function fn = Function;
@@ -1169,6 +1190,8 @@
 
         internal static Type IdToType(VariableType type)
         {
+            Contract.Ensures(Contract.Result<Type>() != null);
+
             switch (type)
             {
             case VariableType.Invalid:
@@ -1206,6 +1229,13 @@
                 throw new ArgumentException();
 
             return _varData[id & Operand.OperandIdValueMask];
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(Contract.ForAll(_targetData, i => i != null));
+            Contract.Invariant(Contract.ForAll(_varData, i => i != null));
         }
     }
 }

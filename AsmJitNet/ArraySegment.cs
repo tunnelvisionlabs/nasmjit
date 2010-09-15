@@ -8,6 +8,7 @@
     using ICollection = System.Collections.ICollection;
     using IEnumerable = System.Collections.IEnumerable;
     using IEnumerator = System.Collections.IEnumerator;
+    using System.Diagnostics.Contracts;
 
     public sealed class ArraySegment<T> : IList<T>, ICollection<T>, IEnumerable<T>, IList, ICollection, IEnumerable
     {
@@ -27,6 +28,7 @@
                 throw new ArgumentException();
             if (checked(offset + count) > array.Length)
                 throw new ArgumentException();
+            Contract.EndContractBlock();
 
             _array = array;
             _offset = offset;
@@ -197,6 +199,15 @@
         void IList.RemoveAt(int index)
         {
             throw new NotSupportedException();
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_array != null);
+            Contract.Invariant(_offset >= 0 && _offset <= _array.Length);
+            Contract.Invariant(_count >= 0);
+            Contract.Invariant(_offset + _count <= _array.Length);
         }
     }
 }

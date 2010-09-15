@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using Array = System.Array;
+    using System.Diagnostics.Contracts;
 
     public class StateData
     {
@@ -27,6 +28,8 @@
                 throw new ArgumentOutOfRangeException("memVarsCount");
 
             _registers = (VarData[])other._registers.Clone();
+            Contract.Assume(_registers.Length == other._registers.Length);
+
             UsedGP = other.UsedGP;
             UsedMM = other.UsedMM;
             UsedXMM = other.UsedXMM;
@@ -40,6 +43,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+
                 return _registers;
             }
         }
@@ -48,6 +53,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+
                 return new ArraySegment<VarData>(_registers, 0, 16);
             }
         }
@@ -56,6 +63,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+
                 return new ArraySegment<VarData>(_registers, 16, 8);
             }
         }
@@ -64,6 +73,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+
                 return new ArraySegment<VarData>(_registers, 24, 16);
             }
         }
@@ -122,6 +133,8 @@
 
         internal void CopyFrom(StateData other)
         {
+            Contract.Requires(other != null);
+
             Array.Copy(other._registers, _registers, _registers.Length);
             UsedGP = other.UsedGP;
             UsedMM = other.UsedMM;
@@ -129,6 +142,13 @@
             ChangedGP = other.ChangedGP;
             ChangedMM = other.ChangedMM;
             ChangedXMM = other.ChangedXMM;
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_registers != null);
+            Contract.Invariant(_registers.Length == RegisterCount);
         }
     }
 }

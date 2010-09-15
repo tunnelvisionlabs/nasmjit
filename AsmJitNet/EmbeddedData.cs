@@ -1,8 +1,9 @@
 ﻿namespace AsmJitNet
 {
     using System;
+    using System.Diagnostics.Contracts;
 
-    public class EmbeddedData : Emittable
+    public sealed class EmbeddedData : Emittable
     {
         private readonly byte[] _data;
 
@@ -11,6 +12,8 @@
         {
             if (data == null)
                 throw new ArgumentNullException("data");
+            Contract.Requires(compiler != null);
+            Contract.EndContractBlock();
 
             _data = data;
         }

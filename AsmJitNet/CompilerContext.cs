@@ -964,6 +964,8 @@
         private void AllocNonGPVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags, int preserved, int used, IList<VarData> stateData, Action<RegIndex> freeAction)
         {
             Contract.Requires(vdata != null);
+            Contract.Requires(stateData != null);
+            Contract.Requires(freeAction != null);
 
             // Preferred register code.
             RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : vdata.PreferredRegisterIndex;
@@ -1118,10 +1120,12 @@
 
         private void SpillVar(VarData vdata, IList<VarData> stateData, Action<RegIndex> freeAction)
         {
-            Contract.Requires(vdata != null);
-
             if (vdata == null)
                 throw new ArgumentNullException("vdata");
+            Contract.Requires(stateData != null);
+            Contract.Requires(freeAction != null);
+            Contract.EndContractBlock();
+
             if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
                 throw new ArgumentException("Can't spill a variable that isn't allocated.");
 

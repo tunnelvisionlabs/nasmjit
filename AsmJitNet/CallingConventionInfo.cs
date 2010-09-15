@@ -68,6 +68,7 @@
                 switch (_callingConvention)
                 {
                 case AsmJitNet.CallingConvention.Cdecl:
+                    _calleePopsStack = false;
                     break;
 
                 case AsmJitNet.CallingConvention.StdCall:

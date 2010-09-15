@@ -267,11 +267,6 @@
             {
                 return _code;
             }
-
-            protected set
-            {
-                _code = value;
-            }
         }
 
         public EmitOptions EmitOptions

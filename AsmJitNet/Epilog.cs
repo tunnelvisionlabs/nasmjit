@@ -2,7 +2,7 @@
 {
     public sealed class Epilog : Emittable
     {
-        private Function _function;
+        private readonly Function _function;
 
         public Epilog(Compiler compiler, Function function)
             : base(compiler)

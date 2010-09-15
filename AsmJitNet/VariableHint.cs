@@ -1,20 +1,23 @@
 ﻿namespace AsmJitNet
 {
     using System;
+    using System.Diagnostics.Contracts;
 
     public class VariableHint : Emittable
     {
-        private VarData _varData;
+        private readonly VarData _varData;
 
-        private VariableHintKind _hintKind;
+        private readonly VariableHintKind _hintKind;
 
-        private int _hintValue;
+        private readonly int _hintValue;
 
         public VariableHint(Compiler compiler, VarData varData, VariableHintKind hintKind, int hintValue)
             : base(compiler)
         {
             if (varData == null)
                 throw new ArgumentNullException("varData");
+            Contract.Requires(compiler != null);
+            Contract.EndContractBlock();
 
             _varData = varData;
             _hintKind = hintKind;

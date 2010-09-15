@@ -316,6 +316,7 @@
                 throw new ArgumentNullException("arguments");
             if (arguments.Length > 32)
                 throw new ArgumentException();
+            Contract.EndContractBlock();
 
             int i;
 

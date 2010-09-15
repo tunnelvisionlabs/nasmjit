@@ -1,5 +1,8 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
+    [ContractClass(typeof(Contracts.IIntrinsicSupportContracts))]
     public interface IIntrinsicSupport
     {
         void EmitInstruction(InstructionCode code);

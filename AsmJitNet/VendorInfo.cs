@@ -33,5 +33,11 @@
                 return new ReadOnlyCollection<char>(_text);
             }
         }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariants()
+        {
+            Contract.Invariant(_text != null);
+        }
     }
 }
