@@ -23,6 +23,8 @@
             IntPtr methodPtr = CreateMethodStub(CreateMethod);
             TestMethod method = (TestMethod)Marshal.GetDelegateForFunctionPointer(methodPtr, typeof(TestMethod));
             Assert.AreEqual(2, method());
+
+            MemoryManager.Global.Free(methodPtr);
         }
 
         private readonly List<MethodCompiler> _unmanagedDelegates = new List<MethodCompiler>();

@@ -41,6 +41,8 @@
             IntPtr result = compiler.Make();
             var fn = (TestReverseJumpToUnreachableLabelFn)Marshal.GetDelegateForFunctionPointer(result, typeof(TestReverseJumpToUnreachableLabelFn));
             Assert.AreEqual(true, fn());
+
+            compiler.CodeGenerator.Free(result);
         }
     }
 }

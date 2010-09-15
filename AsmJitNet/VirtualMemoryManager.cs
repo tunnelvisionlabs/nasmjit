@@ -3,6 +3,7 @@
     using System;
     using System.Runtime.InteropServices;
     using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class VirtualMemoryManager : MemoryManager
     {
@@ -163,37 +164,10 @@
             {
                 int vsize;
                 IntPtr vmem = AllocVirtualMemory((int)size, out vsize);
-
-                // Out of memory.
                 if (vmem == IntPtr.Zero)
-                    return null;
+                    throw new OutOfMemoryException();
 
-                long blocks = (vsize / density);
-                long basize = (((blocks + 7) >> 3) + sizeof(int) - 1) & ~(uint)(sizeof(int) - 1);
-                //long memSize = sizeof(M_Node) + (basize * 2);
-
-                M_Node node;
-                try
-                {
-                    node = new M_Node();
-                }
-                catch (OutOfMemoryException)
-                {
-                    return null;
-                }
-
-                //memset(node, 0, memSize);
-
-                node.NlColor = NodeColor.Red;
-                node.Memory = vmem;
-
-                node.Size = vsize;
-                node.Blocks = blocks;
-                node.Density = density;
-                node.LargestBlock = vsize;
-                node.BaUsed = new int[basize / sizeof(int)];
-                node.BaCont = new int[basize / sizeof(int)];
-
+                M_Node node = new M_Node(vmem, vsize, density);
                 return node;
             }
 
@@ -408,6 +382,8 @@
 
             private void SetBits(int[] buf, int offset, int count)
             {
+                Contract.Requires(buf != null);
+
                 if (count == 0)
                     return;
 
@@ -615,11 +591,18 @@
 
             public static bool NlIsRed(M_Node n)
             {
+                Contract.Ensures(!Contract.Result<bool>() || n != null);
+
                 return n != null && n.NlColor == NodeColor.Red;
             }
 
             public static M_Node NlRotateLeft(M_Node n)
             {
+                Contract.Requires(n != null);
+                Contract.Requires(n.NlRight != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+                Contract.Ensures(Contract.Result<M_Node>().NlLeft != null);
+
                 M_Node x = n.NlRight;
                 n.NlRight = x.NlLeft;
                 x.NlLeft = n;
@@ -630,6 +613,11 @@
 
             public static M_Node NlRotateRight(M_Node n)
             {
+                Contract.Requires(n != null);
+                Contract.Requires(n.NlLeft != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+                Contract.Ensures(Contract.Result<M_Node>().NlRight != null);
+
                 M_Node x = n.NlLeft;
                 n.NlLeft = x.NlRight;
                 x.NlRight = n;
@@ -640,6 +628,10 @@
 
             public static void NlFlipColor(M_Node n)
             {
+                Contract.Requires(n != null);
+                Contract.Requires(n.NlLeft != null);
+                Contract.Requires(n.NlRight != null);
+
                 n.NlColor = (n.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
                 n.NlLeft.NlColor = (n.NlLeft.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
                 n.NlRight.NlColor = (n.NlRight.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
@@ -647,6 +639,11 @@
 
             public static M_Node NlMoveRedLeft(M_Node h)
             {
+                Contract.Requires(h != null);
+                Contract.Requires(h.NlLeft != null);
+                Contract.Requires(h.NlRight != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+
                 NlFlipColor(h);
                 if (NlIsRed(h.NlRight.NlLeft))
                 {
@@ -659,6 +656,11 @@
 
             public static M_Node NlMoveRedRight(M_Node h)
             {
+                Contract.Requires(h != null);
+                Contract.Requires(h.NlLeft != null);
+                Contract.Requires(h.NlRight != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+
                 NlFlipColor(h);
                 if (NlIsRed(h.NlLeft.NlLeft))
                 {
@@ -670,6 +672,9 @@
 
             public static M_Node NlFixUp(M_Node h)
             {
+                Contract.Requires(h != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+
                 if (NlIsRed(h.NlRight))
                     h = NlRotateLeft(h);
                 if (NlIsRed(h.NlLeft) && NlIsRed(h.NlLeft.NlLeft))
@@ -682,11 +687,16 @@
 
             public void NlInsertNode(M_Node n)
             {
+                Contract.Requires(n != null);
+
                 _root = NlInsertNode_(_root, n);
             }
 
             public static M_Node NlInsertNode_(M_Node h, M_Node n)
             {
+                Contract.Requires(n != null);
+                Contract.Ensures(Contract.Result<M_Node>() != null);
+
                 if (h == null)
                     return n;
 
@@ -708,6 +718,8 @@
 
             public void NlRemoveNode(M_Node n)
             {
+                Contract.Requires(n != null);
+
                 _root = NlRemoveNode_(_root, n);
                 if (_root != null)
                     _root.NlColor = NodeColor.Black;
@@ -718,6 +730,9 @@
 
             public M_Node NlRemoveNode_(M_Node h, M_Node n)
             {
+                Contract.Requires(h != null);
+                Contract.Requires(n != null);
+
                 if (n.Memory.ToInt64() < h.Memory.ToInt64())
                 {
                     if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
@@ -728,10 +743,13 @@
                 {
                     if (NlIsRed(h.NlLeft))
                         h = NlRotateRight(h);
+
                     if (h == n && (h.NlRight == null))
                         return null;
+
                     if (!NlIsRed(h.NlRight) && !NlIsRed(h.NlRight.NlLeft))
                         h = NlMoveRedRight(h);
+
                     if (h == n)
                     {
                         // Get minimum node.
@@ -747,7 +765,9 @@
                         h.NlColor = n.NlColor;
                     }
                     else
+                    {
                         h.NlRight = NlRemoveNode_(h.NlRight, n);
+                    }
                 }
 
                 return NlFixUp(h);
@@ -755,6 +775,8 @@
 
             public M_Node NlRemoveMin(M_Node h)
             {
+                Contract.Requires(h != null);
+
                 if (h.NlLeft == null)
                     return null;
                 if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
@@ -794,6 +816,23 @@
 
             public sealed class M_Node
             {
+                private readonly IntPtr _memory;
+                private readonly long _size;
+                private readonly int _density;
+
+                public M_Node(IntPtr memory, long size, int density)
+                {
+                    _memory = memory;
+                    _size = size;
+                    _density = density;
+
+                    long basize = (((Blocks + 7) >> 3) + sizeof(int) - 1) & ~(uint)(sizeof(int) - 1);
+                    NlColor = NodeColor.Red;
+                    LargestBlock = size;
+                    BaUsed = new int[basize / sizeof(int)];
+                    BaCont = new int[basize / sizeof(int)];
+                }
+
                 public M_Node Previous
                 {
                     get;
@@ -826,26 +865,34 @@
 
                 public IntPtr Memory
                 {
-                    get;
-                    set;
+                    get
+                    {
+                        return _memory;
+                    }
                 }
 
                 public long Size
                 {
-                    get;
-                    set;
-                }
-
-                public long Blocks
-                {
-                    get;
-                    set;
+                    get
+                    {
+                        return _size;
+                    }
                 }
 
                 public int Density
                 {
-                    get;
-                    set;
+                    get
+                    {
+                        return _density;
+                    }
+                }
+
+                public long Blocks
+                {
+                    get
+                    {
+                        return Size / Density;
+                    }
                 }
 
                 public long Used

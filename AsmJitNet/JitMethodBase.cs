@@ -6,8 +6,10 @@
     using System.Text;
     using Marshal = System.Runtime.InteropServices.Marshal;
     using System.Collections.ObjectModel;
+    using System.Diagnostics.Contracts;
 
-    public abstract class JitMethodBase
+    [ContractClass(typeof(Contracts.JitMethodBaseContracts))]
+    public abstract class JitMethodBase : IDisposable
     {
         private readonly object _compilerLock = new object();
         private readonly CallingConvention _callingConvention;
@@ -17,6 +19,7 @@
         private Compiler _compiler;
         private IntPtr _result;
         private readonly List<Delegate> _delegates = new List<Delegate>();
+        private bool _disposed;
 
         protected JitMethodBase(CallingConvention callingConvention, FunctionHints hints, CodeGenerator codeGenerator)
         {
@@ -99,6 +102,13 @@
             }
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
+
         public Assembler GetAssembler()
         {
             lock (_compilerLock)
@@ -157,6 +167,15 @@
             }
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && !_disposed)
+            {
+                FreeCore(_result);
+                _disposed = true;
+            }
+        }
+
         protected virtual Assembler CreateAssembler()
         {
             Assembler assembler = new Assembler(CodeGenerator);
@@ -186,6 +205,11 @@
             {
                 throw new InvalidOperationException();
             }
+        }
+
+        protected virtual void FreeCore(IntPtr address)
+        {
+            MemoryManager.Global.Free(address);
         }
     }
 }

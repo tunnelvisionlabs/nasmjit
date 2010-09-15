@@ -123,9 +123,12 @@
 
             c.EndFunction();
 
-            TestDummyFn fn = FunctionCast<TestDummyFn>(c.Make());
+            IntPtr ptr = c.Make();
+            TestDummyFn fn = FunctionCast<TestDummyFn>(ptr);
             var result = fn();
             Assert.AreEqual(0, result);
+
+            MemoryManager.Global.Free(ptr);
         }
 
         [TestMethod]
@@ -204,6 +207,7 @@
             }
 
             Assert.AreEqual(IntPtr.Zero, result);
+            MemoryManager.Global.Free(code);
         }
 
         private IntPtr CompileFunction(int args, int vars, bool naked, bool pushPopSequence)
@@ -318,10 +322,14 @@
 
             // ==========================================================================
             // Make the function.
-            fn = (TestFunctionCallFn)Marshal.GetDelegateForFunctionPointer(c.Make(), typeof(TestFunctionCallFn));
+            IntPtr ptr = c.Make();
+            fn = FunctionCast<TestFunctionCallFn>(ptr);
             int result = fn(3, 2, 1);
             Assert.AreEqual(36, result);
             // ==========================================================================
+
+            MemoryManager.Global.Free(calledFn);
+            MemoryManager.Global.Free(ptr);
         }
 
         private static IntPtr TestFunctionCall1_CreateCalledFn()
@@ -396,12 +404,15 @@
             // Make the function.
             byte[] var = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-            TestFuncManyArgsFn fn = FunctionCast<TestFuncManyArgsFn>(c.Make());
+            IntPtr ptr = c.Make();
+            TestFuncManyArgsFn fn = FunctionCast<TestFuncManyArgsFn>(ptr);
             fn(out var[0], out var[1], out var[2], out var[3], out var[4], out var[5], out var[6], out var[7]);
 
             for (int i = 0; i < var.Length; i++)
                 Assert.AreEqual(i + 1, var[i]);
             // ==========================================================================
+
+            MemoryManager.Global.Free(ptr);
         }
 
         [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
@@ -470,10 +481,13 @@
 
             c.EndFunction();
 
-            TestFuncRetFn fn = FunctionCast<TestFuncRetFn>(c.Make());
+            IntPtr ptr = c.Make();
+            TestFuncRetFn fn = FunctionCast<TestFuncRetFn>(ptr);
             Assert.AreEqual(12, fn(4, 8, 0));
             Assert.AreEqual(32, fn(4, 8, 1));
             Assert.AreEqual(0, fn(4, 8, 2));
+
+            MemoryManager.Global.Free(ptr);
         }
 
         private static int TestFuncRet_FuncA(int x, int y)
@@ -510,7 +524,8 @@
             }
 
             {
-                TestRepFn copy = FunctionCast<TestRepFn>(c.Make());
+                IntPtr ptr = c.Make();
+                TestRepFn copy = FunctionCast<TestRepFn>(ptr);
 
                 string text = "Hello AsmJit";
                 byte[] src = Encoding.ASCII.GetBytes(text);
@@ -518,6 +533,8 @@
 
                 copy(dst, src, (IntPtr)src.Length);
                 Assert.AreEqual(text, Encoding.ASCII.GetString(dst));
+
+                MemoryManager.Global.Free(ptr);
             }
         }
 
@@ -594,7 +611,8 @@
             // Part 2:
 
             // Make JIT function.
-            TestFuncMemCpyFn fn = FunctionCast<TestFuncMemCpyFn>(c.Make());
+            IntPtr ptr = c.Make();
+            TestFuncMemCpyFn fn = FunctionCast<TestFuncMemCpyFn>(ptr);
 
             Assert.IsNotNull(fn);
 
@@ -612,6 +630,8 @@
             fn(dstBuffer, srcBuffer, (IntPtr)count);
 
             Assert.IsTrue(srcBuffer.SequenceEqual(dstBuffer));
+
+            MemoryManager.Global.Free(ptr);
         }
 
         private static readonly Tuple<CpuFeatures, string>[] _bitDescriptions =

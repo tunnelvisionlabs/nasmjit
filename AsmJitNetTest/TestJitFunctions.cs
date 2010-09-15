@@ -29,6 +29,8 @@
             var f = method.GetDelegate<TestJitFunction1Fn>();
             int result = f();
             Assert.AreEqual(1, result);
+
+            method.Dispose();
         }
 
         [TestMethod]
@@ -46,6 +48,8 @@
             var f = method.GetDelegate<TestJitFunction2Fn>();
             int result = f(1);
             Assert.AreEqual(2, result);
+
+            method.Dispose();
         }
 
         [TestMethod]
@@ -77,6 +81,53 @@
             var f = caller.GetDelegate<TestJitFunction2Fn>();
             int result = f(1);
             Assert.AreEqual(2, result);
+
+            called.Dispose();
+            caller.Dispose();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestCompilerAssembler()
+        {
+            JitAction action = new JitAction();
+            Compiler c = action.GetCompiler();
+            Assert.IsNotNull(c);
+            Assert.AreSame(c, action.GetCompiler());
+
+            Assembler a = action.GetAssembler();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestAssemblerCompiler()
+        {
+            JitAction action = new JitAction();
+            Assembler a = action.GetAssembler();
+            Assert.IsNotNull(a);
+            Assert.AreSame(a, action.GetAssembler());
+
+            Compiler c = action.GetCompiler();
+        }
+
+        [TestMethod]
+        public void TestCompileCaching()
+        {
+            JitAction action = new JitAction();
+            Compiler c = action.GetCompiler();
+            c.Ret();
+
+            Assert.AreEqual(IntPtr.Zero, action.CompiledAddress);
+            Assert.IsFalse(action.IsCompiled);
+
+            action.Compile();
+
+            Assert.AreNotEqual(IntPtr.Zero, action.CompiledAddress);
+            Assert.IsTrue(action.IsCompiled);
+
+            IntPtr ptr1 = action.CompiledAddress;
+            action.Compile();
+            Assert.AreEqual(ptr1, action.CompiledAddress);
         }
     }
 }

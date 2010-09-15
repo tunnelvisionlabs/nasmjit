@@ -15,5 +15,7 @@
         }
 
         public abstract void Generate(out IntPtr destination, Assembler assembler);
+
+        public abstract void Free(IntPtr address);
     }
 }

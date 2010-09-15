@@ -58,5 +58,11 @@
             assembler.RelocCode(p);
             destination = p;
         }
+
+        public override void Free(IntPtr address)
+        {
+            MemoryManager memmgr = MemoryManager ?? MemoryManager.Global;
+            memmgr.Free(address);
+        }
     }
 }
