@@ -94,83 +94,6 @@ static void _ClearBit(sysuint_t* buf, sysuint_t index) ASMJIT_NOTHROW
   *buf &= ~((sysuint_t)1 << j);
 }
 
-#if 0
-static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
-{
-  if (len == 0) return;
-
-  sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
-  sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
-
-  // How many bytes process in the first group.
-  sysuint_t c = BITS_PER_ENTITY - j;
-  if (c > len) c = len;
-
-  // Offset.
-  buf += i;
-
-  if (c >= len) 
-  {
-    *buf |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - len)) << j;
-    return;
-  }
-  else
-  {
-    //*buf++ |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j;
-    *buf++ |= ((sysuint_t)-1) << j;
-    len -= c;
-  }
-
-  while (len >= BITS_PER_ENTITY)
-  {
-    *buf++ = (sysuint_t)-1;
-    len -= BITS_PER_ENTITY;
-  }
-
-  if (len)
-  {
-    *buf |= (((sysuint_t)-1) >> (BITS_PER_ENTITY - len));
-  }
-}
-
-static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
-{
-  if (len == 0) return;
-
-  sysuint_t i = index / BITS_PER_ENTITY; // sysuint_t[]
-  sysuint_t j = index % BITS_PER_ENTITY; // sysuint_t[][] bit index
-
-  // How many bytes process in the first group.
-  sysuint_t c = BITS_PER_ENTITY - j;
-
-  // Offset.
-  buf += i;
-
-  if (c > len)
-  {
-    *buf &= ~((((sysuint_t)-1) >> (BITS_PER_ENTITY - len)) << j);
-    return;
-  }
-  else
-  {
-    //*buf++ &= ~((((sysuint_t)-1) >> (BITS_PER_ENTITY - c)) << j);
-    *buf++ &= ~(((sysuint_t)-1) << j);
-    len -= c;
-  }
-
-  while (len >= BITS_PER_ENTITY)
-  {
-    *buf++ = 0;
-    len -= BITS_PER_ENTITY;
-  }
-
-  if (len)
-  {
-    *buf &= ((sysuint_t)-1) << len;
-  }
-}
-#endif
-
 static void _SetBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NOTHROW
 {
   if (len == 0) return;
@@ -236,6 +159,12 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
 #define M_DIV(x, y) ((x) / (y))
 #define M_MOD(x, y) ((x) % (y))
 
+enum NODE_COLOR
+{
+  NODE_BLACK = 0,
+  NODE_RED = 1
+};
+
 struct ASMJIT_HIDDEN M_Node
 {
   // --------------------------------------------------------------------------
@@ -252,9 +181,9 @@ struct ASMJIT_HIDDEN M_Node
   // Implementation is based on:
   //   Left-leaning Red-Black Trees by Robert Sedgewick.
 
-  M_Node* nlLeft;          // Left node.
-  M_Node* nlRight;         // Right node.
-  uint32_t nlColor;        // Color (RED or BLACK).
+  M_Node* left;          // Left node.
+  M_Node* right;         // Right node.
+  uint32_t color;        // Color (NODE_RED or NODE_BLACK).
 
   // --------------------------------------------------------------------------
   // [Chunk Memory]
@@ -275,16 +204,6 @@ struct ASMJIT_HIDDEN M_Node
                            // (0 = unused, 1 = used).
   sysuint_t* baCont;       // Contains bits about continuous blocks.
                            // (0 = stop, 1 = continue).
-
-  // --------------------------------------------------------------------------
-  // [Enums]
-  // --------------------------------------------------------------------------
-
-  enum NODE_COLOR
-  {
-    NODE_BLACK = 0,
-    NODE_RED = 1
-  };
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -478,7 +397,7 @@ M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJ
 
   memset(node, 0, memSize);
 
-  node->nlColor = M_Node::NODE_RED;
+  node->color = NODE_RED;
   node->mem = vmem;
 
   node->size = vsize;
@@ -800,63 +719,67 @@ bool MemoryManagerPrivate::nlCheckTree(M_Node* node) ASMJIT_NOTHROW
   bool result = true;
   if (node == NULL) return result;
 
-  if (node->nlLeft && node->mem < node->nlLeft->mem)
-    return false;
-  if (node->nlRight && node->mem > node->nlRight->mem)
+  // If I am red & any of the children are red then its a red violation.
+  if (nlIsRed(node) && (nlIsRed(node->left) || nlIsRed(node->right)))
     return false;
 
-  if (node->nlLeft) result &= nlCheckTree(node->nlLeft);
-  if (node->nlRight) result &= nlCheckTree(node->nlRight);
+  if (node->left && node->mem < node->left->mem)
+    return false;
+  if (node->right && node->mem > node->right->mem)
+    return false;
+
+  if (node->left) result &= nlCheckTree(node->left);
+  if (node->right) result &= nlCheckTree(node->right);
   return result;
 }
 
 inline bool MemoryManagerPrivate::nlIsRed(M_Node* n) ASMJIT_NOTHROW
 {
-  return n && n->nlColor == M_Node::NODE_RED;
+  return n && n->color == NODE_RED;
 }
 
 inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n) ASMJIT_NOTHROW
 {
-  M_Node* x = n->nlRight;
+  M_Node* x = n->right;
 
-  n->nlRight = x->nlLeft;
-  x->nlLeft = n;
+  n->right = x->left;
+  x->left = n;
 
-  x->nlColor = n->nlColor;
-  n->nlColor = M_Node::NODE_RED;
+  x->color = n->color;
+  n->color = NODE_RED;
 
   return x;
 }
 
 inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n) ASMJIT_NOTHROW
 {
-  M_Node* x = n->nlLeft;
+  M_Node* x = n->left;
 
-  n->nlLeft = x->nlRight;
-  x->nlRight = n;
+  n->left = x->right;
+  x->right = n;
 
-  x->nlColor = n->nlColor;
-  n->nlColor = M_Node::NODE_RED;
+  x->color = n->color;
+  n->color = NODE_RED;
 
   return x;
 }
 
 inline void MemoryManagerPrivate::nlFlipColor(M_Node* n) ASMJIT_NOTHROW
 {
-  ASMJIT_ASSERT(n->nlLeft != NULL);
-  ASMJIT_ASSERT(n->nlRight != NULL);
+  ASMJIT_ASSERT(n->left != NULL);
+  ASMJIT_ASSERT(n->right != NULL);
 
-  n->nlColor = !n->nlColor;
-  n->nlLeft->nlColor = !(n->nlLeft->nlColor);
-  n->nlRight->nlColor = !(n->nlRight->nlColor);
+  n->color = !(n->color);
+  n->left->color = !(n->left->color);
+  n->right->color = !(n->right->color);
 }
 
 M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW
 {
   nlFlipColor(h);
-  if (nlIsRed(h->nlRight->nlLeft))
+  if (nlIsRed(h->right->left))
   {
-    h->nlRight = nlRotateRight(h->nlRight);
+    h->right = nlRotateRight(h->right);
     h = nlRotateLeft(h);
     nlFlipColor(h);
   }
@@ -866,7 +789,7 @@ M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW
 M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW
 {
   nlFlipColor(h);
-  if (nlIsRed(h->nlLeft->nlLeft))
+  if (nlIsRed(h->left->left))
   {
     h = nlRotateRight(h);
     nlFlipColor(h);
@@ -876,11 +799,11 @@ M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW
 
 inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h) ASMJIT_NOTHROW
 {
-  if (nlIsRed(h->nlRight))
+  if (nlIsRed(h->right))
     h = nlRotateLeft(h);
-  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlLeft->nlLeft))
+  if (nlIsRed(h->left) && nlIsRed(h->left->left))
     h = nlRotateRight(h);
-  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight))
+  if (nlIsRed(h->left) && nlIsRed(h->right))
     nlFlipColor(h);
 
   return h;
@@ -889,6 +812,8 @@ inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h) ASMJIT_NOTHROW
 inline void MemoryManagerPrivate::nlInsertNode(M_Node* n) ASMJIT_NOTHROW
 {
   _root = nlInsertNode_(_root, n);
+  _root->color = NODE_BLACK;
+
   ASMJIT_ASSERT(nlCheckTree(_root));
 }
 
@@ -897,14 +822,14 @@ M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
   if (h == NULL) return n;
 
   if (n->mem < h->mem)
-    h->nlLeft = nlInsertNode_(h->nlLeft, n);
+    h->left = nlInsertNode_(h->left, n);
   else
-    h->nlRight = nlInsertNode_(h->nlRight, n);
+    h->right = nlInsertNode_(h->right, n);
 
-  if (nlIsRed(h->nlRight) && !nlIsRed(h->nlLeft)) h = nlRotateLeft(h);
-  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlLeft->nlLeft)) h = nlRotateRight(h);
+  if (nlIsRed(h->right) && !nlIsRed(h->left)) h = nlRotateLeft(h);
+  if (nlIsRed(h->left) && nlIsRed(h->left->left)) h = nlRotateRight(h);
 
-  if (nlIsRed(h->nlLeft) && nlIsRed(h->nlRight)) nlFlipColor(h);
+  if (nlIsRed(h->left) && nlIsRed(h->right)) nlFlipColor(h);
 
   return h;
 }
@@ -912,7 +837,7 @@ M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 void MemoryManagerPrivate::nlRemoveNode(M_Node* n) ASMJIT_NOTHROW
 {
   _root = nlRemoveNode_(_root, n);
-  if (_root) _root->nlColor = M_Node::NODE_BLACK;
+  if (_root) _root->color = NODE_BLACK;
 
   ASMJIT_ASSERT(nlFindPtr(n->mem) == NULL);
   ASMJIT_ASSERT(nlCheckTree(_root));
@@ -932,7 +857,7 @@ static M_Node* findParent(M_Node* root, M_Node* n) ASMJIT_NOTHROW
     if (mem < curMem)
     {
       parent = cur;
-      cur = cur->nlLeft;
+      cur = cur->left;
       continue;
     }
     else
@@ -941,7 +866,7 @@ static M_Node* findParent(M_Node* root, M_Node* n) ASMJIT_NOTHROW
       if (mem >= curEnd)
       {
         parent = cur;
-        cur = cur->nlRight;
+        cur = cur->right;
         continue;
       }
       return parent;
@@ -955,34 +880,34 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 {
   if (n->mem < h->mem)
   {
-    if (!nlIsRed(h->nlLeft) && !nlIsRed(h->nlLeft->nlLeft))
+    if (!nlIsRed(h->left) && !nlIsRed(h->left->left))
       h = nlMoveRedLeft(h);
-    h->nlLeft = nlRemoveNode_(h->nlLeft, n);
+    h->left = nlRemoveNode_(h->left, n);
   }
   else
   {
-    if (nlIsRed(h->nlLeft))
+    if (nlIsRed(h->left))
       h = nlRotateRight(h);
-    if (h == n && (h->nlRight == NULL))
+    if (h == n && (h->right == NULL))
       return NULL;
-    if (!nlIsRed(h->nlRight) && !nlIsRed(h->nlRight->nlLeft))
+    if (!nlIsRed(h->right) && !nlIsRed(h->right->left))
       h = nlMoveRedRight(h);
     if (h == n)
     {
       // Get minimum node.
-      h = n->nlRight;
-      while (h->nlLeft) h = h->nlLeft;
+      h = n->right;
+      while (h->left) h = h->left;
 
-      M_Node* _l = n->nlLeft;
-      M_Node* _r = nlRemoveMin(n->nlRight);
+      M_Node* _l = n->left;
+      M_Node* _r = nlRemoveMin(n->right);
 
-      h->nlLeft = _l;
-      h->nlRight = _r;
-      h->nlColor = n->nlColor;
+      h->left = _l;
+      h->right = _r;
+      h->color = n->color;
     }
     else
     {
-      h->nlRight = nlRemoveNode_(h->nlRight, n);
+      h->right = nlRemoveNode_(h->right, n);
     }
   }
 
@@ -991,10 +916,10 @@ M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
 
 M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h) ASMJIT_NOTHROW
 {
-  if (h->nlLeft == NULL) return NULL;
-  if (!nlIsRed(h->nlLeft) && !nlIsRed(h->nlLeft->nlLeft))
+  if (h->left == NULL) return NULL;
+  if (!nlIsRed(h->left) && !nlIsRed(h->left->left))
     h = nlMoveRedLeft(h);
-  h->nlLeft = nlRemoveMin(h->nlLeft);
+  h->left = nlRemoveMin(h->left);
   return nlFixUp(h);
 }
 
@@ -1006,7 +931,7 @@ M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
     uint8_t* curMem = cur->mem;
     if (mem < curMem)
     {
-      cur = cur->nlLeft;
+      cur = cur->left;
       continue;
     }
     else
@@ -1014,7 +939,7 @@ M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
       uint8_t* curEnd = curMem + cur->size;
       if (mem >= curEnd)
       {
-        cur = cur->nlRight;
+        cur = cur->right;
         continue;
       }
       break;
@@ -1118,6 +1043,80 @@ void VirtualMemoryManager::setKeepVirtualMemory(bool keepVirtualMemory) ASMJIT_N
   MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   d->_keepVirtualMemory = keepVirtualMemory;
 }
+
+// ============================================================================
+// [AsmJit::VirtualMemoryManager - Debug]
+// ============================================================================
+
+#if defined(ASMJIT_MEMORY_MANAGER_DUMP)
+
+struct ASMJIT_HIDDEN GraphVizContext
+{
+  GraphVizContext();
+  ~GraphVizContext();
+
+  bool openFile(const char* fileName);
+  void closeFile();
+
+  void dumpNode(M_Node* node);
+  void connect(M_Node* node, M_Node* other, const char* dst);
+
+  FILE* file;
+};
+
+GraphVizContext::GraphVizContext() :
+  file(NULL)
+{
+}
+
+GraphVizContext::~GraphVizContext()
+{
+  closeFile();
+}
+
+bool GraphVizContext::openFile(const char* fileName)
+{
+  file = fopen(fileName, "w");
+  return file != NULL;
+}
+
+void GraphVizContext::closeFile()
+{
+  if (file) { fclose(file); file = NULL; }
+}
+
+void GraphVizContext::dumpNode(M_Node* node)
+{
+  fprintf(file, "  NODE_%p [shape=record, style=filled, color=%s, label=\"<L>|<C>Mem: %p, Used: %d/%d|<R>\"];\n",
+    node,
+    node->color == NODE_RED ? "red" : "gray",
+    node->mem, node->used, node->size);
+
+  if (node->left) connect(node, node->left, "L");
+  if (node->right) connect(node, node->right, "R");
+}
+
+void GraphVizContext::connect(M_Node* node, M_Node* other, const char* dst)
+{
+  dumpNode(other);
+
+  fprintf(file, "  NODE_%p:%s -> NODE_%p:C", node, dst, other);
+  if (other->color == NODE_RED) 
+    fprintf(file, " [style=bold, color=red]");
+  fprintf(file, ";\n");
+}
+
+void VirtualMemoryManager::dump(const char* fileName)
+{
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
+  GraphVizContext ctx;
+  if (!ctx.openFile(fileName)) return;
+
+  fprintf(ctx.file, "digraph {\n");
+  if (d->_root) ctx.dumpNode(d->_root);
+  fprintf(ctx.file, "}\n");
+}
+#endif // ASMJIT_MEMORY_MANAGER_DUMP
 
 } // AsmJit namespace
 

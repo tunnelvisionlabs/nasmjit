@@ -59,12 +59,16 @@ static void die()
   exit(1);
 }
 
-static void stats()
+static void stats(const char* dumpFile)
 {
   AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
 
   printf("-- Used: %d\n", (int)memmgr->getUsedBytes());
   printf("-- Allocated: %d\n", (int)memmgr->getAllocatedBytes());
+
+#if defined(ASMJIT_MEMORY_MANAGER_DUMP)
+  reinterpret_cast<AsmJit::VirtualMemoryManager*>(memmgr)->dump(dumpFile);
+#endif // ASMJIT_MEMORY_MANAGER_DUMP
 }
 
 static void shuffle(void **a, void **b, sysuint_t count)
@@ -89,7 +93,7 @@ int main(int argc, char* argv[])
   AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
 
   sysuint_t i;
-  sysuint_t count = 200000;
+  sysuint_t count = 20000;
 
   printf("Memory alloc/free test - %d allocations\n\n", (int)count);
 
@@ -111,7 +115,7 @@ int main(int argc, char* argv[])
   }
 
   printf("done\n");
-  stats();
+  stats("dump0.dot");
 
   printf("\n");
   printf("Freeing virtual memory...");
@@ -126,7 +130,7 @@ int main(int argc, char* argv[])
   }
 
   printf("done\n");
-  stats();
+  stats("dump1.dot");
 
   printf("\n");
   printf("Verified alloc/free test - %d allocations\n\n", (int)count);
@@ -143,7 +147,7 @@ int main(int argc, char* argv[])
     gen(a[i], b[i], r);
   }
   printf("done\n");
-  stats();
+  stats("dump2.dot");
 
   printf("\n");
   printf("Shuffling...");
@@ -163,7 +167,7 @@ int main(int argc, char* argv[])
     free(b[i]);
   }
   printf("done\n");
-  stats();
+  stats("dump3.dot");
 
   printf("\n");
   printf("Alloc...");
@@ -178,7 +182,7 @@ int main(int argc, char* argv[])
     gen(a[i], b[i], r);
   }
   printf("done\n");
-  stats();
+  stats("dump4.dot");
 
   printf("\n");
   printf("Verify and free...");
@@ -193,7 +197,7 @@ int main(int argc, char* argv[])
     free(b[i]);
   }
   printf("done\n");
-  stats();
+  stats("dump5.dot");
 
   printf("\n");
   if (problems)

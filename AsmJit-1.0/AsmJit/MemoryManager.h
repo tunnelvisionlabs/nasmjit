@@ -34,6 +34,9 @@
 // [Api-Begin]
 #include "ApiBegin.h"
 
+// [Debug]
+// #define ASMJIT_MEMORY_MANAGER_DUMP
+
 namespace AsmJit {
 
 //! @addtogroup AsmJit_MemoryManagement
@@ -146,6 +149,17 @@ struct ASMJIT_API VirtualMemoryManager : public MemoryManager
   //!
   //! @sa @c getKeepVirtualMemory().
   void setKeepVirtualMemory(bool keepVirtualMemory) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Debug]
+  // --------------------------------------------------------------------------
+
+#if defined(ASMJIT_MEMORY_MANAGER_DUMP)
+  //! @brief Dump memory manager tree into file.
+  //!
+  //! Generated output is using DOT language (from graphviz package).
+  void dump(const char* fileName);
+#endif // ASMJIT_MEMORY_MANAGER_DUMP
 
   // --------------------------------------------------------------------------
   // [Members]
