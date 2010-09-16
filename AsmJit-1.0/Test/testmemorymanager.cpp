@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
   AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
 
   sysuint_t i;
-  sysuint_t count = 20000;
+  sysuint_t count = 200000;
 
   printf("Memory alloc/free test - %d allocations\n\n", (int)count);
 
