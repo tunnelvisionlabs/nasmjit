@@ -52,8 +52,8 @@
 //
 // - Implementation is based on bit arrays and binary trees. Bit arrays 
 //   contains information about allocated and unused blocks of memory. Each
-//   block size describes M_Node::density member. Count of blocks are
-//   stored in M_Node::blocks member. For example if density is 64 and 
+//   block size describes MemNode::density member. Count of blocks are
+//   stored in MemNode::blocks member. For example if density is 64 and 
 //   count of blocks is 20, memory node contains 64*20 bytes of memory and
 //   smallest possible allocation (and also alignment) is 64 bytes. So density
 //   describes also memory alignment. Binary trees are used to enable fast
@@ -153,43 +153,50 @@ static void _ClearBits(sysuint_t* buf, sysuint_t index, sysuint_t len) ASMJIT_NO
 }
 
 // ============================================================================
-// [AsmJit::M_Node]
+// [AsmJit::MemNode]
 // ============================================================================
 
 #define M_DIV(x, y) ((x) / (y))
 #define M_MOD(x, y) ((x) % (y))
 
-enum NODE_COLOR
-{
-  NODE_BLACK = 0,
-  NODE_RED = 1
-};
-
-struct ASMJIT_HIDDEN M_Node
+template<typename T>
+struct ASMJIT_HIDDEN RbNode
 {
   // --------------------------------------------------------------------------
-  // [Node double-linked list]
+  // [Node red-black tree tree, key is mem pointer].
   // --------------------------------------------------------------------------
 
-  M_Node* prev;            // Prev node in list.
-  M_Node* next;            // Next node in list.
+  // Implementation is based on article by Julienne Walker (Public Domain),
+  // including C code and original comments. Thanks for the excellent article.
 
-  // --------------------------------------------------------------------------
-  // [Node LLRB (left leaning red-black) tree, KEY is mem].
-  // --------------------------------------------------------------------------
-
-  // Implementation is based on:
-  //   Left-leaning Red-Black Trees by Robert Sedgewick.
-
-  M_Node* left;          // Left node.
-  M_Node* right;         // Right node.
-  uint32_t color;        // Color (NODE_RED or NODE_BLACK).
+  // Left[0] and right[1] nodes.
+  T* node[2];
+  // Whether the node is RED.
+  uint32_t red;
 
   // --------------------------------------------------------------------------
   // [Chunk Memory]
   // --------------------------------------------------------------------------
 
-  uint8_t* mem;            // Virtual memory address.
+  // Virtual memory address.
+  uint8_t* mem;
+};
+
+// Get whether the node is red (NULL or node with red flag).
+template<typename T>
+inline bool isRed(RbNode<T>* node)
+{
+  return node != NULL && node->red;
+}
+
+struct ASMJIT_HIDDEN MemNode : public RbNode<MemNode>
+{
+  // --------------------------------------------------------------------------
+  // [Node double-linked list]
+  // --------------------------------------------------------------------------
+
+  MemNode* prev;           // Prev node in list.
+  MemNode* next;           // Next node in list.
 
   // --------------------------------------------------------------------------
   // [Chunk Data]
@@ -200,6 +207,7 @@ struct ASMJIT_HIDDEN M_Node
   sysuint_t density;       // Minimum count of allocated bytes in this node (also alignment).
   sysuint_t used;          // How many bytes are used in this node.
   sysuint_t largestBlock;  // Contains largest block that can be allocated.
+
   sysuint_t* baUsed;       // Contains bits about used blocks.
                            // (0 = unused, 1 = used).
   sysuint_t* baCont;       // Contains bits about continuous blocks.
@@ -211,6 +219,19 @@ struct ASMJIT_HIDDEN M_Node
 
   // Get available space.
   inline sysuint_t getAvailable() const ASMJIT_NOTHROW { return size - used; }
+
+  inline void fillData(MemNode* other)
+  {
+    mem = other->mem;
+
+    size = other->size;
+    blocks = other->blocks;
+    density = other->density;
+    used = other->used;
+    largestBlock = other->largestBlock;
+    baUsed = other->baUsed;
+    baCont = other->baCont;
+  }
 };
 
 // ============================================================================
@@ -218,12 +239,12 @@ struct ASMJIT_HIDDEN M_Node
 // ============================================================================
 
 //! @brief Permanent node.
-struct ASMJIT_HIDDEN M_PermanentNode
+struct ASMJIT_HIDDEN PermanentNode
 {
   uint8_t* mem;            // Base pointer (virtual memory address).
   sysuint_t size;          // Count of bytes allocated.
   sysuint_t used;          // Count of bytes used.
-  M_PermanentNode* prev;   // Pointer to prev chunk or NULL.
+  PermanentNode* prev;     // Pointer to prev chunk or NULL.
 
   // Get available space.
   inline sysuint_t getAvailable() const ASMJIT_NOTHROW { return size - used; }
@@ -250,7 +271,7 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   // [Allocation]
   // --------------------------------------------------------------------------
 
-  M_Node* createNode(sysuint_t size, sysuint_t density) ASMJIT_NOTHROW;
+  MemNode* createNode(sysuint_t size, sysuint_t density) ASMJIT_NOTHROW;
 
   void* allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW;
   void* allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW;
@@ -278,27 +299,14 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   }
 
   // --------------------------------------------------------------------------
-  // [NodeList LLRB-Tree]
+  // [NodeList RB-Tree]
   // --------------------------------------------------------------------------
 
-  static bool nlCheckTree(M_Node* node) ASMJIT_NOTHROW;
+  bool checkTree() ASMJIT_NOTHROW;
 
-  static inline bool nlIsRed(M_Node* n) ASMJIT_NOTHROW;
-  static M_Node* nlRotateLeft(M_Node* n) ASMJIT_NOTHROW;
-  static M_Node* nlRotateRight(M_Node* n) ASMJIT_NOTHROW;
-  static inline void nlFlipColor(M_Node* n) ASMJIT_NOTHROW;
-  static M_Node* nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW;
-  static M_Node* nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW;
-  static inline M_Node* nlFixUp(M_Node* h) ASMJIT_NOTHROW;
-
-  inline void nlInsertNode(M_Node* n) ASMJIT_NOTHROW;
-  M_Node* nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW;
-
-  inline void nlRemoveNode(M_Node* n) ASMJIT_NOTHROW;
-  M_Node* nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW;
-  M_Node* nlRemoveMin(M_Node* h) ASMJIT_NOTHROW;
-
-  M_Node* nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW;
+  void insertNode(MemNode* node) ASMJIT_NOTHROW;
+  MemNode* removeNode(MemNode* node) ASMJIT_NOTHROW;
+  MemNode* findPtr(uint8_t* mem) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -315,15 +323,15 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   sysuint_t _used;             // How many bytes are used.
 
   // Memory nodes list.
-  M_Node* _first;
-  M_Node* _last;
-  M_Node* _optimal;
+  MemNode* _first;
+  MemNode* _last;
+  MemNode* _optimal;
 
   // Memory nodes tree.
-  M_Node* _root;
+  MemNode* _root;
 
   // Permanent memory.
-  M_PermanentNode* _permanent;
+  PermanentNode* _permanent;
 
   // Whether to keep virtual memory after destroy.
   bool _keepVirtualMemory;
@@ -358,10 +366,10 @@ MemoryManagerPrivate::~MemoryManagerPrivate() ASMJIT_NOTHROW
   freeAll(_keepVirtualMemory);
 
   // Permanent memory cleanup - Never frees the virtual memory.
-  M_PermanentNode* node = _permanent;
+  PermanentNode* node = _permanent;
   while (node)
   {
-    M_PermanentNode* prev = node->prev;
+    PermanentNode* prev = node->prev;
     ASMJIT_FREE(node);
     node = prev;
   }
@@ -371,10 +379,10 @@ MemoryManagerPrivate::~MemoryManagerPrivate() ASMJIT_NOTHROW
 // [AsmJit::MemoryManagerPrivate - Allocation]
 // ============================================================================
 
-// allocates virtual memory node and M_Node structure.
+// Allocates virtual memory node and MemNode structure.
 //
-// returns M_Node* if success, otherwise NULL
-M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJIT_NOTHROW
+// Returns MemNode* on success, otherwise NULL.
+MemNode* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJIT_NOTHROW
 {
   sysuint_t vsize;
   uint8_t* vmem = allocVirtualMemory(size, &vsize);
@@ -383,29 +391,39 @@ M_Node* MemoryManagerPrivate::createNode(sysuint_t size, sysuint_t density) ASMJ
   if (vmem == NULL) return NULL;
 
   sysuint_t blocks = (vsize / density);
-  sysuint_t basize = (((blocks + 7) >> 3) + sizeof(sysuint_t) - 1) & ~(sysuint_t)(sizeof(sysuint_t)-1);
-  sysuint_t memSize = sizeof(M_Node) + (basize * 2);
+  sysuint_t bsize = (((blocks + 7) >> 3) + sizeof(sysuint_t) - 1) & ~(sysuint_t)(sizeof(sysuint_t)-1);
 
-  M_Node* node = (M_Node*)ASMJIT_MALLOC(memSize);
+  MemNode* node = reinterpret_cast<MemNode*>(ASMJIT_MALLOC(sizeof(MemNode)));
+  uint8_t* data = reinterpret_cast<uint8_t*>(ASMJIT_MALLOC(bsize * 2));
 
   // Out of memory.
-  if (node == NULL)
+  if (node == NULL || data == NULL)
   {
     freeVirtualMemory(vmem, vsize);
+    if (node) ASMJIT_FREE(node);
+    if (data) ASMJIT_FREE(data);
     return NULL;
   }
 
-  memset(node, 0, memSize);
-
-  node->color = NODE_RED;
+  // Initialize RbNode data.
+  node->node[0] = NULL;
+  node->node[1] = NULL;
+  node->red = 1;
   node->mem = vmem;
+
+  // Initialize MemNode data.
+  node->prev = NULL;
+  node->next = NULL;
 
   node->size = vsize;
   node->blocks = blocks;
   node->density = density;
+  node->used = 0;
   node->largestBlock = vsize;
-  node->baUsed = (sysuint_t*)( (uint8_t*)node + sizeof(M_Node) );
-  node->baCont = (sysuint_t*)( (uint8_t*)node->baUsed + basize );
+
+  memset(data, 0, bsize * 2);
+  node->baUsed = reinterpret_cast<sysuint_t*>(data);
+  node->baCont = reinterpret_cast<sysuint_t*>(data + bsize);
 
   return node;
 }
@@ -421,7 +439,7 @@ void* MemoryManagerPrivate::allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW
 
   AutoLock locked(_lock);
 
-  M_PermanentNode* node = _permanent;
+  PermanentNode* node = _permanent;
 
   // Try to find space in allocated chunks.
   while (node && alignedSize > node->getAvailable()) node = node->prev;
@@ -432,7 +450,7 @@ void* MemoryManagerPrivate::allocPermanent(sysuint_t vsize) ASMJIT_NOTHROW
     sysuint_t nodeSize = permanentNodeSize;
     if (vsize > nodeSize) nodeSize = vsize;
 
-    node = (M_PermanentNode*)ASMJIT_MALLOC(sizeof(M_PermanentNode));
+    node = (PermanentNode*)ASMJIT_MALLOC(sizeof(PermanentNode));
     // Out of memory.
     if (node == NULL) return NULL;
 
@@ -471,7 +489,7 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
   if (vsize == 0) return NULL;
 
   AutoLock locked(_lock);
-  M_Node* node = _optimal;
+  MemNode* node = _optimal;
 
   minVSize = _newChunkSize;
 
@@ -482,7 +500,7 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
     if ((node->getAvailable() < vsize) || 
         (node->largestBlock < vsize && node->largestBlock != 0))
     {
-      M_Node* next = node->next;
+      MemNode* next = node->next;
       if (node->getAvailable() < minVSize && node == _optimal && next) _optimal = next;
       node = next;
       continue;
@@ -549,24 +567,9 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
     node = createNode(chunkSize, _newChunkDensity);
     if (node == NULL) return NULL;
 
-    // Link with others.
-    node->prev = _last;
-
-    if (_first == NULL)
-    {
-      _first = node;
-      _last = node;
-      _optimal = node;
-    }
-    else
-    {
-      node->prev = _last;
-      _last->next = node;
-      _last = node;
-    }
-
     // Update binary tree.
-    nlInsertNode(node);
+    insertNode(node);
+    ASMJIT_ASSERT(checkTree());
 
     // Alloc first node at start.
     i = 0;
@@ -577,8 +580,6 @@ void* MemoryManagerPrivate::allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW
   }
 
 found:
-  //printf("ALLOCATED BLOCK %p (%d) \n", node->mem + i * node->density, need * node->density);
-
   // Update bits.
   _SetBits(node->baUsed, i, need);
   _SetBits(node->baCont, i, need - 1);
@@ -593,7 +594,7 @@ found:
 
   // And return pointer to allocated memory.
   uint8_t* result = node->mem + i * node->density;
-  ASMJIT_ASSERT(result >= node->mem && result < node->mem + node->size);
+  ASMJIT_ASSERT(result >= node->mem && result <= node->mem + node->size - vsize);
   return result;
 }
 
@@ -603,7 +604,7 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
 
   AutoLock locked(_lock);
 
-  M_Node* node = nlFindPtr((uint8_t*)address);
+  MemNode* node = findPtr((uint8_t*)address);
   if (node == NULL)
     return false;
 
@@ -647,19 +648,17 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     }
   }
 
-  // If the freed block is fully allocated node, need to update optimal
-  // pointer in memory manager.
+  // If the freed block is fully allocated node then it's needed to 
+  // update 'optimal' pointer in memory manager.
   if (node->used == node->size)
   {
-    M_Node* cur = _optimal;
+    MemNode* cur = _optimal;
 
     do {
       cur = cur->prev;
       if (cur == node) { _optimal = node; break; }
     } while (cur);
   }
-
-  //printf("FREEING %p (%d)\n", address, cont * node->density);
 
   // Statistics.
   cont *= node->density;
@@ -670,18 +669,21 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
   // If page is empty, we can free it.
   if (node->used == 0)
   {
-    _allocated -= node->size;
-    nlRemoveNode(node);
+    // Free memory associated with node (this memory is not accessed
+    // anymore so it's safe).
     freeVirtualMemory(node->mem, node->size);
+    ASMJIT_FREE(node->baUsed);
 
-    M_Node* next = node->next;
-    M_Node* prev = node->prev;
+    node->baUsed = NULL;
+    node->baCont = NULL;
 
-    if (prev) { prev->next = next; } else { _first = next; }
-    if (next) { next->prev = prev; } else { _last  = prev; }
-    if (_optimal == node) { _optimal = prev ? prev : next; }
+    // Statistics.
+    _allocated -= node->size;
 
-    ASMJIT_FREE(node);
+    // Remove node. This function can return different node than
+    // passed into, but data is copied into previous node if needed.
+    ASMJIT_FREE(removeNode(node));
+    ASMJIT_ASSERT(checkTree());
   }
 
   return true;
@@ -689,13 +691,14 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
 
 void MemoryManagerPrivate::freeAll(bool keepVirtualMemory) ASMJIT_NOTHROW
 {
-  M_Node* node = _first;
+  MemNode* node = _first;
 
   while (node)
   {
-    M_Node* next = node->next;
-    
+    MemNode* next = node->next;
+  
     if (!keepVirtualMemory) freeVirtualMemory(node->mem, node->size);
+    ASMJIT_FREE(node->baUsed);
     ASMJIT_FREE(node);
 
     node = next;
@@ -711,227 +714,250 @@ void MemoryManagerPrivate::freeAll(bool keepVirtualMemory) ASMJIT_NOTHROW
 }
 
 // ============================================================================
-// [AsmJit::MemoryManagerPrivate - NodeList LLRB-Tree]
+// [AsmJit::MemoryManagerPrivate - NodeList RB-Tree]
 // ============================================================================
 
-bool MemoryManagerPrivate::nlCheckTree(M_Node* node) ASMJIT_NOTHROW
+static int rbAssert(MemNode* root)
 {
-  bool result = true;
-  if (node == NULL) return result;
+  if (root == NULL) return 1;
 
-  // If I am red & any of the children are red then its a red violation.
-  if (nlIsRed(node) && (nlIsRed(node->left) || nlIsRed(node->right)))
-    return false;
+  MemNode* ln = root->node[0];
+  MemNode* rn = root->node[1];
 
-  if (node->left && node->mem < node->left->mem)
-    return false;
-  if (node->right && node->mem > node->right->mem)
-    return false;
+  // Red violation.
+  ASMJIT_ASSERT( !(isRed(root) && (isRed(ln) || isRed(rn))) );
 
-  if (node->left) result &= nlCheckTree(node->left);
-  if (node->right) result &= nlCheckTree(node->right);
-  return result;
-}
+  int lh = rbAssert(ln);
+  int rh = rbAssert(rn);
 
-inline bool MemoryManagerPrivate::nlIsRed(M_Node* n) ASMJIT_NOTHROW
-{
-  return n && n->color == NODE_RED;
-}
+  // Invalid btree.
+  ASMJIT_ASSERT(ln == NULL || ln->mem < root->mem);
+  ASMJIT_ASSERT(rn == NULL || rn->mem > root->mem);
 
-inline M_Node* MemoryManagerPrivate::nlRotateLeft(M_Node* n) ASMJIT_NOTHROW
-{
-  M_Node* x = n->right;
+  // Black violation.
+  ASMJIT_ASSERT( !(lh != 0 && rh != 0 && lh != rh) );
 
-  n->right = x->left;
-  x->left = n;
-
-  x->color = n->color;
-  n->color = NODE_RED;
-
-  return x;
-}
-
-inline M_Node* MemoryManagerPrivate::nlRotateRight(M_Node* n) ASMJIT_NOTHROW
-{
-  M_Node* x = n->left;
-
-  n->left = x->right;
-  x->right = n;
-
-  x->color = n->color;
-  n->color = NODE_RED;
-
-  return x;
-}
-
-inline void MemoryManagerPrivate::nlFlipColor(M_Node* n) ASMJIT_NOTHROW
-{
-  ASMJIT_ASSERT(n->left != NULL);
-  ASMJIT_ASSERT(n->right != NULL);
-
-  n->color = !(n->color);
-  n->left->color = !(n->left->color);
-  n->right->color = !(n->right->color);
-}
-
-M_Node* MemoryManagerPrivate::nlMoveRedLeft(M_Node* h) ASMJIT_NOTHROW
-{
-  nlFlipColor(h);
-  if (nlIsRed(h->right->left))
-  {
-    h->right = nlRotateRight(h->right);
-    h = nlRotateLeft(h);
-    nlFlipColor(h);
-  }
-  return h;
-}
-
-M_Node* MemoryManagerPrivate::nlMoveRedRight(M_Node* h) ASMJIT_NOTHROW
-{
-  nlFlipColor(h);
-  if (nlIsRed(h->left->left))
-  {
-    h = nlRotateRight(h);
-    nlFlipColor(h);
-  }
-  return h;
-}
-
-inline M_Node* MemoryManagerPrivate::nlFixUp(M_Node* h) ASMJIT_NOTHROW
-{
-  if (nlIsRed(h->right))
-    h = nlRotateLeft(h);
-  if (nlIsRed(h->left) && nlIsRed(h->left->left))
-    h = nlRotateRight(h);
-  if (nlIsRed(h->left) && nlIsRed(h->right))
-    nlFlipColor(h);
-
-  return h;
-}
-
-inline void MemoryManagerPrivate::nlInsertNode(M_Node* n) ASMJIT_NOTHROW
-{
-  _root = nlInsertNode_(_root, n);
-  _root->color = NODE_BLACK;
-
-  ASMJIT_ASSERT(nlCheckTree(_root));
-}
-
-M_Node* MemoryManagerPrivate::nlInsertNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
-{
-  if (h == NULL) return n;
-
-  if (n->mem < h->mem)
-    h->left = nlInsertNode_(h->left, n);
+  // Only count black links.
+  if (lh != 0 && rh != 0)
+    return isRed(root) ? lh : lh + 1;
   else
-    h->right = nlInsertNode_(h->right, n);
-
-  if (nlIsRed(h->right) && !nlIsRed(h->left)) h = nlRotateLeft(h);
-  if (nlIsRed(h->left) && nlIsRed(h->left->left)) h = nlRotateRight(h);
-
-  if (nlIsRed(h->left) && nlIsRed(h->right)) nlFlipColor(h);
-
-  return h;
+    return 0;
 }
 
-void MemoryManagerPrivate::nlRemoveNode(M_Node* n) ASMJIT_NOTHROW
+static inline MemNode* rbRotateSingle(MemNode* root, int dir)
 {
-  _root = nlRemoveNode_(_root, n);
-  if (_root) _root->color = NODE_BLACK;
+  MemNode* save = root->node[!dir];
 
-  ASMJIT_ASSERT(nlFindPtr(n->mem) == NULL);
-  ASMJIT_ASSERT(nlCheckTree(_root));
+  root->node[!dir] = save->node[dir];
+  save->node[dir] = root;
+
+  root->red = 1;
+  save->red = 0;
+
+  return save;
 }
 
-static M_Node* findParent(M_Node* root, M_Node* n) ASMJIT_NOTHROW
+static inline MemNode* rbRotateDouble(MemNode* root, int dir)
 {
-  M_Node* parent = NULL;
-  M_Node* cur = root;
-  uint8_t* mem = n->mem;
-  uint8_t* curMem;
-  uint8_t* curEnd;
+  root->node[!dir] = rbRotateSingle(root->node[!dir], !dir);
+  return rbRotateSingle(root, dir);
+}
 
-  while (cur)
+bool MemoryManagerPrivate::checkTree() ASMJIT_NOTHROW
+{
+  return rbAssert(_root) > 0;
+}
+
+void MemoryManagerPrivate::insertNode(MemNode* node) ASMJIT_NOTHROW
+{
+  if (_root == NULL)
   {
-    curMem = cur->mem;
-    if (mem < curMem)
+    // Empty tree case.
+    _root = node;
+  }
+  else
+  {
+    // False tree root.
+    RbNode<MemNode> head = {0};
+
+    // Grandparent & parent.
+    MemNode* g = NULL;
+    MemNode* t = reinterpret_cast<MemNode*>(&head);
+
+    // Iterator & parent.
+    MemNode* p = NULL;
+    MemNode* q = t->node[1] = _root;
+
+    int dir = 0, last;
+
+    // Search down the tree.
+    for (;;)
     {
-      parent = cur;
-      cur = cur->left;
-      continue;
-    }
-    else
-    {
-      curEnd = curMem + cur->size;
-      if (mem >= curEnd)
+      if (q == NULL)
       {
-        parent = cur;
-        cur = cur->right;
-        continue;
+        // Insert new node at the bottom.
+        q = node;
+        p->node[dir] = node;
       }
-      return parent;
+      else if (isRed(q->node[0]) && isRed(q->node[1]))
+      {
+        // Color flip.
+        q->red = 1;
+        q->node[0]->red = 0;
+        q->node[1]->red = 0;
+      }
+
+      // Fix red violation.
+      if (isRed(q) && isRed(p))
+      {
+        int dir2 = t->node[1] == g;
+        t->node[dir2] = (q == p->node[last]) ? rbRotateSingle(g, !last) : rbRotateDouble(g, !last);
+      }
+
+      // Stop if found.
+      if (q == node) break;
+
+      last = dir;
+      dir = q->mem < node->mem;
+
+      // Update helpers.
+      if (g != NULL) t = g;
+      g = p;
+      p = q;
+      q = q->node[dir];
     }
+
+    // Update root.
+    _root = head.node[1];
   }
 
-  return NULL;
-}
+  // Make root black.
+  _root->red = 0;
 
-M_Node* MemoryManagerPrivate::nlRemoveNode_(M_Node* h, M_Node* n) ASMJIT_NOTHROW
-{
-  if (n->mem < h->mem)
+  // Link with others.
+  node->prev = _last;
+
+  if (_first == NULL)
   {
-    if (!nlIsRed(h->left) && !nlIsRed(h->left->left))
-      h = nlMoveRedLeft(h);
-    h->left = nlRemoveNode_(h->left, n);
+    _first = node;
+    _last = node;
+    _optimal = node;
   }
   else
   {
-    if (nlIsRed(h->left))
-      h = nlRotateRight(h);
-    if (h == n && (h->right == NULL))
-      return NULL;
-    if (!nlIsRed(h->right) && !nlIsRed(h->right->left))
-      h = nlMoveRedRight(h);
-    if (h == n)
-    {
-      // Get minimum node.
-      h = n->right;
-      while (h->left) h = h->left;
+    node->prev = _last;
+    _last->next = node;
+    _last = node;
+  }
+}
 
-      M_Node* _l = n->left;
-      M_Node* _r = nlRemoveMin(n->right);
+MemNode* MemoryManagerPrivate::removeNode(MemNode* node) ASMJIT_NOTHROW
+{
+  // False tree root.
+  RbNode<MemNode> head = {0}; 
 
-      h->left = _l;
-      h->right = _r;
-      h->color = n->color;
-    }
-    else
+  // Helpers.
+  MemNode* q = reinterpret_cast<MemNode*>(&head);
+  MemNode* p = NULL;
+  MemNode* g = NULL;
+  // Found item.
+  MemNode* f = NULL;
+  int dir = 1;
+
+  // Set up.
+  q->node[1] = _root;
+
+  // Search and push a red down.
+  while (q->node[dir] != NULL)
+  {
+    int last = dir;
+
+    // Update helpers.
+    g = p;
+    p = q;
+    q = q->node[dir];
+    dir = q->mem < node->mem;
+
+    // Save found node.
+    if (q == node) f = q;
+
+    // Push the red node down.
+    if (!isRed(q) && !isRed(q->node[dir]))
     {
-      h->right = nlRemoveNode_(h->right, n);
+      if (isRed(q->node[!dir]))
+      {
+        p = p->node[last] = rbRotateSingle(q, dir);
+      }
+      else if (!isRed(q->node[!dir]))
+      {
+        MemNode* s = p->node[!last];
+
+        if (s != NULL)
+        {
+          if (!isRed(s->node[!last]) && !isRed(s->node[last]))
+          {
+            // Color flip.
+            p->red = 0;
+            s->red = 1;
+            q->red = 1;
+          }
+          else
+          {
+            int dir2 = g->node[1] == p;
+
+            if (isRed(s->node[last]))
+              g->node[dir2] = rbRotateDouble(p, last);
+            else if (isRed(s->node[!last]))
+              g->node[dir2] = rbRotateSingle(p, last);
+
+            // Ensure correct coloring.
+            q->red = g->node[dir2]->red = 1;
+            g->node[dir2]->node[0]->red = 0;
+            g->node[dir2]->node[1]->red = 0;
+          }
+        }
+      }
     }
   }
 
-  return nlFixUp(h);
+  // Replace and remove.
+  ASMJIT_ASSERT(f != NULL);
+  ASMJIT_ASSERT(f != reinterpret_cast<MemNode*>(&head));
+  ASMJIT_ASSERT(q != reinterpret_cast<MemNode*>(&head));
+
+  //f->data = q->data;
+  //p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
+  //free(q);
+  if (f != q)
+  {
+    f->fillData(q);
+  }
+  p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
+
+  // Update root and make it black.
+  if ((_root = head.node[1]) != NULL) _root->red = 0;
+
+  // Unlink.
+  MemNode* next = q->next;
+  MemNode* prev = q->prev;
+
+  if (prev) { prev->next = next; } else { _first = next; }
+  if (next) { next->prev = prev; } else { _last  = prev; }
+  if (_optimal == q) { _optimal = prev ? prev : next; }
+
+  return q;
 }
 
-M_Node* MemoryManagerPrivate::nlRemoveMin(M_Node* h) ASMJIT_NOTHROW
+MemNode* MemoryManagerPrivate::findPtr(uint8_t* mem) ASMJIT_NOTHROW
 {
-  if (h->left == NULL) return NULL;
-  if (!nlIsRed(h->left) && !nlIsRed(h->left->left))
-    h = nlMoveRedLeft(h);
-  h->left = nlRemoveMin(h->left);
-  return nlFixUp(h);
-}
-
-M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
-{
-  M_Node* cur = _root;
+  MemNode* cur = _root;
   while (cur)
   {
     uint8_t* curMem = cur->mem;
     if (mem < curMem)
     {
-      cur = cur->left;
+      // Go left.
+      cur = cur->node[0];
       continue;
     }
     else
@@ -939,10 +965,15 @@ M_Node* MemoryManagerPrivate::nlFindPtr(uint8_t* mem) ASMJIT_NOTHROW
       uint8_t* curEnd = curMem + cur->size;
       if (mem >= curEnd)
       {
-        cur = cur->right;
+        // Go right.
+        cur = cur->node[1];
         continue;
       }
-      break;
+      else
+      {
+        // Match.
+        break;
+      }
     }
   }
   return cur;
@@ -1058,8 +1089,8 @@ struct ASMJIT_HIDDEN GraphVizContext
   bool openFile(const char* fileName);
   void closeFile();
 
-  void dumpNode(M_Node* node);
-  void connect(M_Node* node, M_Node* other, const char* dst);
+  void dumpNode(MemNode* node);
+  void connect(MemNode* node, MemNode* other, const char* dst);
 
   FILE* file;
 };
@@ -1085,24 +1116,23 @@ void GraphVizContext::closeFile()
   if (file) { fclose(file); file = NULL; }
 }
 
-void GraphVizContext::dumpNode(M_Node* node)
+void GraphVizContext::dumpNode(MemNode* node)
 {
   fprintf(file, "  NODE_%p [shape=record, style=filled, color=%s, label=\"<L>|<C>Mem: %p, Used: %d/%d|<R>\"];\n",
     node,
-    node->color == NODE_RED ? "red" : "gray",
+    node->red ? "red" : "gray",
     node->mem, node->used, node->size);
 
-  if (node->left) connect(node, node->left, "L");
-  if (node->right) connect(node, node->right, "R");
+  if (node->node[0]) connect(node, node->node[0], "L");
+  if (node->node[1]) connect(node, node->node[1], "R");
 }
 
-void GraphVizContext::connect(M_Node* node, M_Node* other, const char* dst)
+void GraphVizContext::connect(MemNode* node, MemNode* other, const char* dst)
 {
   dumpNode(other);
 
   fprintf(file, "  NODE_%p:%s -> NODE_%p:C", node, dst, other);
-  if (other->color == NODE_RED) 
-    fprintf(file, " [style=bold, color=red]");
+  if (other->red) fprintf(file, " [style=bold, color=red]");
   fprintf(file, ";\n");
 }
 
