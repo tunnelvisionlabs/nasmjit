@@ -925,13 +925,7 @@ MemNode* MemoryManagerPrivate::removeNode(MemNode* node) ASMJIT_NOTHROW
   ASMJIT_ASSERT(f != reinterpret_cast<MemNode*>(&head));
   ASMJIT_ASSERT(q != reinterpret_cast<MemNode*>(&head));
 
-  //f->data = q->data;
-  //p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
-  //free(q);
-  if (f != q)
-  {
-    f->fillData(q);
-  }
+  if (f != q) f->fillData(q);
   p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
 
   // Update root and make it black.
