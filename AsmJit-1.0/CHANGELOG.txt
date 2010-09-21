@@ -1,3 +1,11 @@
+2010-09-21
+- Fixed CBW, CWDE and CDQE compiler support (issue #14, Sam).
+- Fixed Bit Test Instructions and REX.W prefix (issue #15, Chuck).
+- Fixed access to AL, BL, CL and DL registers (issue #16, Chuck).
+- Fixed MemoryManager problems (issue #17, Chuck).
+- AsmJit Compiler now follow direct jumps if needed (needs more testing).
+- Minor improvements and bug fixes I can't remember.
+
 2010-08-20
 - Started CHANGELOG for AsmJit-1.0
 
