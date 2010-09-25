@@ -115,19 +115,19 @@
             private long _used;
 
             // Memory nodes list.
-            private M_Node _first;
-            private M_Node _last;
-            private M_Node _optimal;
+            private MemNode _first;
+            private MemNode _last;
+            private MemNode _optimal;
 
             /// <summary>
             /// Memory nodes tree
             /// </summary>
-            private M_Node _root;
+            private MemNode _root;
 
             /// <summary>
             /// Permanent memory
             /// </summary>
-            private M_PermanentNode _permanent;
+            private PermanentNode _permanent;
 
             private bool _keepVirtualMemory;
 
@@ -186,14 +186,14 @@
 
             // [Allocation]
 
-            public M_Node CreateNode(long size, int density)
+            public MemNode CreateNode(long size, int density)
             {
                 int vsize;
                 IntPtr vmem = AllocVirtualMemory((int)size, out vsize);
                 if (vmem == IntPtr.Zero)
                     throw new OutOfMemoryException();
 
-                M_Node node = new M_Node(vmem, vsize, density);
+                MemNode node = new MemNode(vmem, vsize, density);
                 return node;
             }
 
@@ -210,7 +210,7 @@
                 lock (_lock)
                 {
 
-                    M_PermanentNode node = _permanent;
+                    PermanentNode node = _permanent;
 
                     // Try to find space in allocated chunks.
                     while (node != null && alignedSize > node.Available)
@@ -225,7 +225,7 @@
 
                         try
                         {
-                            node = new M_PermanentNode();
+                            node = new PermanentNode();
                             int size;
                             node.Memory = AllocVirtualMemory((int)nodeSize, out size);
                             node.Size = size;
@@ -267,7 +267,7 @@
 
                 lock (_lock)
                 {
-                    M_Node node = _optimal;
+                    MemNode node = _optimal;
 
                     minVSize = _newChunkSize;
 
@@ -278,7 +278,7 @@
                         if ((node.Available < vsize) ||
                             (node.LargestBlock < vsize && node.LargestBlock != 0))
                         {
-                            M_Node next = node.Next;
+                            MemNode next = node.Next;
                             if (node.Available < minVSize && node == _optimal && next != null)
                                 _optimal = next;
                             node = next;
@@ -357,24 +357,9 @@
                         if (node == null)
                             return IntPtr.Zero;
 
-                        // Link with others.
-                        node.Previous = _last;
-
-                        if (_first == null)
-                        {
-                            _first = node;
-                            _last = node;
-                            _optimal = node;
-                        }
-                        else
-                        {
-                            node.Previous = _last;
-                            _last.Next = node;
-                            _last = node;
-                        }
-
                         // Update binary tree.
-                        NlInsertNode(node);
+                        InsertNode(node);
+                        Debug.Assert(CheckTree());
 
                         // Alloc first node at start.
                         i = 0;
@@ -385,8 +370,6 @@
                     }
 
                 found:
-                    //Console.Error.WriteLine("ALLOCATED BLOCK {0} ({1})", node.Memory.ToInt32() + i * node.Density, need * node.Density);
-
                     // Update bits.
                     SetBits(node.BaUsed, (int)i, (int)need);
                     SetBits(node.BaCont, (int)i, (int)need - 1);
@@ -401,7 +384,7 @@
 
                     // And return pointer to allocated memory.
                     IntPtr result = (IntPtr)(node.Memory.ToInt64() + i * node.Density);
-                    if (result.ToInt64() < node.Memory.ToInt64() || result.ToInt64() >= node.Memory.ToInt64() + node.Size)
+                    if (result.ToInt64() < node.Memory.ToInt64() || result.ToInt64() > node.Memory.ToInt64() + node.Size - vsize)
                         throw new AssemblerException();
 
                     return result;
@@ -480,7 +463,7 @@
                 lock (_lock)
                 {
 
-                    M_Node node = NlFindPtr(address);
+                    MemNode node = FindPtr(address);
                     if (node == null)
                         return false;
 
@@ -536,11 +519,11 @@
                         }
                     }
 
-                    // If the freed block is fully allocated node, need to update optimal
-                    // pointer in memory manager.
+                    // If the freed block is fully allocated node then it's needed to
+                    // update 'optimal' pointer in memory manager.
                     if (node.Used == node.Size)
                     {
-                        M_Node cur = _optimal;
+                        MemNode cur = _optimal;
 
                         do
                         {
@@ -553,8 +536,6 @@
                         } while (cur != null);
                     }
 
-                    //Console.Error.WriteLine("FREEING {0} ({1})", address, cont * node.Density);
-
                     // Statistics.
                     cont *= node.Density;
                     if (node.LargestBlock < cont)
@@ -565,35 +546,23 @@
                     // If page is empty, we can free it.
                     if (node.Used == 0)
                     {
-                        _allocated -= node.Size;
-                        NlRemoveNode(node);
+                        // Free memory associated with node (this memory is not accessed
+                        // anymore so it's safe).
                         FreeVirtualMemory(node.Memory, (int)node.Size);
 
-                        M_Node next = node.Next;
-                        M_Node prev = node.Previous;
+                        node.BaUsed = null;
+                        node.BaCont = null;
 
-                        if (prev!=null)
-                        {
-                            prev.Next = next;
-                        }
-                        else
-                        {
-                            _first = next;
-                        }
+                        // Statistics.
+                        _allocated -= node.Size;
 
-                        if (next!=null)
-                        {
-                            next.Previous = prev;
-                        }
-                        else
-                        {
-                            _last = prev;
-                        }
+                        // Remove node. This function can return different node than
+                        // passed into, but data is copied into previous node if needed.
+                        Debug.Assert(CheckTree());
 
-                        if (_optimal == node)
-                        {
-                            _optimal = prev != null ? prev : next;
-                        }
+                        _allocated -= node.Size;
+                        RemoveNode(node);
+                        FreeVirtualMemory(node.Memory, (int)node.Size);
                     }
                 }
 
@@ -602,11 +571,11 @@
 
             public void FreeAll(bool keepVirtualMemory)
             {
-                M_Node node = _first;
+                MemNode node = _first;
 
                 while (node != null)
                 {
-                    M_Node next = node.Next;
+                    MemNode next = node.Next;
 
                     if (!keepVirtualMemory)
                         FreeVirtualMemory(node.Memory, (int)node.Size);
@@ -644,307 +613,329 @@
 
             // [NodeList LLRB-Tree]
 
-            public static bool NlCheckTree(M_Node node)
+            public void InsertNode(MemNode node)
             {
-                bool result = true;
-                if (node == null)
-                    return result;
-
-                // If I am red & any of the children are red then its a red violation.
-                if (NlIsRed(node) && (NlIsRed(node.Left) || NlIsRed(node.Right)))
-                    return false;
-
-                if (node.Left != null && node.Memory.ToInt64() < node.Left.Memory.ToInt64())
-                    return false;
-                if (node.Right != null && node.Memory.ToInt64() > node.Right.Memory.ToInt64())
-                    return false;
-
-                result &= NlCheckTree(node.Left);
-                result &= NlCheckTree(node.Right);
-                return result;
-            }
-
-            public static bool NlIsRed(M_Node n)
-            {
-                Contract.Ensures(!Contract.Result<bool>() || n != null);
-
-                return n != null && n.Color == NodeColor.Red;
-            }
-
-            public static M_Node NlRotateLeft(M_Node n)
-            {
-                Contract.Requires(n != null);
-                Contract.Requires(n.Right != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-                Contract.Ensures(Contract.Result<M_Node>().Left != null);
-
-                M_Node x = n.Right;
-
-                n.Right = x.Left;
-                x.Left = n;
-
-                x.Color = n.Color;
-                n.Color = NodeColor.Red;
-
-                return x;
-            }
-
-            public static M_Node NlRotateRight(M_Node n)
-            {
-                Contract.Requires(n != null);
-                Contract.Requires(n.Left != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-                Contract.Ensures(Contract.Result<M_Node>().Right != null);
-
-                M_Node x = n.Left;
-
-                n.Left = x.Right;
-                x.Right = n;
-
-                x.Color = n.Color;
-                n.Color = NodeColor.Red;
-                return x;
-            }
-
-            public static void NlFlipColor(M_Node n)
-            {
-                Contract.Requires(n != null);
-                Contract.Requires(n.Left != null);
-                Contract.Requires(n.Right != null);
-
-                n.Color = (n.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
-                n.Left.Color = (n.Left.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
-                n.Right.Color = (n.Right.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
-            }
-
-            public static M_Node NlMoveRedLeft(M_Node h)
-            {
-                Contract.Requires(h != null);
-                Contract.Requires(h.Left != null);
-                Contract.Requires(h.Right != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-
-                NlFlipColor(h);
-                if (NlIsRed(h.Right.Left))
+                if (_root == null)
                 {
-                    h.Right = NlRotateRight(h.Right);
-                    h = NlRotateLeft(h);
-                    NlFlipColor(h);
-                }
-                return h;
-            }
-
-            public static M_Node NlMoveRedRight(M_Node h)
-            {
-                Contract.Requires(h != null);
-                Contract.Requires(h.Left != null);
-                Contract.Requires(h.Right != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-
-                NlFlipColor(h);
-                if (NlIsRed(h.Left.Left))
-                {
-                    h = NlRotateRight(h);
-                    NlFlipColor(h);
-                }
-                return h;
-            }
-
-            public static M_Node NlFixUp(M_Node h)
-            {
-                Contract.Requires(h != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-
-                if (NlIsRed(h.Right))
-                    h = NlRotateLeft(h);
-                if (NlIsRed(h.Left) && NlIsRed(h.Left.Left))
-                    h = NlRotateRight(h);
-                if (NlIsRed(h.Left) && NlIsRed(h.Right))
-                    NlFlipColor(h);
-
-                return h;
-            }
-
-            public void NlInsertNode(M_Node n)
-            {
-                Contract.Requires(n != null);
-
-                _root = NlInsertNode_(_root, n);
-                _root.Color = NodeColor.Black;
-                Debug.Assert(NlCheckTree(_root));
-            }
-
-            public static M_Node NlInsertNode_(M_Node h, M_Node n)
-            {
-                Contract.Requires(n != null);
-                Contract.Ensures(Contract.Result<M_Node>() != null);
-
-                if (h == null)
-                    return n;
-
-                if (n.Memory.ToInt64() < h.Memory.ToInt64())
-                    h.Left = NlInsertNode_(h.Left, n);
-                else
-                    h.Right = NlInsertNode_(h.Right, n);
-
-                if (NlIsRed(h.Right) && !NlIsRed(h.Left))
-                    h = NlRotateLeft(h);
-                if (NlIsRed(h.Left) && NlIsRed(h.Left.Left))
-                    h = NlRotateRight(h);
-
-                if (NlIsRed(h.Left) && NlIsRed(h.Right))
-                    NlFlipColor(h);
-
-                return h;
-            }
-
-            public void NlRemoveNode(M_Node n)
-            {
-                Contract.Requires(n != null);
-
-                _root = NlRemoveNode_(_root, n);
-                if (_root != null)
-                    _root.Color = NodeColor.Black;
-
-                if (NlFindPtr(n.Memory) != null)
-                    throw new AssemblerException();
-                Debug.Assert(NlCheckTree(_root));
-            }
-
-            public M_Node NlRemoveNode_(M_Node h, M_Node n)
-            {
-                Contract.Requires(h != null);
-                Contract.Requires(n != null);
-
-                if (n.Memory.ToInt64() < h.Memory.ToInt64())
-                {
-                    if (!NlIsRed(h.Left) && !NlIsRed(h.Left.Left))
-                        h = NlMoveRedLeft(h);
-                    h.Left = NlRemoveNode_(h.Left, n);
+                    // Empty tree case.
+                    _root = node;
                 }
                 else
                 {
-                    if (NlIsRed(h.Left))
-                        h = NlRotateRight(h);
+                    // False tree root.
+                    MemNode head = new MemNode(IntPtr.Zero, 0, 1);
 
-                    if (h == n && (h.Right == null))
-                        return null;
+                    // Grandparent & parent.
+                    MemNode g = null;
+                    MemNode t = head;
 
-                    if (!NlIsRed(h.Right) && !NlIsRed(h.Right.Left))
-                        h = NlMoveRedRight(h);
+                    // Iterator & parent.
+                    MemNode p = null;
+                    MemNode q = t.Right = _root;
 
-                    if (h == n)
+                    bool dir = false;
+                    bool last = false;
+
+                    // Search down the tree.
+                    for (; ; )
                     {
-                        // Get minimum node.
-                        h = n.Right;
-                        while (h.Left != null)
-                            h = h.Left;
+                        if (q == null)
+                        {
+                            // Insert new node at the bottom.
+                            q = node;
+                            if (dir)
+                                p.Right = node;
+                            else
+                                p.Left = node;
+                        }
+                        else if (MemNode.IsRed(q.Left) && MemNode.IsRed(q.Right))
+                        {
+                            // Color flip.
+                            q.Red = true;
+                            q.Left.Red = false;
+                            q.Right.Red = false;
+                        }
 
-                        M_Node _l = n.Left;
-                        M_Node _r = NlRemoveMin(n.Right);
+                        // Fix red violation.
+                        if (MemNode.IsRed(q) && MemNode.IsRed(p))
+                        {
+                            bool dir2 = t.Right == g;
+                            var result = (q == (last ? p.Right : p.Left)) ? MemNode.RotateSingle(g, !last) : MemNode.RotateDouble(g, !last);
+                            if (dir2)
+                                t.Right = result;
+                            else
+                                t.Left = result;
+                        }
 
-                        h.Left = _l;
-                        h.Right = _r;
-                        h.Color = n.Color;
+                        // Stop if found.
+                        if (q == node)
+                            break;
+
+                        last = dir;
+                        dir = q.Memory.ToInt64() < node.Memory.ToInt64();
+
+                        // Update helpers.
+                        if (g != null)
+                            t = g;
+                        g = p;
+                        p = q;
+                        q = dir ? q.Right : q.Left;
                     }
+
+                    // Update root.
+                    _root = head.Right;
+                }
+
+                // Make root black.
+                _root.Red = false;
+
+                // Link with others.
+                node.Previous = _last;
+
+                if (_first == null)
+                {
+                    _first = node;
+                    _last = node;
+                    _optimal = node;
+                }
+                else
+                {
+                    node.Previous = _last;
+                    _last.Next = node;
+                    _last = node;
+                }
+            }
+
+            public MemNode RemoveNode(MemNode node)
+            {
+                // False tree root.
+                MemNode head = new MemNode(IntPtr.Zero, 0, 1);
+
+                // Helpers.
+                MemNode q = head;
+                MemNode p = null;
+                MemNode g = null;
+
+                // Found item.
+                MemNode f = null;
+                bool dir = true;
+
+                // Set up.
+                q.Right = _root;
+
+                // Search and push a red down.
+                while ((dir ? q.Right : q.Left) != null)
+                {
+                    bool last = dir;
+
+                    // Update helpers.
+                    g = p;
+                    p = q;
+                    q = dir ? q.Right : q.Left;
+                    dir = q.Memory.ToInt64() < node.Memory.ToInt64();
+
+                    // Save found node.
+                    if (q == node)
+                        f = q;
+
+                    // Push the red node down.
+                    if (!MemNode.IsRed(q) && !MemNode.IsRed(dir ? q.Right : q.Left))
+                    {
+                        if (MemNode.IsRed(dir ? q.Left : q.Right))
+                        {
+                            var t = MemNode.RotateSingle(q, dir);
+                            if (last)
+                                p.Right = t;
+                            else
+                                p.Left = t;
+
+                            p = t;
+                        }
+                        else if (!MemNode.IsRed(dir ? q.Left : q.Right))
+                        {
+                            MemNode s = last ? p.Left : p.Right;
+
+                            if (s != null)
+                            {
+                                if (!MemNode.IsRed(last ? s.Left : s.Right) && !MemNode.IsRed(last ? s.Right : s.Left))
+                                {
+                                    // Color flip.
+                                    p.Red = false;
+                                    s.Red = true;
+                                    q.Red = true;
+                                }
+                                else
+                                {
+                                    bool dir2 = g.Right == p;
+
+                                    MemNode t = null;
+                                    if (MemNode.IsRed(last ? s.Right : s.Left))
+                                        t = MemNode.RotateDouble(p, last);
+                                    else if (MemNode.IsRed(last ? s.Left : s.Right))
+                                        t = MemNode.RotateSingle(p, last);
+
+                                    if (dir2)
+                                        g.Right = t;
+                                    else
+                                        g.Left = t;
+
+                                    // Ensure correct coloring.
+                                    q.Red = (dir2 ? g.Right : g.Left).Red = true;
+                                    (dir2 ? g.Right : g.Left).Left.Red = false;
+                                    (dir2 ? g.Right : g.Left).Right.Red = false;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Replace and remove.
+                Debug.Assert(f != null);
+                Debug.Assert(f != head);
+                Debug.Assert(q != head);
+
+                //f->data = q->data;
+                //p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
+                //free(q);
+                if (f != q)
+                {
+                    f.FillData(q);
+                }
+
+                {
+                    MemNode t = q.Left ?? q.Right;
+
+                    if (p.Right == q)
+                        p.Right = t;
                     else
-                    {
-                        h.Right = NlRemoveNode_(h.Right, n);
-                    }
+                        p.Left = t;
                 }
 
-                return NlFixUp(h);
+                // Update root and make it black.
+                if ((_root = head.Right) != null)
+                    _root.Red = false;
+
+                // Unlink.
+                MemNode next = q.Next;
+                MemNode prev = q.Previous;
+
+                if (prev != null)
+                {
+                    prev.Next = next;
+                }
+                else
+                {
+                    _first = next;
+                }
+
+                if (next != null)
+                {
+                    next.Previous = prev;
+                }
+                else
+                {
+                    _last = prev;
+                }
+
+                if (_optimal == q)
+                {
+                    _optimal = prev ?? next;
+                }
+
+                return q;
             }
 
-            public M_Node NlRemoveMin(M_Node h)
+            public MemNode FindPtr(IntPtr memory)
             {
-                Contract.Requires(h != null);
-
-                if (h.Left == null)
-                    return null;
-                if (!NlIsRed(h.Left) && !NlIsRed(h.Left.Left))
-                    h = NlMoveRedLeft(h);
-                h.Left = NlRemoveMin(h.Left);
-                return NlFixUp(h);
-            }
-
-            public M_Node NlFindPtr(IntPtr mem)
-            {
-                M_Node cur = _root;
-
+                MemNode cur = _root;
                 while (cur != null)
                 {
                     IntPtr curMem = cur.Memory;
-                    if (mem.ToInt64() < curMem.ToInt64())
+                    if (memory.ToInt64() < curMem.ToInt64())
                     {
+                        // Go left.
                         cur = cur.Left;
                         continue;
                     }
                     else
                     {
                         long curEnd = curMem.ToInt64() + cur.Size;
-                        if (mem.ToInt64() >= curEnd)
+                        if (memory.ToInt64() >= curEnd)
                         {
+                            // Go right.
                             cur = cur.Right;
                             continue;
                         }
-                        break;
+                        else
+                        {
+                            // Match.
+                            break;
+                        }
                     }
                 }
 
                 return cur;
             }
 
-            public sealed class M_Node
+            public bool CheckTree()
             {
-                private readonly IntPtr _memory;
-                private readonly long _size;
-                private readonly int _density;
+                return MemNode.CheckTree(_root);
+            }
 
-                // Implementation is based on:
-                //   Left-leaning Red-Black Trees by Robert Sedgewick.
+            public abstract class RbNode<T>
+                where T : RbNode<T>
+            {
+                private T _left;
+                private T _right;
 
-                public M_Node(IntPtr memory, long size, int density)
+                private bool _red;
+
+                // virtual memory address
+                private IntPtr _memory;
+
+                protected RbNode(IntPtr memory)
                 {
+                    _red = true;
                     _memory = memory;
-                    _size = size;
-                    _density = density;
-
-                    long basize = (((Blocks + 7) >> 3) + sizeof(int) - 1) & ~(uint)(sizeof(int) - 1);
-                    Color = NodeColor.Red;
-                    LargestBlock = size;
-                    BaUsed = new int[basize / sizeof(int)];
-                    BaCont = new int[basize / sizeof(int)];
                 }
 
-                public M_Node Previous
+                public T Left
                 {
-                    get;
-                    set;
+                    get
+                    {
+                        return _left;
+                    }
+
+                    set
+                    {
+                        _left = value;
+                    }
                 }
 
-                public M_Node Next
+                public T Right
                 {
-                    get;
-                    set;
+                    get
+                    {
+                        return _right;
+                    }
+
+                    set
+                    {
+                        _right = value;
+                    }
                 }
 
-                public M_Node Left
+                public bool Red
                 {
-                    get;
-                    set;
-                }
+                    get
+                    {
+                        return _red;
+                    }
 
-                public M_Node Right
-                {
-                    get;
-                    set;
-                }
-
-                public NodeColor Color
-                {
-                    get;
-                    set;
+                    set
+                    {
+                        _red = value;
+                    }
                 }
 
                 public IntPtr Memory
@@ -952,6 +943,142 @@
                     get
                     {
                         return _memory;
+                    }
+
+                    protected set
+                    {
+                        _memory = value;
+                    }
+                }
+
+                public static int RbAssert(T root)
+                {
+                    if (root == null)
+                        return 1;
+
+                    T ln = root.Left;
+                    T rn = root.Right;
+
+                    // Red violation.
+                    Debug.Assert(!(IsRed(root) && (IsRed(ln) || IsRed(rn))));
+
+                    int lh = RbAssert(ln);
+                    int rh = RbAssert(rn);
+
+                    // Invalid btree.
+                    Debug.Assert(ln == null || ln.Memory.ToInt64() < root.Memory.ToInt64());
+                    Debug.Assert(rn == null || rn.Memory.ToInt64() > root.Memory.ToInt64());
+
+                    // Black violation.
+                    Debug.Assert(!(lh != 0 && rh != 0 && lh != rh));
+
+                    // Only count black links.
+                    if (lh != 0 && rh != 0)
+                        return IsRed(root) ? lh : lh + 1;
+                    else
+                        return 0;
+                }
+
+                public static bool CheckTree(T root)
+                {
+                    return RbAssert(root) > 0;
+                }
+
+                public static T RotateSingle(T root, bool rightDirection)
+                {
+                    T save = rightDirection ? root._left : root._right;
+
+                    if (rightDirection)
+                    {
+                        root._left = save._right;
+                        save._right = root;
+                    }
+                    else
+                    {
+                        root._right = save._left;
+                        save._left = root;
+                    }
+
+                    root._red = true;
+                    save._red = false;
+
+                    return save;
+                }
+
+                public static T RotateDouble(T root, bool rightDirection)
+                {
+                    if (rightDirection)
+                        root._left = RotateSingle(root._left, !rightDirection);
+                    else
+                        root._right = RotateSingle(root._right, !rightDirection);
+
+                    return RotateSingle(root, rightDirection);
+                }
+
+                public static bool IsRed(RbNode<T> node)
+                {
+                    return node != null && node._red;
+                }
+
+                public override string ToString()
+                {
+                    Func<RbNode<T>, string> shortFormat =
+                        node =>
+                        {
+                            return node == null ? "{null}" : string.Format("{0}/{1}", node.Memory, node.Red ? "R" : "B");
+                        };
+
+                    return string.Format("{0} : {1}, {2}", shortFormat(this), shortFormat(Left), shortFormat(Right));
+                }
+            }
+
+            public sealed class MemNode : RbNode<MemNode>
+            {
+                // --------------------------------------------------------------------------
+                // [Node double-linked list]
+                // --------------------------------------------------------------------------
+
+                private MemNode _prev;           // Prev node in list.
+                private MemNode _next;           // Next node in list.
+
+                private long _size;
+                private int _density;
+
+                public MemNode(IntPtr memory, long size, int density)
+                    : base(memory)
+                {
+                    _size = size;
+                    _density = density;
+
+                    long bsize = (((Blocks + 7) >> 3) + sizeof(int) - 1) & ~(uint)(sizeof(int) - 1);
+                    LargestBlock = size;
+                    BaUsed = new int[bsize / sizeof(int)];
+                    BaCont = new int[bsize / sizeof(int)];
+                }
+
+                public MemNode Previous
+                {
+                    get
+                    {
+                        return _prev;
+                    }
+
+                    set
+                    {
+                        _prev = value;
+                    }
+                }
+
+                public MemNode Next
+                {
+                    get
+                    {
+                        return _next;
+                    }
+
+                    set
+                    {
+                        _next = value;
                     }
                 }
 
@@ -961,6 +1088,11 @@
                     {
                         return _size;
                     }
+
+                    private set
+                    {
+                        _size = value;
+                    }
                 }
 
                 public int Density
@@ -968,6 +1100,11 @@
                     get
                     {
                         return _density;
+                    }
+
+                    private set
+                    {
+                        _density = value;
                     }
                 }
 
@@ -1010,6 +1147,18 @@
                         return Size - Used;
                     }
                 }
+
+                public void FillData(MemNode other)
+                {
+                    Memory = other.Memory;
+
+                    Size = other.Size;
+                    Density = other.Density;
+                    Used = other.Used;
+                    LargestBlock = other.LargestBlock;
+                    BaUsed = other.BaUsed;
+                    BaCont = other.BaCont;
+                }
             }
 
             public enum NodeColor
@@ -1022,7 +1171,7 @@
             {
             }
 
-            private sealed class M_PermanentNode
+            private sealed class PermanentNode
             {
                 public IntPtr Memory
                 {
@@ -1042,7 +1191,7 @@
                     set;
                 }
 
-                public M_PermanentNode Previous
+                public PermanentNode Previous
                 {
                     get;
                     set;
@@ -1078,11 +1227,11 @@
                     }
                 }
 
-                public void DumpNode(M_Node node)
+                public void DumpNode(MemNode node)
                 {
                     Writer.WriteLine("  NODE_{0:X} [shape=record, style=filled, color={1}, label=\"<L>|<C>Mem: {2:X}, Used: {3}/{4}|<R>\"];",
                         RuntimeHelpers.GetHashCode(node),
-                        node.Color == NodeColor.Red ? "red" : "gray",
+                        node.Red ? "red" : "gray",
                         node.Memory, node.Used, node.Size);
 
                     if (node.Left != null)
@@ -1091,12 +1240,12 @@
                         Connect(node, node.Right, "R");
                 }
 
-                public void Connect(M_Node node, M_Node other, string destination)
+                public void Connect(MemNode node, MemNode other, string destination)
                 {
                     DumpNode(other);
 
                     Writer.Write("  NODE_{0:X}:{1} -> NODE_{2:X}:C", RuntimeHelpers.GetHashCode(node), destination, RuntimeHelpers.GetHashCode(other));
-                    if (other.Color == NodeColor.Red)
+                    if (other.Red)
                         Writer.Write(" [style=bold, color=red]");
                     Writer.WriteLine(";");
                 }
