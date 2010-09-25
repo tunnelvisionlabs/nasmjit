@@ -359,6 +359,8 @@
                     }
 
                 found:
+                    //Console.Error.WriteLine("ALLOCATED BLOCK {0} ({1})", node.Memory.ToInt32() + i * node.Density, need * node.Density);
+
                     // Update bits.
                     SetBits(node.BaUsed, (int)i, (int)need);
                     SetBits(node.BaCont, (int)i, (int)need - 1);
@@ -380,7 +382,8 @@
                 }
             }
 
-            private void SetBits(int[] buf, int offset, int count)
+#if false
+            private static void SetBits(int[] buf, int offset, int count)
             {
                 Contract.Requires(buf != null);
 
@@ -392,18 +395,21 @@
 
                 // How many bytes process in first group.
                 int c = BITS_PER_ENTITY - j;
+                if (c > count)
+                    c = count;
 
                 // Offset.
                 int bufIndex = i;
 
-                if (c > count)
+                if (c >= count)
                 {
                     buf[bufIndex] |= (int)(((~0U) >> (BITS_PER_ENTITY - count)) << j);
                     return;
                 }
                 else
                 {
-                    buf[bufIndex++] |= (int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
+                    //buf[bufIndex++] |= (int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
+                    buf[bufIndex++] |= (int)((~0U) << j);
                     count -= c;
                 }
 
@@ -416,6 +422,113 @@
                 if (count != 0)
                 {
                     buf[bufIndex] |= (int)(((~0U) >> (BITS_PER_ENTITY - count)));
+                }
+            }
+
+            private static void ClearBits(int[] buf, int offset, int count)
+            {
+                Contract.Requires(buf != null);
+
+                if (count == 0)
+                    return;
+
+                int i = offset / BITS_PER_ENTITY; // sysuint_t[]
+                int j = offset % BITS_PER_ENTITY; // sysuint_t[][] bit index
+
+                // How many bytes process in first group.
+                int c = BITS_PER_ENTITY - j;
+                if (c > count)
+                    c = count;
+
+                // Offset.
+                int bufIndex = i;
+
+                if (c >= count)
+                {
+                    buf[bufIndex] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - count)) << j);
+                    return;
+                }
+                else
+                {
+                    //buf[bufIndex++] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
+                    buf[bufIndex++] &= ~(int)((~0U) << j);
+                    count -= c;
+                }
+
+                while (count >= BITS_PER_ENTITY)
+                {
+                    buf[bufIndex++] = 0;
+                    count -= BITS_PER_ENTITY;
+                }
+
+                if (count != 0)
+                {
+                    buf[bufIndex] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - count)));
+                }
+            }
+#endif
+
+            private static void SetBits(int[] buf, int offset, int count)
+            {
+                Contract.Requires(buf != null);
+
+                if (count == 0)
+                    return;
+
+                int i = offset / BITS_PER_ENTITY; // sysuint_t[]
+                int j = offset % BITS_PER_ENTITY; // sysuint_t[][] bit index
+
+                // How many bytes process in first group.
+                int c = BITS_PER_ENTITY - j;
+                if (c > count)
+                    c = count;
+
+                // Offset.
+                int bufIndex = i;
+                buf[bufIndex++] |= (int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
+                count -= c;
+
+                while (count >= BITS_PER_ENTITY)
+                {
+                    buf[bufIndex++] = -1;
+                    count -= BITS_PER_ENTITY;
+                }
+
+                if (count != 0)
+                {
+                    buf[bufIndex] |= (int)(((~0U) >> (BITS_PER_ENTITY - count)));
+                }
+            }
+
+            private static void ClearBits(int[] buf, int offset, int count)
+            {
+                Contract.Requires(buf != null);
+
+                if (count == 0)
+                    return;
+
+                int i = offset / BITS_PER_ENTITY; // sysuint_t[]
+                int j = offset % BITS_PER_ENTITY; // sysuint_t[][] bit index
+
+                // How many bytes process in first group.
+                int c = BITS_PER_ENTITY - j;
+                if (c > count)
+                    c = count;
+
+                // Offset.
+                int bufIndex = i;
+                buf[bufIndex++] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
+                count -= c;
+
+                while (count >= BITS_PER_ENTITY)
+                {
+                    buf[bufIndex++] = 0;
+                    count -= BITS_PER_ENTITY;
+                }
+
+                if (count != 0)
+                {
+                    buf[bufIndex] &= ~(int)(~0U << count);
                 }
             }
 
@@ -483,7 +596,7 @@
                         }
                     }
 
-                    // If we freed block is fully allocated node, need to update optimal
+                    // If the freed block is fully allocated node, need to update optimal
                     // pointer in memory manager.
                     if (node.Used == node.Size)
                     {
@@ -499,6 +612,8 @@
                             }
                         } while (cur != null);
                     }
+
+                    //Console.Error.WriteLine("FREEING {0} ({1})", address, cont * node.Density);
 
                     // Statistics.
                     cont *= node.Density;
@@ -589,6 +704,22 @@
 
             // [NodeList LLRB-Tree]
 
+            public static bool NlCheckTree(M_Node node)
+            {
+                bool result = true;
+                if (node == null)
+                    return result;
+
+                if (node.NlLeft != null && node.Memory.ToInt64() < node.NlLeft.Memory.ToInt64())
+                    return false;
+                if (node.NlRight != null && node.Memory.ToInt64() > node.NlRight.Memory.ToInt64())
+                    return false;
+
+                result &= NlCheckTree(node.NlLeft);
+                result &= NlCheckTree(node.NlRight);
+                return result;
+            }
+
             public static bool NlIsRed(M_Node n)
             {
                 Contract.Ensures(!Contract.Result<bool>() || n != null);
@@ -604,10 +735,13 @@
                 Contract.Ensures(Contract.Result<M_Node>().NlLeft != null);
 
                 M_Node x = n.NlRight;
+
                 n.NlRight = x.NlLeft;
                 x.NlLeft = n;
-                x.NlColor = x.NlLeft.NlColor;
-                x.NlLeft.NlColor = NodeColor.Red;
+
+                x.NlColor = n.NlColor;
+                n.NlColor = NodeColor.Red;
+
                 return x;
             }
 
@@ -619,10 +753,12 @@
                 Contract.Ensures(Contract.Result<M_Node>().NlRight != null);
 
                 M_Node x = n.NlLeft;
+
                 n.NlLeft = x.NlRight;
                 x.NlRight = n;
-                x.NlColor = x.NlRight.NlColor;
-                x.NlRight.NlColor = NodeColor.Red;
+
+                x.NlColor = n.NlColor;
+                n.NlColor = NodeColor.Red;
                 return x;
             }
 
@@ -690,6 +826,7 @@
                 Contract.Requires(n != null);
 
                 _root = NlInsertNode_(_root, n);
+                Debug.Assert(NlCheckTree(_root));
             }
 
             public static M_Node NlInsertNode_(M_Node h, M_Node n)
@@ -700,9 +837,6 @@
                 if (h == null)
                     return n;
 
-                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlRight))
-                    NlFlipColor(h);
-
                 if (n.Memory.ToInt64() < h.Memory.ToInt64())
                     h.NlLeft = NlInsertNode_(h.NlLeft, n);
                 else
@@ -712,6 +846,9 @@
                     h = NlRotateLeft(h);
                 if (NlIsRed(h.NlLeft) && NlIsRed(h.NlLeft.NlLeft))
                     h = NlRotateRight(h);
+
+                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlRight))
+                    NlFlipColor(h);
 
                 return h;
             }
@@ -726,6 +863,7 @@
 
                 if (NlFindPtr(n.Memory) != null)
                     throw new AssemblerException();
+                Debug.Assert(NlCheckTree(_root));
             }
 
             public M_Node NlRemoveNode_(M_Node h, M_Node n)
@@ -788,12 +926,10 @@
             public M_Node NlFindPtr(IntPtr mem)
             {
                 M_Node cur = _root;
-                IntPtr curMem;
-                long curEnd;
 
                 while (cur != null)
                 {
-                    curMem = cur.Memory;
+                    IntPtr curMem = cur.Memory;
                     if (mem.ToInt64() < curMem.ToInt64())
                     {
                         cur = cur.NlLeft;
@@ -801,17 +937,17 @@
                     }
                     else
                     {
-                        curEnd = curMem.ToInt64() + cur.Size;
+                        long curEnd = curMem.ToInt64() + cur.Size;
                         if (mem.ToInt64() >= curEnd)
                         {
                             cur = cur.NlRight;
                             continue;
                         }
-                        return cur;
+                        break;
                     }
                 }
 
-                return null;
+                return cur;
             }
 
             public sealed class M_Node
@@ -819,6 +955,9 @@
                 private readonly IntPtr _memory;
                 private readonly long _size;
                 private readonly int _density;
+
+                // Implementation is based on:
+                //   Left-leaning Red-Black Trees by Robert Sedgewick.
 
                 public M_Node(IntPtr memory, long size, int density)
                 {

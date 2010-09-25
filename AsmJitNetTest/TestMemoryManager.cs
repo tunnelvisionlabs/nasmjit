@@ -8,7 +8,7 @@
     [TestClass]
     public class TestMemoryManager
     {
-        private readonly Random rand = new Random(1);
+        private readonly Random rand = new Random(100);
 
         public TestContext TestContext
         {
@@ -70,7 +70,7 @@
             IntPtr[] b = new IntPtr[count];
 
             Console.Error.Write("Alloc... ");
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count / 2; i++)
             {
                 int r = rand.Next(1000) + 4;
                 a[i] = memmgr.Alloc(r);
@@ -84,7 +84,7 @@
             Stats();
 
             Console.Error.Write("Verify and free... ");
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count / 2; i++)
             {
                 Verify(a[i], b[i]);
                 Assert.IsTrue(memmgr.Free(a[i]));
@@ -128,7 +128,7 @@
 
             Console.Error.WriteLine();
             Console.Error.Write("Verify and free...");
-            for (int i = 0; i < count; i += 2)
+            for (int i = 0; i < count / 2; i++)
             {
                 Verify(a[i], b[i]);
                 Assert.IsTrue(memmgr.Free(a[i]));
