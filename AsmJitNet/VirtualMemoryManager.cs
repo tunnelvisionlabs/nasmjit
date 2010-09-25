@@ -4,6 +4,9 @@
     using System.Runtime.InteropServices;
     using Debug = System.Diagnostics.Debug;
     using System.Diagnostics.Contracts;
+    using System.Diagnostics;
+    using TextWriter = System.IO.TextWriter;
+    using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 
     public class VirtualMemoryManager : MemoryManager
     {
@@ -71,6 +74,16 @@
         public override void FreeAll()
         {
             _data.FreeAll(false);
+        }
+
+        [Conditional("ASMJIT_MEMORY_MANAGER_DUMP")]
+        public void Dump(TextWriter writer)
+        {
+            if (writer == null)
+                throw new ArgumentNullException("writer");
+            Contract.EndContractBlock();
+
+            _data.Dump(writer);
         }
 
         private class MemoryManagerPrivate
@@ -156,6 +169,19 @@
                 {
                     _keepVirtualMemory = value;
                 }
+            }
+
+            public void Dump(TextWriter writer)
+            {
+                if (writer == null)
+                    throw new ArgumentNullException("writer");
+                Contract.EndContractBlock();
+
+                GraphVizContext ctx = new GraphVizContext(writer);
+                ctx.Writer.WriteLine("digraph {");
+                if (_root != null)
+                    ctx.DumpNode(_root);
+                ctx.Writer.WriteLine("}");
             }
 
             // [Allocation]
@@ -381,92 +407,6 @@
                     return result;
                 }
             }
-
-#if false
-            private static void SetBits(int[] buf, int offset, int count)
-            {
-                Contract.Requires(buf != null);
-
-                if (count == 0)
-                    return;
-
-                int i = offset / BITS_PER_ENTITY; // sysuint_t[]
-                int j = offset % BITS_PER_ENTITY; // sysuint_t[][] bit index
-
-                // How many bytes process in first group.
-                int c = BITS_PER_ENTITY - j;
-                if (c > count)
-                    c = count;
-
-                // Offset.
-                int bufIndex = i;
-
-                if (c >= count)
-                {
-                    buf[bufIndex] |= (int)(((~0U) >> (BITS_PER_ENTITY - count)) << j);
-                    return;
-                }
-                else
-                {
-                    //buf[bufIndex++] |= (int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
-                    buf[bufIndex++] |= (int)((~0U) << j);
-                    count -= c;
-                }
-
-                while (count >= BITS_PER_ENTITY)
-                {
-                    buf[bufIndex++] = -1;
-                    count -= BITS_PER_ENTITY;
-                }
-
-                if (count != 0)
-                {
-                    buf[bufIndex] |= (int)(((~0U) >> (BITS_PER_ENTITY - count)));
-                }
-            }
-
-            private static void ClearBits(int[] buf, int offset, int count)
-            {
-                Contract.Requires(buf != null);
-
-                if (count == 0)
-                    return;
-
-                int i = offset / BITS_PER_ENTITY; // sysuint_t[]
-                int j = offset % BITS_PER_ENTITY; // sysuint_t[][] bit index
-
-                // How many bytes process in first group.
-                int c = BITS_PER_ENTITY - j;
-                if (c > count)
-                    c = count;
-
-                // Offset.
-                int bufIndex = i;
-
-                if (c >= count)
-                {
-                    buf[bufIndex] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - count)) << j);
-                    return;
-                }
-                else
-                {
-                    //buf[bufIndex++] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - c)) << j);
-                    buf[bufIndex++] &= ~(int)((~0U) << j);
-                    count -= c;
-                }
-
-                while (count >= BITS_PER_ENTITY)
-                {
-                    buf[bufIndex++] = 0;
-                    count -= BITS_PER_ENTITY;
-                }
-
-                if (count != 0)
-                {
-                    buf[bufIndex] &= ~(int)(((~0U) >> (BITS_PER_ENTITY - count)));
-                }
-            }
-#endif
 
             private static void SetBits(int[] buf, int offset, int count)
             {
@@ -710,13 +650,17 @@
                 if (node == null)
                     return result;
 
-                if (node.NlLeft != null && node.Memory.ToInt64() < node.NlLeft.Memory.ToInt64())
-                    return false;
-                if (node.NlRight != null && node.Memory.ToInt64() > node.NlRight.Memory.ToInt64())
+                // If I am red & any of the children are red then its a red violation.
+                if (NlIsRed(node) && (NlIsRed(node.Left) || NlIsRed(node.Right)))
                     return false;
 
-                result &= NlCheckTree(node.NlLeft);
-                result &= NlCheckTree(node.NlRight);
+                if (node.Left != null && node.Memory.ToInt64() < node.Left.Memory.ToInt64())
+                    return false;
+                if (node.Right != null && node.Memory.ToInt64() > node.Right.Memory.ToInt64())
+                    return false;
+
+                result &= NlCheckTree(node.Left);
+                result &= NlCheckTree(node.Right);
                 return result;
             }
 
@@ -724,23 +668,23 @@
             {
                 Contract.Ensures(!Contract.Result<bool>() || n != null);
 
-                return n != null && n.NlColor == NodeColor.Red;
+                return n != null && n.Color == NodeColor.Red;
             }
 
             public static M_Node NlRotateLeft(M_Node n)
             {
                 Contract.Requires(n != null);
-                Contract.Requires(n.NlRight != null);
+                Contract.Requires(n.Right != null);
                 Contract.Ensures(Contract.Result<M_Node>() != null);
-                Contract.Ensures(Contract.Result<M_Node>().NlLeft != null);
+                Contract.Ensures(Contract.Result<M_Node>().Left != null);
 
-                M_Node x = n.NlRight;
+                M_Node x = n.Right;
 
-                n.NlRight = x.NlLeft;
-                x.NlLeft = n;
+                n.Right = x.Left;
+                x.Left = n;
 
-                x.NlColor = n.NlColor;
-                n.NlColor = NodeColor.Red;
+                x.Color = n.Color;
+                n.Color = NodeColor.Red;
 
                 return x;
             }
@@ -748,42 +692,42 @@
             public static M_Node NlRotateRight(M_Node n)
             {
                 Contract.Requires(n != null);
-                Contract.Requires(n.NlLeft != null);
+                Contract.Requires(n.Left != null);
                 Contract.Ensures(Contract.Result<M_Node>() != null);
-                Contract.Ensures(Contract.Result<M_Node>().NlRight != null);
+                Contract.Ensures(Contract.Result<M_Node>().Right != null);
 
-                M_Node x = n.NlLeft;
+                M_Node x = n.Left;
 
-                n.NlLeft = x.NlRight;
-                x.NlRight = n;
+                n.Left = x.Right;
+                x.Right = n;
 
-                x.NlColor = n.NlColor;
-                n.NlColor = NodeColor.Red;
+                x.Color = n.Color;
+                n.Color = NodeColor.Red;
                 return x;
             }
 
             public static void NlFlipColor(M_Node n)
             {
                 Contract.Requires(n != null);
-                Contract.Requires(n.NlLeft != null);
-                Contract.Requires(n.NlRight != null);
+                Contract.Requires(n.Left != null);
+                Contract.Requires(n.Right != null);
 
-                n.NlColor = (n.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
-                n.NlLeft.NlColor = (n.NlLeft.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
-                n.NlRight.NlColor = (n.NlRight.NlColor == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
+                n.Color = (n.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
+                n.Left.Color = (n.Left.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
+                n.Right.Color = (n.Right.Color == NodeColor.Black) ? NodeColor.Red : NodeColor.Black;
             }
 
             public static M_Node NlMoveRedLeft(M_Node h)
             {
                 Contract.Requires(h != null);
-                Contract.Requires(h.NlLeft != null);
-                Contract.Requires(h.NlRight != null);
+                Contract.Requires(h.Left != null);
+                Contract.Requires(h.Right != null);
                 Contract.Ensures(Contract.Result<M_Node>() != null);
 
                 NlFlipColor(h);
-                if (NlIsRed(h.NlRight.NlLeft))
+                if (NlIsRed(h.Right.Left))
                 {
-                    h.NlRight = NlRotateRight(h.NlRight);
+                    h.Right = NlRotateRight(h.Right);
                     h = NlRotateLeft(h);
                     NlFlipColor(h);
                 }
@@ -793,12 +737,12 @@
             public static M_Node NlMoveRedRight(M_Node h)
             {
                 Contract.Requires(h != null);
-                Contract.Requires(h.NlLeft != null);
-                Contract.Requires(h.NlRight != null);
+                Contract.Requires(h.Left != null);
+                Contract.Requires(h.Right != null);
                 Contract.Ensures(Contract.Result<M_Node>() != null);
 
                 NlFlipColor(h);
-                if (NlIsRed(h.NlLeft.NlLeft))
+                if (NlIsRed(h.Left.Left))
                 {
                     h = NlRotateRight(h);
                     NlFlipColor(h);
@@ -811,11 +755,11 @@
                 Contract.Requires(h != null);
                 Contract.Ensures(Contract.Result<M_Node>() != null);
 
-                if (NlIsRed(h.NlRight))
+                if (NlIsRed(h.Right))
                     h = NlRotateLeft(h);
-                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlLeft.NlLeft))
+                if (NlIsRed(h.Left) && NlIsRed(h.Left.Left))
                     h = NlRotateRight(h);
-                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlRight))
+                if (NlIsRed(h.Left) && NlIsRed(h.Right))
                     NlFlipColor(h);
 
                 return h;
@@ -826,6 +770,7 @@
                 Contract.Requires(n != null);
 
                 _root = NlInsertNode_(_root, n);
+                _root.Color = NodeColor.Black;
                 Debug.Assert(NlCheckTree(_root));
             }
 
@@ -838,16 +783,16 @@
                     return n;
 
                 if (n.Memory.ToInt64() < h.Memory.ToInt64())
-                    h.NlLeft = NlInsertNode_(h.NlLeft, n);
+                    h.Left = NlInsertNode_(h.Left, n);
                 else
-                    h.NlRight = NlInsertNode_(h.NlRight, n);
+                    h.Right = NlInsertNode_(h.Right, n);
 
-                if (NlIsRed(h.NlRight) && !NlIsRed(h.NlLeft))
+                if (NlIsRed(h.Right) && !NlIsRed(h.Left))
                     h = NlRotateLeft(h);
-                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlLeft.NlLeft))
+                if (NlIsRed(h.Left) && NlIsRed(h.Left.Left))
                     h = NlRotateRight(h);
 
-                if (NlIsRed(h.NlLeft) && NlIsRed(h.NlRight))
+                if (NlIsRed(h.Left) && NlIsRed(h.Right))
                     NlFlipColor(h);
 
                 return h;
@@ -859,7 +804,7 @@
 
                 _root = NlRemoveNode_(_root, n);
                 if (_root != null)
-                    _root.NlColor = NodeColor.Black;
+                    _root.Color = NodeColor.Black;
 
                 if (NlFindPtr(n.Memory) != null)
                     throw new AssemblerException();
@@ -873,38 +818,38 @@
 
                 if (n.Memory.ToInt64() < h.Memory.ToInt64())
                 {
-                    if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
+                    if (!NlIsRed(h.Left) && !NlIsRed(h.Left.Left))
                         h = NlMoveRedLeft(h);
-                    h.NlLeft = NlRemoveNode_(h.NlLeft, n);
+                    h.Left = NlRemoveNode_(h.Left, n);
                 }
                 else
                 {
-                    if (NlIsRed(h.NlLeft))
+                    if (NlIsRed(h.Left))
                         h = NlRotateRight(h);
 
-                    if (h == n && (h.NlRight == null))
+                    if (h == n && (h.Right == null))
                         return null;
 
-                    if (!NlIsRed(h.NlRight) && !NlIsRed(h.NlRight.NlLeft))
+                    if (!NlIsRed(h.Right) && !NlIsRed(h.Right.Left))
                         h = NlMoveRedRight(h);
 
                     if (h == n)
                     {
                         // Get minimum node.
-                        h = n.NlRight;
-                        while (h.NlLeft != null)
-                            h = h.NlLeft;
+                        h = n.Right;
+                        while (h.Left != null)
+                            h = h.Left;
 
-                        M_Node _l = n.NlLeft;
-                        M_Node _r = NlRemoveMin(n.NlRight);
+                        M_Node _l = n.Left;
+                        M_Node _r = NlRemoveMin(n.Right);
 
-                        h.NlLeft = _l;
-                        h.NlRight = _r;
-                        h.NlColor = n.NlColor;
+                        h.Left = _l;
+                        h.Right = _r;
+                        h.Color = n.Color;
                     }
                     else
                     {
-                        h.NlRight = NlRemoveNode_(h.NlRight, n);
+                        h.Right = NlRemoveNode_(h.Right, n);
                     }
                 }
 
@@ -915,11 +860,11 @@
             {
                 Contract.Requires(h != null);
 
-                if (h.NlLeft == null)
+                if (h.Left == null)
                     return null;
-                if (!NlIsRed(h.NlLeft) && !NlIsRed(h.NlLeft.NlLeft))
+                if (!NlIsRed(h.Left) && !NlIsRed(h.Left.Left))
                     h = NlMoveRedLeft(h);
-                h.NlLeft = NlRemoveMin(h.NlLeft);
+                h.Left = NlRemoveMin(h.Left);
                 return NlFixUp(h);
             }
 
@@ -932,7 +877,7 @@
                     IntPtr curMem = cur.Memory;
                     if (mem.ToInt64() < curMem.ToInt64())
                     {
-                        cur = cur.NlLeft;
+                        cur = cur.Left;
                         continue;
                     }
                     else
@@ -940,7 +885,7 @@
                         long curEnd = curMem.ToInt64() + cur.Size;
                         if (mem.ToInt64() >= curEnd)
                         {
-                            cur = cur.NlRight;
+                            cur = cur.Right;
                             continue;
                         }
                         break;
@@ -966,7 +911,7 @@
                     _density = density;
 
                     long basize = (((Blocks + 7) >> 3) + sizeof(int) - 1) & ~(uint)(sizeof(int) - 1);
-                    NlColor = NodeColor.Red;
+                    Color = NodeColor.Red;
                     LargestBlock = size;
                     BaUsed = new int[basize / sizeof(int)];
                     BaCont = new int[basize / sizeof(int)];
@@ -984,19 +929,19 @@
                     set;
                 }
 
-                public M_Node NlLeft
+                public M_Node Left
                 {
                     get;
                     set;
                 }
 
-                public M_Node NlRight
+                public M_Node Right
                 {
                     get;
                     set;
                 }
 
-                public NodeColor NlColor
+                public NodeColor Color
                 {
                     get;
                     set;
@@ -1109,6 +1054,51 @@
                     {
                         return Size - Used;
                     }
+                }
+            }
+
+            private class GraphVizContext
+            {
+                private readonly System.IO.TextWriter _writer;
+
+                public GraphVizContext(TextWriter writer)
+                {
+                    if (writer == null)
+                        throw new ArgumentNullException("writer");
+                    Contract.EndContractBlock();
+
+                    _writer = writer;
+                }
+
+                public TextWriter Writer
+                {
+                    get
+                    {
+                        return _writer;
+                    }
+                }
+
+                public void DumpNode(M_Node node)
+                {
+                    Writer.WriteLine("  NODE_{0:X} [shape=record, style=filled, color={1}, label=\"<L>|<C>Mem: {2:X}, Used: {3}/{4}|<R>\"];",
+                        RuntimeHelpers.GetHashCode(node),
+                        node.Color == NodeColor.Red ? "red" : "gray",
+                        node.Memory, node.Used, node.Size);
+
+                    if (node.Left != null)
+                        Connect(node, node.Left, "L");
+                    if (node.Right != null)
+                        Connect(node, node.Right, "R");
+                }
+
+                public void Connect(M_Node node, M_Node other, string destination)
+                {
+                    DumpNode(other);
+
+                    Writer.Write("  NODE_{0:X}:{1} -> NODE_{2:X}:C", RuntimeHelpers.GetHashCode(node), destination, RuntimeHelpers.GetHashCode(other));
+                    if (other.Color == NodeColor.Red)
+                        Writer.Write(" [style=bold, color=red]");
+                    Writer.WriteLine(";");
                 }
             }
         }

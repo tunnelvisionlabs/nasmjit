@@ -4,6 +4,7 @@
     using AsmJitNet;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Marshal = System.Runtime.InteropServices.Marshal;
+    using TextWriter = System.IO.TextWriter;
 
     [TestClass]
     public class TestMemoryManager
@@ -21,7 +22,7 @@
         {
             MemoryManager memmgr = MemoryManager.Global;
 
-            int count = 2000;
+            int count = 20000;
 
             Console.Error.WriteLine("[Memory alloc/free test - {0} allocations]", count);
             Console.Error.WriteLine();
@@ -40,7 +41,7 @@
             }
 
             Console.Error.WriteLine(" done");
-            Stats();
+            Stats(Console.Error);
 
             Console.Error.WriteLine();
             Console.Error.Write("Freeing virtual memory...");
@@ -50,7 +51,7 @@
             }
 
             Console.Error.WriteLine(" done");
-            Stats();
+            Stats(Console.Error);
 
             Console.Error.WriteLine();
             Console.Error.WriteLine("[Verified alloc/free test - {0} allocations]", count);
@@ -81,7 +82,7 @@
                 Gen(a[i], b[i], r);
             }
             Console.Error.WriteLine("done.");
-            Stats();
+            Stats(Console.Error);
 
             Console.Error.Write("Verify and free... ");
             for (int i = 0; i < count / 2; i++)
@@ -91,7 +92,7 @@
                 Marshal.FreeHGlobal(b[i]);
             }
             Console.Error.WriteLine("done.");
-            Stats();
+            Stats(Console.Error);
         }
 
         [TestMethod]
@@ -119,7 +120,7 @@
                 Gen(a[i], b[i], r);
             }
             Console.Error.WriteLine("done.");
-            Stats();
+            Stats(Console.Error);
 
             Console.Error.WriteLine();
             Console.Error.Write("Shuffling... ");
@@ -135,14 +136,18 @@
                 Marshal.FreeHGlobal(b[i]);
             }
             Console.Error.WriteLine("done.");
-            Stats();
+            Stats(Console.Error);
         }
 
-        private static void Stats()
+        private static void Stats(TextWriter writer)
         {
             MemoryManager memmgr = MemoryManager.Global;
-            Console.Error.WriteLine("-- Used: {0}", memmgr.UsedBytes);
-            Console.Error.WriteLine("-- Allocated: {0}", memmgr.AllocatedBytes);
+            writer.WriteLine("-- Used: {0}", memmgr.UsedBytes);
+            writer.WriteLine("-- Allocated: {0}", memmgr.AllocatedBytes);
+
+            VirtualMemoryManager vmm = memmgr as VirtualMemoryManager;
+            if (vmm != null)
+                vmm.Dump(writer);
         }
 
         private void Shuffle(IntPtr[] a, IntPtr[] b)
