@@ -794,22 +794,14 @@
                 Debug.Assert(f != head);
                 Debug.Assert(q != head);
 
-                //f->data = q->data;
-                //p->node[p->node[1] == q] = q->node[q->node[0] == NULL];
-                //free(q);
                 if (f != q)
-                {
                     f.FillData(q);
-                }
 
-                {
-                    MemNode t = q.Left ?? q.Right;
-
-                    if (p.Right == q)
-                        p.Right = t;
-                    else
-                        p.Left = t;
-                }
+                MemNode c = q.Left ?? q.Right;
+                if (p.Right == q)
+                    p.Right = c;
+                else
+                    p.Left = c;
 
                 // Update root and make it black.
                 if ((_root = head.Right) != null)
