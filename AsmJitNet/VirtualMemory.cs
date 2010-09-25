@@ -46,7 +46,7 @@
             // VirtualAlloc rounds allocated size to page size automatically.
             int msize = RoundUp(length, _vm.PageSize);
 
-            // Windows XP SP2 / Vista allows Data Excution Prevention (DEP).
+            // Windows XP SP2 / Vista allow Data Excution Prevention (DEP).
             UnsafeNativeMethods.MemoryProtect protect = canExecute ? UnsafeNativeMethods.MemoryProtect.ExecuteReadwrite : UnsafeNativeMethods.MemoryProtect.Readwrite;
             IntPtr mbase = UnsafeNativeMethods.VirtualAllocEx(hProcess, IntPtr.Zero, (UIntPtr)msize, UnsafeNativeMethods.AllocationType.Commit | UnsafeNativeMethods.AllocationType.Reserve, protect);
             if (mbase == IntPtr.Zero)

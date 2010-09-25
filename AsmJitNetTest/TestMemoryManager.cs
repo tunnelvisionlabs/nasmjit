@@ -10,6 +10,12 @@
     {
         private readonly Random rand = new Random(1);
 
+        public TestContext TestContext
+        {
+            get;
+            set;
+        }
+
         [TestMethod]
         public void TestMemoryManager1()
         {
@@ -17,7 +23,7 @@
 
             int count = 2000;
 
-            Console.Error.WriteLine("[Memory manager test - {0} allocations]", count);
+            Console.Error.WriteLine("[Memory alloc/free test - {0} allocations]", count);
             Console.Error.WriteLine();
 
             IntPtr[] a = new IntPtr[count];
@@ -34,9 +40,9 @@
             }
 
             Console.Error.WriteLine(" done");
-            Console.Error.WriteLine("-- Used: {0}", memmgr.UsedBytes);
-            Console.Error.WriteLine("-- Allocated: {0}", memmgr.AllocatedBytes);
+            Stats();
 
+            Console.Error.WriteLine();
             Console.Error.Write("Freeing virtual memory...");
             for (int i = 0; i < count; i++)
             {
@@ -44,11 +50,10 @@
             }
 
             Console.Error.WriteLine(" done");
-            Console.Error.WriteLine("-- Used: {0}", memmgr.UsedBytes);
-            Console.Error.WriteLine("-- Allocated: {0}", memmgr.AllocatedBytes);
+            Stats();
 
             Console.Error.WriteLine();
-            Console.Error.WriteLine("[Verified allocation test - {0} allocations]", count);
+            Console.Error.WriteLine("[Verified alloc/free test - {0} allocations]", count);
         }
 
         [TestMethod]
@@ -58,13 +63,13 @@
 
             int count = 2000;
 
-            Console.Error.WriteLine("[Memory manager test - {0} allocations]", count);
+            Console.Error.WriteLine("[Memory alloc/free test - {0} allocations]", count);
             Console.Error.WriteLine();
 
             IntPtr[] a = new IntPtr[count];
             IntPtr[] b = new IntPtr[count];
 
-            Console.Error.WriteLine("Alloc");
+            Console.Error.Write("Alloc... ");
             for (int i = 0; i < count; i++)
             {
                 int r = rand.Next(1000) + 4;
@@ -75,14 +80,18 @@
 
                 Gen(a[i], b[i], r);
             }
+            Console.Error.WriteLine("done.");
+            Stats();
 
-            Console.Error.WriteLine("Verify and Free");
+            Console.Error.Write("Verify and free... ");
             for (int i = 0; i < count; i++)
             {
                 Verify(a[i], b[i]);
                 Assert.IsTrue(memmgr.Free(a[i]));
                 Marshal.FreeHGlobal(b[i]);
             }
+            Console.Error.WriteLine("done.");
+            Stats();
         }
 
         [TestMethod]
@@ -92,13 +101,13 @@
 
             int count = 2000;
 
-            Console.Error.WriteLine("[Memory manager test - {0} allocations]", count);
+            Console.Error.WriteLine("[Memory alloc/free test - {0} allocations]", count);
             Console.Error.WriteLine();
 
             IntPtr[] a = new IntPtr[count];
             IntPtr[] b = new IntPtr[count];
 
-            Console.Error.WriteLine("Alloc");
+            Console.Error.Write("Alloc... ");
             for (int i = 0; i < count; i++)
             {
                 int r = rand.Next(1000) + 4;
@@ -109,17 +118,31 @@
 
                 Gen(a[i], b[i], r);
             }
+            Console.Error.WriteLine("done.");
+            Stats();
 
-            Console.Error.WriteLine("Shuffling");
+            Console.Error.WriteLine();
+            Console.Error.Write("Shuffling... ");
             Shuffle(a, b);
+            Console.Error.WriteLine("done.");
 
-            Console.Error.WriteLine("Verify and Free");
+            Console.Error.WriteLine();
+            Console.Error.Write("Verify and free...");
             for (int i = 0; i < count; i += 2)
             {
                 Verify(a[i], b[i]);
                 Assert.IsTrue(memmgr.Free(a[i]));
                 Marshal.FreeHGlobal(b[i]);
             }
+            Console.Error.WriteLine("done.");
+            Stats();
+        }
+
+        private static void Stats()
+        {
+            MemoryManager memmgr = MemoryManager.Global;
+            Console.Error.WriteLine("-- Used: {0}", memmgr.UsedBytes);
+            Console.Error.WriteLine("-- Allocated: {0}", memmgr.AllocatedBytes);
         }
 
         private void Shuffle(IntPtr[] a, IntPtr[] b)
