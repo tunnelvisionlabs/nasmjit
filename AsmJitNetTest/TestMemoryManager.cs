@@ -22,7 +22,7 @@
         {
             MemoryManager memmgr = MemoryManager.Global;
 
-            int count = 20000;
+            int count = 200000;
 
             Console.Error.WriteLine("[Memory alloc/free test - {0} allocations]", count);
             Console.Error.WriteLine();
