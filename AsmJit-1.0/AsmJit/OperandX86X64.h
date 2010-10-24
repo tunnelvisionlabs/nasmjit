@@ -440,10 +440,10 @@ struct ASMJIT_HIDDEN BaseReg : public Operand
   inline BaseReg& operator=(const BaseReg& other) ASMJIT_NOTHROW
   { _copy(other); return *this; }
 
-  inline bool operator==(const BaseReg& other) ASMJIT_NOTHROW
+  inline bool operator==(const BaseReg& other) const ASMJIT_NOTHROW
   { return getRegCode() == other.getRegCode(); }
 
-  inline bool operator!=(const BaseReg& other) ASMJIT_NOTHROW
+  inline bool operator!=(const BaseReg& other) const ASMJIT_NOTHROW
   { return getRegCode() != other.getRegCode(); }
 };
 
@@ -1317,7 +1317,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
 #if !defined(ASMJIT_NODOC)
   inline Mem& operator=(const Mem& other) ASMJIT_NOTHROW { _copy(other); return *this; }
 
-  inline bool operator==(const Mem& other) ASMJIT_NOTHROW
+  inline bool operator==(const Mem& other) const ASMJIT_NOTHROW
   {
     return
       _mem.size == other._mem.size &&
@@ -1330,7 +1330,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
       _mem.displacement == other._mem.displacement;
   }
 
-  inline bool operator!=(const Mem& other) ASMJIT_NOTHROW { return *this == other; }
+  inline bool operator!=(const Mem& other) const ASMJIT_NOTHROW { return *this == other; }
 #endif // ASMJIT_NODOC
 };
 
