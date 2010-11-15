@@ -1494,13 +1494,13 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
 #if defined(ASMJIT_X64)
           // Optimize instruction size by using 32-bit immediate if value can
-          // fit to it.
+          // fit into it.
           if (immSize == 8 && Util::isInt32(src.getValue()))
           {
             _emitX86RM(0xC7,
-              dst.isRegType(REG_TYPE_GPW),
-              dst.isRegType(REG_TYPE_GPQ),
-              0,
+              0, // 16BIT
+              1, // REX.W
+              0, // O
               dst,
               0, forceRexPrefix);
             immSize = 4;
