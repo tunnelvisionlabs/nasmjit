@@ -1488,8 +1488,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           const GPReg& dst = reinterpret_cast<const GPReg&>(*o0);
           const Imm& src = reinterpret_cast<const Imm&>(*o1);
 
-          // In 64-bit mode immediate can be 64-bits long if destination operand
-          // is register (otherwise 32-bits).
+          // In 64-bit mode the immediate can be 64-bits long if the
+          // destination operand type is register (otherwise 32-bits).
           int32_t immSize = dst.getSize();
 
 #if defined(ASMJIT_X64)

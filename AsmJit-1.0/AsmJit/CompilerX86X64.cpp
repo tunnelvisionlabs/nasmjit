@@ -6890,7 +6890,7 @@ GPVar CompilerCore::newGP(uint32_t variableType, const char* name) ASMJIT_NOTHRO
                 (variableInfo[variableType].clazz & VariableInfo::CLASS_GP) != 0);
 
   GPVar var;
-  VarData* vdata = _newVarData(name, variableType, sizeof(sysint_t));
+  VarData* vdata = _newVarData(name, variableType, variableInfo[variableType].size);
 
   var._var.id = vdata->id;
   var._var.size = vdata->size;
