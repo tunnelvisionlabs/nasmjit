@@ -144,7 +144,7 @@ struct ASMJIT_API FunctionPrototype
   //! @brief Get function calling convention, see @c CALL_CONV.
   inline uint32_t getCallingConvention() const ASMJIT_NOTHROW { return _callingConvention; }
 
-  //! @brief Get whether callee pops stack.
+  //! @brief Get whether the callee pops the stack.
   inline uint32_t getCalleePopsStack() const ASMJIT_NOTHROW { return _calleePopsStack; }
 
   //! @brief Get function arguments.

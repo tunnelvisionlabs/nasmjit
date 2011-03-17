@@ -84,6 +84,7 @@ If(ASMJIT_BUILD_TEST)
     testdummy
     testfuncalign
     testfunccall1
+    testfunccall2
     testfuncmanyargs
     testfuncmemcpy
     testfuncret

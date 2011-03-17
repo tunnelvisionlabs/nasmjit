@@ -1776,17 +1776,37 @@ enum CALL_CONV
   // [Preferred Calling Convention]
 
   //! @def CALL_CONV_DEFAULT
-  //! @brief Default calling convention for current platform / operating 
-  //! system.
+  //! @brief Default calling convention for current platform / operating system.
 
 #if defined(ASMJIT_X86)
-  CALL_CONV_DEFAULT = CALL_CONV_CDECL
-#else
-# if defined(WIN32) || defined(_WIN32) || defined(WINDOWS)
-  CALL_CONV_DEFAULT = CALL_CONV_X64W
+
+  CALL_CONV_DEFAULT = CALL_CONV_CDECL,
+
+# if defined(_MSC_VER)
+  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_MSFASTCALL,
+# elif defined(__GNUC__)
+  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_GCCFASTCALL_2,
+# elif defined(__BORLANDC__)
+  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_BORLANDFASTCALL,
 # else
-  CALL_CONV_DEFAULT = CALL_CONV_X64U
+#  error "AsmJit::CALL_CONV_COMPATIBLE_FASTCALL_2 - Unsupported."
 # endif
+
+  CALL_CONV_COMPAT_STDCALL = CALL_CONV_STDCALL,
+  CALL_CONV_COMPAT_CDECL = CALL_CONV_CDECL
+
+#else
+
+# if defined(ASMJIT_WINDOWS)
+  CALL_CONV_DEFAULT = CALL_CONV_X64W,
+# else
+  CALL_CONV_DEFAULT = CALL_CONV_X64U,
+
+  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_DEFAULT,
+  CALL_CONV_COMPAT_STDCALL = CALL_CONV_DEFAULT,
+  CALL_CONV_COMPAT_CDECL = CALL_CONV_DEFAULT
+# endif
+
 #endif // ASMJIT_X86
 };
 

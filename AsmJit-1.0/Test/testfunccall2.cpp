@@ -35,10 +35,12 @@
 #include <AsmJit/MemoryManager.h>
 
 // Type of generated function.
-typedef int (*MyFn)(int, int, int);
+typedef void (*MyFn)(void);
 
-// Function that is called inside the generated one.
-static int calledFn(int a, int b, int c) { return (a + b) * c; }
+// Function that is called inside the generated one. Because this test is 
+// mainly about register arguments, we need to use the fastcall calling 
+// convention under 32-bit mode.
+static void ASMJIT_FASTCALL_2 simpleFn(int a) {}
 
 int main(int argc, char* argv[])
 {
@@ -52,26 +54,19 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int, int>());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
-  GPVar v0(c.argGP(0));
-  GPVar v1(c.argGP(1));
-  GPVar v2(c.argGP(2));
-
-  // Just do something;)
-  c.shl(v0, imm(1));
-  c.shl(v1, imm(1));
-  c.shl(v2, imm(1));
-
-  // Call function.
+  // Call a function.
   GPVar address(c.newGP());
-  c.mov(address, imm((sysint_t)(void*)calledFn));
+  GPVar argument(c.newGP(VARIABLE_TYPE_GPD));
+
+  c.mov(address, imm((sysint_t)(void*)simpleFn));
+  c.mov(argument, imm(1));
 
   ECall* ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<Void, int, int, int>());
-  ctx->setArgument(0, v2);
-  ctx->setArgument(1, v1);
-  ctx->setArgument(2, v0);
+  ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
+  ctx->setArgument(0, argument);
 
   //ctx->setReturn(v0);
   //c.ret(v0);
@@ -83,7 +78,7 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  printf("Result %u (expected 36)\n", fn(3, 2, 1));
+  fn();
 
   // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);

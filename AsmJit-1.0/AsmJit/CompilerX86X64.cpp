@@ -2852,10 +2852,10 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   // Call address.
   operandsCount++;
 
-  // First return value.
+  // The first return value.
   if (!_ret[0].isNone()) operandsCount++;
 
-  // Second return value.
+  // The second return value.
   if (!_ret[1].isNone()) operandsCount++;
 
 #define __GET_VARIABLE(__vardata__) \
@@ -2978,6 +2978,9 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
         if (fArg.registerIndex != INVALID_VALUE)
         {
+          if (vdata->homeRegisterIndex == INVALID_VALUE)
+            vdata->homeRegisterIndex = fArg.registerIndex;
+
           switch (fArg.variableType)
           {
             case VARIABLE_TYPE_GPD:
@@ -2985,10 +2988,12 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
               var->flags |= VarCallRecord::FLAG_IN_GP;
               var->inCount++;
               break;
+
             case VARIABLE_TYPE_MM:
               var->flags |= VarCallRecord::FLAG_IN_MM;
               var->inCount++;
               break;
+
             case VARIABLE_TYPE_XMM:
             case VARIABLE_TYPE_XMM_1F:
             case VARIABLE_TYPE_XMM_4F:
@@ -2997,6 +3002,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
               var->flags |= VarCallRecord::FLAG_IN_XMM;
               var->inCount++;
               break;
+
             default:
               ASMJIT_ASSERT(0);
           }
@@ -3507,10 +3513,8 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   compiler->emit(INST_CALL, _target);
 
 
-  // Restore stack offset if needed. This is mainly for STDCALL calling
-  // convention used by Windows. Standard 32-bit and 64-bit calling
-  // conventions don't need this.
-  if (getPrototype().getCalleePopsStack())
+  // Restore the stack offset.
+  if (!getPrototype().getCalleePopsStack())
   {
     int32_t s = (int32_t)getPrototype().getArgumentsStackSize();
     if (s) compiler->emit(INST_SUB, nsp, imm(s));
