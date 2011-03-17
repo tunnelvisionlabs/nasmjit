@@ -891,6 +891,17 @@ struct ASMJIT_API EFunction : public Emittable
   inline const Label& getExitLabel() const ASMJIT_NOTHROW { return _exitLabel; }
 
   // --------------------------------------------------------------------------
+  // [Misc]
+  // --------------------------------------------------------------------------
+
+  //! @brief Set the _isEspAdjusted member to true.
+  //!
+  //! This method is used to tell compiler that the ESP/RSP must be adjusted in
+  //! function prolog/epilog, because the stack is manipulated (usually caused
+  //! by the function call, see @c ECall).
+  inline void mustAdjustEsp() { _isEspAdjusted = true; }
+
+  // --------------------------------------------------------------------------
   // [Members]
   // --------------------------------------------------------------------------
 

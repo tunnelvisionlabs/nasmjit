@@ -2232,10 +2232,6 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   _emitSFence = false;
   _emitLFence = false;
 
-  // If another function is called by the function it's needed to adjust ESP.
-  if (_isCaller)
-    _isEspAdjusted = true;
-
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
     _isNaked = (bool)_hints[FUNCTION_HINT_NAKED];
 
@@ -2846,6 +2842,10 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         default:
           ASMJIT_ASSERT(0);
       }
+    }
+    else
+    {
+      cc.getFunction()->mustAdjustEsp();
     }
   }
 

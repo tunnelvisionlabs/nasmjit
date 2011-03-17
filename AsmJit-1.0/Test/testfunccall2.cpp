@@ -68,9 +68,6 @@ int main(int argc, char* argv[])
   ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
   ctx->setArgument(0, argument);
 
-  //ctx->setReturn(v0);
-  //c.ret(v0);
-
   c.endFunction();
   // ==========================================================================
 
