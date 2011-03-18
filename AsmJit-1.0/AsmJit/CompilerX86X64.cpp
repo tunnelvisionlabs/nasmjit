@@ -2519,7 +2519,7 @@ void EFunction::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     _peAdjustStackSize;
   int32_t nspPos;
 
-  if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
+  if (_compiler->getLogger())
   {
     // Here function prolog starts.
     _compiler->comment("Prolog");
@@ -2604,7 +2604,7 @@ void EFunction::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
+  if (_compiler->getLogger())
   {
     _compiler->comment("Body");
   }
@@ -2630,7 +2630,7 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     ? (_memStackSize16)
     : -(_peMovStackSize + _peAdjustStackSize);
 
-  if (_compiler->getLogger() && _compiler->getLogger()->isUsed())
+  if (_compiler->getLogger())
   {
     _compiler->comment("Epilog");
   }
@@ -4733,8 +4733,7 @@ CompilerContext::CompilerContext(Compiler* compiler) ASMJIT_NOTHROW :
   _compiler = compiler;
   _clear();
 
-  _emitComments = compiler->getLogger() != NULL &&
-                  compiler->getLogger()->isUsed();
+  _emitComments = compiler->getLogger() != NULL;
 }
 
 CompilerContext::~CompilerContext() ASMJIT_NOTHROW
@@ -6464,9 +6463,9 @@ void CompilerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
 void CompilerCore::setError(uint32_t error) ASMJIT_NOTHROW
 {
   _error = error;
+  if (_error == ERROR_NONE) return;
 
-  // Log.
-  if (_error != ERROR_NONE && _logger && _logger->isUsed())
+  if (_logger)
   {
     _logger->logFormat("*** COMPILER ERROR: %s (%u).\n",
       getErrorCodeAsString(error),
@@ -7150,7 +7149,7 @@ void* CompilerCore::make() ASMJIT_NOTHROW
   }
 
   void* result = a.make();
-  if (_logger && _logger->isUsed())
+  if (_logger)
   {
     _logger->logFormat("*** COMPILER SUCCESS - Wrote %u bytes, code: %u, trampolines: %u.\n\n",
       (unsigned int)a.getCodeSize(),
@@ -7295,7 +7294,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
     cc._patchMemoryOperands(start, stop);
 
     // Dump function prototype and variable statistics (if enabled).
-    if (_logger && _logger->isUsed())
+    if (_logger)
     {
       cc._function->_dumpFunction(cc);
     }

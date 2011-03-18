@@ -121,9 +121,9 @@ void AssemblerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
 void AssemblerCore::setError(uint32_t error) ASMJIT_NOTHROW
 {
   _error = error;
+  if (_error == ERROR_NONE) return;
 
-  // Log.
-  if (_error != ERROR_NONE && _logger && _logger->isUsed())
+  if (_logger)
   {
     _logger->logFormat("*** ASSEMBLER ERROR: %s (%u).\n",
       getErrorCodeAsString(error),
@@ -446,7 +446,7 @@ void AssemblerCore::_emitModM(
 
       if (target > (sysuint_t)0xFFFFFFFF)
       {
-        if (_logger && _logger->isUsed())
+        if (_logger) 
         {
           _logger->logString("*** ASSEMBER WARNING - Absolute address truncated to 32-bits.\n");
         }
@@ -1391,7 +1391,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           {
             if (isShortJump)
             {
-              if (_logger && _logger->isUsed())
+              if (_logger)
               {
                 _logger->logString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!\n");
                 _emitOptions &= ~EMIT_OPTION_SHORT_JUMP;
@@ -2421,7 +2421,7 @@ illegalInstruction:
 #endif // ASMJIT_DEBUG
 
 end:
-  if ((_logger && _logger->isUsed())
+  if (_logger
 #if defined(ASMJIT_DEBUG)
       || assertIllegal
 #endif // ASMJIT_DEBUG
@@ -2557,7 +2557,7 @@ void AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NO
 #if defined(ASMJIT_X64)
     if (useTrampoline)
     {
-      if (getLogger() && getLogger()->isUsed())
+      if (getLogger())
       {
         getLogger()->logFormat("; Trampoline from %p -> %p\n", (int8_t*)addressBase + r.offset, r.address);
       }
@@ -2577,7 +2577,7 @@ void AssemblerCore::embed(const void* data, sysuint_t size) ASMJIT_NOTHROW
 {
   if (!canEmit()) return;
 
-  if (_logger && _logger->isUsed())
+  if (_logger)
   {
     sysuint_t i, j;
     sysuint_t max;
@@ -2613,7 +2613,7 @@ void AssemblerCore::embedLabel(const Label& label) ASMJIT_NOTHROW
   LabelData& l_data = _labelData[label.getId() & OPERAND_ID_VALUE_MASK];
   RelocData r_data;
 
-  if (_logger && _logger->isUsed())
+  if (_logger)
   {
     _logger->logFormat(sizeof(sysint_t) == 4 ? ".dd L.%u\n" : ".dq L.%u\n", (uint32_t)label.getId() & OPERAND_ID_VALUE_MASK);
   }
@@ -2654,7 +2654,7 @@ void AssemblerCore::embedLabel(const Label& label) ASMJIT_NOTHROW
 void AssemblerCore::align(uint32_t m) ASMJIT_NOTHROW
 {
   if (!canEmit()) return;
-  if (_logger && _logger->isUsed()) _logger->logFormat(".align %u", (uint)m);
+  if (_logger) _logger->logFormat(".align %u", (uint)m);
 
   if (!m) return;
 
@@ -2812,7 +2812,7 @@ void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
   ASMJIT_ASSERT(l_data.offset == -1);
 
   // Log.
-  if (_logger && _logger->isUsed()) _logger->logFormat("L.%u:\n", (uint32_t)label.getId() & OPERAND_ID_VALUE_MASK);
+  if (_logger) _logger->logFormat("L.%u:\n", (uint32_t)label.getId() & OPERAND_ID_VALUE_MASK);
 
   sysint_t pos = getOffset();
 

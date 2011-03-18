@@ -165,7 +165,7 @@ EComment::~EComment() ASMJIT_NOTHROW
 
 void EComment::emit(Assembler& a) ASMJIT_NOTHROW
 {
-  if (a.getLogger() && a.getLogger()->isUsed())
+  if (a.getLogger())
   {
     a.getLogger()->logString(getComment());
   }
