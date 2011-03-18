@@ -2235,6 +2235,9 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   if (_isCaller && cc._memBytesTotal > 0)
     _isEspAdjusted = true;
 
+  if (_functionPrototype.getCallingConvention() == CALL_CONV_X64U && cc._memBytesTotal >= 128)
+    _isEspAdjusted = true;
+
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
     _isNaked = (bool)_hints[FUNCTION_HINT_NAKED];
 
