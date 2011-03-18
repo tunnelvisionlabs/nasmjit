@@ -54,6 +54,8 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
+  ECall* ctx;
+
   c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
@@ -64,7 +66,13 @@ int main(int argc, char* argv[])
   c.mov(address, imm((sysint_t)(void*)simpleFn));
   c.mov(argument, imm(1));
 
-  ECall* ctx = c.call(address);
+  ctx = c.call(address);
+  ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
+  ctx->setArgument(0, argument);
+
+  c.mov(argument, imm(2));
+
+  ctx = c.call(address);
   ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
   ctx->setArgument(0, argument);
 
