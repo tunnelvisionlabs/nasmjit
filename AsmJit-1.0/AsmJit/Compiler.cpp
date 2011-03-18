@@ -89,6 +89,11 @@ int Emittable::getMaxSize() const ASMJIT_NOTHROW
   return -1;
 }
 
+bool Emittable::_tryUnuseVar(VarData* v) ASMJIT_NOTHROW
+{
+  return false;
+}
+
 void Emittable::setComment(const char* str) ASMJIT_NOTHROW
 {
   _comment = _compiler->getZone().zstrdup(str);

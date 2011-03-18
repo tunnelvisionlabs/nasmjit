@@ -475,7 +475,9 @@ struct VarCallRecord
     FLAG_OUT_XMM1 = 0x0800,
 
     FLAG_IN_MEM_PTR = 0x1000,
-    FLAG_CALL_OPERAND = 0x2000
+    FLAG_CALL_OPERAND = 0x2000,
+
+    FLAG_UNUSE_AFTER_USE = 0x4000
   };
 };
 
@@ -639,6 +641,7 @@ struct ASMJIT_API EInstruction : public Emittable
   // --------------------------------------------------------------------------
 
   virtual int getMaxSize() const ASMJIT_NOTHROW;
+  virtual bool _tryUnuseVar(VarData* v) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Instruction Code]
@@ -1137,6 +1140,7 @@ struct ASMJIT_API ECall : public Emittable
   // --------------------------------------------------------------------------
 
   virtual int getMaxSize() const ASMJIT_NOTHROW;
+  virtual bool _tryUnuseVar(VarData* v) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Internal]
@@ -1358,7 +1362,25 @@ struct ASMJIT_API CompilerContext
   void unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW;
 
   //! @brief Helper method that is called for each variable per emittable.
-  inline void unuseVarOnEndOfScope(Emittable* e, VarData* v) { if (v->lastEmittable == e) unuseVar(v, VARIABLE_STATE_UNUSED); }
+  inline void _unuseVarOnEndOfScope(Emittable* e, VarData* v)
+  {
+    if (v->lastEmittable == e)
+      unuseVar(v, VARIABLE_STATE_UNUSED);
+  }
+  //! @overload
+  inline void _unuseVarOnEndOfScope(Emittable* e, VarAllocRecord* rec)
+  {
+    VarData* v = rec->vdata;
+    if (v->lastEmittable == e || (rec->vflags & VARIABLE_ALLOC_UNUSE_AFTER_USE))
+      unuseVar(v, VARIABLE_STATE_UNUSED);
+  }
+  //! @overload
+  inline void _unuseVarOnEndOfScope(Emittable* e, VarCallRecord* rec)
+  {
+    VarData* v = rec->vdata;
+    if (v->lastEmittable == e || (rec->flags & VarCallRecord::FLAG_UNUSE_AFTER_USE))
+      unuseVar(v, VARIABLE_STATE_UNUSED);
+  }
 
   //! @brief Allocate variable (GP).
   void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;

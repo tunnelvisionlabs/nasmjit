@@ -282,11 +282,6 @@ enum VARIABLE_STATE
 //! @brief Variable alloc mode.
 enum VARIABLE_ALLOC
 {
-  //! @brief Variable can be allocated in register.
-  VARIABLE_ALLOC_REGISTER = 0x10,
-  //! @brief Variable can be allocated in memory.
-  VARIABLE_ALLOC_MEMORY = 0x20,
-
   //! @brief Allocating variable to read only.
   //!
   //! Read only variables are used to optimize variable spilling. If variable
@@ -308,7 +303,15 @@ enum VARIABLE_ALLOC
   //! Variable allocated for read / write is marked as changed. This means that
   //! if variable must be later spilled into memory, mov (or similar)
   //! instruction will be generated.
-  VARIABLE_ALLOC_READWRITE = 0x3
+  VARIABLE_ALLOC_READWRITE = 0x3,
+
+  //! @brief Variable can be allocated in register.
+  VARIABLE_ALLOC_REGISTER = 0x10,
+  //! @brief Variable can be allocated in memory.
+  VARIABLE_ALLOC_MEMORY = 0x20,
+
+  //! @brief Unuse the variable after use.
+  VARIABLE_ALLOC_UNUSE_AFTER_USE = 0x100
 };
 
 // ============================================================================

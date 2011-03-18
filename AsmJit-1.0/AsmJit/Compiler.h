@@ -470,6 +470,12 @@ struct ASMJIT_API Emittable
   //! @brief Get maximum size in bytes of this emittable (in binary).
   virtual int getMaxSize() const ASMJIT_NOTHROW;
 
+  //! @brief Try to unuse the variable @a.
+  //!
+  //! Returns @c true only if the variable will be unused by the instruction,
+  //! otherwise @c false is returned.
+  virtual bool _tryUnuseVar(VarData* v) ASMJIT_NOTHROW;
+
   // --------------------------------------------------------------------------
   // [Compiler]
   // --------------------------------------------------------------------------

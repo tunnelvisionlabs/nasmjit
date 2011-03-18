@@ -64,14 +64,14 @@ int main(int argc, char* argv[])
   GPVar argument(c.newGP(VARIABLE_TYPE_GPD));
 
   c.mov(address, imm((sysint_t)(void*)simpleFn));
-  c.mov(argument, imm(1));
 
+  c.mov(argument, imm(1));
   ctx = c.call(address);
   ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
   ctx->setArgument(0, argument);
+  c.unuse(argument);
 
   c.mov(argument, imm(2));
-
   ctx = c.call(address);
   ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
   ctx->setArgument(0, argument);

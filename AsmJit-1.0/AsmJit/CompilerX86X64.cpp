@@ -646,6 +646,8 @@ void EVariableHint::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   // First emittable (begin of variable scope).
   if (_vdata->firstEmittable == NULL) _vdata->firstEmittable = this;
 
+  Emittable* oldLast = _vdata->lastEmittable;
+
   // Last emittable (end of variable scope).
   _vdata->lastEmittable = this;
 
@@ -658,8 +660,9 @@ void EVariableHint::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       break;
     case VARIABLE_HINT_SAVE_AND_UNUSE:
       if (!cc._isActive(_vdata)) cc._addActive(_vdata);
-      // ... fall through ...
+      break;
     case VARIABLE_HINT_UNUSE:
+      if (oldLast) oldLast->_tryUnuseVar(_vdata);
       break;
   }
 }
@@ -690,7 +693,7 @@ unuse:
       goto end;
   }
 
-  cc.unuseVarOnEndOfScope(this, _vdata);
+  cc._unuseVarOnEndOfScope(this, _vdata);
 
 end:
   return translated();
@@ -1664,7 +1667,7 @@ Emittable* EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < variablesCount; i++)
   {
-    cc.unuseVarOnEndOfScope(this, _variables[i].vdata);
+    cc._unuseVarOnEndOfScope(this, &_variables[i]);
   }
 
   return translated();
@@ -1842,6 +1845,20 @@ int EInstruction::getMaxSize() const ASMJIT_NOTHROW
   return 15;
 }
 
+bool EInstruction::_tryUnuseVar(VarData* v) ASMJIT_NOTHROW
+{
+  for (uint32_t i = 0; i < _variablesCount; i++)
+  {
+    if (_variables[i].vdata == v)
+    {
+      _variables[i].vflags |= VARIABLE_ALLOC_UNUSE_AFTER_USE;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 ETarget* EInstruction::getJumpTarget() const ASMJIT_NOTHROW
 {
   return NULL;
@@ -1946,7 +1963,7 @@ Emittable* EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarData* var = first;
 
     do {
-      cc.unuseVarOnEndOfScope(this, var);
+      cc._unuseVarOnEndOfScope(this, var);
       var = var->nextActive;
     } while (var != first);
   }
@@ -3498,7 +3515,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     if (vdata && (preserved & mask) == 0)
     {
       VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->tempPtr);
-      if (rec && (rec->outCount || vdata->lastEmittable == this))
+      if (rec && (rec->outCount || rec->flags & VarCallRecord::FLAG_UNUSE_AFTER_USE || vdata->lastEmittable == this))
         cc.unuseVar(vdata, VARIABLE_STATE_UNUSED);
       else
         cc.spillGPVar(vdata);
@@ -3630,8 +3647,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < variablesCount; i++)
   {
-    VarData* v = _variables[i].vdata;
-    cc.unuseVarOnEndOfScope(this, _variables[i].vdata);
+    cc._unuseVarOnEndOfScope(this, &_variables[i]);
   }
 
   return translated();
@@ -3641,6 +3657,20 @@ int ECall::getMaxSize() const ASMJIT_NOTHROW
 {
   // TODO: Not optimal.
   return 15;
+}
+
+bool ECall::_tryUnuseVar(VarData* v) ASMJIT_NOTHROW
+{
+  for (uint32_t i = 0; i < _variablesCount; i++)
+  {
+    if (_variables[i].vdata == v)
+    {
+      _variables[i].flags |= VarCallRecord::FLAG_UNUSE_AFTER_USE;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 uint32_t ECall::_findTemporaryGpRegister(CompilerContext& cc) ASMJIT_NOTHROW
@@ -4667,7 +4697,7 @@ Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
     if (_ret[i].isVar())
     {
       VarData* vdata = compiler->_getVarData(_ret[i].getId());
-      cc.unuseVarOnEndOfScope(this, vdata);
+      cc._unuseVarOnEndOfScope(this, vdata);
     }
   }
 
