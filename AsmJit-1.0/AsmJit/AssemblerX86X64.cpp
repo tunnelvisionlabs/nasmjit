@@ -2478,7 +2478,7 @@ void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) A
 // [AsmJit::AssemblerCore - Relocation helpers]
 // ============================================================================
 
-void AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
+sysuint_t AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
@@ -2567,6 +2567,12 @@ void AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NO
     }
 #endif // ASMJIT_X64
   }
+
+#if defined(ASMJIT_X64)
+  return (sysuint_t)(tramp - dst);
+#else
+  return (sysuint_t)coff;
+#endif // ASMJIT_X64
 }
 
 // ============================================================================

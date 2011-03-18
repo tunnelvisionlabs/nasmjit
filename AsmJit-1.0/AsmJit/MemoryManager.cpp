@@ -277,6 +277,7 @@ struct ASMJIT_HIDDEN MemoryManagerPrivate
   void* allocFreeable(sysuint_t vsize) ASMJIT_NOTHROW;
 
   bool free(void* address) ASMJIT_NOTHROW;
+  bool shrink(void* address, sysuint_t used) ASMJIT_NOTHROW;
   void freeAll(bool keepVirtualMemory) ASMJIT_NOTHROW;
 
   // Helpers to avoid ifdefs in the code.
@@ -611,16 +612,14 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
   sysuint_t offset = (sysuint_t)((uint8_t*)address - (uint8_t*)node->mem);
   sysuint_t bitpos = M_DIV(offset, node->density);
   sysuint_t i = (bitpos / BITS_PER_ENTITY);
-  sysuint_t j = (bitpos % BITS_PER_ENTITY);
 
   sysuint_t* up = node->baUsed + i;  // Current ubits address.
   sysuint_t* cp = node->baCont + i;  // Current cbits address.
   sysuint_t ubits = *up;             // Current ubits[0] value.
   sysuint_t cbits = *cp;             // Current cbits[0] value.
-  sysuint_t bit = (sysuint_t)1 << j; // Current bit mask.
+  sysuint_t bit = (sysuint_t)1 << (bitpos % BITS_PER_ENTITY);
 
   sysuint_t cont = 0;
-
   bool stop;
 
   for (;;)
@@ -629,21 +628,17 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     ubits &= ~bit;
     cbits &= ~bit;
 
-    j++;
     bit <<= 1;
     cont++;
 
-    if (stop || j == BITS_PER_ENTITY)
+    if (stop || bit == 0)
     {
       *up = ubits;
       *cp = cbits;
-
       if (stop) break;
 
       ubits = *++up;
       cbits = *++cp;
-
-      j = 0;
       bit = 1;
     }
   }
@@ -685,6 +680,84 @@ bool MemoryManagerPrivate::free(void* address) ASMJIT_NOTHROW
     ASMJIT_FREE(removeNode(node));
     ASMJIT_ASSERT(checkTree());
   }
+
+  return true;
+}
+
+bool MemoryManagerPrivate::shrink(void* address, sysuint_t used) ASMJIT_NOTHROW
+{
+  if (address == NULL) return false;
+  if (used == 0) return free(address);
+
+  AutoLock locked(_lock);
+
+  MemNode* node = findPtr((uint8_t*)address);
+  if (node == NULL)
+    return false;
+
+  sysuint_t offset = (sysuint_t)((uint8_t*)address - (uint8_t*)node->mem);
+  sysuint_t bitpos = M_DIV(offset, node->density);
+  sysuint_t i = (bitpos / BITS_PER_ENTITY);
+
+  sysuint_t* up = node->baUsed + i;  // Current ubits address.
+  sysuint_t* cp = node->baCont + i;  // Current cbits address.
+  sysuint_t ubits = *up;             // Current ubits[0] value.
+  sysuint_t cbits = *cp;             // Current cbits[0] value.
+  sysuint_t bit = (sysuint_t)1 << (bitpos % BITS_PER_ENTITY);
+
+  sysuint_t cont = 0;
+  sysuint_t usedBlocks = (used + node->density - 1) / node->density;
+
+  bool stop;
+
+  // Find the first block we can mark as free.
+  for (;;)
+  {
+    stop = (cbits & bit) == 0;
+    if (stop) return true;
+
+    if (++cont == usedBlocks) break;
+
+    bit <<= 1;
+    if (bit == 0)
+    {
+      ubits = *++up;
+      cbits = *++cp;
+      bit = 1;
+    }
+  }
+
+  // Free the tail blocks.
+  cont = (sysuint_t)-1;
+  goto enterFreeLoop;
+
+  for (;;)
+  {
+    stop = (cbits & bit) == 0;
+    ubits &= ~bit;
+enterFreeLoop:
+    cbits &= ~bit;
+
+    bit <<= 1;
+    cont++;
+
+    if (stop || bit == 0)
+    {
+      *up = ubits;
+      *cp = cbits;
+      if (stop) break;
+
+      ubits = *++up;
+      cbits = *++cp;
+      bit = 1;
+    }
+  }
+
+  // Statistics.
+  cont *= node->density;
+  if (node->largestBlock < cont) node->largestBlock = cont;
+  node->used -= cont;
+  _used -= cont;
 
   return true;
 }
@@ -1035,6 +1108,12 @@ bool VirtualMemoryManager::free(void* address) ASMJIT_NOTHROW
 {
   MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
   return d->free(address);
+}
+
+bool VirtualMemoryManager::shrink(void* address, sysuint_t used) ASMJIT_NOTHROW
+{
+  MemoryManagerPrivate* d = reinterpret_cast<MemoryManagerPrivate*>(_d);
+  return d->shrink(address, used);
 }
 
 void VirtualMemoryManager::freeAll() ASMJIT_NOTHROW

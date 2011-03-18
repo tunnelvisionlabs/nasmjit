@@ -84,9 +84,16 @@ uint32_t JitCodeGenerator::generate(void** dest, Assembler* assembler)
     return ERROR_NO_VIRTUAL_MEMORY;
   }
 
-  // This is the last step. Relocate the code and return it.
-  assembler->relocCode(p);
+  // Relocate the code.
+  sysuint_t relocatedSize = assembler->relocCode(p);
 
+  // Return unused memory to mamory-manager.
+  if (relocatedSize < codeSize)
+  {
+    memmgr->shrink(p, relocatedSize);
+  }
+
+  // Return the code.
   *dest = p;
   return ERROR_NONE;
 }

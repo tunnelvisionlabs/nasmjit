@@ -75,6 +75,8 @@ struct ASMJIT_API MemoryManager
   virtual void* alloc(sysuint_t size, uint32_t type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW = 0;
   //! @brief Free previously allocated memory at a given @a address.
   virtual bool free(void* address) ASMJIT_NOTHROW = 0;
+  //! @brief Free some tail memory.
+  virtual bool shrink(void* address, sysuint_t used) ASMJIT_NOTHROW = 0;
   //! @brief Free all allocated memory.
   virtual void freeAll() ASMJIT_NOTHROW = 0;
 
@@ -121,6 +123,7 @@ struct ASMJIT_API VirtualMemoryManager : public MemoryManager
 
   virtual void* alloc(sysuint_t size, uint32_t type = MEMORY_ALLOC_FREEABLE) ASMJIT_NOTHROW;
   virtual bool free(void* address) ASMJIT_NOTHROW;
+  virtual bool shrink(void* address, sysuint_t used) ASMJIT_NOTHROW;
   virtual void freeAll() ASMJIT_NOTHROW;
 
   virtual sysuint_t getUsedBytes() ASMJIT_NOTHROW;

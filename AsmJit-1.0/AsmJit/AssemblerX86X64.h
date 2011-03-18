@@ -530,13 +530,20 @@ struct ASMJIT_API AssemblerCore
   //! integer type. But when generating code for remote process then the value
   //! can be different.
   //!
+  //! @retval The bytes used. Code-generator can create trampolines which are
+  //! used when calling other functions inside the JIT code. However, these
+  //! trampolines can be unused so the relocCode() returns the exact size needed
+  //! for the function.
+  //!
   //! A given buffer will be overwritten, to get number of bytes required use
   //! @c getCodeSize() .
-  virtual void relocCode(void* dst, sysuint_t addressBase) const ASMJIT_NOTHROW;
+  virtual sysuint_t relocCode(void* dst, sysuint_t addressBase) const ASMJIT_NOTHROW;
 
   //! @brief Simplifed version of @c relocCode() method.
-  inline void relocCode(void* dst) const ASMJIT_NOTHROW
-  { relocCode(dst, (sysuint_t)dst); }
+  inline sysuint_t relocCode(void* dst) const ASMJIT_NOTHROW
+  {
+    return relocCode(dst, (sysuint_t)dst);
+  }
 
   // --------------------------------------------------------------------------
   // [Embed]
