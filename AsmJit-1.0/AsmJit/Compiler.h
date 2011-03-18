@@ -528,7 +528,13 @@ struct ASMJIT_API Emittable
 
 protected:
   //! @brief Mark emittable as translated and return next.
-  inline Emittable* translated() ASMJIT_NOTHROW { _translated = true; return getNext(); }
+  inline Emittable* translated() ASMJIT_NOTHROW
+  {
+    ASMJIT_ASSERT(_translated == false);
+
+    _translated = true;
+    return _next;
+  }
 
   // --------------------------------------------------------------------------
   // [Members]

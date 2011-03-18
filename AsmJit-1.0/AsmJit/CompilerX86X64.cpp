@@ -7295,10 +7295,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
       while (cc._backPos < len)
       {
         cur = cc._backCode[cc._backPos++]->getNext();
-        if (!cur->isTranslated()) 
-        {
-          break;
-        }
+        if (!cur->isTranslated()) break;
 
         cur = NULL;
       }

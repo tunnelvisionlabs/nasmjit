@@ -253,6 +253,15 @@ void ETarget::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
 Emittable* ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
+  // If this ETarget was already translated, it's needed to change the current
+  // state and return NULL to tell CompilerContext to process next untranslated
+  // emittable.
+  if (_translated)
+  {
+    cc._restoreState(_state);
+    return NULL;
+  }
+
   if (cc._unrecheable)
   {
     cc._unrecheable = 0;
