@@ -495,6 +495,7 @@ void FunctionPrototype::_setPrototype(
   for (i = istart; i != iend; i += istep)
   {
     Argument& a = _arguments[i];
+    if (a.registerIndex != INVALID_VALUE) continue;
 
     if (isVariableInteger(a.variableType))
     {
@@ -3559,8 +3560,9 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
 
   // Restore the stack offset.
-  if (!getPrototype().getCalleePopsStack())
+  if (getPrototype().getCalleePopsStack())
   {
+    // abc
     int32_t s = (int32_t)getPrototype().getArgumentsStackSize();
     if (s) compiler->emit(INST_SUB, nsp, imm(s));
   }
