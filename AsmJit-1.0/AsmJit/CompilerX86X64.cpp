@@ -3387,7 +3387,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
           bool doSpill = true;
 
-          // Emit xchg instead of spill/alloc if possible (only GP registers).
+          // Emit xchg instead of spill/alloc if possible (GP registers only).
           if (x != INVALID_VALUE && getVariableClass(vdst->type) & VariableInfo::CLASS_GP)
           {
             const FunctionPrototype::Argument& dstArgType = targs[x];
@@ -3430,6 +3430,24 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
         VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vsrc->tempPtr);
 
         _moveSrcVariableToRegister(cc, vsrc, srcArgType);
+
+        switch (srcArgType.variableType)
+        {
+          case VARIABLE_TYPE_GPD:
+          case VARIABLE_TYPE_GPQ:
+            cc._markChangedGPRegister(srcArgType.registerIndex);
+            break;
+          case VARIABLE_TYPE_MM:
+            cc._markChangedMMRegister(srcArgType.registerIndex);
+            break;
+          case VARIABLE_TYPE_XMM:
+          case VARIABLE_TYPE_XMM_1F:
+          case VARIABLE_TYPE_XMM_1D:
+          case VARIABLE_TYPE_XMM_4F:
+          case VARIABLE_TYPE_XMM_2D:
+            cc._markChangedMMRegister(srcArgType.registerIndex);
+            break;
+        }
 
         rec->inDone++;
         processed[i] = true;
@@ -6481,6 +6499,7 @@ void CompilerCore::clear() ASMJIT_NOTHROW
   delAll(_first);
   _first = NULL;
   _last = NULL;
+  _current = NULL;
 
   _zone.freeAll();
   _targetData.clear();
