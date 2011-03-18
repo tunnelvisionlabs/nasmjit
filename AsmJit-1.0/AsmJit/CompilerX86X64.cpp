@@ -2232,10 +2232,14 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   _emitSFence = false;
   _emitLFence = false;
 
+  uint32_t accessibleMemoryBelowStack = 0;
+  if (_functionPrototype.getCallingConvention() == CALL_CONV_X64U) 
+    accessibleMemoryBelowStack = 128;
+
   if (_isCaller && cc._memBytesTotal > 0)
     _isEspAdjusted = true;
 
-  if (_functionPrototype.getCallingConvention() == CALL_CONV_X64U && cc._memBytesTotal >= 128)
+  if (cc._memBytesTotal > accessibleMemoryBelowStack)
     _isEspAdjusted = true;
 
   if (_hints[FUNCTION_HINT_NAKED] != INVALID_VALUE)
