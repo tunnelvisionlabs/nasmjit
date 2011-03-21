@@ -49,17 +49,17 @@ namespace Util
   // --------------------------------------------------------------------------
 
   //! @brief Returns @c true if a given integer @a x is signed 8-bit integer
-  inline bool isInt8(sysint_t x) ASMJIT_NOTHROW { return x >= -128 && x <= 127; }
+  static inline bool isInt8(sysint_t x) ASMJIT_NOTHROW { return x >= -128 && x <= 127; }
   //! @brief Returns @c true if a given integer @a x is unsigned 8-bit integer
-  inline bool isUInt8(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 255; }
+  static inline bool isUInt8(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 255; }
 
   //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
-  inline bool isInt16(sysint_t x) ASMJIT_NOTHROW { return x >= -32768 && x <= 32767; }
+  static inline bool isInt16(sysint_t x) ASMJIT_NOTHROW { return x >= -32768 && x <= 32767; }
   //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
-  inline bool isUInt16(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 65535; }
+  static inline bool isUInt16(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 65535; }
 
   //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
-  inline bool isInt32(sysint_t x) ASMJIT_NOTHROW
+  static inline bool isInt32(sysint_t x) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X86)
     return true;
@@ -68,7 +68,7 @@ namespace Util
 #endif
   }
   //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
-  inline bool isUInt32(sysint_t x) ASMJIT_NOTHROW
+  static inline bool isUInt32(sysint_t x) ASMJIT_NOTHROW
   {
 #if defined(ASMJIT_X86)
     return x >= 0;
@@ -104,7 +104,7 @@ namespace Util
   };
 
   //! @brief Binary cast from 32-bit integer to SP-FP value (@c float).
-  inline float int32AsFloat(int32_t i) ASMJIT_NOTHROW
+  static inline float int32AsFloat(int32_t i) ASMJIT_NOTHROW
   {
     I32FPUnion u;
     u.i = i;
@@ -112,7 +112,7 @@ namespace Util
   }
 
   //! @brief Binary cast SP-FP value (@c float) to 32-bit integer.
-  inline int32_t floatAsInt32(float f) ASMJIT_NOTHROW
+  static inline int32_t floatAsInt32(float f) ASMJIT_NOTHROW
   {
     I32FPUnion u;
     u.f = f;
@@ -120,7 +120,7 @@ namespace Util
   }
 
   //! @brief Binary cast from 64-bit integer to DP-FP value (@c double).
-  inline double int64AsDouble(int64_t i) ASMJIT_NOTHROW
+  static inline double int64AsDouble(int64_t i) ASMJIT_NOTHROW
   {
     I64FPUnion u;
     u.i = i;
@@ -128,7 +128,7 @@ namespace Util
   }
 
   //! @brief Binary cast from DP-FP value (@c double) to 64-bit integer.
-  inline int64_t doubleAsInt64(double f) ASMJIT_NOTHROW
+  static inline int64_t doubleAsInt64(double f) ASMJIT_NOTHROW
   {
     I64FPUnion u;
     u.f = f;
@@ -149,11 +149,52 @@ namespace Util
   // [Mem Utils]
   // --------------------------------------------------------------------------
 
-  inline void memset32(uint32_t* p, uint32_t c, sysuint_t len)
+  static inline void memset32(uint32_t* p, uint32_t c, sysuint_t len) ASMJIT_NOTHROW
   {
     sysuint_t i;
     for (i = 0; i < len; i++) p[i] = c;
   }
+
+  // --------------------------------------------------------------------------
+  // [Bit Utils]
+  // --------------------------------------------------------------------------
+
+  // From http://graphics.stanford.edu/~seander/bithacks.html .
+  static inline uint32_t bitCount(uint32_t x)
+  {
+    x = x - ((x >> 1) & 0x55555555);
+    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+    return ((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+  }
+
+  static inline uint32_t findFirstOne(uint32_t mask) ASMJIT_NOTHROW
+  {
+    for (uint32_t i = 0, bit = 1; i < sizeof(uint32_t); i++, bit <<= 1)
+    {
+      if (mask & bit) return i;
+    }
+    return 0xFFFFFFFF;
+  }
+
+  // --------------------------------------------------------------------------
+  // [Alignment]
+  // --------------------------------------------------------------------------
+
+  // Align variable @a x to 16-bytes.
+  template<typename T>
+  static inline T alignTo16(const T& x)
+  {
+    return (x + (T)15) & (T)~15;
+  }
+
+  // Return the size needed to align variable @a x to 16-bytes.
+  template<typename T>
+  static inline T deltaTo16(const T& x)
+  {
+    T aligned = alignTo16(x);
+    return aligned - x;
+  }
+
 } // Util namespace
 
 //! @}

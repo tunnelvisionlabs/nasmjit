@@ -174,14 +174,21 @@ struct ASMJIT_API FunctionPrototype
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline const uint32_t* getArgumentsGP() const ASMJIT_NOTHROW { return _argumentsGP; }
+  inline const uint32_t* getArgumentsGPList() const ASMJIT_NOTHROW { return _argumentsGPList; }
 
   //! @brief Get registers used to pass first SP-FP or DP-FPparameters by
   //! current calling convention.
   //!
   //! @note This is related to used calling convention, it's not affected by
   //! number of function arguments or their types.
-  inline const uint32_t* getArgumentsXMM() const ASMJIT_NOTHROW { return _argumentsXMM; }
+  inline const uint32_t* getArgumentsXMMList() const ASMJIT_NOTHROW { return _argumentsXMMList; }
+
+  //! @brief Get bitmask of GP registers which might be used for arguments.
+  inline uint32_t getArgumentsGP() const ASMJIT_NOTHROW { return _argumentsGP; }
+  //! @brief Get bitmask of MM registers which might be used for arguments.
+  inline uint32_t getArgumentsMM() const ASMJIT_NOTHROW { return _argumentsMM; }
+  //! @brief Get bitmask of XMM registers which might be used for arguments.
+  inline uint32_t getArgumentsXMM() const ASMJIT_NOTHROW { return _argumentsXMM; }
 
   //! @brief Get bitmask of general purpose registers that's preserved
   //! (non-volatile).
@@ -252,9 +259,16 @@ protected:
   uint32_t _argumentsStackSize;
 
   //! @brief List of registers that's used for first GP arguments.
-  uint32_t _argumentsGP[16];
+  uint32_t _argumentsGPList[16];
   //! @brief List of registers that's used for first XMM arguments.
-  uint32_t _argumentsXMM[16];
+  uint32_t _argumentsXMMList[16];
+
+  //! @brief Bitmask for preserved GP registers.
+  uint32_t _argumentsGP;
+  //! @brief Bitmask for preserved MM registers.
+  uint32_t _argumentsMM;
+  //! @brief Bitmask for preserved XMM registers.
+  uint32_t _argumentsXMM;
 
   //! @brief Bitmask for preserved GP registers.
   uint32_t _preservedGP;
@@ -287,11 +301,13 @@ struct VarData
   //! @brief Scope (NULL if variable is global).
   EFunction* scope;
 
-  //! @brief First emittable where the variable is accessed.
+  //! @brief The first emittable where the variable is accessed.
   //!
   //! @note If this member is @c NULL then variable is unused.
   Emittable* firstEmittable;
-  //! @brief Last emittable where the variable is accessed.
+  //! @brief The first callable (ECall) which is after the @c firstEmittable.
+  ECall* firstCallable;
+  //! @brief The last emittable where the variable is accessed.
   Emittable* lastEmittable;
 
   // --------------------------------------------------------------------------
@@ -314,11 +330,10 @@ struct VarData
   //! @brief Home register index or @c INVALID_VALUE (used by register allocator).
   uint32_t homeRegisterIndex;
   //! @brief Preferred register index.
-  uint32_t prefRegisterIndex;
+  uint32_t prefRegisterMask;
 
   //! @brief Home memory address offset.
   int32_t homeMemoryOffset;
-
   //! @brief Used by @c CompilerContext, do not touch (NULL when created).
   void* homeMemoryData;
 
@@ -475,9 +490,10 @@ struct VarCallRecord
     FLAG_OUT_XMM1 = 0x0800,
 
     FLAG_IN_MEM_PTR = 0x1000,
-    FLAG_CALL_OPERAND = 0x2000,
+    FLAG_CALL_OPERAND_REG = 0x2000,
+    FLAG_CALL_OPERAND_MEM = 0x4000,
 
-    FLAG_UNUSE_AFTER_USE = 0x4000
+    FLAG_UNUSE_AFTER_USE = 0x8000
   };
 };
 
@@ -1445,6 +1461,17 @@ struct ASMJIT_API CompilerContext
   inline void _markChangedMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedMMRegisters |= (1 << index); }
   inline void _markChangedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= (1 << index); }
 
+  inline void _newRegisterHomeIndex(VarData* vdata, uint32_t idx)
+  {
+    if (vdata->homeRegisterIndex == INVALID_VALUE) vdata->homeRegisterIndex = idx;
+    vdata->prefRegisterMask |= (1U << idx);
+  }
+
+  inline void _newRegisterHomeMask(VarData* vdata, uint32_t mask)
+  {
+    vdata->prefRegisterMask |= mask;
+  }
+
   // --------------------------------------------------------------------------
   // [Operand Patcher]
   // --------------------------------------------------------------------------
@@ -1532,13 +1559,8 @@ struct ASMJIT_API CompilerContext
   //! @brief Global modified XMM registers mask (per function).
   uint32_t _modifiedXMMRegisters;
 
-  //! @brief Whether EBP/RBP register can be used by register allocator.
+  //! @brief Whether the EBP/RBP register can be used by register allocator.
   uint32_t _allocableEBP;
-  //! @brief Whether ESP/RSP register can be used by register allocator.
-  //!
-  //! Experimental, can be used only in cases that variables are never spilled
-  //! into memory and function memory is not used (allocated).
-  uint32_t _allocableESP;
 
   //! @brief ESP adjust constant (changed during PUSH/POP or when using
   //! stack.

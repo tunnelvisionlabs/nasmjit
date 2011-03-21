@@ -90,7 +90,7 @@ If(ASMJIT_BUILD_TEST)
     testfuncret
     testjit
     testjump1
-    testmemorymanager
+    testmem1
     testopcode
     testspecial1
     testspecial2

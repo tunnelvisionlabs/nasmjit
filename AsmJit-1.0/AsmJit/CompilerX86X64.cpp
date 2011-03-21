@@ -46,33 +46,6 @@
 namespace AsmJit {
 
 // ============================================================================
-// [Helpers - Essential]
-// ============================================================================
-
-// From http://graphics.stanford.edu/~seander/bithacks.html .
-static inline uint32_t bitCount(uint32_t x)
-{
-  x = x - ((x >> 1) & 0x55555555);
-  x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-  return ((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-}
-
-// Align variable @a x to 16-bytes.
-template<typename T>
-static inline T alignTo16(const T& x)
-{
-  return (x + (T)15) & (T)~15;
-}
-
-// Return the size needed to align variable @a x to 16-bytes.
-template<typename T>
-static inline T deltaTo16(const T& x)
-{
-  T aligned = alignTo16(x);
-  return aligned - x;
-}
-
-// ============================================================================
 // [Helpers - Logging]
 // ============================================================================
 
@@ -157,6 +130,36 @@ static bool isVariableFloat(uint32_t type)
 {
   ASMJIT_ASSERT(type < ASMJIT_ARRAY_SIZE(variableInfo));
   return (variableInfo[type].flags & (VariableInfo::FLAG_SP_FP | VariableInfo::FLAG_DP_FP)) != 0;
+}
+
+static GPVar GPVarFromData(VarData* vdata)
+{
+  GPVar var;
+  var._var.id = vdata->id;
+  var._var.size = vdata->size;
+  var._var.registerCode = variableInfo[vdata->type].code;
+  var._var.variableType = vdata->type;
+  return var;
+}
+
+static MMVar MMVarFromData(VarData* vdata)
+{
+  MMVar var;
+  var._var.id = vdata->id;
+  var._var.size = vdata->size;
+  var._var.registerCode = variableInfo[vdata->type].code;
+  var._var.variableType = vdata->type;
+  return var;
+}
+
+static XMMVar XMMVarFromData(VarData* vdata)
+{
+  XMMVar var;
+  var._var.id = vdata->id;
+  var._var.size = vdata->size;
+  var._var.registerCode = variableInfo[vdata->type].code;
+  var._var.variableType = vdata->type;
+  return var;
 }
 
 // ============================================================================
@@ -295,15 +298,19 @@ void FunctionPrototype::_clear() ASMJIT_NOTHROW
 
   _returnValue = INVALID_VALUE;
 
-  Util::memset32(_argumentsGP , INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsGP ));
-  Util::memset32(_argumentsXMM, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsXMM));
+  Util::memset32(_argumentsGPList , INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsGPList ));
+  Util::memset32(_argumentsXMMList, INVALID_VALUE, ASMJIT_ARRAY_SIZE(_argumentsXMMList));
 
-  _preservedGP = 0;
-  _preservedMM = 0;
+  _argumentsGP  = 0;
+  _argumentsMM  = 0;
+  _argumentsXMM = 0;
+
+  _preservedGP  = 0;
+  _preservedMM  = 0;
   _preservedXMM = 0;
 
-  _passedGP = 0;
-  _passedMM = 0;
+  _passedGP  = 0;
+  _passedMM  = 0;
   _passedXMM = 0;
 }
 
@@ -314,14 +321,16 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
 
   _callingConvention = callingConvention;
 
+  // --------------------------------------------------------------------------
+  // [X86 Calling Conventions]
+  // --------------------------------------------------------------------------
+
 #if defined(ASMJIT_X86)
-  // [X86 calling conventions]
-  _preservedGP =
-    (1 << REG_INDEX_EBX) |
-    (1 << REG_INDEX_ESP) |
-    (1 << REG_INDEX_EBP) |
-    (1 << REG_INDEX_ESI) |
-    (1 << REG_INDEX_EDI) ;
+  _preservedGP  = (1 << REG_INDEX_EBX) |
+                  (1 << REG_INDEX_ESP) |
+                  (1 << REG_INDEX_EBP) |
+                  (1 << REG_INDEX_ESI) |
+                  (1 << REG_INDEX_EDI) ;
   _preservedXMM = 0;
 
   switch (_callingConvention)
@@ -335,34 +344,50 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
 
     case CALL_CONV_MSTHISCALL:
       _calleePopsStack = true;
-      _argumentsGP[0] = REG_INDEX_ECX;
+      _argumentsGPList[0] = REG_INDEX_ECX;
+
+      _argumentsGP =  (1 << REG_INDEX_ECX);
       break;
 
     case CALL_CONV_MSFASTCALL:
       _calleePopsStack = true;
-      _argumentsGP[0] = REG_INDEX_ECX;
-      _argumentsGP[1] = REG_INDEX_EDX;
+      _argumentsGPList[0] = REG_INDEX_ECX;
+      _argumentsGPList[1] = REG_INDEX_EDX;
+
+      _argumentsGP =  (1 << REG_INDEX_ECX) |
+                      (1 << REG_INDEX_EDX) ;
       break;
 
     case CALL_CONV_BORLANDFASTCALL:
       _calleePopsStack = true;
       _argumentsDirection = ARGUMENT_DIR_LEFT_TO_RIGHT;
-      _argumentsGP[0] = REG_INDEX_EAX;
-      _argumentsGP[1] = REG_INDEX_EDX;
-      _argumentsGP[2] = REG_INDEX_ECX;
+      _argumentsGPList[0] = REG_INDEX_EAX;
+      _argumentsGPList[1] = REG_INDEX_EDX;
+      _argumentsGPList[2] = REG_INDEX_ECX;
+
+      _argumentsGP =  (1 << REG_INDEX_EAX) |
+                      (1 << REG_INDEX_EDX) |
+                      (1 << REG_INDEX_ECX) ;
       break;
 
     case CALL_CONV_GCCFASTCALL_2:
       _calleePopsStack = false;
-      _argumentsGP[0] = REG_INDEX_ECX;
-      _argumentsGP[1] = REG_INDEX_EDX;
+      _argumentsGPList[0] = REG_INDEX_ECX;
+      _argumentsGPList[1] = REG_INDEX_EDX;
+
+      _argumentsGP =  (1 << REG_INDEX_ECX) |
+                      (1 << REG_INDEX_EDX) ;
       break;
 
     case CALL_CONV_GCCFASTCALL_3:
       _calleePopsStack = false;
-      _argumentsGP[0] = REG_INDEX_EDX;
-      _argumentsGP[1] = REG_INDEX_ECX;
-      _argumentsGP[2] = REG_INDEX_EAX;
+      _argumentsGPList[0] = REG_INDEX_EDX;
+      _argumentsGPList[1] = REG_INDEX_ECX;
+      _argumentsGPList[2] = REG_INDEX_EAX;
+
+      _argumentsGP =  (1 << REG_INDEX_EDX) |
+                      (1 << REG_INDEX_ECX) |
+                      (1 << REG_INDEX_EAX) ;
       break;
 
     default:
@@ -371,70 +396,96 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
   }
 #endif // ASMJIT_X86
 
+  // --------------------------------------------------------------------------
+  // [X64 Calling Conventions]
+  // --------------------------------------------------------------------------
+
 #if defined(ASMJIT_X64)
-  // [X64 calling conventions]
   switch (_callingConvention)
   {
     case CALL_CONV_X64W:
-      _argumentsGP[0] = REG_INDEX_RCX;
-      _argumentsGP[1] = REG_INDEX_RDX;
-      _argumentsGP[2] = REG_INDEX_R8;
-      _argumentsGP[3] = REG_INDEX_R9;
+      _argumentsGPList[0] = REG_INDEX_RCX;
+      _argumentsGPList[1] = REG_INDEX_RDX;
+      _argumentsGPList[2] = REG_INDEX_R8;
+      _argumentsGPList[3] = REG_INDEX_R9;
 
-      _argumentsXMM[0] = REG_INDEX_XMM0;
-      _argumentsXMM[1] = REG_INDEX_XMM1;
-      _argumentsXMM[2] = REG_INDEX_XMM2;
-      _argumentsXMM[3] = REG_INDEX_XMM3;
+      _argumentsXMMList[0] = REG_INDEX_XMM0;
+      _argumentsXMMList[1] = REG_INDEX_XMM1;
+      _argumentsXMMList[2] = REG_INDEX_XMM2;
+      _argumentsXMMList[3] = REG_INDEX_XMM3;
 
-      _preservedGP =
-        (1 << REG_INDEX_RBX) |
-        (1 << REG_INDEX_RSP) |
-        (1 << REG_INDEX_RBP) |
-        (1 << REG_INDEX_RSI) |
-        (1 << REG_INDEX_RDI) |
-        (1 << REG_INDEX_R12) |
-        (1 << REG_INDEX_R13) |
-        (1 << REG_INDEX_R14) |
-        (1 << REG_INDEX_R15) ;
-      _preservedXMM =
-        (1 << REG_INDEX_XMM6) |
-        (1 << REG_INDEX_XMM7) |
-        (1 << REG_INDEX_XMM8) |
-        (1 << REG_INDEX_XMM9) |
-        (1 << REG_INDEX_XMM10) |
-        (1 << REG_INDEX_XMM11) |
-        (1 << REG_INDEX_XMM12) |
-        (1 << REG_INDEX_XMM13) |
-        (1 << REG_INDEX_XMM14) |
-        (1 << REG_INDEX_XMM15) ;
+      _argumentsGP =  (1 << REG_INDEX_RCX  ) |
+                      (1 << REG_INDEX_RDX  ) |
+                      (1 << REG_INDEX_R8   ) |
+                      (1 << REG_INDEX_R9   ) ;
+
+      _argumentsXMM = (1 << REG_INDEX_XMM0 ) |
+                      (1 << REG_INDEX_XMM1 ) |
+                      (1 << REG_INDEX_XMM2 ) |
+                      (1 << REG_INDEX_XMM3 ) ;
+
+      _preservedGP =  (1 << REG_INDEX_RBX  ) |
+                      (1 << REG_INDEX_RSP  ) |
+                      (1 << REG_INDEX_RBP  ) |
+                      (1 << REG_INDEX_RSI  ) |
+                      (1 << REG_INDEX_RDI  ) |
+                      (1 << REG_INDEX_R12  ) |
+                      (1 << REG_INDEX_R13  ) |
+                      (1 << REG_INDEX_R14  ) |
+                      (1 << REG_INDEX_R15  ) ;
+
+      _preservedXMM = (1 << REG_INDEX_XMM6 ) |
+                      (1 << REG_INDEX_XMM7 ) |
+                      (1 << REG_INDEX_XMM8 ) |
+                      (1 << REG_INDEX_XMM9 ) |
+                      (1 << REG_INDEX_XMM10) |
+                      (1 << REG_INDEX_XMM11) |
+                      (1 << REG_INDEX_XMM12) |
+                      (1 << REG_INDEX_XMM13) |
+                      (1 << REG_INDEX_XMM14) |
+                      (1 << REG_INDEX_XMM15) ;
       break;
 
     case CALL_CONV_X64U:
-      _argumentsGP[0] = REG_INDEX_RDI;
-      _argumentsGP[1] = REG_INDEX_RSI;
-      _argumentsGP[2] = REG_INDEX_RDX;
-      _argumentsGP[3] = REG_INDEX_RCX;
-      _argumentsGP[4] = REG_INDEX_R8;
-      _argumentsGP[5] = REG_INDEX_R9;
+      _argumentsGPList[0] = REG_INDEX_RDI;
+      _argumentsGPList[1] = REG_INDEX_RSI;
+      _argumentsGPList[2] = REG_INDEX_RDX;
+      _argumentsGPList[3] = REG_INDEX_RCX;
+      _argumentsGPList[4] = REG_INDEX_R8;
+      _argumentsGPList[5] = REG_INDEX_R9;
 
-      _argumentsXMM[0] = REG_INDEX_XMM0;
-      _argumentsXMM[1] = REG_INDEX_XMM1;
-      _argumentsXMM[2] = REG_INDEX_XMM2;
-      _argumentsXMM[3] = REG_INDEX_XMM3;
-      _argumentsXMM[4] = REG_INDEX_XMM4;
-      _argumentsXMM[5] = REG_INDEX_XMM5;
-      _argumentsXMM[6] = REG_INDEX_XMM6;
-      _argumentsXMM[7] = REG_INDEX_XMM7;
+      _argumentsXMMList[0] = REG_INDEX_XMM0;
+      _argumentsXMMList[1] = REG_INDEX_XMM1;
+      _argumentsXMMList[2] = REG_INDEX_XMM2;
+      _argumentsXMMList[3] = REG_INDEX_XMM3;
+      _argumentsXMMList[4] = REG_INDEX_XMM4;
+      _argumentsXMMList[5] = REG_INDEX_XMM5;
+      _argumentsXMMList[6] = REG_INDEX_XMM6;
+      _argumentsXMMList[7] = REG_INDEX_XMM7;
 
-      _preservedGP =
-        (1 << REG_INDEX_RBX) |
-        (1 << REG_INDEX_RSP) |
-        (1 << REG_INDEX_RBP) |
-        (1 << REG_INDEX_R12) |
-        (1 << REG_INDEX_R13) |
-        (1 << REG_INDEX_R14) |
-        (1 << REG_INDEX_R15) ;
-      _preservedXMM = 0;
+      _argumentsGP =  (1 << REG_INDEX_RDI  ) |
+                      (1 << REG_INDEX_RSI  ) |
+                      (1 << REG_INDEX_RDX  ) |
+                      (1 << REG_INDEX_RCX  ) |
+                      (1 << REG_INDEX_R8   ) |
+                      (1 << REG_INDEX_R9   ) ;
+
+      _argumentsXMM = (1 << REG_INDEX_XMM0 ) |
+                      (1 << REG_INDEX_XMM1 ) |
+                      (1 << REG_INDEX_XMM2 ) |
+                      (1 << REG_INDEX_XMM3 ) |
+                      (1 << REG_INDEX_XMM4 ) |
+                      (1 << REG_INDEX_XMM5 ) |
+                      (1 << REG_INDEX_XMM6 ) |
+                      (1 << REG_INDEX_XMM7 ) ;
+
+      _preservedGP =  (1 << REG_INDEX_RBX  ) |
+                      (1 << REG_INDEX_RSP  ) |
+                      (1 << REG_INDEX_RBP  ) |
+                      (1 << REG_INDEX_R12  ) |
+                      (1 << REG_INDEX_R13  ) |
+                      (1 << REG_INDEX_R14  ) |
+                      (1 << REG_INDEX_R15  ) ;
       break;
 
     default:
@@ -479,9 +530,9 @@ void FunctionPrototype::_setPrototype(
   for (i = 0; i != argumentsCount; i++)
   {
     Argument& a = _arguments[i];
-    if (isVariableInteger(a.variableType) && posGP < 16 && _argumentsGP[posGP] != INVALID_VALUE)
+    if (isVariableInteger(a.variableType) && posGP < 16 && _argumentsGPList[posGP] != INVALID_VALUE)
     {
-      a.registerIndex = _argumentsGP[posGP++];
+      a.registerIndex = _argumentsGPList[posGP++];
       _passedGP |= (1 << a.registerIndex);
     }
   }
@@ -528,12 +579,12 @@ void FunctionPrototype::_setPrototype(
 
       if (isVariableInteger(a.variableType))
       {
-        a.registerIndex = _argumentsGP[i];
+        a.registerIndex = _argumentsGPList[i];
         _passedGP |= (1 << a.registerIndex);
       }
       else if (isVariableFloat(a.variableType))
       {
-        a.registerIndex = _argumentsXMM[i];
+        a.registerIndex = _argumentsXMMList[i];
         _passedXMM |= (1 << a.registerIndex);
       }
     }
@@ -567,9 +618,9 @@ void FunctionPrototype::_setPrototype(
     for (i = 0; i != argumentsCount; i++)
     {
       Argument& a = _arguments[i];
-      if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGP[posGP] != INVALID_VALUE)
+      if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGPList[posGP] != INVALID_VALUE)
       {
-        a.registerIndex = _argumentsGP[posGP++];
+        a.registerIndex = _argumentsGPList[posGP++];
         _passedGP |= (1 << a.registerIndex);
       }
     }
@@ -580,7 +631,7 @@ void FunctionPrototype::_setPrototype(
       Argument& a = _arguments[i];
       if (isVariableFloat(a.variableType))
       {
-        a.registerIndex = _argumentsXMM[posXMM++];
+        a.registerIndex = _argumentsXMMList[posXMM++];
         _passedXMM |= (1 << a.registerIndex);
       }
     }
@@ -1485,9 +1536,10 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
       // If variable must be in specific register here we could add some hint
       // to allocator to alloc it to this register on first alloc.
-      if (var->regIndex != INVALID_VALUE && vdata->homeRegisterIndex == INVALID_VALUE)
+      if (var->regIndex != INVALID_VALUE)
       {
-        vdata->homeRegisterIndex = var->regIndex;
+        vdata->prefRegisterMask |= (1 << var->regIndex);
+        cc._newRegisterHomeIndex(vdata, var->regIndex);
       }
     }
     else if (o.isMem())
@@ -2177,7 +2229,6 @@ void EFunction::_createVariables() ASMJIT_NOTHROW
     {
       vdata->isRegArgument = true;
       vdata->registerIndex = a.registerIndex;
-      vdata->homeRegisterIndex = a.registerIndex;
     }
 
     if (a.stackOffset != (int32_t)INVALID_VALUE)
@@ -2290,25 +2341,25 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
 
   // Prolog & Epilog stack size.
   {
-    int32_t memGP = bitCount(_modifiedAndPreservedGP) * sizeof(sysint_t);
-    int32_t memMM = bitCount(_modifiedAndPreservedMM) * 8;
-    int32_t memXMM = bitCount(_modifiedAndPreservedXMM) * 16;
+    int32_t memGP = Util::bitCount(_modifiedAndPreservedGP) * sizeof(sysint_t);
+    int32_t memMM = Util::bitCount(_modifiedAndPreservedMM) * 8;
+    int32_t memXMM = Util::bitCount(_modifiedAndPreservedXMM) * 16;
 
     if (_pePushPop)
     {
       _pePushPopStackSize = memGP;
-      _peMovStackSize = memXMM + alignTo16(memMM);
+      _peMovStackSize = memXMM + Util::alignTo16(memMM);
     }
     else
     {
       _pePushPopStackSize = 0;
-      _peMovStackSize = memXMM + alignTo16(memMM + memGP);
+      _peMovStackSize = memXMM + Util::alignTo16(memMM + memGP);
     }
   }
 
   if (_isStackAlignedByFnTo16Bytes)
   {
-    _peAdjustStackSize += deltaTo16(_pePushPopStackSize);
+    _peAdjustStackSize += Util::deltaTo16(_pePushPopStackSize);
   }
   else
   {
@@ -2319,12 +2370,12 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     if (v < 0) v += 16;
     _peAdjustStackSize = v;
 
-    //_peAdjustStackSize += deltaTo16(_pePushPopStackSize + v);
+    //_peAdjustStackSize += Util::deltaTo16(_pePushPopStackSize + v);
   }
 
   // Memory stack size.
   _memStackSize = cc._memBytesTotal;
-  _memStackSize16 = alignTo16(_memStackSize);
+  _memStackSize16 = Util::alignTo16(_memStackSize);
 
   if (_isNaked)
   {
@@ -2587,7 +2638,7 @@ void EFunction::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   else
   {
     nspPos = -(_peMovStackSize + _peAdjustStackSize);
-    //if (_pePushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
+    //if (_pePushPop) nspPos += Util::bitCount(preservedGP) * sizeof(sysint_t);
   }
 
   // Save XMM registers using MOVDQA/MOVDQU.
@@ -2746,7 +2797,7 @@ void EFunction::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
 
 void EFunction::reserveStackForFunctionCall(int32_t size)
 {
-  size = alignTo16(size);
+  size = Util::alignTo16(size);
 
   if (size > _functionCallStackSize) _functionCallStackSize = size;
   _isCaller = true;
@@ -2880,10 +2931,8 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   // Call address.
   operandsCount++;
 
-  // The first return value.
+  // The first and the second return value.
   if (!_ret[0].isNone()) operandsCount++;
-
-  // The second return value.
   if (!_ret[1].isNone()) operandsCount++;
 
 #define __GET_VARIABLE(__vardata__) \
@@ -2966,6 +3015,19 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
+  // Traverse all active variables and set their firstCallable pointer to this
+  // call. This information can be used to choose between the preserved-first
+  // and preserved-last register allocation.
+  if (cc._active)
+  {
+    VarData* first = cc._active;
+    VarData* active = first;
+    do {
+      if (active->firstCallable == NULL) active->firstCallable = this;
+      active = active->nextActive;
+    } while (active != first);
+  }
+
   if (!variablesCount)
   {
     cc._currentOffset++;
@@ -3006,8 +3068,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
         if (fArg.registerIndex != INVALID_VALUE)
         {
-          if (vdata->homeRegisterIndex == INVALID_VALUE)
-            vdata->homeRegisterIndex = fArg.registerIndex;
+          cc._newRegisterHomeIndex(vdata, fArg.registerIndex);
 
           switch (fArg.variableType)
           {
@@ -3044,7 +3105,14 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       }
       else if (i == argumentsCount)
       {
-        var->flags |= VarCallRecord::FLAG_CALL_OPERAND;
+        uint32_t mask = ~getPrototype().getPreservedGP() &
+                        ~getPrototype().getPassedGP()    & 
+                        ((1U << REG_NUM_GP) - 1);
+
+        cc._newRegisterHomeIndex(vdata, Util::findFirstOne(mask));
+        cc._newRegisterHomeMask(vdata, mask);
+
+        var->flags |= VarCallRecord::FLAG_CALL_OPERAND_REG;
         vdata->registerReadCount++;
       }
       else
@@ -3129,7 +3197,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         vdata->registerReadCount++;
 
         __GET_VARIABLE(vdata)
-        var->flags |= VarCallRecord::FLAG_CALL_OPERAND;
+        var->flags |= VarCallRecord::FLAG_CALL_OPERAND_REG | VarCallRecord::FLAG_CALL_OPERAND_MEM;
       }
 
       if ((o._mem.index & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
@@ -3140,7 +3208,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         vdata->registerReadCount++;
 
         __GET_VARIABLE(vdata)
-        var->flags |= VarCallRecord::FLAG_CALL_OPERAND;
+        var->flags |= VarCallRecord::FLAG_CALL_OPERAND_REG | VarCallRecord::FLAG_CALL_OPERAND_MEM;
       }
     }
   }
@@ -3189,8 +3257,8 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   compiler->comment("Function Call");
 
   // These variables are used by the instruction and we set current offset
-  // to their work offsets -> getSpillCandidate never return the variable
-  // used by this instruction.
+  // to their work offsets -> The getSpillCandidate() method never returns 
+  // the variable used by this instruction.
   for (i = 0; i < variablesCount; i++)
   {
     _variables[i].vdata->workOffset = offset;
@@ -3199,11 +3267,12 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     _variables[i].vdata->tempPtr = &_variables[i];
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 1:
   //
   // Spill variables which are not used by the function call and have to
   // be destroyed. These registers may be used by callee.
+  // --------------------------------------------------------------------------
 
   preserved = getPrototype().getPreservedGP();
   for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
@@ -3235,10 +3304,11 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 2:
   //
   // Move all arguments to the stack which all already in registers.
+  // --------------------------------------------------------------------------
 
   for (i = 0; i < argumentsCount; i++)
   {
@@ -3265,10 +3335,11 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 3:
   //
   // Spill all non-preserved variables we moved to stack in STEP #2.
+  // --------------------------------------------------------------------------
 
   for (i = 0; i < argumentsCount; i++)
   {
@@ -3312,11 +3383,12 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 4:
   //
   // Get temporary register that we can use to pass input function arguments.
-  // Now it's safe to do, because we spilled some variables (I hope:)).
+  // Now it's safe to do, because the non-needed variables should be spilled.
+  // --------------------------------------------------------------------------
 
   temporaryGpReg = _findTemporaryGpRegister(cc);
   temporaryXmmReg = _findTemporaryXmmRegister(cc);
@@ -3331,11 +3403,12 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     // TODO.
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 5:
   //
   // Move all remaining arguments to the stack (we can use temporary register).
   // or allocate it to the primary register. Also move immediates.
+  // --------------------------------------------------------------------------
 
   for (i = 0; i < argumentsCount; i++)
   {
@@ -3364,10 +3437,11 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 6:
   //
   // Allocate arguments to registers.
+  // --------------------------------------------------------------------------
 
   bool didWork;
 
@@ -3399,7 +3473,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       {
         VarCallRecord* rdst = reinterpret_cast<VarCallRecord*>(vdst->tempPtr);
 
-        if (rdst->inDone >= rdst->inCount)
+        if (rdst->inDone >= rdst->inCount && (rdst->flags & VarCallRecord::FLAG_CALL_OPERAND_REG) == 0)
         {
           // Safe to spill.
           if (rdst->outCount || vdst->lastEmittable == this)
@@ -3412,35 +3486,109 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
         {
           uint32_t x = getPrototype().findArgumentByRegisterCode(
             getVariableRegisterCode(vsrc->type, vsrc->registerIndex));
-
           bool doSpill = true;
 
-          // Emit xchg instead of spill/alloc if possible (GP registers only).
-          if (x != INVALID_VALUE && getVariableClass(vdst->type) & VariableInfo::CLASS_GP)
+          if ((getVariableClass(vdst->type) & VariableInfo::CLASS_GP) != 0)
           {
-            const FunctionPrototype::Argument& dstArgType = targs[x];
-            if (getVariableClass(dstArgType.variableType) == getVariableClass(srcArgType.variableType))
+            // Try to emit mov to register which is possible for call() operand.
+            if (x == INVALID_VALUE && (rdst->flags & VarCallRecord::FLAG_CALL_OPERAND_REG) != 0)
             {
-              uint32_t dstIndex = vdst->registerIndex;
-              uint32_t srcIndex = vsrc->registerIndex;
+              uint32_t rIndex;
+              uint32_t rBit;
 
-              if (srcIndex == dstArgType.registerIndex)
+              // The mask which contains registers which are not-preserved
+              // (these that might be clobbered by the callee) and which are
+              // not used to pass function arguments. Each register contained
+              // in this mask is ideal to be used by call() instruction.
+              uint32_t possibleMask = ~getPrototype().getPreservedGP() &
+                                      ~getPrototype().getPassedGP()    & 
+                                      ((1U << REG_NUM_GP) - 1);
+
+              if (possibleMask != 0)
               {
-                compiler->emit(INST_XCHG, gpn(dstIndex), gpd(srcIndex));
+                for (rIndex = 0, rBit = 1; rIndex < REG_NUM_GP; rIndex++, rBit <<= 1)
+                {
+                  if ((possibleMask & rBit) != 0)
+                  {
+                    if (cc._state.gp[rIndex] == NULL) 
+                    {
+                      // This is the best possible solution, the register is
+                      // free. We do not need to continue with this loop, the
+                      // rIndex will be used by the call().
+                      break;
+                    }
+                    else
+                    {
+                      // Wait until the register is freed or try to find another.
+                      doSpill = false;
+                      didWork = true;
+                    }
+                  }
+                }
+              }
+              else
+              {
+                // Try to find a register which is free and which is not used
+                // to pass a function argument.
+                possibleMask = getPrototype().getPreservedGP();
 
-                cc._state.gp[srcIndex] = vdst;
-                cc._state.gp[dstIndex] = vsrc;
+                for (rIndex = 0, rBit = 1; rIndex < REG_NUM_GP; rIndex++, rBit <<= 1)
+                {
+                  if ((possibleMask & rBit) != 0)
+                  {
+                    // Found one.
+                    if (cc._state.gp[rIndex] == NULL) break;
+                  }
+                }
+              }
 
-                vdst->registerIndex = srcIndex;
-                vsrc->registerIndex = dstIndex;
+              if (rIndex < REG_NUM_GP)
+              {
+                if (temporaryGpReg == vsrc->registerIndex) temporaryGpReg = rIndex;
+                compiler->emit(INST_MOV, gpn(rIndex), gpn(vsrc->registerIndex));
 
-                rdst->inDone++;
-                rsrc->inDone++;
+                cc._state.gp[vsrc->registerIndex] = NULL;
+                cc._state.gp[rIndex] = vsrc;
 
-                processed[i] = true;
-                processed[x] = true;
+                vsrc->registerIndex = rIndex;
+                cc._allocatedVariable(vsrc);
 
                 doSpill = false;
+              }
+            }
+            // Emit xchg instead of spill/alloc if possible.
+            else if (x != INVALID_VALUE)
+            {
+              const FunctionPrototype::Argument& dstArgType = targs[x];
+              if (getVariableClass(dstArgType.variableType) == getVariableClass(srcArgType.variableType))
+              {
+                uint32_t dstIndex = vdst->registerIndex;
+                uint32_t srcIndex = vsrc->registerIndex;
+
+                if (srcIndex == dstArgType.registerIndex)
+                {
+#if defined(ASMJIT_X64)
+                  if (vdst->type != VARIABLE_TYPE_GPD || vsrc->type != VARIABLE_TYPE_GPD)
+                    compiler->emit(INST_XCHG, gpq(dstIndex), gpq(srcIndex));
+                  else
+#else
+                    compiler->emit(INST_XCHG, gpd(dstIndex), gpd(srcIndex));
+#endif
+
+                  cc._state.gp[srcIndex] = vdst;
+                  cc._state.gp[dstIndex] = vsrc;
+
+                  vdst->registerIndex = srcIndex;
+                  vsrc->registerIndex = dstIndex;
+
+                  rdst->inDone++;
+                  rsrc->inDone++;
+
+                  processed[i] = true;
+                  processed[x] = true;
+
+                  doSpill = false;
+                }
               }
             }
           }
@@ -3483,17 +3631,26 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   } while (didWork);
 
-
+  // --------------------------------------------------------------------------
   // STEP 7:
   //
   // Allocate operand used by CALL instruction.
+  // --------------------------------------------------------------------------
 
   for (i = 0; i < variablesCount; i++)
   {
     VarCallRecord& r = _variables[i];
-    if ((r.flags & VarCallRecord::FLAG_CALL_OPERAND) &&
+    if ((r.flags & VarCallRecord::FLAG_CALL_OPERAND_REG) &&
         (r.vdata->registerIndex == INVALID_VALUE))
     {
+      // If the register is not allocated and the call form is 'call reg' then
+      // it's possible to keep it in memory.
+      if ((r.flags & VarCallRecord::FLAG_CALL_OPERAND_MEM) == 0)
+      {
+        _target = GPVarFromData(r.vdata).m();
+        break;
+      }
+
       if (temporaryGpReg == INVALID_VALUE)
         temporaryGpReg = _findTemporaryGpRegister(cc);
 
@@ -3504,10 +3661,11 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   cc.translateOperands(&_target, 1);
 
-
+  // --------------------------------------------------------------------------
   // STEP 8:
   //
   // Spill all preserved variables.
+  // --------------------------------------------------------------------------
 
   preserved = getPrototype().getPreservedGP();
   for (i = 0, mask = 1; i < REG_NUM_GP; i++, mask <<= 1)
@@ -3551,25 +3709,26 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-
+  // --------------------------------------------------------------------------
   // STEP 9:
   //
   // Emit CALL instruction.
+  // --------------------------------------------------------------------------
 
   compiler->emit(INST_CALL, _target);
-
 
   // Restore the stack offset.
   if (getPrototype().getCalleePopsStack())
   {
-    // abc
     int32_t s = (int32_t)getPrototype().getArgumentsStackSize();
     if (s) compiler->emit(INST_SUB, nsp, imm(s));
   }
 
+  // --------------------------------------------------------------------------
   // STEP 10:
   //
   // Prepare others for return value(s) and cleanup.
+  // --------------------------------------------------------------------------
 
   // Clear temp data, see AsmJit::VarData::temp why it's needed.
   for (i = 0; i < variablesCount; i++)
@@ -4385,12 +4544,9 @@ void ERet::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         vdata->workOffset = _offset;
         vdata->registerReadCount++;
 
-        if (vdata->homeRegisterIndex == INVALID_VALUE)
+        if (isVariableInteger(vdata->type) && isVariableInteger(retValType))
         {
-          if (isVariableInteger(vdata->type) && isVariableInteger(retValType))
-          {
-            vdata->homeRegisterIndex = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
-          }
+          cc._newRegisterHomeIndex(vdata, (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX);
         }
       }
     }
@@ -4804,7 +4960,6 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
   _modifiedXMMRegisters = 0;
 
   _allocableEBP = false;
-  _allocableESP = false;
 
   _adjustESP = 0;
 
@@ -4976,8 +5131,6 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
 {
   uint32_t i;
 
-  // Preferred register code.
-  uint32_t pref = (regIndex != INVALID_VALUE) ? regIndex : vdata->prefRegisterIndex;
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
   // New register code.
@@ -4989,9 +5142,13 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // Spill candidate.
   VarData* spillCandidate = NULL;
 
-  // Whether to alloc non-preserved first or last.
+  // Whether to alloc the non-preserved variables first.
   bool nonPreservedFirst = true;
-  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+  if (this->getFunction()->_isCaller)
+  {
+    nonPreservedFirst = vdata->firstCallable != NULL && 
+                        vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
+  }
 
   // --------------------------------------------------------------------------
   // [Already Allocated]
@@ -5001,15 +5158,15 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = pref;
+    uint32_t newIndex = regIndex;
 
     // Preferred register is none or same as currently allocated one, this is
     // best case.
-    if (pref == INVALID_VALUE || oldIndex == newIndex) return;
+    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
 
     VarData* other = _state.gp[newIndex];
 
-    emitExchangeVar(vdata, pref, vflags, other);
+    emitExchangeVar(vdata, regIndex, vflags, other);
     if (other) other->registerIndex = oldIndex;
 
     // Update VarData.
@@ -5027,16 +5184,16 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // --------------------------------------------------------------------------
 
   // Preferred register.
-  if (pref != INVALID_VALUE)
+  if (regIndex != INVALID_VALUE)
   {
-    if ((_state.usedGP & (1U << pref)) == 0)
+    if ((_state.usedGP & (1U << regIndex)) == 0)
     {
-      idx = pref;
+      idx = regIndex;
     }
     else
     {
       // Spill register we need
-      spillCandidate = _state.gp[pref];
+      spillCandidate = _state.gp[regIndex];
 
       // Jump to spill part of allocation
       goto L_Spill;
@@ -5050,15 +5207,13 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   }
 
   // We start from 1, because EAX/RAX register is sometimes explicitly
-  // needed. So we trying to prevent register reallocation.
+  // needed. So we trying to prevent reallocation in near future.
   if (idx == INVALID_VALUE)
   {
     uint32_t mask;
     for (i = 1, mask = (1 << i); i < REG_NUM_GP; i++, mask <<= 1)
     {
-      if ((_state.usedGP & mask) == 0 &&
-          (i != REG_INDEX_EBP || _allocableEBP) &&
-          (i != REG_INDEX_ESP || _allocableESP))
+      if ((_state.usedGP & mask) == 0 && (i != REG_INDEX_EBP || _allocableEBP))
       {
         // Convenience to alloc non-preserved first or non-preserved last.
         if (nonPreservedFirst)
@@ -5174,8 +5329,6 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
 {
   uint32_t i;
 
-  // Preferred register code.
-  uint32_t pref = (regIndex != INVALID_VALUE) ? regIndex : vdata->prefRegisterIndex;
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
   // New register code.
@@ -5193,7 +5346,11 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
 
   // Whether to alloc non-preserved first or last.
   bool nonPreservedFirst = true;
-  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+  if (this->getFunction()->_isCaller)
+  {
+    nonPreservedFirst = vdata->firstCallable != NULL && 
+                        vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
+  }
 
   // --------------------------------------------------------------------------
   // [Already Allocated]
@@ -5203,11 +5360,11 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = pref;
+    uint32_t newIndex = regIndex;
 
     // Preferred register is none or same as currently allocated one, this is
     // best case.
-    if (pref == INVALID_VALUE || oldIndex == newIndex) return;
+    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
 
     VarData* other = _state.mm[newIndex];
     if (other) spillMMVar(other);
@@ -5215,7 +5372,7 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
     _freedMMRegister(oldIndex);
     _allocatedVariable(vdata);
 
-    emitMoveVar(vdata, pref, vflags);
+    emitMoveVar(vdata, regIndex, vflags);
     return;
   }
 
@@ -5224,16 +5381,16 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // --------------------------------------------------------------------------
 
   // Preferred register.
-  if (pref != INVALID_VALUE)
+  if (regIndex != INVALID_VALUE)
   {
-    if ((_state.usedMM & (1U << pref)) == 0)
+    if ((_state.usedMM & (1U << regIndex)) == 0)
     {
-      idx = pref;
+      idx = regIndex;
     }
     else
     {
       // Spill register we need
-      spillCandidate = _state.mm[pref];
+      spillCandidate = _state.mm[regIndex];
 
       // Jump to spill part of allocation
       goto L_Spill;
@@ -5358,8 +5515,6 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
 {
   uint32_t i;
 
-  // Preferred register code.
-  uint32_t pref = (regIndex != INVALID_VALUE) ? regIndex : vdata->prefRegisterIndex;
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
   // New register code.
@@ -5373,7 +5528,11 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
 
   // Whether to alloc non-preserved first or last.
   bool nonPreservedFirst = true;
-  if (this->getFunction()->_isCaller) nonPreservedFirst = false;
+  if (this->getFunction()->_isCaller)
+  {
+    nonPreservedFirst = vdata->firstCallable != NULL && 
+                        vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
+  }
 
   // --------------------------------------------------------------------------
   // [Already Allocated]
@@ -5383,11 +5542,11 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = pref;
+    uint32_t newIndex = regIndex;
 
     // Preferred register is none or same as currently allocated one, this is
     // best case.
-    if (pref == INVALID_VALUE || oldIndex == newIndex) return;
+    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
 
     VarData* other = _state.xmm[newIndex];
     if (other) spillXMMVar(other);
@@ -5395,7 +5554,7 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
     _freedXMMRegister(oldIndex);
     _allocatedVariable(vdata);
 
-    emitMoveVar(vdata, pref, vflags);
+    emitMoveVar(vdata, regIndex, vflags);
     return;
   }
 
@@ -5404,16 +5563,16 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   // --------------------------------------------------------------------------
 
   // Preferred register.
-  if (pref != INVALID_VALUE)
+  if (regIndex != INVALID_VALUE)
   {
-    if ((_state.usedXMM & (1U << pref)) == 0)
+    if ((_state.usedXMM & (1U << regIndex)) == 0)
     {
-      idx = pref;
+      idx = regIndex;
     }
     else
     {
       // Spill register we need
-      spillCandidate = _state.xmm[pref];
+      spillCandidate = _state.xmm[regIndex];
 
       // Jump to spill part of allocation
       goto L_Spill;
@@ -6904,6 +7063,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
 
   vdata->scope = getFunction();
   vdata->firstEmittable = NULL;
+  vdata->firstCallable = NULL;
   vdata->lastEmittable = NULL;
 
   vdata->name = _zone.zstrdup(name);
@@ -6912,7 +7072,7 @@ VarData* CompilerCore::_newVarData(const char* name, uint32_t type, uint32_t siz
   vdata->size = size;
 
   vdata->homeRegisterIndex = INVALID_VALUE;
-  vdata->prefRegisterIndex = INVALID_VALUE;
+  vdata->prefRegisterMask = 0;
 
   vdata->homeMemoryData = NULL;
 
@@ -6953,15 +7113,8 @@ GPVar CompilerCore::newGP(uint32_t variableType, const char* name) ASMJIT_NOTHRO
   ASMJIT_ASSERT((variableType < _VARIABLE_TYPE_COUNT) &&
                 (variableInfo[variableType].clazz & VariableInfo::CLASS_GP) != 0);
 
-  GPVar var;
   VarData* vdata = _newVarData(name, variableType, variableInfo[variableType].size);
-
-  var._var.id = vdata->id;
-  var._var.size = vdata->size;
-  var._var.registerCode = variableInfo[vdata->type].code;
-  var._var.variableType = vdata->type;
-
-  return var;
+  return GPVarFromData(vdata);
 }
 
 GPVar CompilerCore::argGP(uint32_t index) ASMJIT_NOTHROW
@@ -6991,15 +7144,8 @@ MMVar CompilerCore::newMM(uint32_t variableType, const char* name) ASMJIT_NOTHRO
   ASMJIT_ASSERT((variableType < _VARIABLE_TYPE_COUNT) &&
                 (variableInfo[variableType].clazz & VariableInfo::CLASS_MM) != 0);
 
-  MMVar var;
   VarData* vdata = _newVarData(name, variableType, 8);
-
-  var._var.id = vdata->id;
-  var._var.size = vdata->size;
-  var._var.registerCode = variableInfo[vdata->type].code;
-  var._var.variableType = vdata->type;
-
-  return var;
+  return MMVarFromData(vdata);
 }
 
 MMVar CompilerCore::argMM(uint32_t index) ASMJIT_NOTHROW
@@ -7029,15 +7175,8 @@ XMMVar CompilerCore::newXMM(uint32_t variableType, const char* name) ASMJIT_NOTH
   ASMJIT_ASSERT((variableType < _VARIABLE_TYPE_COUNT) &&
                 (variableInfo[variableType].clazz & VariableInfo::CLASS_XMM) != 0);
 
-  XMMVar var;
   VarData* vdata = _newVarData(name, variableType, 16);
-
-  var._var.id = vdata->id;
-  var._var.size = vdata->size;
-  var._var.registerCode = variableInfo[vdata->type].code;
-  var._var.variableType = vdata->type;
-
-  return var;
+  return XMMVarFromData(vdata);
 }
 
 XMMVar CompilerCore::argXMM(uint32_t index) ASMJIT_NOTHROW

@@ -55,7 +55,7 @@ static void verify(void* a, void* b)
 
 static void die()
 {
-  printf("Couldn't allocate virtual memory, this test needs at least 100MB of free virtual memory\n");
+  printf("Couldn't allocate virtual memory, this test needs at least 100MB of free virtual memory.\n");
   exit(1);
 }
 
