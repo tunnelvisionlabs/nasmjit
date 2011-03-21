@@ -5213,7 +5213,7 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
     uint32_t mask;
     for (i = 1, mask = (1 << i); i < REG_NUM_GP; i++, mask <<= 1)
     {
-      if ((_state.usedGP & mask) == 0 && (i != REG_INDEX_EBP || _allocableEBP))
+      if ((_state.usedGP & mask) == 0 && (i != REG_INDEX_EBP || _allocableEBP) && (i != REG_INDEX_ESP))
       {
         // Convenience to alloc non-preserved first or non-preserved last.
         if (nonPreservedFirst)
