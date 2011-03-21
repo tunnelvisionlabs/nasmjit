@@ -996,11 +996,13 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       VarData* vdata = _compiler->_getVarData(o.getId());
       ASMJIT_ASSERT(vdata != NULL);
 
-      if (vdata->workOffset == _offset) continue;
-      if (!cc._isActive(vdata)) cc._addActive(vdata);
+      if (vdata->workOffset != _offset)
+      {
+        if (!cc._isActive(vdata)) cc._addActive(vdata);
 
-      vdata->workOffset = _offset;
-      variablesCount++;
+        vdata->workOffset = _offset;
+        variablesCount++;
+      }
     }
     else if (o.isMem())
     {
@@ -1010,20 +1012,27 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         ASMJIT_ASSERT(vdata != NULL);
 
         cc._markMemoryUsed(vdata);
-        if (!cc._isActive(vdata)) cc._addActive(vdata);
 
-        continue;
+        if (vdata->workOffset != _offset)
+        {
+          if (!cc._isActive(vdata)) cc._addActive(vdata);
+
+          vdata->workOffset = _offset;
+          variablesCount++;
+        }
       }
       else if ((o._mem.base & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
       {
         VarData* vdata = _compiler->_getVarData(o._mem.base);
         ASMJIT_ASSERT(vdata != NULL);
 
-        if (vdata->workOffset == _offset) continue;
-        if (!cc._isActive(vdata)) cc._addActive(vdata);
+        if (vdata->workOffset != _offset)
+        {
+          if (!cc._isActive(vdata)) cc._addActive(vdata);
 
-        vdata->workOffset = _offset;
-        variablesCount++;
+          vdata->workOffset = _offset;
+          variablesCount++;
+        }
       }
 
       if ((o._mem.index & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
@@ -1031,11 +1040,13 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         VarData* vdata = _compiler->_getVarData(o._mem.index);
         ASMJIT_ASSERT(vdata != NULL);
 
-        if (vdata->workOffset == _offset) continue;
-        if (!cc._isActive(vdata)) cc._addActive(vdata);
+        if (vdata->workOffset != _offset)
+        {
+          if (!cc._isActive(vdata)) cc._addActive(vdata);
 
-        vdata->workOffset = _offset;
-        variablesCount++;
+          vdata->workOffset = _offset;
+          variablesCount++;
+        }
       }
     }
   }
@@ -1511,6 +1522,12 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
                   (id->code == INST_IMUL && _operandsCount == 3 && !isSpecial()))
           {
             // Write-only case.
+            vdata->registerWriteCount++;
+            var->vflags |= VARIABLE_ALLOC_WRITE;
+          }
+          else if (id->code == INST_LEA)
+          {
+            // Write.
             vdata->registerWriteCount++;
             var->vflags |= VARIABLE_ALLOC_WRITE;
           }

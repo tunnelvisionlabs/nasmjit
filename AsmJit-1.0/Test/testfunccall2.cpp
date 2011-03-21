@@ -26,6 +26,8 @@
 // This file is used as a function call test (calling functions inside
 // the generated code).
 
+#if 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,3 +93,62 @@ int main(int argc, char* argv[])
 
   return 0;
 }
+#endif
+
+#if 1
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <AsmJit/Compiler.h>
+#include <AsmJit/Logger.h>
+#include <AsmJit/MemoryManager.h>
+
+// Type of generated function.
+typedef void (*MyFn)(void);
+
+// Function that is called inside the generated one. Because this test is 
+// mainly about register arguments, we need to use the fastcall calling 
+// convention under 32-bit mode.
+static void ASMJIT_FASTCALL_2 simpleFn(int a) {}
+
+int main(int argc, char* argv[])
+{
+  using namespace AsmJit;
+
+  // ==========================================================================
+  // Create compiler.
+  Compiler c;
+
+  // Log compiler output.
+  FileLogger logger(stderr);
+  c.setLogger(&logger);
+
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+
+  // Call a function.
+  GPVar x(c.newGP());
+  GPVar y(c.newGP());
+
+  c.mov(y, 1);
+  c.mov(x, 2);
+  c.lea(x, ptr(x, y, TIMES_1, 3));
+
+  c.endFunction();
+  // ==========================================================================
+
+  // ==========================================================================
+  // Make the function.
+  MyFn fn = function_cast<MyFn>(c.make());
+
+  fn();
+
+  // Free the generated function if it's not needed anymore.
+  MemoryManager::getGlobal()->free((void*)fn);
+  // ==========================================================================
+
+  return 0;
+}
+#endif 
