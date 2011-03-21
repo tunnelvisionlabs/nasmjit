@@ -1619,9 +1619,9 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   //! @brief Cast this variable to 8-bit (LO) part of variable
   inline GPVar r8() const { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
   //! @brief Cast this variable to 8-bit (LO) part of variable
-  inline GPVar r8lo() const { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
+  inline GPVar r8Lo() const { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
   //! @brief Cast this variable to 8-bit (HI) part of variable
-  inline GPVar r8hi() const { return GPVar(*this, REG_TYPE_GPB_HI, 1); }
+  inline GPVar r8Hi() const { return GPVar(*this, REG_TYPE_GPB_HI, 1); }
 
   //! @brief Cast this variable to 16-bit part of variable
   inline GPVar r16() const { return GPVar(*this, REG_TYPE_GPW, 2); }
