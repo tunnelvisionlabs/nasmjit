@@ -5146,7 +5146,7 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   bool nonPreservedFirst = true;
   if (this->getFunction()->_isCaller)
   {
-    nonPreservedFirst = vdata->firstCallable != NULL && 
+    nonPreservedFirst = vdata->firstCallable == NULL || 
                         vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
   }
 
@@ -5348,7 +5348,7 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   bool nonPreservedFirst = true;
   if (this->getFunction()->_isCaller)
   {
-    nonPreservedFirst = vdata->firstCallable != NULL && 
+    nonPreservedFirst = vdata->firstCallable == NULL || 
                         vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
   }
 
@@ -5530,7 +5530,7 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   bool nonPreservedFirst = true;
   if (this->getFunction()->_isCaller)
   {
-    nonPreservedFirst = vdata->firstCallable != NULL && 
+    nonPreservedFirst = vdata->firstCallable == NULL || 
                         vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
   }
 
