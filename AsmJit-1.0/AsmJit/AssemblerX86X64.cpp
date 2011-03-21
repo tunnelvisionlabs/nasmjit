@@ -1016,14 +1016,14 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isRegMem() && o1->isImm())
       {
         const Imm& imm = reinterpret_cast<const Imm&>(*o1);
-        uint8_t immSize = Util::isInt8(imm.getValue()) ? 1 : (o0->getSize() <= 4 ? o0->getSize() : 4);
+        immSize = Util::isInt8(imm.getValue()) ? 1 : (o0->getSize() <= 4 ? o0->getSize() : 4);
 
         _emitX86RM(id->opCode[1] + (o0->getSize() != 1 ? (immSize != 1 ? 1 : 3) : 0),
           o0->getSize() == 2,
           o0->getSize() == 8,
           opReg, reinterpret_cast<const Operand&>(*o0),
           immSize, forceRexPrefix);
-        _FINISHED_IMMEDIATE(o1, immSize);
+        _FINISHED_IMMEDIATE(&imm, immSize);
       }
 
       break;
@@ -1198,12 +1198,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           }
           else
           {
-            int32_t immSize = dst.isRegType(REG_TYPE_GPW) ? 2 : 4;
+            immSize = dst.isRegType(REG_TYPE_GPW) ? 2 : 4;
             _emitX86RM(0x69,
               dst.isRegType(REG_TYPE_GPW),
               dst.isRegType(REG_TYPE_GPQ), dst.getRegCode(), dst,
               immSize, forceRexPrefix);
-            _FINISHED_IMMEDIATE(&imm, (uint32_t)immSize);
+            _FINISHED_IMMEDIATE(&imm, immSize);
           }
         }
       }
@@ -1224,12 +1224,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         }
         else
         {
-          int32_t immSize = dst.isRegType(REG_TYPE_GPW) ? 2 : 4;
+          immSize = dst.isRegType(REG_TYPE_GPW) ? 2 : 4;
           _emitX86RM(0x69,
             dst.isRegType(REG_TYPE_GPW),
             dst.isRegType(REG_TYPE_GPQ), dst.getRegCode(), src,
             immSize, forceRexPrefix);
-          _FINISHED_IMMEDIATE(&imm, (int32_t)immSize);
+          _FINISHED_IMMEDIATE(&imm, immSize);
         }
       }
 
@@ -1477,7 +1477,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
           // In 64-bit mode the immediate can be 64-bits long if the
           // destination operand type is register (otherwise 32-bits).
-          int32_t immSize = dst.getSize();
+          immSize = dst.getSize();
 
 #if defined(ASMJIT_X64)
           // Optimize instruction size by using 32-bit immediate if value can
@@ -1503,7 +1503,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           }
 #endif // ASMJIT_X64
 
-          _FINISHED_IMMEDIATE(&src, (uint32_t)immSize);
+          _FINISHED_IMMEDIATE(&src, immSize);
         }
 
         // Mem <- Reg
@@ -1527,7 +1527,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         // Mem <- Imm
         case (OPERAND_MEM << 4) | OPERAND_IMM:
         {
-          int32_t immSize = dst.getSize() <= 4 ? dst.getSize() : 4;
+          immSize = dst.getSize() <= 4 ? dst.getSize() : 4;
 
           _emitX86RM(0xC6 + (dst.getSize() != 1),
             dst.getSize() == 2,
@@ -1535,7 +1535,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
             0,
             reinterpret_cast<const Operand&>(dst),
             immSize, forceRexPrefix);
-          _FINISHED_IMMEDIATE(&src, (uint32_t)immSize);
+          _FINISHED_IMMEDIATE(&src, immSize);
         }
       }
 
@@ -1818,19 +1818,19 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
       if (o0->isRegIndex(0) && o1->isImm())
       {
-        int32_t immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
+        immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
 
         if (o0->getSize() == 2) _emitByte(0x66); // 16-bit.
 #if defined(ASMJIT_X64)
         _emitRexRM(o0->getSize() == 8, 0, reinterpret_cast<const Operand&>(*o0), forceRexPrefix);
 #endif // ASMJIT_X64
         _emitByte(0xA8 + (o0->getSize() != 1));
-        _FINISHED_IMMEDIATE(o1, (uint32_t)immSize);
+        _FINISHED_IMMEDIATE(o1, immSize);
       }
 
       if (o0->isRegMem() && o1->isImm())
       {
-        int32_t immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
+        immSize = o0->getSize() <= 4 ? o0->getSize() : 4;
 
         if (o0->getSize() == 2) _emitByte(0x66); // 16-bit.
         _emitSegmentPrefix(reinterpret_cast<const Operand&>(*o0)); // Segment prefix.
@@ -1839,7 +1839,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 #endif // ASMJIT_X64
         _emitByte(0xF6 + (o0->getSize() != 1));
         _emitModRM(0, reinterpret_cast<const Operand&>(*o0), immSize);
-        _FINISHED_IMMEDIATE(o1, (uint32_t)immSize);
+        _FINISHED_IMMEDIATE(o1, immSize);
       }
 
       break;
