@@ -347,9 +347,6 @@ struct ASMJIT_API AssemblerCore
   inline void _emitSysUInt(sysuint_t x) ASMJIT_NOTHROW
   { _buffer.emitSysUInt(x); }
 
-  //! @brief Emit immediate value of specified @a size.
-  void _emitImmediate(const Imm& imm, uint32_t size) ASMJIT_NOTHROW;
-
   //! @brief Emit single @a opCode without operands.
   inline void _emitOpCode(uint32_t opCode) ASMJIT_NOTHROW
   {
