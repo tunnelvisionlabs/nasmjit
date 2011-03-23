@@ -3573,6 +3573,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
                 cc._allocatedVariable(vsrc);
 
                 doSpill = false;
+                didWork = true;
               }
             }
             // Emit xchg instead of spill/alloc if possible.
@@ -3590,9 +3591,8 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
                   if (vdst->type != VARIABLE_TYPE_GPD || vsrc->type != VARIABLE_TYPE_GPD)
                     compiler->emit(INST_XCHG, gpq(dstIndex), gpq(srcIndex));
                   else
-#else
-                    compiler->emit(INST_XCHG, gpd(dstIndex), gpd(srcIndex));
 #endif
+                    compiler->emit(INST_XCHG, gpd(dstIndex), gpd(srcIndex));
 
                   cc._state.gp[srcIndex] = vdst;
                   cc._state.gp[dstIndex] = vsrc;
