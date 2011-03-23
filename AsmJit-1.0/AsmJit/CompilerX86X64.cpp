@@ -1566,6 +1566,8 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         VarData* vdata = _compiler->_getVarData(o.getId());
         ASMJIT_ASSERT(vdata != NULL);
 
+        __GET_VARIABLE(vdata)
+
         if (i == 0)
         {
           // If variable is MOV instruction type (source replaces the destination)
