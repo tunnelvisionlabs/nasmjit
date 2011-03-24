@@ -2226,135 +2226,137 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //! @brief Set Byte on Condition.
   inline void set(CONDITION cc, const GPReg& dst)
   {
+    ASMJIT_ASSERT(dst.getSize() == 1);
     _emitInstruction(ConditionToInstruction::toSetCC(cc), &dst);
   }
 
   //! @brief Set Byte on Condition.
   inline void set(CONDITION cc, const Mem& dst)
   {
+    ASMJIT_ASSERT(dst.getSize() <= 1);
     _emitInstruction(ConditionToInstruction::toSetCC(cc), &dst);
   }
 
   //! @brief Set Byte on Condition.
-  inline void seta  (const GPReg& dst) { _emitInstruction(INST_SETA  , &dst); }
+  inline void seta  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETA  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void seta  (const Mem& dst)   { _emitInstruction(INST_SETA  , &dst); }
+  inline void seta  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETA  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setae (const GPReg& dst) { _emitInstruction(INST_SETAE , &dst); }
+  inline void setae (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETAE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setae (const Mem& dst)   { _emitInstruction(INST_SETAE , &dst); }
+  inline void setae (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETAE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setb  (const GPReg& dst) { _emitInstruction(INST_SETB  , &dst); }
+  inline void setb  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETB  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setb  (const Mem& dst)   { _emitInstruction(INST_SETB  , &dst); }
+  inline void setb  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETB  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setbe (const GPReg& dst) { _emitInstruction(INST_SETBE , &dst); }
+  inline void setbe (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETBE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setbe (const Mem& dst)   { _emitInstruction(INST_SETBE , &dst); }
+  inline void setbe (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETBE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setc  (const GPReg& dst) { _emitInstruction(INST_SETC  , &dst); }
+  inline void setc  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETC  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setc  (const Mem& dst)   { _emitInstruction(INST_SETC  , &dst); }
+  inline void setc  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETC  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void sete  (const GPReg& dst) { _emitInstruction(INST_SETE  , &dst); }
+  inline void sete  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETE  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void sete  (const Mem& dst)   { _emitInstruction(INST_SETE  , &dst); }
+  inline void sete  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETE  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setg  (const GPReg& dst) { _emitInstruction(INST_SETG  , &dst); }
+  inline void setg  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETG  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setg  (const Mem& dst)   { _emitInstruction(INST_SETG  , &dst); }
+  inline void setg  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETG  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setge (const GPReg& dst) { _emitInstruction(INST_SETGE , &dst); }
+  inline void setge (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETGE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setge (const Mem& dst)   { _emitInstruction(INST_SETGE , &dst); }
+  inline void setge (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETGE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setl  (const GPReg& dst) { _emitInstruction(INST_SETL  , &dst); }
+  inline void setl  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETL  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setl  (const Mem& dst)   { _emitInstruction(INST_SETL  , &dst); }
+  inline void setl  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETL  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setle (const GPReg& dst) { _emitInstruction(INST_SETLE , &dst); }
+  inline void setle (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETLE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setle (const Mem& dst)   { _emitInstruction(INST_SETLE , &dst); }
+  inline void setle (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETLE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setna (const GPReg& dst) { _emitInstruction(INST_SETNA , &dst); }
+  inline void setna (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNA , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setna (const Mem& dst)   { _emitInstruction(INST_SETNA , &dst); }
+  inline void setna (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNA , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnae(const GPReg& dst) { _emitInstruction(INST_SETNAE, &dst); }
+  inline void setnae(const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNAE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnae(const Mem& dst)   { _emitInstruction(INST_SETNAE, &dst); }
+  inline void setnae(const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNAE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnb (const GPReg& dst) { _emitInstruction(INST_SETNB , &dst); }
+  inline void setnb (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNB , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnb (const Mem& dst)   { _emitInstruction(INST_SETNB , &dst); }
+  inline void setnb (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNB , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnbe(const GPReg& dst) { _emitInstruction(INST_SETNBE, &dst); }
+  inline void setnbe(const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNBE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnbe(const Mem& dst)   { _emitInstruction(INST_SETNBE, &dst); }
+  inline void setnbe(const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNBE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnc (const GPReg& dst) { _emitInstruction(INST_SETNC , &dst); }
+  inline void setnc (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNC , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnc (const Mem& dst)   { _emitInstruction(INST_SETNC , &dst); }
+  inline void setnc (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNC , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setne (const GPReg& dst) { _emitInstruction(INST_SETNE , &dst); }
+  inline void setne (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setne (const Mem& dst)   { _emitInstruction(INST_SETNE , &dst); }
+  inline void setne (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setng (const GPReg& dst) { _emitInstruction(INST_SETNG , &dst); }
+  inline void setng (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNG , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setng (const Mem& dst)   { _emitInstruction(INST_SETNG , &dst); }
+  inline void setng (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNG , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnge(const GPReg& dst) { _emitInstruction(INST_SETNGE, &dst); }
+  inline void setnge(const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNGE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnge(const Mem& dst)   { _emitInstruction(INST_SETNGE, &dst); }
+  inline void setnge(const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNGE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnl (const GPReg& dst) { _emitInstruction(INST_SETNL , &dst); }
+  inline void setnl (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNL , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnl (const Mem& dst)   { _emitInstruction(INST_SETNL , &dst); }
+  inline void setnl (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNL , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnle(const GPReg& dst) { _emitInstruction(INST_SETNLE, &dst); }
+  inline void setnle(const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNLE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnle(const Mem& dst)   { _emitInstruction(INST_SETNLE, &dst); }
+  inline void setnle(const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNLE, &dst); }
   //! @brief Set Byte on Condition.
-  inline void setno (const GPReg& dst) { _emitInstruction(INST_SETNO , &dst); }
+  inline void setno (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNO , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setno (const Mem& dst)   { _emitInstruction(INST_SETNO , &dst); }
+  inline void setno (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNO , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnp (const GPReg& dst) { _emitInstruction(INST_SETNP , &dst); }
+  inline void setnp (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNP , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnp (const Mem& dst)   { _emitInstruction(INST_SETNP , &dst); }
+  inline void setnp (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNP , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setns (const GPReg& dst) { _emitInstruction(INST_SETNS , &dst); }
+  inline void setns (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNS , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setns (const Mem& dst)   { _emitInstruction(INST_SETNS , &dst); }
+  inline void setns (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNS , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnz (const GPReg& dst) { _emitInstruction(INST_SETNZ , &dst); }
+  inline void setnz (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETNZ , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setnz (const Mem& dst)   { _emitInstruction(INST_SETNZ , &dst); }
+  inline void setnz (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETNZ , &dst); }
   //! @brief Set Byte on Condition.
-  inline void seto  (const GPReg& dst) { _emitInstruction(INST_SETO  , &dst); }
+  inline void seto  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETO  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void seto  (const Mem& dst)   { _emitInstruction(INST_SETO  , &dst); }
+  inline void seto  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETO  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setp  (const GPReg& dst) { _emitInstruction(INST_SETP  , &dst); }
+  inline void setp  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETP  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setp  (const Mem& dst)   { _emitInstruction(INST_SETP  , &dst); }
+  inline void setp  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETP  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpe (const GPReg& dst) { _emitInstruction(INST_SETPE , &dst); }
+  inline void setpe (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETPE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpe (const Mem& dst)   { _emitInstruction(INST_SETPE , &dst); }
+  inline void setpe (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETPE , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpo (const GPReg& dst) { _emitInstruction(INST_SETPO , &dst); }
+  inline void setpo (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETPO , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setpo (const Mem& dst)   { _emitInstruction(INST_SETPO , &dst); }
+  inline void setpo (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETPO , &dst); }
   //! @brief Set Byte on Condition.
-  inline void sets  (const GPReg& dst) { _emitInstruction(INST_SETS  , &dst); }
+  inline void sets  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETS  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void sets  (const Mem& dst)   { _emitInstruction(INST_SETS  , &dst); }
+  inline void sets  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETS  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setz  (const GPReg& dst) { _emitInstruction(INST_SETZ  , &dst); }
+  inline void setz  (const GPReg& dst) { ASMJIT_ASSERT(dst.getSize() == 1); _emitInstruction(INST_SETZ  , &dst); }
   //! @brief Set Byte on Condition.
-  inline void setz  (const Mem& dst)   { _emitInstruction(INST_SETZ  , &dst); }
+  inline void setz  (const Mem& dst)   { ASMJIT_ASSERT(dst.getSize() <= 1); _emitInstruction(INST_SETZ  , &dst); }
 
   //! @brief Shift Bits Left.
   //! @note @a src register can be only @c cl.

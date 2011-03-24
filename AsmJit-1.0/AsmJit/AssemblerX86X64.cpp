@@ -1668,6 +1668,10 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       if (o0->isRegMem())
       {
         const Operand& op = reinterpret_cast<const Operand&>(*o0);
+
+        // Only BYTE register or BYTE/TYPELESS memory location can be used.
+        ASMJIT_ASSERT(op.getSize() <= 1);
+        
         _emitX86RM(id->opCode[0], false, false, 0, op, 0, forceRexPrefix);
         _FINISHED();
       }
