@@ -35,10 +35,12 @@
 #include <AsmJit/MemoryManager.h>
 
 // Type of generated function.
-typedef int (*MyFn)(int, int, int);
+typedef int (*MyFn)(void);
 
-// Function that is called inside the generated one.
-static int calledFn(int a, int b, int c) { return (a + b) * c; }
+// Function that is called inside the generated one. Because this test is 
+// mainly about register arguments, we need to use the fastcall calling 
+// convention under 32-bit mode.
+static int oneFunc(void) { return 1; }
 
 int main(int argc, char* argv[])
 {
@@ -52,30 +54,16 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int, int>());
-
-  GPVar v0(c.argGP(0));
-  GPVar v1(c.argGP(1));
-  GPVar v2(c.argGP(2));
-
-  // Just do something;)
-  c.shl(v0, imm(1));
-  c.shl(v1, imm(1));
-  c.shl(v2, imm(1));
-
-  // Call function.
-  GPVar address(c.newGP());
-  c.mov(address, imm((sysint_t)(void*)calledFn));
-
-  ECall* ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<Void, int, int, int>());
-  ctx->setArgument(0, v2);
-  ctx->setArgument(1, v1);
-  ctx->setArgument(2, v0);
-
-  //ctx->setReturn(v0);
-  //c.ret(v0);
-
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<int>());
+  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  GPVar x(c.newGP());
+  GPVar y(c.newGP());
+  ECall *ctx = c.call((void*)oneFunc);
+  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder0<int>());
+  ctx->setReturn(y);
+  c.mov(x, 0);
+  c.add(x, y);
+  c.ret(x);
   c.endFunction();
   // ==========================================================================
 
@@ -83,10 +71,10 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = function_cast<MyFn>(c.make());
 
-  uint result = fn(3, 2, 1);
-  bool success = result == 36;
+  uint result = fn();
+  bool success = result == 1;
 
-  printf("Result %u (expected 36)\n", result);
+  printf("Result %u (expected 1)\n", result);
   printf("Status: %s\n", success ? "Success" : "Failure");
 
   // Free the generated function if it's not needed anymore.
