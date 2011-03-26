@@ -3864,9 +3864,10 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (getVariableClass(vdata->type) & VariableInfo::CLASS_GP)
       {
-        cc.allocGPVar(vdata, (rec->flags & VarCallRecord::FLAG_OUT_EAX) != 0
-          ? REG_INDEX_EAX
-          : REG_INDEX_EDX,
+        cc.allocGPVar(vdata, 
+          Util::maskFromIndex((rec->flags & VarCallRecord::FLAG_OUT_EAX) != 0
+            ? REG_INDEX_EAX
+            : REG_INDEX_EDX),
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
         vdata->changed = true;
       }
