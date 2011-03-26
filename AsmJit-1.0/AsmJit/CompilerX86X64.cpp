@@ -3778,7 +3778,8 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       if (temporaryGpReg == INVALID_VALUE)
         temporaryGpReg = _findTemporaryGpRegister(cc);
 
-      cc.allocGPVar(r.vdata, temporaryGpReg,
+      cc.allocGPVar(r.vdata, 
+        Util::maskFromIndex(temporaryGpReg),
         VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ);
     }
   }
