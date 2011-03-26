@@ -389,21 +389,21 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
     case CALL_CONV_GCCREGPARM_2:
       _calleePopsStack = false;
       _argumentsGPList[0] = REG_INDEX_EAX;
-      _argumentsGPList[1] = REG_INDEX_ECX;
+      _argumentsGPList[1] = REG_INDEX_EDX;
 
       _argumentsGP =  (1 << REG_INDEX_EAX) |
-                      (1 << REG_INDEX_ECX) ;
+                      (1 << REG_INDEX_EDX) ;
       break;
 
     case CALL_CONV_GCCREGPARM_3:
       _calleePopsStack = false;
       _argumentsGPList[0] = REG_INDEX_EAX;
-      _argumentsGPList[1] = REG_INDEX_ECX;
-      _argumentsGPList[2] = REG_INDEX_EDX;
+      _argumentsGPList[1] = REG_INDEX_EDX;
+      _argumentsGPList[2] = REG_INDEX_ECX;
 
       _argumentsGP =  (1 << REG_INDEX_EAX) |
-                      (1 << REG_INDEX_ECX) |
-                      (1 << REG_INDEX_EDX) ;
+                      (1 << REG_INDEX_EDX) |
+                      (1 << REG_INDEX_ECX) ;
       break;
 
     default:

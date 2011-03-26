@@ -1738,11 +1738,7 @@ enum CALL_CONV
   //! to other fastcall conventions used in different compilers.
   CALL_CONV_BORLANDFASTCALL = 7,
 
-  CALL_CONV_GCCFASTCALL = 8,
-
-  CALL_CONV_GCCREGPARM_1 = 9,
-
-  //! @brief GCC specific regparm(2) convention.
+  //! @brief GCC specific fastcall convention.
   //!
   //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
   //! registers, all others on the stack in right-to-left order.
@@ -1751,23 +1747,55 @@ enum CALL_CONV
   //! - Right to Left (except to first two integer arguments in ECX:EDX)
   //!
   //! Stack is cleaned by:
-  //! - Caller.
+  //! - Callee.
   //!
   //! Return value:
   //! - Integer types - EAX:EDX registers.
   //! - Floating points - st(0) register.
   //!
-  //! @note This calling convention differs to MSVC one in stack cleaning
-  //! mechanism.
+  //! @note This calling convention should be compatible to
+  //! @c CALL_CONV_MSFASTCALL.
+  CALL_CONV_GCCFASTCALL = 8,
+
+  //! @brief GCC specific regparm(1) convention.
+  //!
+  //! The first parameter (evaluated from left-to-right) is in EAX register,
+  //! all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first one integer argument in EAX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
+  CALL_CONV_GCCREGPARM_1 = 9,
+
+  //! @brief GCC specific regparm(2) convention.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in EAX:EDX 
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in EAX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - st(0) register.
   CALL_CONV_GCCREGPARM_2 = 10,
 
   //! @brief GCC specific fastcall with 3 parameters in registers.
   //!
   //! Three first parameters (evaluated from left-to-right) are in 
-  //! ECX:EDX:EAX registers, all others on the stack in right-to-left order.
+  //! EAX:EDX:ECX registers, all others on the stack in right-to-left order.
   //!
   //! Arguments direction:
-  //! - Right to Left (except to first three integer arguments in ECX:EDX:EAX)
+  //! - Right to Left (except to first three integer arguments in EAX:EDX:ECX)
   //!
   //! Stack is cleaned by:
   //! - Caller.

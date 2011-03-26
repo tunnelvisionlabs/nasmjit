@@ -40,7 +40,7 @@ typedef void (*MyFn)(void);
 // Function that is called inside the generated one. Because this test is 
 // mainly about register arguments, we need to use the fastcall calling 
 // convention under 32-bit mode.
-static void ASMJIT_FASTCALL_2 simpleFn(int a) {}
+static void ASMJIT_FASTCALL simpleFn(int a) {}
 
 int main(int argc, char* argv[])
 {
