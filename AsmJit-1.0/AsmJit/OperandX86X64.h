@@ -483,9 +483,9 @@ struct ASMJIT_HIDDEN GPReg : public BaseReg
   //! @brief Get whether the general purpose register is BYTE (8-bit) type.
   inline bool isGPB() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) <= REG_TYPE_GPB_HI; }
   //! @brief Get whether the general purpose register is LO-BYTE (8-bit) type.
-  inline bool isGPB_lo() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
+  inline bool isGPBLo() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
   //! @brief Get whether the general purpose register is HI-BYTE (8-bit) type.
-  inline bool isGPB_hi() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_HI; }
+  inline bool isGPBHi() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPB_HI; }
 
   //! @brief Get whether the general purpose register is WORD (16-bit) type.
   inline bool isGPW() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPW; }
@@ -1601,9 +1601,9 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   //! @brief Get whether this variable is general purpose BYTE register.
   inline bool isGPB() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) <= REG_TYPE_GPB_HI; }
   //! @brief Get whether this variable is general purpose BYTE.LO register.
-  inline bool isGPB_lo() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
+  inline bool isGPBLo() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
   //! @brief Get whether this variable is general purpose BYTE.HI register.
-  inline bool isGPB_hi() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPB_HI; }
+  inline bool isGPBHi() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPB_HI; }
 
   //! @brief Get whether this variable is general purpose WORD register.
   inline bool isGPW() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPW; }

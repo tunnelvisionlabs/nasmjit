@@ -658,10 +658,10 @@ ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJI
       else
         return buf + sprintf(buf, "r%ub", (uint32_t)index);
     case REG_TYPE_GPB_HI:
-      if (index < 8)
+      if (index < 4)
         return buf + sprintf(buf, "%s", &reg8h[index*4]);
       else
-        return buf + sprintf(buf, "r%ub", (uint32_t)index);
+        return buf + sprintf(buf, "%s", "INVALID");
     case REG_TYPE_GPW:
       if (index < 8)
         return buf + sprintf(buf, "%s", &reg16[index*4]);
@@ -876,6 +876,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
 void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
 {
+  const Operand* _loggerOperands[3];
+
   uint32_t bLoHiUsed = 0;
 #if defined(ASMJIT_X86)
   uint32_t forceRexPrefix = false;
@@ -929,6 +931,10 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
   // no energy to rewrite it. Maybe in future all of this can be cleaned up!
   if (bLoHiUsed | forceRexPrefix)
   {
+    _loggerOperands[0] = o0;
+    _loggerOperands[1] = o1;
+    _loggerOperands[2] = o2;
+
 #if defined(ASMJIT_X64)
     // Check if there is register that makes this instruction un-encodable.
 
@@ -2427,6 +2433,15 @@ end:
 
     // Detect truncated operand.
     Imm immTemporary(0);
+
+    // Use the original operands, because BYTE some of them were replaced.
+    if (bLoHiUsed)
+    {
+      o0 = _loggerOperands[0];
+      o1 = _loggerOperands[1];
+      o2 = _loggerOperands[2];
+    }
+
     if (immOperand)
     {
       sysint_t value = immOperand->getValue();

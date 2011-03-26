@@ -288,7 +288,7 @@ enum VARIABLE_ALLOC
   //! is some time ago deallocated and it's not marked as changed (so it was
   //! all the life time read only) then spill is simply NOP (no mov instruction
   //! is generated to move it to it's home memory location).
-  VARIABLE_ALLOC_READ = 0x1,
+  VARIABLE_ALLOC_READ = 0x01,
 
   //! @brief Allocating variable to write only (overwrite).
   //!
@@ -296,22 +296,26 @@ enum VARIABLE_ALLOC
   //! instruction to move variable from memory to register, because that
   //! register will be overwritten by next instruction. This is used as a
   //! simple optimization to improve generated code by @c Compiler.
-  VARIABLE_ALLOC_WRITE = 0x2,
+  VARIABLE_ALLOC_WRITE = 0x02,
 
   //! @brief Allocating variable to read / write.
   //!
   //! Variable allocated for read / write is marked as changed. This means that
   //! if variable must be later spilled into memory, mov (or similar)
   //! instruction will be generated.
-  VARIABLE_ALLOC_READWRITE = 0x3,
+  VARIABLE_ALLOC_READWRITE = 0x03,
 
   //! @brief Variable can be allocated in register.
-  VARIABLE_ALLOC_REGISTER = 0x10,
+  VARIABLE_ALLOC_REGISTER = 0x04,
+
   //! @brief Variable can be allocated in memory.
-  VARIABLE_ALLOC_MEMORY = 0x20,
+  VARIABLE_ALLOC_MEMORY = 0x08,
 
   //! @brief Unuse the variable after use.
-  VARIABLE_ALLOC_UNUSE_AFTER_USE = 0x100
+  VARIABLE_ALLOC_UNUSE_AFTER_USE = 0x10,
+
+  //! @brief Variable can be allocated only to one register (special allocation).
+  VARIABLE_ALLOC_SPECIAL = 0x20
 };
 
 // ============================================================================

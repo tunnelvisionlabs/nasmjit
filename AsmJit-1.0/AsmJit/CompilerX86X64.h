@@ -449,8 +449,8 @@ struct VarAllocRecord
   VarData* vdata;
   //! @brief Variable alloc flags, see @c VARIABLE_ALLOC.
   uint32_t vflags;
-  //! @brief Register index (default is @c INVALID_VALUE)
-  uint32_t regIndex;
+  //! @brief Register mask (default is 0).
+  uint32_t regMask;
 };
 
 // ============================================================================
@@ -747,6 +747,11 @@ protected:
   bool _isSpecial;
   //! @brief Whether the instruction is FPU.
   bool _isFPU;
+
+  //! @brief Whether the one of the operands is GPB.Lo register.
+  bool _isGPBLoUsed;
+  //! @brief Whether the one of the operands is GPB.Hi register.
+  bool _isGPBHiUsed;
 
   friend struct EFunction;
   friend struct CompilerContext;
@@ -1365,7 +1370,7 @@ struct ASMJIT_API CompilerContext
   //! @brief Allocate variable
   //!
   //! Calls @c allocGPVar, @c allocMMVar or @c allocXMMVar methods.
-  void allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void allocVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW;
   //! @brief Save variable.
   //!
   //! Calls @c saveGPVar, @c saveMMVar or @c saveXMMVar methods.
@@ -1399,21 +1404,21 @@ struct ASMJIT_API CompilerContext
   }
 
   //! @brief Allocate variable (GP).
-  void allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void allocGPVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW;
   //! @brief Save variable (GP).
   void saveGPVar(VarData* vdata) ASMJIT_NOTHROW;
   //! @brief Spill variable (GP).
   void spillGPVar(VarData* vdata) ASMJIT_NOTHROW;
 
   //! @brief Allocate variable (MM).
-  void allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void allocMMVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW;
   //! @brief Save variable (MM).
   void saveMMVar(VarData* vdata) ASMJIT_NOTHROW;
   //! @brief Spill variable (MM).
   void spillMMVar(VarData* vdata) ASMJIT_NOTHROW;
 
   //! @brief Allocate variable (XMM).
-  void allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW;
+  void allocXMMVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW;
   //! @brief Save variable (XMM).
   void saveXMMVar(VarData* vdata) ASMJIT_NOTHROW;
   //! @brief Spill variable (XMM).
@@ -1449,17 +1454,17 @@ struct ASMJIT_API CompilerContext
 
   void _allocatedVariable(VarData* vdata) ASMJIT_NOTHROW;
 
-  inline void _allocatedGPRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedGP |= (1 << index); _modifiedGPRegisters |= (1 << index); }
-  inline void _allocatedMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedMM |= (1 << index); _modifiedMMRegisters |= (1 << index); }
-  inline void _allocatedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedXMM |= (1 << index); _modifiedXMMRegisters |= (1 << index); }
+  inline void _allocatedGPRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedGP |= Util::maskFromIndex(index); _modifiedGPRegisters |= Util::maskFromIndex(index); }
+  inline void _allocatedMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedMM |= Util::maskFromIndex(index); _modifiedMMRegisters |= Util::maskFromIndex(index); }
+  inline void _allocatedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedXMM |= Util::maskFromIndex(index); _modifiedXMMRegisters |= Util::maskFromIndex(index); }
 
-  inline void _freedGPRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedGP &= ~(1 << index); }
-  inline void _freedMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedMM &= ~(1 << index); }
-  inline void _freedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedXMM &= ~(1 << index); }
+  inline void _freedGPRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedGP &= ~Util::maskFromIndex(index); }
+  inline void _freedMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedMM &= ~Util::maskFromIndex(index); }
+  inline void _freedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _state.usedXMM &= ~Util::maskFromIndex(index); }
 
-  inline void _markChangedGPRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedGPRegisters |= (1 << index); }
-  inline void _markChangedMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedMMRegisters |= (1 << index); }
-  inline void _markChangedXMMRegister(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= (1 << index); }
+  inline void _markGPRegisterModified(uint32_t index) ASMJIT_NOTHROW { _modifiedGPRegisters |= Util::maskFromIndex(index); }
+  inline void _markMMRegisterModified(uint32_t index) ASMJIT_NOTHROW { _modifiedMMRegisters |= Util::maskFromIndex(index); }
+  inline void _markXMMRegisterModified(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= Util::maskFromIndex(index); }
 
   inline void _newRegisterHomeIndex(VarData* vdata, uint32_t idx)
   {

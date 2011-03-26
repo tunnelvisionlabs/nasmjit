@@ -1571,10 +1571,10 @@ enum EMIT_OPTIONS
 //! - @c CALL_CONV_MSFASTCALL - Fastest calling convention that can be used
 //!      by MSVC compiler.
 //! - @c CALL_CONV_BORNANDFASTCALL - Borland fastcall convention.
-//! - @c CALL_CONV_GCCFASTCALL_2 - GCC fastcall convention with 2 register
-//!      arguments.
-//! - @c CALL_CONV_GCCFASTCALL_3 - GCC fastcall convention with 3 register
-//!      arguments.
+//! - @c CALL_CONV_GCCFASTCALL - GCC fastcall convention (2 register arguments).
+//! - @c CALL_CONV_GCCREGPARM_1 - GCC regparm(1) convention.
+//! - @c CALL_CONV_GCCREGPARM_2 - GCC regparm(2) convention.
+//! - @c CALL_CONV_GCCREGPARM_3 - GCC regparm(3) convention.
 //!
 //! List of calling conventions for 64-bit x86 mode (x64):
 //! - @c CALL_CONV_X64W - Windows 64-bit calling convention (WIN64 ABI).
@@ -1738,7 +1738,11 @@ enum CALL_CONV
   //! to other fastcall conventions used in different compilers.
   CALL_CONV_BORLANDFASTCALL = 7,
 
-  //! @brief GCC specific fastcall with 2 parameters in registers.
+  CALL_CONV_GCCFASTCALL = 8,
+
+  CALL_CONV_GCCREGPARM_1 = 9,
+
+  //! @brief GCC specific regparm(2) convention.
   //!
   //! Two first parameters (evaluated from left-to-right) are in ECX:EDX 
   //! registers, all others on the stack in right-to-left order.
@@ -1755,7 +1759,7 @@ enum CALL_CONV
   //!
   //! @note This calling convention differs to MSVC one in stack cleaning
   //! mechanism.
-  CALL_CONV_GCCFASTCALL_2 = 8,
+  CALL_CONV_GCCREGPARM_2 = 10,
 
   //! @brief GCC specific fastcall with 3 parameters in registers.
   //!
@@ -1771,7 +1775,7 @@ enum CALL_CONV
   //! Return value:
   //! - Integer types - EAX:EDX registers.
   //! - Floating points - st(0) register.
-  CALL_CONV_GCCFASTCALL_3 = 9,
+  CALL_CONV_GCCREGPARM_3 = 11,
 
   // [Preferred Calling Convention]
 
@@ -1785,7 +1789,7 @@ enum CALL_CONV
 # if defined(_MSC_VER)
   CALL_CONV_COMPAT_FASTCALL = CALL_CONV_MSFASTCALL,
 # elif defined(__GNUC__)
-  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_GCCFASTCALL_2,
+  CALL_CONV_COMPAT_FASTCALL = CALL_CONV_GCCFASTCALL,
 # elif defined(__BORLANDC__)
   CALL_CONV_COMPAT_FASTCALL = CALL_CONV_BORLANDFASTCALL,
 # else

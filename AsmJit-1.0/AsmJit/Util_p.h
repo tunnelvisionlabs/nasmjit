@@ -45,39 +45,6 @@ namespace AsmJit {
 namespace Util
 {
   // --------------------------------------------------------------------------
-  // [AsmJit::isIntX]
-  // --------------------------------------------------------------------------
-
-  //! @brief Returns @c true if a given integer @a x is signed 8-bit integer
-  static inline bool isInt8(sysint_t x) ASMJIT_NOTHROW { return x >= -128 && x <= 127; }
-  //! @brief Returns @c true if a given integer @a x is unsigned 8-bit integer
-  static inline bool isUInt8(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 255; }
-
-  //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
-  static inline bool isInt16(sysint_t x) ASMJIT_NOTHROW { return x >= -32768 && x <= 32767; }
-  //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
-  static inline bool isUInt16(sysint_t x) ASMJIT_NOTHROW { return x >= 0 && x <= 65535; }
-
-  //! @brief Returns @c true if a given integer @a x is signed 16-bit integer
-  static inline bool isInt32(sysint_t x) ASMJIT_NOTHROW
-  {
-#if defined(ASMJIT_X86)
-    return true;
-#else
-    return x >= ASMJIT_INT64_C(-2147483648) && x <= ASMJIT_INT64_C(2147483647);
-#endif
-  }
-  //! @brief Returns @c true if a given integer @a x is unsigned 16-bit integer
-  static inline bool isUInt32(sysint_t x) ASMJIT_NOTHROW
-  {
-#if defined(ASMJIT_X86)
-    return x >= 0;
-#else
-    return x >= 0 && x <= ASMJIT_INT64_C(4294967295);
-#endif
-  }
-
-  // --------------------------------------------------------------------------
   // [AsmJit::floatAsInt32, int32AsFloat]
   // --------------------------------------------------------------------------
 
@@ -139,11 +106,11 @@ namespace Util
   // [Str Utils]
   // --------------------------------------------------------------------------
 
-  char* mycpy(char* dst, const char* src, sysuint_t len = (sysuint_t)-1) ASMJIT_NOTHROW;
-  char* myfill(char* dst, const int c, sysuint_t len) ASMJIT_NOTHROW;
-  char* myhex(char* dst, const uint8_t* src, sysuint_t len) ASMJIT_NOTHROW;
-  char* myutoa(char* dst, sysuint_t i, sysuint_t base = 10) ASMJIT_NOTHROW;
-  char* myitoa(char* dst, sysint_t i, sysuint_t base = 10) ASMJIT_NOTHROW;
+  ASMJIT_HIDDEN char* mycpy(char* dst, const char* src, sysuint_t len = (sysuint_t)-1) ASMJIT_NOTHROW;
+  ASMJIT_HIDDEN char* myfill(char* dst, const int c, sysuint_t len) ASMJIT_NOTHROW;
+  ASMJIT_HIDDEN char* myhex(char* dst, const uint8_t* src, sysuint_t len) ASMJIT_NOTHROW;
+  ASMJIT_HIDDEN char* myutoa(char* dst, sysuint_t i, sysuint_t base = 10) ASMJIT_NOTHROW;
+  ASMJIT_HIDDEN char* myitoa(char* dst, sysint_t i, sysuint_t base = 10) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Mem Utils]
@@ -154,47 +121,6 @@ namespace Util
     sysuint_t i;
     for (i = 0; i < len; i++) p[i] = c;
   }
-
-  // --------------------------------------------------------------------------
-  // [Bit Utils]
-  // --------------------------------------------------------------------------
-
-  // From http://graphics.stanford.edu/~seander/bithacks.html .
-  static inline uint32_t bitCount(uint32_t x)
-  {
-    x = x - ((x >> 1) & 0x55555555);
-    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-    return ((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-  }
-
-  static inline uint32_t findFirstOne(uint32_t mask) ASMJIT_NOTHROW
-  {
-    for (uint32_t i = 0, bit = 1; i < sizeof(uint32_t); i++, bit <<= 1)
-    {
-      if (mask & bit) return i;
-    }
-    return 0xFFFFFFFF;
-  }
-
-  // --------------------------------------------------------------------------
-  // [Alignment]
-  // --------------------------------------------------------------------------
-
-  // Align variable @a x to 16-bytes.
-  template<typename T>
-  static inline T alignTo16(const T& x)
-  {
-    return (x + (T)15) & (T)~15;
-  }
-
-  // Return the size needed to align variable @a x to 16-bytes.
-  template<typename T>
-  static inline T deltaTo16(const T& x)
-  {
-    T aligned = alignTo16(x);
-    return aligned - x;
-  }
-
 } // Util namespace
 
 //! @}

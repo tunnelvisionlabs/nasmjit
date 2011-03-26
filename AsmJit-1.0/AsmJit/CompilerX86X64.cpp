@@ -370,8 +370,8 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
                       (1 << REG_INDEX_ECX) ;
       break;
 
-    case CALL_CONV_GCCFASTCALL_2:
-      _calleePopsStack = false;
+    case CALL_CONV_GCCFASTCALL:
+      _calleePopsStack = true;
       _argumentsGPList[0] = REG_INDEX_ECX;
       _argumentsGPList[1] = REG_INDEX_EDX;
 
@@ -379,15 +379,31 @@ void FunctionPrototype::_setCallingConvention(uint32_t callingConvention) ASMJIT
                       (1 << REG_INDEX_EDX) ;
       break;
 
-    case CALL_CONV_GCCFASTCALL_3:
+    case CALL_CONV_GCCREGPARM_1:
       _calleePopsStack = false;
-      _argumentsGPList[0] = REG_INDEX_EDX;
-      _argumentsGPList[1] = REG_INDEX_ECX;
-      _argumentsGPList[2] = REG_INDEX_EAX;
+      _argumentsGPList[0] = REG_INDEX_EAX;
 
-      _argumentsGP =  (1 << REG_INDEX_EDX) |
+      _argumentsGP =  (1 << REG_INDEX_EAX) ;
+      break;
+
+    case CALL_CONV_GCCREGPARM_2:
+      _calleePopsStack = false;
+      _argumentsGPList[0] = REG_INDEX_EAX;
+      _argumentsGPList[1] = REG_INDEX_ECX;
+
+      _argumentsGP =  (1 << REG_INDEX_EAX) |
+                      (1 << REG_INDEX_ECX) ;
+      break;
+
+    case CALL_CONV_GCCREGPARM_3:
+      _calleePopsStack = false;
+      _argumentsGPList[0] = REG_INDEX_EAX;
+      _argumentsGPList[1] = REG_INDEX_ECX;
+      _argumentsGPList[2] = REG_INDEX_EDX;
+
+      _argumentsGP =  (1 << REG_INDEX_EAX) |
                       (1 << REG_INDEX_ECX) |
-                      (1 << REG_INDEX_EAX) ;
+                      (1 << REG_INDEX_EDX) ;
       break;
 
     default:
@@ -790,6 +806,8 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
   const InstructionDescription* id = &instructionDescription[_code];
   _isSpecial = id->isSpecial();
   _isFPU = id->isFPU();
+  _isGPBLoUsed = false;
+  _isGPBHiUsed = false;
 
   if (_isSpecial)
   {
@@ -963,7 +981,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         var = cur++; \
         var->vdata = _candidate; \
         var->vflags = 0; \
-        var->regIndex = INVALID_VALUE; \
+        var->regMask = 0xFFFFFFFF; \
         break; \
       } \
       \
@@ -973,7 +991,6 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       { \
         break; \
       } \
-      \
     } \
     \
     ASMJIT_ASSERT(var != NULL); \
@@ -995,6 +1012,12 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       ASMJIT_ASSERT(o.getId() != INVALID_VALUE);
       VarData* vdata = _compiler->_getVarData(o.getId());
       ASMJIT_ASSERT(vdata != NULL);
+
+      if (reinterpret_cast<BaseVar*>(&o)->isGPVar())
+      {
+        if (reinterpret_cast<GPVar*>(&o)->isGPBLo()) { _isGPBLoUsed = true; vdata->registerGPBLoCount++; };
+        if (reinterpret_cast<GPVar*>(&o)->isGPBHi()) { _isGPBHiUsed = true; vdata->registerGPBHiCount++; };
+      }
 
       if (vdata->workOffset != _offset)
       {
@@ -1070,6 +1093,22 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   VarAllocRecord* cur = _variables;
   VarAllocRecord* var = NULL;
 
+  bool _isGPBUsed = _isGPBLoUsed | _isGPBHiUsed;
+  uint32_t gpRestrictMask = Util::maskUpToIndex(REG_NUM_GP);
+
+#if defined(ASMJIT_X64)
+  if (_isGPBHiUsed)
+  {
+    gpRestrictMask &= Util::maskFromIndex(REG_INDEX_EAX) |
+                      Util::maskFromIndex(REG_INDEX_EBX) |
+                      Util::maskFromIndex(REG_INDEX_ECX) |
+                      Util::maskFromIndex(REG_INDEX_EDX) |
+                      Util::maskFromIndex(REG_INDEX_EBP) |
+                      Util::maskFromIndex(REG_INDEX_ESI) |
+                      Util::maskFromIndex(REG_INDEX_EDI) ;
+  }
+#endif // ASMJIT_X64
+
   for (i = 0; i < len; i++)
   {
     Operand& o = _operands[i];
@@ -1082,6 +1121,32 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       __GET_VARIABLE(vdata)
       var->vflags |= VARIABLE_ALLOC_REGISTER;
 
+      if (_isGPBUsed)
+      {
+#if defined(ASMJIT_X86)
+        if (reinterpret_cast<GPVar*>(&o)->isGPB())
+        {
+          var->regMask &= Util::maskFromIndex(REG_INDEX_EAX) |
+                          Util::maskFromIndex(REG_INDEX_EBX) |
+                          Util::maskFromIndex(REG_INDEX_ECX) |
+                          Util::maskFromIndex(REG_INDEX_EDX) ;
+        }
+#else
+        // Restrict all BYTE registers to RAX/RBX/RCX/RDX if HI BYTE register
+        // is used (REX prefix makes HI BYTE addressing unencodable).
+        if (_isGPBHiUsed)
+        {
+          if (reinterpret_cast<GPVar*>(&o)->isGPB())
+          {
+            var->regMask &= Util::maskFromIndex(REG_INDEX_EAX) |
+                            Util::maskFromIndex(REG_INDEX_EBX) |
+                            Util::maskFromIndex(REG_INDEX_ECX) |
+                            Util::maskFromIndex(REG_INDEX_EDX) ;
+          }
+        }
+#endif // ASMJIT_X86/X64
+      }
+
       if (isSpecial())
       {
         // ${SPECIAL_INSTRUCTION_HANDLING_BEGIN}
@@ -1092,23 +1157,27 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EBX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EBX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 3:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EDX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1123,8 +1192,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1137,8 +1207,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerRWCount++;
@@ -1162,23 +1233,27 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EDX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 3:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EBX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EBX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1191,8 +1266,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           case INST_DAS:
             ASMJIT_ASSERT(i == 0);
             vdata->registerRWCount++;
-            var->vflags |= VARIABLE_ALLOC_READWRITE;
-            var->regIndex = REG_INDEX_EAX;
+            var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+            var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+            gpRestrictMask &= ~var->regMask;
             break;
 #endif // ASMJIT_X86
 
@@ -1204,13 +1280,15 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EDX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerReadCount++;
@@ -1227,13 +1305,15 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               default:
                 ASMJIT_ASSERT(0);
@@ -1243,15 +1323,17 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           case INST_LAHF:
             ASMJIT_ASSERT(i == 0);
             vdata->registerWriteCount++;
-            var->vflags |= VARIABLE_ALLOC_WRITE;
-            var->regIndex = REG_INDEX_EAX;
+            var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+            var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+            gpRestrictMask &= ~var->regMask;
             break;
 
           case INST_SAHF:
             ASMJIT_ASSERT(i == 0);
             vdata->registerReadCount++;
-            var->vflags |= VARIABLE_ALLOC_READ;
-            var->regIndex = REG_INDEX_EAX;
+            var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+            var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+            gpRestrictMask &= ~var->regMask;
             break;
 
           case INST_MASKMOVQ:
@@ -1260,8 +1342,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EDI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
               case 2:
@@ -1321,8 +1404,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1344,8 +1428,9 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
                 break;
               case 2:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1359,19 +1444,22 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EDX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 ASMJIT_ASSERT(_code == INST_RDTSCP);
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
 
               default:
@@ -1387,18 +1475,21 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_ESI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ESI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               default:
                 ASMJIT_ASSERT(0);
@@ -1421,18 +1512,21 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EDI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_ESI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ESI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               default:
                 ASMJIT_ASSERT(0);
@@ -1447,18 +1541,21 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EDI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               default:
                 ASMJIT_ASSERT(0);
@@ -1477,18 +1574,21 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case 0:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EDI;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDI);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 1:
                 vdata->registerReadCount++;
-                var->vflags |= VARIABLE_ALLOC_READ;
-                var->regIndex = REG_INDEX_EAX;
+                var->vflags |= VARIABLE_ALLOC_READ | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
                 vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE;
-                var->regIndex = REG_INDEX_ECX;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_ECX);
+                gpRestrictMask &= ~var->regMask;
                 break;
               default:
                 ASMJIT_ASSERT(0);
@@ -1553,10 +1653,10 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
       // If variable must be in specific register here we could add some hint
       // to allocator to alloc it to this register on first alloc.
-      if (var->regIndex != INVALID_VALUE)
+      if (var->vflags & VARIABLE_ALLOC_SPECIAL)
       {
-        vdata->prefRegisterMask |= (1 << var->regIndex);
-        cc._newRegisterHomeIndex(vdata, var->regIndex);
+        vdata->prefRegisterMask |= Util::maskFromIndex(var->regMask);
+        //cc._newRegisterHomeIndex(vdata, var->regIndex);
       }
     }
     else if (o.isMem())
@@ -1596,6 +1696,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         __GET_VARIABLE(vdata)
         vdata->registerReadCount++;
         var->vflags |= VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ;
+        var->regMask &= gpRestrictMask;
       }
 
       if ((o._mem.index & OPERAND_ID_TYPE_MASK) == OPERAND_ID_TYPE_VAR)
@@ -1606,6 +1707,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         __GET_VARIABLE(vdata)
         vdata->registerReadCount++;
         var->vflags |= VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_READ;
+        var->regMask &= gpRestrictMask;
       }
     }
   }
@@ -1614,15 +1716,19 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   // function is called from iterator that scans emittables using forward
   // direction so we can use this knowledge to optimize the process.
   //
-  // Same code is in ECall::prepare().
+  // Similar to ECall::prepare().
   for (i = 0; i < _variablesCount; i++)
   {
     VarData* v = _variables[i].vdata;
 
-    // First emittable (begin of variable scope).
-    if (v->firstEmittable == NULL) v->firstEmittable = this;
+    // Update GP register allocator restrictions.
+    if (isVariableInteger(v->type))
+    {
+      if (_variables[i].regMask == 0xFFFFFFFF) _variables[i].regMask &= gpRestrictMask;
+    }
 
-    // Last emittable (end of variable scope).
+    // Update first/last emittable (begin of variable scope).
+    if (v->firstEmittable == NULL) v->firstEmittable = this;
     v->lastEmittable = this;
   }
 
@@ -1674,8 +1780,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       case INST_PCMPGTW:
       case INST_PCMPGTD:
       case INST_PCMPGTQ:
-        // Clear read flag. We are not interested about reading spilled variable
-        // into register, because result of instruction not depends to it.
+        // Clear the read flag. This prevents variable alloc/spill.
         _variables[0].vflags = VARIABLE_ALLOC_WRITE;
         _variables[0].vdata->registerReadCount--;
         break;
@@ -1701,20 +1806,21 @@ Emittable* EInstruction::translate(CompilerContext& cc) ASMJIT_NOTHROW
       _variables->vdata->workOffset = cc._currentOffset;
     }
 
-    // Alloc variables used by the instruction.
+    // Alloc variables used by the instruction (special first).
     for (i = 0; i < variablesCount; i++)
     {
       VarAllocRecord& r = _variables[i];
       // Alloc variables with specific register first.
-      if (r.regIndex != INVALID_VALUE)
-        cc.allocVar(r.vdata, r.regIndex, r.vflags);
+      if ((r.vflags & VARIABLE_ALLOC_SPECIAL) != 0)
+        cc.allocVar(r.vdata, r.regMask, r.vflags);
     }
+
     for (i = 0; i < variablesCount; i++)
     {
       VarAllocRecord& r = _variables[i];
       // Alloc variables without specific register last.
-      if (r.regIndex == INVALID_VALUE)
-        cc.allocVar(r.vdata, r.regIndex, r.vflags);
+      if ((r.vflags & VARIABLE_ALLOC_SPECIAL) == 0)
+        cc.allocVar(r.vdata, r.regMask, r.vflags);
     }
 
     cc.translateOperands(_operands, _operandsCount);
@@ -3128,7 +3234,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
                         ~getPrototype().getPassedGP()    & 
                         ((1U << REG_NUM_GP) - 1);
 
-        cc._newRegisterHomeIndex(vdata, Util::findFirstOne(mask));
+        cc._newRegisterHomeIndex(vdata, Util::findFirstBit(mask));
         cc._newRegisterHomeMask(vdata, mask);
 
         var->flags |= VarCallRecord::FLAG_CALL_OPERAND_REG;
@@ -3570,7 +3676,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
                 cc._state.gp[rIndex] = vsrc;
 
                 vsrc->registerIndex = rIndex;
-                cc._allocatedVariable(vsrc);
+                cc._allocatedGPRegister(rIndex);
 
                 doSpill = false;
                 didWork = true;
@@ -3630,17 +3736,17 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
         {
           case VARIABLE_TYPE_GPD:
           case VARIABLE_TYPE_GPQ:
-            cc._markChangedGPRegister(srcArgType.registerIndex);
+            cc._markGPRegisterModified(srcArgType.registerIndex);
             break;
           case VARIABLE_TYPE_MM:
-            cc._markChangedMMRegister(srcArgType.registerIndex);
+            cc._markMMRegisterModified(srcArgType.registerIndex);
             break;
           case VARIABLE_TYPE_XMM:
           case VARIABLE_TYPE_XMM_1F:
           case VARIABLE_TYPE_XMM_1D:
           case VARIABLE_TYPE_XMM_4F:
           case VARIABLE_TYPE_XMM_2D:
-            cc._markChangedMMRegister(srcArgType.registerIndex);
+            cc._markMMRegisterModified(srcArgType.registerIndex);
             break;
         }
 
@@ -3771,7 +3877,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (getVariableClass(vdata->type) & VariableInfo::CLASS_MM)
       {
-        cc.allocMMVar(vdata, REG_INDEX_MM0,
+        cc.allocMMVar(vdata, Util::maskFromIndex(REG_INDEX_MM0),
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
         vdata->changed = true;
       }
@@ -3781,9 +3887,10 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (getVariableClass(vdata->type) & VariableInfo::CLASS_XMM)
       {
-        cc.allocXMMVar(vdata, (rec->flags & VarCallRecord::FLAG_OUT_XMM0) != 0
-          ? REG_INDEX_XMM0
-          : REG_INDEX_XMM1,
+        cc.allocXMMVar(vdata, 
+          Util::maskFromIndex((rec->flags & VarCallRecord::FLAG_OUT_XMM0) != 0
+            ? REG_INDEX_XMM0
+            : REG_INDEX_XMM1),
           VARIABLE_ALLOC_REGISTER | VARIABLE_ALLOC_WRITE);
         vdata->changed = true;
       }
@@ -5007,7 +5114,7 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
 // [AsmJit::CompilerContext - Construction / Destruction]
 // ============================================================================
 
-void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
+void CompilerContext::allocVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
   switch (vdata->type)
   {
@@ -5015,7 +5122,7 @@ void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflag
 #if defined(ASMJIT_X64)
     case VARIABLE_TYPE_GPQ:
 #endif // ASMJIT_X64
-      allocGPVar(vdata, regIndex, vflags);
+      allocGPVar(vdata, regMask, vflags);
       break;
 
     case VARIABLE_TYPE_X87:
@@ -5025,7 +5132,7 @@ void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflag
       break;
 
     case VARIABLE_TYPE_MM:
-      allocMMVar(vdata, regIndex, vflags);
+      allocMMVar(vdata, regMask, vflags);
       break;
 
     case VARIABLE_TYPE_XMM:
@@ -5033,7 +5140,7 @@ void CompilerContext::allocVar(VarData* vdata, uint32_t regIndex, uint32_t vflag
     case VARIABLE_TYPE_XMM_4F:
     case VARIABLE_TYPE_XMM_1D:
     case VARIABLE_TYPE_XMM_2D:
-      allocXMMVar(vdata, regIndex, vflags);
+      allocXMMVar(vdata, regMask, vflags);
       break;
   }
 
@@ -5146,9 +5253,15 @@ void CompilerContext::unuseVar(VarData* vdata, uint32_t toState) ASMJIT_NOTHROW
   vdata->registerIndex = INVALID_VALUE;
 }
 
-void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
+void CompilerContext::allocGPVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
+  // Fix the regMask (0 or full bit-array means that any register may be used).
+  if (regMask == 0) regMask = Util::maskUpToIndex(REG_NUM_GP);
+  regMask &= Util::maskUpToIndex(REG_NUM_GP);
+
+  // Working variables.
   uint32_t i;
+  uint32_t mask;
 
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
@@ -5163,7 +5276,7 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
 
   // Whether to alloc the non-preserved variables first.
   bool nonPreservedFirst = true;
-  if (this->getFunction()->_isCaller)
+  if (getFunction()->_isCaller)
   {
     nonPreservedFirst = vdata->firstCallable == NULL || 
                         vdata->firstCallable->getOffset() >= vdata->lastEmittable->getOffset();
@@ -5177,24 +5290,41 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = regIndex;
 
-    // Preferred register is none or same as currently allocated one, this is
-    // best case.
-    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
+    // Already allocated in the right register.
+    if (Util::maskFromIndex(oldIndex) & regMask) return;
 
-    VarData* other = _state.gp[newIndex];
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedGP;
+    if (mask != 0)
+    {
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedGP) != 0) ? mask & ~preservedGP : mask);
+    }
+    // Then find the allocated and later exchange.
+    else
+    {
+      idx = Util::findFirstBit(regMask & _state.usedGP);
+    }
+    ASMJIT_ASSERT(idx != INVALID_VALUE);
 
-    emitExchangeVar(vdata, regIndex, vflags, other);
-    if (other) other->registerIndex = oldIndex;
+    VarData* other = _state.gp[idx];
+    emitExchangeVar(vdata, idx, vflags, other);
+
+    _state.gp[oldIndex] = other;
+    _state.gp[idx     ] = vdata;
+
+    if (other)
+      other->registerIndex = oldIndex;
+    else
+      _freedGPRegister(oldIndex);
 
     // Update VarData.
     vdata->state = VARIABLE_STATE_REGISTER;
-    vdata->registerIndex = newIndex;
-    vdata->homeRegisterIndex = newIndex;
+    vdata->registerIndex = idx;
+    vdata->homeRegisterIndex = idx;
 
-    _state.gp[oldIndex] = other;
-    _state.gp[newIndex] = vdata;
+    _allocatedGPRegister(idx);
     return;
   }
 
@@ -5202,19 +5332,28 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // [Find Unused GP]
   // --------------------------------------------------------------------------
 
-  // Preferred register.
-  if (regIndex != INVALID_VALUE)
+  // If regMask contains restricted registers which may be used then everything
+  // is handled in this block.
+  if (regMask != Util::maskUpToIndex(REG_NUM_GP))
   {
-    if ((_state.usedGP & (1U << regIndex)) == 0)
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedGP;
+    if (mask != 0)
     {
-      idx = regIndex;
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
     }
+    // Then find the allocated and later spill.
     else
     {
-      // Spill register we need
-      spillCandidate = _state.gp[regIndex];
+      idx = Util::findFirstBit(regMask & _state.usedGP);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
 
-      // Jump to spill part of allocation
+      // Spill register we need.
+      spillCandidate = _state.gp[idx];
+
+      // Jump to spill part of allocation.
       goto L_Spill;
     }
   }
@@ -5229,7 +5368,6 @@ void CompilerContext::allocGPVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // needed. So we trying to prevent reallocation in near future.
   if (idx == INVALID_VALUE)
   {
-    uint32_t mask;
     for (i = 1, mask = (1 << i); i < REG_NUM_GP; i++, mask <<= 1)
     {
       if ((_state.usedGP & mask) == 0 && (i != REG_INDEX_EBP || _allocableEBP) && (i != REG_INDEX_ESP))
@@ -5344,9 +5482,15 @@ void CompilerContext::spillGPVar(VarData* vdata) ASMJIT_NOTHROW
   _freedGPRegister(idx);
 }
 
-void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
+void CompilerContext::allocMMVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
+  // Fix the regMask (0 or full bit-array means that any register may be used).
+  if (regMask == 0) regMask = Util::maskUpToIndex(REG_NUM_MM);
+  regMask &= Util::maskUpToIndex(REG_NUM_MM);
+
+  // Working variables.
   uint32_t i;
+  uint32_t mask;
 
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
@@ -5379,19 +5523,37 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = regIndex;
 
-    // Preferred register is none or same as currently allocated one, this is
-    // best case.
-    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
+    // Already allocated in the right register.
+    if (Util::maskFromIndex(oldIndex) & regMask) return;
 
-    VarData* other = _state.mm[newIndex];
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedMM;
+    if (mask != 0)
+    {
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedMM) != 0) ? mask & ~preservedMM : mask);
+    }
+    // Then find the allocated and later exchange.
+    else
+    {
+      idx = Util::findFirstBit(regMask & _state.usedMM);
+    }
+    ASMJIT_ASSERT(idx != INVALID_VALUE);
+
+    VarData* other = _state.mm[idx];
     if (other) spillMMVar(other);
 
+    emitMoveVar(vdata, idx, vflags);
     _freedMMRegister(oldIndex);
-    _allocatedVariable(vdata);
+    _state.mm[idx] = vdata;
 
-    emitMoveVar(vdata, regIndex, vflags);
+    // Update VarData.
+    vdata->state = VARIABLE_STATE_REGISTER;
+    vdata->registerIndex = idx;
+    vdata->homeRegisterIndex = idx;
+
+    _allocatedMMRegister(idx);
     return;
   }
 
@@ -5399,19 +5561,28 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
   // [Find Unused MM]
   // --------------------------------------------------------------------------
 
-  // Preferred register.
-  if (regIndex != INVALID_VALUE)
+  // If regMask contains restricted registers which may be used then everything
+  // is handled in this block.
+  if (regMask != Util::maskUpToIndex(REG_NUM_MM))
   {
-    if ((_state.usedMM & (1U << regIndex)) == 0)
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedMM;
+    if (mask != 0)
     {
-      idx = regIndex;
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedMM) != 0) ? mask & ~preservedMM : mask);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
     }
+    // Then find the allocated and later spill.
     else
     {
-      // Spill register we need
-      spillCandidate = _state.mm[regIndex];
+      idx = Util::findFirstBit(regMask & _state.usedMM);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
 
-      // Jump to spill part of allocation
+      // Spill register we need.
+      spillCandidate = _state.mm[idx];
+
+      // Jump to spill part of allocation.
       goto L_Spill;
     }
   }
@@ -5424,7 +5595,6 @@ void CompilerContext::allocMMVar(VarData* vdata, uint32_t regIndex, uint32_t vfl
 
   if (idx == INVALID_VALUE)
   {
-    uint32_t mask;
     for (i = 0, mask = (1 << i); i < REG_NUM_MM; i++, mask <<= 1)
     {
       if ((_state.usedMM & mask) == 0)
@@ -5530,9 +5700,15 @@ void CompilerContext::spillMMVar(VarData* vdata) ASMJIT_NOTHROW
   _freedMMRegister(idx);
 }
 
-void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
+void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
+  // Fix the regMask (0 or full bit-array means that any register may be used).
+  if (regMask == 0) regMask = Util::maskUpToIndex(REG_NUM_XMM);
+  regMask &= Util::maskUpToIndex(REG_NUM_XMM);
+
+  // Working variables.
   uint32_t i;
+  uint32_t mask;
 
   // Last register code (aka home).
   uint32_t home = vdata->homeRegisterIndex;
@@ -5561,19 +5737,37 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   if (vdata->state == VARIABLE_STATE_REGISTER)
   {
     uint32_t oldIndex = vdata->registerIndex;
-    uint32_t newIndex = regIndex;
 
-    // Preferred register is none or same as currently allocated one, this is
-    // best case.
-    if (regIndex == INVALID_VALUE || oldIndex == newIndex) return;
+    // Already allocated in the right register.
+    if (Util::maskFromIndex(oldIndex) & regMask) return;
 
-    VarData* other = _state.xmm[newIndex];
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedXMM;
+    if (mask != 0)
+    {
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedXMM) != 0) ? mask & ~preservedXMM : mask);
+    }
+    // Then find the allocated and later exchange.
+    else
+    {
+      idx = Util::findFirstBit(regMask & _state.usedXMM);
+    }
+    ASMJIT_ASSERT(idx != INVALID_VALUE);
+
+    VarData* other = _state.xmm[idx];
     if (other) spillXMMVar(other);
 
+    emitMoveVar(vdata, idx, vflags);
     _freedXMMRegister(oldIndex);
-    _allocatedVariable(vdata);
+    _state.xmm[idx] = vdata;
 
-    emitMoveVar(vdata, regIndex, vflags);
+    // Update VarData.
+    vdata->state = VARIABLE_STATE_REGISTER;
+    vdata->registerIndex = idx;
+    vdata->homeRegisterIndex = idx;
+
+    _allocatedXMMRegister(idx);
     return;
   }
 
@@ -5581,19 +5775,28 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
   // [Find Unused XMM]
   // --------------------------------------------------------------------------
 
-  // Preferred register.
-  if (regIndex != INVALID_VALUE)
+  // If regMask contains restricted registers which may be used then everything
+  // is handled in this block.
+  if (regMask != Util::maskUpToIndex(REG_NUM_XMM))
   {
-    if ((_state.usedXMM & (1U << regIndex)) == 0)
+    // Try to find unallocated register first.
+    mask = regMask & ~_state.usedXMM;
+    if (mask != 0)
     {
-      idx = regIndex;
+      idx = Util::findFirstBit(
+        (nonPreservedFirst && (mask & ~preservedXMM) != 0) ? mask & ~preservedXMM : mask);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
     }
+    // Then find the allocated and later spill.
     else
     {
-      // Spill register we need
-      spillCandidate = _state.xmm[regIndex];
+      idx = Util::findFirstBit(regMask & _state.usedXMM);
+      ASMJIT_ASSERT(idx != INVALID_VALUE);
 
-      // Jump to spill part of allocation
+      // Spill register we need.
+      spillCandidate = _state.xmm[idx];
+
+      // Jump to spill part of allocation.
       goto L_Spill;
     }
   }
@@ -5606,7 +5809,6 @@ void CompilerContext::allocXMMVar(VarData* vdata, uint32_t regIndex, uint32_t vf
 
   if (idx == INVALID_VALUE)
   {
-    uint32_t mask;
     for (i = 0, mask = (1 << i); i < REG_NUM_XMM; i++, mask <<= 1)
     {
       if ((_state.usedXMM & mask) == 0)
@@ -6426,7 +6628,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
       // Alloc register
       if (toVar != NULL)
       {
-        allocVar(toVar, regIndex, VARIABLE_ALLOC_READ);
+        allocVar(toVar, Util::maskFromIndex(regIndex), VARIABLE_ALLOC_READ);
       }
     }
 
