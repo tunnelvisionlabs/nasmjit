@@ -549,7 +549,7 @@ void FunctionPrototype::_setPrototype(
     if (isVariableInteger(a.variableType) && posGP < 16 && _argumentsGPList[posGP] != INVALID_VALUE)
     {
       a.registerIndex = _argumentsGPList[posGP++];
-      _passedGP |= (1 << a.registerIndex);
+      _passedGP |= Util::maskFromIndex(a.registerIndex);
     }
   }
 
@@ -596,12 +596,12 @@ void FunctionPrototype::_setPrototype(
       if (isVariableInteger(a.variableType))
       {
         a.registerIndex = _argumentsGPList[i];
-        _passedGP |= (1 << a.registerIndex);
+        _passedGP |= Util::maskFromIndex(a.registerIndex);
       }
       else if (isVariableFloat(a.variableType))
       {
         a.registerIndex = _argumentsXMMList[i];
-        _passedXMM |= (1 << a.registerIndex);
+        _passedXMM |= Util::maskFromIndex(a.registerIndex);
       }
     }
 
@@ -637,7 +637,7 @@ void FunctionPrototype::_setPrototype(
       if (isVariableInteger(a.variableType) && posGP < 32 && _argumentsGPList[posGP] != INVALID_VALUE)
       {
         a.registerIndex = _argumentsGPList[posGP++];
-        _passedGP |= (1 << a.registerIndex);
+        _passedGP |= Util::maskFromIndex(a.registerIndex);
       }
     }
 
@@ -648,7 +648,7 @@ void FunctionPrototype::_setPrototype(
       if (isVariableFloat(a.variableType))
       {
         a.registerIndex = _argumentsXMMList[posXMM++];
-        _passedXMM |= (1 << a.registerIndex);
+        _passedXMM |= Util::maskFromIndex(a.registerIndex);
       }
     }
 
@@ -2458,7 +2458,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     _isEspAdjusted = true;
   }
 
-  _modifiedAndPreservedGP  = cc._modifiedGPRegisters  & _functionPrototype.getPreservedGP() & ~(1 << REG_INDEX_ESP);
+  _modifiedAndPreservedGP  = cc._modifiedGPRegisters  & _functionPrototype.getPreservedGP() & ~Util::maskFromIndex(REG_INDEX_ESP);
   _modifiedAndPreservedMM  = cc._modifiedMMRegisters  & _functionPrototype.getPreservedMM();
   _modifiedAndPreservedXMM = cc._modifiedXMMRegisters & _functionPrototype.getPreservedXMM();
 
@@ -2687,7 +2687,7 @@ void EFunction::_dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW
 
       for (i = 0; i < REG_NUM_BASE; i++)
       {
-        if ((regs & (1 << i)) != 0)
+        if ((regs & Util::maskFromIndex(i)) != 0)
         {
           if (!first) { *p++ = ','; *p++ = ' '; }
           p = dumpRegister(p, type, i);
@@ -3031,17 +3031,17 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       {
         case VARIABLE_TYPE_GPD:
         case VARIABLE_TYPE_GPQ:
-          _gpParams |= (1 << fArg.registerIndex);
+          _gpParams |= Util::maskFromIndex(fArg.registerIndex);
           break;
         case VARIABLE_TYPE_MM:
-          _mmParams |= (1 << fArg.registerIndex);
+          _mmParams |= Util::maskFromIndex(fArg.registerIndex);
           break;
         case VARIABLE_TYPE_XMM:
         case VARIABLE_TYPE_XMM_1F:
         case VARIABLE_TYPE_XMM_4F:
         case VARIABLE_TYPE_XMM_1D:
         case VARIABLE_TYPE_XMM_2D:
-          _xmmParams |= (1 << fArg.registerIndex);
+          _xmmParams |= Util::maskFromIndex(fArg.registerIndex);
           break;
         default:
           ASMJIT_ASSERT(0);
@@ -3232,7 +3232,7 @@ void ECall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       {
         uint32_t mask = ~getPrototype().getPreservedGP() &
                         ~getPrototype().getPassedGP()    & 
-                        ((1U << REG_NUM_GP) - 1);
+                        Util::maskUpToIndex(REG_NUM_GP);
 
         cc._newRegisterHomeIndex(vdata, Util::findFirstBit(mask));
         cc._newRegisterHomeMask(vdata, mask);
@@ -3488,11 +3488,11 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
         {
           case VARIABLE_TYPE_GPD:
           case VARIABLE_TYPE_GPQ:
-            if ((getPrototype().getPreservedGP() & (1 << vdata->registerIndex)) == 0)
+            if ((getPrototype().getPreservedGP() & Util::maskFromIndex(vdata->registerIndex)) == 0)
               cc.spillGPVar(vdata);
             break;
           case VARIABLE_TYPE_MM:
-            if ((getPrototype().getPreservedMM() & (1 << vdata->registerIndex)) == 0)
+            if ((getPrototype().getPreservedMM() & Util::maskFromIndex(vdata->registerIndex)) == 0)
               cc.spillMMVar(vdata);
             break;
           case VARIABLE_TYPE_XMM:
@@ -3500,7 +3500,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
           case VARIABLE_TYPE_XMM_1D:
           case VARIABLE_TYPE_XMM_4F:
           case VARIABLE_TYPE_XMM_2D:
-            if ((getPrototype().getPreservedXMM() & (1 << vdata->registerIndex)) == 0)
+            if ((getPrototype().getPreservedXMM() & Util::maskFromIndex(vdata->registerIndex)) == 0)
               cc.spillXMMVar(vdata);
             break;
         }
@@ -3627,7 +3627,7 @@ Emittable* ECall::translate(CompilerContext& cc) ASMJIT_NOTHROW
               // in this mask is ideal to be used by call() instruction.
               uint32_t possibleMask = ~getPrototype().getPreservedGP() &
                                       ~getPrototype().getPassedGP()    & 
-                                      ((1U << REG_NUM_GP) - 1);
+                                      Util::maskUpToIndex(REG_NUM_GP);
 
               if (possibleMask != 0)
               {
@@ -6604,9 +6604,9 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
     }
     else if (fromVar != NULL)
     {
-      uint32_t msk = (1 << i);
+      uint32_t mask = Util::maskFromIndex(i);
       // Variables are the same, we just need to compare changed flags.
-      if ((fromState->changedGP & msk) && !(toState->changedGP & msk))
+      if ((fromState->changedGP & mask) && !(toState->changedGP & mask))
       {
         saveVar(fromVar);
       }

@@ -1466,12 +1466,14 @@ struct ASMJIT_API CompilerContext
   inline void _markMMRegisterModified(uint32_t index) ASMJIT_NOTHROW { _modifiedMMRegisters |= Util::maskFromIndex(index); }
   inline void _markXMMRegisterModified(uint32_t index) ASMJIT_NOTHROW { _modifiedXMMRegisters |= Util::maskFromIndex(index); }
 
+  // TODO: Find code which uses this and improve.
   inline void _newRegisterHomeIndex(VarData* vdata, uint32_t idx)
   {
     if (vdata->homeRegisterIndex == INVALID_VALUE) vdata->homeRegisterIndex = idx;
     vdata->prefRegisterMask |= (1U << idx);
   }
 
+  // TODO: Find code which uses this and improve.
   inline void _newRegisterHomeMask(VarData* vdata, uint32_t mask)
   {
     vdata->prefRegisterMask |= mask;
