@@ -1651,12 +1651,11 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         }
       }
 
-      // If variable must be in specific register here we could add some hint
-      // to allocator to alloc it to this register on first alloc.
+      // If variable must be in specific register we could add some hint to allocator.
       if (var->vflags & VARIABLE_ALLOC_SPECIAL)
       {
         vdata->prefRegisterMask |= Util::maskFromIndex(var->regMask);
-        //cc._newRegisterHomeIndex(vdata, var->regIndex);
+        cc._newRegisterHomeIndex(vdata, Util::findFirstBit(var->regMask));
       }
     }
     else if (o.isMem())
