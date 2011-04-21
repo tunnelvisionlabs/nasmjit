@@ -1279,15 +1279,15 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             switch (i)
             {
               case 0:
-                vdata->registerWriteCount++;
-                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
-                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
-                gpRestrictMask &= ~var->regMask;
-                break;
-              case 1:
                 vdata->registerRWCount++;
                 var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
                 var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
+                gpRestrictMask &= ~var->regMask;
+                break;
+              case 1:
+                vdata->registerWriteCount++;
+                var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
                 gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
@@ -6548,8 +6548,11 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
   uint base;
   uint i;
 
+  // --------------------------------------------------------------------------
   // Set target state to all variables. vdata->tempInt is target state in this
   // function.
+  // --------------------------------------------------------------------------
+
   {
     // UNUSED.
     VarData* vdata = _active;
@@ -6574,19 +6577,62 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
     }
   }
 
+  // --------------------------------------------------------------------------
+  // [GP-Registers Switch]
+  // --------------------------------------------------------------------------
+
+  // TODO.
+#if 0
+  for (i = 0; i < REG_NUM_GP; i++)
+  {
+    VarData* fromVar = fromState->gp[i];
+    VarData* toVar = toState->gp[i];
+
+    if (fromVar != toVar)
+    {
+      if (fromVar != NULL)
+      {
+        if (toVar != NULL)
+        {
+          if (fromState->gp[to
+        }
+        else
+        {
+          // It is possible that variable that was saved in state currently not
+          // exists (tempInt is target scope!).
+          if (fromVar->tempInt == VARIABLE_STATE_UNUSED)
+          {
+            unuseVar(fromVar, VARIABLE_STATE_UNUSED);
+          }
+          else
+          {
+            spillVar(fromVar);
+          }
+        }
+      }
+    }
+    else if (fromVar != NULL)
+    {
+      uint32_t mask = Util::maskFromIndex(i);
+      // Variables are the same, we just need to compare changed flags.
+      if ((fromState->changedGP & mask) && !(toState->changedGP & mask)) saveVar(fromVar);
+    }
+  }
+#endif
+
   // Spill.
   for (base = 0, i = 0; i < STATE_REGS_COUNT; i++)
   {
     // Change the base offset (from base offset the register index can be
     // calculated).
     if (i == 16 || i == 16 + 8) base = i;
+    uint32_t regIndex = i - base;
 
     VarData* fromVar = fromState->regs[i];
     VarData* toVar = toState->regs[i];
 
     if (fromVar != toVar)
     {
-      uint32_t regIndex = i - base;
 
       // Spill the register.
       if (fromVar != NULL)
@@ -6605,7 +6651,7 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
     }
     else if (fromVar != NULL)
     {
-      uint32_t mask = Util::maskFromIndex(i);
+      uint32_t mask = Util::maskFromIndex(regIndex);
       // Variables are the same, we just need to compare changed flags.
       if ((fromState->changedGP & mask) && !(toState->changedGP & mask))
       {
@@ -6640,12 +6686,18 @@ void CompilerContext::_restoreState(StateData* state, uint32_t targetOffset) ASM
     //}
   }
 
+  // --------------------------------------------------------------------------
   // Update used masks.
+  // --------------------------------------------------------------------------
+
   _state.usedGP = state->usedGP;
   _state.usedMM = state->usedMM;
   _state.usedXMM = state->usedXMM;
 
+  // --------------------------------------------------------------------------
   // Update changed masks and cleanup.
+  // --------------------------------------------------------------------------
+
   {
     VarData* vdata = _active;
     if (vdata)
