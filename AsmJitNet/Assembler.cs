@@ -286,8 +286,8 @@
             var coff = _buffer.Offset;
             var csize = CodeSize;
 
-            // We are copying exactly size of generated code. Extra code for trampolines
-            // is generated on-the-fly by relocator (this code not exists at now).
+            // We are copying the exact size of the generated code. Extra code for trampolines
+            // is generated on-the-fly by relocator (this code doesn't exist at the moment).
             Marshal.Copy(_buffer.Data, 0, destination, (int)coff);
 
             // Trampoline pointer
@@ -326,7 +326,7 @@
                     {
                         if (r.Type == RelocationType.AbsoluteToRelativeTrampoline && !Util.IsInt32(val.ToInt64()))
                         {
-                            val = (IntPtr)(tramp.ToInt64() - (addressBase.ToInt64() + r.Offset + 4));
+                            val = (IntPtr)(tramp.ToInt64() - (destination.ToInt64() + r.Offset + 4));
                             useTrampoline = true;
                         }
                     }
@@ -3147,9 +3147,9 @@
             // [index * scale + displacemnt] |   ABSOLUTE  | ABSOLUTE (ZERO EXTENDED)
             else
             {
-                // - In 32 bit mode is used absolute addressing model.
-                // - In 64 bit mode is used relative addressing model together with
-                //   absolute addressing one. Main problem is that if instruction
+                // - In 32 bit mode the absolute addressing model is used.
+                // - In 64 bit mode the relative addressing model is used together with
+                //   the absolute addressing one. Main problem is that if instruction
                 //   contains SIB then relative addressing (RIP) is not possible.
 
                 if (Util.IsX86)
@@ -3255,7 +3255,7 @@
                         {
                             if (Logger != null && Logger.IsUsed)
                             {
-                                Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits" + Environment.NewLine);
+                                Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits." + Environment.NewLine);
                             }
                             target = (UIntPtr)(target.ToUInt64() & uint.MaxValue);
                         }
