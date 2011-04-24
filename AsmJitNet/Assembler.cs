@@ -1596,8 +1596,8 @@
                             //GPReg dst = ((GPReg)o0);
                             //Imm src = ((Imm)o1);
 
-                            // In 64 bit mode immediate can be 64-bits long if destination operand
-                            // is register (otherwise 32-bits).
+                            // In 64-bit mode the immediate can be 64-bits long if the
+                            // destination operand type is register (otherwise 32-bits).
                             int immSize = dst.Size;
 
                             // Optimize instruction size by using 32 bit immediate if value can

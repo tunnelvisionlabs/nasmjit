@@ -221,7 +221,7 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.GP) == 0)
                 throw new ArgumentException();
 
-            VarData varData = NewVarData(name, variableType, IntPtr.Size);
+            VarData varData = NewVarData(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
             GPVar var = new GPVar(varData.Id, varData.Size, VariableInfo.GetVariableInfo(varData.Type).RegisterType, varData.Type);
             return var;
         }
