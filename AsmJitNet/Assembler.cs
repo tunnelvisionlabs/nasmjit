@@ -1601,13 +1601,13 @@
                             int immSize = dst.Size;
 
                             // Optimize instruction size by using 32 bit immediate if value can
-                            // fit to it.
+                            // fit into it.
                             if (Util.IsX64 && immSize == 8 && Util.IsInt32(((Imm)src).Value.ToInt64()))
                             {
                                 EmitX86RM(0xC7,
-                                  dst.IsRegType(RegType.GPW),
-                                  dst.IsRegType(RegType.GPQ),
-                                  0,
+                                  false, // 16 bit
+                                  true, // rex.w
+                                  0, // O
                                   dst,
                                   0, forceRexPrefix);
                                 immSize = 4;
