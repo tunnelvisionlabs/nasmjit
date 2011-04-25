@@ -930,6 +930,8 @@
                         VarData vdata = Compiler.GetVarData(o.Id);
                         Debug.Assert(vdata != null);
 
+                        __GET_VARIABLE(vdata);
+
                         if (i == 0)
                         {
                             // If variable is MOV instruction type (source replaces the destination)
