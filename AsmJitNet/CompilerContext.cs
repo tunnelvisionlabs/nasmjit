@@ -27,9 +27,9 @@
         /// </summary>
         private bool _unreachable;
 
-        private int _modifiedGPRegisters;
-        private int _modifiedMMRegisters;
-        private int _modifiedXMMRegisters;
+        private RegisterMask _modifiedGPRegisters;
+        private RegisterMask _modifiedMMRegisters;
+        private RegisterMask _modifiedXMMRegisters;
 
         /// <summary>
         /// Whether the EBP/RBP register can be used by register allocator
@@ -227,7 +227,7 @@
             }
         }
 
-        internal int ModifiedGPRegisters
+        internal RegisterMask ModifiedGPRegisters
         {
             get
             {
@@ -235,7 +235,7 @@
             }
         }
 
-        internal int ModifiedMMRegisters
+        internal RegisterMask ModifiedMMRegisters
         {
             get
             {
@@ -243,7 +243,7 @@
             }
         }
 
-        internal int ModifiedXMMRegisters
+        internal RegisterMask ModifiedXMMRegisters
         {
             get
             {
@@ -364,9 +364,9 @@
             _currentOffset = 0;
             //_unreachable = 0;
 
-            _modifiedGPRegisters = 0;
-            _modifiedMMRegisters = 0;
-            _modifiedXMMRegisters = 0;
+            _modifiedGPRegisters = RegisterMask.Zero;
+            _modifiedMMRegisters = RegisterMask.Zero;
+            _modifiedXMMRegisters = RegisterMask.Zero;
 
             _allocableEBP = false;
 
@@ -542,7 +542,7 @@
             vdata.PreviousActive = null;
         }
 
-        public void AllocVar(VarData varData, int regMask, VariableAlloc variableAlloc)
+        public void AllocVar(VarData varData, RegisterMask regMask, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
 
@@ -623,17 +623,17 @@
             vdata.Changed = false;
         }
 
-        public void AllocGPVar(VarData varData, int regMask, VariableAlloc variableAlloc)
+        public void AllocGPVar(VarData varData, RegisterMask regMask, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
 
               // Fix the regMask (0 or full bit-array means that any register may be used).
-            if (regMask == 0)
-                regMask = Util.MaskUpToIndex(RegNum.GP);
-            regMask &= Util.MaskUpToIndex(RegNum.GP);
+            if (regMask == RegisterMask.Zero)
+                regMask = RegisterMask.MaskToIndex(RegNum.GP);
+            regMask &= RegisterMask.MaskToIndex(RegNum.GP);
 
             int i;
-            int mask;
+            RegisterMask mask;
 
             // Last register code (aka home).
             RegIndex home = varData.HomeRegisterIndex;
@@ -641,7 +641,7 @@
             RegIndex idx = RegIndex.Invalid;
 
             // Preserved GP variables.
-            int preservedGP = varData.Scope.Prototype.PreservedGP;
+            RegisterMask preservedGP = varData.Scope.Prototype.PreservedGP;
 
             // Spill candidate.
             VarData spillCandidate = null;
@@ -664,20 +664,19 @@
                 RegIndex oldIndex = varData.RegisterIndex;
 
                 // Already allocated in the right register.
-                if ((Util.MaskFromIndex(oldIndex) & regMask) != 0)
+                if ((RegisterMask.FromIndex(oldIndex) & regMask) != RegisterMask.Zero)
                     return;
 
                 // Try to find unallocated register first.
                 mask = regMask & ~_state.UsedGP;
-                if (mask != 0)
+                if (mask != RegisterMask.Zero)
                 {
-                    idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~preservedGP) != 0) ? mask & ~preservedGP : mask);
+                    idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? mask & ~preservedGP : mask).FirstRegister;
                 }
                 // Then find the allocated and later exchange.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & _state.UsedGP);
+                    idx = (regMask & _state.UsedGP).FirstRegister;
                 }
 
                 Contract.Assert(idx != RegIndex.Invalid);
@@ -708,20 +707,19 @@
 
             // If regMask contains restricted registers which may be used then everything
             // is handled in this block.
-            if (regMask != Util.MaskUpToIndex(RegNum.GP))
+            if (regMask != RegisterMask.MaskToIndex(RegNum.GP))
             {
                 // Try to find unallocated register first.
                 mask = regMask & ~_state.UsedGP;
-                if (mask != 0)
+                if (mask != RegisterMask.Zero)
                 {
-                    idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
+                    idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? (mask & ~preservedGP) : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
                 // Then find the allocated and later spill.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & _state.UsedGP);
+                    idx = (regMask & _state.UsedGP).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
 
                     // Spill register we need.
@@ -735,7 +733,7 @@
             // Home register code.
             if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
             {
-                if ((_state.UsedGP & (1U << (int)home)) == 0)
+                if ((_state.UsedGP & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
                     idx = home;
             }
 
@@ -743,28 +741,28 @@
             // needed. So we trying to prevent reallocation in near future.
             if (idx == RegIndex.Invalid)
             {
-                for (i = 1, mask = (1 << i); i < (int)RegNum.GP; i++, mask <<= 1)
+                for (i = 1, mask = RegisterMask.FromIndex((RegIndex)i); i < (int)RegNum.GP; i++, mask = RegisterMask.FromIndex((RegIndex)i))
                 {
-                    if ((_state.UsedGP & mask) == 0 && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
+                    if ((_state.UsedGP & mask) == RegisterMask.Zero && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
                     {
                         // Convenience to alloc non-preserved first or non-preserved last.
                         if (nonPreservedFirst)
                         {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) != 0)
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) != RegisterMask.Zero)
                                 continue;
                             idx = (RegIndex)i;
                             // If current register is preserved, we should try to find different
                             // one that is not. This can save one push / pop in prolog / epilog.
-                            if ((preservedGP & mask) == 0)
+                            if ((preservedGP & mask) == RegisterMask.Zero)
                                 break;
                         }
                         else
                         {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) == 0)
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) == RegisterMask.Zero)
                                 continue;
                             idx = (RegIndex)i;
                             // The opposite.
-                            if ((preservedGP & mask) != 0)
+                            if ((preservedGP & mask) != RegisterMask.Zero)
                                 break;
                         }
                     }
@@ -772,7 +770,7 @@
             }
 
             // If not found, try EAX/RAX.
-            if (idx == RegIndex.Invalid && (_state.UsedGP & 1) == 0)
+            if (idx == RegIndex.Invalid && (_state.UsedGP & RegisterMask.FromIndex(RegIndex.Eax)) == RegisterMask.Zero)
             {
                 idx = RegIndex.Eax;
             }
@@ -1005,7 +1003,7 @@
             SpillVar(vdata, _state.GP, FreedGPRegister);
         }
 
-        public void AllocMMVar(VarData vdata, int regMask, VariableAlloc vflags)
+        public void AllocMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
             AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Prototype.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
@@ -1017,7 +1015,7 @@
             SpillVar(vdata, _state.MM, FreedMMRegister);
         }
 
-        public void AllocXMMVar(VarData vdata, int regMask, VariableAlloc vflags)
+        public void AllocXMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
             AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Prototype.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
@@ -1029,24 +1027,24 @@
             SpillVar(vdata, _state.XMM, FreedXMMRegister);
         }
 
-        private void AllocNonGPVar(VarData vdata, int regMask, VariableAlloc vflags, int regNum, int preserved, int used, IList<VarData> stateData, Action<RegIndex> allocatedAction, Action<VarData> spillAction, Action<RegIndex> freeAction)
+        private void AllocNonGPVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags, int regNum, RegisterMask preserved, RegisterMask used, IList<VarData> stateData, Action<RegIndex> allocatedAction, Action<VarData> spillAction, Action<RegIndex> freeAction)
         {
             Contract.Requires(vdata != null);
             Contract.Requires(stateData != null);
             Contract.Requires(freeAction != null);
 
             // Fix the regMask (0 or full bit-array means that any register may be used).
-            if (regMask == 0)
-                regMask = Util.MaskUpToIndex(regNum);
+            if (regMask == RegisterMask.Zero)
+                regMask = RegisterMask.MaskToIndex(regNum);
 
-            regMask &= Util.MaskUpToIndex(regNum);
+            regMask &= RegisterMask.MaskToIndex(regNum);
 
             // Last register code (aka home).
             RegIndex home = vdata.HomeRegisterIndex;
             // New register code.
             RegIndex idx = RegIndex.Invalid;
 
-            int mask = 0;
+            RegisterMask mask = RegisterMask.Zero;
 
             // Spill candidate.
             VarData spillCandidate = null;
@@ -1069,20 +1067,19 @@
                 RegIndex oldIndex = vdata.RegisterIndex;
 
                 // Already allocated in the right register.
-                if ((Util.MaskFromIndex(oldIndex) & regMask) != 0)
+                if ((RegisterMask.FromIndex(oldIndex) & regMask) != RegisterMask.Zero)
                     return;
 
                 // Try to find unallocated register first.
                 mask = regMask & ~used;
-                if (mask != 0)
+                if (mask != RegisterMask.Zero)
                 {
-                    idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~preserved) != 0) ? mask & ~preserved : mask);
+                    idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                 }
                 // Then find the allocated and later exchange.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & used);
+                    idx = (regMask & used).FirstRegister;
                 }
                 Contract.Assert(idx != RegIndex.Invalid);
 
@@ -1109,20 +1106,19 @@
 
             // If regMask contains restricted registers which may be used then everything
             // is handled in this block.
-            if (regMask != Util.MaskUpToIndex(regNum))
+            if (regMask != RegisterMask.MaskToIndex(regNum))
             {
                 // Try to find unallocated register first.
                 mask = regMask & ~used;
-                if (mask != 0)
+                if (mask != RegisterMask.Zero)
                 {
-                    idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~preserved) != 0) ? mask & ~preserved : mask);
+                    idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
                 // Then find the allocated and later spill.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & used);
+                    idx = (regMask & used).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
 
                     // Spill register we need.
@@ -1136,35 +1132,35 @@
             // Home register code.
             if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
             {
-                if ((used & (1U << (int)home)) == 0)
+                if ((used & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
                     idx = home;
             }
 
             if (idx == RegIndex.Invalid)
             {
                 RegIndex i;
-                for (i = 0, mask = (1 << (int)i); i < (RegIndex)stateData.Count; i++, mask <<= 1)
+                for (i = 0, mask = RegisterMask.FromIndex((RegIndex)i); i < (RegIndex)stateData.Count; i++, mask = RegisterMask.FromIndex((RegIndex)i))
                 {
-                    if ((used & mask) == 0)
+                    if ((used & mask) == RegisterMask.Zero)
                     {
                         // Convenience to alloc non-preserved first or non-preserved last.
                         if (nonPreservedFirst)
                         {
-                            if (idx != RegIndex.Invalid && (preserved & mask) != 0)
+                            if (idx != RegIndex.Invalid && (preserved & mask) != RegisterMask.Zero)
                                 continue;
                             idx = i;
                             // If current register is preserved, we should try to find different
                             // one that is not. This can save one push / pop in prolog / epilog.
-                            if ((preserved & mask) == 0)
+                            if ((preserved & mask) == RegisterMask.Zero)
                                 break;
                         }
                         else
                         {
-                            if (idx != RegIndex.Invalid && (preserved & mask) == 0)
+                            if (idx != RegIndex.Invalid && (preserved & mask) == RegisterMask.Zero)
                                 continue;
                             idx = i;
                             // The opposite.
-                            if ((preserved & mask) != 0)
+                            if ((preserved & mask) != RegisterMask.Zero)
                                 break;
                         }
                     }
@@ -1249,32 +1245,32 @@
 
         private void FreedGPRegister(RegIndex index)
         {
-            _state.UsedGP &= ~(int)Util.MaskFromIndex(index);
+            _state.UsedGP &= ~RegisterMask.FromIndex(index);
         }
 
         private void FreedMMRegister(RegIndex index)
         {
-            _state.UsedMM &= ~(int)Util.MaskFromIndex(index);
+            _state.UsedMM &= ~RegisterMask.FromIndex(index);
         }
 
         private void FreedXMMRegister(RegIndex index)
         {
-            _state.UsedXMM &= ~(int)Util.MaskFromIndex(index);
+            _state.UsedXMM &= ~RegisterMask.FromIndex(index);
         }
 
         internal void MarkGPRegisterModified(RegIndex index)
         {
-            _modifiedGPRegisters |= (int)Util.MaskFromIndex(index);
+            _modifiedGPRegisters |= RegisterMask.FromIndex(index);
         }
 
         internal void MarkMMRegisterModified(RegIndex index)
         {
-            _modifiedMMRegisters |= (int)Util.MaskFromIndex(index);
+            _modifiedMMRegisters |= RegisterMask.FromIndex(index);
         }
 
         internal void MarkXMMRegisterModified(RegIndex index)
         {
-            _modifiedXMMRegisters |= (int)Util.MaskFromIndex(index);
+            _modifiedXMMRegisters |= RegisterMask.FromIndex(index);
         }
 
         // TODO: Find code which uses this and improve.
@@ -1283,11 +1279,11 @@
             if (vdata.HomeRegisterIndex == RegIndex.Invalid)
                 vdata.HomeRegisterIndex = idx;
 
-            vdata.PreferredRegisterMask |= Util.MaskFromIndex(idx);
+            vdata.PreferredRegisterMask |= RegisterMask.FromIndex(idx);
         }
 
         // TODO: Find code which uses this and improve.
-        internal void NewRegisterHomeMask(VarData vdata, int mask)
+        internal void NewRegisterHomeMask(VarData vdata, RegisterMask mask)
         {
             vdata.PreferredRegisterMask |= mask;
         }
@@ -1644,20 +1640,20 @@
 
         internal void AllocatedGPRegister(RegIndex index)
         {
-            _state.UsedGP |= (int)Util.MaskFromIndex(index);
-            _modifiedGPRegisters |= (int)Util.MaskFromIndex(index);
+            _state.UsedGP |= RegisterMask.FromIndex(index);
+            _modifiedGPRegisters |= RegisterMask.FromIndex(index);
         }
 
         internal void AllocatedMMRegister(RegIndex index)
         {
-            _state.UsedMM |= (int)Util.MaskFromIndex(index);
-            _modifiedMMRegisters |= (int)Util.MaskFromIndex(index);
+            _state.UsedMM |= RegisterMask.FromIndex(index);
+            _modifiedMMRegisters |= RegisterMask.FromIndex(index);
         }
 
         internal void AllocatedXMMRegister(RegIndex index)
         {
-            _state.UsedXMM |= (int)Util.MaskFromIndex(index);
-            _modifiedXMMRegisters |= (int)Util.MaskFromIndex(index);
+            _state.UsedXMM |= RegisterMask.FromIndex(index);
+            _modifiedXMMRegisters |= RegisterMask.FromIndex(index);
         }
 
         internal void MarkMemoryUsed(VarData varData)
@@ -1818,28 +1814,28 @@
             StateData state = new StateData(_state, memVarsCount);
 
             // Clear changed flags.
-            state.ChangedGP = 0;
-            state.ChangedMM = 0;
-            state.ChangedXMM = 0;
-
-            int i;
-            int mask;
+            state.ChangedGP = RegisterMask.Zero;
+            state.ChangedMM = RegisterMask.Zero;
+            state.ChangedXMM = RegisterMask.Zero;
 
             // Save variables stored in REGISTERs and CHANGE flag.
-            for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.GP; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if (state.GP[i] != null && state.GP[i].Changed)
                     state.ChangedGP |= mask;
             }
 
-            for (i = 0, mask = 1; i < (int)RegNum.MM; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.MM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if (state.MM[i] != null && state.MM[i].Changed)
                     state.ChangedMM |= mask;
             }
 
-            for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.XMM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if (state.XMM[i] != null && state.XMM[i].Changed)
                     state.ChangedXMM |= mask;
             }
@@ -1869,7 +1865,6 @@
             _state.MemVarsData = new VarData[0];
 
             int i;
-            int mask;
             VarData vdata;
 
             // Unuse all variables first.
@@ -1890,33 +1885,36 @@
             }
 
             // Assign allocated variables.
-            for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+            for (i = 0; i < RegNum.GP; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if ((vdata = _state.GP[i]) != null)
                 {
                     vdata.State = VariableState.Register;
                     vdata.RegisterIndex = (RegIndex)i;
-                    vdata.Changed = (_state.ChangedGP & mask) != 0;
+                    vdata.Changed = (_state.ChangedGP & mask) != RegisterMask.Zero;
                 }
             }
 
-            for (i = 0, mask = 1; i < (int)RegNum.MM; i++, mask <<= 1)
+            for (i = 0; i < RegNum.MM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if ((vdata = _state.MM[i]) != null)
                 {
                     vdata.State = VariableState.Register;
                     vdata.RegisterIndex = (RegIndex)i;
-                    vdata.Changed = (_state.ChangedMM & mask) != 0;
+                    vdata.Changed = (_state.ChangedMM & mask) != RegisterMask.Zero;
                 }
             }
 
-            for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+            for (i = 0; i < RegNum.XMM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if ((vdata = _state.XMM[i]) != null)
                 {
                     vdata.State = VariableState.Register;
                     vdata.RegisterIndex = (RegIndex)i;
-                    vdata.Changed = (_state.ChangedXMM & mask) != 0;
+                    vdata.Changed = (_state.ChangedXMM & mask) != RegisterMask.Zero;
                 }
             }
         }
@@ -2005,7 +2003,7 @@
                 }
                 else if (fromVar != null)
                 {
-                    int mask = Util.MaskFromIndex((RegIndex)i);
+                    int mask = RegisterMask.FromIndex((RegIndex)i);
                     // Variables are the same, we just need to compare changed flags.
                     if ((fromState.ChangedGP & mask) != 0 && (toState.ChangedGP & mask) == 0)
                         SaveVar(fromVar);
@@ -2044,9 +2042,9 @@
                 }
                 else if (fromVar != null)
                 {
-                    int mask = (int)Util.MaskFromIndex((RegIndex)regIndex);
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)regIndex);
                     // Variables are the same, we just need to compare changed flags.
-                    if ((fromState.ChangedGP & mask) != 0 && (toState.ChangedGP & mask) == 0)
+                    if ((fromState.ChangedGP & mask) != RegisterMask.Zero && (toState.ChangedGP & mask) == RegisterMask.Zero)
                     {
                         SaveVar(fromVar);
                     }
@@ -2069,7 +2067,7 @@
                     // Alloc register
                     if (toVar != null)
                     {
-                        AllocVar(toVar, Util.MaskFromIndex((RegIndex)regIndex), VariableAlloc.Read);
+                        AllocVar(toVar, RegisterMask.FromIndex((RegIndex)regIndex), VariableAlloc.Read);
                     }
                 }
 

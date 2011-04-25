@@ -15,17 +15,17 @@
         /// <summary>
         /// Mask of GP registers used as function arguments
         /// </summary>
-        private int _gpParams;
+        private RegisterMask _gpParams;
 
         /// <summary>
         /// Mask of MM registers used as function arguments
         /// </summary>
-        private int _mmParams;
+        private RegisterMask _mmParams;
 
         /// <summary>
         /// Mask of XMM registers used as function arguments
         /// </summary>
-        private int _xmmParams;
+        private RegisterMask _xmmParams;
 
         /// <summary>
         /// Variables (extracted from operands)
@@ -157,17 +157,17 @@
                     {
                     case VariableType.GPD:
                     case VariableType.GPQ:
-                        _gpParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
+                        _gpParams |= RegisterMask.FromIndex(fArg._registerIndex);
                         break;
                     case VariableType.MM:
-                        _mmParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
+                        _mmParams |= RegisterMask.FromIndex(fArg._registerIndex);
                         break;
                     case VariableType.XMM:
                     case VariableType.XMM_1F:
                     case VariableType.XMM_4F:
                     case VariableType.XMM_1D:
                     case VariableType.XMM_2D:
-                        _xmmParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
+                        _xmmParams |= RegisterMask.FromIndex(fArg._registerIndex);
                         break;
                     default:
                         throw new CompilerException("Invalid variable type in function call argument.");
@@ -368,11 +368,11 @@
                     }
                     else if (i == argumentsCount)
                     {
-                        int mask = ~Prototype.PreservedGP &
+                        RegisterMask mask = ~Prototype.PreservedGP &
                                         ~Prototype.PassedGP &
-                                        (Util.MaskUpToIndex(RegNum.GP) - 1);
+                                        (RegisterMask.MaskToIndex(RegNum.GP) & ~RegisterMask.FromIndex(RegIndex.Eax));
 
-                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit(mask));
+                        cc.NewRegisterHomeIndex(vdata, mask.FirstRegister);
                         cc.NewRegisterHomeMask(vdata, mask);
 
                         var.Flags |= VarCallFlags.CALL_OPERAND_REG;
@@ -522,9 +522,7 @@
 
         protected override Emittable TranslateImpl(CompilerContext cc)
         {
-            int i;
-            int preserved;
-            int mask;
+            RegisterMask preserved;
 
             RegIndex temporaryGpReg;
             RegIndex temporaryXmmReg;
@@ -546,7 +544,7 @@
             // These variables are used by the instruction and we set current offset
             // to their work offsets -> The SpillCandidate method never returns 
             // the variable used by this instruction.
-            for (i = 0; i < variablesCount; i++)
+            for (int i = 0; i < variablesCount; i++)
             {
                 _variables[i].vdata.WorkOffset = offset;
 
@@ -562,30 +560,33 @@
             // --------------------------------------------------------------------------
 
             preserved = Prototype.PreservedGP;
-            for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+            for (int i = 0; i < RegNum.GP; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.GP[i];
-                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == 0)
+                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                 {
                     cc.SpillGPVar(vdata);
                 }
             }
 
             preserved = Prototype.PreservedMM;
-            for (i = 0, mask = 1; i < (int)RegNum.MM; i++, mask <<= 1)
+            for (int i = 0; i < RegNum.MM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.MM[i];
-                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == 0)
+                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                 {
                     cc.SpillMMVar(vdata);
                 }
             }
 
             preserved = Prototype.PreservedXMM;
-            for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+            for (int i = 0; i < RegNum.XMM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.XMM[i];
-                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == 0)
+                if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                 {
                     cc.SpillXMMVar(vdata);
                 }
@@ -597,7 +598,7 @@
             // Move all arguments to the stack which all already in registers.
             // --------------------------------------------------------------------------
 
-            for (i = 0; i < argumentsCount; i++)
+            for (int i = 0; i < argumentsCount; i++)
             {
                 if (processed[i])
                     continue;
@@ -630,7 +631,7 @@
             // Spill all non-preserved variables we moved to stack in STEP #2.
             // --------------------------------------------------------------------------
 
-            for (i = 0; i < argumentsCount; i++)
+            for (int i = 0; i < argumentsCount; i++)
             {
                 VarCallRecord rec = _argumentToVarRecord[i];
                 if (rec == null || processed[i])
@@ -654,11 +655,11 @@
                         {
                         case VariableType.GPD:
                         case VariableType.GPQ:
-                            if ((Prototype.PreservedGP & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedGP & RegisterMask.FromIndex(vdata.RegisterIndex)) == RegisterMask.Zero)
                                 cc.SpillGPVar(vdata);
                             break;
                         case VariableType.MM:
-                            if ((Prototype.PreservedMM & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedMM & RegisterMask.FromIndex(vdata.RegisterIndex)) == RegisterMask.Zero)
                                 cc.SpillMMVar(vdata);
                             break;
                         case VariableType.XMM:
@@ -666,7 +667,7 @@
                         case VariableType.XMM_1D:
                         case VariableType.XMM_4F:
                         case VariableType.XMM_2D:
-                            if ((Prototype.PreservedXMM & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedXMM & RegisterMask.FromIndex(vdata.RegisterIndex)) == RegisterMask.Zero)
                                 cc.SpillXMMVar(vdata);
                             break;
                         default:
@@ -705,7 +706,7 @@
             // or allocate it to the primary register. Also move immediates.
             // --------------------------------------------------------------------------
 
-            for (i = 0; i < argumentsCount; i++)
+            for (int i = 0; i < argumentsCount; i++)
             {
                 if (processed[i])
                     continue;
@@ -778,7 +779,7 @@
             {
                 didWork = false;
 
-                for (i = 0; i < argumentsCount; i++)
+                for (int i = 0; i < argumentsCount; i++)
                 {
                     if (processed[i])
                         continue;
@@ -827,21 +828,21 @@
                                 if (x == InvalidValue && (rdst.Flags & VarCallFlags.CALL_OPERAND_REG) != 0)
                                 {
                                     int rIndex;
-                                    int rBit;
 
                                     // The mask which contains registers which are not-preserved
                                     // (these that might be clobbered by the callee) and which are
                                     // not used to pass function arguments. Each register contained
                                     // in this mask is ideal to be used by call() instruction.
-                                    int possibleMask = ~Prototype.PreservedGP &
+                                    RegisterMask possibleMask = ~Prototype.PreservedGP &
                                                             ~Prototype.PassedGP &
-                                                            ((int)Util.MaskUpToIndex(RegNum.GP) - 1);
+                                                            (RegisterMask.MaskToIndex(RegNum.GP) & ~RegisterMask.FromIndex(RegIndex.Eax));
 
-                                    if (possibleMask != 0)
+                                    if (possibleMask != RegisterMask.Zero)
                                     {
-                                        for (rIndex = 0, rBit = 1; rIndex < RegNum.GP; rIndex++, rBit <<= 1)
+                                        for (rIndex = 0; rIndex < RegNum.GP; rIndex++)
                                         {
-                                            if ((possibleMask & rBit) != 0)
+                                            RegisterMask rBit = RegisterMask.FromIndex((RegIndex)rIndex);
+                                            if ((possibleMask & rBit) != RegisterMask.Zero)
                                             {
                                                 if (cc.State.GP[rIndex] == null)
                                                 {
@@ -865,9 +866,10 @@
                                         // to pass a function argument.
                                         possibleMask = Prototype.PreservedGP;
 
-                                        for (rIndex = 0, rBit = 1; rIndex < RegNum.GP; rIndex++, rBit <<= 1)
+                                        for (rIndex = 0; rIndex < RegNum.GP; rIndex++)
                                         {
-                                            if ((possibleMask & rBit) != 0)
+                                            RegisterMask rBit = RegisterMask.FromIndex((RegIndex)rIndex);
+                                            if ((possibleMask & rBit) != RegisterMask.Zero)
                                             {
                                                 // Found one.
                                                 if (cc.State.GP[rIndex] == null)
@@ -981,7 +983,7 @@
             // Allocate operand used by CALL instruction.
             // --------------------------------------------------------------------------
 
-            for (i = 0; i < variablesCount; i++)
+            for (int i = 0; i < variablesCount; i++)
             {
                 VarCallRecord r = _variables[i];
                 if ((r.Flags & VarCallFlags.CALL_OPERAND_REG) != 0 &&
@@ -998,7 +1000,7 @@
                     if (temporaryGpReg == RegIndex.Invalid)
                         temporaryGpReg = FindTemporaryGpRegister(cc);
 
-                    cc.AllocGPVar(r.vdata, Util.MaskFromIndex(temporaryGpReg),
+                    cc.AllocGPVar(r.vdata, RegisterMask.FromIndex(temporaryGpReg),
                       VariableAlloc.Register | VariableAlloc.Read);
                 }
             }
@@ -1016,10 +1018,11 @@
             // --------------------------------------------------------------------------
 
             preserved = Prototype.PreservedGP;
-            for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.GP; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.GP[i];
-                if (vdata != null && (preserved & mask) == 0)
+                if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
                     if (rec != null && (rec.OutCount != 0 || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0 || vdata.LastEmittable == this))
@@ -1030,10 +1033,11 @@
             }
 
             preserved = Prototype.PreservedMM;
-            for (i = 0, mask = 1; i < (int)RegNum.MM; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.MM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.MM[i];
-                if (vdata != null && (preserved & mask) == 0)
+                if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
                     if (rec != null && (rec.OutCount != 0 || vdata.LastEmittable == this))
@@ -1044,10 +1048,11 @@
             }
 
             preserved = Prototype.PreservedXMM;
-            for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.XMM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.XMM[i];
-                if (vdata != null && (preserved & mask) == 0)
+                if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
                     if (rec != null && (rec.OutCount != 0 || vdata.LastEmittable == this))
@@ -1080,7 +1085,7 @@
             // --------------------------------------------------------------------------
 
             // Clear temp data, see AsmJit::VarData::temp why it's needed.
-            for (i = 0; i < variablesCount; i++)
+            for (int i = 0; i < variablesCount; i++)
             {
                 VarCallRecord rec = _variables[i];
                 VarData vdata = rec.vdata;
@@ -1090,8 +1095,8 @@
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.GP) != 0)
                     {
                         cc.AllocGPVar(vdata, (rec.Flags & VarCallFlags.OUT_EAX) != 0
-                          ? Util.MaskFromIndex(RegIndex.Eax)
-                          : Util.MaskFromIndex(RegIndex.Edx),
+                          ? RegisterMask.FromIndex(RegIndex.Eax)
+                          : RegisterMask.FromIndex(RegIndex.Edx),
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }
@@ -1101,7 +1106,7 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.MM) != 0)
                     {
-                        cc.AllocMMVar(vdata, Util.MaskFromIndex(RegIndex.Mm0),
+                        cc.AllocMMVar(vdata, RegisterMask.FromIndex(RegIndex.Mm0),
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }
@@ -1111,7 +1116,7 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM) != 0)
                     {
-                        cc.AllocXMMVar(vdata, Util.MaskFromIndex((rec.Flags & VarCallFlags.OUT_XMM0) != 0
+                        cc.AllocXMMVar(vdata, RegisterMask.FromIndex((rec.Flags & VarCallFlags.OUT_XMM0) != 0
                           ? RegIndex.Xmm0
                           : RegIndex.Xmm1),
                           VariableAlloc.Register | VariableAlloc.Write);
@@ -1161,7 +1166,7 @@
                 vdata.Temp = null;
             }
 
-            for (i = 0; i < variablesCount; i++)
+            for (int i = 0; i < variablesCount; i++)
             {
                 cc.UnuseVarOnEndOfScope(this, _variables[i]);
             }
@@ -1171,7 +1176,7 @@
 
         protected override bool TryUnuseVarImpl(VarData v)
         {
-            for (uint i = 0; i < _variables.Length; i++)
+            for (int i = 0; i < _variables.Length; i++)
             {
                 if (_variables[i].vdata == v)
                 {
@@ -1311,21 +1316,19 @@
         {
             Contract.Requires(cc != null);
 
-            int i;
-            int mask;
-
-            int passedXMM = Prototype.PassedXMM;
+            RegisterMask passedXMM = Prototype.PassedXMM;
             RegIndex candidate = RegIndex.Invalid;
 
             // Find all registers used to pass function arguments. We shouldn't use these
             // if possible.
-            for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+            for (int i = 0; i < RegNum.XMM; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if (cc.State.XMM[i] == null)
                 {
                     // If this register is used to pass arguments to function, we will mark
                     // it and use it only if there is no other one.
-                    if ((passedXMM & mask) != 0)
+                    if ((passedXMM & mask) != RegisterMask.Zero)
                         candidate = (RegIndex)i;
                     else
                         return (RegIndex)i;
@@ -1800,21 +1803,19 @@
 
         private RegIndex FindTemporaryGpRegister(CompilerContext cc)
         {
-            int i;
-            int mask;
-
-            int passedGP = Prototype.PassedGP;
+            RegisterMask passedGP = Prototype.PassedGP;
             RegIndex candidate = RegIndex.Invalid;
 
             // Find all registers used to pass function arguments. We shouldn't use these
             // if possible.
-            for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+            for (int i = 0; i < (int)RegNum.GP; i++)
             {
+                RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 if (cc.State.GP[i] == null)
                 {
                     // If this register is used to pass arguments to function, we will mark
                     // it and use it only if there is no other one.
-                    if ((passedGP & mask) != 0)
+                    if ((passedGP & mask) != RegisterMask.Zero)
                         candidate = (RegIndex)i;
                     else
                         return (RegIndex)i;

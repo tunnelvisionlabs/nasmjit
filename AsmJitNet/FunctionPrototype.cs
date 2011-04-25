@@ -19,9 +19,9 @@
         private VariableType _returnValue = VariableType.Invalid;
         private int _argumentsStackSize;
 
-        private int _passedGP;
-        private int _passedMM;
-        private int _passedXMM;
+        private RegisterMask _passedGP;
+        private RegisterMask _passedMM;
+        private RegisterMask _passedXMM;
 
         internal FunctionPrototype(CallingConvention callingConvention, Type delegateType)
         {
@@ -135,7 +135,7 @@
             }
         }
 
-        public int PassedGP
+        public RegisterMask PassedGP
         {
             get
             {
@@ -143,7 +143,7 @@
             }
         }
 
-        public int PassedMM
+        public RegisterMask PassedMM
         {
             get
             {
@@ -151,7 +151,7 @@
             }
         }
 
-        public int PassedXMM
+        public RegisterMask PassedXMM
         {
             get
             {
@@ -194,7 +194,7 @@
             }
         }
 
-        public int PreservedGP
+        public RegisterMask PreservedGP
         {
             get
             {
@@ -202,7 +202,7 @@
             }
         }
 
-        public int PreservedMM
+        public RegisterMask PreservedMM
         {
             get
             {
@@ -210,7 +210,7 @@
             }
         }
 
-        public int PreservedXMM
+        public RegisterMask PreservedXMM
         {
             get
             {
@@ -351,7 +351,7 @@
                     if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGPList[posGP] != RegIndex.Invalid)
                     {
                         a._registerIndex = CallingConventionInfo.ArgumentsGPList[posGP++];
-                        _passedGP |= (int)Util.MaskFromIndex(a._registerIndex);
+                        _passedGP |= RegisterMask.FromIndex(a._registerIndex);
                     }
                 }
 
@@ -400,12 +400,12 @@
                         if (VariableInfo.IsVariableInteger(a._variableType))
                         {
                             a._registerIndex = CallingConventionInfo.ArgumentsGPList[i];
-                            _passedGP |= (int)Util.MaskFromIndex(a._registerIndex);
+                            _passedGP |= RegisterMask.FromIndex(a._registerIndex);
                         }
                         else if (VariableInfo.IsVariableFloat(a._variableType))
                         {
                             a._registerIndex = CallingConventionInfo.ArgumentsXMMList[i];
-                            _passedXMM |= (int)Util.MaskFromIndex(a._registerIndex);
+                            _passedXMM |= RegisterMask.FromIndex(a._registerIndex);
                         }
                     }
 
@@ -442,7 +442,7 @@
                         if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGPList[posGP] != RegIndex.Invalid)
                         {
                             a._registerIndex = CallingConventionInfo.ArgumentsGPList[posGP++];
-                            _passedGP |= (int)Util.MaskFromIndex(a._registerIndex);
+                            _passedGP |= RegisterMask.FromIndex(a._registerIndex);
                         }
                     }
 
@@ -453,7 +453,7 @@
                         if (VariableInfo.IsVariableFloat(a._variableType))
                         {
                             a._registerIndex = CallingConventionInfo.ArgumentsXMMList[posXMM++];
-                            _passedXMM |= (int)Util.MaskFromIndex(a._registerIndex);
+                            _passedXMM |= RegisterMask.FromIndex(a._registerIndex);
                         }
                     }
 

@@ -33,11 +33,11 @@
 
         private bool _finished;
 
-        private int _modifiedAndPreservedGP;
+        private RegisterMask _modifiedAndPreservedGP;
 
-        private int _modifiedAndPreservedMM;
+        private RegisterMask _modifiedAndPreservedMM;
 
-        private int _modifiedAndPreservedXMM;
+        private RegisterMask _modifiedAndPreservedXMM;
 
         private InstructionCode _movDqaInstruction;
 
@@ -288,7 +288,7 @@
                 _isEspAdjusted = true;
             }
 
-            _modifiedAndPreservedGP = cc.ModifiedGPRegisters & _functionPrototype.PreservedGP & ~(int)Util.MaskFromIndex(RegIndex.Esp);
+            _modifiedAndPreservedGP = cc.ModifiedGPRegisters & _functionPrototype.PreservedGP & ~RegisterMask.FromIndex(RegIndex.Esp);
             _modifiedAndPreservedMM = cc.ModifiedMMRegisters & _functionPrototype.PreservedMM;
             _modifiedAndPreservedXMM = cc.ModifiedXMMRegisters & _functionPrototype.PreservedXMM;
 
@@ -296,9 +296,9 @@
 
             // Prolog & Epilog stack size.
             {
-                int memGP = Util.BitCount(_modifiedAndPreservedGP) * IntPtr.Size;
-                int memMM = Util.BitCount(_modifiedAndPreservedMM) * 8;
-                int memXMM = Util.BitCount(_modifiedAndPreservedXMM) * 16;
+                int memGP = _modifiedAndPreservedGP.RegisterCount * IntPtr.Size;
+                int memMM = _modifiedAndPreservedMM.RegisterCount * 8;
+                int memXMM = _modifiedAndPreservedXMM.RegisterCount * 16;
 
                 if (_pePushPop)
                 {
@@ -355,12 +355,9 @@
 
         internal void EmitProlog(CompilerContext cc)
         {
-            int i;
-            int mask;
-
-            int preservedGP = _modifiedAndPreservedGP;
-            int preservedMM = _modifiedAndPreservedMM;
-            int preservedXMM = _modifiedAndPreservedXMM;
+            RegisterMask preservedGP = _modifiedAndPreservedGP;
+            RegisterMask preservedMM = _modifiedAndPreservedMM;
+            RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
             int stackSubtract = _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
             int nspPos;
@@ -394,11 +391,12 @@
             }
 
             // Save GP registers using PUSH/POP.
-            if (preservedGP != 0 && _pePushPop)
+            if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
-                for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+                for (int i = 0; i < RegNum.GP; i++)
                 {
-                    if ((preservedGP & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedGP & mask) != RegisterMask.Zero)
                         Compiler.Emit(InstructionCode.Push, Register.gpn((RegIndex)i));
                 }
             }
@@ -416,11 +414,12 @@
             }
 
             // Save XMM registers using MOVDQA/MOVDQU.
-            if (preservedXMM != 0)
+            if (preservedXMM != RegisterMask.Zero)
             {
-                for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+                for (int i = 0; i < RegNum.XMM; i++)
                 {
-                    if ((preservedXMM & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(_movDqaInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
                         nspPos += 16;
@@ -429,11 +428,12 @@
             }
 
             // Save MM registers using MOVQ.
-            if (preservedMM != 0)
+            if (preservedMM != RegisterMask.Zero)
             {
-                for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
+                for (int i = 0; i < 8; i++)
                 {
-                    if ((preservedMM & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedMM & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, nspPos), Register.mm((RegIndex)i));
                         nspPos += 8;
@@ -442,11 +442,12 @@
             }
 
             // Save GP registers using MOV.
-            if (preservedGP != 0 && !_pePushPop)
+            if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
-                for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+                for (int i = 0; i < RegNum.GP; i++)
                 {
-                    if ((preservedGP & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedGP & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, nspPos), Register.gpn((RegIndex)i));
                         nspPos += IntPtr.Size;
@@ -462,12 +463,9 @@
 
         internal void EmitEpilog(CompilerContext cc)
         {
-            int i;
-            int mask;
-
-            int preservedGP = _modifiedAndPreservedGP;
-            int preservedMM = _modifiedAndPreservedMM;
-            int preservedXMM = _modifiedAndPreservedXMM;
+            RegisterMask preservedGP = _modifiedAndPreservedGP;
+            RegisterMask preservedMM = _modifiedAndPreservedMM;
+            RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
             int stackAdd =
               _functionCallStackSize +
@@ -487,11 +485,12 @@
             }
 
             // Restore XMM registers using MOVDQA/MOVDQU.
-            if (preservedXMM != 0)
+            if (preservedXMM != RegisterMask.Zero)
             {
-                for (i = 0, mask = 1; i < (int)RegNum.XMM; i++, mask <<= 1)
+                for (int i = 0; i < RegNum.XMM; i++)
                 {
-                    if ((preservedXMM & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
                         nspPos += 16;
@@ -500,11 +499,12 @@
             }
 
             // Restore MM registers using MOVQ.
-            if (preservedMM != 0)
+            if (preservedMM != RegisterMask.Zero)
             {
-                for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
+                for (int i = 0; i < 8; i++)
                 {
-                    if ((preservedMM & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedMM & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, nspPos));
                         nspPos += 8;
@@ -513,11 +513,12 @@
             }
 
             // Restore GP registers using MOV.
-            if (preservedGP != 0 && !_pePushPop)
+            if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
-                for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
+                for (int i = 0; i < (int)RegNum.GP; i++)
                 {
-                    if ((preservedGP & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedGP & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, nspPos));
                         nspPos += IntPtr.Size;
@@ -531,11 +532,12 @@
             }
 
             // Restore GP registers using POP.
-            if (preservedGP != 0 && _pePushPop)
+            if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
-                for (i = (int)RegNum.GP - 1, mask = 1 << i; i >= 0; i--, mask >>= 1)
+                for (int i = RegNum.GP - 1; i >= 0; i--)
                 {
-                    if ((preservedGP & mask) != 0)
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((preservedGP & mask) != RegisterMask.Zero)
                     {
                         Compiler.Emit(InstructionCode.Pop, Register.gpn((RegIndex)i));
                     }
@@ -739,7 +741,7 @@
                 for (r = 0; r < 3; r++)
                 {
                     bool first = true;
-                    int regs;
+                    RegisterMask regs;
                     RegType type;
 
                     switch (r)
@@ -764,9 +766,9 @@
                         continue;
                     }
 
-                    for (i = 0; i < (int)RegNum.Base; i++)
+                    for (i = 0; i < RegNum.Base; i++)
                     {
-                        if ((regs & (int)Util.MaskFromIndex((RegIndex)i)) != 0)
+                        if ((regs & RegisterMask.FromIndex((RegIndex)i)) != RegisterMask.Zero)
                         {
                             if (!first)
                             {

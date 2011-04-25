@@ -17,7 +17,7 @@
         /// <summary>
         /// Register mask (default is 0).
         /// </summary>
-        public int RegMask
+        public RegisterMask RegMask
         {
             get;
             set;

@@ -429,7 +429,7 @@
                             varIndex = curIndex++;
                             _variables[varIndex].VarData = candidate;
                             _variables[varIndex].VarFlags = 0;
-                            _variables[varIndex].RegMask = ~0;
+                            _variables[varIndex].RegMask = RegisterMask.All;
                             break;
                         }
 
@@ -445,18 +445,18 @@
                 };
 
             bool _isGPBUsed = _isGPBLoUsed | _isGPBHiUsed;
-            int gpRestrictMask = Util.MaskUpToIndex(RegNum.GP);
+            RegisterMask gpRestrictMask = RegisterMask.MaskToIndex(RegNum.GP);
 
 
             if (_isGPBHiUsed && Util.IsX64)
             {
-                gpRestrictMask &= Util.MaskFromIndex(RegIndex.Eax) |
-                                  Util.MaskFromIndex(RegIndex.Ebx) |
-                                  Util.MaskFromIndex(RegIndex.Ecx) |
-                                  Util.MaskFromIndex(RegIndex.Edx) |
-                                  Util.MaskFromIndex(RegIndex.Ebp) |
-                                  Util.MaskFromIndex(RegIndex.Esi) |
-                                  Util.MaskFromIndex(RegIndex.Edi);
+                gpRestrictMask &= RegisterMask.FromIndex(RegIndex.Eax) |
+                                  RegisterMask.FromIndex(RegIndex.Ebx) |
+                                  RegisterMask.FromIndex(RegIndex.Ecx) |
+                                  RegisterMask.FromIndex(RegIndex.Edx) |
+                                  RegisterMask.FromIndex(RegIndex.Ebp) |
+                                  RegisterMask.FromIndex(RegIndex.Esi) |
+                                  RegisterMask.FromIndex(RegIndex.Edi);
             }
 
             for (i = 0; i < len; i++)
@@ -477,10 +477,10 @@
                         {
                             if (((GPVar)o).IsGPB)
                             {
-                                var.RegMask &= Util.MaskFromIndex(RegIndex.Eax) |
-                                               Util.MaskFromIndex(RegIndex.Ebx) |
-                                               Util.MaskFromIndex(RegIndex.Ecx) |
-                                               Util.MaskFromIndex(RegIndex.Edx);
+                                var.RegMask &= RegisterMask.FromIndex(RegIndex.Eax) |
+                                               RegisterMask.FromIndex(RegIndex.Ebx) |
+                                               RegisterMask.FromIndex(RegIndex.Ecx) |
+                                               RegisterMask.FromIndex(RegIndex.Edx);
                             }
                         }
                         else
@@ -491,10 +491,10 @@
                             {
                                 if (((GPVar)o).IsGPB)
                                 {
-                                    var.RegMask &= Util.MaskFromIndex(RegIndex.Eax) |
-                                                   Util.MaskFromIndex(RegIndex.Ebx) |
-                                                   Util.MaskFromIndex(RegIndex.Ecx) |
-                                                   Util.MaskFromIndex(RegIndex.Edx);
+                                    var.RegMask &= RegisterMask.FromIndex(RegIndex.Eax) |
+                                                   RegisterMask.FromIndex(RegIndex.Ebx) |
+                                                   RegisterMask.FromIndex(RegIndex.Ecx) |
+                                                   RegisterMask.FromIndex(RegIndex.Edx);
                                 }
                             }
                         }
@@ -511,28 +511,28 @@
                             case 0:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 1:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ebx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ebx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 2:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 3:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -549,7 +549,7 @@
                             case 0:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -564,7 +564,7 @@
                             case 0:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
@@ -591,28 +591,28 @@
                             case 0:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 1:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 2:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 3:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ebx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ebx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -631,7 +631,7 @@
 
                             vdata.RegisterRWCount++;
                             var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                            var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                            var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                             gpRestrictMask &= ~var.RegMask;
                             break;
 
@@ -644,13 +644,13 @@
                             case 0:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
@@ -669,13 +669,13 @@
                             case 0:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             default:
@@ -689,7 +689,7 @@
 
                             vdata.RegisterWriteCount++;
                             var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                            var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                            var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                             gpRestrictMask &= ~var.RegMask;
                             break;
 
@@ -699,7 +699,7 @@
 
                             vdata.RegisterReadCount++;
                             var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                            var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                            var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                             gpRestrictMask &= ~var.RegMask;
                             break;
 
@@ -710,7 +710,7 @@
                             case 0:
                                 vdata.MemoryReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -776,7 +776,7 @@
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -800,7 +800,7 @@
                             case 2:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -816,14 +816,14 @@
                             case 0:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
                             case 1:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -833,7 +833,7 @@
 
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -851,19 +851,19 @@
                             case 0:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Esi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Esi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             default:
@@ -888,19 +888,19 @@
                             case 0:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Esi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Esi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             default:
@@ -917,19 +917,19 @@
                             case 0:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             default:
@@ -950,19 +950,19 @@
                             case 0:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edi);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edi);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 1:
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Ecx);
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Ecx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             default:
@@ -1030,7 +1030,7 @@
                     if ((var.VarFlags & VariableAlloc.Special) != 0)
                     {
                         vdata.PreferredRegisterMask |= var.RegMask;
-                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit(var.RegMask));
+                        cc.NewRegisterHomeIndex(vdata, var.RegMask.FirstRegister);
                     }
                 }
                 else if (o.IsMem)
@@ -1099,7 +1099,7 @@
                 // Update GP register allocator restrictions.
                 if (VariableInfo.IsVariableInteger(v.Type))
                 {
-                    if (_variables[i].RegMask == ~0)
+                    if (_variables[i].RegMask == RegisterMask.All)
                         _variables[i].RegMask &= gpRestrictMask;
                 }
 

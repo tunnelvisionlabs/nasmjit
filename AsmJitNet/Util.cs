@@ -52,19 +52,6 @@
             return value >= uint.MinValue && value <= uint.MaxValue;
         }
 
-        internal static int MaskFromIndex(RegIndex index)
-        {
-            return 1 << (int)index;
-        }
-
-        internal static int MaskUpToIndex(int x)
-        {
-            if (x >= 32)
-                return ~0;
-            else
-                return (1 << x) - 1;
-        }
-
         internal static int BitCount(int x)
         {
             return BitCount((uint)x);

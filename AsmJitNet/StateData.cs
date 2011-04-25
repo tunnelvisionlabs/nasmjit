@@ -79,37 +79,37 @@
             }
         }
 
-        public int UsedGP
+        public RegisterMask UsedGP
         {
             get;
             set;
         }
 
-        public int UsedMM
+        public RegisterMask UsedMM
         {
             get;
             set;
         }
 
-        public int UsedXMM
+        public RegisterMask UsedXMM
         {
             get;
             set;
         }
 
-        public int ChangedGP
+        public RegisterMask ChangedGP
         {
             get;
             set;
         }
 
-        public int ChangedMM
+        public RegisterMask ChangedMM
         {
             get;
             set;
         }
 
-        public int ChangedXMM
+        public RegisterMask ChangedXMM
         {
             get;
             set;
@@ -123,12 +123,12 @@
 
         internal void Clear()
         {
-            UsedGP = 0;
-            UsedMM = 0;
-            UsedXMM = 0;
-            ChangedGP = 0;
-            ChangedMM = 0;
-            ChangedXMM = 0;
+            UsedGP = RegisterMask.Zero;
+            UsedMM = RegisterMask.Zero;
+            UsedXMM = RegisterMask.Zero;
+            ChangedGP = RegisterMask.Zero;
+            ChangedMM = RegisterMask.Zero;
+            ChangedXMM = RegisterMask.Zero;
         }
 
         internal void CopyFrom(StateData other)

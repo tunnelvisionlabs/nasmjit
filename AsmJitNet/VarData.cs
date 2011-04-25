@@ -24,7 +24,7 @@
             _name = name;
 
             HomeRegisterIndex = RegIndex.Invalid;
-            PreferredRegisterMask = ~0;
+            PreferredRegisterMask = RegisterMask.All;
             RegisterIndex = RegIndex.Invalid;
             WorkOffset = Operand.InvalidValue;
             Priority = 10;
@@ -103,7 +103,7 @@
             }
         }
 
-        public int PreferredRegisterMask
+        public RegisterMask PreferredRegisterMask
         {
             get;
             set;
