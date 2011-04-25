@@ -708,6 +708,8 @@
 
             public void InsertNode(MemNode node)
             {
+                Contract.Requires(node != null);
+
                 if (_root == null)
                 {
                     // Empty tree case.
@@ -801,6 +803,8 @@
 
             public MemNode RemoveNode(MemNode node)
             {
+                Contract.Requires(node != null);
+
                 // False tree root.
                 MemNode head = new MemNode(IntPtr.Zero, 0, 1);
 
@@ -1071,6 +1075,8 @@
 
                 public static T RotateSingle(T root, bool rightDirection)
                 {
+                    Contract.Requires(root != null);
+
                     T save = rightDirection ? root._left : root._right;
 
                     if (rightDirection)
@@ -1092,6 +1098,8 @@
 
                 public static T RotateDouble(T root, bool rightDirection)
                 {
+                    Contract.Requires(root != null);
+
                     if (rightDirection)
                         root._left = RotateSingle(root._left, !rightDirection);
                     else
@@ -1235,6 +1243,8 @@
 
                 public void FillData(MemNode other)
                 {
+                    Contract.Requires(other != null);
+
                     Memory = other.Memory;
 
                     Size = other.Size;
@@ -1314,6 +1324,9 @@
 
                 public void DumpNode(MemNode node)
                 {
+                    Contract.Requires(node != null);
+                    Contract.Requires(Writer != null);
+
                     Writer.WriteLine("  NODE_{0:X} [shape=record, style=filled, color={1}, label=\"<L>|<C>Mem: {2:X}, Used: {3}/{4}|<R>\"];",
                         RuntimeHelpers.GetHashCode(node),
                         node.Red ? "red" : "gray",
@@ -1327,6 +1340,8 @@
 
                 public void Connect(MemNode node, MemNode other, string destination)
                 {
+                    Contract.Requires(other != null);
+
                     DumpNode(other);
 
                     Writer.Write("  NODE_{0:X}:{1} -> NODE_{2:X}:C", RuntimeHelpers.GetHashCode(node), destination, RuntimeHelpers.GetHashCode(other));
@@ -1334,6 +1349,13 @@
                         Writer.Write(" [style=bold, color=red]");
                     Writer.WriteLine(";");
                 }
+
+                [ContractInvariantMethod]
+                private void ObjectInvariant()
+                {
+                    Contract.Invariant(Writer != null);
+                }
+
             }
         }
 
