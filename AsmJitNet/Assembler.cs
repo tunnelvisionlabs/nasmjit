@@ -1122,7 +1122,7 @@
 
                     if (o0.IsRegMem && o1.IsImm)
                     {
-                        Imm imm = ((Imm)o1);
+                        Imm imm = (Imm)o1;
                         immSize = Util.IsInt8(imm.Value.ToInt64()) ? (byte)1 : (o0.Size <= 4 ? o0.Size : (byte)4);
 
                         EmitX86RM(id.OpCode1 + (o0.Size != 1 ? (immSize != 1 ? 1 : 3) : 0),
@@ -1130,7 +1130,7 @@
                           o0.Size == 8,
                           opReg, o0,
                           (byte)immSize, forceRexPrefix);
-                        immOperand = (Imm)o1;
+                        immOperand = (Imm)imm;
                         goto emitImmediate;
                     }
 
@@ -1323,7 +1323,6 @@
                                 immOperand = (Imm)imm;
                                 goto emitImmediate;
                             }
-                            goto end;
                         }
                     }
                     // 3 operands
@@ -1353,7 +1352,6 @@
                             immOperand = (Imm)imm;
                             goto emitImmediate;
                         }
-                        goto end;
                     }
 
                     break;
