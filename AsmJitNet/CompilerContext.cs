@@ -1938,8 +1938,11 @@
 
             // TODO: 16 + 8 + 16 is cryptic, make constants instead!
 
+            // --------------------------------------------------------------------------
             // Set target state to all variables. vdata->tempInt is target state in this
             // function.
+            // --------------------------------------------------------------------------
+
             {
                 // UNUSED.
                 VarData vdata = _active;
@@ -1966,6 +1969,50 @@
                 }
             }
 
+#if false
+            // --------------------------------------------------------------------------
+            // [GP-Registers Switch]
+            // --------------------------------------------------------------------------
+
+            // TODO.
+            for (i = 0; i < RegNum.GP; i++)
+            {
+                VarData fromVar = fromState.GP[i];
+                VarData toVar = toState.GP[i];
+
+                if (fromVar != toVar)
+                {
+                    if (fromVar != null)
+                    {
+                        if (toVar != null)
+                        {
+                            if (fromState.GP[to
+                        }
+                        else
+                        {
+                            // It is possible that variable that was saved in state currently not
+                            // exists (tempInt is target scope!).
+                            if (fromVar.State == VariableState.Unused)
+                            {
+                                UnuseVar(fromVar, VariableState.Unused);
+                            }
+                            else
+                            {
+                                SpillVar(fromVar);
+                            }
+                        }
+                    }
+                }
+                else if (fromVar != null)
+                {
+                    int mask = Util.MaskFromIndex((RegIndex)i);
+                    // Variables are the same, we just need to compare changed flags.
+                    if ((fromState.ChangedGP & mask) != 0 && (toState.ChangedGP & mask) == 0)
+                        SaveVar(fromVar);
+                }
+            }
+#endif
+
             // Spill.
             for (@base = 0, i = 0; i < STATE_REGS_COUNT; i++)
             {
@@ -1973,13 +2020,13 @@
                 if (i == 16 || i == 16 + 8)
                     @base = i;
 
+                int regIndex = i - @base;
+
                 VarData fromVar = fromState.Registers[i];
                 VarData toVar = toState.Registers[i];
 
                 if (fromVar != toVar)
                 {
-                    int regIndex = i - @base;
-
                     // Spill the register
                     if (fromVar != null)
                     {
@@ -1997,7 +2044,7 @@
                 }
                 else if (fromVar != null)
                 {
-                    int mask = (int)Util.MaskFromIndex((RegIndex)i);
+                    int mask = (int)Util.MaskFromIndex((RegIndex)regIndex);
                     // Variables are the same, we just need to compare changed flags.
                     if ((fromState.ChangedGP & mask) != 0 && (toState.ChangedGP & mask) == 0)
                     {
@@ -2033,12 +2080,18 @@
                 //}
             }
 
-            // Update masks
+            // --------------------------------------------------------------------------
+            // Update used masks.
+            // --------------------------------------------------------------------------
+
             _state.UsedGP = state.UsedGP;
             _state.UsedMM = state.UsedMM;
             _state.UsedXMM = state.UsedXMM;
 
-            // Cleanup.
+            // --------------------------------------------------------------------------
+            // Update changed masks and cleanup.
+            // --------------------------------------------------------------------------
+
             {
                 VarData vdata = _active;
                 if (vdata != null)

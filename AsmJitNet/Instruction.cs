@@ -642,15 +642,15 @@
                             switch (i)
                             {
                             case 0:
-                                vdata.RegisterWriteCount++;
-                                var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
-                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
-                                gpRestrictMask &= ~var.RegMask;
-                                break;
-                            case 1:
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
                                 var.RegMask = Util.MaskFromIndex(RegIndex.Eax);
+                                gpRestrictMask &= ~var.RegMask;
+                                break;
+                            case 1:
+                                vdata.RegisterWriteCount++;
+                                var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
+                                var.RegMask = Util.MaskFromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:
