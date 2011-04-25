@@ -890,6 +890,7 @@
                                         cc.AllocatedVariable(vsrc);
 
                                         doSpill = false;
+                                        didWork = true;
                                     }
                                 }
                                 // Emit xchg instead of spill/alloc if possible.
