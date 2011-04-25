@@ -27,6 +27,16 @@
             return value >= sbyte.MinValue && value <= sbyte.MaxValue;
         }
 
+        internal static bool IsUInt8(long value)
+        {
+            return value >= byte.MinValue && value <= byte.MaxValue;
+        }
+
+        internal static bool IsInt16(long value)
+        {
+            return value >= short.MinValue && value <= short.MaxValue;
+        }
+
         internal static bool IsUInt16(long value)
         {
             return value >= ushort.MinValue && value <= ushort.MaxValue;
@@ -35,6 +45,11 @@
         internal static bool IsInt32(long value)
         {
             return value >= int.MinValue && value <= int.MaxValue;
+        }
+
+        internal static bool IsUInt32(long value)
+        {
+            return value >= uint.MinValue && value <= uint.MaxValue;
         }
 
         internal static void myhex(StringBuilder buf, IList<byte> binaryData)

@@ -972,6 +972,9 @@
             bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
             int bufferStartOffset = _buffer.Offset;
 
+            Imm immOperand = null;
+            int immSize = 0;
+
             // Convert operands to OPERAND_NONE if needed.
             if (o0 == null)
             {
@@ -1112,25 +1115,23 @@
                             EmitByte(0x48); // REX.W
 
                         EmitByte((byte)((opReg << 3) | (0x04 + (o0.Size != 1 ? 1 : 0))));
-                        EmitImmediate(
-                          ((Imm)o1), o0.Size <= 4 ? o0.Size : 4);
-                        goto end;
+                        immOperand = (Imm)o1;
+                        immSize = o0.Size <= 4 ? o0.Size : 4;
+                        goto emitImmediate;
                     }
 
                     if (o0.IsRegMem && o1.IsImm)
                     {
                         Imm imm = ((Imm)o1);
-                        byte immSize = Util.IsInt8(imm.Value.ToInt64()) ? (byte)1 : (o0.Size <= 4 ? o0.Size : (byte)4);
+                        immSize = Util.IsInt8(imm.Value.ToInt64()) ? (byte)1 : (o0.Size <= 4 ? o0.Size : (byte)4);
 
                         EmitX86RM(id.OpCode1 + (o0.Size != 1 ? (immSize != 1 ? 1 : 3) : 0),
                           o0.Size == 2,
                           o0.Size == 8,
                           opReg, o0,
-                          immSize, forceRexPrefix);
-                        EmitImmediate(
-                          ((Imm)o1),
-                          immSize);
-                        goto end;
+                          (byte)immSize, forceRexPrefix);
+                        immOperand = (Imm)o1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -1180,8 +1181,9 @@
                           (byte)id.OpCodeR,
                           dst,
                           1, forceRexPrefix);
-                        EmitImmediate(src, 1);
-                        goto end;
+                        immOperand = src;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -1259,9 +1261,11 @@
                     if (o0.IsImm && o1.IsImm)
                     {
                         EmitByte(0xC8);
-                        EmitImmediate((Imm)o0, 2);
-                        EmitImmediate((Imm)o1, 1);
+                        EmitWord((ushort)((Imm)o2).Value);
+                        EmitByte((byte)((Imm)o1).Value);
+                        goto end;
                     }
+
                     break;
                 }
 
@@ -1305,16 +1309,19 @@
                                   dst.IsRegType(RegType.GPW),
                                   dst.IsRegType(RegType.GPQ), (byte)dst.Code, dst,
                                   1, forceRexPrefix);
-                                EmitImmediate(imm, 1);
+                                immOperand = (Imm)imm;
+                                immSize = 1;
+                                goto emitImmediate;
                             }
                             else
                             {
-                                int immSize = dst.IsRegType(RegType.GPW) ? 2 : 4;
+                                immSize = dst.IsRegType(RegType.GPW) ? 2 : 4;
                                 EmitX86RM(0x69,
                                   dst.IsRegType(RegType.GPW),
                                   dst.IsRegType(RegType.GPQ), (byte)dst.Code, dst,
                                   immSize, forceRexPrefix);
-                                EmitImmediate(imm, (int)immSize);
+                                immOperand = (Imm)imm;
+                                goto emitImmediate;
                             }
                             goto end;
                         }
@@ -1332,16 +1339,19 @@
                               dst.IsRegType(RegType.GPW),
                               dst.IsRegType(RegType.GPQ), (byte)dst.Code, src,
                               1, forceRexPrefix);
-                            EmitImmediate(imm, 1);
+                            immOperand = (Imm)imm;
+                            immSize = 1;
+                            goto emitImmediate;
                         }
                         else
                         {
-                            int immSize = dst.IsRegType(RegType.GPW) ? 2 : 4;
+                            immSize = dst.IsRegType(RegType.GPW) ? 2 : 4;
                             EmitX86RM(0x69,
                               dst.IsRegType(RegType.GPW),
                               dst.IsRegType(RegType.GPQ), (byte)dst.Code, src,
                               immSize, forceRexPrefix);
-                            EmitImmediate(imm, (int)immSize);
+                            immOperand = (Imm)imm;
+                            goto emitImmediate;
                         }
                         goto end;
                     }
@@ -1603,7 +1613,7 @@
 
                             // In 64-bit mode the immediate can be 64-bits long if the
                             // destination operand type is register (otherwise 32-bits).
-                            int immSize = dst.Size;
+                            immSize = dst.Size;
 
                             // Optimize instruction size by using 32 bit immediate if value can
                             // fit into it.
@@ -1625,8 +1635,8 @@
                                   (byte)((GPReg)dst).Code, forceRexPrefix);
                             }
 
-                            EmitImmediate((Imm)src, (int)immSize);
-                            goto end;
+                            immOperand = (Imm)src;
+                            goto emitImmediate;
                         }
 
                     // Mem <- Reg
@@ -1653,7 +1663,7 @@
                     // Mem <- Imm
                     case ((int)OperandType.Mem << 4) | (int)OperandType.Imm:
                         {
-                            int immSize = dst.Size <= 4 ? dst.Size : 4;
+                            immSize = dst.Size <= 4 ? dst.Size : 4;
 
                             EmitX86RM(0xC6 + (dst.Size != 1 ? 1 : 0),
                               dst.Size == 2,
@@ -1661,9 +1671,8 @@
                               0,
                               dst,
                               immSize, forceRexPrefix);
-                            EmitImmediate((Imm)src,
-                              (int)immSize);
-                            goto end;
+                            immOperand = (Imm)src;
+                            goto emitImmediate;
                         }
                     }
 
@@ -1689,8 +1698,9 @@
                             EmitRexR(reg.Size == 8, 0, 0, forceRexPrefix);
 
                         EmitByte((byte)(opCode + (reg.Size != 1 ? 1 : 0)));
-                        EmitImmediate(imm, IntPtr.Size);
-                        goto end;
+                        immOperand = (Imm)imm;
+                        immSize = IntPtr.Size;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -1743,7 +1753,7 @@
 
             case InstructionGroup.PUSH:
                 {
-                    // This section is only for immediates, memory/register operands are handled in I_POP.
+                    // This section is only for immediates, memory/register operands are handled in InstructionGroup.POP.
                     if (o0.IsImm)
                     {
                         Imm imm = (Imm)o0;
@@ -1751,14 +1761,17 @@
                         if (Util.IsInt8(imm.Value.ToInt64()))
                         {
                             EmitByte(0x6A);
-                            EmitImmediate(imm, 1);
+                            immOperand = (Imm)imm;
+                            immSize = 1;
+                            goto emitImmediate;
                         }
                         else
                         {
                             EmitByte(0x68);
-                            EmitImmediate(imm, 4);
+                            immOperand = (Imm)imm;
+                            immSize = 4;
+                            goto emitImmediate;
                         }
-                        goto end;
                     }
 
                     // ... goto I_POP ...
@@ -1896,7 +1909,9 @@
                         else
                         {
                             EmitByte(0xC2);
-                            EmitImmediate(imm, 2);
+                            immOperand = (Imm)imm;
+                            immSize = 2;
+                            goto emitImmediate;
                         }
                         goto end;
                     }
@@ -1923,8 +1938,14 @@
                           o0.Size == 8,
                           (byte)id.OpCodeR, o0,
                           useImm8 ? 1 : 0, forceRexPrefix);
+
                         if (useImm8)
-                            EmitImmediate(((Imm)o1), 1);
+                        {
+                            immOperand = (Imm)o1;
+                            immSize = 1;
+                            goto emitImmediate;
+                        }
+
                         goto end;
                     }
 
@@ -1947,8 +1968,14 @@
                           src1.IsRegType(RegType.GPQ),
                           (byte)src1.Code, dst,
                           src2.IsImm ? 1 : 0, forceRexPrefix);
+
                         if (src2.IsImm)
-                            EmitImmediate((Imm)src2, 1);
+                        {
+                            immOperand = (Imm)src2;
+                            immSize = 1;
+                            goto emitImmediate;
+                        }
+
                         goto end;
                     }
 
@@ -1972,7 +1999,7 @@
 
                     if (o0.IsRegIndex(0) && o1.IsImm)
                     {
-                        int immSize = o0.Size <= 4 ? o0.Size : 4;
+                        immSize = o0.Size <= 4 ? o0.Size : 4;
 
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
@@ -1981,13 +2008,13 @@
                             EmitRexRM(o0.Size == 8, 0, o0, forceRexPrefix);
 
                         EmitByte((byte)(0xA8 + (o0.Size != 1 ? 1 : 0)));
-                        EmitImmediate(((Imm)o1), (int)immSize);
-                        goto end;
+                        immOperand = (Imm)o1;
+                        goto emitImmediate;
                     }
 
                     if (o0.IsRegMem && o1.IsImm)
                     {
-                        int immSize = o0.Size <= 4 ? o0.Size : 4;
+                        immSize = o0.Size <= 4 ? o0.Size : 4;
 
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
@@ -1998,8 +2025,8 @@
 
                         EmitByte((byte)(0xF6 + (o0.Size != 1 ? 1 : 0)));
                         EmitModRM(0, o0, immSize);
-                        EmitImmediate((Imm)o1, (int)immSize);
-                        goto end;
+                        immOperand = (Imm)o1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -2149,7 +2176,7 @@
                         goto end;
                     }
 
-                    // ... fall through to I_X87_MEM ...
+                    // ... fall through to InstructionGroup.X87_MEM ...
                     goto case InstructionGroup.X87_MEM;
                 }
 
@@ -2415,9 +2442,9 @@
                         EmitMmu((uint)opCode, id.OpCodeR != 0 || o0.IsRegType(RegType.GPQ),
                           (byte)((BaseReg)o1).Code,
                           ((BaseReg)o0), (IntPtr)1);
-                        EmitImmediate(
-                          ((Imm)o2), 1);
-                        goto end;
+                        immOperand = (Imm)o2;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
 
                     if (o0.IsMem)
@@ -2425,9 +2452,9 @@
                         EmitMmu((uint)opCode, id.OpCodeR != 0,
                           (byte)((BaseReg)o1).Code,
                           ((Mem)o0), (IntPtr)1);
-                        EmitImmediate(
-                          ((Imm)o2), 1);
-                        goto end;
+                        immOperand = (Imm)o2;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -2495,9 +2522,9 @@
                         EmitMmu((uint)id.OpCode1 | (uint)prefix, rexw,
                           (byte)id.OpCodeR,
                           ((BaseReg)o0), (IntPtr)1);
-                        EmitImmediate(
-                          ((Imm)o1), 1);
-                        goto end;
+                        immOperand = (Imm)o1;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -2543,8 +2570,9 @@
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((BaseReg)o1), (IntPtr)1);
-                        EmitImmediate(((Imm)o2), 1);
-                        goto end;
+                        immOperand = (Imm)o2;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
                     // (X)MM <- Mem (opcode0)
                     if (o1.IsMem)
@@ -2554,8 +2582,9 @@
                         EmitMmu((uint)id.OpCode0 | (uint)prefix, rexw,
                           (byte)((BaseReg)o0).Code,
                           ((Mem)o1), (IntPtr)1);
-                        EmitImmediate(((Imm)o2), 1);
-                        goto end;
+                        immOperand = (Imm)o2;
+                        immSize = 1;
+                        goto emitImmediate;
                     }
 
                     break;
@@ -2576,9 +2605,112 @@
                 }
             }
 
+            goto end;
+
+        emitImmediate:
+            {
+                IntPtr value = immOperand.Value;
+                switch (immSize)
+                {
+                case 1:
+                    EmitByte((byte)value);
+                    break;
+
+                case 2:
+                    EmitWord((ushort)value);
+                    break;
+
+                case 4:
+                    EmitDWord((uint)value);
+                    break;
+
+                case 8:
+                    if (Util.IsX64)
+                    {
+                        EmitQWord((ulong)value);
+                        break;
+                    }
+                    else
+                    {
+                        goto default;
+                    }
+
+                default:
+                    throw new ArgumentException();
+                }
+            }
+
         end:
             if (Logger != null)
             {
+                // Detect truncated operand.
+                Imm immTemporary = 0;
+                if (immOperand != null)
+                {
+                    IntPtr value = immOperand.Value;
+                    bool isUnsigned = immOperand.IsUnsigned;
+
+                    switch (immSize)
+                    {
+                    case 1:
+                        if (isUnsigned && !Util.IsUInt8(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, true);
+                            break;
+                        }
+
+                        if (!isUnsigned && !Util.IsInt8(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, false);
+                            break;
+                        }
+
+                        break;
+
+                    case 2:
+                        if (isUnsigned && !Util.IsUInt16(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, true);
+                            break;
+                        }
+
+                        if (!isUnsigned && !Util.IsInt16(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, false);
+                            break;
+                        }
+
+                        break;
+
+                    case 4:
+                        if (isUnsigned && !Util.IsUInt32(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, true);
+                            break;
+                        }
+
+                        if (!isUnsigned && !Util.IsInt32(value.ToInt64()))
+                        {
+                            immTemporary = new Imm(value, false);
+                            break;
+                        }
+
+                        break;
+                    }
+
+                    if (immTemporary.Value != IntPtr.Zero)
+                    {
+                        if (o0 == immOperand)
+                            o0 = immTemporary;
+
+                        if (o1 == immOperand)
+                            o1 = immTemporary;
+
+                        if (o2 == immOperand)
+                            o2 = immTemporary;
+                    }
+                }
+
                 StringBuilder buf = new StringBuilder();
                 int bufferStopOffset = _buffer.Offset;
 
@@ -2950,31 +3082,6 @@
         private void EmitSysUInt(UIntPtr x)
         {
             _buffer.EmitSysUInt(x);
-        }
-
-        private void EmitImmediate(Imm imm, int size)
-        {
-            bool isUnsigned = imm.IsUnsigned;
-            IntPtr i = imm.Value;
-
-            if (size == 1 && !isUnsigned)
-                EmitByte((byte)(sbyte)i);
-            else if (size == 1 && isUnsigned)
-                EmitByte((byte)i);
-            else if (size == 2 && !isUnsigned)
-                EmitWord((ushort)(short)i);
-            else if (size == 2 && isUnsigned)
-                EmitWord((ushort)i);
-            else if (size == 4 && !isUnsigned)
-                EmitDWord((uint)(int)i);
-            else if (size == 4 && isUnsigned)
-                EmitDWord((uint)i);
-            else if (size == 8 && !isUnsigned && Util.IsX64)
-                EmitQWord((ulong)(long)i);
-            else if (size == 8 && isUnsigned && Util.IsX64)
-                EmitQWord((ulong)i);
-            else
-                throw new ArgumentException();
         }
 
         private void EmitOpCode(int opcode)

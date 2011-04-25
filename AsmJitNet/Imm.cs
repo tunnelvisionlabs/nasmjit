@@ -5,13 +5,18 @@
 
     public sealed class Imm : Operand
     {
-        private bool _isUnsigned;
-        private IntPtr _value;
+        private readonly IntPtr _value;
+        private readonly bool _isUnsigned;
 
         public Imm(IntPtr i)
+            : this(i, false)
         {
-            _isUnsigned = false;
+        }
+
+        public Imm(IntPtr i, bool isUnsigned)
+        {
             _value = i;
+            _isUnsigned = isUnsigned;
         }
 
         public override OperandType OperandType
