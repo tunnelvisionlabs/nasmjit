@@ -429,7 +429,7 @@
                             varIndex = curIndex++;
                             _variables[varIndex].VarData = candidate;
                             _variables[varIndex].VarFlags = 0;
-                            _variables[varIndex].RegMask = ~0U;
+                            _variables[varIndex].RegMask = ~0;
                             break;
                         }
 
@@ -445,7 +445,7 @@
                 };
 
             bool _isGPBUsed = _isGPBLoUsed | _isGPBHiUsed;
-            uint gpRestrictMask = Util.MaskUpToIndex(RegNum.GP);
+            int gpRestrictMask = Util.MaskUpToIndex(RegNum.GP);
 
 
             if (_isGPBHiUsed && Util.IsX64)
@@ -1029,8 +1029,7 @@
                     // If variable must be in specific register we could add some hint to allocator.
                     if ((var.VarFlags & VariableAlloc.Special) != 0)
                     {
-#warning Check these casts
-                        vdata.PreferredRegisterMask |= (RegIndex)Util.MaskFromIndex((RegIndex)var.RegMask);
+                        vdata.PreferredRegisterMask |= var.RegMask;
                         cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit(var.RegMask));
                     }
                 }
@@ -1100,7 +1099,7 @@
                 // Update GP register allocator restrictions.
                 if (VariableInfo.IsVariableInteger(v.Type))
                 {
-                    if (_variables[i].RegMask == 0xFFFFFFFF)
+                    if (_variables[i].RegMask == ~0)
                         _variables[i].RegMask &= gpRestrictMask;
                 }
 

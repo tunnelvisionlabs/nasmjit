@@ -542,7 +542,7 @@
             vdata.PreviousActive = null;
         }
 
-        public void AllocVar(VarData varData, uint regMask, VariableAlloc variableAlloc)
+        public void AllocVar(VarData varData, int regMask, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
 
@@ -623,7 +623,7 @@
             vdata.Changed = false;
         }
 
-        public void AllocGPVar(VarData varData, uint regMask, VariableAlloc variableAlloc)
+        public void AllocGPVar(VarData varData, int regMask, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
 
@@ -633,7 +633,7 @@
             regMask &= Util.MaskUpToIndex(RegNum.GP);
 
             int i;
-            uint mask;
+            int mask;
 
             // Last register code (aka home).
             RegIndex home = varData.HomeRegisterIndex;
@@ -668,16 +668,16 @@
                     return;
 
                 // Try to find unallocated register first.
-                mask = regMask & ~(uint)_state.UsedGP;
+                mask = regMask & ~_state.UsedGP;
                 if (mask != 0)
                 {
                     idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~preservedGP) != 0) ? mask & ~(uint)preservedGP : mask);
+                      (nonPreservedFirst && (mask & ~preservedGP) != 0) ? mask & ~preservedGP : mask);
                 }
                 // Then find the allocated and later exchange.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & (uint)_state.UsedGP);
+                    idx = (RegIndex)Util.FindFirstBit(regMask & _state.UsedGP);
                 }
 
                 Contract.Assert(idx != RegIndex.Invalid);
@@ -711,17 +711,17 @@
             if (regMask != Util.MaskUpToIndex(RegNum.GP))
             {
                 // Try to find unallocated register first.
-                mask = regMask & ~(uint)_state.UsedGP;
+                mask = regMask & ~_state.UsedGP;
                 if (mask != 0)
                 {
                     idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~(uint)preservedGP) != 0) ? (mask & ~(uint)preservedGP) : mask);
+                      (nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
                 // Then find the allocated and later spill.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & (uint)_state.UsedGP);
+                    idx = (RegIndex)Util.FindFirstBit(regMask & _state.UsedGP);
                     Contract.Assert(idx != RegIndex.Invalid);
 
                     // Spill register we need.
@@ -743,7 +743,7 @@
             // needed. So we trying to prevent reallocation in near future.
             if (idx == RegIndex.Invalid)
             {
-                for (i = 1, mask = (1U << i); i < (int)RegNum.GP; i++, mask <<= 1)
+                for (i = 1, mask = (1 << i); i < (int)RegNum.GP; i++, mask <<= 1)
                 {
                     if ((_state.UsedGP & mask) == 0 && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
                     {
@@ -1005,7 +1005,7 @@
             SpillVar(vdata, _state.GP, FreedGPRegister);
         }
 
-        public void AllocMMVar(VarData vdata, uint regMask, VariableAlloc vflags)
+        public void AllocMMVar(VarData vdata, int regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
             AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Prototype.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
@@ -1017,7 +1017,7 @@
             SpillVar(vdata, _state.MM, FreedMMRegister);
         }
 
-        public void AllocXMMVar(VarData vdata, uint regMask, VariableAlloc vflags)
+        public void AllocXMMVar(VarData vdata, int regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
             AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Prototype.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
@@ -1029,7 +1029,7 @@
             SpillVar(vdata, _state.XMM, FreedXMMRegister);
         }
 
-        private void AllocNonGPVar(VarData vdata, uint regMask, VariableAlloc vflags, int regNum, int preserved, int used, IList<VarData> stateData, Action<RegIndex> allocatedAction, Action<VarData> spillAction, Action<RegIndex> freeAction)
+        private void AllocNonGPVar(VarData vdata, int regMask, VariableAlloc vflags, int regNum, int preserved, int used, IList<VarData> stateData, Action<RegIndex> allocatedAction, Action<VarData> spillAction, Action<RegIndex> freeAction)
         {
             Contract.Requires(vdata != null);
             Contract.Requires(stateData != null);
@@ -1046,7 +1046,7 @@
             // New register code.
             RegIndex idx = RegIndex.Invalid;
 
-            uint mask = 0;
+            int mask = 0;
 
             // Spill candidate.
             VarData spillCandidate = null;
@@ -1073,16 +1073,16 @@
                     return;
 
                 // Try to find unallocated register first.
-                mask = regMask & ~(uint)used;
+                mask = regMask & ~used;
                 if (mask != 0)
                 {
                     idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~(uint)preserved) != 0) ? mask & ~(uint)preserved : mask);
+                      (nonPreservedFirst && (mask & ~preserved) != 0) ? mask & ~preserved : mask);
                 }
                 // Then find the allocated and later exchange.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & (uint)used);
+                    idx = (RegIndex)Util.FindFirstBit(regMask & used);
                 }
                 Contract.Assert(idx != RegIndex.Invalid);
 
@@ -1112,17 +1112,17 @@
             if (regMask != Util.MaskUpToIndex(regNum))
             {
                 // Try to find unallocated register first.
-                mask = regMask & ~(uint)used;
+                mask = regMask & ~used;
                 if (mask != 0)
                 {
                     idx = (RegIndex)Util.FindFirstBit(
-                      (nonPreservedFirst && (mask & ~(uint)preserved) != 0) ? mask & ~(uint)preserved : mask);
+                      (nonPreservedFirst && (mask & ~preserved) != 0) ? mask & ~preserved : mask);
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
                 // Then find the allocated and later spill.
                 else
                 {
-                    idx = (RegIndex)Util.FindFirstBit(regMask & (uint)used);
+                    idx = (RegIndex)Util.FindFirstBit(regMask & used);
                     Contract.Assert(idx != RegIndex.Invalid);
 
                     // Spill register we need.
@@ -1143,7 +1143,7 @@
             if (idx == RegIndex.Invalid)
             {
                 RegIndex i;
-                for (i = 0, mask = (1U << (int)i); i < (RegIndex)stateData.Count; i++, mask <<= 1)
+                for (i = 0, mask = (1 << (int)i); i < (RegIndex)stateData.Count; i++, mask <<= 1)
                 {
                     if ((used & mask) == 0)
                     {
@@ -1282,11 +1282,12 @@
         {
             if (vdata.HomeRegisterIndex == RegIndex.Invalid)
                 vdata.HomeRegisterIndex = idx;
-            vdata.PreferredRegisterMask |= (RegIndex)(1 << (int)idx);
+
+            vdata.PreferredRegisterMask |= Util.MaskFromIndex(idx);
         }
 
         // TODO: Find code which uses this and improve.
-        internal void NewRegisterHomeMask(VarData vdata, RegIndex mask)
+        internal void NewRegisterHomeMask(VarData vdata, int mask)
         {
             vdata.PreferredRegisterMask |= mask;
         }

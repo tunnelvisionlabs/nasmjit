@@ -370,10 +370,10 @@
                     {
                         int mask = ~Prototype.PreservedGP &
                                         ~Prototype.PassedGP &
-                                        ((int)Util.MaskUpToIndex(RegNum.GP) - 1);
+                                        (Util.MaskUpToIndex(RegNum.GP) - 1);
 
-                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit((uint)mask));
-                        cc.NewRegisterHomeMask(vdata, (RegIndex)mask);
+                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit(mask));
+                        cc.NewRegisterHomeMask(vdata, mask);
 
                         var.Flags |= VarCallFlags.CALL_OPERAND_REG;
                         vdata.RegisterReadCount++;

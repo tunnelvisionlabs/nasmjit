@@ -52,17 +52,17 @@
             return value >= uint.MinValue && value <= uint.MaxValue;
         }
 
-        internal static uint MaskFromIndex(RegIndex index)
+        internal static int MaskFromIndex(RegIndex index)
         {
-            return 1U << (int)index;
+            return 1 << (int)index;
         }
 
-        internal static uint MaskUpToIndex(int x)
+        internal static int MaskUpToIndex(int x)
         {
             if (x >= 32)
-                return 0xFFFFFFFF;
+                return ~0;
             else
-                return (1U << x) - 1;
+                return (1 << x) - 1;
         }
 
         internal static int BitCount(int x)
@@ -77,14 +77,14 @@
             return (int)(((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24);
         }
 
-        internal static uint FindFirstBit(uint mask)
+        internal static int FindFirstBit(int mask)
         {
-            for (uint i = 0, bit = 1; i < sizeof(uint); i++, bit <<= 1)
+            for (int i = 0, bit = 1; i < sizeof(int); i++, bit <<= 1)
             {
                 if ((mask & bit) != 0)
                     return i;
             }
-            return 0xFFFFFFFFU;
+            return ~0;
         }
 
         internal static int DeltaTo16(int x)

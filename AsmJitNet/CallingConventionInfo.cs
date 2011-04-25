@@ -18,11 +18,11 @@
         private readonly ReadOnlyCollection<RegIndex> _argumentsXMMList;
 
         //! @brief Bitmask for preserved GP registers.
-        private readonly uint _argumentsGP;
+        private readonly int _argumentsGP;
         //! @brief Bitmask for preserved MM registers.
-        private readonly uint _argumentsMM;
+        private readonly int _argumentsMM;
         //! @brief Bitmask for preserved XMM registers.
-        private readonly uint _argumentsXMM;
+        private readonly int _argumentsXMM;
 
         static CallingConventionInfo()
         {
@@ -65,11 +65,11 @@
             if (Util.IsX86)
             {
                 _preservedGP =
-                    (int)Util.MaskFromIndex(RegIndex.Ebx) |
-                    (int)Util.MaskFromIndex(RegIndex.Esp) |
-                    (int)Util.MaskFromIndex(RegIndex.Ebp) |
-                    (int)Util.MaskFromIndex(RegIndex.Esi) |
-                    (int)Util.MaskFromIndex(RegIndex.Edi);
+                    Util.MaskFromIndex(RegIndex.Ebx) |
+                    Util.MaskFromIndex(RegIndex.Esp) |
+                    Util.MaskFromIndex(RegIndex.Ebp) |
+                    Util.MaskFromIndex(RegIndex.Esi) |
+                    Util.MaskFromIndex(RegIndex.Edi);
                 _preservedXMM = 0;
 
                 switch (_callingConvention)
@@ -174,26 +174,26 @@
                                     Util.MaskFromIndex(RegIndex.Xmm3);
 
                     _preservedGP =
-                        (int)Util.MaskFromIndex(RegIndex.Rbx) |
-                        (int)Util.MaskFromIndex(RegIndex.Rsp) |
-                        (int)Util.MaskFromIndex(RegIndex.Rbp) |
-                        (int)Util.MaskFromIndex(RegIndex.Rsi) |
-                        (int)Util.MaskFromIndex(RegIndex.Rdi) |
-                        (int)Util.MaskFromIndex(RegIndex.R12) |
-                        (int)Util.MaskFromIndex(RegIndex.R13) |
-                        (int)Util.MaskFromIndex(RegIndex.R14) |
-                        (int)Util.MaskFromIndex(RegIndex.R15);
+                        Util.MaskFromIndex(RegIndex.Rbx) |
+                        Util.MaskFromIndex(RegIndex.Rsp) |
+                        Util.MaskFromIndex(RegIndex.Rbp) |
+                        Util.MaskFromIndex(RegIndex.Rsi) |
+                        Util.MaskFromIndex(RegIndex.Rdi) |
+                        Util.MaskFromIndex(RegIndex.R12) |
+                        Util.MaskFromIndex(RegIndex.R13) |
+                        Util.MaskFromIndex(RegIndex.R14) |
+                        Util.MaskFromIndex(RegIndex.R15);
                     _preservedXMM =
-                        (int)Util.MaskFromIndex(RegIndex.Xmm6) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm7) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm8) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm9) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm10) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm11) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm12) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm13) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm14) |
-                        (int)Util.MaskFromIndex(RegIndex.Xmm15);
+                        Util.MaskFromIndex(RegIndex.Xmm6) |
+                        Util.MaskFromIndex(RegIndex.Xmm7) |
+                        Util.MaskFromIndex(RegIndex.Xmm8) |
+                        Util.MaskFromIndex(RegIndex.Xmm9) |
+                        Util.MaskFromIndex(RegIndex.Xmm10) |
+                        Util.MaskFromIndex(RegIndex.Xmm11) |
+                        Util.MaskFromIndex(RegIndex.Xmm12) |
+                        Util.MaskFromIndex(RegIndex.Xmm13) |
+                        Util.MaskFromIndex(RegIndex.Xmm14) |
+                        Util.MaskFromIndex(RegIndex.Xmm15);
                     break;
 
                 case CallingConvention.X64U:
@@ -230,13 +230,13 @@
                                     Util.MaskFromIndex(RegIndex.Xmm7);
 
                     _preservedGP =
-                        (int)Util.MaskFromIndex(RegIndex.Rbx) |
-                        (int)Util.MaskFromIndex(RegIndex.Rsp) |
-                        (int)Util.MaskFromIndex(RegIndex.Rbp) |
-                        (int)Util.MaskFromIndex(RegIndex.R12) |
-                        (int)Util.MaskFromIndex(RegIndex.R13) |
-                        (int)Util.MaskFromIndex(RegIndex.R14) |
-                        (int)Util.MaskFromIndex(RegIndex.R15);
+                        Util.MaskFromIndex(RegIndex.Rbx) |
+                        Util.MaskFromIndex(RegIndex.Rsp) |
+                        Util.MaskFromIndex(RegIndex.Rbp) |
+                        Util.MaskFromIndex(RegIndex.R12) |
+                        Util.MaskFromIndex(RegIndex.R13) |
+                        Util.MaskFromIndex(RegIndex.R14) |
+                        Util.MaskFromIndex(RegIndex.R15);
                     break;
 
                 default:

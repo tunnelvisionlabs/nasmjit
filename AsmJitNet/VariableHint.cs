@@ -96,8 +96,7 @@
             switch (_hintKind)
             {
             case VariableHintKind.Alloc:
-#warning Check these casts
-                cc.AllocVar(_varData, (uint)_hintValue, VariableAlloc.ReadWrite);
+                cc.AllocVar(_varData, Util.MaskFromIndex((RegIndex)_hintValue), VariableAlloc.ReadWrite);
                 break;
 
             case VariableHintKind.Spill:
