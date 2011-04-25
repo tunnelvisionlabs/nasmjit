@@ -2,9 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using Debug = System.Diagnostics.Debug;
-    using System.Diagnostics.Contracts;
     using System.Collections.ObjectModel;
+    using System.Diagnostics.Contracts;
 
     public class CompilerContext
     {
@@ -461,7 +460,7 @@
                     if (mem != null && (mem.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData varData = _compiler.GetVarData(mem.Id);
-                        Debug.Assert(varData != null);
+                        Contract.Assert(varData != null);
 
                         if (varData.IsMemArgument)
                         {
@@ -1735,7 +1734,7 @@
                 if (o.IsVar)
                 {
                     VarData vdata = _compiler.GetVarData(o.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     operands[i] = new GPReg(((BaseVar)o).RegisterType, vdata.RegisterIndex);
                 }
@@ -1747,7 +1746,7 @@
                     {
                         // Memory access. We just increment here actual displacement.
                         VarData vdata = _compiler.GetVarData(o.Id);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         mem.Displacement += vdata.IsMemArgument
                           ? _argumentsActualDisp
@@ -1758,7 +1757,7 @@
                     else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = _compiler.GetVarData((int)mem.Base);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         mem.Base = vdata.RegisterIndex;
                     }
@@ -1766,7 +1765,7 @@
                     if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = _compiler.GetVarData((int)mem.Index);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         mem.Index = vdata.RegisterIndex;
                     }

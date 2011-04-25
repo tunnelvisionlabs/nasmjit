@@ -2,7 +2,6 @@
 {
     using System;
     using System.Diagnostics.Contracts;
-    using Debug = System.Diagnostics.Debug;
 
     public static class Intrinsics
     {

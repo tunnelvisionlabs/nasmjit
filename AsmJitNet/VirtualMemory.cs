@@ -1,7 +1,6 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
     using System.Runtime.InteropServices;
 
     public static class VirtualMemory

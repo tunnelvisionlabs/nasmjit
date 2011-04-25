@@ -1,7 +1,6 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
     using System.Diagnostics.Contracts;
 
     public class Instruction : Emittable
@@ -324,7 +323,7 @@
                         throw new CompilerException();
 
                     VarData vdata = Compiler.GetVarData(o.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     if (vo.IsGPVar)
                     {
@@ -358,7 +357,7 @@
                         if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
                             VarData vdata = Compiler.GetVarData(o.Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             cc.MarkMemoryUsed(vdata);
                             if (vdata.WorkOffset != Offset)
@@ -373,7 +372,7 @@
                         else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
                             VarData vdata = Compiler.GetVarData((int)mem.Base);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             if (vdata.WorkOffset != Offset)
                             {
@@ -388,7 +387,7 @@
                         if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
                             VarData vdata = Compiler.GetVarData((int)mem.Index);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             if (vdata.WorkOffset != Offset)
                             {
@@ -466,7 +465,7 @@
                 if (o.IsVar)
                 {
                     VarData vdata = Compiler.GetVarData(o.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     __GET_VARIABLE(vdata);
                     var.VarFlags |= VariableAlloc.Register;
@@ -1039,7 +1038,7 @@
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData(o.Id);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
 
@@ -1066,7 +1065,7 @@
                     else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)mem.Base);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
                         vdata.RegisterReadCount++;
@@ -1077,7 +1076,7 @@
                     if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)mem.Index);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
                         vdata.RegisterReadCount++;
@@ -1205,7 +1204,7 @@
             if (_memoryOperand != null && (_memoryOperand.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
             {
                 VarData vdata = Compiler.GetVarData(_memoryOperand.Id);
-                Debug.Assert(vdata != null);
+                Contract.Assert(vdata != null);
 
                 switch (vdata.State)
                 {

@@ -1,7 +1,6 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
     using System.Diagnostics.Contracts;
 
     public class Call : Emittable
@@ -202,7 +201,7 @@
                         throw new CompilerException();
 
                     VarData vdata = Compiler.GetVarData(o.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     if (vdata.WorkOffset == Offset)
                         continue;
@@ -217,7 +216,7 @@
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData(o.Id);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         cc.MarkMemoryUsed(vdata);
                         if (!cc.IsActive(vdata))
@@ -228,7 +227,7 @@
                     else if (((int)((Mem)o).Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)((Mem)o).Base);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         if (vdata.WorkOffset == Offset)
                             continue;
@@ -242,7 +241,7 @@
                     if (((int)((Mem)o).Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)((Mem)o).Index);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         if (vdata.WorkOffset == Offset)
                             continue;
@@ -311,7 +310,7 @@
                     }
 
                     var = _variables[varIndex];
-                    Debug.Assert(var != null);
+                    Contract.Assert(var != null);
                 };
 
             for (i = 0; i < operandsCount; i++)
@@ -323,7 +322,7 @@
                 if (o.IsVar)
                 {
                     VarData vdata = Compiler.GetVarData(o.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     __GET_VARIABLE(vdata);
                     _argumentToVarRecord[i] = var;
@@ -465,14 +464,14 @@
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData(o.Id);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         vdata.MemoryReadCount++;
                     }
                     else if (((int)((Mem)o).Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)((Mem)o).Base);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         vdata.RegisterReadCount++;
 
@@ -483,7 +482,7 @@
                     if (((int)((Mem)o).Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         VarData vdata = Compiler.GetVarData((int)((Mem)o).Index);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         vdata.RegisterReadCount++;
 
@@ -613,7 +612,7 @@
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
                     VarData vdata = compiler.GetVarData(operand.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     if (vdata.RegisterIndex != RegIndex.Invalid)
                     {
@@ -721,7 +720,7 @@
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
                     VarData vdata = compiler.GetVarData(operand.Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     MoveSpilledVariableToStack(cc, vdata, argType, temporaryGpReg, temporaryXmmReg);
 
@@ -790,7 +789,7 @@
                     if (!osrc.IsVar)
                         throw new CompilerException();
                     VarData vsrc = compiler.GetVarData(osrc.Id);
-                    Debug.Assert(vsrc != null);
+                    Contract.Assert(vsrc != null);
 
                     FunctionPrototype.Argument srcArgType = targs[i];
                     VarData vdst = GetOverlappingVariable(cc, srcArgType);

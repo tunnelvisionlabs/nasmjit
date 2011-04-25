@@ -1,7 +1,7 @@
 ﻿namespace AsmJitNet
 {
-    using System.Collections.ObjectModel;
     using System;
+    using System.Collections.ObjectModel;
     using System.Linq;
 
     public sealed class CallingConventionInfo

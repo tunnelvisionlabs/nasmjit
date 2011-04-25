@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using Array = System.Array;
     using System.Diagnostics.Contracts;
+    using Array = System.Array;
 
     public class StateData
     {

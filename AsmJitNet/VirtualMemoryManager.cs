@@ -1,12 +1,11 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using System.Runtime.InteropServices;
-    using Debug = System.Diagnostics.Debug;
-    using System.Diagnostics.Contracts;
     using System.Diagnostics;
-    using TextWriter = System.IO.TextWriter;
+    using System.Diagnostics.Contracts;
+    using System.Runtime.InteropServices;
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
+    using TextWriter = System.IO.TextWriter;
 
     public class VirtualMemoryManager : MemoryManager
     {
@@ -364,7 +363,7 @@
 
                         // Update binary tree.
                         InsertNode(node);
-                        Debug.Assert(CheckTree());
+                        Contract.Assert(CheckTree());
 
                         // Alloc first node at start.
                         i = 0;
@@ -559,7 +558,7 @@
 
                         // Remove node. This function can return different node than
                         // passed into, but data is copied into previous node if needed.
-                        Debug.Assert(CheckTree());
+                        Contract.Assert(CheckTree());
 
                         _allocated -= node.Size;
                         RemoveNode(node);
@@ -887,9 +886,9 @@
                 }
 
                 // Replace and remove.
-                Debug.Assert(f != null);
-                Debug.Assert(f != head);
-                Debug.Assert(q != head);
+                Contract.Assert(f != null);
+                Contract.Assert(f != head);
+                Contract.Assert(q != head);
 
                 if (f != q)
                     f.FillData(q);
@@ -1049,17 +1048,17 @@
                     T rn = root.Right;
 
                     // Red violation.
-                    Debug.Assert(!(IsRed(root) && (IsRed(ln) || IsRed(rn))));
+                    Contract.Assert(!(IsRed(root) && (IsRed(ln) || IsRed(rn))));
 
                     int lh = RbAssert(ln);
                     int rh = RbAssert(rn);
 
                     // Invalid btree.
-                    Debug.Assert(ln == null || ln.Memory.ToInt64() < root.Memory.ToInt64());
-                    Debug.Assert(rn == null || rn.Memory.ToInt64() > root.Memory.ToInt64());
+                    Contract.Assert(ln == null || ln.Memory.ToInt64() < root.Memory.ToInt64());
+                    Contract.Assert(rn == null || rn.Memory.ToInt64() > root.Memory.ToInt64());
 
                     // Black violation.
-                    Debug.Assert(!(lh != 0 && rh != 0 && lh != rh));
+                    Contract.Assert(!(lh != 0 && rh != 0 && lh != rh));
 
                     // Only count black links.
                     if (lh != 0 && rh != 0)

@@ -5,7 +5,6 @@
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
-    using Debug = System.Diagnostics.Debug;
     using Marshal = System.Runtime.InteropServices.Marshal;
 
     public class Assembler

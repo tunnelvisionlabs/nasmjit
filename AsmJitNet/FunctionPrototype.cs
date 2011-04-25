@@ -1,10 +1,10 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using System.Diagnostics.Contracts;
-    using System.Linq;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
+    using System.Linq;
     using Expression = System.Linq.Expressions.Expression;
 
     public sealed class FunctionPrototype

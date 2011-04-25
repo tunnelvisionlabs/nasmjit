@@ -4,7 +4,6 @@
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
-    using Debug = System.Diagnostics.Debug;
 
     public class Function : Emittable
     {
@@ -666,7 +665,7 @@
                 for (i = 0; i < variablesCount; i++)
                 {
                     VarData vdata = Compiler.GetVarData(i);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
 
                     // If this variable is not related to this function then skip it.
                     if (vdata.Scope != this)
@@ -762,7 +761,7 @@
                         buffer.Append("; XMM: ");
                         break;
                     default:
-                        Debug.Fail("");
+                        Contract.Assert(false, "");
                         continue;
                     }
 

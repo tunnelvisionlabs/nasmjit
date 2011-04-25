@@ -2,11 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using Marshal = System.Runtime.InteropServices.Marshal;
     using System.Collections.ObjectModel;
     using System.Diagnostics.Contracts;
+    using System.Linq;
+    using Marshal = System.Runtime.InteropServices.Marshal;
 
     [ContractClass(typeof(Contracts.JitMethodBaseContracts))]
     public abstract class JitMethodBase : IDisposable

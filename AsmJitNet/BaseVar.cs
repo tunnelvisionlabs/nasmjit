@@ -1,7 +1,5 @@
 ﻿namespace AsmJitNet
 {
-    using System;
-
     public abstract class BaseVar : Operand
     {
         private readonly RegType _registerType;

@@ -1,6 +1,5 @@
 ﻿namespace AsmJitNet
 {
-    using System;
     using System.Collections.ObjectModel;
 
     public class JitAction : JitMethodBase

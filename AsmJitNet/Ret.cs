@@ -1,7 +1,7 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
+    using System.Diagnostics.Contracts;
 
     public class Ret : Emittable
     {
@@ -76,7 +76,7 @@
                             throw new CompilerException();
 
                         VarData vdata = Compiler.GetVarData(o.Id);
-                        Debug.Assert(vdata != null);
+                        Contract.Assert(vdata != null);
 
                         // First emittable (begin of variable scope).
                         if (vdata.FirstEmittable == null)
@@ -130,7 +130,7 @@
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             if (srci == RegIndex.Invalid)
@@ -172,7 +172,7 @@
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             if (srci != RegIndex.Invalid)
@@ -208,7 +208,7 @@
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             InstructionCode inst = ret[i].IsRegType(RegType.GPQ) ? InstructionCode.Movq : InstructionCode.Movd;
@@ -230,7 +230,7 @@
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             InstructionCode inst = InstructionCode.Movq;
@@ -243,7 +243,7 @@
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             InstructionCode inst = InstructionCode.Movq;
@@ -275,7 +275,7 @@
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             InstructionCode inst = ret[i].IsRegType(RegType.GPQ) ? InstructionCode.Movq : InstructionCode.Movd;
@@ -302,7 +302,7 @@
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             if (srci == RegIndex.Invalid)
@@ -313,7 +313,7 @@
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             if (srci == RegIndex.Invalid)
@@ -343,7 +343,7 @@
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             switch (vdata.Type)
@@ -392,7 +392,7 @@
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
                             VarData vdata = compiler.GetVarData(ret[i].Id);
-                            Debug.Assert(vdata != null);
+                            Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
                             switch (vdata.Type)
@@ -438,7 +438,7 @@
                 if (ret[i] != null && ret[i].IsVar)
                 {
                     VarData vdata = compiler.GetVarData(ret[i].Id);
-                    Debug.Assert(vdata != null);
+                    Contract.Assert(vdata != null);
                     cc.UnuseVarOnEndOfScope(this, vdata);
                 }
             }

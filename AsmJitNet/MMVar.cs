@@ -1,7 +1,5 @@
 ﻿namespace AsmJitNet
 {
-    using System.Diagnostics.Contracts;
-
     public class MMVar : BaseVar
     {
         public MMVar()

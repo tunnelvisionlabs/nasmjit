@@ -2,13 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using IList = System.Collections.IList;
+    using System.Diagnostics.Contracts;
     using ICollection = System.Collections.ICollection;
     using IEnumerable = System.Collections.IEnumerable;
     using IEnumerator = System.Collections.IEnumerator;
-    using System.Diagnostics.Contracts;
+    using IList = System.Collections.IList;
 
     public sealed class ArraySegment<T> : IList<T>, ICollection<T>, IEnumerable<T>, IList, ICollection, IEnumerable
     {

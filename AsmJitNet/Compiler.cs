@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Linq;
-    using Debug = System.Diagnostics.Debug;
 
     public class Compiler
         : IIntrinsicSupport<GPVar, X87Var, MMVar, XMMVar>
@@ -616,7 +615,7 @@
                 return;
 
             VarData vdata = GetVarData(var.Id);
-            Debug.Assert(vdata != null);
+            Contract.Assert(vdata != null);
 
             VariableHint e = new VariableHint(this, vdata, hintId, hintValue);
             AddEmittable(e);

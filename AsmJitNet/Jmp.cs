@@ -1,7 +1,6 @@
 ﻿namespace AsmJitNet
 {
     using System;
-    using Debug = System.Diagnostics.Debug;
     using System.Diagnostics.Contracts;
 
     public class Jmp : Instruction
