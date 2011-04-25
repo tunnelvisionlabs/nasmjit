@@ -714,7 +714,7 @@
                 int mask;
                 for (i = 1, mask = (1 << i); i < (int)RegNum.GP; i++, mask <<= 1)
                 {
-                    if ((_state.UsedGP & mask) == 0 && (i != (int)RegIndex.Ebp || _allocableEBP))
+                    if ((_state.UsedGP & mask) == 0 && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
                     {
                         // Convenience to alloc non-preserved first or non-preserved last.
                         if (nonPreservedFirst)
