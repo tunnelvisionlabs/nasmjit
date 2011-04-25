@@ -995,11 +995,10 @@
                         break;
                     }
 
-#warning check these casts
                     if (temporaryGpReg == RegIndex.Invalid)
                         temporaryGpReg = FindTemporaryGpRegister(cc);
 
-                    cc.AllocGPVar(r.vdata, (uint)temporaryGpReg,
+                    cc.AllocGPVar(r.vdata, Util.MaskFromIndex(temporaryGpReg),
                       VariableAlloc.Register | VariableAlloc.Read);
                 }
             }
@@ -1090,10 +1089,9 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.GP) != 0)
                     {
-#warning check these casts
                         cc.AllocGPVar(vdata, (rec.Flags & VarCallFlags.OUT_EAX) != 0
-                          ? (uint)RegIndex.Eax
-                          : (uint)RegIndex.Edx,
+                          ? Util.MaskFromIndex(RegIndex.Eax)
+                          : Util.MaskFromIndex(RegIndex.Edx),
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }
