@@ -314,13 +314,14 @@
                     VarData vdata = Compiler.GetVarData(o.Id);
                     Debug.Assert(vdata != null);
 
-                    if (vdata.WorkOffset == Offset)
-                        continue;
-                    if (!cc.IsActive(vdata))
-                        cc.AddActive(vdata);
+                    if (vdata.WorkOffset != Offset)
+                    {
+                        if (!cc.IsActive(vdata))
+                            cc.AddActive(vdata);
 
-                    vdata.WorkOffset = Offset;
-                    variablesCount++;
+                        vdata.WorkOffset = Offset;
+                        variablesCount++;
+                    }
                 }
                 else
                 {
@@ -333,23 +334,28 @@
                             Debug.Assert(vdata != null);
 
                             cc.MarkMemoryUsed(vdata);
-                            if (!cc.IsActive(vdata))
-                                cc.AddActive(vdata);
+                            if (vdata.WorkOffset != Offset)
+                            {
+                                if (!cc.IsActive(vdata))
+                                    cc.AddActive(vdata);
 
-                            continue;
+                                vdata.WorkOffset = Offset;
+                                variablesCount++;
+                            }
                         }
                         else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
                             VarData vdata = Compiler.GetVarData((int)mem.Base);
                             Debug.Assert(vdata != null);
 
-                            if (vdata.WorkOffset == Offset)
-                                continue;
-                            if (!cc.IsActive(vdata))
-                                cc.AddActive(vdata);
+                            if (vdata.WorkOffset != Offset)
+                            {
+                                if (!cc.IsActive(vdata))
+                                    cc.AddActive(vdata);
 
-                            vdata.WorkOffset = Offset;
-                            variablesCount++;
+                                vdata.WorkOffset = Offset;
+                                variablesCount++;
+                            }
                         }
 
                         if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
@@ -357,13 +363,14 @@
                             VarData vdata = Compiler.GetVarData((int)mem.Index);
                             Debug.Assert(vdata != null);
 
-                            if (vdata.WorkOffset == Offset)
-                                continue;
-                            if (!cc.IsActive(vdata))
-                                cc.AddActive(vdata);
+                            if (vdata.WorkOffset != Offset)
+                            {
+                                if (!cc.IsActive(vdata))
+                                    cc.AddActive(vdata);
 
-                            vdata.WorkOffset = Offset;
-                            variablesCount++;
+                                vdata.WorkOffset = Offset;
+                                variablesCount++;
+                            }
                         }
                     }
                 }
@@ -878,6 +885,12 @@
                                     (id.Code == InstructionCode.Imul && _operands.Length == 3 && !IsSpecial))
                             {
                                 // Write-only case.
+                                vdata.RegisterWriteCount++;
+                                var.VarFlags |= VariableAlloc.Write;
+                            }
+                            else if (id.Code == InstructionCode.Lea)
+                            {
+                                // Write.
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write;
                             }
