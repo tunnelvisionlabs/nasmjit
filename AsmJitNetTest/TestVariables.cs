@@ -247,12 +247,12 @@
             {
                 int var = 0;
                 RegIndex index = 0;
-                int mask = 1;
-                int preserved = compiler.Function.Prototype.PreservedGP;
+                RegisterMask preserved = compiler.Function.Prototype.PreservedGP;
 
                 do
                 {
-                    if ((preserved & mask) != 0 && (index != RegIndex.Esp && index != RegIndex.Ebp))
+                    RegisterMask mask = RegisterMask.FromIndex(index);
+                    if ((preserved & mask) != RegisterMask.Zero && (index != RegIndex.Esp && index != RegIndex.Ebp))
                     {
                         GPVar somevar = compiler.NewGP(VariableType.GPD);
                         compiler.Alloc(somevar, index);
@@ -262,7 +262,6 @@
                     }
 
                     index++;
-                    mask <<= 1;
                 } while (var < vars && (int)index < (int)RegNum.GP);
             }
 
