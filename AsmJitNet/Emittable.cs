@@ -131,6 +131,7 @@
             Contract.Requires(cc != null);
 
             Emittable next = TranslateImpl(cc);
+            Contract.Assert(!_translated || next == null);
             _translated = true;
             return next;
         }

@@ -91,6 +91,15 @@
 
         protected override Emittable TranslateImpl(CompilerContext cc)
         {
+            // If this Target was already translated, it's needed to change the current
+            // state and return null to tell CompilerContext to process next untranslated
+            // emittable.
+            if (IsTranslated)
+            {
+                cc.RestoreState(_state);
+                return null;
+            }
+
             if (cc.Unreachable)
             {
                 cc.Unreachable = false;
