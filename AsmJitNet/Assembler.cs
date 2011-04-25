@@ -1820,6 +1820,10 @@
                     if (o0.IsRegMem)
                     {
                         Operand op = o0;
+
+                        // Only BYTE register or BYTE/TYPELESS memory location can be used.
+                        Contract.Assert(op.Size <= 1);
+
                         EmitX86RM(id.OpCode0, false, false, 0, op, 0, forceRexPrefix);
                         goto end;
                     }

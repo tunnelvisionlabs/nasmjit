@@ -2925,6 +2925,8 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst.Size == 1);
+
             intrinsicSupport.EmitInstruction(Assembler.ConditionToSetCC(cc), dst);
         }
 
@@ -2935,6 +2937,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(Assembler.ConditionToSetCC(cc), dst);
         }
@@ -2944,6 +2947,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Seta, dst);
         }
@@ -2952,6 +2956,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Seta, dst);
         }
@@ -2961,6 +2966,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setae, dst);
         }
@@ -2969,6 +2975,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setae, dst);
         }
@@ -2978,6 +2985,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setb, dst);
         }
@@ -2985,6 +2993,9 @@
         public static void Setb(this IIntrinsicSupport intrinsicSupport, Mem dst)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Setb, dst);
         }
 
@@ -2993,6 +3004,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setbe, dst);
         }
@@ -3000,6 +3012,9 @@
         public static void Setbe(this IIntrinsicSupport intrinsicSupport, Mem dst)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Setbe, dst);
         }
 
@@ -3008,6 +3023,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setc, dst);
         }
@@ -3016,6 +3032,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setc, dst);
         }
@@ -3025,6 +3042,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Sete, dst);
         }
@@ -3033,6 +3051,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Sete, dst);
         }
@@ -3042,6 +3061,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setg, dst);
         }
@@ -3050,6 +3070,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setg, dst);
         }
@@ -3059,6 +3080,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setge, dst);
         }
@@ -3067,6 +3089,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setge, dst);
         }
@@ -3076,6 +3099,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setl, dst);
         }
@@ -3084,6 +3108,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setl, dst);
         }
@@ -3093,6 +3118,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setle, dst);
         }
@@ -3101,6 +3127,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setle, dst);
         }
@@ -3110,6 +3137,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setna, dst);
         }
@@ -3118,6 +3146,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setna, dst);
         }
@@ -3127,6 +3156,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnae, dst);
         }
@@ -3135,6 +3165,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnae, dst);
         }
@@ -3144,6 +3175,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnb, dst);
         }
@@ -3152,6 +3184,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnb, dst);
         }
@@ -3161,6 +3194,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnbe, dst);
         }
@@ -3169,6 +3203,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnbe, dst);
         }
@@ -3178,6 +3213,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnc, dst);
         }
@@ -3186,6 +3222,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnc, dst);
         }
@@ -3195,6 +3232,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setne, dst);
         }
@@ -3203,6 +3241,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setne, dst);
         }
@@ -3212,6 +3251,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setng, dst);
         }
@@ -3220,6 +3260,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setng, dst);
         }
@@ -3229,6 +3270,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnge, dst);
         }
@@ -3237,6 +3279,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnge, dst);
         }
@@ -3246,6 +3289,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnl, dst);
         }
@@ -3254,6 +3298,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnl, dst);
         }
@@ -3263,6 +3308,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnle, dst);
         }
@@ -3271,6 +3317,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnle, dst);
         }
@@ -3280,6 +3327,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setno, dst);
         }
@@ -3288,6 +3336,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setno, dst);
         }
@@ -3297,6 +3346,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnp, dst);
         }
@@ -3305,6 +3355,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnp, dst);
         }
@@ -3314,6 +3365,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setns, dst);
         }
@@ -3322,6 +3374,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setns, dst);
         }
@@ -3331,6 +3384,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnz, dst);
         }
@@ -3339,6 +3393,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setnz, dst);
         }
@@ -3348,6 +3403,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Seto, dst);
         }
@@ -3356,6 +3412,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Seto, dst);
         }
@@ -3365,6 +3422,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setp, dst);
         }
@@ -3373,6 +3431,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setp, dst);
         }
@@ -3382,6 +3441,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setpe, dst);
         }
@@ -3390,6 +3450,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setpe, dst);
         }
@@ -3399,6 +3460,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setpo, dst);
         }
@@ -3407,6 +3469,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setpo, dst);
         }
@@ -3416,6 +3479,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Sets, dst);
         }
@@ -3424,6 +3488,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Sets, dst);
         }
@@ -3433,6 +3498,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setz, dst);
         }
@@ -3441,6 +3507,7 @@
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
+            Contract.Requires(dst.Size <= 1);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Setz, dst);
         }
