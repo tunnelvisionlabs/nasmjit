@@ -149,6 +149,21 @@
             PostImpl(a);
         }
 
+        /// <summary>
+        /// Try to unuse the variable <paramref name="v"/>.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>
+        /// @c true only if the variable will be unused by the instruction,
+        /// otherwise @c false is returned.
+        /// </returns>
+        public bool TryUnuseVar(VarData v)
+        {
+            Contract.Requires(v != null);
+
+            return TryUnuseVarImpl(v);
+        }
+
         protected virtual void PrepareImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
@@ -170,6 +185,12 @@
         protected virtual void PostImpl(Assembler a)
         {
             Contract.Requires(a != null);
+        }
+
+        protected virtual bool TryUnuseVarImpl(VarData v)
+        {
+            Contract.Requires(v != null);
+            return false;
         }
     }
 }

@@ -175,6 +175,9 @@
             }
         }
 
+        /// <summary>
+        /// Get whether the callee pops the stack.
+        /// </summary>
         public bool CalleePopsStack
         {
             get
@@ -361,6 +364,8 @@
                 for (i = istart; i != iend; i += istep)
                 {
                     ArgumentData a = argumentData[i];
+                    if (a._registerIndex != RegIndex.Invalid)
+                        continue;
 
                     if (VariableInfo.IsVariableInteger(a._variableType))
                     {

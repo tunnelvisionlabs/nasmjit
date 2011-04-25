@@ -21,6 +21,8 @@
         OUT_XMM1 = 0x0800,
 
         IN_MEM_PTR = 0x1000,
-        CALL_OPERAND = 0x2000
+        CALL_OPERAND = 0x2000,
+
+        UnuseAfterUse = 0x4000,
     }
 }

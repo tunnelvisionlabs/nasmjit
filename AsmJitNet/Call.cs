@@ -173,16 +173,20 @@
                         throw new CompilerException("Invalid variable type in function call argument.");
                     }
                 }
+                else
+                {
+                    cc.Function.IsEspAdjusted = true;
+                }
             }
 
             // Call address.
             operandsCount++;
 
-            // First return value.
+            // The first return value.
             if (_ret[0] != null && !_ret[0].IsNone)
                 operandsCount++;
 
-            // Second return value.
+            // The second return value.
             if (_ret[1] != null && !_ret[1].IsNone)
                 operandsCount++;
 
@@ -315,6 +319,9 @@
 
                         if (fArg._registerIndex != RegIndex.Invalid)
                         {
+                            if (vdata.HomeRegisterIndex == RegIndex.Invalid)
+                                vdata.HomeRegisterIndex = fArg._registerIndex;
+
                             switch (fArg._variableType)
                             {
                             case VariableType.GPD:
@@ -787,7 +794,7 @@
 
                             bool doSpill = true;
 
-                            // Emit xchg instead of spill/alloc if possible (only GP registers).
+                            // Emit xchg instead of spill/alloc if possible (GP registers only).
                             if (x != InvalidValue && (VariableInfo.GetVariableInfo(vdst.Type).Class & VariableClass.GP) != 0)
                             {
                                 FunctionPrototype.Argument dstArgType = targs[x];
@@ -831,6 +838,26 @@
 
                         MoveSrcVariableToRegister(cc, vsrc, srcArgType);
 
+                        switch (srcArgType._variableType)
+                        {
+                        case VariableType.GPD:
+                        case VariableType.GPQ:
+                            cc.MarkChangedGPRegister(srcArgType._registerIndex);
+                            break;
+
+                        case VariableType.MM:
+                            cc.MarkChangedMMRegister(srcArgType._registerIndex);
+                            break;
+
+                        case VariableType.XMM:
+                        case VariableType.XMM_1F:
+                        case VariableType.XMM_1D:
+                        case VariableType.XMM_4F:
+                        case VariableType.XMM_2D:
+                            cc.MarkChangedXMMRegister(srcArgType._registerIndex);
+                            break;
+                        }
+
                         rec.InDone++;
                         processed[i] = true;
                     }
@@ -873,7 +900,7 @@
                 if (vdata != null && (preserved & mask) == 0)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
-                    if (rec != null && (rec.OutCount != 0 || vdata.LastEmittable == this))
+                    if (rec != null && (rec.OutCount != 0 || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0 || vdata.LastEmittable == this))
                         cc.UnuseVar(vdata, VariableState.Unused);
                     else
                         cc.SpillGPVar(vdata);
@@ -916,11 +943,10 @@
             compiler.Emit(InstructionCode.Call, _target);
 
 
-            // Restore stack offset if needed. This is mainly for STDCALL calling
-            // convention used by Windows. Standard 32-bit and 64-bit calling
-            // conventions don't need this.
+            // Restore the stack offset.
             if (Prototype.CalleePopsStack)
             {
+                // abc
                 int s = Prototype.ArgumentsStackSize;
                 if (s != 0)
                     compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)s);
@@ -1014,11 +1040,24 @@
 
             for (i = 0; i < variablesCount; i++)
             {
-                VarData v = _variables[i].vdata;
-                cc.UnuseVarOnEndOfScope(this, _variables[i].vdata);
+                cc.UnuseVarOnEndOfScope(this, _variables[i]);
             }
 
             return Next;
+        }
+
+        protected override bool TryUnuseVarImpl(VarData v)
+        {
+            for (uint i = 0; i < _variables.Length; i++)
+            {
+                if (_variables[i].vdata == v)
+                {
+                    _variables[i].Flags |= VarCallFlags.UnuseAfterUse;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void MoveAllocatedVariableToStack(CompilerContext cc, VarData vdata, FunctionPrototype.Argument argType)

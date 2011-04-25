@@ -31,7 +31,7 @@
 
         protected override void EmitImpl(Assembler a)
         {
-            if (a.Logger != null && a.Logger.IsUsed)
+            if (a.Logger != null)
                 a.Logger.LogFormat("; {0}" + Environment.NewLine, Comment);
         }
     }

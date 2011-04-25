@@ -65,6 +65,8 @@
             if (_varData.FirstEmittable == null)
                 _varData.FirstEmittable = this;
 
+            Emittable oldLast = _varData.LastEmittable;
+
             // Last emittable (end of variable scope).
             _varData.LastEmittable = this;
 
@@ -80,9 +82,11 @@
             case VariableHintKind.SaveAndUnuse:
                 if (!cc.IsActive(_varData))
                     cc.AddActive(_varData);
-                goto case VariableHintKind.Unuse;
+                break;
 
             case VariableHintKind.Unuse:
+                if (oldLast != null)
+                    oldLast.TryUnuseVar(_varData);
                 break;
             }
         }

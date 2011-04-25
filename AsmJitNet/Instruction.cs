@@ -1087,7 +1087,7 @@
 
             for (i = 0; i < variablesCount; i++)
             {
-                cc.UnuseVarOnEndOfScope(this, _variables[i].VarData);
+                cc.UnuseVarOnEndOfScope(this, _variables[i]);
             }
 
             return Next;
@@ -1260,6 +1260,20 @@
             default:
                 throw new NotSupportedException();
             }
+        }
+
+        protected override bool TryUnuseVarImpl(VarData v)
+        {
+            for (uint i = 0; i < _variables.Length; i++)
+            {
+                if (_variables[i].VarData == v)
+                {
+                    _variables[i].VarFlags |= VariableAlloc.UnuseAfterUse;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

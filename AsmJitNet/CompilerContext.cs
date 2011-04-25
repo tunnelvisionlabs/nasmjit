@@ -117,7 +117,7 @@
             _compiler = compiler;
             Clear();
 
-            _emitComments = compiler.Logger != null && compiler.Logger.IsUsed;
+            _emitComments = compiler.Logger != null;
         }
 
         public Compiler Compiler
@@ -1203,6 +1203,21 @@
             _state.UsedXMM &= ~(1 << (int)index);
         }
 
+        internal void MarkChangedGPRegister(RegIndex index)
+        {
+            _modifiedGPRegisters |= (1 << (int)index);
+        }
+
+        internal void MarkChangedMMRegister(RegIndex index)
+        {
+            _modifiedMMRegisters |= (1 << (int)index);
+        }
+
+        internal void MarkChangedXMMRegister(RegIndex index)
+        {
+            _modifiedXMMRegisters |= (1 << (int)index);
+        }
+
         public void EmitLoadVar(VarData varData, RegIndex regIndex)
         {
             Contract.Requires(varData != null);
@@ -1506,6 +1521,20 @@
         {
             if (vdata.LastEmittable == e)
                 UnuseVar(vdata, VariableState.Unused);
+        }
+
+        public void UnuseVarOnEndOfScope(Emittable e, VarAllocRecord rec)
+        {
+            VarData v = rec.VarData;
+            if (v.LastEmittable == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
+                UnuseVar(v, VariableState.Unused);
+        }
+
+        internal void UnuseVarOnEndOfScope(Emittable e, VarCallRecord rec)
+        {
+            VarData v = rec.vdata;
+            if (v.LastEmittable == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
+                UnuseVar(v, VariableState.Unused);
         }
 
         internal void AllocatedVariable(VarData vdata)

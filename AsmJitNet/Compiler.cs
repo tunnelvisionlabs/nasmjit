@@ -333,7 +333,7 @@
             Serialize(a);
 
             IntPtr result = a.Make();
-            if (_logger != null && _logger.IsUsed)
+            if (_logger != null)
             {
                 _logger.LogFormat("*** COMPILER SUCCESS - Wrote {0} bytes, code: {1}, trampolines: {2}." + Environment.NewLine + Environment.NewLine,
                     a.CodeSize,
@@ -479,7 +479,7 @@
                 cc.PatchMemoryOperands(start, stop);
 
                 // Dump function prototype and variable statistics (if enabled).
-                if (_logger != null && _logger.IsUsed)
+                if (_logger != null)
                 {
                     cc.Function.DumpFunction(cc);
                 }

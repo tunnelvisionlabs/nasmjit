@@ -126,6 +126,19 @@
             }
         }
 
+        public bool IsEspAdjusted
+        {
+            get
+            {
+                return _isEspAdjusted;
+            }
+
+            set
+            {
+                _isEspAdjusted = value;
+            }
+        }
+
         public Prolog Prolog
         {
             get
@@ -253,8 +266,14 @@
             _emitSFence = false;
             _emitLFence = false;
 
-            // if another function is calleb by the function, it's needed to adjust ESP
-            if (_isCaller)
+            uint accessibleMemoryBelowStack = 0;
+            if (_functionPrototype.CallingConvention == CallingConvention.X64U)
+                accessibleMemoryBelowStack = 128;
+
+            if (_isCaller && cc.MemBytesTotal > 0)
+                _isEspAdjusted = true;
+
+            if (cc.MemBytesTotal > accessibleMemoryBelowStack)
                 _isEspAdjusted = true;
 
             _isNaked = (_hints & FunctionHints.Naked) != 0;
@@ -369,7 +388,7 @@
             int stackSubtract = _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
             int nspPos;
 
-            if (Compiler.Logger != null && Compiler.Logger.IsUsed)
+            if (Compiler.Logger != null)
             {
                 // Here function prolog starts.
                 Compiler.Comment("Prolog");
@@ -458,7 +477,7 @@
                 }
             }
 
-            if (Compiler.Logger != null && Compiler.Logger.IsUsed)
+            if (Compiler.Logger != null)
             {
                 Compiler.Comment("Body");
             }
@@ -485,7 +504,7 @@
               ? (_memStackSize16)
               : -(_peMovStackSize + _peAdjustStackSize);
 
-            if (Compiler.Logger != null && Compiler.Logger.IsUsed)
+            if (Compiler.Logger != null)
             {
                 Compiler.Comment("Epilog");
             }

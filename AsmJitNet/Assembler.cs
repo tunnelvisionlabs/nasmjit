@@ -195,7 +195,7 @@
                 throw new InvalidOperationException("The label is already bound.");
 
             // Log.
-            if (Logger != null && Logger.IsUsed)
+            if (Logger != null)
                 Logger.LogFormat("L.{0}:" + Environment.NewLine, label.Id & Operand.OperandIdValueMask);
 
             long pos = Offset;
@@ -353,7 +353,7 @@
 
                 if (useTrampoline)
                 {
-                    if (Logger != null && Logger.IsUsed)
+                    if (Logger != null)
                     {
                         Logger.LogFormat("; Trampoline from 0x{0:x} -> 0x{1:x}" + Environment.NewLine, addressBase.ToInt64() + r.Offset, r.Destination);
                     }
@@ -371,7 +371,7 @@
 
             int size = data.Length;
 
-            if (Logger != null && Logger.IsUsed)
+            if (Logger != null)
             {
                 int i;
                 int j;
@@ -422,7 +422,7 @@
             if (!CanEmit())
                 return;
 
-            if (Logger != null && Logger.IsUsed)
+            if (Logger != null)
             {
                 Logger.LogFormat(".align {0}", m);
             }
@@ -1490,7 +1490,7 @@
                             {
                                 if (isShortJump)
                                 {
-                                    if (Logger != null && Logger.IsUsed)
+                                    if (Logger != null)
                                     {
                                         Logger.LogString("*** ASSEMBLER WARNING: Emitting long jump, but short jump instruction forced!" + Environment.NewLine);
                                         _emitOptions &= ~EmitOptions.ShortJump;
@@ -2572,7 +2572,7 @@
             }
 
         end:
-            if (Logger != null && Logger.IsUsed)
+            if (Logger != null)
             {
                 StringBuilder buf = new StringBuilder();
                 int bufferStopOffset = _buffer.Offset;
@@ -3253,7 +3253,7 @@
 
                         if (target.ToUInt64() > uint.MaxValue)
                         {
-                            if (Logger != null && Logger.IsUsed)
+                            if (Logger != null)
                             {
                                 Logger.LogString("*** ASSEMBER WARNING - Absolute address truncated to 32 bits." + Environment.NewLine);
                             }

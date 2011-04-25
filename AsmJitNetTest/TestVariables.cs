@@ -305,7 +305,7 @@
             c.Shl(v1, (Imm)(1));
             c.Shl(v2, (Imm)(1));
 
-            // Call function
+            // Call function.
             GPVar address = c.NewGP();
             c.Mov(address, (Imm)calledFn);
 
@@ -349,6 +349,74 @@
             c.Ret(v0);
 
             c.EndFunction();
+            return c.Make();
+        }
+
+        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        private delegate void MyFn();
+
+        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.FastCall)]
+        private delegate void SimpleFn(int a);
+
+        [TestMethod]
+        public void TestFunctionCall2()
+        {
+            IntPtr calledFn = TestFunctionCall2_CreateCalledFunction();
+            //SimpleFn fn = (SimpleFn)Marshal.GetDelegateForFunctionPointer(calledFn, typeof(SimpleFn));
+
+            // ==========================================================================
+            // Create compiler.
+            Compiler c = new Compiler();
+
+            // Log compiler output.
+            FileLogger logger = new FileLogger(Console.Error);
+            c.Logger = logger;
+
+            c.NewFunction(CallingConvention.Default, typeof(Action));
+            c.Function.SetHint(FunctionHints.Naked, true);
+
+            // Call function.
+            GPVar address = c.NewGP();
+            GPVar argument = c.NewGP(VariableType.GPD);
+
+            c.Mov(address, (Imm)calledFn);
+
+            c.Mov(argument, 1);
+            Call ctx = c.Call(address, CallingConvention.MsFastCall, typeof(Action<int>));
+            ctx.SetArgument(0, argument);
+            //c.Unuse(argument);
+
+            c.Mov(argument, 2);
+            ctx = c.Call(address, CallingConvention.MsFastCall, typeof(Action<int>));
+            ctx.SetArgument(0, argument);
+
+            c.Ret();
+            c.EndFunction();
+            // ==========================================================================
+
+            // ==========================================================================
+            // Make the function.
+            IntPtr ptr = c.Make();
+            MyFn fn = FunctionCast<MyFn>(ptr);
+            fn();
+            // ==========================================================================
+
+            MemoryManager.Global.Free(calledFn);
+            MemoryManager.Global.Free(ptr);
+        }
+
+        private static IntPtr TestFunctionCall2_CreateCalledFunction()
+        {
+            Compiler c = new Compiler();
+
+            FileLogger logger = new FileLogger(Console.Error);
+            c.Logger = logger;
+
+            c.NewFunction(CallingConvention.MsFastCall, typeof(Action<int>));
+            c.ArgGP(0);
+            c.Ret();
+            c.EndFunction();
+
             return c.Make();
         }
 
