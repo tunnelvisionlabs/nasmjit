@@ -11,5 +11,10 @@
             : base(id, size, registerType, variableType)
         {
         }
+
+        public static GPVar FromData(VarData vdata)
+        {
+            return new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
+        }
     }
 }

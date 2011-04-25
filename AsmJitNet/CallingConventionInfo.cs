@@ -14,8 +14,15 @@
         private readonly int _preservedGP;
         private readonly int _preservedMM;
         private readonly int _preservedXMM;
-        private readonly ReadOnlyCollection<RegIndex> _argumentsGP;
-        private readonly ReadOnlyCollection<RegIndex> _argumentsXMM;
+        private readonly ReadOnlyCollection<RegIndex> _argumentsGPList;
+        private readonly ReadOnlyCollection<RegIndex> _argumentsXMMList;
+
+        //! @brief Bitmask for preserved GP registers.
+        private readonly uint _argumentsGP;
+        //! @brief Bitmask for preserved MM registers.
+        private readonly uint _argumentsMM;
+        //! @brief Bitmask for preserved XMM registers.
+        private readonly uint _argumentsXMM;
 
         static CallingConventionInfo()
         {
@@ -47,13 +54,13 @@
             _callingConvention = callingConvention;
             _argumentsDirection = ArgumentsDirection.RightToLeft;
 
-            RegIndex[] argumentsGP = new RegIndex[(int)RegNum.GP];
-            RegIndex[] argumentsXMM = new RegIndex[(int)RegNum.XMM];
+            RegIndex[] argumentsGPList = new RegIndex[(int)RegNum.GP];
+            RegIndex[] argumentsXMMList = new RegIndex[(int)RegNum.XMM];
 
-            for (int i = 0; i < argumentsGP.Length; i++)
-                argumentsGP[i] = RegIndex.Invalid;
-            for (int i = 0; i < argumentsXMM.Length; i++)
-                argumentsXMM[i] = RegIndex.Invalid;
+            for (int i = 0; i < argumentsGPList.Length; i++)
+                argumentsGPList[i] = RegIndex.Invalid;
+            for (int i = 0; i < argumentsXMMList.Length; i++)
+                argumentsXMMList[i] = RegIndex.Invalid;
 
             if (Util.IsX86)
             {
@@ -77,34 +84,48 @@
 
                 case AsmJitNet.CallingConvention.MsThisCall:
                     _calleePopsStack = true;
-                    argumentsGP[0] = RegIndex.Ecx;
+                    argumentsGPList[0] = RegIndex.Ecx;
+                    _argumentsGP = 1 << (int)RegIndex.Ecx;
                     break;
 
                 case AsmJitNet.CallingConvention.MsFastCall:
                     _calleePopsStack = true;
-                    argumentsGP[0] = RegIndex.Ecx;
-                    argumentsGP[1] = RegIndex.Edx;
+                    argumentsGPList[0] = RegIndex.Ecx;
+                    argumentsGPList[1] = RegIndex.Edx;
+                    _argumentsGP = (1 << (int)RegIndex.Ecx) |
+                                    (1 << (int)RegIndex.Edx);
                     break;
 
                 case AsmJitNet.CallingConvention.BorlandFastCall:
                     _calleePopsStack = true;
                     _argumentsDirection = ArgumentsDirection.LeftToRight;
-                    argumentsGP[0] = RegIndex.Eax;
-                    argumentsGP[1] = RegIndex.Edx;
-                    argumentsGP[2] = RegIndex.Ecx;
+                    argumentsGPList[0] = RegIndex.Eax;
+                    argumentsGPList[1] = RegIndex.Edx;
+                    argumentsGPList[2] = RegIndex.Ecx;
+
+                    _argumentsGP = (1 << (int)RegIndex.Eax) |
+                                    (1 << (int)RegIndex.Edx) |
+                                    (1 << (int)RegIndex.Ecx);
                     break;
 
                 case AsmJitNet.CallingConvention.GccFastCall2:
                     _calleePopsStack = false;
-                    argumentsGP[0] = RegIndex.Ecx;
-                    argumentsGP[1] = RegIndex.Edx;
+                    argumentsGPList[0] = RegIndex.Ecx;
+                    argumentsGPList[1] = RegIndex.Edx;
+
+                    _argumentsGP = (1 << (int)RegIndex.Ecx) |
+                                    (1 << (int)RegIndex.Edx);
                     break;
 
                 case AsmJitNet.CallingConvention.GccFastCall3:
                     _calleePopsStack = false;
-                    argumentsGP[0] = RegIndex.Edx;
-                    argumentsGP[1] = RegIndex.Ecx;
-                    argumentsGP[2] = RegIndex.Eax;
+                    argumentsGPList[0] = RegIndex.Edx;
+                    argumentsGPList[1] = RegIndex.Ecx;
+                    argumentsGPList[2] = RegIndex.Eax;
+
+                    _argumentsGP = (1 << (int)RegIndex.Edx) |
+                                    (1 << (int)RegIndex.Ecx) |
+                                    (1 << (int)RegIndex.Eax);
                     break;
 
                 default:
@@ -116,15 +137,25 @@
                 switch (_callingConvention)
                 {
                 case CallingConvention.X64W:
-                    argumentsGP[0] = RegIndex.Rcx;
-                    argumentsGP[1] = RegIndex.Rdx;
-                    argumentsGP[2] = RegIndex.R8;
-                    argumentsGP[3] = RegIndex.R9;
+                    argumentsGPList[0] = RegIndex.Rcx;
+                    argumentsGPList[1] = RegIndex.Rdx;
+                    argumentsGPList[2] = RegIndex.R8;
+                    argumentsGPList[3] = RegIndex.R9;
 
-                    argumentsXMM[0] = RegIndex.Xmm0;
-                    argumentsXMM[1] = RegIndex.Xmm1;
-                    argumentsXMM[2] = RegIndex.Xmm2;
-                    argumentsXMM[3] = RegIndex.Xmm3;
+                    argumentsXMMList[0] = RegIndex.Xmm0;
+                    argumentsXMMList[1] = RegIndex.Xmm1;
+                    argumentsXMMList[2] = RegIndex.Xmm2;
+                    argumentsXMMList[3] = RegIndex.Xmm3;
+
+                    _argumentsGP = (1 << (int)RegIndex.Rcx) |
+                                    (1 << (int)RegIndex.Rdx) |
+                                    (1 << (int)RegIndex.R8) |
+                                    (1 << (int)RegIndex.R9);
+
+                    _argumentsXMM = (1 << (int)RegIndex.Xmm0) |
+                                    (1 << (int)RegIndex.Xmm1) |
+                                    (1 << (int)RegIndex.Xmm2) |
+                                    (1 << (int)RegIndex.Xmm3);
 
                     _preservedGP =
                       (1 << (int)RegIndex.Rbx) |
@@ -150,21 +181,37 @@
                     break;
 
                 case CallingConvention.X64U:
-                    argumentsGP[0] = RegIndex.Rdi;
-                    argumentsGP[1] = RegIndex.Rsi;
-                    argumentsGP[2] = RegIndex.Rdx;
-                    argumentsGP[3] = RegIndex.Rcx;
-                    argumentsGP[4] = RegIndex.R8;
-                    argumentsGP[5] = RegIndex.R9;
+                    argumentsGPList[0] = RegIndex.Rdi;
+                    argumentsGPList[1] = RegIndex.Rsi;
+                    argumentsGPList[2] = RegIndex.Rdx;
+                    argumentsGPList[3] = RegIndex.Rcx;
+                    argumentsGPList[4] = RegIndex.R8;
+                    argumentsGPList[5] = RegIndex.R9;
 
-                    argumentsXMM[0] = RegIndex.Xmm0;
-                    argumentsXMM[1] = RegIndex.Xmm1;
-                    argumentsXMM[2] = RegIndex.Xmm2;
-                    argumentsXMM[3] = RegIndex.Xmm3;
-                    argumentsXMM[4] = RegIndex.Xmm4;
-                    argumentsXMM[5] = RegIndex.Xmm5;
-                    argumentsXMM[6] = RegIndex.Xmm6;
-                    argumentsXMM[7] = RegIndex.Xmm7;
+                    argumentsXMMList[0] = RegIndex.Xmm0;
+                    argumentsXMMList[1] = RegIndex.Xmm1;
+                    argumentsXMMList[2] = RegIndex.Xmm2;
+                    argumentsXMMList[3] = RegIndex.Xmm3;
+                    argumentsXMMList[4] = RegIndex.Xmm4;
+                    argumentsXMMList[5] = RegIndex.Xmm5;
+                    argumentsXMMList[6] = RegIndex.Xmm6;
+                    argumentsXMMList[7] = RegIndex.Xmm7;
+
+                    _argumentsGP = (1 << (int)RegIndex.Rdi) |
+                                    (1 << (int)RegIndex.Rsi) |
+                                    (1 << (int)RegIndex.Rdx) |
+                                    (1 << (int)RegIndex.Rcx) |
+                                    (1 << (int)RegIndex.R8) |
+                                    (1 << (int)RegIndex.R9);
+
+                    _argumentsXMM = (1 << (int)RegIndex.Xmm0) |
+                                    (1 << (int)RegIndex.Xmm1) |
+                                    (1 << (int)RegIndex.Xmm2) |
+                                    (1 << (int)RegIndex.Xmm3) |
+                                    (1 << (int)RegIndex.Xmm4) |
+                                    (1 << (int)RegIndex.Xmm5) |
+                                    (1 << (int)RegIndex.Xmm6) |
+                                    (1 << (int)RegIndex.Xmm7);
 
                     _preservedGP =
                       (1 << (int)RegIndex.Rbx) |
@@ -174,7 +221,6 @@
                       (1 << (int)RegIndex.R13) |
                       (1 << (int)RegIndex.R14) |
                       (1 << (int)RegIndex.R15);
-                    _preservedXMM = 0;
                     break;
 
                 default:
@@ -186,8 +232,8 @@
                 throw new NotImplementedException();
             }
 
-            _argumentsGP = new ReadOnlyCollection<RegIndex>(argumentsGP);
-            _argumentsXMM = new ReadOnlyCollection<RegIndex>(argumentsXMM);
+            _argumentsGPList = new ReadOnlyCollection<RegIndex>(argumentsGPList);
+            _argumentsXMMList = new ReadOnlyCollection<RegIndex>(argumentsXMMList);
         }
 
         public static CallingConvention DefaultCallingConvention
@@ -251,19 +297,19 @@
             }
         }
 
-        public ReadOnlyCollection<RegIndex> ArgumentsGP
+        public ReadOnlyCollection<RegIndex> ArgumentsGPList
         {
             get
             {
-                return _argumentsGP;
+                return _argumentsGPList;
             }
         }
 
-        public ReadOnlyCollection<RegIndex> ArgumentsXMM
+        public ReadOnlyCollection<RegIndex> ArgumentsXMMList
         {
             get
             {
-                return _argumentsXMM;
+                return _argumentsXMMList;
             }
         }
 

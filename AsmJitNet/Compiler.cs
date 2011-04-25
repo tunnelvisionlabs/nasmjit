@@ -222,8 +222,7 @@
                 throw new ArgumentException();
 
             VarData varData = NewVarData(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
-            GPVar var = new GPVar(varData.Id, varData.Size, VariableInfo.GetVariableInfo(varData.Type).RegisterType, varData.Type);
-            return var;
+            return GPVar.FromData(varData);
         }
 
         public MMVar ArgMM(int index)
@@ -262,8 +261,7 @@
             if (vdata.Size != 8)
                 throw new NotSupportedException();
 
-            MMVar var = new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
-            return var;
+            return MMVar.FromData(vdata);
         }
 
         public XMMVar ArgXMM(int index)
@@ -302,8 +300,7 @@
             if (vdata.Size != 16)
                 throw new NotSupportedException();
 
-            XMMVar var = new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
-            return var;
+            return XMMVar.FromData(vdata);
         }
 
         public Function EndFunction()

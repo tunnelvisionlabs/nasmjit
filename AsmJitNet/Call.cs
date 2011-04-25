@@ -262,6 +262,21 @@
 
             _variables = new VarCallRecord[variablesCount];
 
+            // Traverse all active variables and set their firstCallable pointer to this
+            // call. This information can be used to choose between the preserved-first
+            // and preserved-last register allocation.
+            if (cc.Active != null)
+            {
+                VarData first = cc.Active;
+                VarData active = first;
+                do
+                {
+                    if (active.FirstCallable == null)
+                        active.FirstCallable = this;
+                    active = active.NextActive;
+                } while (active != first);
+            }
+
             if (variablesCount == 0)
             {
                 cc.CurrentOffset++;
@@ -319,8 +334,7 @@
 
                         if (fArg._registerIndex != RegIndex.Invalid)
                         {
-                            if (vdata.HomeRegisterIndex == RegIndex.Invalid)
-                                vdata.HomeRegisterIndex = fArg._registerIndex;
+                            cc.NewRegisterHomeIndex(vdata, fArg._registerIndex);
 
                             switch (fArg._variableType)
                             {
@@ -354,7 +368,14 @@
                     }
                     else if (i == argumentsCount)
                     {
-                        var.Flags |= VarCallFlags.CALL_OPERAND;
+                        int mask = ~Prototype.PreservedGP &
+                                        ~Prototype.PassedGP &
+                                        ((1 << RegNum.GP) - 1);
+
+                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Function.FindFirstOne((uint)mask));
+                        cc.NewRegisterHomeMask(vdata, (RegIndex)mask);
+
+                        var.Flags |= VarCallFlags.CALL_OPERAND_REG;
                         vdata.RegisterReadCount++;
                     }
                     else
@@ -456,7 +477,7 @@
                         vdata.RegisterReadCount++;
 
                         __GET_VARIABLE(vdata);
-                        var.Flags |= VarCallFlags.CALL_OPERAND;
+                        var.Flags |= VarCallFlags.CALL_OPERAND_REG | VarCallFlags.CALL_OPERAND_MEM;
                     }
 
                     if (((int)((Mem)o).Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
@@ -467,7 +488,7 @@
                         vdata.RegisterReadCount++;
 
                         __GET_VARIABLE(vdata);
-                        var.Flags |= VarCallFlags.CALL_OPERAND;
+                        var.Flags |= VarCallFlags.CALL_OPERAND_REG | VarCallFlags.CALL_OPERAND_MEM;
                     }
                 }
                 else
@@ -523,8 +544,8 @@
             compiler.Comment("Function Call");
 
             // These variables are used by the instruction and we set current offset
-            // to their work offsets -> getSpillCandidate never return the variable
-            // used by this instruction.
+            // to their work offsets -> The SpillCandidate method never returns 
+            // the variable used by this instruction.
             for (i = 0; i < variablesCount; i++)
             {
                 _variables[i].vdata.WorkOffset = offset;
@@ -533,11 +554,12 @@
                 _variables[i].vdata.Temp = _variables[i];
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 1:
             //
             // Spill variables which are not used by the function call and have to
             // be destroyed. These registers may be used by callee.
+            // --------------------------------------------------------------------------
 
             preserved = Prototype.PreservedGP;
             for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
@@ -569,10 +591,11 @@
                 }
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 2:
             //
             // Move all arguments to the stack which all already in registers.
+            // --------------------------------------------------------------------------
 
             for (i = 0; i < argumentsCount; i++)
             {
@@ -601,10 +624,11 @@
                 }
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 3:
             //
             // Spill all non-preserved variables we moved to stack in STEP #2.
+            // --------------------------------------------------------------------------
 
             for (i = 0; i < argumentsCount; i++)
             {
@@ -652,11 +676,12 @@
                 }
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 4:
             //
             // Get temporary register that we can use to pass input function arguments.
-            // Now it's safe to do, because we spilled some variables (I hope:)).
+            // Now it's safe to do, because the non-needed variables should be spilled.
+            // --------------------------------------------------------------------------
 
             temporaryGpReg = FindTemporaryGpRegister(cc);
             temporaryXmmReg = FindTemporaryXmmRegister(cc);
@@ -673,11 +698,12 @@
                 throw new NotImplementedException();
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 5:
             //
             // Move all remaining arguments to the stack (we can use temporary register).
             // or allocate it to the primary register. Also move immediates.
+            // --------------------------------------------------------------------------
 
             for (i = 0; i < argumentsCount; i++)
             {
@@ -740,10 +766,11 @@
                 }
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 6:
             //
             // Allocate arguments to registers.
+            // --------------------------------------------------------------------------
 
             bool didWork;
 
@@ -779,7 +806,7 @@
                     {
                         VarCallRecord rdst = (VarCallRecord)(vdst.Temp);
 
-                        if (rdst.InDone >= rdst.InCount)
+                        if (rdst.InDone >= rdst.InCount && (rdst.Flags & VarCallFlags.CALL_OPERAND_REG) == 0)
                         {
                             // Safe to spill.
                             if (rdst.OutCount != 0 || vdst.LastEmittable == this)
@@ -794,32 +821,115 @@
 
                             bool doSpill = true;
 
-                            // Emit xchg instead of spill/alloc if possible (GP registers only).
-                            if (x != InvalidValue && (VariableInfo.GetVariableInfo(vdst.Type).Class & VariableClass.GP) != 0)
+                            if ((VariableInfo.GetVariableClass(vdst.Type) & VariableClass.GP) != 0)
                             {
-                                FunctionPrototype.Argument dstArgType = targs[x];
-                                if (VariableInfo.GetVariableInfo(dstArgType._variableType).Class == VariableInfo.GetVariableInfo(srcArgType._variableType).Class)
+                                // Try to emit mov to register which is possible for call() operand.
+                                if (x == InvalidValue && (rdst.Flags & VarCallFlags.CALL_OPERAND_REG) != 0)
                                 {
-                                    RegIndex dstIndex = vdst.RegisterIndex;
-                                    RegIndex srcIndex = vsrc.RegisterIndex;
+                                    int rIndex;
+                                    int rBit;
 
-                                    if (srcIndex == dstArgType._registerIndex)
+                                    // The mask which contains registers which are not-preserved
+                                    // (these that might be clobbered by the callee) and which are
+                                    // not used to pass function arguments. Each register contained
+                                    // in this mask is ideal to be used by call() instruction.
+                                    int possibleMask = ~Prototype.PreservedGP &
+                                                            ~Prototype.PassedGP &
+                                                            ((1 << RegNum.GP) - 1);
+
+                                    if (possibleMask != 0)
                                     {
-                                        compiler.Emit(InstructionCode.Xchg, Register.gpn(dstIndex), Register.gpd(srcIndex));
+                                        for (rIndex = 0, rBit = 1; rIndex < RegNum.GP; rIndex++, rBit <<= 1)
+                                        {
+                                            if ((possibleMask & rBit) != 0)
+                                            {
+                                                if (cc.State.GP[rIndex] == null)
+                                                {
+                                                    // This is the best possible solution, the register is
+                                                    // free. We do not need to continue with this loop, the
+                                                    // rIndex will be used by the call().
+                                                    break;
+                                                }
+                                                else
+                                                {
+                                                    // Wait until the register is freed or try to find another.
+                                                    doSpill = false;
+                                                    didWork = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Try to find a register which is free and which is not used
+                                        // to pass a function argument.
+                                        possibleMask = Prototype.PreservedGP;
 
-                                        cc.State.GP[(int)srcIndex] = vdst;
-                                        cc.State.GP[(int)dstIndex] = vsrc;
+                                        for (rIndex = 0, rBit = 1; rIndex < RegNum.GP; rIndex++, rBit <<= 1)
+                                        {
+                                            if ((possibleMask & rBit) != 0)
+                                            {
+                                                // Found one.
+                                                if (cc.State.GP[rIndex] == null)
+                                                    break;
+                                            }
+                                        }
+                                    }
 
-                                        vdst.RegisterIndex = srcIndex;
-                                        vsrc.RegisterIndex = dstIndex;
+                                    if (rIndex < RegNum.GP)
+                                    {
+                                        if (temporaryGpReg == vsrc.RegisterIndex)
+                                            temporaryGpReg = (RegIndex)rIndex;
 
-                                        rdst.InDone++;
-                                        rsrc.InDone++;
+                                        compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)rIndex), Register.gpn(vsrc.RegisterIndex));
 
-                                        processed[i] = true;
-                                        processed[x] = true;
+                                        cc.State.GP[(int)vsrc.RegisterIndex] = null;
+                                        cc.State.GP[rIndex] = vsrc;
+
+                                        vsrc.RegisterIndex = (RegIndex)rIndex;
+                                        cc.AllocatedVariable(vsrc);
 
                                         doSpill = false;
+                                    }
+                                }
+                                // Emit xchg instead of spill/alloc if possible.
+                                else if (x != InvalidValue)
+                                {
+                                    FunctionPrototype.Argument dstArgType = targs[x];
+                                    if (VariableInfo.GetVariableInfo(dstArgType._variableType).Class == VariableInfo.GetVariableInfo(srcArgType._variableType).Class)
+                                    {
+                                        RegIndex dstIndex = vdst.RegisterIndex;
+                                        RegIndex srcIndex = vsrc.RegisterIndex;
+
+                                        if (srcIndex == dstArgType._registerIndex)
+                                        {
+                                            compiler.Emit(InstructionCode.Xchg, Register.gpn(dstIndex), Register.gpd(srcIndex));
+                                            if (Util.IsX64)
+                                            {
+                                                if (vdst.Type != VariableType.GPD || vsrc.Type != VariableType.GPD)
+                                                    compiler.Emit(InstructionCode.Xchg, Register.gpq(dstIndex), Register.gpq(srcIndex));
+                                                else
+                                                    compiler.Emit(InstructionCode.Xchg, Register.gpd(dstIndex), Register.gpd(srcIndex));
+                                            }
+                                            else
+                                            {
+                                                compiler.Emit(InstructionCode.Xchg, Register.gpd(dstIndex), Register.gpd(srcIndex));
+                                            }
+
+                                            cc.State.GP[(int)srcIndex] = vdst;
+                                            cc.State.GP[(int)dstIndex] = vsrc;
+
+                                            vdst.RegisterIndex = srcIndex;
+                                            vsrc.RegisterIndex = dstIndex;
+
+                                            rdst.InDone++;
+                                            rsrc.InDone++;
+
+                                            processed[i] = true;
+                                            processed[x] = true;
+
+                                            doSpill = false;
+                                        }
                                     }
                                 }
                             }
@@ -864,17 +974,26 @@
                 }
             } while (didWork);
 
-
+            // --------------------------------------------------------------------------
             // STEP 7:
             //
             // Allocate operand used by CALL instruction.
+            // --------------------------------------------------------------------------
 
             for (i = 0; i < variablesCount; i++)
             {
                 VarCallRecord r = _variables[i];
-                if ((r.Flags & VarCallFlags.CALL_OPERAND) != 0 &&
+                if ((r.Flags & VarCallFlags.CALL_OPERAND_REG) != 0 &&
                     (r.vdata.RegisterIndex == RegIndex.Invalid))
                 {
+                    // If the register is not allocated and the call form is 'call reg' then
+                    // it's possible to keep it in memory.
+                    if ((r.Flags & VarCallFlags.CALL_OPERAND_MEM) == 0)
+                    {
+                        _target = GPVar.FromData(r.vdata).ToMem();
+                        break;
+                    }
+
                     if (temporaryGpReg == RegIndex.Invalid)
                         temporaryGpReg = FindTemporaryGpRegister(cc);
 
@@ -889,9 +1008,11 @@
                 _target = operands[0];
             }
 
+            // --------------------------------------------------------------------------
             // STEP 8:
             //
             // Spill all preserved variables.
+            // --------------------------------------------------------------------------
 
             preserved = Prototype.PreservedGP;
             for (i = 0, mask = 1; i < (int)RegNum.GP; i++, mask <<= 1)
@@ -935,26 +1056,27 @@
                 }
             }
 
-
+            // --------------------------------------------------------------------------
             // STEP 9:
             //
             // Emit CALL instruction.
+            // --------------------------------------------------------------------------
 
             compiler.Emit(InstructionCode.Call, _target);
-
 
             // Restore the stack offset.
             if (Prototype.CalleePopsStack)
             {
-                // abc
                 int s = Prototype.ArgumentsStackSize;
                 if (s != 0)
                     compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)s);
             }
 
+            // --------------------------------------------------------------------------
             // STEP 10:
             //
             // Prepare others for return value(s) and cleanup.
+            // --------------------------------------------------------------------------
 
             // Clear temp data, see AsmJit::VarData::temp why it's needed.
             for (i = 0; i < variablesCount; i++)

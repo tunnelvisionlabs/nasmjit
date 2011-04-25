@@ -32,14 +32,9 @@
         private int _modifiedXMMRegisters;
 
         /// <summary>
-        /// Whether EBP/RBP register can be used by register allocator
+        /// Whether the EBP/RBP register can be used by register allocator
         /// </summary>
         private bool _allocableEBP;
-
-        /// <summary>
-        /// Whether ESP/RSP register can be used by register allocator
-        /// </summary>
-        private bool _allocableESP;
 
         /// <summary>
         /// ESP adjust constant (changed during PUSH/POP or when using stack)
@@ -374,7 +369,6 @@
             _modifiedXMMRegisters = 0;
 
             _allocableEBP = false;
-            _allocableESP = false;
 
             _adjustESP = 0;
 
@@ -635,8 +629,6 @@
 
             int i;
 
-            // Preferred register code.
-            RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : varData.PreferredRegisterIndex;
             // Last register code (aka home).
             RegIndex home = varData.HomeRegisterIndex;
             // New register code.
@@ -648,10 +640,13 @@
             // Spill candidate.
             VarData spillCandidate = null;
 
-            // Whether to alloc non-preserved first or last.
+            // Whether to alloc the non-preserved variables first.
             bool nonPreservedFirst = true;
             if (this.Function.IsCaller)
-                nonPreservedFirst = false;
+            {
+                nonPreservedFirst = varData.FirstCallable != null &&
+                       varData.FirstCallable.Offset >= varData.LastEmittable.Offset;
+            }
 
             // --------------------------------------------------------------------------
             // [Already Allocated]
@@ -661,16 +656,16 @@
             if (varData.State == VariableState.Register)
             {
                 RegIndex oldIndex = varData.RegisterIndex;
-                RegIndex newIndex = pref;
+                RegIndex newIndex = regIndex;
 
                 // Preferred register is none or same as currently allocated one, this is
                 // best case.
-                if (pref == RegIndex.Invalid || oldIndex == newIndex)
+                if (regIndex == RegIndex.Invalid || oldIndex == newIndex)
                     return;
 
                 VarData other = _state.GP[(int)newIndex];
 
-                EmitExchangeVar(varData, pref, variableAlloc, other);
+                EmitExchangeVar(varData, regIndex, variableAlloc, other);
                 if (other != null)
                     other.RegisterIndex = oldIndex;
 
@@ -689,16 +684,16 @@
             // --------------------------------------------------------------------------
 
             // Preferred register.
-            if (pref != RegIndex.Invalid)
+            if (regIndex != RegIndex.Invalid)
             {
-                if ((_state.UsedGP & (1U << (int)pref)) == 0)
+                if ((_state.UsedGP & (1U << (int)regIndex)) == 0)
                 {
-                    idx = pref;
+                    idx = regIndex;
                 }
                 else
                 {
                     // Spill register we need
-                    spillCandidate = _state.GP[(int)pref];
+                    spillCandidate = _state.GP[(int)regIndex];
 
                     // Jump to spill part of allocation
                     goto L_Spill;
@@ -713,15 +708,13 @@
             }
 
             // We start from 1, because EAX/RAX register is sometimes explicitly
-            // needed. So we trying to prevent register reallocation.
+            // needed. So we trying to prevent reallocation in near future.
             if (idx == RegIndex.Invalid)
             {
                 int mask;
                 for (i = 1, mask = (1 << i); i < (int)RegNum.GP; i++, mask <<= 1)
                 {
-                    if ((_state.UsedGP & mask) == 0 &&
-                        (i != (int)RegIndex.Ebp || _allocableEBP) &&
-                        (i != (int)RegIndex.Esp || _allocableESP))
+                    if ((_state.UsedGP & mask) == 0 && (i != (int)RegIndex.Ebp || _allocableEBP))
                     {
                         // Convenience to alloc non-preserved first or non-preserved last.
                         if (nonPreservedFirst)
@@ -1011,8 +1004,6 @@
             Contract.Requires(stateData != null);
             Contract.Requires(freeAction != null);
 
-            // Preferred register code.
-            RegIndex pref = (regIndex != RegIndex.Invalid) ? regIndex : vdata.PreferredRegisterIndex;
             // Last register code (aka home).
             RegIndex home = vdata.HomeRegisterIndex;
             // New register code.
@@ -1024,7 +1015,10 @@
             // Whether to alloc non-preserved first or last.
             bool nonPreservedFirst = true;
             if (this.Function.IsCaller)
-                nonPreservedFirst = false;
+            {
+                nonPreservedFirst = vdata.FirstCallable != null &&
+                                    vdata.FirstCallable.Offset >= vdata.LastEmittable.Offset;
+            }
 
             // --------------------------------------------------------------------------
             // [Already Allocated]
@@ -1034,11 +1028,11 @@
             if (vdata.State == VariableState.Register)
             {
                 RegIndex oldIndex = vdata.RegisterIndex;
-                RegIndex newIndex = pref;
+                RegIndex newIndex = regIndex;
 
                 // Preferred register is none or same as currently allocated one, this is
                 // best case.
-                if (pref == RegIndex.Invalid || oldIndex == newIndex)
+                if (regIndex == RegIndex.Invalid || oldIndex == newIndex)
                     return;
 
                 VarData other = stateData[(int)newIndex];
@@ -1048,7 +1042,7 @@
                 freeAction(oldIndex);
                 AllocatedVariable(vdata);
 
-                EmitMoveVar(vdata, pref, vflags);
+                EmitMoveVar(vdata, regIndex, vflags);
                 return;
             }
 
@@ -1057,16 +1051,16 @@
             // --------------------------------------------------------------------------
 
             // Preferred register.
-            if (pref != RegIndex.Invalid)
+            if (regIndex != RegIndex.Invalid)
             {
-                if ((used & (1U << (int)pref)) == 0)
+                if ((used & (1U << (int)regIndex)) == 0)
                 {
-                    idx = pref;
+                    idx = regIndex;
                 }
                 else
                 {
                     // Spill register we need
-                    spillCandidate = stateData[(int)pref];
+                    spillCandidate = stateData[(int)regIndex];
 
                     // Jump to spill part of allocation
                     goto L_Spill;
@@ -1216,6 +1210,18 @@
         internal void MarkChangedXMMRegister(RegIndex index)
         {
             _modifiedXMMRegisters |= (1 << (int)index);
+        }
+
+        internal void NewRegisterHomeIndex(VarData vdata, RegIndex idx)
+        {
+            if (vdata.HomeRegisterIndex == RegIndex.Invalid)
+                vdata.HomeRegisterIndex = idx;
+            vdata.PreferredRegisterMask |= (RegIndex)(1 << (int)idx);
+        }
+
+        internal void NewRegisterHomeMask(VarData vdata, RegIndex mask)
+        {
+            vdata.PreferredRegisterMask |= mask;
         }
 
         public void EmitLoadVar(VarData varData, RegIndex regIndex)

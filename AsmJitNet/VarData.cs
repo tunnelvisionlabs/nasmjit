@@ -24,7 +24,7 @@
             _name = name;
 
             HomeRegisterIndex = RegIndex.Invalid;
-            PreferredRegisterIndex = RegIndex.Invalid;
+            PreferredRegisterMask = RegIndex.Invalid;
             RegisterIndex = RegIndex.Invalid;
             WorkOffset = Operand.InvalidValue;
             Priority = 10;
@@ -103,7 +103,7 @@
             }
         }
 
-        public RegIndex PreferredRegisterIndex
+        public RegIndex PreferredRegisterMask
         {
             get;
             set;
@@ -199,12 +199,30 @@
             set;
         }
 
+        /// <summary>
+        /// The first emittable where the variable is accessed.
+        /// </summary>
+        /// <remarks>
+        /// If this member is @c NULL then variable is unused.
+        /// </remarks>
         public Emittable FirstEmittable
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// The first callable (ECall) which is after the @c FirstEmittable.
+        /// </summary>
+        public Emittable FirstCallable
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The last emittable where the variable is accessed.
+        /// </summary>
         public Emittable LastEmittable
         {
             get;

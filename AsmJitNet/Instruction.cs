@@ -903,9 +903,10 @@
 
                     // If variable must be in specific register here we could add some hint
                     // to allocator to alloc it to this register on first alloc.
-                    if (var.RegIndex != RegIndex.Invalid && vdata.HomeRegisterIndex == RegIndex.Invalid)
+                    if (var.RegIndex != RegIndex.Invalid)
                     {
-                        vdata.HomeRegisterIndex = var.RegIndex;
+                        vdata.PreferredRegisterMask |= (RegIndex)(1 << (int)var.RegIndex);
+                        cc.NewRegisterHomeIndex(vdata, var.RegIndex);
                     }
                 }
                 else if (o.IsMem)

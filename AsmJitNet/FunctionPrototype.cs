@@ -348,9 +348,9 @@
                 for (i = 0; i != arguments.Length; i++)
                 {
                     ArgumentData a = argumentData[i];
-                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
+                    if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 16 && CallingConventionInfo.ArgumentsGPList[posGP] != RegIndex.Invalid)
                     {
-                        a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
+                        a._registerIndex = CallingConventionInfo.ArgumentsGPList[posGP++];
                         _passedGP |= (1 << (int)a._registerIndex);
                     }
                 }
@@ -399,12 +399,12 @@
 
                         if (VariableInfo.IsVariableInteger(a._variableType))
                         {
-                            a._registerIndex = CallingConventionInfo.ArgumentsGP[i];
+                            a._registerIndex = CallingConventionInfo.ArgumentsGPList[i];
                             _passedGP |= (1 << (int)a._registerIndex);
                         }
                         else if (VariableInfo.IsVariableFloat(a._variableType))
                         {
-                            a._registerIndex = CallingConventionInfo.ArgumentsXMM[i];
+                            a._registerIndex = CallingConventionInfo.ArgumentsXMMList[i];
                             _passedXMM |= (1 << (int)a._registerIndex);
                         }
                     }
@@ -439,9 +439,9 @@
                     for (i = 0; i != arguments.Length; i++)
                     {
                         ArgumentData a = argumentData[i];
-                        if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGP[posGP] != RegIndex.Invalid)
+                        if (VariableInfo.IsVariableInteger(a._variableType) && posGP < 32 && CallingConventionInfo.ArgumentsGPList[posGP] != RegIndex.Invalid)
                         {
-                            a._registerIndex = CallingConventionInfo.ArgumentsGP[posGP++];
+                            a._registerIndex = CallingConventionInfo.ArgumentsGPList[posGP++];
                             _passedGP |= (1 << (int)a._registerIndex);
                         }
                     }
@@ -452,7 +452,7 @@
                         ArgumentData a = argumentData[i];
                         if (VariableInfo.IsVariableFloat(a._variableType))
                         {
-                            a._registerIndex = CallingConventionInfo.ArgumentsXMM[posXMM++];
+                            a._registerIndex = CallingConventionInfo.ArgumentsXMMList[posXMM++];
                             _passedXMM |= (1 << (int)a._registerIndex);
                         }
                     }

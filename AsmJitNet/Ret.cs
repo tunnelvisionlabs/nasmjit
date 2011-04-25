@@ -93,12 +93,9 @@
                         vdata.WorkOffset = Offset;
                         vdata.RegisterReadCount++;
 
-                        if (vdata.HomeRegisterIndex == RegIndex.Invalid)
+                        if (VariableInfo.IsVariableInteger(vdata.Type) && VariableInfo.IsVariableInteger(retValType))
                         {
-                            if (VariableInfo.IsVariableInteger(vdata.Type) && VariableInfo.IsVariableInteger(retValType))
-                            {
-                                vdata.HomeRegisterIndex = (i == 0) ? RegIndex.Eax : RegIndex.Edx;
-                            }
+                            cc.NewRegisterHomeIndex(vdata, (i == 0) ? RegIndex.Eax : RegIndex.Edx);
                         }
                     }
                 }

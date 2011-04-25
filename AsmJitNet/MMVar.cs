@@ -13,5 +13,10 @@
             : base(id, 8, registerType, variableType)
         {
         }
+
+        public static MMVar FromData(VarData vdata)
+        {
+            return new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
+        }
     }
 }

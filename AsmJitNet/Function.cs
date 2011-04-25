@@ -246,7 +246,6 @@
                 {
                     varData.IsRegArgument = true;
                     varData.RegisterIndex = a._registerIndex;
-                    varData.HomeRegisterIndex = a._registerIndex;
                 }
 
                 if (a._stackOffset != InvalidValue)
@@ -364,6 +363,16 @@
             x = x - ((x >> 1) & 0x55555555);
             x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
             return (int)(((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24);
+        }
+
+        internal static uint FindFirstOne(uint mask)
+        {
+            for (uint i = 0, bit = 1; i < sizeof(uint); i++, bit <<= 1)
+            {
+                if ((mask & bit) != 0)
+                    return i;
+            }
+            return 0xFFFFFFFFU;
         }
 
         private static int DeltaTo16(int x)

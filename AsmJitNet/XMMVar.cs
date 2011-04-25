@@ -11,5 +11,10 @@
             : base(id, 16, registerType, variableType)
         {
         }
+
+        public static XMMVar FromData(VarData vdata)
+        {
+            return new XMMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
+        }
     }
 }
