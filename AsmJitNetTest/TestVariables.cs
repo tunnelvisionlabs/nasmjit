@@ -420,6 +420,51 @@
             return c.Make();
         }
 
+        [TestMethod]
+        public void TestFunctionCall3()
+        {
+            TestFunctionCall3_OneFuncDelegate oneFunc = TestFunctionCall3_OneFunc;
+            IntPtr calledFunction = Marshal.GetFunctionPointerForDelegate(oneFunc);
+
+            // ==========================================================================
+            // Create compiler.
+            Compiler c = new Compiler();
+
+            // Log compiler output.
+            FileLogger logger = new FileLogger(Console.Error);
+            c.Logger = logger;
+
+            c.NewFunction(CallingConvention.Default, typeof(Func<int>));
+            c.Function.SetHint(FunctionHints.Naked, true);
+            GPVar x = c.NewGP();
+            GPVar y = c.NewGP();
+            Call ctx = c.Call(calledFunction, CallingConvention.Cdecl, typeof(Func<int>));
+            ctx.SetReturn(y);
+            c.Mov(x, 0);
+            c.Add(x, y);
+            c.Ret(x);
+            c.EndFunction();
+            // ==========================================================================
+
+            // ==========================================================================
+            // Make the function.
+            IntPtr ptr = c.Make();
+            TestFunctionCall3_OneFuncDelegate fn = FunctionCast<TestFunctionCall3_OneFuncDelegate>(ptr);
+            int result = fn();
+            Assert.AreEqual(1, result);
+            // ==========================================================================
+
+            MemoryManager.Global.Free(ptr);
+        }
+
+        [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
+        private delegate int TestFunctionCall3_OneFuncDelegate();
+
+        private static int TestFunctionCall3_OneFunc()
+        {
+            return 1;
+        }
+
         [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
         private delegate void TestFuncManyArgsFn(out byte arg0, out byte arg1, out byte arg2, out byte arg3, out byte arg4, out byte arg5, out byte arg6, out byte arg7);
 
