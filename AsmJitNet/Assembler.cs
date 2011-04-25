@@ -274,12 +274,12 @@
             return p;
         }
 
-        public void RelocCode(IntPtr destination)
+        public IntPtr RelocCode(IntPtr destination)
         {
-            RelocCode(destination, destination);
+            return RelocCode(destination, destination);
         }
 
-        public void RelocCode(IntPtr destination, IntPtr addressBase)
+        public IntPtr RelocCode(IntPtr destination, IntPtr addressBase)
         {
             // Copy code to virtual memory (this is a given destination pointer).
 
@@ -362,6 +362,11 @@
                     tramp += TrampolineWriter.TRAMPOLINE_SIZE;
                 }
             }
+
+            if (Util.IsX64)
+                return (IntPtr)(tramp.ToInt64() - destination.ToInt64());
+            else
+                return (IntPtr)coff;
         }
 
         public void Embed(byte[] data)

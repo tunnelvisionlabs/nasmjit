@@ -54,8 +54,16 @@
                 throw new JitException("Out of virtual memory.");
             }
 
-            // This is the last step. Relocate the code and return it.
-            assembler.RelocCode(p);
+            // Relocate the code.
+            IntPtr relocatedSize = assembler.RelocCode(p);
+
+            // Return unused memory to mamory-manager.
+            if (relocatedSize.ToInt64() < codeSize)
+            {
+                memmgr.Shrink(p, relocatedSize);
+            }
+
+            // Return the code.
             destination = p;
         }
 

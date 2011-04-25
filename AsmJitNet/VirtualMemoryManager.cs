@@ -71,6 +71,11 @@
             return _data.Free(address);
         }
 
+        public override bool Shrink(IntPtr address, IntPtr used)
+        {
+            return _data.Shrink(address, used);
+        }
+
         public override void FreeAll()
         {
             _data.FreeAll(false);
@@ -470,7 +475,6 @@
                     IntPtr offset = (IntPtr)(address.ToInt64() - node.Memory.ToInt64());
                     int bitpos = (int)(offset.ToInt64() / node.Density);
                     int i = (bitpos / BITS_PER_ENTITY);
-                    int j = (bitpos % BITS_PER_ENTITY);
 
                     int cont = 0;
 
@@ -486,7 +490,7 @@
                                 uint* cp = (uint*)cpPtr + i;
                                 uint ubits = *up;             // Current ubits[0] value.
                                 uint cbits = *cp;             // Current cbits[0] value.
-                                uint bit = 1U << j; // Current bit mask.
+                                uint bit = 1U << (bitpos % BITS_PER_ENTITY);
 
                                 bool stop;
 
@@ -496,11 +500,10 @@
                                     ubits &= ~bit;
                                     cbits &= ~bit;
 
-                                    j++;
                                     bit <<= 1;
                                     cont++;
 
-                                    if (stop || j == BITS_PER_ENTITY)
+                                    if (stop || bit == 0)
                                     {
                                         *up = ubits;
                                         *cp = cbits;
@@ -510,8 +513,6 @@
 
                                         ubits = *++up;
                                         cbits = *++cp;
-
-                                        j = 0;
                                         bit = 1;
                                     }
                                 }
@@ -567,6 +568,98 @@
                 }
 
                 return true;
+            }
+
+            public bool Shrink(IntPtr address, IntPtr used)
+            {
+                if (address == IntPtr.Zero)
+                    return false;
+
+                if (used == IntPtr.Zero)
+                    return Free(address);
+
+                lock (_lock)
+                {
+                    MemNode node = FindPtr(address);
+                    if (node == null)
+                        return false;
+
+                    long offset = address.ToInt64() - node.Memory.ToInt64();
+                    long bitpos = offset / node.Density;
+                    long i = (bitpos / BITS_PER_ENTITY);
+
+                    long upIndex = /*node.BaUsed +*/ i;  // Current ubits address.
+                    long cpIndex = /*node.BaCont +*/ i;  // Current cbits address.
+                    int ubits = node.BaUsed[upIndex];             // Current ubits[0] value.
+                    int cbits = node.BaCont[cpIndex];             // Current cbits[0] value.
+                    int bit = 1 << (int)(bitpos % BITS_PER_ENTITY);
+
+                    long cont = 0;
+                    long usedBlocks = (used.ToInt64() + node.Density - 1) / node.Density;
+
+                    bool stop;
+
+                    // Find the first block we can mark as free.
+                    for (; ; )
+                    {
+                        stop = (cbits & bit) == 0;
+                        if (stop)
+                            return true;
+
+                        if (++cont == usedBlocks)
+                            break;
+
+                        bit <<= 1;
+                        if (bit == 0)
+                        {
+                            upIndex++;
+                            ubits = node.BaUsed[upIndex];
+                            cpIndex++;
+                            cbits = node.BaCont[cpIndex];
+                            bit = 1;
+                        }
+                    }
+
+                    // Free the tail blocks.
+                    cont = -1;
+
+                    for (bool firstPass = true; ; firstPass = false)
+                    {
+                        if (!firstPass)
+                        {
+                            stop = (cbits & bit) == 0;
+                            ubits &= ~bit;
+                        }
+
+                        cbits &= ~bit;
+
+                        bit <<= 1;
+                        cont++;
+
+                        if (stop || bit == 0)
+                        {
+                            node.BaUsed[upIndex] = ubits;
+                            node.BaCont[cpIndex] = cbits;
+                            if (stop)
+                                break;
+
+                            upIndex++;
+                            ubits = node.BaUsed[upIndex];
+                            cpIndex++;
+                            cbits = node.BaCont[cpIndex];
+                            bit = 1;
+                        }
+                    }
+
+                    // Statistics.
+                    cont *= node.Density;
+                    if (node.LargestBlock < cont)
+                        node.LargestBlock = cont;
+                    node.Used -= cont;
+                    _used -= cont;
+
+                    return true;
+                }
             }
 
             public void FreeAll(bool keepVirtualMemory)

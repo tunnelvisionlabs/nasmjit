@@ -28,6 +28,14 @@
 
         public abstract bool Free(IntPtr address);
 
+        /// <summary>
+        /// Free some tail memory.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="used"></param>
+        /// <returns></returns>
+        public abstract bool Shrink(IntPtr address, IntPtr used);
+
         public abstract void FreeAll();
     }
 }
