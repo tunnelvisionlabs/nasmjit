@@ -644,7 +644,7 @@
             bool nonPreservedFirst = true;
             if (this.Function.IsCaller)
             {
-                nonPreservedFirst = varData.FirstCallable != null &&
+                nonPreservedFirst = varData.FirstCallable == null ||
                        varData.FirstCallable.Offset >= varData.LastEmittable.Offset;
             }
 
@@ -1016,7 +1016,7 @@
             bool nonPreservedFirst = true;
             if (this.Function.IsCaller)
             {
-                nonPreservedFirst = vdata.FirstCallable != null &&
+                nonPreservedFirst = vdata.FirstCallable == null ||
                                     vdata.FirstCallable.Offset >= vdata.LastEmittable.Offset;
             }
 
