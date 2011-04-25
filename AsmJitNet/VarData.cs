@@ -103,6 +103,7 @@
             }
         }
 
+#warning Check this type
         public RegIndex PreferredRegisterMask
         {
             get;

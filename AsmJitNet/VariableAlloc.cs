@@ -43,16 +43,21 @@
         /// <summary>
         /// Variable can be allocated in register.
         /// </summary>
-        Register = 0x10,
+        Register = 0x04,
 
         /// <summary>
         /// Variable can be allocated in memory.
         /// </summary>
-        Memory = 0x20,
+        Memory = 0x08,
 
         /// <summary>
         /// Unuse the variable after use.
         /// </summary>
-        UnuseAfterUse = 0x100,
+        UnuseAfterUse = 0x10,
+
+        /// <summary>
+        /// Variable can be allocated only to one register (special allocation).
+        /// </summary>
+        Special = 0x20,
     }
 }

@@ -71,15 +71,19 @@
         /// </summary>
         BorlandFastCall,
 
+        GccFastCall,
+
+        GccRegParm1,
+
         /// <summary>
         /// GCC fastcall convention with 2 register arguments
         /// </summary>
-        GccFastCall2,
+        GccRegParm2,
 
         /// <summary>
         /// GCC fastcall convention with 3 register arguments
         /// </summary>
-        GccFastCall3,
+        GccRegParm3,
 
         /// <summary>
         /// Specifier for the default calling convention for the current platform

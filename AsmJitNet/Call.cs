@@ -157,17 +157,17 @@
                     {
                     case VariableType.GPD:
                     case VariableType.GPQ:
-                        _gpParams |= (1 << (int)fArg._registerIndex);
+                        _gpParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
                         break;
                     case VariableType.MM:
-                        _mmParams |= (1 << (int)fArg._registerIndex);
+                        _mmParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
                         break;
                     case VariableType.XMM:
                     case VariableType.XMM_1F:
                     case VariableType.XMM_4F:
                     case VariableType.XMM_1D:
                     case VariableType.XMM_2D:
-                        _xmmParams |= (1 << (int)fArg._registerIndex);
+                        _xmmParams |= (int)Util.MaskFromIndex(fArg._registerIndex);
                         break;
                     default:
                         throw new CompilerException("Invalid variable type in function call argument.");
@@ -370,9 +370,9 @@
                     {
                         int mask = ~Prototype.PreservedGP &
                                         ~Prototype.PassedGP &
-                                        ((1 << RegNum.GP) - 1);
+                                        ((int)Util.MaskUpToIndex(RegNum.GP) - 1);
 
-                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Function.FindFirstOne((uint)mask));
+                        cc.NewRegisterHomeIndex(vdata, (RegIndex)Util.FindFirstBit((uint)mask));
                         cc.NewRegisterHomeMask(vdata, (RegIndex)mask);
 
                         var.Flags |= VarCallFlags.CALL_OPERAND_REG;
@@ -654,11 +654,11 @@
                         {
                         case VariableType.GPD:
                         case VariableType.GPQ:
-                            if ((Prototype.PreservedGP & (1 << (int)vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedGP & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
                                 cc.SpillGPVar(vdata);
                             break;
                         case VariableType.MM:
-                            if ((Prototype.PreservedMM & (1 << (int)vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedMM & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
                                 cc.SpillMMVar(vdata);
                             break;
                         case VariableType.XMM:
@@ -666,7 +666,7 @@
                         case VariableType.XMM_1D:
                         case VariableType.XMM_4F:
                         case VariableType.XMM_2D:
-                            if ((Prototype.PreservedXMM & (1 << (int)vdata.RegisterIndex)) == 0)
+                            if ((Prototype.PreservedXMM & (int)Util.MaskFromIndex(vdata.RegisterIndex)) == 0)
                                 cc.SpillXMMVar(vdata);
                             break;
                         default:
@@ -835,7 +835,7 @@
                                     // in this mask is ideal to be used by call() instruction.
                                     int possibleMask = ~Prototype.PreservedGP &
                                                             ~Prototype.PassedGP &
-                                                            ((1 << RegNum.GP) - 1);
+                                                            ((int)Util.MaskUpToIndex(RegNum.GP) - 1);
 
                                     if (possibleMask != 0)
                                     {
@@ -887,7 +887,7 @@
                                         cc.State.GP[rIndex] = vsrc;
 
                                         vsrc.RegisterIndex = (RegIndex)rIndex;
-                                        cc.AllocatedVariable(vsrc);
+                                        cc.AllocatedGPRegister((RegIndex)rIndex);
 
                                         doSpill = false;
                                         didWork = true;
@@ -953,11 +953,11 @@
                         {
                         case VariableType.GPD:
                         case VariableType.GPQ:
-                            cc.MarkChangedGPRegister(srcArgType._registerIndex);
+                            cc.MarkGPRegisterModified(srcArgType._registerIndex);
                             break;
 
                         case VariableType.MM:
-                            cc.MarkChangedMMRegister(srcArgType._registerIndex);
+                            cc.MarkMMRegisterModified(srcArgType._registerIndex);
                             break;
 
                         case VariableType.XMM:
@@ -965,7 +965,7 @@
                         case VariableType.XMM_1D:
                         case VariableType.XMM_4F:
                         case VariableType.XMM_2D:
-                            cc.MarkChangedXMMRegister(srcArgType._registerIndex);
+                            cc.MarkXMMRegisterModified(srcArgType._registerIndex);
                             break;
                         }
 
@@ -995,10 +995,11 @@
                         break;
                     }
 
+#warning check these casts
                     if (temporaryGpReg == RegIndex.Invalid)
                         temporaryGpReg = FindTemporaryGpRegister(cc);
 
-                    cc.AllocGPVar(r.vdata, (RegIndex)temporaryGpReg,
+                    cc.AllocGPVar(r.vdata, (uint)temporaryGpReg,
                       VariableAlloc.Register | VariableAlloc.Read);
                 }
             }
@@ -1089,9 +1090,10 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.GP) != 0)
                     {
+#warning check these casts
                         cc.AllocGPVar(vdata, (rec.Flags & VarCallFlags.OUT_EAX) != 0
-                          ? RegIndex.Eax
-                          : RegIndex.Edx,
+                          ? (uint)RegIndex.Eax
+                          : (uint)RegIndex.Edx,
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }
@@ -1101,7 +1103,7 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.MM) != 0)
                     {
-                        cc.AllocMMVar(vdata, RegIndex.Mm0,
+                        cc.AllocMMVar(vdata, Util.MaskFromIndex(RegIndex.Mm0),
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }
@@ -1111,9 +1113,9 @@
                 {
                     if ((VariableInfo.GetVariableInfo(vdata.Type).Class & VariableClass.XMM) != 0)
                     {
-                        cc.AllocXMMVar(vdata, (rec.Flags & VarCallFlags.OUT_XMM0) != 0
+                        cc.AllocXMMVar(vdata, Util.MaskFromIndex((rec.Flags & VarCallFlags.OUT_XMM0) != 0
                           ? RegIndex.Xmm0
-                          : RegIndex.Xmm1,
+                          : RegIndex.Xmm1),
                           VariableAlloc.Register | VariableAlloc.Write);
                         vdata.Changed = true;
                     }

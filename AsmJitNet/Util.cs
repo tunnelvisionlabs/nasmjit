@@ -52,6 +52,51 @@
             return value >= uint.MinValue && value <= uint.MaxValue;
         }
 
+        internal static uint MaskFromIndex(RegIndex index)
+        {
+            return 1U << (int)index;
+        }
+
+        internal static uint MaskUpToIndex(int x)
+        {
+            if (x >= 32)
+                return 0xFFFFFFFF;
+            else
+                return (1U << x) - 1;
+        }
+
+        internal static int BitCount(int x)
+        {
+            return BitCount((uint)x);
+        }
+
+        internal static int BitCount(uint x)
+        {
+            x = x - ((x >> 1) & 0x55555555);
+            x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+            return (int)(((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24);
+        }
+
+        internal static uint FindFirstBit(uint mask)
+        {
+            for (uint i = 0, bit = 1; i < sizeof(uint); i++, bit <<= 1)
+            {
+                if ((mask & bit) != 0)
+                    return i;
+            }
+            return 0xFFFFFFFFU;
+        }
+
+        internal static int DeltaTo16(int x)
+        {
+            return AlignTo16(x) - x;
+        }
+
+        internal static int AlignTo16(int x)
+        {
+            return (x + 15) & ~15;
+        }
+
         internal static void myhex(StringBuilder buf, IList<byte> binaryData)
         {
             throw new NotImplementedException();

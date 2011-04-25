@@ -35,8 +35,8 @@
                 _info[(int)CallingConvention.MsThisCall] = new CallingConventionInfo(CallingConvention.MsThisCall);
                 _info[(int)CallingConvention.MsFastCall] = new CallingConventionInfo(CallingConvention.MsFastCall);
                 _info[(int)CallingConvention.BorlandFastCall] = new CallingConventionInfo(CallingConvention.BorlandFastCall);
-                _info[(int)CallingConvention.GccFastCall2] = new CallingConventionInfo(CallingConvention.GccFastCall2);
-                _info[(int)CallingConvention.GccFastCall3] = new CallingConventionInfo(CallingConvention.GccFastCall3);
+                _info[(int)CallingConvention.GccRegParm2] = new CallingConventionInfo(CallingConvention.GccRegParm2);
+                _info[(int)CallingConvention.GccRegParm3] = new CallingConventionInfo(CallingConvention.GccRegParm3);
             }
             else if (Util.IsX64)
             {
@@ -108,8 +108,8 @@
                                     (1 << (int)RegIndex.Ecx);
                     break;
 
-                case AsmJitNet.CallingConvention.GccFastCall2:
-                    _calleePopsStack = false;
+                case AsmJitNet.CallingConvention.GccFastCall:
+                    _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
                     argumentsGPList[1] = RegIndex.Edx;
 
@@ -117,15 +117,31 @@
                                     (1 << (int)RegIndex.Edx);
                     break;
 
-                case AsmJitNet.CallingConvention.GccFastCall3:
+                case AsmJitNet.CallingConvention.GccRegParm1:
                     _calleePopsStack = false;
-                    argumentsGPList[0] = RegIndex.Edx;
-                    argumentsGPList[1] = RegIndex.Ecx;
-                    argumentsGPList[2] = RegIndex.Eax;
+                    argumentsGPList[0] = RegIndex.Eax;
 
-                    _argumentsGP = (1 << (int)RegIndex.Edx) |
+                    _argumentsGP = (1 << (int)RegIndex.Eax);
+                    break;
+
+                case AsmJitNet.CallingConvention.GccRegParm2:
+                    _calleePopsStack = false;
+                    argumentsGPList[0] = RegIndex.Eax;
+                    argumentsGPList[1] = RegIndex.Ecx;
+
+                    _argumentsGP = (1 << (int)RegIndex.Eax) |
+                                    (1 << (int)RegIndex.Ecx);
+                    break;
+
+                case AsmJitNet.CallingConvention.GccRegParm3:
+                    _calleePopsStack = false;
+                    argumentsGPList[0] = RegIndex.Eax;
+                    argumentsGPList[1] = RegIndex.Ecx;
+                    argumentsGPList[2] = RegIndex.Edx;
+
+                    _argumentsGP = (1 << (int)RegIndex.Eax) |
                                     (1 << (int)RegIndex.Ecx) |
-                                    (1 << (int)RegIndex.Eax);
+                                    (1 << (int)RegIndex.Edx);
                     break;
 
                 default:

@@ -14,7 +14,10 @@
             set;
         }
 
-        public RegIndex RegIndex
+        /// <summary>
+        /// Register mask (default is 0).
+        /// </summary>
+        public uint RegMask
         {
             get;
             set;

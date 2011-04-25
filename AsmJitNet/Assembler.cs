@@ -968,6 +968,8 @@
 
         internal void EmitInstructionImpl(InstructionCode code, Operand o0, Operand o1, Operand o2)
         {
+            Operand[] loggerOperands = new Operand[3];
+
             int bLoHiUsed = 0;
             bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
             int bufferStartOffset = _buffer.Offset;
@@ -984,6 +986,7 @@
             {
                 bLoHiUsed |= (int)((BaseReg)o0).Code & (int)(RegType.GPB_LO | RegType.GPB_HI);
             }
+
             if (o1 == null)
             {
                 o1 = Operand.None;
@@ -992,6 +995,7 @@
             {
                 bLoHiUsed |= (int)((BaseReg)o1).Code & (int)(RegType.GPB_LO | RegType.GPB_HI);
             }
+
             if (o2 == null)
             {
                 o2 = Operand.None;
@@ -1024,6 +1028,10 @@
             // no energy to rewrite it. Maybe in future all of this can be cleaned up!
             if (bLoHiUsed != 0 || forceRexPrefix)
             {
+                loggerOperands[0] = o0;
+                loggerOperands[1] = o1;
+                loggerOperands[2] = o2;
+
                 if (Util.IsX64)
                 {
                     // Check if there is register that makes this instruction un-encodable.
@@ -2647,6 +2655,15 @@
             {
                 // Detect truncated operand.
                 Imm immTemporary = 0;
+
+                // Use the original operands, because BYTE some of them were replaced.
+                if (bLoHiUsed != 0)
+                {
+                    o0 = loggerOperands[0];
+                    o1 = loggerOperands[1];
+                    o2 = loggerOperands[2];
+                }
+
                 if (immOperand != null)
                 {
                     IntPtr value = immOperand.Value;
@@ -2982,12 +2999,12 @@
 
                 return;
             case RegType.GPB_HI:
-                if ((int)index < 8)
+                if ((int)index < 4)
                     //return buf + sprintf(buf, "%s", _reg8h[(int)index]);
                     buf.Append(_reg8h[(int)index]);
                 else
-                    //return buf + sprintf(buf, "r%ub", (uint32_t)index);
-                    buf.AppendFormat("r{0}b", (int)index);
+                    //return buf + sprintf(buf, "%s", "INVALID");
+                    buf.Append("INVALID");
 
                 return;
 

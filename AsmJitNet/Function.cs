@@ -288,7 +288,7 @@
                 _isEspAdjusted = true;
             }
 
-            _modifiedAndPreservedGP = cc.ModifiedGPRegisters & _functionPrototype.PreservedGP & ~(1 << (int)RegIndex.Esp);
+            _modifiedAndPreservedGP = cc.ModifiedGPRegisters & _functionPrototype.PreservedGP & ~(int)Util.MaskFromIndex(RegIndex.Esp);
             _modifiedAndPreservedMM = cc.ModifiedMMRegisters & _functionPrototype.PreservedMM;
             _modifiedAndPreservedXMM = cc.ModifiedXMMRegisters & _functionPrototype.PreservedXMM;
 
@@ -296,25 +296,25 @@
 
             // Prolog & Epilog stack size.
             {
-                int memGP = BitCount(_modifiedAndPreservedGP) * IntPtr.Size;
-                int memMM = BitCount(_modifiedAndPreservedMM) * 8;
-                int memXMM = BitCount(_modifiedAndPreservedXMM) * 16;
+                int memGP = Util.BitCount(_modifiedAndPreservedGP) * IntPtr.Size;
+                int memMM = Util.BitCount(_modifiedAndPreservedMM) * 8;
+                int memXMM = Util.BitCount(_modifiedAndPreservedXMM) * 16;
 
                 if (_pePushPop)
                 {
                     _pePushPopStackSize = memGP;
-                    _peMovStackSize = memXMM + AlignTo16(memMM);
+                    _peMovStackSize = memXMM + Util.AlignTo16(memMM);
                 }
                 else
                 {
                     _pePushPopStackSize = 0;
-                    _peMovStackSize = memXMM + AlignTo16(memMM + memGP);
+                    _peMovStackSize = memXMM + Util.AlignTo16(memMM + memGP);
                 }
             }
 
             if (_isStackAlignedByFnTo16Bytes)
             {
-                _peAdjustStackSize += DeltaTo16(_pePushPopStackSize);
+                _peAdjustStackSize += Util.DeltaTo16(_pePushPopStackSize);
             }
             else
             {
@@ -332,7 +332,7 @@
 
             // Memory stack size.
             _memStackSize = cc.MemBytesTotal;
-            _memStackSize16 = AlignTo16(_memStackSize);
+            _memStackSize16 = Util.AlignTo16(_memStackSize);
 
             if (_isNaked)
             {
@@ -351,38 +351,6 @@
             cc.VariablesBaseOffset = _functionCallStackSize;
             if (!_isEspAdjusted)
                 cc.VariablesBaseOffset = -_memStackSize16 - _peMovStackSize - _peAdjustStackSize;
-        }
-
-        private static int BitCount(int x)
-        {
-            return BitCount((uint)x);
-        }
-
-        private static int BitCount(uint x)
-        {
-            x = x - ((x >> 1) & 0x55555555);
-            x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-            return (int)(((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24);
-        }
-
-        internal static uint FindFirstOne(uint mask)
-        {
-            for (uint i = 0, bit = 1; i < sizeof(uint); i++, bit <<= 1)
-            {
-                if ((mask & bit) != 0)
-                    return i;
-            }
-            return 0xFFFFFFFFU;
-        }
-
-        private static int DeltaTo16(int x)
-        {
-            return AlignTo16(x) - x;
-        }
-
-        private static int AlignTo16(int x)
-        {
-            return (x + 15) & ~15;
         }
 
         internal void EmitProlog(CompilerContext cc)
@@ -616,7 +584,7 @@
 
         internal void ReserveStackForFunctionCall(int size)
         {
-            size = AlignTo16(size);
+            size = Util.AlignTo16(size);
 
             if (size > _functionCallStackSize)
                 _functionCallStackSize = size;
@@ -798,7 +766,7 @@
 
                     for (i = 0; i < (int)RegNum.Base; i++)
                     {
-                        if ((regs & (1 << i)) != 0)
+                        if ((regs & (int)Util.MaskFromIndex((RegIndex)i)) != 0)
                         {
                             if (!first)
                             {

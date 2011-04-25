@@ -45,6 +45,39 @@
             }
         }
 
+        /// <summary>
+        /// Get whether this variable is general purpose BYTE register.
+        /// </summary>
+        public bool IsGPB
+        {
+            get
+            {
+                return (RegisterType & RegType.MASK) <= RegType.GPB_HI;
+            }
+        }
+
+        /// <summary>
+        /// Get whether this variable is general purpose BYTE.LO register.
+        /// </summary>
+        public bool IsGPBLo
+        {
+            get
+            {
+                return (RegisterType & RegType.MASK) == RegType.GPB_LO;
+            }
+        }
+
+        /// <summary>
+        /// Get whether this variable is general purpose BYTE.HI register.
+        /// </summary>
+        public bool IsGPBHi
+        {
+            get
+            {
+                return (RegisterType & RegType.MASK) == RegType.GPB_HI;
+            }
+        }
+
         public bool IsGPVar
         {
             get
