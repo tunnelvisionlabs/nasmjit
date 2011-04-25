@@ -71,18 +71,83 @@
         /// </summary>
         BorlandFastCall,
 
+        /// <summary>
+        /// GCC-specific fastcall convention.
+        /// </summary>
+        /// <remarks>
+        /// Two first parameters (evaluated from left-to-right) are in ECX:EDX 
+        /// registers, all others on the stack in right-to-left order.
+        ///
+        /// Arguments direction:
+        /// - Right to Left (except to first two integer arguments in ECX:EDX)
+        ///
+        /// Stack is cleaned by:
+        /// - Callee.
+        ///
+        /// Return value:
+        /// - Integer types - EAX:EDX registers.
+        /// - Floating points - st(0) register.
+        ///
+        /// @note This calling convention should be compatible to
+        /// @c CALL_CONV_MSFASTCALL.
+        /// </remarks>
         GccFastCall,
 
+        /// <summary>
+        /// @brief GCC specific regparm(1) convention.
+        /// </summary>
+        /// <remarks>
+        /// The first parameter (evaluated from left-to-right) is in EAX register,
+        /// all others on the stack in right-to-left order.
+        ///
+        /// Arguments direction:
+        /// - Right to Left (except to first one integer argument in EAX)
+        ///
+        /// Stack is cleaned by:
+        /// - Caller.
+        ///
+        /// Return value:
+        /// - Integer types - EAX:EDX registers.
+        /// - Floating points - st(0) register.
+        /// </remarks>
         GccRegParm1,
 
         /// <summary>
-        /// GCC fastcall convention with 2 register arguments
+        /// @brief GCC specific regparm(2) convention.
         /// </summary>
+        /// <remarks>
+        /// Two first parameters (evaluated from left-to-right) are in EAX:EDX 
+        /// registers, all others on the stack in right-to-left order.
+        ///
+        /// Arguments direction:
+        /// - Right to Left (except to first two integer arguments in EAX:EDX)
+        ///
+        /// Stack is cleaned by:
+        /// - Caller.
+        ///
+        /// Return value:
+        /// - Integer types - EAX:EDX registers.
+        /// - Floating points - st(0) register.
+        /// </remarks>
         GccRegParm2,
 
         /// <summary>
-        /// GCC fastcall convention with 3 register arguments
+        /// @brief GCC specific fastcall with 3 parameters in registers.
         /// </summary>
+        /// <remarks>
+        /// Three first parameters (evaluated from left-to-right) are in 
+        /// EAX:EDX:ECX registers, all others on the stack in right-to-left order.
+        ///
+        /// Arguments direction:
+        /// - Right to Left (except to first three integer arguments in EAX:EDX:ECX)
+        ///
+        /// Stack is cleaned by:
+        /// - Caller.
+        ///
+        /// Return value:
+        /// - Integer types - EAX:EDX registers.
+        /// - Floating points - st(0) register.
+        /// </remarks>
         GccRegParm3,
 
         /// <summary>

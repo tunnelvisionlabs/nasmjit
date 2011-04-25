@@ -65,11 +65,11 @@
             if (Util.IsX86)
             {
                 _preservedGP =
-                  (1 << (int)RegIndex.Ebx) |
-                  (1 << (int)RegIndex.Esp) |
-                  (1 << (int)RegIndex.Ebp) |
-                  (1 << (int)RegIndex.Esi) |
-                  (1 << (int)RegIndex.Edi);
+                    (int)Util.MaskFromIndex(RegIndex.Ebx) |
+                    (int)Util.MaskFromIndex(RegIndex.Esp) |
+                    (int)Util.MaskFromIndex(RegIndex.Ebp) |
+                    (int)Util.MaskFromIndex(RegIndex.Esi) |
+                    (int)Util.MaskFromIndex(RegIndex.Edi);
                 _preservedXMM = 0;
 
                 switch (_callingConvention)
@@ -85,15 +85,15 @@
                 case AsmJitNet.CallingConvention.MsThisCall:
                     _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
-                    _argumentsGP = 1 << (int)RegIndex.Ecx;
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Ecx);
                     break;
 
                 case AsmJitNet.CallingConvention.MsFastCall:
                     _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
                     argumentsGPList[1] = RegIndex.Edx;
-                    _argumentsGP = (1 << (int)RegIndex.Ecx) |
-                                    (1 << (int)RegIndex.Edx);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Ecx) |
+                                   Util.MaskFromIndex(RegIndex.Edx);
                     break;
 
                 case AsmJitNet.CallingConvention.BorlandFastCall:
@@ -103,9 +103,9 @@
                     argumentsGPList[1] = RegIndex.Edx;
                     argumentsGPList[2] = RegIndex.Ecx;
 
-                    _argumentsGP = (1 << (int)RegIndex.Eax) |
-                                    (1 << (int)RegIndex.Edx) |
-                                    (1 << (int)RegIndex.Ecx);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Eax) |
+                                   Util.MaskFromIndex(RegIndex.Edx) |
+                                   Util.MaskFromIndex(RegIndex.Ecx);
                     break;
 
                 case AsmJitNet.CallingConvention.GccFastCall:
@@ -113,35 +113,35 @@
                     argumentsGPList[0] = RegIndex.Ecx;
                     argumentsGPList[1] = RegIndex.Edx;
 
-                    _argumentsGP = (1 << (int)RegIndex.Ecx) |
-                                    (1 << (int)RegIndex.Edx);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Ecx) |
+                                   Util.MaskFromIndex(RegIndex.Edx);
                     break;
 
                 case AsmJitNet.CallingConvention.GccRegParm1:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
 
-                    _argumentsGP = (1 << (int)RegIndex.Eax);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Eax);
                     break;
 
                 case AsmJitNet.CallingConvention.GccRegParm2:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
-                    argumentsGPList[1] = RegIndex.Ecx;
+                    argumentsGPList[1] = RegIndex.Edx;
 
-                    _argumentsGP = (1 << (int)RegIndex.Eax) |
-                                    (1 << (int)RegIndex.Ecx);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Eax) |
+                                   Util.MaskFromIndex(RegIndex.Edx);
                     break;
 
                 case AsmJitNet.CallingConvention.GccRegParm3:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
-                    argumentsGPList[1] = RegIndex.Ecx;
-                    argumentsGPList[2] = RegIndex.Edx;
+                    argumentsGPList[1] = RegIndex.Edx;
+                    argumentsGPList[2] = RegIndex.Ecx;
 
-                    _argumentsGP = (1 << (int)RegIndex.Eax) |
-                                    (1 << (int)RegIndex.Ecx) |
-                                    (1 << (int)RegIndex.Edx);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Eax) |
+                                   Util.MaskFromIndex(RegIndex.Edx) |
+                                   Util.MaskFromIndex(RegIndex.Ecx);
                     break;
 
                 default:
@@ -163,37 +163,37 @@
                     argumentsXMMList[2] = RegIndex.Xmm2;
                     argumentsXMMList[3] = RegIndex.Xmm3;
 
-                    _argumentsGP = (1 << (int)RegIndex.Rcx) |
-                                    (1 << (int)RegIndex.Rdx) |
-                                    (1 << (int)RegIndex.R8) |
-                                    (1 << (int)RegIndex.R9);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Rcx) |
+                                   Util.MaskFromIndex(RegIndex.Rdx) |
+                                   Util.MaskFromIndex(RegIndex.R8) |
+                                   Util.MaskFromIndex(RegIndex.R9);
 
-                    _argumentsXMM = (1 << (int)RegIndex.Xmm0) |
-                                    (1 << (int)RegIndex.Xmm1) |
-                                    (1 << (int)RegIndex.Xmm2) |
-                                    (1 << (int)RegIndex.Xmm3);
+                    _argumentsXMM = Util.MaskFromIndex(RegIndex.Xmm0) |
+                                    Util.MaskFromIndex(RegIndex.Xmm1) |
+                                    Util.MaskFromIndex(RegIndex.Xmm2) |
+                                    Util.MaskFromIndex(RegIndex.Xmm3);
 
                     _preservedGP =
-                      (1 << (int)RegIndex.Rbx) |
-                      (1 << (int)RegIndex.Rsp) |
-                      (1 << (int)RegIndex.Rbp) |
-                      (1 << (int)RegIndex.Rsi) |
-                      (1 << (int)RegIndex.Rdi) |
-                      (1 << (int)RegIndex.R12) |
-                      (1 << (int)RegIndex.R13) |
-                      (1 << (int)RegIndex.R14) |
-                      (1 << (int)RegIndex.R15);
+                        (int)Util.MaskFromIndex(RegIndex.Rbx) |
+                        (int)Util.MaskFromIndex(RegIndex.Rsp) |
+                        (int)Util.MaskFromIndex(RegIndex.Rbp) |
+                        (int)Util.MaskFromIndex(RegIndex.Rsi) |
+                        (int)Util.MaskFromIndex(RegIndex.Rdi) |
+                        (int)Util.MaskFromIndex(RegIndex.R12) |
+                        (int)Util.MaskFromIndex(RegIndex.R13) |
+                        (int)Util.MaskFromIndex(RegIndex.R14) |
+                        (int)Util.MaskFromIndex(RegIndex.R15);
                     _preservedXMM =
-                      (1 << (int)RegIndex.Xmm6) |
-                      (1 << (int)RegIndex.Xmm7) |
-                      (1 << (int)RegIndex.Xmm8) |
-                      (1 << (int)RegIndex.Xmm9) |
-                      (1 << (int)RegIndex.Xmm10) |
-                      (1 << (int)RegIndex.Xmm11) |
-                      (1 << (int)RegIndex.Xmm12) |
-                      (1 << (int)RegIndex.Xmm13) |
-                      (1 << (int)RegIndex.Xmm14) |
-                      (1 << (int)RegIndex.Xmm15);
+                        (int)Util.MaskFromIndex(RegIndex.Xmm6) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm7) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm8) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm9) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm10) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm11) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm12) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm13) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm14) |
+                        (int)Util.MaskFromIndex(RegIndex.Xmm15);
                     break;
 
                 case CallingConvention.X64U:
@@ -213,30 +213,30 @@
                     argumentsXMMList[6] = RegIndex.Xmm6;
                     argumentsXMMList[7] = RegIndex.Xmm7;
 
-                    _argumentsGP = (1 << (int)RegIndex.Rdi) |
-                                    (1 << (int)RegIndex.Rsi) |
-                                    (1 << (int)RegIndex.Rdx) |
-                                    (1 << (int)RegIndex.Rcx) |
-                                    (1 << (int)RegIndex.R8) |
-                                    (1 << (int)RegIndex.R9);
+                    _argumentsGP = Util.MaskFromIndex(RegIndex.Rdi) |
+                                   Util.MaskFromIndex(RegIndex.Rsi) |
+                                   Util.MaskFromIndex(RegIndex.Rdx) |
+                                   Util.MaskFromIndex(RegIndex.Rcx) |
+                                   Util.MaskFromIndex(RegIndex.R8) |
+                                   Util.MaskFromIndex(RegIndex.R9);
 
-                    _argumentsXMM = (1 << (int)RegIndex.Xmm0) |
-                                    (1 << (int)RegIndex.Xmm1) |
-                                    (1 << (int)RegIndex.Xmm2) |
-                                    (1 << (int)RegIndex.Xmm3) |
-                                    (1 << (int)RegIndex.Xmm4) |
-                                    (1 << (int)RegIndex.Xmm5) |
-                                    (1 << (int)RegIndex.Xmm6) |
-                                    (1 << (int)RegIndex.Xmm7);
+                    _argumentsXMM = Util.MaskFromIndex(RegIndex.Xmm0) |
+                                    Util.MaskFromIndex(RegIndex.Xmm1) |
+                                    Util.MaskFromIndex(RegIndex.Xmm2) |
+                                    Util.MaskFromIndex(RegIndex.Xmm3) |
+                                    Util.MaskFromIndex(RegIndex.Xmm4) |
+                                    Util.MaskFromIndex(RegIndex.Xmm5) |
+                                    Util.MaskFromIndex(RegIndex.Xmm6) |
+                                    Util.MaskFromIndex(RegIndex.Xmm7);
 
                     _preservedGP =
-                      (1 << (int)RegIndex.Rbx) |
-                      (1 << (int)RegIndex.Rsp) |
-                      (1 << (int)RegIndex.Rbp) |
-                      (1 << (int)RegIndex.R12) |
-                      (1 << (int)RegIndex.R13) |
-                      (1 << (int)RegIndex.R14) |
-                      (1 << (int)RegIndex.R15);
+                        (int)Util.MaskFromIndex(RegIndex.Rbx) |
+                        (int)Util.MaskFromIndex(RegIndex.Rsp) |
+                        (int)Util.MaskFromIndex(RegIndex.Rbp) |
+                        (int)Util.MaskFromIndex(RegIndex.R12) |
+                        (int)Util.MaskFromIndex(RegIndex.R13) |
+                        (int)Util.MaskFromIndex(RegIndex.R14) |
+                        (int)Util.MaskFromIndex(RegIndex.R15);
                     break;
 
                 default:
