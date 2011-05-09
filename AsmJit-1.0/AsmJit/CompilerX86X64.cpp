@@ -7387,6 +7387,17 @@ GPVar CompilerCore::newGP(uint32_t variableType, const char* name) ASMJIT_NOTHRO
   ASMJIT_ASSERT((variableType < _VARIABLE_TYPE_COUNT) &&
                 (variableInfo[variableType].clazz & VariableInfo::CLASS_GP) != 0);
 
+#if defined(ASMJIT_X86)
+  if (variableInfo[variableType].size > 4)
+  {
+    variableType = VARIABLE_TYPE_GPD;
+    if (_logger)
+    {
+      _logger->logString("*** COMPILER WARNING: Translated QWORD variable to DWORD, FIX YOUR CODE! ***\n");
+    }
+  }
+#endif // ASMJIT_X86
+
   VarData* vdata = _newVarData(name, variableType, variableInfo[variableType].size);
   return GPVarFromData(vdata);
 }
