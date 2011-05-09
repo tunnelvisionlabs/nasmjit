@@ -357,6 +357,31 @@ ASMJIT_API Mem _MemPtrAbs(
   return m;
 }
 
+ASMJIT_API Mem _MemPtrAbs(
+  void* target,
+  const GPVar& index, uint32_t shift, sysint_t disp,
+  uint32_t segmentPrefix, uint32_t ptrSize)
+  ASMJIT_NOTHROW
+{
+  Mem m;// (_DontInitialize());
+
+  m._mem.op = OPERAND_MEM;
+  m._mem.size = ptrSize;
+  m._mem.type = OPERAND_MEM_ABSOLUTE;
+  m._mem.segmentPrefix = (uint8_t)segmentPrefix;
+
+  m._mem.id = INVALID_VALUE;
+
+  m._mem.base = INVALID_VALUE;
+  m._mem.index = index.getId();
+  m._mem.shift = shift;
+
+  m._mem.target = target;
+  m._mem.displacement = disp;
+
+  return m;
+}
+
 // ============================================================================
 // [AsmJit::Mem - ptr[base + displacement]]
 // ============================================================================

@@ -1923,6 +1923,12 @@ ASMJIT_API Mem _MemPtrAbs(
   const GPReg& index, uint32_t shift, sysint_t disp,
   uint32_t segmentPrefix, uint32_t ptrSize) ASMJIT_NOTHROW;
 
+//! @internal
+ASMJIT_API Mem _MemPtrAbs(
+  void* target,
+  const GPVar& index, uint32_t shift, sysint_t disp,
+  uint32_t segmentPrefix, uint32_t ptrSize) ASMJIT_NOTHROW;
+
 
 
 //! @brief Create pointer operand with not specified size.
@@ -2013,6 +2019,52 @@ static inline Mem xmmword_ptr_abs(void* target, const GPReg& index, uint32_t shi
 
 //! @brief Create system dependent pointer operand (32-bit or 64-bit).
 static inline Mem sysint_ptr_abs(void* target, const GPReg& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, sizeof(sysint_t)); }
+
+
+
+//! @brief Create pointer operand with not specified size.
+static inline Mem ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, 0); }
+
+//! @brief Create byte pointer operand.
+static inline Mem byte_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_BYTE); }
+
+//! @brief Create word (2 Bytes) pointer operand.
+static inline Mem word_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_WORD); }
+
+//! @brief Create dword (4 Bytes) pointer operand.
+static inline Mem dword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_DWORD); }
+
+//! @brief Create qword (8 Bytes) pointer operand.
+static inline Mem qword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_QWORD); }
+
+//! @brief Create tword (10 Bytes) pointer operand (used for 80-bit floating points).
+static inline Mem tword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_TWORD); }
+
+//! @brief Create dqword (16 Bytes) pointer operand.
+static inline Mem dqword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_DQWORD); }
+
+//! @brief Create mmword (8 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for mmx programming.
+static inline Mem mmword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_QWORD); }
+
+//! @brief Create xmmword (16 bytes) pointer operand
+//!
+//! @note This constructor is provided only for convenience for sse programming.
+static inline Mem xmmword_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
+{ return _MemPtrAbs(target, index, shift, disp, segmentPrefix, SIZE_DQWORD); }
+
+//! @brief Create system dependent pointer operand (32-bit or 64-bit).
+static inline Mem sysint_ptr_abs(void* target, const GPVar& index, uint32_t shift, sysint_t disp = 0, uint32_t segmentPrefix = SEGMENT_NONE) ASMJIT_NOTHROW
 { return _MemPtrAbs(target, index, shift, disp, segmentPrefix, sizeof(sysint_t)); }
 
 // ============================================================================
