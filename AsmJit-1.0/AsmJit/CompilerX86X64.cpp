@@ -2429,7 +2429,7 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   if (_functionPrototype.getCallingConvention() == CALL_CONV_X64U) 
     accessibleMemoryBelowStack = 128;
 
-  if (_isCaller && cc._memBytesTotal > 0)
+  if (_isCaller && (cc._memBytesTotal > 0 || _isStackAlignedByOsTo16Bytes))
     _isEspAdjusted = true;
 
   if (cc._memBytesTotal > accessibleMemoryBelowStack)
