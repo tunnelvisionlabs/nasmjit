@@ -195,9 +195,9 @@ struct ASMJIT_HIDDEN Operand
     //   label (in _mem.base) and INVALID_VALUE, we just decrement the value
     //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there
     //   then it's extended register.
-    return (isReg() && (_reg.code & REG_INDEX_MASK) >= 8) ||
-           (isMem() && (((uint32_t)_mem.base  - 8U) < 8U) ||
-                       (((uint32_t)_mem.index - 8U) < 8U) );
+    return (isReg() && (_reg.code & REG_INDEX_MASK)  >= 8) ||
+           (isMem() && ((((uint32_t)_mem.base  - 8U) < 8U) ||
+                        (((uint32_t)_mem.index - 8U) < 8U) ));
   }
 
   // --------------------------------------------------------------------------
