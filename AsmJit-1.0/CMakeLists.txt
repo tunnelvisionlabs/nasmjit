@@ -88,6 +88,7 @@ If(ASMJIT_BUILD_TEST)
     testfunccall3
     testfuncmanyargs
     testfuncmemcpy
+    testfuncrecursive1
     testfuncret
     testjit
     testjump1
