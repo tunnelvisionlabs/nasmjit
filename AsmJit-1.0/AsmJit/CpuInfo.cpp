@@ -246,7 +246,6 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
         if (out.ecx & 0x00000040U) i->features |= CPU_FEATURE_SSE4_A;
         if (out.ecx & 0x00000080U) i->features |= CPU_FEATURE_MSSE;
         if (out.ecx & 0x00000100U) i->features |= CPU_FEATURE_PREFETCH;
-        if (out.ecx & 0x00000800U) i->features |= CPU_FEATURE_SSE5;
 
         if (out.edx & 0x00100000U) i->features |= CPU_FEATURE_EXECUTE_DISABLE_BIT;
         if (out.edx & 0x00200000U) i->features |= CPU_FEATURE_FFXSR;

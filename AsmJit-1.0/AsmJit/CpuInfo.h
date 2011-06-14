@@ -139,8 +139,6 @@ enum CPU_FEATURE
   CPU_FEATURE_SSE4_1 = 1U << 19,
   //! @brief Cpu has SSE4.2.
   CPU_FEATURE_SSE4_2 = 1U << 20,
-  //! @brief Cpu has SSE5.
-  CPU_FEATURE_SSE5 = 1U << 21,
   //! @brief Cpu has AVX.
   CPU_FEATURE_AVX = 1U << 22,
   //! @brief Cpu has Misaligned SSE (MSSE).
