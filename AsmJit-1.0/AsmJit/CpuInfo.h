@@ -80,14 +80,19 @@ ASMJIT_API void cpuid(uint32_t in, CpuId* out) ASMJIT_NOTHROW;
 //! read from cpuid result, instead it's based on CPU vendor string.
 enum CPU_VENDOR
 {
-  //! @brief Unknown vendor.
+  //! @brief Unknown CPU vendor.
   CPU_VENDOR_UNKNOWN = 0,
-  //! @brief Intel vendor (GenuineIntel vendor string).
+
+  //! @brief Intel CPU vendor.
   CPU_VENDOR_INTEL = 1,
-  //! @brief AMD vendor (AuthenticAMD or alternatively AMDisbetter! vendor strings).
+  //! @brief AMD CPU vendor.
   CPU_VENDOR_AMD = 2,
-  //! @brief VIA vendor (VIA VIA VIA vendor string).
-  CPU_VENDOR_VIA = 3
+  //! @brief National Semiconductor CPU vendor (applies also to Cyrix processors).
+  CPU_VENDOR_NSM = 3,
+  //! @brief Transmeta CPU vendor.
+  CPU_VENDOR_TRANSMETA = 4,
+  //! @brief VIA CPU vendor.
+  CPU_VENDOR_VIA = 5
 };
 
 // ============================================================================
@@ -182,6 +187,8 @@ struct ASMJIT_HIDDEN CpuInfo
 {
   //! @brief Cpu short vendor string.
   char vendor[16];
+  //! @brief Cpu long vendor string (brand).
+  char brand[64];
   //! @brief Cpu vendor id (see @c AsmJit::CpuInfo::VendorId enum).
   uint32_t vendorId;
   //! @brief Cpu family ID.

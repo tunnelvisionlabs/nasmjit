@@ -124,19 +124,38 @@ void cpuid(uint32_t in, CpuId* out) ASMJIT_NOTHROW
 #endif // compiler
 }
 
-struct VendorInfo
+struct CpuVendorInfo
 {
   uint32_t id;
   char text[12];
 };
 
-static const VendorInfo vendorInfo[] = 
+static const CpuVendorInfo cpuVendorInfo[] = 
 {
-  { CPU_VENDOR_INTEL, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
-  { CPU_VENDOR_AMD  , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
-  { CPU_VENDOR_AMD  , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
-  { CPU_VENDOR_VIA  , { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} }
+  { CPU_VENDOR_INTEL    , { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } },
+
+  { CPU_VENDOR_AMD      , { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } },
+  { CPU_VENDOR_AMD      , { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } },
+
+  { CPU_VENDOR_NSM      , { 'G', 'e', 'o', 'd', 'e', ' ', 'b', 'y', ' ', 'N', 'S', 'C' } },
+  { CPU_VENDOR_NSM      , { 'C', 'y', 'r', 'i', 'x', 'I', 'n', 's', 't', 'e', 'a', 'd' } },
+
+  { CPU_VENDOR_TRANSMETA, { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'T', 'M', 'x', '8', '6' } },
+  { CPU_VENDOR_TRANSMETA, { 'T', 'r', 'a', 'n', 's', 'm', 'e', 't', 'a', 'C', 'P', 'U' } },
+
+  { CPU_VENDOR_VIA      , { 'V', 'I', 'A',  0 , 'V', 'I', 'A',  0 , 'V', 'I', 'A',  0  } },
+  { CPU_VENDOR_VIA      , { 'C', 'e', 'n', 't', 'a', 'u', 'r', 'H', 'a', 'u', 'l', 's' } }
 };
+
+static inline bool cpuVencorEq(const CpuVendorInfo& info, const char* vendorString)
+{
+  const uint32_t* a = reinterpret_cast<const uint32_t*>(info.text);
+  const uint32_t* b = reinterpret_cast<const uint32_t*>(vendorString);
+
+  return (a[0] == b[0]) &
+         (a[1] == b[1]) &
+         (a[2] == b[2]) ;
+}
 
 void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 {
@@ -160,9 +179,9 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 
   for (a = 0; a < 3; a++)
   {
-    if (memcmp(i->vendor, vendorInfo[a].text, 12) == 0)
+    if (cpuVencorEq(cpuVendorInfo[a], i->vendor))
     {
-      i->vendorId = vendorInfo[a].id;
+      i->vendorId = cpuVendorInfo[a].id;
       break;
     }
   }
@@ -233,8 +252,9 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   cpuid(0x80000000, &out);
 
   uint32_t exIds = out.eax;
+  uint32_t* brand = reinterpret_cast<uint32_t*>(i->brand);
 
-  for (a = 0x80000001; a < exIds && a <= (0x80000001); a++)
+  for (a = 0x80000001; a < exIds && a <= 0x80000001; a++)
   {
     cpuid(a, &out);
 
@@ -254,8 +274,15 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
         if (out.edx & 0x20000000U) i->features |= CPU_FEATURE_64_BIT;
         if (out.edx & 0x40000000U) i->features |= CPU_FEATURE_3DNOW_EXT | CPU_FEATURE_MMX_EXT;
         if (out.edx & 0x80000000U) i->features |= CPU_FEATURE_3DNOW;
-
         break;
+
+      case 0x80000002:
+      case 0x80000003:
+      case 0x80000004:
+        *brand++ = out.eax;
+        *brand++ = out.ebx;
+        *brand++ = out.ecx;
+        *brand++ = out.edx;
 
       // Additional features can be detected in the future.
     }
