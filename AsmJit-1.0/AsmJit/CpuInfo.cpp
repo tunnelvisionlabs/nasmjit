@@ -157,6 +157,38 @@ static inline bool cpuVencorEq(const CpuVendorInfo& info, const char* vendorStri
          (a[2] == b[2]) ;
 }
 
+static inline void simplifyBrandString(char* s)
+{
+  // Always clear the current character in the buffer. This ensures that there
+  // is no garbage after the string NULL terminator.
+  char* d = s;
+
+  char prev = 0;
+  char curr = s[0];
+  s[0] = '\0';
+
+  for (;;)
+  {
+    if (curr == 0) break;
+
+    if (curr == ' ')
+    {
+      if (prev == '@') goto _Skip;
+      if (s[1] == ' ' || s[1] == '@') goto _Skip;
+    }
+
+    d[0] = curr;
+    d++;
+    prev = curr;
+
+_Skip:
+    curr = *++s;
+    s[0] = '\0';
+  }
+
+  d[0] = '\0';
+}
+
 void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
 {
   uint32_t a;
@@ -252,9 +284,11 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   cpuid(0x80000000, &out);
 
   uint32_t exIds = out.eax;
+  if (exIds > 0x80000004) exIds = 0x80000004;
+
   uint32_t* brand = reinterpret_cast<uint32_t*>(i->brand);
 
-  for (a = 0x80000001; a < exIds && a <= 0x80000001; a++)
+  for (a = 0x80000001; a <= exIds; a++)
   {
     cpuid(a, &out);
 
@@ -283,10 +317,16 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
         *brand++ = out.ebx;
         *brand++ = out.ecx;
         *brand++ = out.edx;
+        break;
 
-      // Additional features can be detected in the future.
+      default:
+        // Additional features can be detected in the future.
+        break;
     }
   }
+
+  // Simplify the brand string (remove unnecessary spaces to make it printable).
+  simplifyBrandString(i->brand);
 
 #endif // ASMJIT_X86 || ASMJIT_X64
 }

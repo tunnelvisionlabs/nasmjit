@@ -69,7 +69,7 @@ static const BitDescription cFeatures[] =
   { CPU_FEATURE_POPCNT                      , "POPCNT" },
   { CPU_FEATURE_LZCNT                       , "LZCNT" },
   { CPU_FEATURE_PCLMULDQ                    , "PCLMULDQ" },
-  { CPU_FEATURE_MULTI_THREADING             , "MultiThreading" },
+  { CPU_FEATURE_MULTI_THREADING             , "Multi-Threading" },
   { CPU_FEATURE_EXECUTE_DISABLE_BIT         , "Execute Disable Bit" },
   { CPU_FEATURE_64_BIT                      , "64 Bit Processor" },
   { 0, NULL }
@@ -92,12 +92,14 @@ int main(int argc, char* argv[])
 
   printf("\nBasic info\n");
   printf("  Vendor string         : %s\n", i->vendor);
+  printf("  Brand string          : %s\n", i->brand);
   printf("  Family                : %u\n", i->family);
   printf("  Model                 : %u\n", i->model);
   printf("  Stepping              : %u\n", i->stepping);
   printf("  Number of Processors  : %u\n", i->numberOfProcessors);
-  printf("  Features              : %0.8X\n", i->features);
-  printf("  Bugs                  : %0.8X\n", i->bugs);
+  printf("  Features              : 0x%0.8X\n", i->features);
+  printf("  Bugs                  : 0x%0.8X\n", i->bugs);
+
   printf("\nExtended Info (X86/X64):\n");
   printf("  Processor Type        : %u\n", i->x86ExtendedInfo.processorType);
   printf("  Brand Index           : %u\n", i->x86ExtendedInfo.brandIndex);
