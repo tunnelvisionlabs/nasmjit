@@ -252,6 +252,21 @@ private: \
   inline __type__& operator=(const __type__& other);
 
 // ----------------------------------------------------------------------------
+// [AsmJit - Debug]
+// ----------------------------------------------------------------------------
+
+// If ASMJIT_DEBUG and ASMJIT_NO_DEBUG is not defined then ASMJIT_DEBUG will be
+// detected using the compiler specific macros. This enables to set the build 
+// type using IDE.
+#if !defined(ASMJIT_DEBUG) && !defined(ASMJIT_NO_DEBUG)
+
+#if defined(_DEBUG)
+#define ASMJIT_DEBUG
+#endif // _DEBUG
+
+#endif // !ASMJIT_DEBUG && !ASMJIT_NO_DEBUG
+  
+// ----------------------------------------------------------------------------
 // [AsmJit - Assert]
 // ----------------------------------------------------------------------------
 
@@ -276,6 +291,10 @@ ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 // #  pragma GCC diagnostic ignored "-w"
 // # endif
 // #endif // __GNUC__
+
+// ----------------------------------------------------------------------------
+// [AsmJit - OS Support]
+// ----------------------------------------------------------------------------
 
 #if defined(ASMJIT_WINDOWS)
 #include <Windows.h>

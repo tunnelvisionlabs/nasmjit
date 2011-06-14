@@ -190,7 +190,7 @@ struct ASMJIT_HIDDEN Operand
   {
     // Hacky, but correct.
     // - If operand type is register then extended register is register with
-    //   index 8 and higher (8 to 15 inclusive).
+    //   index 8 and greater (8 to 15 inclusive).
     // - If operand type is memory operand then we need to take care about
     //   label (in _mem.base) and INVALID_VALUE, we just decrement the value
     //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there

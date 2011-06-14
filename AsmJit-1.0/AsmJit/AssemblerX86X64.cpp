@@ -938,9 +938,9 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 #if defined(ASMJIT_X64)
     // Check if there is register that makes this instruction un-encodable.
 
-    forceRexPrefix |= o0->isExtendedRegisterUsed();
-    forceRexPrefix |= o1->isExtendedRegisterUsed();
-    forceRexPrefix |= o2->isExtendedRegisterUsed();
+    forceRexPrefix |= (uint32_t)o0->isExtendedRegisterUsed();
+    forceRexPrefix |= (uint32_t)o1->isExtendedRegisterUsed();
+    forceRexPrefix |= (uint32_t)o2->isExtendedRegisterUsed();
 
     if      (o0->isRegType(REG_TYPE_GPB_LO) && (o0->_reg.code & REG_INDEX_MASK) >= 4) forceRexPrefix = true;
     else if (o1->isRegType(REG_TYPE_GPB_LO) && (o1->_reg.code & REG_INDEX_MASK) >= 4) forceRexPrefix = true;

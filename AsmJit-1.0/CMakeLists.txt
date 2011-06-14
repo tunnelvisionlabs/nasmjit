@@ -59,10 +59,14 @@ If(NOT WIN32)
   Link_Libraries(pthread)
 EndIf(NOT WIN32)
 
-# Debugging support is indicated through _DEBUG macro, add it if needed
-If(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  Add_Definitions(-DASMJIT_DEBUG)
-EndIf(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+# Build-Type.
+If(${CMAKE_BUILD_TYPE})
+  If(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    Add_Definitions(-DASMJIT_DEBUG)
+  Else()
+    Add_Definitions(-DASMJIT_NO_DEBUG)
+  EndIf()
+EndIf()
 
 # Build AsmJit shared library?
 If(ASMJIT_BUILD_LIBRARY)

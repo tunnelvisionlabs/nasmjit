@@ -189,6 +189,7 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   i->x86ExtendedInfo.apicPhysicalId       = ((out.ebx >> 24) & 0xFF);
 
   if (out.ecx & 0x00000001U) i->features |= CPU_FEATURE_SSE3;
+  if (out.ecx & 0x00000002U) i->features |= CPU_FEATURE_PCLMULDQ;
   if (out.ecx & 0x00000008U) i->features |= CPU_FEATURE_MONITOR_MWAIT;
   if (out.ecx & 0x00000200U) i->features |= CPU_FEATURE_SSSE3;
   if (out.ecx & 0x00002000U) i->features |= CPU_FEATURE_CMPXCHG16B;
@@ -196,6 +197,7 @@ void detectCpuInfo(CpuInfo* i) ASMJIT_NOTHROW
   if (out.ecx & 0x00100000U) i->features |= CPU_FEATURE_SSE4_2;
   if (out.ecx & 0x00400000U) i->features |= CPU_FEATURE_MOVBE;
   if (out.ecx & 0x00800000U) i->features |= CPU_FEATURE_POPCNT;
+  if (out.ecx & 0x10000000U) i->features |= CPU_FEATURE_AVX;
 
   if (out.edx & 0x00000010U) i->features |= CPU_FEATURE_RDTSC;
   if (out.edx & 0x00000100U) i->features |= CPU_FEATURE_CMPXCHG8B;

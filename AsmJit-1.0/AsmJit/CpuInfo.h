@@ -117,7 +117,6 @@ enum CPU_FEATURE
   CPU_FEATURE_FXSR = 1U << 8,
   //! @brief Cpu supports FXSAVE and FXRSTOR instruction optimizations (FFXSR).
   CPU_FEATURE_FFXSR = 1U << 9,
-
   //! @brief Cpu has MMX.
   CPU_FEATURE_MMX = 1U << 10,
   //! @brief Cpu has extended MMX.
@@ -128,30 +127,34 @@ enum CPU_FEATURE
   CPU_FEATURE_3DNOW_EXT = 1U << 13,
   //! @brief Cpu has SSE.
   CPU_FEATURE_SSE = 1U << 14,
-  //! @brief Cpu has Misaligned SSE (MSSE).
-  CPU_FEATURE_MSSE = 1U << 15,
   //! @brief Cpu has SSE2.
-  CPU_FEATURE_SSE2 = 1U << 16,
+  CPU_FEATURE_SSE2 = 1U << 15,
   //! @brief Cpu has SSE3.
-  CPU_FEATURE_SSE3 = 1U << 17,
+  CPU_FEATURE_SSE3 = 1U << 16,
   //! @brief Cpu has Supplemental SSE3 (SSSE3).
-  CPU_FEATURE_SSSE3 = 1U << 18,
+  CPU_FEATURE_SSSE3 = 1U << 17,
   //! @brief Cpu has SSE4.A.
-  CPU_FEATURE_SSE4_A = 1U << 19,
+  CPU_FEATURE_SSE4_A = 1U << 18,
   //! @brief Cpu has SSE4.1.
-  CPU_FEATURE_SSE4_1 = 1U << 20,
+  CPU_FEATURE_SSE4_1 = 1U << 19,
   //! @brief Cpu has SSE4.2.
-  CPU_FEATURE_SSE4_2 = 1U << 21,
+  CPU_FEATURE_SSE4_2 = 1U << 20,
   //! @brief Cpu has SSE5.
-  CPU_FEATURE_SSE5 = 1U << 22,
+  CPU_FEATURE_SSE5 = 1U << 21,
+  //! @brief Cpu has AVX.
+  CPU_FEATURE_AVX = 1U << 22,
+  //! @brief Cpu has Misaligned SSE (MSSE).
+  CPU_FEATURE_MSSE = 1U << 23,
   //! @brief Cpu supports MONITOR and MWAIT instructions.
-  CPU_FEATURE_MONITOR_MWAIT = 1U << 23,
+  CPU_FEATURE_MONITOR_MWAIT = 1U << 24,
   //! @brief Cpu supports MOVBE instruction.
-  CPU_FEATURE_MOVBE = 1U << 24,
+  CPU_FEATURE_MOVBE = 1U << 25,
   //! @brief Cpu supports POPCNT instruction.
-  CPU_FEATURE_POPCNT = 1U << 25,
+  CPU_FEATURE_POPCNT = 1U << 26,
   //! @brief Cpu supports LZCNT instruction.
-  CPU_FEATURE_LZCNT = 1U << 26,
+  CPU_FEATURE_LZCNT = 1U << 27,
+  //! @brief Cpu supports PCLMULDQ set of instructions.
+  CPU_FEATURE_PCLMULDQ  = 1U << 28,
   //! @brief Cpu supports multithreading.
   CPU_FEATURE_MULTI_THREADING = 1U << 29,
   //! @brief Cpu supports execute disable bit (execute protection).
