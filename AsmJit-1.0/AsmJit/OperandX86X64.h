@@ -1401,7 +1401,7 @@ struct ASMJIT_HIDDEN BaseVar : public Operand
 
   //! @brief Cast this variable to memory operand.
   //!
-  //! @note Size of operand depends to native variable type, you can use other
+  //! @note Size of operand depends on native variable type, you can use other
   //! variants if you want specific one.
   inline Mem m() const ASMJIT_NOTHROW
   { return _baseVarMem(*this, INVALID_VALUE); }

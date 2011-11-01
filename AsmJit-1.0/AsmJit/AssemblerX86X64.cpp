@@ -2686,7 +2686,7 @@ void AssemblerCore::embedLabel(const Label& label) ASMJIT_NOTHROW
 
   _relocData.append(r_data);
 
-  // Emit dummy sysint (4 or 8 bytes that depends to address size).
+  // Emit dummy sysint (4 or 8 bytes that depends on address size).
   _emitSysInt(0);
 }
 

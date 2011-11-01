@@ -53,7 +53,7 @@ namespace AsmJit {
 //! @var REG_NUM
 //! @brief Count of General purpose registers and XMM registers.
 //!
-//! Count of general purpose registers and XMM registers depends to current
+//! Count of general purpose registers and XMM registers depends on current
 //! bit-mode. If application is compiled for 32-bit platform then this number
 //! is 8, 64-bit platforms have 8 extra general purpose and xmm registers (16
 //! total).
@@ -63,7 +63,7 @@ enum REG_NUM
 {
   //! @var REG_NUM_BASE
   //!
-  //! Count of general purpose registers and XMM registers depends to current
+  //! Count of general purpose registers and XMM registers depends on current
   //! bit-mode. If application is compiled for 32-bit platform then this number
   //! is 8, 64-bit platforms have 8 extra general purpose and xmm registers (16
   //! total).
@@ -243,7 +243,7 @@ enum REG_TYPE
   //! @var REG_GPN
   //! @brief 32-bit or 64-bit general purpose register type.
 
-  // native 32-bit or 64-bit register type (depends to x86 or x64 mode).
+  // native 32-bit or 64-bit register type (depends on x86 or x64 mode).
 #if defined(ASMJIT_X86)
   REG_TYPE_GPN = REG_TYPE_GPD,
 #else
@@ -1498,7 +1498,7 @@ struct InstructionDescription
   uint8_t group;
   //! @brief Instruction type flags.
   uint8_t flags;
-  //! @brief First and second operand flags (some groups depends to these settings, used also by @c Compiler).
+  //! @brief First and second operand flags (some groups depends on these settings, used also by @c Compiler).
   uint16_t oflags[2];
   //! @brief If instruction has only memory operand, this is register opcode.
   uint16_t opCodeR;

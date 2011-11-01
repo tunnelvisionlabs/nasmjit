@@ -1519,7 +1519,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_JMP              , "jmp"              , G(JMP)           , F(JUMP)          , 0                   , 0                   , 0, 0         , 0),
   MAKE_INST(INST_LDDQU            , "lddqu"            , G(MMU_RMI)       , F(NONE)          , O(XMM)              , O(MEM)              , 0, 0xF2000FF0, 0),
   MAKE_INST(INST_LDMXCSR          , "ldmxcsr"          , G(M)             , F(NONE)          , O(MEM)              , 0                   , 2, 0x00000FAE, 0),
-  MAKE_INST(INST_LEA              , "lahf"             , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x0000009F, 0),
+  MAKE_INST(INST_LAHF             , "lahf"             , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x0000009F, 0),
   MAKE_INST(INST_LEA              , "lea"              , G(LEA)           , F(NONE)          , O(GQD)              , O(MEM)              , 0, 0         , 0),
   MAKE_INST(INST_LEAVE            , "leave"            , G(EMIT)          , F(SPECIAL)       , 0                   , 0                   , 0, 0x000000C9, 0),
   MAKE_INST(INST_LFENCE           , "lfence"           , G(EMIT)          , F(NONE)          , 0                   , 0                   , 0, 0x000FAEE8, 0),

@@ -2199,7 +2199,7 @@ void EJmp::_doJump(CompilerContext& cc) ASMJIT_NOTHROW
     //
     // NOTE: We can't use this technique if instruction is forward conditional
     // jump. The reason is that when generating code we can't change state here,
-    // because next instruction depends to it.
+    // because the next instruction depends on it.
     cc._restoreState(_jumpTarget->getState(), _jumpTarget->getOffset());
   }
   else
