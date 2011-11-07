@@ -688,7 +688,7 @@ ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJI
   }
 }
 
-ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
+ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegType) ASMJIT_NOTHROW
 {
   if (op->isReg())
   {
@@ -714,7 +714,7 @@ ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
       case OPERAND_MEM_NATIVE:
       {
         // [base + index*scale + displacement]
-        buf = dumpRegister(buf, REG_TYPE_GPN, mem.getBase());
+        buf = dumpRegister(buf, memRegType, mem.getBase());
         break;
       }
       case OPERAND_MEM_LABEL:
@@ -735,7 +735,7 @@ ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW
     if (mem.hasIndex())
     {
       buf = Util::mycpy(buf, " + ");
-      buf = dumpRegister(buf, REG_TYPE_GPN, mem.getIndex());
+      buf = dumpRegister(buf, memRegType, mem.getIndex());
 
       if (mem.getShift())
       {
@@ -776,7 +776,8 @@ static char* dumpInstruction(char* buf,
   uint32_t emitOptions,
   const Operand* o0,
   const Operand* o1,
-  const Operand* o2) ASMJIT_NOTHROW
+  const Operand* o2,
+  uint32_t memRegType) ASMJIT_NOTHROW
 {
   if (emitOptions & EMIT_OPTION_REX_PREFIX ) buf = Util::mycpy(buf, "rex ", 4);
   if (emitOptions & EMIT_OPTION_LOCK_PREFIX) buf = Util::mycpy(buf, "lock ", 5);
@@ -786,9 +787,9 @@ static char* dumpInstruction(char* buf,
   buf = dumpInstructionName(buf, code);
 
   // Dump operands.
-  if (!o0->isNone()) { *buf++ = ' '; buf = dumpOperand(buf, o0); }
-  if (!o1->isNone()) { *buf++ = ','; *buf++ = ' '; buf = dumpOperand(buf, o1); }
-  if (!o2->isNone()) { *buf++ = ','; *buf++ = ' '; buf = dumpOperand(buf, o2); }
+  if (!o0->isNone()) { *buf++ = ' '; buf = dumpOperand(buf, o0, memRegType); }
+  if (!o1->isNone()) { *buf++ = ','; *buf++ = ' '; buf = dumpOperand(buf, o1, memRegType); }
+  if (!o2->isNone()) { *buf++ = ','; *buf++ = ' '; buf = dumpOperand(buf, o2, memRegType); }
 
   return buf;
 }
@@ -884,6 +885,7 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 #else
   uint32_t forceRexPrefix = _emitOptions & EMIT_OPTION_REX_PREFIX;
 #endif
+  uint32_t memRegType = REG_TYPE_GPN;
 
 #if defined(ASMJIT_DEBUG)
   bool assertIllegal = false;
@@ -1421,6 +1423,16 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
       {
         const GPReg& dst = reinterpret_cast<const GPReg&>(*o0);
         const Mem& src = reinterpret_cast<const Mem&>(*o1);
+
+        // Support lea gpd/gpq, [gpd address]
+#if defined(ASMJIT_X64)
+        if (code == INST_LEA_D)
+        {
+          _emitByte(0x67);
+          memRegType = REG_TYPE_GPD;
+        }
+#endif // ASMJIT_X64
+
         _emitX86RM(0x8D,
           dst.isRegType(REG_TYPE_GPW),
           dst.isRegType(REG_TYPE_GPQ), dst.getRegCode(), src,
@@ -2468,7 +2480,7 @@ end:
       }
     }
 
-    buf = dumpInstruction(buf, code, _emitOptions, o0, o1, o2);
+    buf = dumpInstruction(buf, code, _emitOptions, o0, o1, o2, memRegType);
 
     if (_logger->getLogBinary())
       buf = dumpComment(buf, (sysuint_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _comment);

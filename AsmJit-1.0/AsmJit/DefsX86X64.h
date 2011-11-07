@@ -971,7 +971,8 @@ enum INST_CODE
   INST_LDDQU,
   INST_LDMXCSR,
   INST_LAHF,          // X86/X64 (CPUID NEEDED)
-  INST_LEA,           // X86/X64
+  INST_LEA_D,         // X86/X64 (lea gpd/gpq, [gpd])
+  INST_LEA_Q,         // X64     (lea gpd/gpq, [gpq])
   INST_LEAVE,         // X86/X64
   INST_LFENCE,
   INST_MASKMOVDQU,

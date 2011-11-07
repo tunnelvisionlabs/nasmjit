@@ -59,14 +59,19 @@ def processFile(fileName):
 
   dinst = []
   daddr = []
+  hinst = {}
 
   r = re.compile(r'\"(?P<INST>[A-Za-z0-9_ ]+)\"')
   dpos = 0
   for m in r.finditer(din):
     inst = m.group("INST")
-    dinst.append(inst)
-    daddr.append(dpos)
-    dpos += len(inst) + 1
+    
+    if not inst in hinst:
+      dinst.append(inst)
+      hinst[inst] = dpos
+
+      daddr.append(dpos)
+      dpos += len(inst) + 1
 
   dout += "const char instructionName[] =\n"
   for i in xrange(len(dinst)):

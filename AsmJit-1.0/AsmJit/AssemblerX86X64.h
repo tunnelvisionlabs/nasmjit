@@ -1556,7 +1556,23 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   //! The destination operand is a general-purpose register.
   inline void lea(const GPReg& dst, const Mem& src)
   {
-    _emitInstruction(INST_LEA, &dst, &src);
+#if defined(ASMJIT_X86)
+    _emitInstruction(INST_LEA_D, &dst, &src);
+#else
+    _emitInstruction(INST_LEA_Q, &dst, &src);
+#endif // ASMJIT_X86
+  }
+
+  //! @overload
+  inline void lea_d(const GPReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_LEA_D, &dst, &src);
+  }
+
+  //! @overload
+  inline void lea_q(const GPReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_LEA_Q, &dst, &src);
   }
 
   //! @brief High Level Procedure Exit.

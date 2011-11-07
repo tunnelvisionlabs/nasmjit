@@ -3031,7 +3031,23 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! The destination operand is a general-purpose register.
   inline void lea(const GPVar& dst, const Mem& src)
   {
-    _emitInstruction(INST_LEA, &dst, &src);
+#if defined(ASMJIT_X86)
+    _emitInstruction(INST_LEA_D, &dst, &src);
+#else
+    _emitInstruction(INST_LEA_Q, &dst, &src);
+#endif // ASMJIT_X86
+  }
+
+  //! @overload
+  inline void lea_d(const GPVar& dst, const Mem& src)
+  {
+    _emitInstruction(INST_LEA_D, &dst, &src);
+  }
+
+  //! @overload
+  inline void lea_q(const GPVar& dst, const Mem& src)
+  {
+    _emitInstruction(INST_LEA_Q, &dst, &src);
   }
 
 #if ASMJIT_NOT_SUPPORTED_BY_COMPILER

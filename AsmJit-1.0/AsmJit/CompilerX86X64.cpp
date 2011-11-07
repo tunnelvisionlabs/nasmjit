@@ -51,7 +51,7 @@ namespace AsmJit {
 
 // Defined in AssemblerX86X64.cpp.
 ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJIT_NOTHROW;
-ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op) ASMJIT_NOTHROW;
+ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegType) ASMJIT_NOTHROW;
 
 // ============================================================================
 // [Helpers - Variables]
@@ -1625,7 +1625,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             vdata->registerWriteCount++;
             var->vflags |= VARIABLE_ALLOC_WRITE;
           }
-          else if (id->code == INST_LEA)
+          else if (id->code == INST_LEA_D || id->code == INST_LEA_Q)
           {
             // Write.
             vdata->registerWriteCount++;
@@ -2553,14 +2553,14 @@ void EFunction::_dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW
       if (a.registerIndex != INVALID_VALUE)
       {
         BaseReg regOp(a.registerIndex | REG_TYPE_GPN, 0);
-        dumpOperand(memHome, &regOp)[0] = '\0';
+        dumpOperand(memHome, &regOp, REG_TYPE_GPN)[0] = '\0';
       }
       else
       {
         Mem memOp;
         memOp._mem.base = REG_INDEX_ESP;
         memOp._mem.displacement = a.stackOffset;
-        dumpOperand(memHome, &memOp)[0] = '\0';
+        dumpOperand(memHome, &memOp, REG_TYPE_GPN)[0] = '\0';
       }
 
       logger->logFormat("; %-3u| %-9s| %-3u| %-15s|\n",
@@ -2624,7 +2624,7 @@ void EFunction::_dumpFunction(CompilerContext& cc) ASMJIT_NOTHROW
           memOp._mem.displacement += cc._variablesBaseOffset;
           memOp._mem.displacement += memBlock->offset;
         }
-        dumpOperand(memHome, &memOp)[0] = '\0';
+        dumpOperand(memHome, &memOp, REG_TYPE_GPN)[0] = '\0';
       }
 
       logger->logFormat("; %-3u| %-9s| %-3u| %-15s| r=%-4uw=%-4ux=%-4u| r=%-4uw=%-4ux=%-4u|\n",
