@@ -6180,6 +6180,12 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   }
 
   //! @brief Move Unaligned Packed Double-Precision FP Values (SSE2).
+  inline void movupd(const XMMVar& dst, const XMMVar& src)
+  {
+    _emitInstruction(INST_MOVUPD, &dst, &src);
+  }
+
+  //! @brief Move Unaligned Packed Double-Precision FP Values (SSE2).
   inline void movupd(const XMMVar& dst, const Mem& src)
   {
     _emitInstruction(INST_MOVUPD, &dst, &src);
@@ -6470,6 +6476,17 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   inline void pcmpgtd(const XMMVar& dst, const Mem& src)
   {
     _emitInstruction(INST_PCMPGTD, &dst, &src);
+  }
+
+  //! @brief Extract Word (SSE2).
+  inline void pextrw(const GPVar& dst, const XMMVar& src, const Imm& imm8)
+  {
+    _emitInstruction(INST_PEXTRW, &dst, &src, &imm8);
+  }
+  //! @brief Extract Word (SSE2).
+  inline void pextrw(const Mem& dst, const XMMVar& src, const Imm& imm8)
+  {
+    _emitInstruction(INST_PEXTRW, &dst, &src, &imm8);
   }
 
   //! @brief Packed Signed Integer Word Maximum (SSE2).
@@ -7732,17 +7749,6 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   inline void pextrq(const Mem& dst, const XMMVar& src, const Imm& imm8)
   {
     _emitInstruction(INST_PEXTRQ, &dst, &src, &imm8);
-  }
-
-  //! @brief Extract Word (SSE4.1).
-  inline void pextrw(const GPVar& dst, const XMMVar& src, const Imm& imm8)
-  {
-    _emitInstruction(INST_PEXTRW, &dst, &src, &imm8);
-  }
-  //! @brief Extract Word (SSE4.1).
-  inline void pextrw(const Mem& dst, const XMMVar& src, const Imm& imm8)
-  {
-    _emitInstruction(INST_PEXTRW, &dst, &src, &imm8);
   }
 
   //! @brief Packed Horizontal Word Minimum (SSE4.1).

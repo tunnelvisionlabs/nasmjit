@@ -719,23 +719,23 @@ enum INST_CODE
 {
   INST_ADC,           // X86/X64
   INST_ADD,           // X86/X64
-  INST_ADDPD,
-  INST_ADDPS,
-  INST_ADDSD,
-  INST_ADDSS,
-  INST_ADDSUBPD,
-  INST_ADDSUBPS,
+  INST_ADDPD,         // SSE2
+  INST_ADDPS,         // SSE
+  INST_ADDSD,         // SSE2
+  INST_ADDSS,         // SSE
+  INST_ADDSUBPD,      // SSE3
+  INST_ADDSUBPS,      // SSE3
   INST_AMD_PREFETCH,
   INST_AMD_PREFETCHW,
   INST_AND,           // X86/X64
-  INST_ANDNPD,
-  INST_ANDNPS,
-  INST_ANDPD,
-  INST_ANDPS,
-  INST_BLENDPD,
-  INST_BLENDPS,
-  INST_BLENDVPD,
-  INST_BLENDVPS,
+  INST_ANDNPD,        // SSE2
+  INST_ANDNPS,        // SSE
+  INST_ANDPD,         // SSE2
+  INST_ANDPS,         // SSE
+  INST_BLENDPD,       // SSE4.1
+  INST_BLENDPS,       // SSE4.1
+  INST_BLENDVPD,      // SSE4.1
+  INST_BLENDVPS,      // SSE4.1
   INST_BSF,           // X86/X64
   INST_BSR,           // X86/X64
   INST_BSWAP,         // X86/X64 (i486)
@@ -748,7 +748,7 @@ enum INST_CODE
   INST_CDQE,          // X64 only
   INST_CLC,           // X86/X64
   INST_CLD,           // X86/X64
-  INST_CLFLUSH,
+  INST_CLFLUSH,       // SSE2
   INST_CMC,           // X86/X64
 
   INST_CMOV,          // Begin (cmovcc) (i586)
@@ -784,53 +784,53 @@ enum INST_CODE
   INST_CMOVZ,         // X86/X64 (cmovcc) (i586)
 
   INST_CMP,           // X86/X64
-  INST_CMPPD,
-  INST_CMPPS,
-  INST_CMPSD,
-  INST_CMPSS,
+  INST_CMPPD,         // SSE2
+  INST_CMPPS,         // SSE
+  INST_CMPSD,         // SSE2
+  INST_CMPSS,         // SSE
   INST_CMPXCHG,       // X86/X64 (i486)
   INST_CMPXCHG16B,    // X64 only
   INST_CMPXCHG8B,     // X86/X64 (i586)
-  INST_COMISD,
-  INST_COMISS,
+  INST_COMISD,        // SSE2
+  INST_COMISS,        // SSE
   INST_CPUID,         // X86/X64 (i486)
-  INST_CRC32,
-  INST_CVTDQ2PD,
-  INST_CVTDQ2PS,
-  INST_CVTPD2DQ,
-  INST_CVTPD2PI,
-  INST_CVTPD2PS,
-  INST_CVTPI2PD,
-  INST_CVTPI2PS,
-  INST_CVTPS2DQ,
-  INST_CVTPS2PD,
-  INST_CVTPS2PI,
-  INST_CVTSD2SI,
-  INST_CVTSD2SS,
-  INST_CVTSI2SD,
-  INST_CVTSI2SS,
-  INST_CVTSS2SD,
-  INST_CVTSS2SI,
-  INST_CVTTPD2DQ,
-  INST_CVTTPD2PI,
-  INST_CVTTPS2DQ,
-  INST_CVTTPS2PI,
-  INST_CVTTSD2SI,
-  INST_CVTTSS2SI,
+  INST_CRC32,         // SSE4.2
+  INST_CVTDQ2PD,      // SSE2
+  INST_CVTDQ2PS,      // SSE2
+  INST_CVTPD2DQ,      // SSE2
+  INST_CVTPD2PI,      // SSE2
+  INST_CVTPD2PS,      // SSE2
+  INST_CVTPI2PD,      // SSE2
+  INST_CVTPI2PS,      // SSE
+  INST_CVTPS2DQ,      // SSE2
+  INST_CVTPS2PD,      // SSE2
+  INST_CVTPS2PI,      // SSE
+  INST_CVTSD2SI,      // SSE2
+  INST_CVTSD2SS,      // SSE2
+  INST_CVTSI2SD,      // SSE2
+  INST_CVTSI2SS,      // SSE
+  INST_CVTSS2SD,      // SSE2
+  INST_CVTSS2SI,      // SSE
+  INST_CVTTPD2DQ,     // SSE2
+  INST_CVTTPD2PI,     // SSE2
+  INST_CVTTPS2DQ,     // SSE2
+  INST_CVTTPS2PI,     // SSE
+  INST_CVTTSD2SI,     // SSE2
+  INST_CVTTSS2SI,     // SSE
   INST_CWDE,          // X86/X64
   INST_DAA,           // X86 only
   INST_DAS,           // X86 only
   INST_DEC,           // X86/X64
   INST_DIV,           // X86/X64
-  INST_DIVPD,
-  INST_DIVPS,
-  INST_DIVSD,
-  INST_DIVSS,
-  INST_DPPD,
-  INST_DPPS,
+  INST_DIVPD,         // SSE2
+  INST_DIVPS,         // SSE
+  INST_DIVSD,         // SSE2
+  INST_DIVSS,         // SSE
+  INST_DPPD,          // SSE4.1
+  INST_DPPS,          // SSE4.1
   INST_EMMS,          // MMX
   INST_ENTER,         // X86/X64
-  INST_EXTRACTPS,
+  INST_EXTRACTPS,     // SSE4.1
   INST_F2XM1,         // X87
   INST_FABS,          // X87
   INST_FADD,          // X87
@@ -871,7 +871,7 @@ enum INST_CODE
   INST_FINIT,         // X87
   INST_FIST,          // X87
   INST_FISTP,         // X87
-  INST_FISTTP,
+  INST_FISTTP,        // SSE3
   INST_FISUB,         // X87
   INST_FISUBR,        // X87
   INST_FLD,           // X87
@@ -927,10 +927,10 @@ enum INST_CODE
   INST_FXTRACT,       // X87
   INST_FYL2X,         // X87
   INST_FYL2XP1,       // X87
-  INST_HADDPD,
-  INST_HADDPS,
-  INST_HSUBPD,
-  INST_HSUBPS,
+  INST_HADDPD,        // SSE3
+  INST_HADDPS,        // SSE3
+  INST_HSUBPD,        // SSE3
+  INST_HSUBPS,        // SSE3
   INST_IDIV,          // X86/X64
   INST_IMUL,          // X86/X64
   INST_INC,           // X86/X64
@@ -968,114 +968,114 @@ enum INST_CODE
   INST_JS,            // X86/X64 (jcc)
   INST_JZ,            // X86/X64 (jcc)
   INST_JMP,           // X86/X64 (jmp)
-  INST_LDDQU,
-  INST_LDMXCSR,
+  INST_LDDQU,         // SSE3
+  INST_LDMXCSR,       // SSE
   INST_LAHF,          // X86/X64 (CPUID NEEDED)
   INST_LEA_D,         // X86/X64 (lea gpd/gpq, [gpd])
   INST_LEA_Q,         // X64     (lea gpd/gpq, [gpq])
   INST_LEAVE,         // X86/X64
-  INST_LFENCE,
-  INST_MASKMOVDQU,
-  INST_MASKMOVQ,      // MMX Extensions
-  INST_MAXPD,
-  INST_MAXPS,
-  INST_MAXSD,
-  INST_MAXSS,
-  INST_MFENCE,
-  INST_MINPD,
-  INST_MINPS,
-  INST_MINSD,
-  INST_MINSS,
-  INST_MONITOR,
+  INST_LFENCE,        // SSE2
+  INST_MASKMOVDQU,    // SSE2
+  INST_MASKMOVQ,      // MMX-Ext
+  INST_MAXPD,         // SSE2
+  INST_MAXPS,         // SSE
+  INST_MAXSD,         // SSE2
+  INST_MAXSS,         // SSE
+  INST_MFENCE,        // SSE2
+  INST_MINPD,         // SSE2
+  INST_MINPS,         // SSE
+  INST_MINSD,         // SSE2
+  INST_MINSS,         // SSE
+  INST_MONITOR,       // SSE3
   INST_MOV,           // X86/X64
-  INST_MOVAPD,
-  INST_MOVAPS,
-  INST_MOVBE,
-  INST_MOVD,
-  INST_MOVDDUP,
-  INST_MOVDQ2Q,
-  INST_MOVDQA,
-  INST_MOVDQU,
-  INST_MOVHLPS,
-  INST_MOVHPD,
-  INST_MOVHPS,
-  INST_MOVLHPS,
-  INST_MOVLPD,
-  INST_MOVLPS,
-  INST_MOVMSKPD,
-  INST_MOVMSKPS,
-  INST_MOVNTDQ,
-  INST_MOVNTDQA,
-  INST_MOVNTI,
-  INST_MOVNTPD,
-  INST_MOVNTPS,
-  INST_MOVNTQ,        // MMX Extensions
-  INST_MOVQ,
-  INST_MOVQ2DQ,
-  INST_MOVSD,
-  INST_MOVSHDUP,
-  INST_MOVSLDUP,
-  INST_MOVSS,
+  INST_MOVAPD,        // SSE2
+  INST_MOVAPS,        // SSE
+  INST_MOVBE,         // SSE3 - Intel-Atom
+  INST_MOVD,          // MMX/SSE2
+  INST_MOVDDUP,       // SSE3
+  INST_MOVDQ2Q,       // SSE2
+  INST_MOVDQA,        // SSE2
+  INST_MOVDQU,        // SSE2
+  INST_MOVHLPS,       // SSE
+  INST_MOVHPD,        // SSE2
+  INST_MOVHPS,        // SSE
+  INST_MOVLHPS,       // SSE
+  INST_MOVLPD,        // SSE2
+  INST_MOVLPS,        // SSE
+  INST_MOVMSKPD,      // SSE2
+  INST_MOVMSKPS,      // SSE2
+  INST_MOVNTDQ,       // SSE2
+  INST_MOVNTDQA,      // SSE4.1
+  INST_MOVNTI,        // SSE2
+  INST_MOVNTPD,       // SSE2
+  INST_MOVNTPS,       // SSE
+  INST_MOVNTQ,        // MMX-Ext
+  INST_MOVQ,          // MMX/SSE/SSE2
+  INST_MOVQ2DQ,       // SSE2
+  INST_MOVSD,         // SSE2
+  INST_MOVSHDUP,      // SSE3
+  INST_MOVSLDUP,      // SSE3
+  INST_MOVSS,         // SSE
   INST_MOVSX,         // X86/X64
   INST_MOVSXD,        // X86/X64
-  INST_MOVUPD,
-  INST_MOVUPS,
+  INST_MOVUPD,        // SSE2
+  INST_MOVUPS,        // SSE
   INST_MOVZX,         // X86/X64
   INST_MOV_PTR,       // X86/X64
-  INST_MPSADBW,
+  INST_MPSADBW,       // SSE4.1
   INST_MUL,           // X86/X64
-  INST_MULPD,
-  INST_MULPS,
-  INST_MULSD,
-  INST_MULSS,
-  INST_MWAIT,
+  INST_MULPD,         // SSE2
+  INST_MULPS,         // SSE
+  INST_MULSD,         // SSE2
+  INST_MULSS,         // SSE
+  INST_MWAIT,         // SSE3
   INST_NEG,           // X86/X64
   INST_NOP,           // X86/X64
   INST_NOT,           // X86/X64
   INST_OR,            // X86/X64
-  INST_ORPD,
-  INST_ORPS,
-  INST_PABSB,
-  INST_PABSD,
-  INST_PABSW,
-  INST_PACKSSDW,
-  INST_PACKSSWB,
-  INST_PACKUSDW,
-  INST_PACKUSWB,
-  INST_PADDB,
-  INST_PADDD,
-  INST_PADDQ,
-  INST_PADDSB,
-  INST_PADDSW,
-  INST_PADDUSB,
-  INST_PADDUSW,
-  INST_PADDW,
-  INST_PALIGNR,
-  INST_PAND,
-  INST_PANDN,
-  INST_PAUSE,
-  INST_PAVGB,         // MMX Extensions
-  INST_PAVGW,         // MMX Extensions
-  INST_PBLENDVB,
-  INST_PBLENDW,
-  INST_PCMPEQB,
-  INST_PCMPEQD,
-  INST_PCMPEQQ,
-  INST_PCMPEQW,
-  INST_PCMPESTRI,
-  INST_PCMPESTRM,
-  INST_PCMPGTB,
-  INST_PCMPGTD,
-  INST_PCMPGTQ,
-  INST_PCMPGTW,
-  INST_PCMPISTRI,
-  INST_PCMPISTRM,
-  INST_PEXTRB,
-  INST_PEXTRD,
-  INST_PEXTRQ,
-  INST_PEXTRW,        // MMX Extensions
+  INST_ORPD,          // SSE2
+  INST_ORPS,          // SSE
+  INST_PABSB,         // SSSE3
+  INST_PABSD,         // SSSE3
+  INST_PABSW,         // SSSE3
+  INST_PACKSSDW,      // MMX/SSE2
+  INST_PACKSSWB,      // MMX/SSE2
+  INST_PACKUSDW,      // SSE4.1
+  INST_PACKUSWB,      // MMX/SSE2
+  INST_PADDB,         // MMX/SSE2
+  INST_PADDD,         // MMX/SSE2
+  INST_PADDQ,         // SSE2
+  INST_PADDSB,        // MMX/SSE2
+  INST_PADDSW,        // MMX/SSE2
+  INST_PADDUSB,       // MMX/SSE2
+  INST_PADDUSW,       // MMX/SSE2
+  INST_PADDW,         // MMX/SSE2
+  INST_PALIGNR,       // SSSE3
+  INST_PAND,          // MMX/SSE2
+  INST_PANDN,         // MMX/SSE2
+  INST_PAUSE,         // SSE2.
+  INST_PAVGB,         // MMX-Ext
+  INST_PAVGW,         // MMX-Ext
+  INST_PBLENDVB,      // SSE4.1
+  INST_PBLENDW,       // SSE4.1
+  INST_PCMPEQB,       // MMX/SSE2
+  INST_PCMPEQD,       // MMX/SSE2
+  INST_PCMPEQQ,       // SSE4.1
+  INST_PCMPEQW,       // MMX/SSE2    
+  INST_PCMPESTRI,     // SSE4.2
+  INST_PCMPESTRM,     // SSE4.2
+  INST_PCMPGTB,       // MMX/SSE2
+  INST_PCMPGTD,       // MMX/SSE2
+  INST_PCMPGTQ,       // SSE4.2
+  INST_PCMPGTW,       // MMX/SSE2
+  INST_PCMPISTRI,     // SSE4.2
+  INST_PCMPISTRM,     // SSE4.2
+  INST_PEXTRB,        // SSE4.1
+  INST_PEXTRD,        // SSE4.1        
+  INST_PEXTRQ,        // SSE4.1
+  INST_PEXTRW,        // MMX-Ext/SSE2
   INST_PF2ID,         // 3dNow!
-  INST_PF2IW,         // 3dNow! Extensions
+  INST_PF2IW,         // Enhanced 3dNow!
   INST_PFACC,         // 3dNow!
   INST_PFADD,         // 3dNow!
   INST_PFCMPEQ,       // 3dNow!
@@ -1084,8 +1084,8 @@ enum INST_CODE
   INST_PFMAX,         // 3dNow!
   INST_PFMIN,         // 3dNow!
   INST_PFMUL,         // 3dNow!
-  INST_PFNACC,        // 3dNow! Extensions
-  INST_PFPNACC,       // 3dNow! Extensions
+  INST_PFNACC,        // Enhanced 3dNow!
+  INST_PFPNACC,       // Enhanced 3dNow!
   INST_PFRCP,         // 3dNow!
   INST_PFRCPIT1,      // 3dNow!
   INST_PFRCPIT2,      // 3dNow!
@@ -1093,105 +1093,105 @@ enum INST_CODE
   INST_PFRSQRT,       // 3dNow!
   INST_PFSUB,         // 3dNow!
   INST_PFSUBR,        // 3dNow!
-  INST_PHADDD,
-  INST_PHADDSW,
-  INST_PHADDW,
-  INST_PHMINPOSUW,
-  INST_PHSUBD,
-  INST_PHSUBSW,
-  INST_PHSUBW,
+  INST_PHADDD,        // SSSE3
+  INST_PHADDSW,       // SSSE3
+  INST_PHADDW,        // SSSE3
+  INST_PHMINPOSUW,    // SSE4.1
+  INST_PHSUBD,        // SSSE3
+  INST_PHSUBSW,       // SSSE3
+  INST_PHSUBW,        // SSSE3
   INST_PI2FD,         // 3dNow!
-  INST_PI2FW,         // 3dNow! Extensions
-  INST_PINSRB,
-  INST_PINSRD,
-  INST_PINSRQ,
-  INST_PINSRW,        // MMX Extensions
-  INST_PMADDUBSW,
-  INST_PMADDWD,
-  INST_PMAXSB,
-  INST_PMAXSD,
-  INST_PMAXSW,        // MMX Extensions
-  INST_PMAXUB,        // MMX Extensions
-  INST_PMAXUD,
-  INST_PMAXUW,
-  INST_PMINSB,
-  INST_PMINSD,
-  INST_PMINSW,        // MMX Extensions
-  INST_PMINUB,        // MMX Extensions
-  INST_PMINUD,
-  INST_PMINUW,
-  INST_PMOVMSKB,      // MMX Extensions
-  INST_PMOVSXBD,
-  INST_PMOVSXBQ,
-  INST_PMOVSXBW,
-  INST_PMOVSXDQ,
-  INST_PMOVSXWD,
-  INST_PMOVSXWQ,
-  INST_PMOVZXBD,
-  INST_PMOVZXBQ,
-  INST_PMOVZXBW,
-  INST_PMOVZXDQ,
-  INST_PMOVZXWD,
-  INST_PMOVZXWQ,
-  INST_PMULDQ,
-  INST_PMULHRSW,
-  INST_PMULHUW,       // MMX Extensions
-  INST_PMULHW,
-  INST_PMULLD,
-  INST_PMULLW,
-  INST_PMULUDQ,
+  INST_PI2FW,         // Enhanced 3dNow!
+  INST_PINSRB,        // SSE4.1
+  INST_PINSRD,        // SSE4.1
+  INST_PINSRQ,        // SSE4.1
+  INST_PINSRW,        // MMX-Ext
+  INST_PMADDUBSW,     // SSSE3
+  INST_PMADDWD,       // MMX/SSE2
+  INST_PMAXSB,        // SSE4.1
+  INST_PMAXSD,        // SSE4.1
+  INST_PMAXSW,        // MMX-Ext
+  INST_PMAXUB,        // MMX-Ext
+  INST_PMAXUD,        // SSE4.1
+  INST_PMAXUW,        // SSE4.1
+  INST_PMINSB,        // SSE4.1
+  INST_PMINSD,        // SSE4.1
+  INST_PMINSW,        // MMX-Ext
+  INST_PMINUB,        // MMX-Ext
+  INST_PMINUD,        // SSE4.1
+  INST_PMINUW,        // SSE4.1
+  INST_PMOVMSKB,      // MMX-Ext
+  INST_PMOVSXBD,      // SSE4.1
+  INST_PMOVSXBQ,      // SSE4.1
+  INST_PMOVSXBW,      // SSE4.1
+  INST_PMOVSXDQ,      // SSE4.1
+  INST_PMOVSXWD,      // SSE4.1
+  INST_PMOVSXWQ,      // SSE4.1
+  INST_PMOVZXBD,      // SSE4.1
+  INST_PMOVZXBQ,      // SSE4.1
+  INST_PMOVZXBW,      // SSE4.1
+  INST_PMOVZXDQ,      // SSE4.1
+  INST_PMOVZXWD,      // SSE4.1
+  INST_PMOVZXWQ,      // SSE4.1
+  INST_PMULDQ,        // SSE4.1
+  INST_PMULHRSW,      // SSSE3
+  INST_PMULHUW,       // MMX-Ext
+  INST_PMULHW,        // MMX/SSE2
+  INST_PMULLD,        // SSE4.1
+  INST_PMULLW,        // MMX/SSE2
+  INST_PMULUDQ,       // SSE2
   INST_POP,           // X86/X64
   INST_POPAD,         // X86 only
-  INST_POPCNT,
+  INST_POPCNT,        // SSE4.2
   INST_POPFD,         // X86 only
   INST_POPFQ,         // X64 only
-  INST_POR,
-  INST_PREFETCH,      // MMX Extensions
-  INST_PSADBW,        // MMX Extensions
-  INST_PSHUFB,
-  INST_PSHUFD,
-  INST_PSHUFW,        // MMX Extensions
-  INST_PSHUFHW,
-  INST_PSHUFLW,
-  INST_PSIGNB,
-  INST_PSIGND,
-  INST_PSIGNW,
-  INST_PSLLD,
-  INST_PSLLDQ,
-  INST_PSLLQ,
-  INST_PSLLW,
-  INST_PSRAD,
-  INST_PSRAW,
-  INST_PSRLD,
-  INST_PSRLDQ,
-  INST_PSRLQ,
-  INST_PSRLW,
-  INST_PSUBB,
-  INST_PSUBD,
-  INST_PSUBQ,
-  INST_PSUBSB,
-  INST_PSUBSW,
-  INST_PSUBUSB,
-  INST_PSUBUSW,
-  INST_PSUBW,
-  INST_PSWAPD,        // 3dNow! Extensions
-  INST_PTEST,
-  INST_PUNPCKHBW,
-  INST_PUNPCKHDQ,
-  INST_PUNPCKHQDQ,
-  INST_PUNPCKHWD,
-  INST_PUNPCKLBW,
-  INST_PUNPCKLDQ,
-  INST_PUNPCKLQDQ,
-  INST_PUNPCKLWD,
+  INST_POR,           // MMX/SSE2
+  INST_PREFETCH,      // MMX-Ext
+  INST_PSADBW,        // MMX-Ext
+  INST_PSHUFB,        // SSSE3
+  INST_PSHUFD,        // SSE2
+  INST_PSHUFW,        // MMX-Ext
+  INST_PSHUFHW,       // SSE2
+  INST_PSHUFLW,       // SSE2
+  INST_PSIGNB,        // SSSE3
+  INST_PSIGND,        // SSSE3
+  INST_PSIGNW,        // SSSE3
+  INST_PSLLD,         // MMX/SSE2
+  INST_PSLLDQ,        // SSE2
+  INST_PSLLQ,         // MMX/SSE2
+  INST_PSLLW,         // MMX/SSE2
+  INST_PSRAD,         // MMX/SSE2
+  INST_PSRAW,         // MMX/SSE2
+  INST_PSRLD,         // MMX/SSE2
+  INST_PSRLDQ,        // SSE2
+  INST_PSRLQ,         // MMX/SSE2
+  INST_PSRLW,         // MMX/SSE2
+  INST_PSUBB,         // MMX/SSE2
+  INST_PSUBD,         // MMX/SSE2
+  INST_PSUBQ,         // SSE2
+  INST_PSUBSB,        // MMX/SSE2
+  INST_PSUBSW,        // MMX/SSE2
+  INST_PSUBUSB,       // MMX/SSE2
+  INST_PSUBUSW,       // MMX/SSE2
+  INST_PSUBW,         // MMX/SSE2
+  INST_PSWAPD,        // Enhanced 3dNow!
+  INST_PTEST,         // SSE4.1
+  INST_PUNPCKHBW,     // MMX/SSE2
+  INST_PUNPCKHDQ,     // MMX/SSE2
+  INST_PUNPCKHQDQ,    // SSE2
+  INST_PUNPCKHWD,     // MMX/SSE2
+  INST_PUNPCKLBW,     // MMX/SSE2
+  INST_PUNPCKLDQ,     // MMX/SSE2
+  INST_PUNPCKLQDQ,    // SSE2
+  INST_PUNPCKLWD,     // MMX/SSE2
   INST_PUSH,          // X86/X64
   INST_PUSHAD,        // X86 only
   INST_PUSHFD,        // X86 only
   INST_PUSHFQ,        // X64 only
-  INST_PXOR,
+  INST_PXOR,          // MMX/SSE2
   INST_RCL,           // X86/X64
-  INST_RCPPS,
-  INST_RCPSS,
+  INST_RCPPS,         // SSE
+  INST_RCPSS,         // SSE
   INST_RCR,           // X86/X64
   INST_RDTSC,         // X86/X64
   INST_RDTSCP,        // X86/X64
@@ -1226,12 +1226,12 @@ enum INST_CODE
   INST_RET,           // X86/X64
   INST_ROL,           // X86/X64
   INST_ROR,           // X86/X64
-  INST_ROUNDPD,
-  INST_ROUNDPS,
-  INST_ROUNDSD,
-  INST_ROUNDSS,
-  INST_RSQRTPS,
-  INST_RSQRTSS,
+  INST_ROUNDPD,       // SSE4.1
+  INST_ROUNDPS,       // SSE4.1
+  INST_ROUNDSD,       // SSE4.1
+  INST_ROUNDSS,       // SSE4.1
+  INST_RSQRTPS,       // SSE
+  INST_RSQRTSS,       // SSE
   INST_SAHF,          // X86/X64 (CPUID NEEDED)
   INST_SAL,           // X86/X64
   INST_SAR,           // X86/X64
@@ -1267,38 +1267,38 @@ enum INST_CODE
   INST_SETPO,         // X86/X64 (setcc)
   INST_SETS,          // X86/X64 (setcc)
   INST_SETZ,          // X86/X64 (setcc)
-  INST_SFENCE,        // MMX Extensions
+  INST_SFENCE,        // MMX-Ext/SSE
   INST_SHL,           // X86/X64
   INST_SHLD,          // X86/X64
   INST_SHR,           // X86/X64
   INST_SHRD,          // X86/X64
-  INST_SHUFPD,
-  INST_SHUFPS,
-  INST_SQRTPD,
-  INST_SQRTPS,
-  INST_SQRTSD,
-  INST_SQRTSS,
+  INST_SHUFPD,        // SSE2
+  INST_SHUFPS,        // SSE
+  INST_SQRTPD,        // SSE2
+  INST_SQRTPS,        // SSE
+  INST_SQRTSD,        // SSE2
+  INST_SQRTSS,        // SSE
   INST_STC,           // X86/X64
   INST_STD,           // X86/X64
-  INST_STMXCSR,
+  INST_STMXCSR,       // SSE
   INST_SUB,           // X86/X64
-  INST_SUBPD,
-  INST_SUBPS,
-  INST_SUBSD,
-  INST_SUBSS,
+  INST_SUBPD,         // SSE2
+  INST_SUBPS,         // SSE
+  INST_SUBSD,         // SSE2
+  INST_SUBSS,         // SSE
   INST_TEST,          // X86/X64
-  INST_UCOMISD,
-  INST_UCOMISS,
+  INST_UCOMISD,       // SSE2
+  INST_UCOMISS,       // SSE
   INST_UD2,           // X86/X64
-  INST_UNPCKHPD,
-  INST_UNPCKHPS,
-  INST_UNPCKLPD,
-  INST_UNPCKLPS,
+  INST_UNPCKHPD,      // SSE2
+  INST_UNPCKHPS,      // SSE
+  INST_UNPCKLPD,      // SSE2
+  INST_UNPCKLPS,      // SSE
   INST_XADD,          // X86/X64 (i486)
   INST_XCHG,          // X86/X64 (i386)
   INST_XOR,           // X86/X64
-  INST_XORPD,
-  INST_XORPS,
+  INST_XORPD,         // SSE2
+  INST_XORPS,         // SSE
 
   _INST_COUNT,
 

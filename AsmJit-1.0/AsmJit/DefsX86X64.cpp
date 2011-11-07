@@ -1624,7 +1624,7 @@ const InstructionDescription instructionDescription[] =
   MAKE_INST(INST_PEXTRB           , "pextrb"           , G(MMU_PEXTR)     , F(NONE)          , O(GD)|O(GB)|O(MEM)  , O(XMM)              , 0, 0x000F3A14, 0),
   MAKE_INST(INST_PEXTRD           , "pextrd"           , G(MMU_PEXTR)     , F(NONE)          , O(GD)      |O(MEM)  , O(XMM)              , 0, 0x000F3A16, 0),
   MAKE_INST(INST_PEXTRQ           , "pextrq"           , G(MMU_PEXTR)     , F(NONE)          , O(GQD)     |O(MEM)  , O(XMM)              , 1, 0x000F3A16, 0),
-  MAKE_INST(INST_PEXTRW           , "pextrw"           , G(MMU_PEXTR)     , F(NONE)          , O(GD)      |O(MEM)  , O(XMM) | O(MM)      , 0, 0x000F3A16, 0),
+  MAKE_INST(INST_PEXTRW           , "pextrw"           , G(MMU_PEXTR)     , F(NONE)          , O(GD)      |O(MEM)  , O(XMM) | O(MM)      , 0, 0x000F3A15, 0),
   MAKE_INST(INST_PF2ID            , "pf2id"            , G(MMU_RM_3DNOW)  , F(NONE)          , O(MM)               , O(MM_MEM)           , 0, 0x00000F0F, 0x1D),
   MAKE_INST(INST_PF2IW            , "pf2iw"            , G(MMU_RM_3DNOW)  , F(NONE)          , O(MM)               , O(MM_MEM)           , 0, 0x00000F0F, 0x1C),
   MAKE_INST(INST_PFACC            , "pfacc"            , G(MMU_RM_3DNOW)  , F(NONE)          , O(MM)               , O(MM_MEM)           , 0, 0x00000F0F, 0xAE),

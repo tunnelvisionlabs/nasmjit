@@ -5401,6 +5401,12 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 
   //! @brief Move Unaligned Packed Double-Precision FP Values (SSE2).
+  inline void movupd(const XMMReg& dst, const XMMReg& src)
+  {
+    _emitInstruction(INST_MOVUPD, &dst, &src);
+  }
+
+  //! @brief Move Unaligned Packed Double-Precision FP Values (SSE2).
   inline void movupd(const XMMReg& dst, const Mem& src)
   {
     _emitInstruction(INST_MOVUPD, &dst, &src);
