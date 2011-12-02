@@ -434,7 +434,7 @@ struct ASMJIT_HIDDEN BaseReg : public Operand
   { _reg.size = (uint8_t)size; }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
   inline BaseReg& operator=(const BaseReg& other) ASMJIT_NOTHROW
@@ -499,7 +499,7 @@ struct ASMJIT_HIDDEN GPReg : public BaseReg
   inline bool isGPQ() const ASMJIT_NOTHROW { return (_reg.code & REG_TYPE_MASK) == REG_TYPE_GPQ; }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -539,7 +539,7 @@ struct ASMJIT_HIDDEN X87Reg : public BaseReg
 #endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -577,7 +577,7 @@ struct ASMJIT_HIDDEN MMReg : public BaseReg
 #endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -615,13 +615,51 @@ struct ASMJIT_HIDDEN XMMReg : public BaseReg
 #endif // ASMJIT_NODOC
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
   inline XMMReg& operator=(const XMMReg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
   inline bool operator==(const XMMReg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
   inline bool operator!=(const XMMReg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
+#endif // ASMJIT_NODOC
+};
+
+// ============================================================================
+// [AsmJit::SegmentReg]
+// ============================================================================
+
+//! @brief Segment register.
+struct ASMJIT_HIDDEN SegmentReg : public BaseReg
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create non-initialized segment register.
+  inline SegmentReg() ASMJIT_NOTHROW :
+    BaseReg(INVALID_VALUE, 2) {}
+
+  //! @brief Create a reference to @a other segment register.
+  inline SegmentReg(const _Initialize&, uint32_t code) ASMJIT_NOTHROW :
+    BaseReg(code, 2) {}
+
+#if !defined(ASMJIT_NODOC)
+  inline SegmentReg(const _DontInitialize& dontInitialize) ASMJIT_NOTHROW :
+    BaseReg(dontInitialize) {}
+
+  inline SegmentReg(const SegmentReg& other) ASMJIT_NOTHROW :
+    BaseReg(other) {}
+#endif // ASMJIT_NODOC
+
+  // --------------------------------------------------------------------------
+  // [Operator Overload]
+  // --------------------------------------------------------------------------
+
+#if !defined(ASMJIT_NODOC)
+  inline SegmentReg& operator=(const SegmentReg& other) ASMJIT_NOTHROW { _copy(other); return *this; }
+  inline bool operator==(const SegmentReg& other) const ASMJIT_NOTHROW { return getRegCode() == other.getRegCode(); }
+  inline bool operator!=(const SegmentReg& other) const ASMJIT_NOTHROW { return getRegCode() != other.getRegCode(); }
 #endif // ASMJIT_NODOC
 };
 
@@ -885,6 +923,17 @@ ASMJIT_VAR const XMMReg xmm15;
 #endif // ASMJIT_X64
 
 // ============================================================================
+// [AsmJit::Registers - Segment]
+// ============================================================================
+
+ASMJIT_VAR const SegmentReg cs;
+ASMJIT_VAR const SegmentReg ss;
+ASMJIT_VAR const SegmentReg ds;
+ASMJIT_VAR const SegmentReg es;
+ASMJIT_VAR const SegmentReg fs;
+ASMJIT_VAR const SegmentReg gs;
+
+// ============================================================================
 // [AsmJit::Registers - Register From Index]
 // ============================================================================
 
@@ -1016,7 +1065,7 @@ struct ASMJIT_HIDDEN Imm : public Operand
   }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
   //! @brief Assign a signed value @a val to the immediate operand.
@@ -1093,7 +1142,7 @@ struct ASMJIT_HIDDEN Label : public Operand
   }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1311,7 +1360,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
   }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1487,7 +1536,7 @@ struct ASMJIT_HIDDEN BaseVar : public Operand
   { return _baseVarMem(*this, 16, index, shift, disp); }
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1545,7 +1594,7 @@ struct ASMJIT_HIDDEN X87Var : public BaseVar
     BaseVar(other) {}
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1633,7 +1682,7 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
 #endif // ASMJIT_X64
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1697,7 +1746,7 @@ struct ASMJIT_HIDDEN MMVar : public BaseVar
   // --------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
@@ -1744,7 +1793,7 @@ struct ASMJIT_HIDDEN XMMVar : public BaseVar
   // --------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------
-  // [Overloaded Operators]
+  // [Operator Overload]
   // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)

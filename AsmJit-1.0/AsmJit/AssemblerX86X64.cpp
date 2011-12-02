@@ -126,7 +126,7 @@ void AssemblerCore::setError(uint32_t error) ASMJIT_NOTHROW
   if (_logger)
   {
     _logger->logFormat("*** ASSEMBLER ERROR: %s (%u).\n",
-      getErrorCodeAsString(error),
+      getErrorString(error),
       (unsigned int)error);
   }
 }
@@ -225,13 +225,25 @@ bool AssemblerCore::canEmit() ASMJIT_NOTHROW
 
 void AssemblerCore::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
 {
-  static const uint8_t prefixes[] = { 0x00, 0x2E, 0x36, 0x3E, 0x26, 0x64, 0x65 };
-
-  if (rm.isMem())
+  static const uint8_t segmentPrefixCode[6] =
   {
-    sysuint_t segmentPrefix = reinterpret_cast<const Mem&>(rm).getSegmentPrefix();
-    if (segmentPrefix) _emitByte(prefixes[segmentPrefix]);
-  }
+    0x26, // ES
+    0x2E, // SS
+    0x36, // SS
+    0x3E, // DS
+    0x64, // FS
+    0x65  // GS
+  };
+
+  uint32_t segmentPrefix;
+  
+  if (!rm.isMem())
+    return;
+
+  if ((segmentPrefix = reinterpret_cast<const Mem&>(rm).getSegmentPrefix()) >= REG_NUM_SEGMENT)
+    return;
+
+  _emitByte(segmentPrefixCode[segmentPrefix]);
 }
 
 void AssemblerCore::_emitModM(
@@ -628,14 +640,14 @@ static const char* operandSize[] =
   "dqword ptr "
 };
 
-static const char segmentName[] =
-  "\0\0\0\0"
+static const char segmentPrefixName[] =
+  "es:\0"
   "cs:\0"
   "ss:\0"
   "ds:\0"
-  "es:\0"
   "fs:\0"
-  "gs:\0";
+  "gs:\0"
+  "\0\0\0\0";
 
 ASMJIT_HIDDEN char* dumpInstructionName(char* buf, uint32_t code) ASMJIT_NOTHROW
 {
@@ -654,35 +666,76 @@ ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJI
   {
     case REG_TYPE_GPB_LO:
       if (index < 8)
-        return buf + sprintf(buf, "%s", &reg8l[index*4]);
-      else
-        return buf + sprintf(buf, "r%ub", (uint32_t)index);
+        return Util::mycpy(buf, &reg8l[index*4]);
+
+      *buf++ = 'r';
+      goto _EmitID;
+
     case REG_TYPE_GPB_HI:
       if (index < 4)
-        return buf + sprintf(buf, "%s", &reg8h[index*4]);
-      else
-        return buf + sprintf(buf, "%s", "INVALID");
+        return Util::mycpy(buf, &reg8h[index*4]);
+
+_EmitNE:
+      return Util::mycpy(buf, "NE");
+
     case REG_TYPE_GPW:
       if (index < 8)
-        return buf + sprintf(buf, "%s", &reg16[index*4]);
-      else
-        return buf + sprintf(buf, "r%uw", (uint32_t)index);
+        return Util::mycpy(buf, &reg16[index*4]);
+
+      *buf++ = 'r';
+      buf = Util::myutoa(buf, index);
+      *buf++ = 'w';
+      return buf;
+
     case REG_TYPE_GPD:
       if (index < 8)
-        return buf + sprintf(buf, "e%s", &reg16[index*4]);
-      else
-        return buf + sprintf(buf, "r%ud", (uint32_t)index);
+      {
+        *buf++ = 'e';
+        return Util::mycpy(buf, &reg16[index*4]);
+      }
+
+      *buf++ = 'r';
+      buf = Util::myutoa(buf, index);
+      *buf++ = 'd';
+      return buf;
+    
     case REG_TYPE_GPQ:
+      *buf++ = 'r';
+
       if (index < 8)
-        return buf + sprintf(buf, "r%s", &reg16[index*4]);
-      else
-        return buf + sprintf(buf, "r%u", (uint32_t)index);
+        return Util::mycpy(buf, &reg16[index*4]);
+
+_EmitID:
+      return Util::myutoa(buf, index);
+    
     case REG_TYPE_X87:
-      return buf + sprintf(buf, "st%u", (uint32_t)index);
+      *buf++ = 's';
+      *buf++ = 't';
+      goto _EmitID;
+    
     case REG_TYPE_MM:
-      return buf + sprintf(buf, "mm%u", (uint32_t)index);
+      *buf++ = 'm';
+      *buf++ = 'm';
+      goto _EmitID;
+    
     case REG_TYPE_XMM:
-      return buf + sprintf(buf, "xmm%u", (uint32_t)index);
+      *buf++ = 'x';
+      *buf++ = 'm';
+      *buf++ = 'm';
+      goto _EmitID;
+    
+    case REG_TYPE_YMM:
+      *buf++ = 'y';
+      *buf++ = 'm';
+      *buf++ = 'm';
+      goto _EmitID;
+
+    case REG_TYPE_SEGMENT:
+      if (index < REG_NUM_SEGMENT)
+        return Util::mycpy(buf, &segmentPrefixName[index*4], 2);
+      
+      goto _EmitNE;
+
     default:
       return buf;
   }
@@ -697,15 +750,20 @@ ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegTyp
   }
   else if (op->isMem())
   {
-    bool isAbsolute = false;
     const Mem& mem = reinterpret_cast<const Mem&>(*op);
+    uint32_t segmentPrefix = mem.getSegmentPrefix();
+
+    bool isAbsolute = false;
 
     if (op->getSize() <= 16)
     {
       buf = Util::mycpy(buf, operandSize[op->getSize()]);
     }
 
-    buf = Util::mycpy(buf, &segmentName[mem.getSegmentPrefix() * 4]);
+    if (segmentPrefix < REG_NUM_SEGMENT)
+    {
+      buf = Util::mycpy(buf, &segmentPrefixName[segmentPrefix * 4]);
+    }
 
     *buf++ = '[';
 
@@ -1463,6 +1521,39 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         // Reg <- Reg/Mem
         case (OPERAND_REG << 4) | OPERAND_REG:
         {
+          // Reg <- Sreg
+          if (src.isRegType(REG_TYPE_SEGMENT))
+          {
+            ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPW) ||
+                          dst.isRegType(REG_TYPE_GPD) ||
+                          dst.isRegType(REG_TYPE_GPQ) );
+
+            _emitX86RM(0x8C,
+              dst.getSize() == 2,
+              dst.getSize() == 8,
+              reinterpret_cast<const SegmentReg&>(src).getRegCode(),
+              reinterpret_cast<const Operand&>(dst),
+              0, forceRexPrefix);
+            _FINISHED();
+          }
+
+          // Sreg <- Reg/Mem
+          if (dst.isRegType(REG_TYPE_SEGMENT))
+          {
+            ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPW   ) ||
+                          src.isRegType(REG_TYPE_GPD   ) ||
+                          src.isRegType(REG_TYPE_GPQ   ) );
+
+_Emit_Mov_Sreg_RM:
+            _emitX86RM(0x8E,
+              src.getSize() == 2,
+              src.getSize() == 8,
+              reinterpret_cast<const SegmentReg&>(dst).getRegCode(),
+              reinterpret_cast<const Operand&>(src),
+              0, forceRexPrefix);
+            _FINISHED();
+          }
+
           ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPB_LO) ||
                         src.isRegType(REG_TYPE_GPB_HI) ||
                         src.isRegType(REG_TYPE_GPW   ) ||
@@ -1472,6 +1563,12 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         }
         case (OPERAND_REG << 4) | OPERAND_MEM:
         {
+          // Sreg <- Mem
+          if (dst.isRegType(REG_TYPE_SEGMENT))
+          {
+            goto _Emit_Mov_Sreg_RM;
+          }
+
           ASMJIT_ASSERT(dst.isRegType(REG_TYPE_GPB_LO) ||
                         dst.isRegType(REG_TYPE_GPB_HI) ||
                         dst.isRegType(REG_TYPE_GPW   ) ||
@@ -1524,22 +1621,37 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
           _FINISHED_IMMEDIATE(&src, immSize);
         }
 
-        // Mem <- Reg
+        // Mem <- Reg/Sreg
         case (OPERAND_MEM << 4) | OPERAND_REG:
         {
-          ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPB_LO) ||
-                        src.isRegType(REG_TYPE_GPB_HI) ||
-                        src.isRegType(REG_TYPE_GPW   ) ||
-                        src.isRegType(REG_TYPE_GPD   ) ||
-                        src.isRegType(REG_TYPE_GPQ   ) );
+          if (src.isRegType(REG_TYPE_SEGMENT))
+          {
+            // Mem <- Sreg
+            _emitX86RM(0x8C,
+              dst.getSize() == 2,
+              dst.getSize() == 8,
+              reinterpret_cast<const SegmentReg&>(src).getRegCode(),
+              reinterpret_cast<const Operand&>(dst),
+              0, forceRexPrefix);
+            _FINISHED();
+          }
+          else
+          {
+            // Mem <- Reg
+            ASMJIT_ASSERT(src.isRegType(REG_TYPE_GPB_LO) ||
+                          src.isRegType(REG_TYPE_GPB_HI) ||
+                          src.isRegType(REG_TYPE_GPW   ) ||
+                          src.isRegType(REG_TYPE_GPD   ) ||
+                          src.isRegType(REG_TYPE_GPQ   ) );
 
-          _emitX86RM(0x88 + (src.getSize() != 1),
-            src.isRegType(REG_TYPE_GPW),
-            src.isRegType(REG_TYPE_GPQ),
-            reinterpret_cast<const GPReg&>(src).getRegCode(),
-            reinterpret_cast<const Operand&>(dst),
-            0, forceRexPrefix);
-          _FINISHED();
+            _emitX86RM(0x88 + (src.getSize() != 1),
+              src.isRegType(REG_TYPE_GPW),
+              src.isRegType(REG_TYPE_GPQ),
+              reinterpret_cast<const GPReg&>(src).getRegCode(),
+              reinterpret_cast<const Operand&>(dst),
+              0, forceRexPrefix);
+            _FINISHED();
+          }
         }
 
         // Mem <- Imm

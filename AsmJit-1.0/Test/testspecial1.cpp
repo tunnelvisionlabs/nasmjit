@@ -52,17 +52,17 @@ int main(int argc, char* argv[])
     c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<Void, int32_t*, int32_t*, int32_t, int32_t>());
     c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
-    GPVar dst0_lo(c.argGP(0));
-    GPVar dst0_hi(c.argGP(1));
+    GPVar dst0_hi(c.argGP(0));
+    GPVar dst0_lo(c.argGP(1));
 
-    GPVar v0_lo(c.newGP(VARIABLE_TYPE_GPD));
-    GPVar v0_hi(c.argGP(2));
+    GPVar v0_hi(c.newGP(VARIABLE_TYPE_GPD));
+    GPVar v0_lo(c.argGP(2));
+
     GPVar src0(c.argGP(3));
+    c.imul(v0_hi, v0_lo, src0);
 
-    c.imul_lo_hi(v0_lo, v0_hi, src0);
-
-    c.mov(dword_ptr(dst0_lo), v0_lo);
     c.mov(dword_ptr(dst0_hi), v0_hi);
+    c.mov(dword_ptr(dst0_lo), v0_lo);
     c.endFunction();
   }
   // ==========================================================================
@@ -72,21 +72,21 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   {
-    int32_t out_lo;
     int32_t out_hi;
+    int32_t out_lo;
 
     int32_t v0 = 4;
     int32_t v1 = 4;
 
-    int32_t expected_lo = 0;
-    int32_t expected_hi = v0 * v1;
+    int32_t expected_hi = 0;
+    int32_t expected_lo = v0 * v1;
 
-    fn(&out_lo, &out_hi, v0, v1);
+    fn(&out_hi, &out_lo, v0, v1);
 
-    printf("out_lo=%d (expected %d)\n", out_lo, expected_lo);
     printf("out_hi=%d (expected %d)\n", out_hi, expected_hi);
+    printf("out_lo=%d (expected %d)\n", out_lo, expected_lo);
 
-    printf("Status: %s\n", (out_lo == expected_lo && out_hi == expected_hi) 
+    printf("Status: %s\n", (out_hi == expected_hi && out_lo == expected_lo)
       ? "Success" 
       : "Failure");
   }

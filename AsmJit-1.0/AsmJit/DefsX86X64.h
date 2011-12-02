@@ -65,7 +65,7 @@ enum REG_NUM
   //!
   //! Count of general purpose registers and XMM registers depends on current
   //! bit-mode. If application is compiled for 32-bit platform then this number
-  //! is 8, 64-bit platforms have 8 extra general purpose and xmm registers (16
+  //! is 8, 64-bit platforms have 8 extra general purpose and XMM registers (16
   //! total).
 #if defined(ASMJIT_X86)
   REG_NUM_BASE = 8,
@@ -83,11 +83,19 @@ enum REG_NUM
 
   //! @brief Count of FPU stack registers (always 8).
   REG_NUM_FPU = 8,
-
+  
   //! @brief Count of XMM registers.
   //!
   //! 8 in 32-bit mode and 16 in 64-bit mode.
-  REG_NUM_XMM = REG_NUM_BASE
+  REG_NUM_XMM = REG_NUM_BASE,
+
+  //! @brief Count of segment registers, including no segment (AsmJit specific).
+  //!
+  //! @note There are 6 segment registers, but AsmJit uses 0 as no segment, and
+  //! 1...6 as segment registers, this means that there are 7 segment registers
+  //! in AsmJit API, but only 6 can be used through @c Assembler or @c Compiler
+  //! API.
+  REG_NUM_SEGMENT = 7
 };
 
 // ============================================================================
@@ -188,11 +196,9 @@ enum REG_INDEX
   //! @brief ID for xmm6 register.
   REG_INDEX_XMM6 = 6,
   //! @brief ID for xmm7 register.
-  REG_INDEX_XMM7 = 7
+  REG_INDEX_XMM7 = 7,
 
 #if defined(ASMJIT_X64)
-  ,
-
   //! @brief ID for xmm8 register (additional register introduced by 64-bit architecture).
   REG_INDEX_XMM8 = 8,
   //! @brief ID for xmm9 register (additional register introduced by 64-bit architecture).
@@ -208,8 +214,21 @@ enum REG_INDEX
   //! @brief ID for xmm14 register (additional register introduced by 64-bit architecture).
   REG_INDEX_XMM14 = 14,
   //! @brief ID for xmm15 register (additional register introduced by 64-bit architecture).
-  REG_INDEX_XMM15 = 15
+  REG_INDEX_XMM15 = 15,
 #endif // ASMJIT_X64
+
+  //! @brief ID for ES segment register.
+  REG_INDEX_ES = 0,
+  //! @brief ID for CS segment register.
+  REG_INDEX_CS = 1,
+  //! @brief ID for SS segment register.
+  REG_INDEX_SS = 2,
+  //! @brief ID for DS segment register.
+  REG_INDEX_DS = 3,
+  //! @brief ID for FS segment register.
+  REG_INDEX_FS = 4,
+  //! @brief ID for GS segment register.
+  REG_INDEX_GS = 5
 };
 
 // ============================================================================
@@ -269,7 +288,21 @@ enum REG_TYPE
   // --------------------------------------------------------------------------
 
   //! @brief 128-bit XMM register type.
-  REG_TYPE_XMM = 0x7000
+  REG_TYPE_XMM = 0x7000,
+
+  // --------------------------------------------------------------------------
+  // [YMM Register Type]
+  // --------------------------------------------------------------------------
+
+  //! @brief 256-bit YMM register type.
+  REG_TYPE_YMM = 0x8000,
+
+  // --------------------------------------------------------------------------
+  // [Other]
+  // --------------------------------------------------------------------------
+
+  //! @brief 16-bit segment register type.
+  REG_TYPE_SEGMENT = 0xD000
 };
 
 // ============================================================================
@@ -419,7 +452,7 @@ enum REG_CODE
 #endif // ASMJIT_X64
 
   // --------------------------------------------------------------------------
-  // [Native registers (depends if processor runs in 32-bit or 64-bit mode)]
+  // [Native registers (depends on 32-bit or 64-bit mode)]
   // --------------------------------------------------------------------------
 
   REG_NAX = REG_TYPE_GPN,
@@ -429,7 +462,24 @@ enum REG_CODE
   REG_NSP,
   REG_NBP,
   REG_NSI,
-  REG_NDI
+  REG_NDI,
+
+  // --------------------------------------------------------------------------
+  // [Segment registers]
+  // --------------------------------------------------------------------------
+
+  //! @brief ES segment register.
+  REG_ES = REG_TYPE_SEGMENT,
+  //! @brief CS segment register.
+  REG_CS,
+  //! @brief SS segment register.
+  REG_SS,
+  //! @brief DS segment register.
+  REG_DS,
+  //! @brief FS segment register.
+  REG_FS,
+  //! @brief GS segment register.
+  REG_GS
 };
 
 // ============================================================================
@@ -439,24 +489,27 @@ enum REG_CODE
 //! @brief Segment override prefixes.
 enum SEGMENT_PREFIX
 {
-  // DO NOT MODIFY INDEX CODES - They are used by logger in this order.
+  // DO NOT MODIFY INDEX CODES - They are used by _emitSegmentPrefix() and
+  // by logger in the following order:
 
-  //! @brief No segment override prefix.
-  SEGMENT_NONE = 0,
+  //! @brief Use 'es' segment override prefix.
+  SEGMENT_ES = 0,
   //! @brief Use 'cs' segment override prefix.
   SEGMENT_CS = 1,
   //! @brief Use 'ss' segment override prefix.
   SEGMENT_SS = 2,
   //! @brief Use 'ds' segment override prefix.
   SEGMENT_DS = 3,
-  //! @brief Use 'es' segment override prefix.
-  SEGMENT_ES = 4,
   //! @brief Use 'fs' segment override prefix.
-  SEGMENT_FS = 5,
+  SEGMENT_FS = 4,
   //! @brief Use 'gs' segment override prefix.
-  SEGMENT_GS = 6,
+  SEGMENT_GS = 5,
+
+  //! @brief No segment override prefix.
+  SEGMENT_NONE = 0xF,
+
   //! @brief End of prefix codes
-  _SEGMENT_END
+  _SEGMENT_COUNT = 6
 };
 
 // ============================================================================

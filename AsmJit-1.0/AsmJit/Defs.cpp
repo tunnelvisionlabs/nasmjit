@@ -31,7 +31,7 @@
 
 namespace AsmJit {
 
-const char* getErrorCodeAsString(uint32_t error) ASMJIT_NOTHROW
+const char* getErrorString(uint32_t error) ASMJIT_NOTHROW
 {
   static const char* errorMessage[] = {
     "No error",

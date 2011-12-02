@@ -849,7 +849,7 @@ EInstruction::EInstruction(Compiler* c, uint32_t code, Operand* operandsData, ui
           case 3:
             if (!(_operands[0].isVar() && _operands[1].isVar() && _operands[2].isVarMem()))
             {
-              // Only IMUL dst_lo, dst_hi, reg/mem is special, all others not.
+              // Only IMUL dst_hi, dst_lo, reg/mem is special, all others don't.
               _isSpecial = false;
             }
             break;
@@ -1279,15 +1279,15 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             switch (i)
             {
               case 0:
-                vdata->registerRWCount++;
-                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
-                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
-                gpRestrictMask &= ~var->regMask;
-                break;
-              case 1:
                 vdata->registerWriteCount++;
                 var->vflags |= VARIABLE_ALLOC_WRITE | VARIABLE_ALLOC_SPECIAL;
                 var->regMask = Util::maskFromIndex(REG_INDEX_EDX);
+                gpRestrictMask &= ~var->regMask;
+                break;
+              case 1:
+                vdata->registerRWCount++;
+                var->vflags |= VARIABLE_ALLOC_READWRITE | VARIABLE_ALLOC_SPECIAL;
+                var->regMask = Util::maskFromIndex(REG_INDEX_EAX);
                 gpRestrictMask &= ~var->regMask;
                 break;
               case 2:
@@ -6940,7 +6940,7 @@ void CompilerCore::setError(uint32_t error) ASMJIT_NOTHROW
   if (_logger)
   {
     _logger->logFormat("*** COMPILER ERROR: %s (%u).\n",
-      getErrorCodeAsString(error),
+      getErrorString(error),
       (unsigned int)error);
   }
 }

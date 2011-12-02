@@ -2785,21 +2785,21 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! This instruction divides (unsigned) the value in the AL, AX, or EAX
   //! register by the source operand and stores the result in the AX,
   //! DX:AX, or EDX:EAX registers.
-  inline void div_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void div(const GPVar& dst_rem, const GPVar& dst_quot, const GPVar& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_rem.getId() != dst_quot.getId());
 
-    _emitInstruction(INST_DIV, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_DIV, &dst_rem, &dst_quot, &src);
   }
   //! @brief Unsigned divide.
   //! @overload
-  inline void div_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void div(const GPVar& dst_rem, const GPVar& dst_quot, const Mem& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_rem.getId() != dst_quot.getId());
 
-    _emitInstruction(INST_DIV, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_DIV, &dst_rem, &dst_quot, &src);
   }
 
 #if ASMJIT_NOT_SUPPORTED_BY_COMPILER
@@ -2815,40 +2815,40 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! This instruction divides (signed) the value in the AL, AX, or EAX
   //! register by the source operand and stores the result in the AX,
   //! DX:AX, or EDX:EAX registers.
-  inline void idiv_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void idiv(const GPVar& dst_rem, const GPVar& dst_quot, const GPVar& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_rem.getId() != dst_quot.getId());
 
-    _emitInstruction(INST_IDIV, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_IDIV, &dst_rem, &dst_quot, &src);
   }
   //! @brief Signed divide.
   //! @overload
-  inline void idiv_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void idiv(const GPVar& dst_rem, const GPVar& dst_quot, const Mem& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_rem.getId() != dst_quot.getId());
 
-    _emitInstruction(INST_IDIV, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_IDIV, &dst_rem, &dst_quot, &src);
   }
 
   //! @brief Signed multiply.
   //!
   //! [dst_lo:dst_hi] = dst_hi * src.
-  inline void imul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void imul(const GPVar& dst_hi, const GPVar& dst_lo, const GPVar& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_hi.getId() != dst_lo.getId());
 
-    _emitInstruction(INST_IMUL, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_IMUL, &dst_hi, &dst_lo, &src);
   }
   //! @overload
-  inline void imul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void imul(const GPVar& dst_hi, const GPVar& dst_lo, const Mem& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_hi.getId() != dst_lo.getId());
 
-    _emitInstruction(INST_IMUL, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_IMUL, &dst_hi, &dst_lo, &src);
   }
 
   //! @brief Signed multiply.
@@ -3099,6 +3099,34 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
     _emitInstruction(INST_MOV, &dst, &src);
   }
 
+  //! @brief Move from segment register.
+  //! @overload.
+  inline void mov(const GPVar& dst, const SegmentReg& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+  
+  //! @brief Move from segment register.
+  //! @overload.
+  inline void mov(const Mem& dst, const SegmentReg& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
+  //! @brief Move to segment register.
+  //! @overload.
+  inline void mov(const SegmentReg& dst, const GPVar& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
+  //! @brief Move to segment register.
+  //! @overload.
+  inline void mov(const SegmentReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
   //! @brief Move byte, word, dword or qword from absolute address @a src to
   //! AL, AX, EAX or RAX register.
   inline void mov_ptr(const GPVar& dst, void* src)
@@ -3170,21 +3198,21 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
   //! is multiplied by the value in the AL, AX, or EAX register (depending
   //! on the operand size) and the product is stored in the AX, DX:AX, or
   //! EDX:EAX registers, respectively.
-  inline void mul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const GPVar& src)
+  inline void mul(const GPVar& dst_hi, const GPVar& dst_lo, const GPVar& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_hi.getId() != dst_lo.getId());
 
-    _emitInstruction(INST_MUL, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_MUL, &dst_hi, &dst_lo, &src);
   }
   //! @brief Unsigned multiply.
   //! @overload
-  inline void mul_lo_hi(const GPVar& dst_lo, const GPVar& dst_hi, const Mem& src)
+  inline void mul(const GPVar& dst_hi, const GPVar& dst_lo, const Mem& src)
   {
     // Destination variables must be different.
-    ASMJIT_ASSERT(dst_lo.getId() != dst_hi.getId());
+    ASMJIT_ASSERT(dst_hi.getId() != dst_lo.getId());
 
-    _emitInstruction(INST_MUL, &dst_lo, &dst_hi, &src);
+    _emitInstruction(INST_MUL, &dst_hi, &dst_lo, &src);
   }
 
   //! @brief Two's Complement Negation.

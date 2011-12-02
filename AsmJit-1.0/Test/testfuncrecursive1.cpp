@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
   ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder1<int, int>());
   ctx->setArgument(0, tmp);
   ctx->setReturn(tmp);
-  c.mul_lo_hi(var, c.newGP(VARIABLE_TYPE_INT32), tmp);
+  c.mul(c.newGP(VARIABLE_TYPE_INT32), var, tmp);
 
   c.bind(skip);
   c.ret(var);

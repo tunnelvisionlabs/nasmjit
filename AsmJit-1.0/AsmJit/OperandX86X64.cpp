@@ -191,6 +191,17 @@ const XMMReg xmm15(_Initialize(), REG_XMM15);
 #endif // ASMJIT_X64
 
 // ============================================================================
+// [AsmJit::Registers - Segment]
+// ============================================================================
+
+const SegmentReg cs(_Initialize(), REG_CS);
+const SegmentReg ss(_Initialize(), REG_SS);
+const SegmentReg ds(_Initialize(), REG_DS);
+const SegmentReg es(_Initialize(), REG_ES);
+const SegmentReg fs(_Initialize(), REG_FS);
+const SegmentReg gs(_Initialize(), REG_GS);
+
+// ============================================================================
 // [AsmJit::Immediate]
 // ============================================================================
 

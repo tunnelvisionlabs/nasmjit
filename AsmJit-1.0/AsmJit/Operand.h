@@ -35,6 +35,8 @@ namespace AsmJit {
 //! @addtogroup AsmJit_Core
 //! @{
 
+// There is currently no platform independent code.
+
 //! @}
 
 } // AsmJit namespace

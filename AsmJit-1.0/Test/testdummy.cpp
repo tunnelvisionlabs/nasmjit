@@ -34,7 +34,12 @@
 #include <AsmJit/MemoryManager.h>
 
 // This is type of function we will generate
-typedef uint32_t (*MyFn)();
+typedef void (*MyFn)(void);
+
+static void dummyFunc(void)
+{
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -48,13 +53,12 @@ int main(int argc, char* argv[])
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, uint32_t, uint32_t>());
+  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
 
-  // ...
-  GPVar var = c.newGP(VARIABLE_TYPE_GPD);
-  c.xor_(var, var);
-  c.ret(var);
+  ECall* ctx = c.call((void*)dummyFunc);
+  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+
   c.endFunction();
   // ==========================================================================
 
@@ -63,7 +67,7 @@ int main(int argc, char* argv[])
   MyFn fn = function_cast<MyFn>(c.make());
 
   // Call it.
-  printf("Result %u\n", fn());
+  // printf("Result %llu\n", (unsigned long long)fn());
 
   // Free the generated function if it's not needed anymore.
   MemoryManager::getGlobal()->free((void*)fn);

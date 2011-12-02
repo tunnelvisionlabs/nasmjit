@@ -1622,6 +1622,34 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
     _emitInstruction(INST_MOV, &dst, &src);
   }
 
+  //! @brief Move from segment register.
+  //! @overload.
+  inline void mov(const GPReg& dst, const SegmentReg& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
+  //! @brief Move from segment register.
+  //! @overload.
+  inline void mov(const Mem& dst, const SegmentReg& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
+  //! @brief Move to segment register.
+  //! @overload.
+  inline void mov(const SegmentReg& dst, const GPReg& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
+  //! @brief Move to segment register.
+  //! @overload.
+  inline void mov(const SegmentReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_MOV, &dst, &src);
+  }
+
   //! @brief Move byte, word, dword or qword from absolute address @a src to
   //! AL, AX, EAX or RAX register.
   inline void mov_ptr(const GPReg& dst, void* src)
