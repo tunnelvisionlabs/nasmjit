@@ -348,9 +348,9 @@ struct VarData
   //! this variable is probably used in next instruction and can't be spilled.
   uint32_t workOffset;
 
-  //! @brief Next active variable in circullar double-linked list.
+  //! @brief Next active variable in circular double-linked list.
   VarData* nextActive;
-  //! @brief Previous active variable in circullar double-linked list.
+  //! @brief Previous active variable in circular double-linked list.
   VarData* prevActive;
 
   // --------------------------------------------------------------------------
@@ -1546,7 +1546,7 @@ struct ASMJIT_API CompilerContext
 
   //! @brief Current state (register allocator).
   StateData _state;
-  //! @brief Link to circullar double-linked list containing all active variables
+  //! @brief Link to circular double-linked list containing all active variables
   //! (for current state).
   VarData* _active;
 
@@ -1556,8 +1556,8 @@ struct ASMJIT_API CompilerContext
   //! @brief Current offset, used in prepare() stage. Each emittable should increment it.
   uint32_t _currentOffset;
 
-  //! @brief Whether current code is unrecheable.
-  uint32_t _unrecheable;
+  //! @brief Whether current code is unreachable.
+  uint32_t _unreachable;
 
   //! @brief Global modified GP registers mask (per function).
   uint32_t _modifiedGPRegisters;
@@ -8779,7 +8779,7 @@ struct ASMJIT_HIDDEN CompilerIntrinsics : public CompilerCore
 //! @endverbatim
 //!
 //! This section provided information about how state-change works. The 
-//! behavior is deterministic and it can be overriden.
+//! behavior is deterministic and it can be overridden.
 //!
 //! @section AsmJit_Compiler_AdvancedCodeGeneration Advanced Code Generation
 //!

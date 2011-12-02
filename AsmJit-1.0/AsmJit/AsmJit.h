@@ -184,7 +184,7 @@
 //! done only once and it's cached for all next calls. @c AsmJit::CpuInfo 
 //! structure not contains only information through @c AsmJit::cpuid(), but
 //! there is also small multiplatform code to detect number of processors 
-//! (or cores) throught operating system API.
+//! (or cores) through operating system API.
 //!
 //! It's recommended to use @c AsmJit::cpuInfo to detect and check for
 //! host processor features.

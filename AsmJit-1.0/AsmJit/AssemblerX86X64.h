@@ -7607,7 +7607,7 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! using @c AsmJit::Assembler::make() method. This method will use memory
 //! manager to allocate virtual memory and relocates generated code to it. For
 //! memory allocation is used global memory manager by default and memory is
-//! freeable, but of course this default behavior can be overriden specifying
+//! freeable, but of course this default behavior can be overridden specifying
 //! your memory manager and allocation type. If you want to do with code
 //! something else you can always override make() method and do what you want.
 //!

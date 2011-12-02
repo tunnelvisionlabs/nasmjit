@@ -262,9 +262,9 @@ Emittable* ETarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
     return NULL;
   }
 
-  if (cc._unrecheable)
+  if (cc._unreachable)
   {
-    cc._unrecheable = 0;
+    cc._unreachable = 0;
 
     // Assign state to the compiler context. 
     ASMJIT_ASSERT(_state != NULL);

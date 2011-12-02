@@ -2070,7 +2070,7 @@ void EJmp::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   _offset = cc._currentOffset;
 
   // Update _isTaken to true if this is conditional backward jump. This behavior
-  // can be overriden by using HINT_NOT_TAKEN when using the instruction.
+  // can be overridden by using HINT_NOT_TAKEN when using the instruction.
   if (getCode() != INST_JMP &&
       _operandsCount == 1 &&
       _jumpTarget->getOffset() < getOffset())
@@ -2128,8 +2128,8 @@ Emittable* EJmp::translate(CompilerContext& cc) ASMJIT_NOTHROW
       _jumpTarget->_state = _state;
     }
 
-    // Mark next code as unrecheable, cleared by a next label (ETarget).
-    if (_code == INST_JMP) cc._unrecheable = 1;
+    // Mark next code as unreachable, cleared by a next label (ETarget).
+    if (_code == INST_JMP) cc._unreachable = 1;
   }
 
   // Need to traverse over all active variables and unuse them if their scope ends
@@ -4974,7 +4974,7 @@ Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   if (shouldEmitJumpToEpilog())
   {
-    cc._unrecheable = 1;
+    cc._unreachable = 1;
   }
 
   for (i = 0; i < 2; i++)
@@ -5080,7 +5080,7 @@ void CompilerContext::_clear() ASMJIT_NOTHROW
   _forwardJumps = NULL;
 
   _currentOffset = 0;
-  _unrecheable = 0;
+  _unreachable = 0;
 
   _modifiedGPRegisters = 0;
   _modifiedMMRegisters = 0;
@@ -7713,7 +7713,7 @@ void CompilerCore::serialize(Assembler& a) ASMJIT_NOTHROW
         cur = cur->translate(cc);
       } while (cur);
 
-      cc._unrecheable = true;
+      cc._unreachable = true;
 
       sysuint_t len = cc._backCode.getLength();
       while (cc._backPos < len)
