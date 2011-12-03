@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
   printf("  AsmJit::Operand::MemData  : %u\n", (uint32_t)sizeof(Operand::MemData));
   printf("  AsmJit::Operand::RegData  : %u\n", (uint32_t)sizeof(Operand::RegData));
   printf("  AsmJit::Operand::VarData  : %u\n", (uint32_t)sizeof(Operand::VarData));
+  printf("  AsmJit::Operand::BinData  : %u\n", (uint32_t)sizeof(Operand::BinData));
   printf("\n");
 
   printf("  AsmJit::Assembler         : %u\n", (uint32_t)sizeof(Assembler));

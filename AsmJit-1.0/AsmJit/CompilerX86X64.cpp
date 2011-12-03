@@ -1625,7 +1625,7 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             vdata->registerWriteCount++;
             var->vflags |= VARIABLE_ALLOC_WRITE;
           }
-          else if (id->code == INST_LEA_D || id->code == INST_LEA_Q)
+          else if (id->code == INST_LEA)
           {
             // Write.
             vdata->registerWriteCount++;
@@ -4750,11 +4750,11 @@ Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
             {
               case VARIABLE_TYPE_XMM_1F:
               case VARIABLE_TYPE_XMM_4F:
-                compiler->emit(INST_FLD, _baseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 4));
+                compiler->emit(INST_FLD, _BaseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 4));
                 break;
               case VARIABLE_TYPE_XMM_1D:
               case VARIABLE_TYPE_XMM_2D:
-                compiler->emit(INST_FLD, _baseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 8));
+                compiler->emit(INST_FLD, _BaseVarMem(reinterpret_cast<BaseVar&>(_ret[i]), 8));
                 break;
             }
           }

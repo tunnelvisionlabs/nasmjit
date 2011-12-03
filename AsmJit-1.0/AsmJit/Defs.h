@@ -365,9 +365,9 @@ enum VARIABLE_ALLOC
 enum VARIABLE_ALLOC_POLICY
 {
   //! @brief Allocate preserved registers first.
-  VARIABLE_ALLOC_PRESERVED_FIRST,
+  VARIABLE_ALLOC_PRESERVED_FIRST = 0,
   //! @brief Allocate preserved registers last (default).
-  VARIABLE_ALLOC_PRESERVED_LAST
+  VARIABLE_ALLOC_PRESERVED_LAST = 1
 };
 
 // ============================================================================

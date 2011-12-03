@@ -1482,14 +1482,16 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
         const GPReg& dst = reinterpret_cast<const GPReg&>(*o0);
         const Mem& src = reinterpret_cast<const Mem&>(*o1);
 
-        // Support lea gpd/gpq, [gpd address]
-#if defined(ASMJIT_X64)
-        if (code == INST_LEA_D)
+        // Size override prefix support.
+        if (src.getSizePrefix())
         {
           _emitByte(0x67);
+#if defined(ASMJIT_X86)
+          memRegType = REG_TYPE_GPW;
+#else
           memRegType = REG_TYPE_GPD;
+#endif
         }
-#endif // ASMJIT_X64
 
         _emitX86RM(0x8D,
           dst.isRegType(REG_TYPE_GPW),

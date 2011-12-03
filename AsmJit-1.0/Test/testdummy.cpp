@@ -46,11 +46,12 @@ int main(int argc, char* argv[])
   using namespace AsmJit;
 
   // ==========================================================================
-  // Create compiler.
-  Compiler c;
-
   // Log compiler output.
   FileLogger logger(stderr);
+  logger.setLogBinary(true);
+
+  // Create compiler.
+  Compiler c;
   c.setLogger(&logger);
 
   c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
