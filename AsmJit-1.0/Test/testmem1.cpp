@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/MemoryManager.h>
+#include <AsmJit/AsmJit.h>
 
 static int problems = 0;
 

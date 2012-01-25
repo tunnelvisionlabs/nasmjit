@@ -29,9 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/Compiler.h>
-#include <AsmJit/Logger.h>
-#include <AsmJit/MemoryManager.h>
+#include <AsmJit/AsmJit.h>
 
 // This is type of function we will generate
 typedef void (*MemCopy)(void* a, void* b, sysuint_t size);

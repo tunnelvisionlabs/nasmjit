@@ -29,9 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/Compiler.h>
-#include <AsmJit/Logger.h>
-#include <AsmJit/MemoryManager.h>
+#include <AsmJit/AsmJit.h>
 
 // Type of generated function.
 typedef int (*MyFn)(int);

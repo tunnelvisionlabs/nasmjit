@@ -29,9 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/Compiler.h>
-#include <AsmJit/Logger.h>
-#include <AsmJit/MemoryManager.h>
+#include <AsmJit/AsmJit.h>
 
 using namespace AsmJit;
 
@@ -52,16 +50,16 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
   switch (args)
   {
     case 0:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<sysint_t>());
       break;
     case 1:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<Void, sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<sysint_t, sysint_t>());
       break;
     case 2:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, sysint_t, sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<sysint_t, sysint_t, sysint_t>());
       break;
     case 3:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, sysint_t, sysint_t, sysint_t>());
+      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<sysint_t, sysint_t, sysint_t, sysint_t>());
       break;
   }
   c.getFunction()->setHint(FUNCTION_HINT_NAKED, naked);

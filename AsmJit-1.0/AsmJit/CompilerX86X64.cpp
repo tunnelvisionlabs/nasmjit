@@ -4690,14 +4690,14 @@ Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t retValType = getFunction()->getPrototype().getReturnValue();
   uint32_t i;
 
-  switch (retValType)
+  switch ((int)retValType)
   {
     case VARIABLE_TYPE_GPD:
     case VARIABLE_TYPE_GPQ:
       for (i = 0; i < 2; i++)
       {
-        uint32_t dsti = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
-        uint32_t srci;
+        uint32_t dstIndex = (i == 0) ? REG_INDEX_EAX : REG_INDEX_EDX;
+        uint32_t srcIndex;
 
         if (_ret[i].isVar())
         {
@@ -4706,16 +4706,16 @@ Emittable* ERet::translate(CompilerContext& cc) ASMJIT_NOTHROW
             VarData* vdata = compiler->_getVarData(_ret[i].getId());
             ASMJIT_ASSERT(vdata != NULL);
 
-            srci = vdata->registerIndex;
-            if (srci == INVALID_VALUE)
-              compiler->emit(INST_MOV, gpn(dsti), cc._getVarMem(vdata));
-            else if (dsti != srci)
-              compiler->emit(INST_MOV, gpn(dsti), gpn(srci));
+            srcIndex = vdata->registerIndex;
+            if (srcIndex == INVALID_VALUE)
+              compiler->emit(INST_MOV, gpn(dstIndex), cc._getVarMem(vdata));
+            else if (dstIndex != srcIndex)
+              compiler->emit(INST_MOV, gpn(dstIndex), gpn(srcIndex));
           }
         }
         else if (_ret[i].isImm())
         {
-          compiler->emit(INST_MOV, gpn(dsti), _ret[i]);
+          compiler->emit(INST_MOV, gpn(dstIndex), _ret[i]);
         }
       }
       break;
@@ -7441,7 +7441,7 @@ MMVar CompilerCore::argMM(uint32_t index) ASMJIT_NOTHROW
   if (f)
   {
     const FunctionPrototype& prototype = f->getPrototype();
-    if (prototype.getArgumentsCount() < index)
+    if (index < prototype.getArgumentsCount())
     {
       VarData* vdata = getFunction()->_argumentVariables[index];
 
@@ -7472,7 +7472,7 @@ XMMVar CompilerCore::argXMM(uint32_t index) ASMJIT_NOTHROW
   if (f)
   {
     const FunctionPrototype& prototype = f->getPrototype();
-    if (prototype.getArgumentsCount() < index)
+    if (index < prototype.getArgumentsCount())
     {
       VarData* vdata = getFunction()->_argumentVariables[index];
 

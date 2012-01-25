@@ -7,7 +7,7 @@ Project(AsmJit C CXX)
 # If ASMJIT_DIR is not specified, assume that we are building it from here
 If(NOT ASMJIT_DIR)
   Set(ASMJIT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-EndIf(NOT ASMJIT_DIR)
+EndIf()
 
 # AsmJit C++ sources
 Set(ASMJIT_SOURCES
@@ -57,7 +57,7 @@ Include_Directories(${ASMJIT_DIR})
 # pthread library is needed for non-windows OSes.
 If(NOT WIN32)
   Link_Libraries(pthread)
-EndIf(NOT WIN32)
+EndIf()
 
 # Build-Type.
 If(${CMAKE_BUILD_TYPE})
@@ -78,7 +78,7 @@ If(ASMJIT_BUILD_LIBRARY)
     Get_Filename_Component(path ${i} PATH)
     Install(FILES ${i} DESTINATION "include/${path}")
   EndForEach(i)
-EndIf(ASMJIT_BUILD_LIBRARY)
+EndIf()
 
 # Build AsmJit test executables?
 If(ASMJIT_BUILD_TEST)
@@ -113,4 +113,4 @@ If(ASMJIT_BUILD_TEST)
     Add_Executable(${file} Test/${file}.cpp)
     Target_Link_Libraries(${file} AsmJit)
   EndForEach(file)
-EndIf(ASMJIT_BUILD_TEST)
+EndIf()

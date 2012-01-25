@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/CpuInfo.h>
+#include <AsmJit/AsmJit.h>
 
 using namespace AsmJit;
 
