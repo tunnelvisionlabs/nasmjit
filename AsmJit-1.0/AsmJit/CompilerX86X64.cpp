@@ -2450,7 +2450,8 @@ void EFunction::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   if (_hints[FUNCTION_HINT_LFENCE] != INVALID_VALUE)
     _emitLFence = (bool)_hints[FUNCTION_HINT_LFENCE];
 
-  if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc._mem16BlocksCount > 0))
+  // Updated to respect comment from issue #47, align also when using MMX code.
+  if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc._mem16BlocksCount + (cc._mem8BlocksCount > 0)))
   {
     // Have to align stack to 16-bytes.
     _isStackAlignedByFnTo16Bytes = true;
