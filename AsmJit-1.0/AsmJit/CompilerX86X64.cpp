@@ -7488,7 +7488,8 @@ XMMVar CompilerCore::argXMM(uint32_t index) ASMJIT_NOTHROW
 
 void CompilerCore::_vhint(BaseVar& var, uint32_t hintId, uint32_t hintValue) ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return;
+  if (var.getId() == INVALID_VALUE)
+    return;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
@@ -7504,12 +7505,15 @@ void CompilerCore::alloc(BaseVar& var) ASMJIT_NOTHROW
 
 void CompilerCore::alloc(BaseVar& var, uint32_t regIndex) ASMJIT_NOTHROW
 {
-  _vhint(var, VARIABLE_HINT_ALLOC, regIndex);
+  if (regIndex > 31)
+    return;
+
+  _vhint(var, VARIABLE_HINT_ALLOC, 1 << regIndex);
 }
 
 void CompilerCore::alloc(BaseVar& var, const BaseReg& reg) ASMJIT_NOTHROW
 {
-  _vhint(var, VARIABLE_HINT_ALLOC, reg.getRegIndex());
+  _vhint(var, VARIABLE_HINT_ALLOC, 1 << reg.getRegIndex());
 }
 
 void CompilerCore::save(BaseVar& var) ASMJIT_NOTHROW
@@ -7529,7 +7533,8 @@ void CompilerCore::unuse(BaseVar& var) ASMJIT_NOTHROW
 
 uint32_t CompilerCore::getPriority(BaseVar& var) const ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return INVALID_VALUE;
+  if (var.getId() == INVALID_VALUE)
+    return INVALID_VALUE;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
@@ -7539,7 +7544,8 @@ uint32_t CompilerCore::getPriority(BaseVar& var) const ASMJIT_NOTHROW
 
 void CompilerCore::setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return;
+  if (var.getId() == INVALID_VALUE)
+    return;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
@@ -7550,7 +7556,8 @@ void CompilerCore::setPriority(BaseVar& var, uint32_t priority) ASMJIT_NOTHROW
 
 bool CompilerCore::getSaveOnUnuse(BaseVar& var) const ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return false;
+  if (var.getId() == INVALID_VALUE)
+    return false;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
@@ -7560,7 +7567,8 @@ bool CompilerCore::getSaveOnUnuse(BaseVar& var) const ASMJIT_NOTHROW
 
 void CompilerCore::setSaveOnUnuse(BaseVar& var, bool value) ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return;
+  if (var.getId() == INVALID_VALUE)
+    return;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
@@ -7570,7 +7578,8 @@ void CompilerCore::setSaveOnUnuse(BaseVar& var, bool value) ASMJIT_NOTHROW
 
 void CompilerCore::rename(BaseVar& var, const char* name) ASMJIT_NOTHROW
 {
-  if (var.getId() == INVALID_VALUE) return;
+  if (var.getId() == INVALID_VALUE)
+    return;
 
   VarData* vdata = _getVarData(var.getId());
   ASMJIT_ASSERT(vdata != NULL);
