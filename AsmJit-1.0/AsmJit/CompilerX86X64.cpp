@@ -740,7 +740,7 @@ Emittable* EVariableHint::translate(CompilerContext& cc) ASMJIT_NOTHROW
   switch (_hintId)
   {
     case VARIABLE_HINT_ALLOC:
-      cc.allocVar(_vdata, _hintValue, VARIABLE_ALLOC_READWRITE);
+      cc.allocVar(_vdata, _hintValue, VARIABLE_ALLOC_READ);
       break;
     case VARIABLE_HINT_SPILL:
       if (_vdata->state == VARIABLE_STATE_REGISTER)
