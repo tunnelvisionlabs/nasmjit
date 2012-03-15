@@ -1408,7 +1408,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
   }
 
   //! @brief Get new memory operand adjusted by @a displacement.
-  inline Mem adjusted(sysint_t displacement) ASMJIT_NOTHROW
+  inline Mem adjusted(sysint_t displacement) const ASMJIT_NOTHROW
   {
     Mem result(*this);
     result.adjust(displacement);
