@@ -3465,6 +3465,28 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
   }
 #endif
 
+  //! @brief Pack with Signed Saturation (MMX).
+  inline void packsswb(const MMReg& dst, const MMReg& src)
+  {
+    _emitInstruction(INST_PACKSSWB, &dst, &src);
+  }
+  //! @brief Pack with Signed Saturation (MMX).
+  inline void packsswb(const MMReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_PACKSSWB, &dst, &src);
+  }
+
+  //! @brief Pack with Signed Saturation (MMX).
+  inline void packssdw(const MMReg& dst, const MMReg& src)
+  {
+    _emitInstruction(INST_PACKSSDW, &dst, &src);
+  }
+  //! @brief Pack with Signed Saturation (MMX).
+  inline void packssdw(const MMReg& dst, const Mem& src)
+  {
+    _emitInstruction(INST_PACKSSDW, &dst, &src);
+  }
+
   //! @brief Pack with Unsigned Saturation (MMX).
   inline void packuswb(const MMReg& dst, const MMReg& src)
   {
