@@ -409,7 +409,7 @@ void AssemblerCore::_emitModM(
         // Bound label.
         disp += getOffset() - l_data.offset;
 
-        // Add a dummy DWORD.
+        // Displacement is known.
         _emitInt32((int32_t)disp);
       }
       else
@@ -1026,7 +1026,8 @@ void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Ope
 
   if (_emitOptions & EMIT_OPTION_LOCK_PREFIX)
   {
-    if (!id->isLockable()) goto illegalInstruction;
+    if (!id->isLockable())
+      goto illegalInstruction;
     _emitByte(0xF0);
   }
 
@@ -1683,7 +1684,8 @@ _Emit_Mov_Sreg_RM:
         const GPReg& reg = reinterpret_cast<const GPReg&>(!reverse ? *o0 : *o1);
         const Imm& imm = reinterpret_cast<const Imm&>(!reverse ? *o1 : *o0);
 
-        if (reg.getRegIndex() != 0) goto illegalInstruction;
+        if (reg.getRegIndex() != 0)
+          goto illegalInstruction;
 
         if (reg.isRegType(REG_TYPE_GPW)) _emitByte(0x66);
 #if defined(ASMJIT_X64)
@@ -1703,9 +1705,14 @@ _Emit_Mov_Sreg_RM:
         const GPReg& dst = reinterpret_cast<const GPReg&>(*o0);
         const Operand& src = reinterpret_cast<const Operand&>(*o1);
 
-        if (dst.getSize() == 1) goto illegalInstruction;
-        if (src.getSize() != 1 && src.getSize() != 2) goto illegalInstruction;
-        if (src.getSize() == 2 && dst.getSize() == 2) goto illegalInstruction;
+        if (dst.getSize() == 1)
+          goto illegalInstruction;
+        
+        if (src.getSize() != 1 && src.getSize() != 2)
+          goto illegalInstruction;
+        
+        if (src.getSize() == 2 && dst.getSize() == 2)
+          goto illegalInstruction;
 
         _emitX86RM(id->opCode[0] + (src.getSize() != 1),
           dst.isRegType(REG_TYPE_GPW),
@@ -2048,7 +2055,8 @@ _Emit_Mov_Sreg_RM:
 
         if (code != INST_FCOM && code != INST_FCOMP)
         {
-          if (!o1->isRegType(REG_TYPE_X87)) goto illegalInstruction;
+          if (!o1->isRegType(REG_TYPE_X87))
+            goto illegalInstruction;
           i2 = reinterpret_cast<const X87Reg&>(*o1).getRegIndex();
         }
         else if (i1 != 0 && i2 != 0)
@@ -2128,7 +2136,8 @@ _Emit_Mov_Sreg_RM:
 
     case InstructionDescription::G_X87_MEM:
     {
-      if (!o0->isMem()) goto illegalInstruction;
+      if (!o0->isMem())
+        goto illegalInstruction;
       const Mem& m = reinterpret_cast<const Mem&>(*o0);
 
       uint8_t opCode = 0x00, mod = 0;
@@ -2181,11 +2190,12 @@ _Emit_Mov_Sreg_RM:
       }
 
       // Illegal.
-      if (o0->isMem() && o1->isMem()) goto illegalInstruction;
+      if (o0->isMem() && o1->isMem())
+        goto illegalInstruction;
 
-      uint8_t rexw = ((id->oflags[0]|id->oflags[1]) & InstructionDescription::O_NOREX)
+      uint8_t rexw = ((id->oflags[0] | id->oflags[1]) & InstructionDescription::O_NOREX)
         ? 0
-        : o0->isRegType(REG_TYPE_GPQ) | o0->isRegType(REG_TYPE_GPQ);
+        : o0->isRegType(REG_TYPE_GPQ) | o1->isRegType(REG_TYPE_GPQ);
 
       // (X)MM|Reg <- (X)MM|Reg
       if (o0->isReg() && o1->isReg())
@@ -2368,10 +2378,14 @@ _Emit_Mov_Sreg_RM:
       uint32_t opCode = id->opCode[0];
       uint8_t isGpdGpq = o0->isRegType(REG_TYPE_GPD) | o0->isRegType(REG_TYPE_GPQ);
 
-      if (code == INST_PEXTRB && (o0->getSize() != 0 && o0->getSize() != 1) && !isGpdGpq) goto illegalInstruction;
-      if (code == INST_PEXTRW && (o0->getSize() != 0 && o0->getSize() != 2) && !isGpdGpq) goto illegalInstruction;
-      if (code == INST_PEXTRD && (o0->getSize() != 0 && o0->getSize() != 4) && !isGpdGpq) goto illegalInstruction;
-      if (code == INST_PEXTRQ && (o0->getSize() != 0 && o0->getSize() != 8) && !isGpdGpq) goto illegalInstruction;
+      if (code == INST_PEXTRB && (o0->getSize() != 0 && o0->getSize() != 1) && !isGpdGpq)
+        goto illegalInstruction;
+      if (code == INST_PEXTRW && (o0->getSize() != 0 && o0->getSize() != 2) && !isGpdGpq)
+        goto illegalInstruction;
+      if (code == INST_PEXTRD && (o0->getSize() != 0 && o0->getSize() != 4) && !isGpdGpq)
+        goto illegalInstruction;
+      if (code == INST_PEXTRQ && (o0->getSize() != 0 && o0->getSize() != 8) && !isGpdGpq)
+        goto illegalInstruction;
 
       if (o1->isRegType(REG_TYPE_XMM)) opCode |= 0x66000000;
 
@@ -2420,14 +2434,16 @@ _Emit_Mov_Sreg_RM:
         ((id->oflags[1] & InstructionDescription::O_MM_XMM) == InstructionDescription::O_MM_XMM && o1->isRegType(REG_TYPE_XMM))
           ? 0x66000000
           : 0x00000000;
-      uint8_t rexw = ((id->oflags[0]|id->oflags[1]) & InstructionDescription::O_NOREX)
+
+      uint8_t rexw = ((id->oflags[0] | id->oflags[1]) & InstructionDescription::O_NOREX)
         ? 0
-        : o0->isRegType(REG_TYPE_GPQ) | o0->isRegType(REG_TYPE_GPQ);
+        : o0->isRegType(REG_TYPE_GPQ) | o1->isRegType(REG_TYPE_GPQ);
 
       // (X)MM <- (X)MM (opcode0)
       if (o1->isReg())
       {
-        if ((id->oflags[1] & (InstructionDescription::O_MM_XMM | InstructionDescription::O_GQD)) == 0) goto illegalInstruction;
+        if ((id->oflags[1] & (InstructionDescription::O_MM_XMM | InstructionDescription::O_GQD)) == 0)
+          goto illegalInstruction;
         _emitMmu(id->opCode[0] | prefix, rexw,
           reinterpret_cast<const BaseReg&>(*o0).getRegCode(),
           reinterpret_cast<const BaseReg&>(*o1), 0);
@@ -2436,7 +2452,8 @@ _Emit_Mov_Sreg_RM:
       // (X)MM <- Mem (opcode0)
       if (o1->isMem())
       {
-        if ((id->oflags[1] & InstructionDescription::O_MEM) == 0) goto illegalInstruction;
+        if ((id->oflags[1] & InstructionDescription::O_MEM) == 0)
+          goto illegalInstruction;
         _emitMmu(id->opCode[0] | prefix, rexw,
           reinterpret_cast<const BaseReg&>(*o0).getRegCode(),
           reinterpret_cast<const Mem&>(*o1), 0);
@@ -2445,7 +2462,8 @@ _Emit_Mov_Sreg_RM:
       // (X)MM <- Imm (opcode1+opcodeR)
       if (o1->isImm())
       {
-        if ((id->oflags[1] & InstructionDescription::O_IMM) == 0) goto illegalInstruction;
+        if ((id->oflags[1] & InstructionDescription::O_IMM) == 0)
+          goto illegalInstruction;
         _emitMmu(id->opCode[1] | prefix, rexw,
           (uint8_t)id->opCodeR,
           reinterpret_cast<const BaseReg&>(*o0), 1);
@@ -2481,14 +2499,16 @@ _Emit_Mov_Sreg_RM:
         ((id->oflags[1] & InstructionDescription::O_MM_XMM) == InstructionDescription::O_MM_XMM && o1->isRegType(REG_TYPE_XMM))
           ? 0x66000000
           : 0x00000000;
+
       uint8_t rexw = ((id->oflags[0]|id->oflags[1]) & InstructionDescription::O_NOREX)
         ? 0
-        : o0->isRegType(REG_TYPE_GPQ) | o0->isRegType(REG_TYPE_GPQ);
+        : o0->isRegType(REG_TYPE_GPQ) | o1->isRegType(REG_TYPE_GPQ);
 
       // (X)MM <- (X)MM (opcode0)
       if (o1->isReg())
       {
-        if ((id->oflags[1] & (InstructionDescription::O_MM_XMM | InstructionDescription::O_GQD)) == 0) goto illegalInstruction;
+        if ((id->oflags[1] & (InstructionDescription::O_MM_XMM | InstructionDescription::O_GQD)) == 0)
+goto illegalInstruction;
         _emitMmu(id->opCode[0] | prefix, rexw,
           reinterpret_cast<const BaseReg&>(*o0).getRegCode(),
           reinterpret_cast<const BaseReg&>(*o1), 1);
@@ -2497,7 +2517,8 @@ _Emit_Mov_Sreg_RM:
       // (X)MM <- Mem (opcode0)
       if (o1->isMem())
       {
-        if ((id->oflags[1] & InstructionDescription::O_MEM) == 0) goto illegalInstruction;
+        if ((id->oflags[1] & InstructionDescription::O_MEM) == 0)
+          goto illegalInstruction;
         _emitMmu(id->opCode[0] | prefix, rexw,
           reinterpret_cast<const BaseReg&>(*o0).getRegCode(),
           reinterpret_cast<const Mem&>(*o1), 1);
