@@ -11,7 +11,6 @@ EndIf()
 
 # AsmJit C++ sources
 Set(ASMJIT_SOURCES
-  AsmJit/Assembler.cpp
   AsmJit/AssemblerX86X64.cpp
   AsmJit/CodeGenerator.cpp
   AsmJit/Compiler.cpp
@@ -21,7 +20,6 @@ Set(ASMJIT_SOURCES
   AsmJit/DefsX86X64.cpp
   AsmJit/Logger.cpp
   AsmJit/MemoryManager.cpp
-  AsmJit/Operand.cpp
   AsmJit/OperandX86X64.cpp
   AsmJit/Platform.cpp
   AsmJit/Util.cpp
