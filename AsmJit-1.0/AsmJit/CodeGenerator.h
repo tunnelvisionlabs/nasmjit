@@ -39,6 +39,7 @@ namespace AsmJit {
 struct Assembler;
 struct JitCodeGenerator;
 struct MemoryManager;
+struct MemoryMarker;
 
 // ============================================================================
 // [AsmJit::CodeGenerator]
@@ -80,7 +81,7 @@ struct ASMJIT_API CodeGenerator
   // [Statics]
   // --------------------------------------------------------------------------
 
-  static CodeGenerator* getGlobal();
+  static JitCodeGenerator* getGlobal();
 
 private:
   ASMJIT_DISABLE_COPY(CodeGenerator)
@@ -133,6 +134,9 @@ struct JitCodeGenerator : public CodeGenerator
 protected:
   //! @brief Memory manager.
   MemoryManager* _memoryManager;
+  //! @brief Memory marker.
+  MemoryMarker* _memoryMarker;
+
   //! @brief Type of allocation.
   uint32_t _allocType;
 

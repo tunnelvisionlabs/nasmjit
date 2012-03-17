@@ -361,6 +361,7 @@
 #include "Defs.h"
 #include "Logger.h"
 #include "MemoryManager.h"
+#include "MemoryMarker.h"
 #include "Operand.h"
 #include "Platform.h"
 #include "Util.h"

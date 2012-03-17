@@ -601,12 +601,11 @@ struct ASMJIT_API AssemblerCore
   // --------------------------------------------------------------------------
 
 protected:
+  //! @brief Zone memory management.
+  Zone _zone;
 
   //! @brief Code generator instance.
   CodeGenerator* _codeGenerator;
-
-  //! @brief Zone memory management.
-  Zone _zone;
 
   //! @brief Logger.
   Logger* _logger;

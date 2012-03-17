@@ -28,11 +28,12 @@
 #include "CodeGenerator.h"
 #include "Defs.h"
 #include "MemoryManager.h"
+#include "MemoryMarker.h"
 
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::CodeGenerator]
+// [AsmJit::CodeGenerator - Construction / Destruction]
 // ============================================================================
 
 CodeGenerator::CodeGenerator()
@@ -43,18 +44,23 @@ CodeGenerator::~CodeGenerator()
 {
 }
 
-CodeGenerator* CodeGenerator::getGlobal()
+// ============================================================================
+// [AsmJit::CodeGenerator - GetGlobal]
+// ============================================================================
+
+JitCodeGenerator* CodeGenerator::getGlobal()
 {
   static JitCodeGenerator global;
   return &global;
 }
 
 // ============================================================================
-// [AsmJit::JitCodeGenerator]
+// [AsmJit::JitCodeGenerator - Construction / Destruction]
 // ============================================================================
 
 JitCodeGenerator::JitCodeGenerator() :
   _memoryManager(NULL),
+  _memoryMarker(NULL),
   _allocType(MEMORY_ALLOC_FREEABLE)
 {
 }
@@ -62,6 +68,10 @@ JitCodeGenerator::JitCodeGenerator() :
 JitCodeGenerator::~JitCodeGenerator()
 {
 }
+
+// ============================================================================
+// [AsmJit::JitCodeGenerator - Generate]
+// ============================================================================
 
 uint32_t JitCodeGenerator::generate(void** dest, Assembler* assembler)
 {
@@ -75,7 +85,11 @@ uint32_t JitCodeGenerator::generate(void** dest, Assembler* assembler)
 
   // Switch to global memory manager if not provided.
   MemoryManager* memmgr = getMemoryManager();
-  if (memmgr == NULL) memmgr = MemoryManager::getGlobal();
+
+  if (memmgr == NULL)
+  {
+    memmgr = MemoryManager::getGlobal();
+  }
 
   void* p = memmgr->alloc(codeSize, getAllocType());
   if (p == NULL)
@@ -87,10 +101,16 @@ uint32_t JitCodeGenerator::generate(void** dest, Assembler* assembler)
   // Relocate the code.
   sysuint_t relocatedSize = assembler->relocCode(p);
 
-  // Return unused memory to mamory-manager.
+  // Return unused memory to MemoryManager.
   if (relocatedSize < codeSize)
   {
     memmgr->shrink(p, relocatedSize);
+  }
+
+  // Mark memory if MemoryMarker provided.
+  if (_memoryMarker)
+  {
+    _memoryMarker->mark(p, relocatedSize);
   }
 
   // Return the code.

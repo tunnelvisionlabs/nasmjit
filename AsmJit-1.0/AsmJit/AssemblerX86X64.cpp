@@ -88,8 +88,8 @@ struct ASMJIT_HIDDEN TrampolineWriter
 // ============================================================================
 
 AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
-  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _zone(16384 - sizeof(Zone::Chunk) - 32),
+  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _logger(NULL),
   _error(0),
   _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
@@ -3073,7 +3073,8 @@ void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
 void* AssemblerCore::make() ASMJIT_NOTHROW
 {
   // Do nothing on error state or when no instruction was emitted.
-  if (_error || getCodeSize() == 0) return NULL;
+  if (_error || getCodeSize() == 0)
+    return NULL;
 
   void* p;
   _error = _codeGenerator->generate(&p, reinterpret_cast<Assembler*>(this));

@@ -6899,8 +6899,8 @@ bool CompilerUtil::isStack16ByteAligned()
 // ============================================================================
 
 CompilerCore::CompilerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
-  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _zone(16384 - sizeof(Zone::Chunk) - 32),
+  _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _logger(NULL),
   _error(0),
   _properties((1 << PROPERTY_OPTIMIZE_ALIGN)),
@@ -7605,6 +7605,7 @@ StateData* CompilerCore::_newStateData(uint32_t memVarsCount) ASMJIT_NOTHROW
 void* CompilerCore::make() ASMJIT_NOTHROW
 {
   Assembler a(_codeGenerator);
+
   a._properties = _properties;
   a.setLogger(_logger);
 
@@ -7622,6 +7623,7 @@ void* CompilerCore::make() ASMJIT_NOTHROW
   }
 
   void* result = a.make();
+
   if (_logger)
   {
     _logger->logFormat("*** COMPILER SUCCESS - Wrote %u bytes, code: %u, trampolines: %u.\n\n",
@@ -7629,6 +7631,7 @@ void* CompilerCore::make() ASMJIT_NOTHROW
       (unsigned int)a.getOffset(),
       (unsigned int)a.getTrampolineSize());
   }
+
   return result;
 }
 

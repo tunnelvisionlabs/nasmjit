@@ -43,10 +43,12 @@ namespace AsmJit {
 // ============================================================================
 
 struct Assembler;
+struct CodeGenerator;
 struct Compiler;
 struct CompilerContext;
 struct CompilerCore;
 struct CompilerIntrinsics;
+struct MemoryManager;
 
 struct FunctionDefinition;
 

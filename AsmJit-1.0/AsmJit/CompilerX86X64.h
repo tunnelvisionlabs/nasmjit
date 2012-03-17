@@ -58,12 +58,6 @@ namespace AsmJit {
 //! @{
 
 // ============================================================================
-// [Forward Declarations]
-// ============================================================================
-
-struct CodeGenerator;
-
-// ============================================================================
 // [AsmJit::TypeToId]
 // ============================================================================
 
@@ -2072,11 +2066,11 @@ struct ASMJIT_API CompilerCore
 
 protected:
 
-  //! @brief Code generator.
-  CodeGenerator* _codeGenerator;
-
   //! @brief Zone memory management.
   Zone _zone;
+
+  //! @brief Code generator.
+  CodeGenerator* _codeGenerator;
 
   //! @brief Logger.
   Logger* _logger;

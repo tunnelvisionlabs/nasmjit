@@ -24,32 +24,51 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 // [Guard]
-#ifndef _ASMJIT_ASSEMBLER_H
-#define _ASMJIT_ASSEMBLER_H
+#ifndef _ASMJIT_MEMORYMARKER_H
+#define _ASMJIT_MEMORYMARKER_H
 
 // [Dependencies]
 #include "Build.h"
+#include "Defs.h"
+
+// [Api-Begin]
+#include "ApiBegin.h"
 
 namespace AsmJit {
 
+//! @addtogroup AsmJit_MemoryManagement
+//! @{
+
 // ============================================================================
-// [Forward Declarations]
+// [AsmJit::MemoryMarker]
 // ============================================================================
 
-struct Logger;
-struct MemoryManager;
-struct EInstruction;
+//! @brief Virtual memory marker interface.
+struct ASMJIT_API MemoryMarker
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  MemoryMarker() ASMJIT_NOTHROW;
+  virtual ~MemoryMarker() ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Interface]
+  // --------------------------------------------------------------------------
+
+  virtual void mark(const void* ptr, sysuint_t size) ASMJIT_NOTHROW = 0;
+
+private:
+  ASMJIT_DISABLE_COPY(MemoryMarker)
+};
+
+//! @}
 
 } // AsmJit namespace
 
-// ============================================================================
-// [Platform Specific]
-// ============================================================================
-
-// [X86 / X64]
-#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-#include "AssemblerX86X64.h"
-#endif // ASMJIT_X86 || ASMJIT_X64
+// [Api-End]
+#include "ApiEnd.h"
 
 // [Guard]
-#endif // _ASMJIT_ASSEMBLER_H
+#endif // _ASMJIT_MEMORYMARKER_H

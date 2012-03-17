@@ -23,33 +23,23 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// [Guard]
-#ifndef _ASMJIT_ASSEMBLER_H
-#define _ASMJIT_ASSEMBLER_H
-
 // [Dependencies]
 #include "Build.h"
+#include "MemoryMarker.h"
+
+// [Api-Begin]
+#include "ApiBegin.h"
 
 namespace AsmJit {
 
 // ============================================================================
-// [Forward Declarations]
+// [AsmJit::MemoryMarker]
 // ============================================================================
 
-struct Logger;
-struct MemoryManager;
-struct EInstruction;
+MemoryMarker::MemoryMarker() ASMJIT_NOTHROW {}
+MemoryMarker::~MemoryMarker() ASMJIT_NOTHROW {}
 
 } // AsmJit namespace
 
-// ============================================================================
-// [Platform Specific]
-// ============================================================================
-
-// [X86 / X64]
-#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
-#include "AssemblerX86X64.h"
-#endif // ASMJIT_X86 || ASMJIT_X64
-
-// [Guard]
-#endif // _ASMJIT_ASSEMBLER_H
+// [Api-End]
+#include "ApiEnd.h"
