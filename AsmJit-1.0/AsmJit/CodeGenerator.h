@@ -122,6 +122,15 @@ struct JitCodeGenerator : public CodeGenerator
   inline void setAllocType(uint32_t allocType) { _allocType = allocType; }
 
   // --------------------------------------------------------------------------
+  // [Memory Marker]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get the @c MemoryMarker instance.
+  inline MemoryMarker* getMemoryMarker() const { return _memoryMarker; }
+  //! @brief Set the @c MemoryMarker instance.
+  inline void setMemoryMarker(MemoryMarker* memoryMarker) { _memoryMarker = memoryMarker; }
+
+  // --------------------------------------------------------------------------
   // [Interface]
   // --------------------------------------------------------------------------
 
