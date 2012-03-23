@@ -1611,6 +1611,28 @@ void EInstruction::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             vdata->registerReadCount++;
             var->vflags |= VARIABLE_ALLOC_READ;
           }
+          // CVTTSD2SI/CVTTSS2SI instructions.
+          else if (id->code == INST_CVTTSD2SI || id->code == INST_CVTTSS2SI)
+          {
+            // In 32-bit mode the whole destination is replaced. In 64-bit mode
+            // we need to check whether the destination operand size is 64-bits.
+#if defined(ASMJIT_X64)
+            if (_operands[0].isRegType(REG_TYPE_GPQ))
+            {
+#endif // ASMJIT_X64
+              // Write-only case.
+              vdata->registerWriteCount++;
+              var->vflags |= VARIABLE_ALLOC_WRITE;
+#if defined(ASMJIT_X64)
+            }
+            else
+            {
+              // Read/Write.
+              vdata->registerRWCount++;
+              var->vflags |= VARIABLE_ALLOC_READWRITE;
+            }
+#endif // ASMJIT_X64
+          }
           // MOV/MOVSS/MOVSD instructions.
           //
           // If instruction is MOV (source replaces the destination) or 
