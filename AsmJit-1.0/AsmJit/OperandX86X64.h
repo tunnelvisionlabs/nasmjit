@@ -1438,7 +1438,7 @@ struct ASMJIT_HIDDEN Mem : public Operand
 
   inline bool operator!=(const Mem& other) const ASMJIT_NOTHROW
   {
-    return *this == other;
+    return !(*this == other);
   }
 #endif // ASMJIT_NODOC
 };
