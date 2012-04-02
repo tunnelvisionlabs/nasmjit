@@ -785,7 +785,7 @@ ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegTyp
       {
         // [absolute]
         isAbsolute = true;
-        buf = Util::myutoa(buf, (sysuint_t)mem.getTarget(), 16);
+        buf = Util::myutoa(buf, (sysuint_t)mem.getTarget() + mem.getDisplacement(), 16);
         break;
       }
     }
