@@ -97,14 +97,8 @@ Examples and tests can be found in these places:
 License
 =======
 
-AsmJit can be distributed under MIT licence:
-<http://www.opensource.org/licenses/mit-license.php>
-
-Older versions of AsmJit also contained Google's V8 and Sun licenses (where
-original Assembler class from Google's V8 is). But because AsmJit were
-completely rewritten and it now contains complete new codebase, these licenses
-were removed (code from Google's V8 is not used in new versions of AsmJit
-anymore).
+AsmJit can be distributed under zlib license:
+<http://www.opensource.org/licenses/zlib-license.php>
 
 Google Groups and Mailing Lists
 ===============================
@@ -115,7 +109,7 @@ AsmJit google group:
 AsmJit mailing list:
   * asmjit-dev@googlegroups.com 
 
-Contact Author
-==============
+Contact Author/Maintainer
+=========================
 
 Petr Kobalicek <kobalicek.petr@gmail.com>
