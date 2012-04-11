@@ -268,7 +268,7 @@
             if (_functionPrototype.CallingConvention == CallingConvention.X64U)
                 accessibleMemoryBelowStack = 128;
 
-            if (_isCaller && cc.MemBytesTotal > 0)
+            if (_isCaller && (cc.MemBytesTotal > 0 || _isStackAlignedByOsTo16Bytes))
                 _isEspAdjusted = true;
 
             if (cc.MemBytesTotal > accessibleMemoryBelowStack)
