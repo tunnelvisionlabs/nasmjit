@@ -117,8 +117,8 @@
                 //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there
                 //   then it's extended register.
                 return (IsReg && ((int)((BaseReg)this).Code & (int)RegIndex.Mask) >= 8) ||
-                       (IsMem && (((uint)((Mem)this).Base - 8U) < 8U) ||
-                                   (((uint)((Mem)this).Index - 8U) < 8U));
+                       (IsMem && ((((uint)((Mem)this).Base - 8U) < 8U) ||
+                                   (((uint)((Mem)this).Index - 8U) < 8U)));
             }
         }
 
