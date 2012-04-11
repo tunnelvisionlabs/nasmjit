@@ -220,6 +220,13 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.GP) == 0)
                 throw new ArgumentException();
 
+            if (Util.IsX86 && VariableInfo.GetVariableInfo(variableType).Size > 4)
+            {
+                variableType = VariableType.GPD;
+                if (_logger != null)
+                    _logger.LogString("*** COMPILER WARNING: Translated QWORD variable to DWORD, FIX YOUR CODE! ***" + Environment.NewLine);
+            }
+
             VarData varData = NewVarData(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
             return GPVar.FromData(varData);
         }
