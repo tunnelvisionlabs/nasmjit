@@ -129,5 +129,34 @@
             action.Compile();
             Assert.AreEqual(ptr1, action.CompiledAddress);
         }
+
+        [TestMethod]
+        public void TestRecursiveFunction()
+        {
+            JitFunction<int, int> function = new JitFunction<int, int>(CallingConvention.Default, FunctionHints.Naked);
+            Compiler c = function.GetCompiler();
+            c.Logger = new FileLogger(Console.Error);
+
+            Label skip = c.DefineLabel();
+
+            GPVar var = c.ArgGP(0);
+            c.Cmp(var, 1);
+            c.Jle(skip);
+
+            GPVar tmp = c.NewGP(VariableType.INT32);
+            c.Mov(tmp, var);
+            c.Dec(tmp);
+
+            Call call = c.Call(c.Function.EntryLabel, CallingConvention.Default, typeof(Func<int, int>));
+            call.SetArgument(0, tmp);
+            call.SetReturn(var);
+            c.MulLoHi(var, c.NewGP(VariableType.INT32), tmp);
+
+            c.MarkLabel(skip);
+            c.Ret(var);
+
+            TestJitFunction2Fn fn = function.GetDelegate<TestJitFunction2Fn>();
+            Assert.AreEqual(5 * 4 * 3 * 2 * 1, fn(5));
+        }
     }
 }
