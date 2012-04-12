@@ -1,5 +1,6 @@
 ﻿namespace AsmJitNet
 {
+    using Encoding = System.Text.Encoding;
     using System;
     using System.Diagnostics;
     using System.Linq;
@@ -11,6 +12,7 @@
         private static readonly Lazy<CpuInfo> _instance = new Lazy<CpuInfo>(() => new CpuInfo());
 
         private string _vendor;
+        private string _brand;
 
         private CpuVendor _vendorId;
         private int _family;
@@ -124,9 +126,17 @@
         private static readonly VendorInfo[] _vendorInfo =
             {
                 new VendorInfo( CpuVendor.Intel, new char[] { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l' } ),
+
                 new VendorInfo( CpuVendor.Amd  , new char[] { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!' } ),
                 new VendorInfo( CpuVendor.Amd  , new char[] { 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D' } ),
-                new VendorInfo( CpuVendor.Via  , new char[] { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} ),
+
+                new VendorInfo( CpuVendor.Nsm, new char[] { 'G', 'e', 'o', 'd', 'e', ' ', 'b', 'y', ' ', 'N', 'S', 'C' } ),
+                new VendorInfo( CpuVendor.Nsm, new char[] { 'C', 'y', 'r', 'i', 'x', 'I', 'n', 's', 't', 'e', 'a', 'd' } ),
+
+                new VendorInfo( CpuVendor.Transmeta, new char[] { 'G', 'e', 'n', 'u', 'i', 'n', 'e', 'T', 'M', 'x', '8', '6' } ),
+                new VendorInfo( CpuVendor.Transmeta, new char[] { 'T', 'r', 'a', 'n', 's', 'm', 'e', 't', 'a', 'C', 'P', 'U' } ),
+
+                new VendorInfo( CpuVendor.Via, new char[] { 'V', 'I', 'A', '\0','V', 'I', 'A', '\0','V', 'I', 'A', '\0'} ),
             };
 
         private void DetectCpuInfo()
@@ -253,7 +263,7 @@
 
                 uint exIds = eax;
 
-                for (a = 0x80000001; a < exIds && a <= (0x80000001); a++)
+                for (a = 0x80000001; a < exIds && a <= 0x80000001; a++)
                 {
                     eax = a;
                     CpuId(ref eax, out ebx, out ecx, out edx);
@@ -287,6 +297,17 @@
                         if ((edx & 0x80000000U) != 0)
                             _features |= CpuFeatures.AMD3DNOW;
 
+                        break;
+
+                    case 0x80000002:
+                    case 0x80000003:
+                    case 0x80000004:
+                        byte[] brand = new byte[16];
+                        BitConverter.GetBytes(eax).CopyTo(brand, 0);
+                        BitConverter.GetBytes(ebx).CopyTo(brand, 4);
+                        BitConverter.GetBytes(ecx).CopyTo(brand, 8);
+                        BitConverter.GetBytes(edx).CopyTo(brand, 12);
+                        _brand = Encoding.ASCII.GetString(brand, 0, 16);
                         break;
 
                     // Additional features can be detected in the future.
