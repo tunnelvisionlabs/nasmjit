@@ -257,7 +257,8 @@
         Lddqu,
         Ldmxcsr,
         Lahf,          // X86/X64 (CPUID NEEDED)
-        Lea,           // X86/X64
+        LeaD,          // X86/X64 (lea gpd/gpq, [gpd])
+        LeaQ,          // X64     (lea gpd/gpq, [gpq])
         Leave,         // X86/X64
         Lfence,
         Maskmovdqu,

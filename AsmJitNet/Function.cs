@@ -627,14 +627,14 @@
                     if (a._registerIndex != RegIndex.Invalid)
                     {
                         var regOp = new GPReg(Register.NativeRegisterType, a._registerIndex);
-                        Assembler.DumpOperand(buffer, regOp);
+                        Assembler.DumpOperand(buffer, regOp, Register.NativeRegisterType);
                     }
                     else
                     {
                         Mem memOp = new Mem();
                         memOp.Base = RegIndex.Esp;
                         memOp.Displacement = (IntPtr)a._stackOffset;
-                        Assembler.DumpOperand(buffer, memOp);
+                        Assembler.DumpOperand(buffer, memOp, Register.NativeRegisterType);
                     }
 
                     // original format string: "; %-3u| %-9s| %-3u| %-15s|\n"
@@ -703,7 +703,8 @@
                             memOp.Displacement += cc.VariablesBaseOffset;
                             memOp.Displacement += memBlock.Offset;
                         }
-                        Assembler.DumpOperand(buffer, memOp);
+
+                        Assembler.DumpOperand(buffer, memOp, Register.NativeRegisterType);
                     }
 
                     logger.LogFormat("; {0}| {1}| {2}| {3}| r={4}w={5}x={6}| r={7}w={8}x={9}|" + Environment.NewLine,

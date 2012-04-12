@@ -1014,6 +1014,7 @@
 
             int bLoHiUsed = 0;
             bool forceRexPrefix = (_emitOptions & EmitOptions.RexPrefix) != 0;
+            RegType memRegType = Register.NativeRegisterType;
             int bufferStartOffset = _buffer.Offset;
 
             Imm immOperand = null;
@@ -1590,6 +1591,17 @@
                     {
                         GPReg dst = (GPReg)o0;
                         Mem src = (Mem)o1;
+
+                        // Support lea gpd/gpq, [gpd address]
+                        if (Util.IsX64)
+                        {
+                            if (code == InstructionCode.LeaD)
+                            {
+                                EmitByte(0x67);
+                                memRegType = RegType.GPD;
+                            }
+                        }
+
                         EmitX86RM(0x8D,
                           dst.IsRegType(RegType.GPW),
                           dst.IsRegType(RegType.GPQ), (byte)dst.Code, src,
@@ -2775,7 +2787,7 @@
                 StringBuilder buf = new StringBuilder();
                 int bufferStopOffset = _buffer.Offset;
 
-                DumpInstruction(buf, new ArraySegment<byte>(_buffer.Data, bufferStartOffset, bufferStopOffset - bufferStartOffset), code, _emitOptions, o0, o1, o2);
+                DumpInstruction(buf, new ArraySegment<byte>(_buffer.Data, bufferStartOffset, bufferStopOffset - bufferStartOffset), code, _emitOptions, o0, o1, o2, memRegType);
 
                 if (Logger.LogBinary)
                     DumpComment(buf, new ArraySegment<byte>(GetCode(), (int)beginOffset, (int)(Offset - beginOffset)), _comment);
@@ -2852,7 +2864,7 @@
             return _buffer.Data;
         }
 
-        private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, EmitOptions emitOptions, Operand o0, Operand o1, Operand o2)
+        private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, EmitOptions emitOptions, Operand o0, Operand o1, Operand o2, RegType memRegType)
         {
             Contract.Requires(buf != null);
             Contract.Requires(o0 != null);
@@ -2881,19 +2893,19 @@
             if (!o0.IsNone)
             {
                 buf.Append(' ');
-                DumpOperand(buf, o0);
+                DumpOperand(buf, o0, memRegType);
             }
 
             if (!o1.IsNone)
             {
                 buf.Append(", ");
-                DumpOperand(buf, o1);
+                DumpOperand(buf, o1, memRegType);
             }
 
             if (!o2.IsNone)
             {
                 buf.Append(", ");
-                DumpOperand(buf, o2);
+                DumpOperand(buf, o2, memRegType);
             }
         }
 
@@ -2937,7 +2949,7 @@
                 "gs:",
             };
 
-        internal static void DumpOperand(StringBuilder buf, Operand op)
+        internal static void DumpOperand(StringBuilder buf, Operand op, RegType memRegType)
         {
             if (op.IsReg)
             {
@@ -2963,7 +2975,7 @@
                 case MemoryType.Native:
                     {
                         // [base + index*scale + displacement]
-                        DumpRegister(buf, Register.NativeRegisterType, mem.Base);
+                        DumpRegister(buf, memRegType, mem.Base);
                         break;
                     }
                 case MemoryType.Label:
@@ -2984,7 +2996,7 @@
                 if (mem.HasIndex)
                 {
                     buf.Append(" + ");
-                    DumpRegister(buf, Register.NativeRegisterType, mem.Index);
+                    DumpRegister(buf, memRegType, mem.Index);
 
                     if (mem.Shift != 0)
                     {
