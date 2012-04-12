@@ -6229,6 +6229,31 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Pinsrw, dst, src, imm8);
         }
 
+        public static void Pextrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
+            where TGP : Operand
+            where TX87 : Operand
+            where TMM : Operand
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+            Contract.Requires(imm8 != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Pextrw, dst, src, imm8);
+        }
+
+        public static void Pextrw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+            Contract.Requires(imm8 != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Pextrw, dst, src, imm8);
+        }
+
         public static void Pmaxsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
             where TMM : Operand
         {
@@ -7567,6 +7592,16 @@
             Contract.Requires(src != null);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Movntpd, dst, src);
+        }
+
+        public static void Movupd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Movupd, dst, src);
         }
 
         public static void Movupd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
@@ -10352,31 +10387,6 @@
             Contract.Requires(imm8 != null);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Pextrb, dst, src, imm8);
-        }
-
-        public static void Pextrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
-        {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dst != null);
-            Contract.Requires(src != null);
-            Contract.Requires(imm8 != null);
-
-            intrinsicSupport.EmitInstruction(InstructionCode.Pextrw, dst, src, imm8);
-        }
-
-        public static void Pextrw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
-            where TXMM : Operand
-        {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dst != null);
-            Contract.Requires(src != null);
-            Contract.Requires(imm8 != null);
-
-            intrinsicSupport.EmitInstruction(InstructionCode.Pextrw, dst, src, imm8);
         }
 
         public static void Pextrd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)

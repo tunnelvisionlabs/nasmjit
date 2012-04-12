@@ -4,23 +4,23 @@
     {
         Adc,           // X86/X64
         Add,           // X86/X64
-        Addpd,
-        Addps,
-        Addsd,
-        Addss,
-        Addsubpd,
-        Addsubps,
+        Addpd,         // SSE2
+        Addps,         // SSE
+        Addsd,         // SSE2
+        Addss,         // SSE
+        Addsubpd,      // SSE3
+        Addsubps,      // SSE3
         AmdPrefetch,
         AmdPrefetchw,
         And,           // X86/X64
-        Andnpd,
-        Andnps,
-        Andpd,
-        Andps,
-        Blendpd,
-        Blendps,
-        Blendvpd,
-        Blendvps,
+        Andnpd,        // SSE2
+        Andnps,        // SSE
+        Andpd,         // SSE2
+        Andps,         // SSE
+        Blendpd,       // SSE4.1
+        Blendps,       // SSE4.1
+        Blendvpd,      // SSE4.1
+        Blendvps,      // SSE4.1
         Bsf,           // X86/X64
         Bsr,           // X86/X64
         Bswap,         // X86/X64 (i486)
@@ -33,7 +33,7 @@
         Cdqe,          // X64 only
         Clc,           // X86/X64
         Cld,           // X86/X64
-        Clflush,
+        Clflush,       // SSE2
         Cmc,           // X86/X64
 
         Cmov,          // Begin (cmovcc) (i586)
@@ -69,53 +69,53 @@
         Cmovz,         // X86/X64 (cmovcc) (i586)
 
         Cmp,           // X86/X64
-        Cmppd,
-        Cmpps,
-        Cmpsd,
-        Cmpss,
+        Cmppd,         // SSE2
+        Cmpps,         // SSE
+        Cmpsd,         // SSE2
+        Cmpss,         // SSE
         Cmpxchg,       // X86/X64 (i486)
         Cmpxchg16b,    // X64 only
         Cmpxchg8b,     // X86/X64 (i586)
-        Comisd,
-        Comiss,
+        Comisd,        // SSE2
+        Comiss,        // SSE
         Cpuid,         // X86/X64 (i486)
-        Crc32,
-        Cvtdq2pd,
-        Cvtdq2ps,
-        Cvtpd2dq,
-        Cvtpd2pi,
-        Cvtpd2ps,
-        Cvtpi2pd,
-        Cvtpi2ps,
-        Cvtps2dq,
-        Cvtps2pd,
-        Cvtps2pi,
-        Cvtsd2si,
-        Cvtsd2ss,
-        Cvtsi2sd,
-        Cvtsi2ss,
-        Cvtss2sd,
-        Cvtss2si,
-        Cvttpd2dq,
-        Cvttpd2pi,
-        Cvttps2dq,
-        Cvttps2pi,
-        Cvttsd2si,
-        Cvttss2si,
+        Crc32,         // SSE4.2
+        Cvtdq2pd,      // SSE2
+        Cvtdq2ps,      // SSE2
+        Cvtpd2dq,      // SSE2
+        Cvtpd2pi,      // SSE2
+        Cvtpd2ps,      // SSE2
+        Cvtpi2pd,      // SSE2
+        Cvtpi2ps,      // SSE
+        Cvtps2dq,      // SSE2
+        Cvtps2pd,      // SSE2
+        Cvtps2pi,      // SSE
+        Cvtsd2si,      // SSE2
+        Cvtsd2ss,      // SSE2
+        Cvtsi2sd,      // SSE2
+        Cvtsi2ss,      // SSE
+        Cvtss2sd,      // SSE2
+        Cvtss2si,      // SSE
+        Cvttpd2dq,     // SSE2
+        Cvttpd2pi,     // SSE2
+        Cvttps2dq,     // SSE2
+        Cvttps2pi,     // SSE
+        Cvttsd2si,     // SSE2
+        Cvttss2si,     // SSE
         Cwde,          // X86/X64
         Daa,           // X86 only
         Das,           // X86 only
         Dec,           // X86/X64
         Div,           // X86/X64
-        Divpd,
-        Divps,
-        Divsd,
-        Divss,
-        Dppd,
-        Dpps,
+        Divpd,         // SSE2
+        Divps,         // SSE
+        Divsd,         // SSE2
+        Divss,         // SSE
+        Dppd,          // SSE4.1
+        Dpps,          // SSE4.1
         Emms,          // MMX
         Enter,         // X86/X64
-        Extractps,
+        Extractps,     // SSE4.1
         F2xm1,         // X87
         Fabs,          // X87
         Fadd,          // X87
@@ -156,7 +156,7 @@
         Finit,         // X87
         Fist,          // X87
         Fistp,         // X87
-        Fisttp,
+        Fisttp,        // SSE3
         Fisub,         // X87
         Fisubr,        // X87
         Fld,           // X87
@@ -212,10 +212,10 @@
         Fxtract,       // X87
         Fyl2x,         // X87
         Fyl2xp1,       // X87
-        Haddpd,
-        Haddps,
-        Hsubpd,
-        Hsubps,
+        Haddpd,        // SSE3
+        Haddps,        // SSE3
+        Hsubpd,        // SSE3
+        Hsubps,        // SSE3
         Idiv,          // X86/X64
         Imul,          // X86/X64
         Inc,           // X86/X64
@@ -254,114 +254,114 @@
         Jz,            // X86/X64 (jcc)
         Jmp,           // X86/X64 (jmp)
 
-        Lddqu,
-        Ldmxcsr,
+        Lddqu,         // SSE3
+        Ldmxcsr,       // SSE
         Lahf,          // X86/X64 (CPUID NEEDED)
         LeaD,          // X86/X64 (lea gpd/gpq, [gpd])
         LeaQ,          // X64     (lea gpd/gpq, [gpq])
         Leave,         // X86/X64
-        Lfence,
-        Maskmovdqu,
-        Maskmovq,      // MMX Extensions
-        Maxpd,
-        Maxps,
-        Maxsd,
-        Maxss,
-        Mfence,
-        Minpd,
-        Minps,
-        Minsd,
-        Minss,
-        Monitor,
+        Lfence,        // SSE2
+        Maskmovdqu,    // SSE2
+        Maskmovq,      // MMX-Ext
+        Maxpd,         // SSE2
+        Maxps,         // SSE
+        Maxsd,         // SSE2
+        Maxss,         // SSE
+        Mfence,        // SSE2
+        Minpd,         // SSE2
+        Minps,         // SSE
+        Minsd,         // SSE2
+        Minss,         // SSE
+        Monitor,       // SSE3
         Mov,           // X86/X64
-        Movapd,
-        Movaps,
-        Movbe,
-        Movd,
-        Movddup,
-        Movdq2q,
-        Movdqa,
-        Movdqu,
-        Movhlps,
-        Movhpd,
-        Movhps,
-        Movlhps,
-        Movlpd,
-        Movlps,
-        Movmskpd,
-        Movmskps,
-        Movntdq,
-        Movntdqa,
-        Movnti,
-        Movntpd,
-        Movntps,
-        Movntq,        // MMX Extensions
-        Movq,
-        Movq2dq,
-        Movsd,
-        Movshdup,
-        Movsldup,
-        Movss,
+        Movapd,        // SSE2
+        Movaps,        // SSE
+        Movbe,         // SSE3 - Intel-Atom
+        Movd,          // MMX/SSE2
+        Movddup,       // SSE3
+        Movdq2q,       // SSE2
+        Movdqa,        // SSE2
+        Movdqu,        // SSE2
+        Movhlps,       // SSE
+        Movhpd,        // SSE2
+        Movhps,        // SSE
+        Movlhps,       // SSE
+        Movlpd,        // SSE2
+        Movlps,        // SSE
+        Movmskpd,      // SSE2
+        Movmskps,      // SSE2
+        Movntdq,       // SSE2
+        Movntdqa,      // SSE4.1
+        Movnti,        // SSE2
+        Movntpd,       // SSE2
+        Movntps,       // SSE
+        Movntq,        // MMX-Ext
+        Movq,          // MMX/SSE/SSE2
+        Movq2dq,       // SSE2
+        Movsd,         // SSE2
+        Movshdup,      // SSE3
+        Movsldup,      // SSE3
+        Movss,         // SSE
         Movsx,         // X86/X64
         Movsxd,        // X86/X64
-        Movupd,
-        Movups,
+        Movupd,        // SSE2
+        Movups,        // SSE
         Movzx,         // X86/X64
         MovPtr,       // X86/X64
-        Mpsadbw,
+        Mpsadbw,       // SSE4.1
         Mul,           // X86/X64
-        Mulpd,
-        Mulps,
-        Mulsd,
-        Mulss,
-        Mwait,
+        Mulpd,         // SSE2
+        Mulps,         // SSE
+        Mulsd,         // SSE2
+        Mulss,         // SSE
+        Mwait,         // SSE3
         Neg,           // X86/X64
         Nop,           // X86/X64
         Not,           // X86/X64
         Or,            // X86/X64
-        Orpd,
-        Orps,
-        Pabsb,
-        Pabsd,
-        Pabsw,
-        Packssdw,
-        Packsswb,
-        Packusdw,
-        Packuswb,
-        Paddb,
-        Paddd,
-        Paddq,
-        Paddsb,
-        Paddsw,
-        Paddusb,
-        Paddusw,
-        Paddw,
-        Palignr,
-        Pand,
-        Pandn,
-        Pause,
-        Pavgb,         // MMX Extensions
-        Pavgw,         // MMX Extensions
-        Pblendvb,
-        Pblendw,
-        Pcmpeqb,
-        Pcmpeqd,
-        Pcmpeqq,
-        Pcmpeqw,
-        Pcmpestri,
-        Pcmpestrm,
-        Pcmpgtb,
-        Pcmpgtd,
-        Pcmpgtq,
-        Pcmpgtw,
-        Pcmpistri,
-        Pcmpistrm,
-        Pextrb,
-        Pextrd,
-        Pextrq,
-        Pextrw,        // MMX Extensions
+        Orpd,          // SSE2
+        Orps,          // SSE
+        Pabsb,         // SSSE3
+        Pabsd,         // SSSE3
+        Pabsw,         // SSSE3
+        Packssdw,      // MMX/SSE2
+        Packsswb,      // MMX/SSE2
+        Packusdw,      // SSE4.1
+        Packuswb,      // MMX/SSE2
+        Paddb,         // MMX/SSE2
+        Paddd,         // MMX/SSE2
+        Paddq,         // SSE2
+        Paddsb,        // MMX/SSE2
+        Paddsw,        // MMX/SSE2
+        Paddusb,       // MMX/SSE2
+        Paddusw,       // MMX/SSE2
+        Paddw,         // MMX/SSE2
+        Palignr,       // SSSE3
+        Pand,          // MMX/SSE2
+        Pandn,         // MMX/SSE2
+        Pause,         // SSE2
+        Pavgb,         // MMX-Ext
+        Pavgw,         // MMX-Ext
+        Pblendvb,      // SSE4.1
+        Pblendw,       // SSE4.1
+        Pcmpeqb,       // MMX/SSE2
+        Pcmpeqd,       // MMX/SSE2
+        Pcmpeqq,       // SSE4.1
+        Pcmpeqw,       // MMX/SSE2
+        Pcmpestri,     // SSE4.2
+        Pcmpestrm,     // SSE4.2
+        Pcmpgtb,       // MMX/SSE2
+        Pcmpgtd,       // MMX/SSE2
+        Pcmpgtq,       // SSE4.2
+        Pcmpgtw,       // MMX/SSE2
+        Pcmpistri,     // SSE4.2
+        Pcmpistrm,     // SSE4.2
+        Pextrb,        // SSE4.1
+        Pextrd,        // SSE4.1
+        Pextrq,        // SSE4.1
+        Pextrw,        // MMX-Ext/SSE2
         Pf2id,         // 3dNow!
-        Pf2iw,         // 3dNow! Extensions
+        Pf2iw,         // Enhanced 3dNow!
         Pfacc,         // 3dNow!
         Pfadd,         // 3dNow!
         Pfcmpeq,       // 3dNow!
@@ -370,8 +370,8 @@
         Pfmax,         // 3dNow!
         Pfmin,         // 3dNow!
         Pfmul,         // 3dNow!
-        Pfnacc,        // 3dNow! Extensions
-        Pfpnacc,       // 3dNow! Extensions
+        Pfnacc,        // Enhanced 3dNow!
+        Pfpnacc,       // Enhanced 3dNow!
         Pfrcp,         // 3dNow!
         Pfrcpit1,      // 3dNow!
         Pfrcpit2,      // 3dNow!
@@ -379,105 +379,105 @@
         Pfrsqrt,       // 3dNow!
         Pfsub,         // 3dNow!
         Pfsubr,        // 3dNow!
-        Phaddd,
-        Phaddsw,
-        Phaddw,
-        Phminposuw,
-        Phsubd,
-        Phsubsw,
-        Phsubw,
+        Phaddd,        // SSSE3
+        Phaddsw,       // SSSE3
+        Phaddw,        // SSSE3
+        Phminposuw,    // SSE4.1
+        Phsubd,        // SSSE3
+        Phsubsw,       // SSSE3
+        Phsubw,        // SSSE3
         Pi2fd,         // 3dNow!
-        Pi2fw,         // 3dNow! Extensions
-        Pinsrb,
-        Pinsrd,
-        Pinsrq,
-        Pinsrw,        // MMX Extensions
-        Pmaddubsw,
-        Pmaddwd,
-        Pmaxsb,
-        Pmaxsd,
-        Pmaxsw,        // MMX Extensions
-        Pmaxub,        // MMX Extensions
-        Pmaxud,
-        Pmaxuw,
-        Pminsb,
-        Pminsd,
-        Pminsw,        // MMX Extensions
-        Pminub,        // MMX Extensions
-        Pminud,
-        Pminuw,
-        Pmovmskb,      // MMX Extensions
-        Pmovsxbd,
-        Pmovsxbq,
-        Pmovsxbw,
-        Pmovsxdq,
-        Pmovsxwd,
-        Pmovsxwq,
-        Pmovzxbd,
-        Pmovzxbq,
-        Pmovzxbw,
-        Pmovzxdq,
-        Pmovzxwd,
-        Pmovzxwq,
-        Pmuldq,
-        Pmulhrsw,
-        Pmulhuw,       // MMX Extensions
-        Pmulhw,
-        Pmulld,
-        Pmullw,
-        Pmuludq,
+        Pi2fw,         // Enhanced 3dNow!
+        Pinsrb,        // SSE4.1
+        Pinsrd,        // SSE4.1
+        Pinsrq,        // SSE4.1
+        Pinsrw,        // MMX-Ext
+        Pmaddubsw,     // SSSE3
+        Pmaddwd,       // MMX/SSE2
+        Pmaxsb,        // SSE4.1
+        Pmaxsd,        // SSE4.1
+        Pmaxsw,        // MMX-Ext
+        Pmaxub,        // MMX-Ext
+        Pmaxud,        // SSE4.1
+        Pmaxuw,        // SSE4.1
+        Pminsb,        // SSE4.1
+        Pminsd,        // SSE4.1
+        Pminsw,        // MMX-Ext
+        Pminub,        // MMX-Ext
+        Pminud,        // SSE4.1
+        Pminuw,        // SSE4.1
+        Pmovmskb,      // MMX-Ext
+        Pmovsxbd,      // SSE4.1
+        Pmovsxbq,      // SSE4.1
+        Pmovsxbw,      // SSE4.1
+        Pmovsxdq,      // SSE4.1
+        Pmovsxwd,      // SSE4.1
+        Pmovsxwq,      // SSE4.1
+        Pmovzxbd,      // SSE4.1
+        Pmovzxbq,      // SSE4.1
+        Pmovzxbw,      // SSE4.1
+        Pmovzxdq,      // SSE4.1
+        Pmovzxwd,      // SSE4.1
+        Pmovzxwq,      // SSE4.1
+        Pmuldq,        // SSE4.1
+        Pmulhrsw,      // SSSE3
+        Pmulhuw,       // MMX-Ext
+        Pmulhw,        // MMX/SSE2
+        Pmulld,        // SSE4.2
+        Pmullw,        // MMX/SSE2
+        Pmuludq,       // SSE2
         Pop,           // X86/X64
         Popad,         // X86 only
-        Popcnt,
+        Popcnt,        // SSE4.2
         Popfd,         // X86 only
         Popfq,         // X64 only
-        Por,
-        Prefetch,      // MMX Extensions
-        Psadbw,        // MMX Extensions
-        Pshufb,
-        Pshufd,
-        Pshufw,        // MMX Extensions
-        Pshufhw,
-        Pshuflw,
-        Psignb,
-        Psignd,
-        Psignw,
-        Pslld,
-        Pslldq,
-        Psllq,
-        Psllw,
-        Psrad,
-        Psraw,
-        Psrld,
-        Psrldq,
-        Psrlq,
-        Psrlw,
-        Psubb,
-        Psubd,
-        Psubq,
-        Psubsb,
-        Psubsw,
-        Psubusb,
-        Psubusw,
-        Psubw,
-        Pswapd,        // 3dNow! Extensions
-        Ptest,
-        Punpckhbw,
-        Punpckhdq,
-        Punpckhqdq,
-        Punpckhwd,
-        Punpcklbw,
-        Punpckldq,
-        Punpcklqdq,
-        Punpcklwd,
+        Por,           // MMX/SSE2
+        Prefetch,      // MMX-Ext
+        Psadbw,        // MMX-Ext
+        Pshufb,        // SSSE3
+        Pshufd,        // SSE2
+        Pshufw,        // MMX-Ext
+        Pshufhw,       // SSE2
+        Pshuflw,       // SSE2
+        Psignb,        // SSSE3
+        Psignd,        // SSSE3
+        Psignw,        // SSSE3
+        Pslld,         // MMX/SSE2
+        Pslldq,        // SSE2
+        Psllq,         // MMX/SSE2
+        Psllw,         // MMX/SSE2
+        Psrad,         // MMX/SSE2
+        Psraw,         // MMX/SSE2
+        Psrld,         // MMX/SSE2
+        Psrldq,        // SSE2
+        Psrlq,         // MMX/SSE2
+        Psrlw,         // MMX/SSE2
+        Psubb,         // MMX/SSE2
+        Psubd,         // MMX/SSE2
+        Psubq,         // SSE2
+        Psubsb,        // MMX/SSE2
+        Psubsw,        // MMX/SSE2
+        Psubusb,       // MMX/SSE2
+        Psubusw,       // MMX/SSE2
+        Psubw,         // MMX/SSE2
+        Pswapd,        // Enhanced 3dNow!
+        Ptest,         // SSE4.1
+        Punpckhbw,     // MMX/SSE2
+        Punpckhdq,     // MMX/SSE2
+        Punpckhqdq,    // SSE2
+        Punpckhwd,     // MMX/SSE2
+        Punpcklbw,     // MMX/SSE2
+        Punpckldq,     // MMX/SSE2
+        Punpcklqdq,    // SSE2
+        Punpcklwd,     // MMX/SSE2
         Push,          // X86/X64
         Pushad,        // X86 only
         Pushfd,        // X86 only
         Pushfq,        // X64 only
-        Pxor,
+        Pxor,          // MMX/SSE2
         Rcl,           // X86/X64
-        Rcpps,
-        Rcpss,
+        Rcpps,         // SSE
+        Rcpss,         // SSE
         Rcr,           // X86/X64
         Rdtsc,         // X86/X64
         Rdtscp,        // X86/X64
@@ -512,12 +512,12 @@
         Ret,           // X86/X64
         Rol,           // X86/X64
         Ror,           // X86/X64
-        Roundpd,
-        Roundps,
-        Roundsd,
-        Roundss,
-        Rsqrtps,
-        Rsqrtss,
+        Roundpd,       // SSE4.1
+        Roundps,       // SSE4.1
+        Roundsd,       // SSE4.1
+        Roundss,       // SSE4.1
+        Rsqrtps,       // SSE
+        Rsqrtss,       // SSE
         Sahf,          // X86/X64 (CPUID NEEDED)
         Sal,           // X86/X64
         Sar,           // X86/X64
@@ -553,37 +553,37 @@
         Setpo,         // X86/X64 (setcc)
         Sets,          // X86/X64 (setcc)
         Setz,          // X86/X64 (setcc)
-        Sfence,        // MMX Extensions
+        Sfence,        // MMX-Ext/SSE
         Shl,           // X86/X64
         Shld,          // X86/X64
         Shr,           // X86/X64
         Shrd,          // X86/X64
-        Shufpd,
-        Shufps,
-        Sqrtpd,
-        Sqrtps,
-        Sqrtsd,
-        Sqrtss,
+        Shufpd,        // SSE2
+        Shufps,        // SSE
+        Sqrtpd,        // SSE2
+        Sqrtps,        // SSE
+        Sqrtsd,        // SSE2
+        Sqrtss,        // SSE
         Stc,           // X86/X64
         Std,           // X86/X64
-        Stmxcsr,
+        Stmxcsr,       // SSE
         Sub,           // X86/X64
-        Subpd,
-        Subps,
-        Subsd,
-        Subss,
+        Subpd,         // SSE2
+        Subps,         // SSE
+        Subsd,         // SSE2
+        Subss,         // SSE
         Test,          // X86/X64
-        Ucomisd,
-        Ucomiss,
+        Ucomisd,       // SSE2
+        Ucomiss,       // SSE
         Ud2,           // X86/X64
-        Unpckhpd,
-        Unpckhps,
-        Unpcklpd,
-        Unpcklps,
+        Unpckhpd,      // SSE2
+        Unpckhps,      // SSE
+        Unpcklpd,      // SSE2
+        Unpcklps,      // SSE
         Xadd,          // X86/X64 (i486)
         Xchg,          // X86/X64 (i386)
         Xor,           // X86/X64
-        Xorpd,
-        Xorps,
+        Xorpd,         // SSE2
+        Xorps,         // SSE
     }
 }
