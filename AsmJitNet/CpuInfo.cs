@@ -45,6 +45,14 @@
             }
         }
 
+        public string Brand
+        {
+            get
+            {
+                return _brand;
+            }
+        }
+
         public CpuVendor VendorId
         {
             get
@@ -262,8 +270,10 @@
                 CpuId(ref eax, out ebx, out ecx, out edx);
 
                 uint exIds = eax;
+                if (exIds > 0x80000004)
+                    exIds = 0x80000004;
 
-                for (a = 0x80000001; a < exIds && a <= 0x80000001; a++)
+                for (a = 0x80000001; a <= exIds; a++)
                 {
                     eax = a;
                     CpuId(ref eax, out ebx, out ecx, out edx);
@@ -307,10 +317,12 @@
                         BitConverter.GetBytes(ebx).CopyTo(brand, 4);
                         BitConverter.GetBytes(ecx).CopyTo(brand, 8);
                         BitConverter.GetBytes(edx).CopyTo(brand, 12);
-                        _brand = Encoding.ASCII.GetString(brand, 0, 16);
+                        _brand = Encoding.ASCII.GetString(brand);
                         break;
 
-                    // Additional features can be detected in the future.
+                    default:
+                        // Additional features can be detected in the future.
+                        break;
                     }
                 }
             }

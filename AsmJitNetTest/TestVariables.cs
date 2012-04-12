@@ -776,7 +776,7 @@
                 Tuple.Create( CpuFeatures.POPCNT                      , "POPCNT" ),
                 Tuple.Create( CpuFeatures.LZCNT                       , "LZCNT" ),
                 Tuple.Create( CpuFeatures.PCLMULDQ                    , "PCLMULDQ" ),
-                Tuple.Create( CpuFeatures.MULTI_THREADING             , "MultiThreading" ),
+                Tuple.Create( CpuFeatures.MULTI_THREADING             , "Multi-Threading" ),
                 Tuple.Create( CpuFeatures.EXECUTE_DISABLE_BIT         , "Execute Disable Bit" ),
                 Tuple.Create( CpuFeatures.X64_BIT                     , "64 Bit Processor" ),
             };
@@ -788,12 +788,13 @@
 
             Console.Error.WriteLine("Basic Info:");
             Console.Error.WriteLine("  Vendor String         : {0}", info.Vendor);
+            Console.Error.WriteLine("  Brand String          : {0}", info.Brand);
             Console.Error.WriteLine("  Family                : {0}", info.Family);
             Console.Error.WriteLine("  Model                 : {0}", info.Model);
             Console.Error.WriteLine("  Stepping              : {0}", info.Stepping);
             Console.Error.WriteLine("  Number of Processors  : {0}", info.NumberOfProcessors);
-            Console.Error.WriteLine("  Features              : {0:x}", info.Features);
-            Console.Error.WriteLine("  Bugs                  : {0:x}", info.Bugs);
+            Console.Error.WriteLine("  Features              : 0x{0:x}", info.Features);
+            Console.Error.WriteLine("  Bugs                  : 0x{0:x}", info.Bugs);
 
             Console.Error.WriteLine("Extended Info (X86/X64):");
             Console.Error.WriteLine("  Processor Type        : {0}", info.ExtendedInfo.ProcessorType);
