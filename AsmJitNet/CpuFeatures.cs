@@ -36,30 +36,34 @@
         AMD3DNOW_EXT = 1U << 13,
         //! @brief Cpu has SSE.
         SSE = 1U << 14,
-        //! @brief Cpu has Misaligned SSE (MSSE).
-        MSSE = 1U << 15,
         //! @brief Cpu has SSE2.
-        SSE2 = 1U << 16,
+        SSE2 = 1U << 15,
         //! @brief Cpu has SSE3.
-        SSE3 = 1U << 17,
+        SSE3 = 1U << 16,
         //! @brief Cpu has Supplemental SSE3 (SSSE3).
-        SSSE3 = 1U << 18,
+        SSSE3 = 1U << 17,
         //! @brief Cpu has SSE4.A.
-        SSE4_A = 1U << 19,
+        SSE4_A = 1U << 18,
         //! @brief Cpu has SSE4.1.
-        SSE4_1 = 1U << 20,
+        SSE4_1 = 1U << 19,
         //! @brief Cpu has SSE4.2.
-        SSE4_2 = 1U << 21,
+        SSE4_2 = 1U << 20,
         //! @brief Cpu has SSE5.
-        SSE5 = 1U << 22,
+        SSE5 = 1U << 21,
+        //! @brief Cpu has AVX.
+        AVX = 1U << 22,
+        //! @brief Cpu has Misaligned SSE (MSSE).
+        MSSE = 1U << 23,
         //! @brief Cpu supports MONITOR and MWAIT instructions.
-        MONITOR_MWAIT = 1U << 23,
+        MONITOR_MWAIT = 1U << 24,
         //! @brief Cpu supports MOVBE instruction.
-        MOVBE = 1U << 24,
+        MOVBE = 1U << 25,
         //! @brief Cpu supports POPCNT instruction.
-        POPCNT = 1U << 25,
+        POPCNT = 1U << 26,
         //! @brief Cpu supports LZCNT instruction.
-        LZCNT = 1U << 26,
+        LZCNT = 1U << 27,
+        //! @brief Cpu supports PCLMULDQ set of instructions.
+        PCLMULDQ = 1U << 28,
         //! @brief Cpu supports multithreading.
         MULTI_THREADING = 1U << 29,
         //! @brief Cpu supports execute disable bit (execute protection).

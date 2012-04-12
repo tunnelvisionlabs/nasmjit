@@ -189,6 +189,8 @@
 
                 if ((ecx & 0x00000001U) != 0)
                     _features |= CpuFeatures.SSE3;
+                if ((ecx & 0x00000002U) != 0)
+                    _features |= CpuFeatures.PCLMULDQ;
                 if ((ecx & 0x00000008U) != 0)
                     _features |= CpuFeatures.MONITOR_MWAIT;
                 if ((ecx & 0x00000200U) != 0)
@@ -203,6 +205,8 @@
                     _features |= CpuFeatures.MOVBE;
                 if ((ecx & 0x00800000U) != 0)
                     _features |= CpuFeatures.POPCNT;
+                if ((ecx & 0x10000000U) != 0)
+                    _features |= CpuFeatures.AVX;
 
                 if ((edx & 0x00000010U) != 0)
                     _features |= CpuFeatures.RDTSC;
