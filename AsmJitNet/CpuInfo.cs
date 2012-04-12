@@ -271,8 +271,6 @@
                             _features |= CpuFeatures.MSSE;
                         if ((ecx & 0x00000100U) != 0)
                             _features |= CpuFeatures.PREFETCH;
-                        if ((ecx & 0x00000800U) != 0)
-                            _features |= CpuFeatures.SSE5;
 
                         if ((edx & 0x00100000U) != 0)
                             _features |= CpuFeatures.EXECUTE_DISABLE_BIT;
