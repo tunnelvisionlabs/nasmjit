@@ -59,7 +59,7 @@
             Offset = cc.CurrentOffset;
 
             // Update _isTaken to true if this is conditional backward jump. This behavior
-            // can be overriden by using HINT_NOT_TAKEN when using the instruction.
+            // can be overridden by using HINT_NOT_TAKEN when using the instruction.
             if ((Code != InstructionCode.Jmp)
                 && Operands.Length == 1 && _jumpTarget.Offset < Offset)
             {
