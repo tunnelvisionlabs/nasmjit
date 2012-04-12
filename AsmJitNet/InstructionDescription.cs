@@ -279,7 +279,7 @@ instructionDescriptions =
 
   MAKE_INST(InstructionCode.Lddqu            , "lddqu"            , InstructionGroup.MMU_RMI       , InstructionFlags.NONE          , AsmJitNet.OperandFlags.XMM              , AsmJitNet.OperandFlags.MEM              , 0, 0xF2000FF0, 0),
   MAKE_INST(InstructionCode.Ldmxcsr          , "ldmxcsr"          , InstructionGroup.M             , InstructionFlags.NONE          , AsmJitNet.OperandFlags.MEM              , 0                   , 2, 0x00000FAE, 0),
-  MAKE_INST(InstructionCode.Lea              , "lahf"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x0000009F, 0),
+  MAKE_INST(InstructionCode.Lahf             , "lahf"             , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x0000009F, 0),
   MAKE_INST(InstructionCode.Lea              , "lea"              , InstructionGroup.LEA           , InstructionFlags.NONE          , AsmJitNet.OperandFlags.GQD              , AsmJitNet.OperandFlags.MEM              , 0, 0         , 0),
   MAKE_INST(InstructionCode.Leave            , "leave"            , InstructionGroup.EMIT          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0x000000C9, 0),
   MAKE_INST(InstructionCode.Lfence           , "lfence"           , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000FAEE8, 0),

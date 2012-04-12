@@ -401,6 +401,49 @@
             _buffer.EmitData(data);
         }
 
+        public void EmbedLabel(Label label)
+        {
+            Contract.Requires(label.Id != Operand.InvalidValue);
+            if (CanEmit())
+                return;
+
+            AssemblerLabelData l_data = _labelData[label.Id & Operand.OperandIdValueMask];
+            RelocationData r_data = new RelocationData();
+
+            if (Logger != null)
+            {
+                Logger.LogFormat(IntPtr.Size == 4 ? ".dd L.{0}\n" : ".dq L.{1}\n", label.Id & Operand.OperandIdValueMask);
+            }
+
+            r_data.Type = RelocationType.RelativeToAbsolute;
+            r_data.Size = IntPtr.Size;
+            r_data.Offset = Offset;
+            r_data.Destination = IntPtr.Zero;
+
+            if (l_data.Offset != -1)
+            {
+                // Bound label.
+                r_data.Destination = (IntPtr)l_data.Offset;
+            }
+            else
+            {
+                // Non-bound label. Need to chain.
+                LabelLink link = NewLabelLink();
+
+                link.Previous = l_data.Links;
+                link.Offset = (int)Offset;
+                link.Displacement = 0;
+                link.RelocId = _relocationData.Count;
+
+                l_data.Links = link;
+            }
+
+            _relocationData.Add(r_data);
+
+            // Emit dummy sysint (4 or 8 bytes that depends on address size).
+            EmitSysInt(IntPtr.Zero);
+        }
+
         // Intel and AMD.
         private static readonly byte[] _nop1 = { 0x90 };
         private static readonly byte[] _nop2 = { 0x66, 0x90 };
