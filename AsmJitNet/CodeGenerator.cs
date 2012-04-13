@@ -6,7 +6,7 @@
     {
         private static readonly JitCodeGenerator _globalCodeGenerator = new JitCodeGenerator();
 
-        public static CodeGenerator Global
+        public static JitCodeGenerator Global
         {
             get
             {

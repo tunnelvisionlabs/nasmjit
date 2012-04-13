@@ -8,6 +8,8 @@
         private readonly MemoryManager _memoryManager;
         private readonly MemoryAllocType _allocType;
 
+        private IMemoryMarker _memoryMarker;
+
         public JitCodeGenerator(MemoryManager memoryManager = null, MemoryAllocType allocType = MemoryAllocType.Freeable)
         {
             _memoryManager = memoryManager;
@@ -27,6 +29,19 @@
             get
             {
                 return _allocType;
+            }
+        }
+
+        public IMemoryMarker MemoryMarker
+        {
+            get
+            {
+                return _memoryMarker;
+            }
+
+            set
+            {
+                _memoryMarker = value;
             }
         }
 
@@ -57,11 +72,15 @@
             // Relocate the code.
             IntPtr relocatedSize = assembler.RelocCode(p);
 
-            // Return unused memory to mamory-manager.
+            // Return unused memory to memory manager.
             if (relocatedSize.ToInt64() < codeSize)
             {
                 memmgr.Shrink(p, relocatedSize);
             }
+
+            // Mark memory
+            if (_memoryMarker != null)
+                _memoryMarker.Mark(p, relocatedSize);
 
             // Return the code.
             destination = p;

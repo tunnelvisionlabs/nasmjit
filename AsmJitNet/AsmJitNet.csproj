@@ -197,6 +197,7 @@
     <Compile Include="EmbeddedData.cs" />
     <Compile Include="EmitOptions.cs" />
     <Compile Include="FunctionEnd.cs" />
+    <Compile Include="IMemoryMarker.cs" />
     <Compile Include="IX86IntrinsicSupport`1.cs" />
     <Compile Include="IIntrinsicSupport.cs" />
     <Compile Include="IIntrinsicSupport`4.cs" />
