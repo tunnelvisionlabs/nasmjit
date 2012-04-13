@@ -652,6 +652,8 @@
 
             // Spill candidate.
             VarData spillCandidate = null;
+            // spill caused by direct jump to L_Spill
+            bool doSpill = false;
 
             // Whether to alloc the non-preserved variables first.
             bool nonPreservedFirst = true;
@@ -733,6 +735,7 @@
                     spillCandidate = _state.GP[(int)idx];
 
                     // Jump to spill part of allocation.
+                    doSpill = true;
                     goto L_Spill;
                 }
             }
@@ -803,10 +806,10 @@
 
         L_Spill:
 
-            if (idx == RegIndex.Invalid)
+            if (idx == RegIndex.Invalid || doSpill)
             {
                 // Prevented variables can't be spilled. _getSpillCandidate() never returns
-                // prevented variables, but when jumping to L_spill it can happen.
+                // prevented variables, but when jumping to L_Spill it can happen.
                 if (spillCandidate.WorkOffset == _currentOffset)
                 {
                     throw new CompilerException("Registers overlap.");
@@ -1055,6 +1058,8 @@
 
             // Spill candidate.
             VarData spillCandidate = null;
+            // spill caused by direct jump to L_Spill
+            bool doSpill = false;
 
             // Whether to alloc non-preserved first or last.
             bool nonPreservedFirst = true;
@@ -1132,6 +1137,7 @@
                     spillCandidate = stateData[(int)idx];
 
                     // Jump to spill part of allocation.
+                    doSpill = true;
                     goto L_Spill;
                 }
             }
@@ -1193,7 +1199,7 @@
 
         L_Spill:
 
-            if (idx == RegIndex.Invalid)
+            if (idx == RegIndex.Invalid || doSpill)
             {
                 // Prevented variables can't be spilled. _getSpillCandidate() never returns
                 // prevented variables, but when jumping to L_spill it can happen.
