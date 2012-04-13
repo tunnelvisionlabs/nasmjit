@@ -4048,6 +4048,62 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Movq, dst, src);
         }
 
+        //! @brief Pack with Signed Saturation (MMX).
+        public static void packsswb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TMM src)
+            where TGP : Operand
+            where TX87 : Operand
+            where TMM : Operand
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Packsswb, dst, src);
+        }
+
+        //! @brief Pack with Signed Saturation (MMX).
+        public static void packsswb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, Mem src)
+            where TGP : Operand
+            where TX87 : Operand
+            where TMM : Operand
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Packsswb, dst, src);
+        }
+
+        //! @brief Pack with Signed Saturation (MMX).
+        public static void packssdw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TMM src)
+            where TGP : Operand
+            where TX87 : Operand
+            where TMM : Operand
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Packssdw, dst, src);
+        }
+
+        //! @brief Pack with Signed Saturation (MMX).
+        public static void packssdw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, Mem src)
+            where TGP : Operand
+            where TX87 : Operand
+            where TMM : Operand
+            where TXMM : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Packssdw, dst, src);
+        }
+
         public static void Packuswb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
             where TMM : Operand
         {
