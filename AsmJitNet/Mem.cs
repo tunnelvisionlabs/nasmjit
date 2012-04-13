@@ -9,6 +9,8 @@
 
         private SegmentPrefix _segmentPrefix;
 
+        private bool _sizePrefix;
+
         private RegIndex _base;
 
         private RegIndex _index;
@@ -72,6 +74,8 @@
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
+            _sizePrefix = @base.Size != IntPtr.Size;
+
             _base = @base.RegisterIndex;
             _index = RegIndex.Invalid;
             _shift = 0;
@@ -89,6 +93,8 @@
 
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
+
+            _sizePrefix = @base.Size != IntPtr.Size;
 
             _base = (RegIndex)@base.Id;
             _index = RegIndex.Invalid;
@@ -110,6 +116,8 @@
             _type = MemoryType.Absolute;
             _segmentPrefix = segmentPrefix;
 
+            _sizePrefix = index.Size != IntPtr.Size;
+
             _base = RegIndex.Invalid;
             _index = index.RegisterIndex;
             _shift = (byte)shift;
@@ -129,6 +137,8 @@
 
             _type = MemoryType.Absolute;
             _segmentPrefix = segmentPrefix;
+
+            _sizePrefix = index.Size != IntPtr.Size;
 
             _base = RegIndex.Invalid;
             _index = (RegIndex)index.Id;
@@ -152,6 +162,8 @@
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
 
+            _sizePrefix = @base.Size != IntPtr.Size;
+
             _base = @base.RegisterIndex;
             _index = index.RegisterIndex;
             _shift = (byte)shift;
@@ -173,6 +185,8 @@
 
             _type = MemoryType.Native;
             _segmentPrefix = SegmentPrefix.None;
+
+            _sizePrefix = @base.Size != IntPtr.Size || index.Size != IntPtr.Size;
 
             _base = (RegIndex)@base.Id;
             _index = (RegIndex)index.Id;
@@ -274,6 +288,14 @@
             get
             {
                 return _shift != 0;
+            }
+        }
+
+        public bool HasSizePrefix
+        {
+            get
+            {
+                return _sizePrefix;
             }
         }
 

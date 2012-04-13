@@ -1592,14 +1592,14 @@
                         GPReg dst = (GPReg)o0;
                         Mem src = (Mem)o1;
 
-                        // Support lea gpd/gpq, [gpd address]
-                        if (Util.IsX64)
+                        // Size override prefix support
+                        if (src.HasSizePrefix)
                         {
-                            if (code == InstructionCode.LeaD)
-                            {
-                                EmitByte(0x67);
+                            EmitByte(0x67);
+                            if (Util.IsX86)
+                                memRegType = RegType.GPW;
+                            else
                                 memRegType = RegType.GPD;
-                            }
                         }
 
                         EmitX86RM(0x8D,

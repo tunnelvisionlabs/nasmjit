@@ -257,8 +257,7 @@
         Lddqu,         // SSE3
         Ldmxcsr,       // SSE
         Lahf,          // X86/X64 (CPUID NEEDED)
-        LeaD,          // X86/X64 (lea gpd/gpq, [gpd])
-        LeaQ,          // X64     (lea gpd/gpq, [gpq])
+        Lea,           // X86/X64
         Leave,         // X86/X64
         Lfence,        // SSE2
         Maskmovdqu,    // SSE2

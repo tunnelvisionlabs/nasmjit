@@ -999,7 +999,7 @@
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write;
                             }
-                            else if (id.Code == InstructionCode.LeaD || id.Code == InstructionCode.LeaQ)
+                            else if (id.Code == InstructionCode.Lea)
                             {
                                 // Write.
                                 vdata.RegisterWriteCount++;

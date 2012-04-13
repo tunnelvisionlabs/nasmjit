@@ -1578,30 +1578,7 @@
             Contract.Requires(dst != null);
             Contract.Requires(src != null);
 
-            if (Util.IsX86)
-                intrinsicSupport.EmitInstruction(InstructionCode.LeaD, dst, src);
-            else
-                intrinsicSupport.EmitInstruction(InstructionCode.LeaQ, dst, src);
-        }
-
-        public static void LeaD<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
-        {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dst != null);
-            Contract.Requires(src != null);
-
-            intrinsicSupport.EmitInstruction(InstructionCode.LeaD, dst, src);
-        }
-
-        public static void LeaQ<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
-        {
-            Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dst != null);
-            Contract.Requires(src != null);
-
-            intrinsicSupport.EmitInstruction(InstructionCode.LeaQ, dst, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Lea, dst, src);
         }
 
 #if ASMJIT_NOT_SUPPORTED_BY_COMPILER
