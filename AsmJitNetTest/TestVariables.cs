@@ -433,6 +433,26 @@
             FileLogger logger = new FileLogger(Console.Error);
             c.Logger = logger;
 
+            c.NewFunction(CallingConvention.Default, typeof(Func<int, int>));
+            c.Function.SetHint(FunctionHints.Naked, true);
+            Label l0 = c.DefineLabel();
+            Label l1 = c.DefineLabel();
+            GPVar x = c.NewGP();
+            GPVar y = c.NewGP();
+            c.Mov(x, 0);
+            c.Jnz(l0);
+            c.Mov(y, c.ArgGP(0));
+            c.Jmp(l1);
+            c.MarkLabel(l0);
+            Call ctx = c.Call(calledFunction, CallingConvention.Cdecl, typeof(Func<int, int>));
+            ctx.SetArgument(0, c.ArgGP(0));
+            ctx.SetReturn(y);
+            c.MarkLabel(l1);
+            c.Add(x, y);
+            c.EndFunction();
+
+            // TODO: Remove
+#if false
             c.NewFunction(CallingConvention.Default, typeof(Func<int>));
             c.Function.SetHint(FunctionHints.Naked, true);
             GPVar x = c.NewGP();
@@ -443,23 +463,24 @@
             c.Add(x, y);
             c.Ret(x);
             c.EndFunction();
+#endif
             // ==========================================================================
 
             // ==========================================================================
             // Make the function.
             IntPtr ptr = c.Make();
-            TestFunctionCall3_OneFuncDelegate fn = FunctionCast<TestFunctionCall3_OneFuncDelegate>(ptr);
-            int result = fn();
-            Assert.AreEqual(1, result);
+            //TestFunctionCall3_OneFuncDelegate fn = FunctionCast<TestFunctionCall3_OneFuncDelegate>(ptr);
+            //int result = fn(0);
+            //Assert.AreEqual(1, result);
             // ==========================================================================
 
             MemoryManager.Global.Free(ptr);
         }
 
         [UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Cdecl)]
-        private delegate int TestFunctionCall3_OneFuncDelegate();
+        private delegate int TestFunctionCall3_OneFuncDelegate(int arg);
 
-        private static int TestFunctionCall3_OneFunc()
+        private static int TestFunctionCall3_OneFunc(int arg)
         {
             return 1;
         }
