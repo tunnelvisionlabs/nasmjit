@@ -83,7 +83,6 @@
     <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Util_p.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Assembler.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\AssemblerX86X64.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Compiler.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\CompilerX86X64.cpp" />
@@ -92,7 +91,6 @@
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\DefsX86X64.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Logger.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\MemoryManager.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Operand.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\OperandX86X64.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Platform.cpp" />
     <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Util.cpp" />
