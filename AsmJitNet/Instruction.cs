@@ -985,6 +985,24 @@
                                 vdata.RegisterReadCount++;
                                 var.VarFlags |= VariableAlloc.Read;
                             }
+                            // CVTTSD2SI/CVTTSS2SI instructions.
+                            else if (id.Code == InstructionCode.Cvttsd2si || id.Code == InstructionCode.Cvttss2si)
+                            {
+                                // In 32-bit mode the whole destination is replaced. In 64-bit mode
+                                // we need to check whether the destination operand size is 64-bits.
+                                if (Util.IsX86 || _operands[0].IsRegType(RegType.GPQ))
+                                {
+                                    // Write-only case.
+                                    vdata.RegisterWriteCount++;
+                                    var.VarFlags |= VariableAlloc.Write;
+                                }
+                                else if (Util.IsX64)
+                                {
+                                    // Read/Write.
+                                    vdata.RegisterRWCount++;
+                                    var.VarFlags |= VariableAlloc.ReadWrite;
+                                }
+                            }
                             // MOV/MOVSS/MOVSD instructions.
                             //
                             // If instruction is MOV (source replaces the destination) or 
