@@ -244,7 +244,7 @@
                 throw new InvalidOperationException("No function.");
 
             FunctionPrototype prototype = f.Prototype;
-            if (index >= prototype.Arguments.Length)
+            if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
             VarData vdata = Function._argumentVariables[index];
@@ -283,7 +283,7 @@
                 throw new InvalidOperationException("No function.");
 
             FunctionPrototype prototype = f.Prototype;
-            if (index >= prototype.Arguments.Length)
+            if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
             VarData vdata = Function._argumentVariables[index];
@@ -603,12 +603,15 @@
 
         public void Alloc(BaseVar var, RegIndex regIndex)
         {
-            Vhint(var, VariableHintKind.Alloc, (int)regIndex);
+            if ((int)regIndex > 31)
+                return;
+
+            Vhint(var, VariableHintKind.Alloc, 1 << (int)regIndex);
         }
 
         public void Alloc(BaseVar var, BaseReg reg)
         {
-            Vhint(var, VariableHintKind.Alloc, (int)reg.RegisterIndex);
+            Vhint(var, VariableHintKind.Alloc, 1 << (int)reg.RegisterIndex);
         }
 
         public void Spill(BaseVar var)
