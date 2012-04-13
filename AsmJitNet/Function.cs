@@ -280,7 +280,8 @@
             _emitSFence = (_hints & FunctionHints.StoreFence) != 0;
             _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
 
-            if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount > 0))
+            // Updated to respect comment from issue #47, align also when using MMX code.
+            if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount + cc.Mem8BlocksCount > 0))
             {
                 // Have to align stack to 16-bytes.
                 _isStackAlignedByFnTo16Bytes = true;

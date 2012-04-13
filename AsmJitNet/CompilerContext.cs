@@ -302,6 +302,14 @@
             }
         }
 
+        internal int Mem8BlocksCount
+        {
+            get
+            {
+                return _mem8BlocksCount;
+            }
+        }
+
         internal int Mem16BlocksCount
         {
             get
