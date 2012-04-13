@@ -66,7 +66,7 @@
 
         internal static int FindFirstBit(int mask)
         {
-            for (int i = 0, bit = 1; i < sizeof(int); i++, bit <<= 1)
+            for (int i = 0, bit = 1; i < sizeof(int) * 8; i++, bit <<= 1)
             {
                 if ((mask & bit) != 0)
                     return i;
