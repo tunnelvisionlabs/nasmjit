@@ -181,16 +181,20 @@
                     throw new ArgumentNullException("writer");
                 Contract.EndContractBlock();
 
-                GraphVizContext ctx = new GraphVizContext(writer);
-                ctx.Writer.WriteLine("digraph {");
-                if (_root != null)
-                    ctx.DumpNode(_root);
-                ctx.Writer.WriteLine("}");
+                lock (_lock)
+                {
+                    GraphVizContext ctx = new GraphVizContext(writer);
+                    ctx.Writer.WriteLine("digraph {");
+                    if (_root != null)
+                        ctx.DumpNode(_root);
+
+                    ctx.Writer.WriteLine("}");
+                }
             }
 
             // [Allocation]
 
-            public MemNode CreateNode(long size, int density)
+            private MemNode CreateNode(long size, int density)
             {
                 int vsize;
                 IntPtr vmem = AllocVirtualMemory((int)size, out vsize);
@@ -461,7 +465,7 @@
 
             public bool Free(IntPtr address)
             {
-                if (address == null)
+                if (address == IntPtr.Zero)
                     return true;
 
                 lock (_lock)
@@ -569,7 +573,7 @@
                 return true;
             }
 
-            public bool Shrink(IntPtr address, IntPtr used)
+            internal bool Shrink(IntPtr address, IntPtr used)
             {
                 if (address == IntPtr.Zero)
                     return false;
@@ -661,31 +665,34 @@
                 }
             }
 
-            public void FreeAll(bool keepVirtualMemory)
+            internal void FreeAll(bool keepVirtualMemory)
             {
-                MemNode node = _first;
-
-                while (node != null)
+                lock (_lock)
                 {
-                    MemNode next = node.Next;
+                    MemNode node = _first;
 
-                    if (!keepVirtualMemory)
-                        FreeVirtualMemory(node.Memory, (int)node.Size);
+                    while (node != null)
+                    {
+                        MemNode next = node.Next;
 
-                    node = next;
+                        if (!keepVirtualMemory)
+                            FreeVirtualMemory(node.Memory, (int)node.Size);
+
+                        node = next;
+                    }
+
+                    _allocated = 0;
+                    _used = 0;
+
+                    _root = null;
+                    _first = null;
+                    _last = null;
+                    _optimal = null;
                 }
-
-                _allocated = 0;
-                _used = 0;
-
-                _root = null;
-                _first = null;
-                _last = null;
-                _optimal = null;
             }
 
             // Helpers to avoid ifdefs in the code.
-            public IntPtr AllocVirtualMemory(int size, out int vsize)
+            private IntPtr AllocVirtualMemory(int size, out int vsize)
             {
 #if !ASMJIT_WINDOWS
                 return VirtualMemory.Alloc(size, out vsize, true);
@@ -694,7 +701,7 @@
 #endif
             }
 
-            public void FreeVirtualMemory(IntPtr vmem, int vsize)
+            private void FreeVirtualMemory(IntPtr vmem, int vsize)
             {
 #if !ASMJIT_WINDOWS
                 VirtualMemory.Free(vmem, vsize);
@@ -705,7 +712,7 @@
 
             // [NodeList LLRB-Tree]
 
-            public void InsertNode(MemNode node)
+            private void InsertNode(MemNode node)
             {
                 Contract.Requires(node != null);
 
@@ -800,7 +807,7 @@
                 }
             }
 
-            public MemNode RemoveNode(MemNode node)
+            private MemNode RemoveNode(MemNode node)
             {
                 Contract.Requires(node != null);
 
@@ -933,7 +940,7 @@
                 return q;
             }
 
-            public MemNode FindPtr(IntPtr memory)
+            private MemNode FindPtr(IntPtr memory)
             {
                 MemNode cur = _root;
                 while (cur != null)
@@ -965,7 +972,7 @@
                 return cur;
             }
 
-            public bool CheckTree()
+            private bool CheckTree()
             {
                 return MemNode.CheckTree(_root);
             }
