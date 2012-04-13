@@ -116,7 +116,7 @@
                     case 3:
                         if (!(_operands[0].IsVar && _operands[1].IsVar && _operands[2].IsVarMem))
                         {
-                            // Only IMUL dst_lo, dst_hi, reg/mem is special, all others not.
+                            // Only IMUL dst_hi, dst_lo, reg/mem is special, all others don't.
                             _isSpecial = false;
                         }
                         break;
@@ -641,15 +641,15 @@
                             switch (i)
                             {
                             case 0:
-                                vdata.RegisterRWCount++;
-                                var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
-                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
-                                gpRestrictMask &= ~var.RegMask;
-                                break;
-                            case 1:
                                 vdata.RegisterWriteCount++;
                                 var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
                                 var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
+                                gpRestrictMask &= ~var.RegMask;
+                                break;
+                            case 1:
+                                vdata.RegisterRWCount++;
+                                var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
                             case 2:

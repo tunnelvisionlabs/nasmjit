@@ -106,6 +106,19 @@
         /// <summary>ID for xmm14 register (64-bit only).</summary>
         Xmm14 = 14,
         /// <summary>ID for xmm15 register (64-bit only).</summary>
-        Xmm15 = 15
+        Xmm15 = 15,
+
+        /// <summary>ID for ES segment register.</summary>
+        ES = 0,
+        /// <summary>ID for CS segment register.</summary>
+        CS = 1,
+        /// <summary>ID for SS segment register.</summary>
+        SS = 2,
+        /// <summary>ID for DS segment register.</summary>
+        DS = 3,
+        /// <summary>ID for FS segment register.</summary>
+        FS = 4,
+        /// <summary>ID for GS segment register.</summary>
+        GS = 5
     }
 }

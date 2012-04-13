@@ -1174,29 +1174,31 @@
         /// <summary>
         /// Unsigned divide
         /// </summary>
-        public static void DivLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, TGP src)
+        public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
-            Contract.Requires(dstHi != null);
+            Contract.Requires(dstRem != null);
+            Contract.Requires(dstQuot != null);
             Contract.Requires(src != null);
+            Contract.Requires(dstRem.Id != dstQuot.Id);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Div, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Div, dstRem, dstQuot, src);
         }
 
         /// <summary>
         /// Unsigned divide
         /// </summary>
-        public static void DivLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, Mem src)
+        public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
-            Contract.Requires(dstHi != null);
+            Contract.Requires(dstRem != null);
+            Contract.Requires(dstQuot != null);
             Contract.Requires(src != null);
+            Contract.Requires(dstRem.Id != dstQuot.Id);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Div, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Div, dstRem, dstQuot, src);
         }
 
         /// <summary>
@@ -1214,57 +1216,57 @@
         /// <summary>
         /// Signed divide
         /// </summary>
-        public static void IdivLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, TGP src)
+        public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
-            Contract.Requires(dstHi != null);
+            Contract.Requires(dstRem != null);
+            Contract.Requires(dstQuot != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, dstRem, dstQuot, src);
         }
 
         /// <summary>
         /// Signed divide
         /// </summary>
-        public static void IdivLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, Mem src)
+        public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
-            Contract.Requires(dstHi != null);
+            Contract.Requires(dstRem != null);
+            Contract.Requires(dstQuot != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, dstRem, dstQuot, src);
         }
 
         /// <summary>
         /// Signed multiply
         /// </summary>
-        public static void ImulLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, TGP src)
+        public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
             Contract.Requires(dstHi != null);
+            Contract.Requires(dstLo != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Imul, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Imul, dstHi, dstLo, src);
         }
 
         /// <summary>
         /// Signed multiply
         /// </summary>
-        public static void ImulLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, Mem src)
+        public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
             Contract.Requires(dstHi != null);
+            Contract.Requires(dstLo != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Imul, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Imul, dstHi, dstLo, src);
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
@@ -1661,6 +1663,44 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
         }
 
+        public static void Mov(this IIntrinsicSupport intrinsicSupport, Mem dst, SegmentReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
+        }
+
+        public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, SegmentReg src)
+            where TGP : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
+        }
+
+        public static void Mov(this IIntrinsicSupport intrinsicSupport, SegmentReg dst, Mem src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
+        }
+
+        public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, SegmentReg dst, TGP src)
+            where TGP : Operand
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
+        }
+
         public static void MovPtr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, IntPtr src)
             where TGP : Operand
         {
@@ -1750,29 +1790,29 @@
         /// <summary>
         /// Unsigned multiply
         /// </summary>
-        public static void MulLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, TGP src)
+        public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
             Contract.Requires(dstHi != null);
+            Contract.Requires(dstLo != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Mul, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Mul, dstHi, dstLo, src);
         }
 
         /// <summary>
         /// Unsigned multiply
         /// </summary>
-        public static void MulLoHi<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstLo, TGP dstHi, Mem src)
+        public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
-            Contract.Requires(dstLo != null);
             Contract.Requires(dstHi != null);
+            Contract.Requires(dstLo != null);
             Contract.Requires(src != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Mul, dstLo, dstHi, src);
+            intrinsicSupport.EmitInstruction(InstructionCode.Mul, dstHi, dstLo, src);
         }
 
         /// <summary>

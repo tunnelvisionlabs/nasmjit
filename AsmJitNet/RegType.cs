@@ -51,5 +51,15 @@
         /// 128-bit SSE register
         /// </summary>
         XMM = 0x7000,
+
+        /// <summary>
+        /// 256-bit YMM register
+        /// </summary>
+        YMM = 0x8000,
+
+        /// <summary>
+        /// 16-bit segment register
+        /// </summary>
+        Segment = 0xD000,
     }
 }

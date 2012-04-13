@@ -7,5 +7,13 @@
         public static readonly int MM = 8;
         public static readonly int FPU = 8;
         public static readonly int XMM = Base;
+
+        //! @brief Count of segment registers, including no segment (AsmJit specific).
+        //!
+        //! @note There are 6 segment registers, but AsmJit uses 0 as no segment, and
+        //! 1...6 as segment registers, this means that there are 7 segment registers
+        //! in AsmJit API, but only 6 can be used through @c Assembler or @c Compiler
+        //! API.
+        public static readonly int Segment = 7;
     }
 }

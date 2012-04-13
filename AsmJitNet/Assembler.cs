@@ -1632,6 +1632,39 @@
                     // Reg <- Reg/Mem
                     case ((int)OperandType.Reg << 4) | (int)OperandType.Reg:
                         {
+                            // Reg <- Sreg
+                            if (src.IsRegType(RegType.Segment))
+                            {
+                                if (!dst.IsRegType(RegType.GPW) &&
+                                    !dst.IsRegType(RegType.GPD) &&
+                                    !dst.IsRegType(RegType.GPQ))
+                                {
+                                    throw new AssemblerException();
+                                }
+
+                                EmitX86RM(0x8C,
+                                    dst.Size == 2,
+                                    dst.Size == 8,
+                                    (byte)((SegmentReg)src).RegisterIndex,
+                                    (Operand)dst,
+                                    0, forceRexPrefix);
+                                goto end;
+                            }
+
+                            // Sreg <- Reg/Mem
+                            if (dst.IsRegType(RegType.Segment))
+                            {
+                                if (!src.IsRegType(RegType.GPW) &&
+                                    !src.IsRegType(RegType.GPD) &&
+                                    !src.IsRegType(RegType.GPQ))
+                                {
+                                    throw new AssemblerException();
+                                }
+
+                                EmitMovSregRM((SegmentReg)src, forceRexPrefix);
+                                goto end;
+                            }
+
                             if (!src.IsRegType(RegType.GPB_LO)
                                 && !src.IsRegType(RegType.GPB_HI)
                                 && !src.IsRegType(RegType.GPW)
@@ -1647,6 +1680,13 @@
 
                     case ((int)OperandType.Reg << 4) | (int)OperandType.Mem:
                         {
+                            // Sreg <- Mem
+                            if (dst.IsRegType(RegType.Segment))
+                            {
+                                EmitMovSregRM((SegmentReg)src, forceRexPrefix);
+                                goto end;
+                            }
+
                             if (!dst.IsRegType(RegType.GPB_LO)
                                 && !dst.IsRegType(RegType.GPB_HI)
                                 && !dst.IsRegType(RegType.GPW)
@@ -1699,25 +1739,40 @@
                             goto emitImmediate;
                         }
 
-                    // Mem <- Reg
+                    // Mem <- Reg/Sreg
                     case ((int)OperandType.Mem << 4) | (int)OperandType.Reg:
                         {
-                            if (!src.IsRegType(RegType.GPB_LO)
-                                && !src.IsRegType(RegType.GPB_HI)
-                                && !src.IsRegType(RegType.GPW)
-                                && !src.IsRegType(RegType.GPD)
-                                && !src.IsRegType(RegType.GPQ))
+                            if (src.IsRegType(RegType.Segment))
                             {
-                                throw new AssemblerException();
+                                // Mem <- Sreg
+                                EmitX86RM(0x8C,
+                                    dst.Size == 2,
+                                    dst.Size == 8,
+                                    (byte)((SegmentReg)src).RegisterIndex,
+                                    (Operand)dst,
+                                    0, forceRexPrefix);
+                                goto end;
                             }
+                            else
+                            {
+                                // Mem <- Reg
+                                if (!src.IsRegType(RegType.GPB_LO)
+                                    && !src.IsRegType(RegType.GPB_HI)
+                                    && !src.IsRegType(RegType.GPW)
+                                    && !src.IsRegType(RegType.GPD)
+                                    && !src.IsRegType(RegType.GPQ))
+                                {
+                                    throw new AssemblerException();
+                                }
 
-                            EmitX86RM(0x88 + (src.Size != 1 ? 1 : 0),
-                              src.IsRegType(RegType.GPW),
-                              src.IsRegType(RegType.GPQ),
-                              (byte)((GPReg)src).Code,
-                              dst,
-                              0, forceRexPrefix);
-                            goto end;
+                                EmitX86RM(0x88 + (src.Size != 1 ? 1 : 0),
+                                  src.IsRegType(RegType.GPW),
+                                  src.IsRegType(RegType.GPQ),
+                                  (byte)((GPReg)src).Code,
+                                  dst,
+                                  0, forceRexPrefix);
+                                goto end;
+                            }
                         }
 
                     // Mem <- Imm
@@ -2802,6 +2857,16 @@
             _emitOptions = EmitOptions.None;
         }
 
+        private void EmitMovSregRM(SegmentReg src, bool forceRexPrefix)
+        {
+            EmitX86RM(0x8E,
+                src.Size == 2,
+                src.Size == 8,
+                (byte)((SegmentReg)src).RegisterIndex,
+                (Operand)src,
+                0, forceRexPrefix);
+        }
+
         private Exception NewIllegalInstructionException()
         {
             return new AssemblerException("Encountered an illegal instruction");
@@ -2938,15 +3003,15 @@
                 "dqword ptr ",
             };
 
-        private static readonly string[] _segmentName =
+        private static readonly string[] _segmentPrefixName =
             {
-                "",
+                "es:",
                 "cs:",
                 "ss:",
                 "ds:",
-                "es:",
                 "fs:",
                 "gs:",
+                "",
             };
 
         internal static void DumpOperand(StringBuilder buf, Operand op, RegType memRegType)
@@ -2958,15 +3023,20 @@
             }
             else if (op.IsMem)
             {
-                bool isAbsolute = false;
                 Mem mem = ((Mem)op);
+                SegmentPrefix segmentPrefix = mem.SegmentPrefix;
+
+                bool isAbsolute = false;
 
                 if (op.Size <= 16)
                 {
                     buf.Append(_operandSize[op.Size]);
                 }
 
-                buf.Append(_segmentName[(int)mem.SegmentPrefix]);
+                if ((int)segmentPrefix < RegNum.Segment)
+                {
+                    buf.Append(_segmentPrefixName[(int)segmentPrefix]);
+                }
 
                 buf.Append('[');
 
@@ -3045,64 +3115,85 @@
             {
             case RegType.GPB_LO:
                 if ((int)index < 8)
+                {
                     //return buf + sprintf(buf, "%s", _reg8l[(int)index]);
                     buf.Append(_reg8l[(int)index]);
-                else
-                    //return buf + sprintf(buf, "r%ub", (uint32_t)index);
-                    buf.AppendFormat("r{0}b", (int)index);
+                    return;
+                }
 
-                return;
+                //return buf + sprintf(buf, "r%ub", (uint32_t)index);
+                buf.Append('r');
+                goto _EmitID;
+
             case RegType.GPB_HI:
                 if ((int)index < 4)
+                {
                     //return buf + sprintf(buf, "%s", _reg8h[(int)index]);
                     buf.Append(_reg8h[(int)index]);
-                else
-                    //return buf + sprintf(buf, "%s", "INVALID");
-                    buf.Append("INVALID");
+                    return;
+                }
 
+            _EmitNE:
+                //return buf + sprintf(buf, "%s", "INVALID");
+                buf.Append("NE");
                 return;
 
             case RegType.GPW:
                 if ((int)index < 8)
+                {
                     //return buf + sprintf(buf, "%s", _reg16[(int)index]);
                     buf.Append(_reg16[(int)index]);
-                else
-                    //return buf + sprintf(buf, "r%uw", (uint32_t)index);
-                    buf.AppendFormat("r{0}w", (int)index);
+                    return;
+                }
 
+                buf.AppendFormat("r{0}w", (int)index);
                 return;
 
             case RegType.GPD:
                 if ((int)index < 8)
+                {
                     //return buf + sprintf(buf, "e%s", _reg16[(int)index]);
                     buf.AppendFormat("e{0}", _reg16[(int)index]);
-                else
-                    //return buf + sprintf(buf, "r%uw", (uint32_t)index);
-                    buf.AppendFormat("r{0}d", (int)index);
+                    return;
+                }
 
+                //return buf + sprintf(buf, "r%uw", (uint32_t)index);
+                buf.AppendFormat("r{0}d", (int)index);
                 return;
 
             case RegType.GPQ:
-                if ((int)index < 8)
-                    //return buf + sprintf(buf, "e%s", _reg16[(int)index]);
-                    buf.AppendFormat("r{0}", _reg16[(int)index]);
-                else
-                    //return buf + sprintf(buf, "r%uw", (uint32_t)index);
-                    buf.AppendFormat("r{0}", (int)index);
+                buf.Append('r');
 
+                if ((int)index < 8)
+                {
+                    buf.Append(_reg16[(int)index]);
+                    return;
+                }
+
+            _EmitID:
+                buf.Append((int)index);
                 return;
 
             case RegType.X87:
-                buf.AppendFormat("st{0}", (int)index);
-                return;
+                buf.Append("st");
+                goto _EmitID;
 
             case RegType.MM:
-                buf.AppendFormat("mm{0}", (int)index);
-                return;
+                buf.Append("mm");
+                goto _EmitID;
 
             case RegType.XMM:
-                buf.AppendFormat("xmm{0}", (int)index);
-                return;
+                buf.Append("xmm");
+                goto _EmitID;
+
+            case RegType.Segment:
+                if ((int)index < RegNum.Segment)
+                {
+                    buf.Append(_segmentPrefixName[(int)index]);
+                    return;
+                }
+
+                goto _EmitNE;
 
             default:
                 return;
@@ -3171,16 +3262,26 @@
             EmitByte((byte)(opcode & 0x000000FF));
         }
 
-        private static readonly byte[] _prefixes = { 0x00, 0x2E, 0x36, 0x3E, 0x26, 0x64, 0x65 };
+        private static readonly byte[] _segmentPrefixCode =
+            {
+                0x2E, // ES
+                0x36, // SS
+                0x3E, // SS
+                0x26, // DS
+                0x64, // FS
+                0x65  // GS
+            };
 
         private void EmitSegmentPrefix(Operand rm)
         {
-            if (rm.IsMem)
-            {
-                SegmentPrefix segmentPrefix = ((Mem)rm).SegmentPrefix;
-                if (segmentPrefix != 0)
-                    EmitByte(_prefixes[(int)segmentPrefix]);
-            }
+            if (!rm.IsMem)
+                return;
+
+            SegmentPrefix segmentPrefix = ((Mem)rm).SegmentPrefix;
+            if ((int)segmentPrefix > RegNum.Segment)
+                return;
+
+            EmitByte(_segmentPrefixCode[(int)segmentPrefix]);
         }
 
         private void EmitMod(byte m, byte o, byte r)

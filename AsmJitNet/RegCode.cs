@@ -111,7 +111,7 @@
         // [XMM Registers]
         // --------------------------------------------------------------------------
 
-        XMM0 = (int)RegType.XMM,
+        XMM0 = RegType.XMM,
         XMM1,
         XMM2,
         XMM3,
@@ -130,7 +130,7 @@
         XMM15,
 
         //// --------------------------------------------------------------------------
-        //// [Native registers (depends if processor runs in 32 bit or 64 bit mode)]
+        //// [Native registers (depends on 32-bit or 64-bit mode)]
         //// --------------------------------------------------------------------------
 
         //NAX = (int)RegType.GPN,
@@ -140,6 +140,23 @@
         //NSP,
         //NBP,
         //NSI,
-        //NDI
+        //NDI,
+
+        // --------------------------------------------------------------------------
+        // [Segment registers]
+        // --------------------------------------------------------------------------
+
+        /// <summary>ES segment register.</summary>
+        ES = RegType.Segment,
+        /// <summary>CS segment register.</summary>
+        CS,
+        /// <summary>SS segment register.</summary>
+        SS,
+        /// <summary>DS segment register.</summary>
+        DS,
+        /// <summary>FS segment register.</summary>
+        FS,
+        /// <summary>GS segment register.</summary>
+        GS
     }
 }

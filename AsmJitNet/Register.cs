@@ -507,6 +507,13 @@
         /// </summary>
         public static readonly XMMReg xmm15 = new XMMReg(RegCode.XMM15);
 
+        public static readonly SegmentReg cs = new SegmentReg(RegCode.CS);
+        public static readonly SegmentReg ss = new SegmentReg(RegCode.SS);
+        public static readonly SegmentReg ds = new SegmentReg(RegCode.DS);
+        public static readonly SegmentReg es = new SegmentReg(RegCode.ES);
+        public static readonly SegmentReg fs = new SegmentReg(RegCode.FS);
+        public static readonly SegmentReg gs = new SegmentReg(RegCode.GS);
+
         /// <summary>
         /// Native-size (platform specific) general purpose register
         /// </summary>

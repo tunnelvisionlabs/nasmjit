@@ -150,7 +150,7 @@
             Call call = c.Call(c.Function.EntryLabel, CallingConvention.Default, typeof(Func<int, int>));
             call.SetArgument(0, tmp);
             call.SetReturn(var);
-            c.MulLoHi(var, c.NewGP(VariableType.INT32), tmp);
+            c.Mul(c.NewGP(VariableType.INT32), var, tmp);
 
             c.MarkLabel(skip);
             c.Ret(var);
