@@ -2360,7 +2360,7 @@
 
                     bool rexw = ((id.OperandFlags[0] | id.OperandFlags[1]) & OperandFlags.NOREX) != 0
                       ? false
-                      : (o0.IsRegType(RegType.GPQ) || o0.IsRegType(RegType.GPQ));
+                      : (o0.IsRegType(RegType.GPQ) || o1.IsRegType(RegType.GPQ));
 
                     // (X)MM|Reg <- (X)MM|Reg
                     if (o0.IsReg && o1.IsReg)
@@ -2609,7 +2609,7 @@
                         : 0x00000000;
                     bool rexw = ((id.OperandFlags[0] | id.OperandFlags[1]) & OperandFlags.NOREX) != 0
                       ? false
-                      : (o0.IsRegType(RegType.GPQ) || o0.IsRegType(RegType.GPQ));
+                      : (o0.IsRegType(RegType.GPQ) || o1.IsRegType(RegType.GPQ));
 
                     // (X)MM <- (X)MM (opcode0)
                     if (o1.IsReg)
@@ -2679,7 +2679,7 @@
                         : 0x00000000;
                     bool rexw = ((id.OperandFlags[0] | id.OperandFlags[1]) & OperandFlags.NOREX) != 0
                       ? false
-                      : (o0.IsRegType(RegType.GPQ) || o0.IsRegType(RegType.GPQ));
+                      : (o0.IsRegType(RegType.GPQ) || o1.IsRegType(RegType.GPQ));
 
                     // (X)MM <- (X)MM (opcode0)
                     if (o1.IsReg)
@@ -3509,7 +3509,7 @@
                             // Bound label.
                             disp = (IntPtr)(disp.ToInt64() + Offset - l_data.Offset);
 
-                            // Add a dummy DWORD.
+                            // Displacement is known.
                             EmitInt32(disp.ToInt32());
                         }
                         else
