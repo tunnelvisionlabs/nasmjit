@@ -3058,7 +3058,7 @@
                     {
                         // [absolute]
                         isAbsolute = true;
-                        buf.AppendFormat("{0:x}", mem.Target);
+                        buf.AppendFormat("{0:x}", (long)mem.Target + (long)mem.Displacement);
                         break;
                     }
                 }
