@@ -118,6 +118,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Compiler>() != null);
+
                 return _compiler;
             }
         }
@@ -131,6 +133,9 @@
 
             internal set
             {
+                Contract.Requires(value != null);
+                Contract.Ensures(Function != null);
+
                 _function = value;
             }
         }
@@ -330,6 +335,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<StateData>() != null);
+
                 return _state;
             }
         }
@@ -338,6 +345,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<ReadOnlyCollection<Jmp>>() != null);
+
                 return _backCode.AsReadOnly();
             }
         }
@@ -346,17 +355,33 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<int>() >= 0);
+
                 return _backPos;
             }
 
             set
             {
+                Contract.Requires(value >= 0);
+
                 _backPos = value;
             }
         }
 
+        [ContractInvariantMethod]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Required for code contracts.")]
+        private void ObjectInvariant()
+        {
+            Contract.Invariant(_compiler != null);
+            Contract.Invariant(_state != null);
+            Contract.Invariant(_backPos >= 0);
+        }
+
+
         internal void Clear()
         {
+            Contract.Ensures(Function == null);
+
             //_zone.clear();
             _function = null;
 
@@ -633,6 +658,7 @@
         public void AllocGPVar(VarData varData, RegisterMask regMask, VariableAlloc variableAlloc)
         {
             Contract.Requires(varData != null);
+            Contract.Requires(Function != null);
 
               // Fix the regMask (0 or full bit-array means that any register may be used).
             if (regMask == RegisterMask.Zero)
@@ -932,21 +958,30 @@
 
         private VarData GetSpillCandidateGP()
         {
+            Contract.Requires(_compiler.CurrentEmittable != null);
+
             return GetSpillCandidateGeneric(_state.GP);
         }
 
         private VarData GetSpillCandidateMM()
         {
+            Contract.Requires(_compiler.CurrentEmittable != null);
+
             return GetSpillCandidateGeneric(_state.MM);
         }
 
         private VarData GetSpillCandidateXMM()
         {
+            Contract.Requires(_compiler.CurrentEmittable != null);
+
             return GetSpillCandidateGeneric(_state.XMM);
         }
 
         private VarData GetSpillCandidateGeneric(IList<VarData> varArray)
         {
+            Contract.Requires(varArray != null);
+            Contract.Requires(_compiler.CurrentEmittable != null);
+
             int i;
 
             VarData candidate = null;
@@ -1016,6 +1051,8 @@
         public void AllocMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
+            Contract.Requires(Function != null);
+
             AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Prototype.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
         }
 
@@ -1028,6 +1065,8 @@
         public void AllocXMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
         {
             Contract.Requires(vdata != null);
+            Contract.Requires(Function != null);
+
             AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Prototype.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
         }
 
@@ -1042,6 +1081,7 @@
             Contract.Requires(vdata != null);
             Contract.Requires(stateData != null);
             Contract.Requires(freeAction != null);
+            Contract.Requires(Function != null);
 
             // Fix the regMask (0 or full bit-array means that any register may be used).
             if (regMask == RegisterMask.Zero)
@@ -1289,6 +1329,8 @@
         // TODO: Find code which uses this and improve.
         internal void NewRegisterHomeIndex(VarData vdata, RegIndex idx)
         {
+            Contract.Requires(vdata != null);
+
             if (vdata.HomeRegisterIndex == RegIndex.Invalid)
                 vdata.HomeRegisterIndex = idx;
 
@@ -1298,6 +1340,8 @@
         // TODO: Find code which uses this and improve.
         internal void NewRegisterHomeMask(VarData vdata, RegisterMask mask)
         {
+            Contract.Requires(vdata != null);
+
             vdata.PreferredRegisterMask |= mask;
         }
 
@@ -1503,6 +1547,8 @@
 
         public void EmitMoveVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
         {
+            Contract.Requires(vdata != null);
+
             if (vdata.RegisterIndex == RegIndex.Invalid)
                 throw new ArgumentException("Caller must ensure that variable is allocated.");
 
@@ -1554,6 +1600,8 @@
 
         public void UnuseVar(VarData vdata, VariableState toState)
         {
+            Contract.Requires(vdata != null);
+
             if (toState == VariableState.Register)
                 throw new ArgumentException();
 
@@ -1602,12 +1650,19 @@
 
         public void UnuseVarOnEndOfScope(Emittable e, VarData vdata)
         {
+            Contract.Requires(e != null);
+            Contract.Requires(vdata != null);
+
             if (vdata.LastEmittable == e)
                 UnuseVar(vdata, VariableState.Unused);
         }
 
         public void UnuseVarOnEndOfScope(Emittable e, VarAllocRecord rec)
         {
+            Contract.Requires(e != null);
+            Contract.Requires(rec != null);
+            Contract.Requires(rec.VarData != null);
+
             VarData v = rec.VarData;
             if (v.LastEmittable == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
@@ -1615,6 +1670,10 @@
 
         internal void UnuseVarOnEndOfScope(Emittable e, VarCallRecord rec)
         {
+            Contract.Requires(e != null);
+            Contract.Requires(rec != null);
+            Contract.Requires(rec.vdata != null);
+
             VarData v = rec.vdata;
             if (v.LastEmittable == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
@@ -1622,6 +1681,8 @@
 
         internal void AllocatedVariable(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             RegIndex idx = vdata.RegisterIndex;
 
             switch (vdata.Type)
@@ -1671,6 +1732,8 @@
 
         internal void MarkMemoryUsed(VarData varData)
         {
+            Contract.Requires(varData != null);
+
             if (varData.HomeMemoryData != null)
                 return;
 
@@ -1737,6 +1800,8 @@
 
         public void TranslateOperands(Operand[] operands)
         {
+            Contract.Requires(operands != null);
+
             int i;
             int count = operands.Length;
 
@@ -1873,6 +1938,8 @@
 
         internal void AssignState(StateData state)
         {
+            Contract.Requires(state != null);
+
             Compiler compiler = Compiler;
             _state.CopyFrom(state);
             _state.MemVarsData = new VarData[0];

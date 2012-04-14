@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.ObjectModel;
+    using System.Diagnostics.Contracts;
     using System.Linq;
 
     public sealed class CallingConventionInfo
@@ -331,10 +332,16 @@
 
         public static CallingConventionInfo GetCallingConventionInfo(CallingConvention callingConvention)
         {
+            Contract.Ensures(Contract.Result<CallingConventionInfo>() != null);
+
             if (callingConvention == CallingConvention.Default)
                 callingConvention = DefaultCallingConvention;
 
-            return _info[(int)callingConvention];
+            CallingConventionInfo info = _info[(int)callingConvention];
+            if (info == null)
+                throw new InvalidOperationException("The specified calling convention is not supported.");
+
+            return info;
         }
     }
 }

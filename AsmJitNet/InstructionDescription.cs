@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.ObjectModel;
+    using System.Diagnostics.Contracts;
 
     public sealed class InstructionDescription
     {
@@ -612,6 +613,8 @@ instructionDescriptions =
 
         private InstructionDescription(InstructionCode code, string name, InstructionGroup group, InstructionFlags flags, OperandFlags[] operandFlags, int opReg, int opcode0, int opcode1)
         {
+            Contract.Requires(operandFlags != null);
+
             _code = code;
             _name = name;
             _group = (byte)group;

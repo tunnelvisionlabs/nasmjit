@@ -36,6 +36,9 @@
         public Call(Compiler compiler, Function caller, Operand target, CallingConvention callingConvention, Type delegateType)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+            Contract.Requires(caller != null);
+
             _caller = caller;
             _target = target;
 
@@ -78,6 +81,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Function>() != null);
+
                 return _caller;
             }
         }
@@ -94,8 +99,18 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+
                 return _functionPrototype;
             }
+        }
+
+        [ContractInvariantMethod]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Required for code contracts.")]
+        private void ObjectInvariant()
+        {
+            Contract.Invariant(_functionPrototype != null);
+            Contract.Invariant(_caller != null);
         }
 
         public void SetArgument(int i, Operand operand)

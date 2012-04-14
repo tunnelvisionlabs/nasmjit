@@ -182,6 +182,8 @@
 
         internal void DoJump(CompilerContext cc)
         {
+            Contract.Requires(cc != null);
+
             // The state have to be already known. The _doJump() method is called by
             // translate() or by Compiler in case that it's forward jump.
             if (_jumpTarget.State == null)

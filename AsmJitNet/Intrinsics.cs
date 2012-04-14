@@ -540,6 +540,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(Assembler.ConditionToMovCC(cc), dst, src);
         }
 
@@ -550,6 +553,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(Assembler.ConditionToMovCC(cc), dst, src);
         }
 
@@ -557,6 +563,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmova, dst, src);
         }
 
@@ -564,6 +573,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmova, dst, src);
         }
 
@@ -571,6 +583,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovae, dst, src);
         }
 
@@ -578,6 +593,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovae, dst, src);
         }
 
@@ -585,6 +603,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovb, dst, src);
         }
 
@@ -592,6 +613,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovb, dst, src);
         }
 
@@ -599,6 +623,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovbe, dst, src);
         }
 
@@ -606,6 +633,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovbe, dst, src);
         }
 
@@ -613,6 +643,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovc, dst, src);
         }
 
@@ -620,6 +653,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovc, dst, src);
         }
 
@@ -627,6 +663,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmove, dst, src);
         }
 
@@ -634,6 +673,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmove, dst, src);
         }
 
@@ -641,6 +683,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovg, dst, src);
         }
 
@@ -648,6 +693,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovg, dst, src);
         }
 
@@ -655,6 +703,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovge, dst, src);
         }
 
@@ -662,6 +713,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovge, dst, src);
         }
 
@@ -669,6 +723,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovl, dst, src);
         }
 
@@ -676,6 +733,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovl, dst, src);
         }
 
@@ -683,6 +743,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovle, dst, src);
         }
 
@@ -690,6 +753,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovle, dst, src);
         }
 
@@ -697,6 +763,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovna, dst, src);
         }
 
@@ -704,6 +773,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovna, dst, src);
         }
 
@@ -711,6 +783,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnae, dst, src);
         }
 
@@ -718,6 +793,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnae, dst, src);
         }
 
@@ -725,6 +803,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnb, dst, src);
         }
 
@@ -732,6 +813,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnb, dst, src);
         }
 
@@ -739,6 +823,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnbe, dst, src);
         }
 
@@ -746,6 +833,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnbe, dst, src);
         }
 
@@ -753,6 +843,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnc, dst, src);
         }
 
@@ -760,6 +853,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnc, dst, src);
         }
 
@@ -767,6 +863,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovne, dst, src);
         }
 
@@ -774,6 +873,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovne, dst, src);
         }
 
@@ -781,6 +883,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovng, dst, src);
         }
 
@@ -788,6 +893,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovng, dst, src);
         }
 
@@ -795,6 +903,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnge, dst, src);
         }
 
@@ -802,6 +913,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnge, dst, src);
         }
 
@@ -809,6 +923,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnl, dst, src);
         }
 
@@ -816,6 +933,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnl, dst, src);
         }
 
@@ -823,6 +943,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnle, dst, src);
         }
 
@@ -830,6 +953,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnle, dst, src);
         }
 
@@ -837,6 +963,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovno, dst, src);
         }
 
@@ -844,6 +973,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovno, dst, src);
         }
 
@@ -851,6 +983,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnp, dst, src);
         }
 
@@ -858,6 +993,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnp, dst, src);
         }
 
@@ -865,6 +1003,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovns, dst, src);
         }
 
@@ -872,6 +1013,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovns, dst, src);
         }
 
@@ -879,6 +1023,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnz, dst, src);
         }
 
@@ -886,6 +1033,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovnz, dst, src);
         }
 
@@ -893,6 +1043,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovo, dst, src);
         }
 
@@ -900,6 +1053,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovo, dst, src);
         }
 
@@ -907,6 +1063,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovp, dst, src);
         }
 
@@ -914,6 +1073,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovp, dst, src);
         }
 
@@ -921,6 +1083,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpe, dst, src);
         }
 
@@ -928,6 +1093,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpe, dst, src);
         }
 
@@ -935,6 +1103,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpo, dst, src);
         }
 
@@ -942,6 +1113,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovpo, dst, src);
         }
 
@@ -949,6 +1123,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovs, dst, src);
         }
 
@@ -956,6 +1133,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovs, dst, src);
         }
 
@@ -963,6 +1143,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovz, dst, src);
         }
 
@@ -970,6 +1153,9 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
             intrinsicSupport.EmitInstruction(InstructionCode.Cmovz, dst, src);
         }
 
@@ -1348,186 +1534,248 @@
         public static void J(this IIntrinsicSupport intrinsicSupport, Condition cc, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(Assembler.ConditionToJump(cc), label, hint);
         }
 
         public static void Ja(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Ja, label, hint);
         }
 
         public static void Jae(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jae, label, hint);
         }
 
         public static void Jb(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jb, label, hint);
         }
 
         public static void Jbe(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jbe, label, hint);
         }
 
         public static void Jc(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jc, label, hint);
         }
 
         public static void Je(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Je, label, hint);
         }
 
         public static void Jg(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jg, label, hint);
         }
 
         public static void Jge(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jge, label, hint);
         }
 
         public static void Jl(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jl, label, hint);
         }
 
         public static void Jle(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jle, label, hint);
         }
 
         public static void Jna(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jna, label, hint);
         }
 
         public static void Jnae(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnae, label, hint);
         }
 
         public static void Jnb(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnb, label, hint);
         }
 
         public static void Jnbe(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnbe, label, hint);
         }
 
         public static void Jnc(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnc, label, hint);
         }
 
         public static void Jne(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jne, label, hint);
         }
 
         public static void Jng(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jng, label, hint);
         }
 
         public static void Jnge(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnge, label, hint);
         }
 
         public static void Jnl(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnl, label, hint);
         }
 
         public static void Jnle(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnle, label, hint);
         }
 
         public static void Jno(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jno, label, hint);
         }
 
         public static void Jnp(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnp, label, hint);
         }
 
         public static void Jns(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jns, label, hint);
         }
 
         public static void Jnz(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jnz, label, hint);
         }
 
         public static void Jo(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jo, label, hint);
         }
 
         public static void Jp(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jp, label, hint);
         }
 
         public static void Jpe(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jpe, label, hint);
         }
 
         public static void Jpo(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jpo, label, hint);
         }
 
         public static void Js(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Js, label, hint);
         }
 
         public static void Jz(this IIntrinsicSupport intrinsicSupport, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(label != null);
+
             intrinsicSupport.EmitJcc(InstructionCode.Jz, label, hint);
         }
 
@@ -1559,6 +1807,7 @@
         public static void Jmp(this IIntrinsicSupport intrinsicSupport, IntPtr dst)
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
 
             intrinsicSupport.EmitInstruction(InstructionCode.Jmp, (Imm)dst);
         }
@@ -2705,6 +2954,7 @@
             Contract.Requires(compiler != null);
             Contract.Requires(first != null);
             Contract.Requires(second != null);
+            Contract.Requires(compiler.Function != null);
 
             compiler.EmitReturn(first, second);
         }
@@ -2722,6 +2972,7 @@
             Contract.Requires(compiler != null);
             Contract.Requires(first != null);
             Contract.Requires(second != null);
+            Contract.Requires(compiler.Function != null);
 
             compiler.EmitReturn(first, second);
         }
@@ -2808,6 +3059,7 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(var != null);
 
             if (!Util.IsX86)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Sahf));
@@ -2964,6 +3216,7 @@
             where TGP : Operand
         {
             Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
             Contract.Requires(dst.Size == 1);
 
             intrinsicSupport.EmitInstruction(Assembler.ConditionToSetCC(cc), dst);

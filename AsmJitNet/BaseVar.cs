@@ -1,5 +1,7 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public abstract class BaseVar : Operand
     {
         private readonly RegType _registerType;
@@ -115,6 +117,8 @@
 
         internal static Mem BaseVarMem(BaseVar var, int ptrSize)
         {
+            Contract.Requires(var != null);
+
             int memSize = (ptrSize == InvalidValue) ? var.Size : (byte)ptrSize;
             Mem m = new Mem(var.Id, memSize);
             return m;

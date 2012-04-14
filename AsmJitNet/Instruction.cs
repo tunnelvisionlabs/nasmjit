@@ -48,6 +48,7 @@
             : base(compiler)
         {
             Contract.Requires(compiler != null);
+            Contract.Requires(operands != null);
 
             _code = code;
             _emitOptions = compiler.EmitOptions;

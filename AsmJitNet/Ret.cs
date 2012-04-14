@@ -12,6 +12,9 @@
         public Ret(Compiler compiler, Function function, Operand first, Operand second)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+            Contract.Requires(function != null);
+
             _function = function;
             _first = first;
             _second = second;
@@ -37,6 +40,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<Function>() != null);
+
                 return _function;
             }
         }
@@ -55,6 +60,13 @@
             {
                 return _second;
             }
+        }
+
+        [ContractInvariantMethod]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Required for code contracts.")]
+        private void ObjectInvariant()
+        {
+            Contract.Invariant(_function != null);
         }
 
         protected override void PrepareImpl(CompilerContext cc)
@@ -448,6 +460,8 @@
 
         private Mem BaseVarMem(BaseVar var, int ptrSize)
         {
+            Contract.Requires(var != null);
+
             int memSize = (ptrSize == Operand.InvalidValue ? var.Size : (byte)ptrSize);
             Mem m = new Mem(var.Id, memSize);
             return m;

@@ -1,5 +1,7 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public class MMVar : BaseVar
     {
         public MMVar()
@@ -14,6 +16,8 @@
 
         public static MMVar FromData(VarData vdata)
         {
+            Contract.Requires(vdata != null);
+
             return new MMVar(vdata.Id, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
         }
     }

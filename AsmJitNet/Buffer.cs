@@ -5,7 +5,9 @@
 
     internal sealed class Buffer
     {
-        private byte[] _data;
+        private static readonly byte[] EmptyData = new byte[0];
+
+        private byte[] _data = EmptyData;
 
         private int _cur;
 
@@ -24,6 +26,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<byte[]>() != null);
+
                 return _data;
             }
         }
@@ -42,6 +46,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<int>() >= 0);
+
                 return _capacity;
             }
         }

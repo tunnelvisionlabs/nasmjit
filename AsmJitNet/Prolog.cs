@@ -1,5 +1,7 @@
 ﻿namespace AsmJitNet
 {
+    using System.Diagnostics.Contracts;
+
     public sealed class Prolog : Emittable
     {
         private readonly Function _function;
@@ -7,6 +9,8 @@
         public Prolog(Compiler compiler, Function function)
             : base(compiler)
         {
+            Contract.Requires(compiler != null);
+
             _function = function;
         }
 

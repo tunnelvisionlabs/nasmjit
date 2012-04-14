@@ -160,6 +160,8 @@
 
         public void MarkLabel(Label label)
         {
+            Contract.Requires(label != null);
+
             int id = label.Id & Operand.OperandIdValueMask;
             if (id >= _targetData.Count)
                 throw new ArgumentException();
@@ -188,6 +190,9 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
+            Contract.Requires(Function.Prototype != null);
+            Contract.Requires(Function.Prototype != null);
+            Contract.Requires(Function.Prototype.Arguments != null);
             Contract.Ensures(Contract.Result<GPVar>() != null);
             Contract.EndContractBlock();
 
@@ -236,6 +241,8 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
+            Contract.Requires(Function.Prototype != null);
+            Contract.Requires(Function.Prototype.Arguments != null);
             Contract.Ensures(Contract.Result<MMVar>() != null);
             Contract.EndContractBlock();
 
@@ -275,6 +282,8 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
+            Contract.Requires(Function.Prototype != null);
+            Contract.Requires(Function.Prototype.Arguments != null);
             Contract.Ensures(Contract.Result<XMMVar>() != null);
             Contract.EndContractBlock();
 
@@ -349,6 +358,8 @@
 
         public void Serialize(Assembler a)
         {
+            Contract.Requires(a != null);
+
             // context
             CompilerContext cc = new CompilerContext(this);
 
@@ -598,11 +609,15 @@
 
         public void Alloc(BaseVar var)
         {
+            Contract.Requires(var != null);
+
             Vhint(var, VariableHintKind.Alloc, Operand.InvalidValue);
         }
 
         public void Alloc(BaseVar var, RegIndex regIndex)
         {
+            Contract.Requires(var != null);
+
             if ((int)regIndex > 31)
                 return;
 
@@ -611,16 +626,23 @@
 
         public void Alloc(BaseVar var, BaseReg reg)
         {
+            Contract.Requires(var != null);
+            Contract.Requires(reg != null);
+
             Vhint(var, VariableHintKind.Alloc, 1 << (int)reg.RegisterIndex);
         }
 
         public void Spill(BaseVar var)
         {
+            Contract.Requires(var != null);
+
             Vhint(var, VariableHintKind.Spill, Operand.InvalidValue);
         }
 
         private void Vhint(BaseVar var, VariableHintKind hintId, int hintValue)
         {
+            Contract.Requires(var != null);
+
             if (var.Id == Operand.InvalidValue)
                 return;
 
@@ -1131,8 +1153,6 @@
 
         internal void EmitReturn(Operand first, Operand second)
         {
-            Contract.Requires(first != null);
-            Contract.Requires(second != null);
             Contract.Requires(Function != null);
 
             Function fn = Function;

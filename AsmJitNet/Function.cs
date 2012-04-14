@@ -7,7 +7,7 @@
 
     public class Function : Emittable
     {
-        private FunctionPrototype _functionPrototype;
+        private readonly FunctionPrototype _functionPrototype;
         internal VarData[] _argumentVariables;
 
         private FunctionHints _hints;
@@ -55,10 +55,13 @@
         private readonly Epilog _epilog;
         private readonly FunctionEnd _end;
 
-        private Function(Compiler compiler)
+        private Function(Compiler compiler, FunctionPrototype prototype)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
+            Contract.Requires(prototype != null);
+
+            _functionPrototype = prototype;
 
             _entryLabel = compiler.DefineLabel();
             _exitLabel = compiler.DefineLabel();
@@ -69,15 +72,16 @@
         }
 
         public Function(Compiler compiler, CallingConvention callingConvention, Type delegateType)
-            : this(compiler)
+            : this(compiler, new FunctionPrototype(callingConvention, delegateType))
         {
-            _functionPrototype = new FunctionPrototype(callingConvention, delegateType);
+            Contract.Requires(compiler != null);
         }
 
         public Function(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
-            : this(compiler)
+            : this(compiler, new FunctionPrototype(callingConvention, arguments, returnValue))
         {
-            _functionPrototype = new FunctionPrototype(callingConvention, arguments, returnValue);
+            Contract.Requires(compiler != null);
+            Contract.Requires(arguments != null);
         }
 
         public override EmittableType EmittableType
@@ -101,6 +105,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+
                 return _functionPrototype;
             }
         }
@@ -192,6 +198,7 @@
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
+            Contract.Invariant(_functionPrototype != null);
             Contract.Invariant(_entryLabel != null);
             Contract.Invariant(_exitLabel != null);
             Contract.Invariant(_prolog != null);
@@ -259,6 +266,8 @@
 
         internal void PreparePrologEpilog(CompilerContext cc)
         {
+            Contract.Requires(cc != null);
+
             _pePushPop = true;
             _emitEMMS = false;
             _emitSFence = false;

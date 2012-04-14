@@ -171,6 +171,8 @@
         {
             get
             {
+                Contract.Ensures(Contract.Result<CallingConventionInfo>() != null);
+
                 return CallingConventionInfo.GetCallingConventionInfo(_callingConvention);
             }
         }

@@ -147,6 +147,16 @@
             }
         }
 
+        [ContractInvariantMethod]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Required for code contracts.")]
+        private void ObjectInvariant()
+        {
+            Contract.Invariant(_labelData != null);
+            Contract.Invariant(_relocationData != null);
+            Contract.Invariant(_buffer != null);
+        }
+
+
         public byte GetByteAt(int position)
         {
             return _buffer.GetByteAt(position);
@@ -181,6 +191,8 @@
 
         public void MarkLabel(Label label)
         {
+            if (label == null)
+                throw new ArgumentNullException("label");
             if (label.Id == Operand.InvalidValue)
                 throw new ArgumentException("Only labels created by DefineLabel() can be used by Assembler.");
             if ((label.Id & Operand.OperandIdValueMask) >= _labelData.Count)
@@ -403,7 +415,9 @@
 
         public void EmbedLabel(Label label)
         {
+            Contract.Requires(label != null);
             Contract.Requires(label.Id != Operand.InvalidValue);
+
             if (CanEmit())
                 return;
 
@@ -706,6 +720,8 @@
 
         public void Call(GPReg dst)
         {
+            Contract.Requires(dst != null);
+
             if (!dst.IsRegType(Register.NativeRegisterType))
                 throw new ArgumentException();
 
@@ -714,11 +730,15 @@
 
         public void Call(Mem dst)
         {
+            Contract.Requires(dst != null);
+
             EmitInstruction(InstructionCode.Call, dst);
         }
 
         public void Call(Imm dst)
         {
+            Contract.Requires(dst != null);
+
             EmitInstruction(InstructionCode.Call, dst);
         }
 
@@ -729,167 +749,233 @@
 
         public void Call(Label dst)
         {
+            Contract.Requires(dst != null);
+
             EmitInstruction(InstructionCode.Call, dst);
         }
 
         public void ShortJ(Condition cc, Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             _emitOptions |= EmitOptions.ShortJump;
             this.J(cc, label, hint);
         }
 
         public void ShortJa(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Ja, label, hint);
         }
 
         public void ShortJae(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jae, label, hint);
         }
 
         public void ShortJb(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jb, label, hint);
         }
 
         public void ShortJbe(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jbe, label, hint);
         }
 
         public void ShortJc(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jc, label, hint);
         }
 
         public void ShortJe(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Je, label, hint);
         }
 
         public void ShortJg(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jg, label, hint);
         }
 
         public void ShortJge(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jge, label, hint);
         }
 
         public void ShortJl(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jl, label, hint);
         }
 
         public void ShortJle(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jle, label, hint);
         }
 
         public void ShortJna(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jna, label, hint);
         }
 
         public void ShortJnae(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnae, label, hint);
         }
 
         public void ShortJnb(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnb, label, hint);
         }
 
         public void ShortJnbe(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnbe, label, hint);
         }
 
         public void ShortJnc(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnc, label, hint);
         }
 
         public void ShortJne(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jne, label, hint);
         }
 
         public void ShortJng(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jng, label, hint);
         }
 
         public void ShortJnge(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnge, label, hint);
         }
 
         public void ShortJnl(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnl, label, hint);
         }
 
         public void ShortJnle(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnle, label, hint);
         }
 
         public void ShortJno(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jno, label, hint);
         }
 
         public void ShortJnp(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnp, label, hint);
         }
 
         public void ShortJns(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jns, label, hint);
         }
 
         public void ShortJnz(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jnz, label, hint);
         }
 
         public void ShortJo(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jo, label, hint);
         }
 
         public void ShortJp(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jp, label, hint);
         }
 
         public void ShortJpe(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jpe, label, hint);
         }
 
         public void ShortJpo(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jpo, label, hint);
         }
 
         public void ShortJs(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Js, label, hint);
         }
 
         public void ShortJz(Label label, Hint hint = Hint.None)
         {
+            Contract.Requires(label != null);
+
             EmitShortJcc(InstructionCode.Jz, label, hint);
         }
 
         public void ShortJmp(Label label)
         {
+            Contract.Requires(label != null);
+
             _emitOptions |= EmitOptions.ShortJump;
             EmitInstruction(InstructionCode.Jmp, label);
         }
@@ -901,6 +987,8 @@
 
         public void Ret(Imm imm16)
         {
+            Contract.Requires(imm16 != null);
+
             EmitInstruction(InstructionCode.Ret, imm16);
         }
 
@@ -2859,6 +2947,8 @@
 
         private void EmitMovSregRM(SegmentReg src, bool forceRexPrefix)
         {
+            Contract.Requires(src != null);
+
             EmitX86RM(0x8E,
                 src.Size == 2,
                 src.Size == 8,
@@ -2874,6 +2964,8 @@
 
         private void DumpComment(StringBuilder buf, IList<byte> binaryData, string comment)
         {
+            Contract.Requires(buf != null);
+
             int currentLength = buf.Length;
             int commentLength = comment != null ? comment.Length : 0;
             binaryData = binaryData ?? new byte[0];
@@ -2932,6 +3024,7 @@
         private static void DumpInstruction(StringBuilder buf, IList<byte> machineCode, InstructionCode code, EmitOptions emitOptions, Operand o0, Operand o1, Operand o2, RegType memRegType)
         {
             Contract.Requires(buf != null);
+            Contract.Requires(machineCode != null);
             Contract.Requires(o0 != null);
             Contract.Requires(o1 != null);
             Contract.Requires(o2 != null);
@@ -2976,6 +3069,8 @@
 
         private static void DumpInstructionName(StringBuilder buf, InstructionCode code)
         {
+            Contract.Requires(buf != null);
+
             if ((int)code >= _instructionCount)
                 throw new ArgumentException();
 
@@ -3016,6 +3111,8 @@
 
         internal static void DumpOperand(StringBuilder buf, Operand op, RegType memRegType)
         {
+            Contract.Requires(op != null);
+
             if (op.IsReg)
             {
                 BaseReg reg = ((BaseReg)op);
@@ -3274,6 +3371,8 @@
 
         private void EmitSegmentPrefix(Operand rm)
         {
+            Contract.Requires(rm != null);
+
             if (!rm.IsMem)
                 return;
 
@@ -3348,11 +3447,15 @@
 
         private void EmitModR(byte opReg, BaseReg r)
         {
+            Contract.Requires(r != null);
+
             EmitMod(3, opReg, (byte)r.Code);
         }
 
         private void EmitModM(byte opReg, Mem mem, int immSize)
         {
+            Contract.Requires(mem != null);
+
             byte baseReg = (byte)((int)mem.Base & 0x7);
             byte indexReg = (byte)((int)mem.Index & 0x7);
             IntPtr disp = mem.Displacement;
@@ -3558,6 +3661,8 @@
 
         private void EmitModRM(byte opReg, Operand op, int immSize)
         {
+            Contract.Requires(op != null);
+
             if (op.OperandType != OperandType.Reg && op.OperandType != OperandType.Mem)
                 throw new ArgumentException();
 
@@ -3592,6 +3697,8 @@
 
         private void EmitX86RM(int opCode, bool i16bit, bool rexw, byte o, Operand op, int immSize, bool forceRexPrefix)
         {
+            Contract.Requires(op != null);
+
             // 16 bit prefix.
             if (i16bit)
                 EmitByte(0x66);
@@ -3634,6 +3741,8 @@
         //! @brief Emit FPU instruction with one operand @a opReg and memory operand @a mem.
         private void EmitFpuMEM(int opCode, byte opReg, Mem mem)
         {
+            Contract.Requires(mem != null);
+
             // segment prefix
             EmitSegmentPrefix(mem);
 
@@ -3658,6 +3767,8 @@
         //! @brief Emit MMX/SSE instruction.
         private void EmitMmu(uint opCode, bool rexw, byte opReg, Operand src, IntPtr immSize)
         {
+            Contract.Requires(src != null);
+
             // Segment prefix.
             EmitSegmentPrefix(src);
 
@@ -3686,6 +3797,8 @@
         //! @brief Emit displacement.
         private LabelLink EmitDisplacement(AssemblerLabelData l_data, long inlinedDisplacement, int size)
         {
+            Contract.Requires(l_data != null);
+
             if (l_data.Offset != -1)
                 throw new ArgumentException();
             if (size != 1 && size != 4)
@@ -3755,6 +3868,8 @@
 
         private void EmitShortJcc(InstructionCode code, Label label, Hint hint)
         {
+            Contract.Requires(label != null);
+
             _emitOptions |= EmitOptions.ShortJump;
             EmitJcc(code, label, hint);
         }

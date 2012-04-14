@@ -687,11 +687,17 @@
 
         private static Mem MemPtrAbs(IntPtr target, GPReg index, int shift, int displacement, SegmentPrefix segmentPrefix, Size size)
         {
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+
             return new Mem(target, index, shift, (IntPtr)displacement, segmentPrefix, (int)size);
         }
 
         private static Mem MemPtrAbs(IntPtr target, GPVar index, int shift, int displacement, SegmentPrefix segmentPrefix, Size size)
         {
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+
             return new Mem(target, index, shift, (IntPtr)displacement, segmentPrefix, (int)size);
         }
 
