@@ -149,7 +149,7 @@
 
             Call call = c.Call(c.Function.EntryLabel, CallingConvention.Default, typeof(Func<int, int>));
             call.SetArgument(0, tmp);
-            call.SetReturn(var);
+            call.SetReturn(tmp);
             c.Mul(c.NewGP(VariableType.INT32), var, tmp);
 
             c.MarkLabel(skip);
