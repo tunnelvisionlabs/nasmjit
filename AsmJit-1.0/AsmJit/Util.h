@@ -88,9 +88,9 @@ static inline uint32_t maskUpToIndex(uint32_t x)
 // From http://graphics.stanford.edu/~seander/bithacks.html .
 static inline uint32_t bitCount(uint32_t x)
 {
-  x = x - ((x >> 1) & 0x55555555);
-  x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-  return ((x + (x >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+  x = x - ((x >> 1) & 0x55555555U);
+  x = (x & 0x33333333U) + ((x >> 2) & 0x33333333U);
+  return (((x + (x >> 4)) & 0xF0F0F0FU) * 0x1010101U) >> 24;
 }
 
 static inline uint32_t findFirstBit(uint32_t mask) ASMJIT_NOTHROW
