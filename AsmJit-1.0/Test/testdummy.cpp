@@ -30,21 +30,43 @@ int main(int argc, char* argv[])
   logger.setLogBinary(true);
 
   // Create compiler.
-  Compiler c;
+  /*
+  X86Compiler c;
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
+  c.getFunc()->setHint(kFuncHintNaked, true);
 
-  ECall* ctx = c.call((void*)dummyFunc);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+  X86CompilerFuncCall* ctx = c.call((void*)dummyFunc);
+  ctx->setPrototype(kX86FuncConvDefault, FuncBuilder0<Void>());
 
   c.endFunction();
+  */
+
+  X86Compiler c;
+  c.setLogger(&logger);
+
+  c.newFunc(kX86FuncConvDefault, FuncBuilder0<void>());
+  c.getFunc()->setHint(kFuncHintNaked, true);
+
+  Label l1 = c.newLabel();
+  Label l2 = c.newLabel();
+
+  GpVar var1(c.newGpVar());
+  GpVar var2(c.newGpVar());
+
+  c.jmp(l2);
+  c.bind(l1);
+  c.bind(l2);
+
+  c.ret();
+  c.endFunction();
+
   // ==========================================================================
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   // Call it.
   // printf("Result %llu\n", (unsigned long long)fn());

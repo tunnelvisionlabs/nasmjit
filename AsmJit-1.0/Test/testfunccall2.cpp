@@ -27,32 +27,32 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  ECall* ctx;
+  X86CompilerFuncCall* ctx;
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
+  c.getFunc()->setHint(kFuncHintNaked, true);
 
   // Call a function.
-  GPVar address(c.newGP());
-  GPVar argument(c.newGP(VARIABLE_TYPE_GPD));
+  GpVar address(c.newGpVar());
+  GpVar argument(c.newGpVar(kX86VarTypeGpd));
 
   c.mov(address, imm((sysint_t)(void*)simpleFn));
 
   c.mov(argument, imm(1));
   ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
+  ctx->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder1<Void, int>());
   ctx->setArgument(0, argument);
   c.unuse(argument);
 
   c.mov(argument, imm(2));
   ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_COMPAT_FASTCALL, FunctionBuilder1<Void, int>());
+  ctx->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder1<Void, int>());
   ctx->setArgument(0, argument);
 
   c.endFunction();
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   fn();
 

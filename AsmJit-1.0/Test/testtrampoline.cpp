@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create assembler.
-  Assembler a;
+  X86Assembler a;
 
   // Log compiler output.
   FileLogger logger(stderr);
@@ -50,11 +50,11 @@ int main(int argc, char* argv[])
 
   a.call(imm((sysint_t)calledfn)); // First trampoline - call.
   a.jmp(imm((sysint_t)calledfn));  // Second trampoline - jump, will return.
-  MyFn fn0 = function_cast<MyFn>(a.make());
+  MyFn fn0 = asmjit_cast<MyFn>(a.make());
 
   a.clear(); // Purge assembler, we will reuse it.
   a.jmp(imm((sysint_t)fn0));
-  MyFn fn1 = function_cast<MyFn>(a.make());
+  MyFn fn1 = asmjit_cast<MyFn>(a.make());
 
   // ==========================================================================
 

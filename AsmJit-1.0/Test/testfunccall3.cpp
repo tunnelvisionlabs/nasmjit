@@ -27,50 +27,35 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<int,int>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.newFunc(kX86FuncConvDefault, FuncBuilder1<int,int>());
+  c.getFunc()->setHint(kFuncHintNaked, true);
   Label L0(c.newLabel());
   Label L1(c.newLabel());
-  GPVar x(c.newGP());
-  GPVar y(c.newGP());
+  GpVar x(c.newGpVar());
+  GpVar y(c.newGpVar());
   c.mov(x, 0);
   c.jnz(L0);
-  c.mov(y, c.argGP(0));
+  c.mov(y, c.getGpArg(0));
   c.jmp(L1);
   c.bind(L0);
-  ECall *ctx = c.call((void*)oneFunc);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder1<int,int>());
-  ctx->setArgument(0, c.argGP(0));
+  X86CompilerFuncCall* ctx = c.call((void*)oneFunc);
+  ctx->setPrototype(kX86FuncConvDefault, FuncBuilder1<int,int>());
+  ctx->setArgument(0, c.getGpArg(0));
   ctx->setReturn(y);
   c.bind(L1);
   c.add(x, y);
   c.endFunction();
-
-  // TODO: Remove
-#if 0
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<int>());
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
-  GPVar x(c.newGP());
-  GPVar y(c.newGP());
-  ECall *ctx = c.call((void*)oneFunc);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder0<int>());
-  ctx->setReturn(y);
-  c.mov(x, 0);
-  c.add(x, y);
-  c.ret(x);
-  c.endFunction();
-#endif
   // ==========================================================================
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   //uint result = fn();
   //bool success = result == 1;

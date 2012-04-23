@@ -22,7 +22,7 @@ typedef sysint_t (*MyFn3)(sysint_t, sysint_t, sysint_t);
 
 static void* compileFunction(int args, int vars, bool naked, bool pushPopSequence)
 {
-  Compiler c;
+  X86Compiler c;
 
   // Not enabled by default...
   // FileLogger logger(stderr);
@@ -31,23 +31,23 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
   switch (args)
   {
     case 0:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder0<sysint_t>());
       break;
     case 1:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder1<sysint_t, sysint_t>());
       break;
     case 2:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<sysint_t, sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder2<sysint_t, sysint_t, sysint_t>());
       break;
     case 3:
-      c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<sysint_t, sysint_t, sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder3<sysint_t, sysint_t, sysint_t, sysint_t>());
       break;
   }
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, naked);
-  c.getFunction()->setHint(FUNCTION_HINT_PUSH_POP_SEQUENCE, pushPopSequence);
+  c.getFunc()->setHint(kFuncHintNaked, naked);
+  c.getFunc()->setHint(kX86FuncHintPushPop, pushPopSequence);
 
-  GPVar gvar(c.newGP());
-  XMMVar xvar(c.newXMM(VARIABLE_TYPE_XMM));
+  GpVar gvar(c.newGpVar());
+  XmmVar xvar(c.newXmmVar(kX86VarTypeXmm));
 
   // Alloc, use and spill preserved registers.
   if (vars)
@@ -55,12 +55,12 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
     int var = 0;
     uint32_t index = 0;
     uint32_t mask = 1;
-    uint32_t preserved = c.getFunction()->getPrototype().getPreservedGP();
+    uint32_t preserved = c.getFunc()->getDecl()->getGpPreservedMask();
 
     do {
-      if ((preserved & mask) != 0 && (index != REG_INDEX_ESP && index != REG_INDEX_EBP))
+      if ((preserved & mask) != 0 && (index != kX86RegIndexEsp && index != kX86RegIndexEbp))
       {
-        GPVar somevar(c.newGP(VARIABLE_TYPE_GPD));
+        GpVar somevar(c.newGpVar(kX86VarTypeGpd));
         c.alloc(somevar, index);
         c.mov(somevar, imm(0));
         c.spill(somevar);
@@ -69,10 +69,10 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
 
       index++;
       mask <<= 1;
-    } while (var < vars && index < REG_NUM_GP);
+    } while (var < vars && index < kX86RegNumGp);
   }
 
-  c.alloc(gvar, nax);
+  c.alloc(gvar, zax);
   c.lea(gvar, xvar.m());
   c.and_(gvar, imm(15));
   c.ret(gvar);
@@ -91,16 +91,16 @@ static bool testFunction(int args, int vars, bool naked, bool pushPopSequence)
   switch (args)
   {
     case 0:
-      result = AsmJit::function_cast<MyFn0>(fn)();
+      result = asmjit_cast<MyFn0>(fn)();
       break;
     case 1:
-      result = AsmJit::function_cast<MyFn1>(fn)(1);
+      result = asmjit_cast<MyFn1>(fn)(1);
       break;
     case 2:
-      result = AsmJit::function_cast<MyFn2>(fn)(1, 2);
+      result = asmjit_cast<MyFn2>(fn)(1, 2);
       break;
     case 3:
-      result = AsmJit::function_cast<MyFn3>(fn)(1, 2, 3);
+      result = asmjit_cast<MyFn3>(fn)(1, 2, 3);
       break;
   }
 

@@ -25,17 +25,17 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int, int>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder3<int, int, int, int>());
 
-  GPVar v0(c.argGP(0));
-  GPVar v1(c.argGP(1));
-  GPVar v2(c.argGP(2));
+  GpVar v0(c.getGpArg(0));
+  GpVar v1(c.getGpArg(1));
+  GpVar v2(c.getGpArg(2));
 
   // Just do something;)
   c.shl(v0, imm(1));
@@ -43,11 +43,11 @@ int main(int argc, char* argv[])
   c.shl(v2, imm(1));
 
   // Call function.
-  GPVar address(c.newGP());
+  GpVar address(c.newGpVar());
   c.mov(address, imm((sysint_t)(void*)calledFn));
 
-  ECall* ctx = c.call(address);
-  ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder3<Void, int, int, int>());
+  X86CompilerFuncCall* ctx = c.call(address);
+  ctx->setPrototype(kX86FuncConvDefault, FuncBuilder3<Void, int, int, int>());
   ctx->setArgument(0, v2);
   ctx->setArgument(1, v1);
   ctx->setArgument(2, v0);
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   uint result = fn(3, 2, 1);
   bool success = result == 36;

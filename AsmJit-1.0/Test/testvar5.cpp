@@ -21,19 +21,19 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<Void, uint32_t*>());
-    c.getFunction()->setHint(FUNCTION_HINT_NAKED, false);
+    c.newFunc(kX86FuncConvDefault, FuncBuilder1<Void, uint32_t*>());
+    c.getFunc()->setHint(kFuncHintNaked, false);
 
-    GPVar v0(c.newGP(VARIABLE_TYPE_GPD));
-    GPVar v1(c.newGP(VARIABLE_TYPE_GPD));
-    GPVar cnt(c.newGP(VARIABLE_TYPE_GPD));
+    GpVar v0(c.newGpVar(kX86VarTypeGpd));
+    GpVar v1(c.newGpVar(kX86VarTypeGpd));
+    GpVar cnt(c.newGpVar(kX86VarTypeGpd));
 
     c.xor_(v0, v0);
     c.xor_(v1, v1);
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     c.dec(cnt);
     c.jnz(L);
 
-    GPVar a0(c.argGP(0));
+    GpVar a0(c.getGpArg(0));
     c.mov(dword_ptr(a0), v0);
     c.endFunction();
   }
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   {
     uint32_t out;

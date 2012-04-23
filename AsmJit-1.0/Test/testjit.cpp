@@ -22,35 +22,35 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create assembler.
-  Assembler a;
+  X86Assembler a;
 
   // Log assembler output.
   FileLogger logger(stderr);
   a.setLogger(&logger);
 
   // Prolog.
-  a.push(nbp);
-  a.mov(nbp, nsp);
+  a.push(zbp);
+  a.mov(zbp, zsp);
 
   // Mov 1024 to EAX/RAX, EAX/RAX is also return value.
-  a.mov(nax, 1024);
+  a.mov(zax, 1024);
 
   // Epilog.
-  a.mov(nsp, nbp);
-  a.pop(nbp);
+  a.mov(zsp, zbp);
+  a.pop(zbp);
   a.ret();
   // ==========================================================================
 
   // NOTE:
   // This function can be also completely rewritten to this form:
-  //   a.mov(nax, 1024);
+  //   a.mov(zax, 1024);
   //   a.ret();
   // If you are interested in removing prolog and epilog, please
   // study calling conventions and check register preservations.
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(a.make());
+  MyFn fn = asmjit_cast<MyFn>(a.make());
 
   // Call it.
   int result = fn();

@@ -21,20 +21,20 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder4<Void, int32_t*, int32_t, int32_t, int32_t>());
+    c.newFunc(kX86FuncConvDefault, FuncBuilder4<Void, int32_t*, int32_t, int32_t, int32_t>());
 
-    GPVar dst0(c.argGP(0));
-    GPVar v0(c.argGP(1));
+    GpVar dst0(c.getGpArg(0));
+    GpVar v0(c.getGpArg(1));
 
-    c.shl(v0, c.argGP(2));
-    c.ror(v0, c.argGP(3));
+    c.shl(v0, c.getGpArg(2));
+    c.ror(v0, c.getGpArg(3));
     
     c.mov(dword_ptr(dst0), v0);
     c.endFunction();
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   {
     int32_t out;

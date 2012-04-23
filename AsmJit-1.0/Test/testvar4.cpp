@@ -21,25 +21,25 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<Void, uint32_t*>());
+    c.newFunc(kX86FuncConvDefault, FuncBuilder1<Void, uint32_t*>());
 
-    GPVar var[32];
+    GpVar var[32];
     int i;
 
     for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
     {
-      var[i] = c.newGP(VARIABLE_TYPE_GPD);
+      var[i] = c.newGpVar(kX86VarTypeGpd);
       c.xor_(var[i], var[i]);
     }
 
-    GPVar v0(c.newGP(VARIABLE_TYPE_GPD));
+    GpVar v0(c.newGpVar(kX86VarTypeGpd));
     Label L(c.newLabel());
 
     c.mov(v0, imm(32));
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     c.dec(v0);
     c.jnz(L);
 
-    GPVar a0(c.argGP(0));
+    GpVar a0(c.getGpArg(0));
     for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
     {
       c.mov(dword_ptr(a0, i * 4), var[i]);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   {
     uint32_t out[32];

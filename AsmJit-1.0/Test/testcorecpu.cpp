@@ -20,76 +20,83 @@ struct BitDescription
   const char* description;
 };
 
-static const BitDescription cFeatures[] = 
+#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
+static const BitDescription x86Features[] = 
 {
-  { CPU_FEATURE_RDTSC                       , "RDTSC" },
-  { CPU_FEATURE_RDTSCP                      , "RDTSCP" },
-  { CPU_FEATURE_CMOV                        , "CMOV" },
-  { CPU_FEATURE_CMPXCHG8B                   , "CMPXCHG8B" },
-  { CPU_FEATURE_CMPXCHG16B                  , "CMPXCHG16B" },
-  { CPU_FEATURE_CLFLUSH                     , "CLFLUSH" },
-  { CPU_FEATURE_PREFETCH                    , "PREFETCH" },
-  { CPU_FEATURE_LAHF_SAHF                   , "LAHF/SAHF" },
-  { CPU_FEATURE_FXSR                        , "FXSAVE/FXRSTOR" },
-  { CPU_FEATURE_FFXSR                       , "FXSAVE/FXRSTOR Optimizations" },
-  { CPU_FEATURE_MMX                         , "MMX" },
-  { CPU_FEATURE_MMX_EXT                     , "MMX Extensions" },
-  { CPU_FEATURE_3DNOW                       , "3dNow!" },
-  { CPU_FEATURE_3DNOW_EXT                   , "3dNow! Extensions" },
-  { CPU_FEATURE_SSE                         , "SSE" },
-  { CPU_FEATURE_SSE2                        , "SSE2" },
-  { CPU_FEATURE_SSE3                        , "SSE3" },
-  { CPU_FEATURE_SSSE3                       , "Suplemental SSE3 (SSSE3)" },
-  { CPU_FEATURE_SSE4_A                      , "SSE4A" },
-  { CPU_FEATURE_SSE4_1                      , "SSE4.1" },
-  { CPU_FEATURE_SSE4_2                      , "SSE4.2" },
-  { CPU_FEATURE_AVX                         , "AVX" },
-  { CPU_FEATURE_MSSE                        , "Misaligned SSE" },
-  { CPU_FEATURE_MONITOR_MWAIT               , "MONITOR/MWAIT" },
-  { CPU_FEATURE_MOVBE                       , "MOVBE" },
-  { CPU_FEATURE_POPCNT                      , "POPCNT" },
-  { CPU_FEATURE_LZCNT                       , "LZCNT" },
-  { CPU_FEATURE_PCLMULDQ                    , "PCLMULDQ" },
-  { CPU_FEATURE_MULTI_THREADING             , "Multi-Threading" },
-  { CPU_FEATURE_EXECUTE_DISABLE_BIT         , "Execute Disable Bit" },
-  { CPU_FEATURE_64_BIT                      , "64 Bit Processor" },
+  { kX86FeatureRdtsc              , "RDTSC" },
+  { kX86FeatureRdtscP             , "RDTSCP" },
+  { kX86FeatureCMov               , "CMOV" },
+  { kX86FeatureCmpXchg8B          , "CMPXCHG8B" },
+  { kX86FeatureCmpXchg16B         , "CMPXCHG16B" },
+  { kX86FeatureClFlush            , "CLFLUSH" },
+  { kX86FeaturePrefetch           , "PREFETCH" },
+  { kX86FeatureLahfSahf           , "LAHF/SAHF" },
+  { kX86FeatureFXSR               , "FXSAVE/FXRSTOR" },
+  { kX86FeatureFFXSR              , "FXSAVE/FXRSTOR Optimizations" },
+  { kX86FeatureMmx                , "MMX" },
+  { kX86FeatureMmxExt             , "MMX Extensions" },
+  { kX86Feature3dNow              , "3dNow!" },
+  { kX86Feature3dNowExt           , "3dNow! Extensions" },
+  { kX86FeatureSse                , "SSE" },
+  { kX86FeatureSse2               , "SSE2" },
+  { kX86FeatureSse3               , "SSE3" },
+  { kX86FeatureSsse3              , "SSSE3" },
+  { kX86FeatureSse4A              , "SSE4A" },
+  { kX86FeatureSse41              , "SSE4.1" },
+  { kX86FeatureSse42              , "SSE4.2" },
+  { kX86FeatureAvx                , "AVX" },
+  { kX86FeatureMSse               , "Misaligned SSE" },
+  { kX86FeatureMonitorMWait       , "MONITOR/MWAIT" },
+  { kX86FeatureMovBE              , "MOVBE" },
+  { kX86FeaturePopCnt             , "POPCNT" },
+  { kX86FeatureLzCnt              , "LZCNT" },
+  { kX86FeaturePclMulDQ           , "PCLMULDQ" },
+  { kX86FeatureMultiThreading     , "Multi-Threading" },
+  { kX86FeatureExecuteDisableBit  , "Execute-Disable Bit" },
+  { kX86Feature64Bit              , "64-Bit Processor" },
   { 0, NULL }
 };
+#endif // ASMJIT_X86 || ASMJIT_X64
 
 static void printBits(const char* msg, uint32_t mask, const BitDescription* d)
 {
   for (; d->mask; d++)
   {
-    if (mask & d->mask) printf("%s%s\n", msg, d->description);
+    if (mask & d->mask)
+      printf("%s%s\n", msg, d->description);
   }
 }
 
 int main(int argc, char* argv[])
 {
-  CpuInfo *i = getCpuInfo();
+  const CpuInfo* cpu = CpuInfo::getGlobal();
 
   printf("CPUID Detection\n");
   printf("===============\n");
 
   printf("\nBasic info\n");
-  printf("  Vendor string         : %s\n", i->vendor);
-  printf("  Brand string          : %s\n", i->brand);
-  printf("  Family                : %u\n", i->family);
-  printf("  Model                 : %u\n", i->model);
-  printf("  Stepping              : %u\n", i->stepping);
-  printf("  Number of Processors  : %u\n", i->numberOfProcessors);
-  printf("  Features              : 0x%0.8X\n", i->features);
-  printf("  Bugs                  : 0x%0.8X\n", i->bugs);
+  printf("  Vendor string         : %s\n", cpu->getVendorString());
+  printf("  Brand string          : %s\n", cpu->getBrandString());
+  printf("  Family                : %u\n", cpu->getFamily());
+  printf("  Model                 : %u\n", cpu->getModel());
+  printf("  Stepping              : %u\n", cpu->getStepping());
+  printf("  Number of Processors  : %u\n", cpu->getNumberOfProcessors());
+  printf("  Features              : 0x%0.8X\n", cpu->getFeatures());
+  printf("  Bugs                  : 0x%0.8X\n", cpu->getBugs());
 
-  printf("\nExtended Info (X86/X64):\n");
-  printf("  Processor Type        : %u\n", i->x86ExtendedInfo.processorType);
-  printf("  Brand Index           : %u\n", i->x86ExtendedInfo.brandIndex);
-  printf("  CL Flush Cache Line   : %u\n", i->x86ExtendedInfo.flushCacheLineSize);
-  printf("  Max logical Processors: %u\n", i->x86ExtendedInfo.maxLogicalProcessors);
-  printf("  APIC Physical ID      : %u\n", i->x86ExtendedInfo.apicPhysicalId);
+#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
+  const X86CpuInfo* x86Cpu = static_cast<const X86CpuInfo*>(cpu);
 
-  printf("\nCpu Features:\n");
-  printBits("  ", i->features, cFeatures);
+  printf("\nX86/X64 Extended Info:\n");
+  printf("  Processor Type        : %u\n", x86Cpu->getProcessorType());
+  printf("  Brand Index           : %u\n", x86Cpu->getBrandIndex());
+  printf("  CL Flush Cache Line   : %u\n", x86Cpu->getFlushCacheLineSize());
+  printf("  Max logical Processors: %u\n", x86Cpu->getMaxLogicalProcessors());
+  printf("  APIC Physical ID      : %u\n", x86Cpu->getApicPhysicalId());
+
+  printf("\nX86/X64 Features:\n");
+  printBits("  ", cpu->getFeatures(), x86Features);
+#endif // ASMJIT_X86 || ASMJIT_X64
 
   return 0;
 }

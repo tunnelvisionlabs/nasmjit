@@ -21,19 +21,19 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
   {
-    c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, void*, void*, sysuint_t>());
-    c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, void*, void*, sysuint_t>());
+    c.getFunc()->setHint(kFuncHintNaked, true);
 
-    GPVar dst(c.argGP(0));
-    GPVar src(c.argGP(1));
-    GPVar cnt(c.argGP(2));
+    GpVar dst(c.getGpArg(0));
+    GpVar src(c.getGpArg(1));
+    GpVar cnt(c.getGpArg(2));
 
     c.rep_movsb(dst, src, cnt);
     c.endFunction();
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   {
-    MemCopy copy = function_cast<MemCopy>(c.make());
+    MemCopy copy = asmjit_cast<MemCopy>(c.make());
 
     char src[20] = "Hello AsmJit";
     char dst[20];

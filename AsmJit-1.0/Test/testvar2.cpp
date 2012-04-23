@@ -22,19 +22,19 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<sysint_t>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder0<sysint_t>());
 
-  GPVar v0(c.newGP());
-  GPVar v1(c.newGP());
-  GPVar v2(c.newGP());
-  GPVar v3(c.newGP());
-  GPVar v4(c.newGP());
+  GpVar v0(c.newGpVar());
+  GpVar v1(c.newGpVar());
+  GpVar v2(c.newGpVar());
+  GpVar v3(c.newGpVar());
+  GpVar v4(c.newGpVar());
 
   c.xor_(v0, v0);
 
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
   int result = (int)fn();
 
   printf("Result from JIT function: %d\n", result);

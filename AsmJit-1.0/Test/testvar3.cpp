@@ -21,29 +21,29 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log assembler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder2<Void, int*, int*>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder2<Void, int*, int*>());
 
   // Function arguments.
-  GPVar a1(c.argGP(0));
-  GPVar a2(c.argGP(1));
+  GpVar a1(c.getGpArg(0));
+  GpVar a2(c.getGpArg(1));
 
   // Create some variables.
-  GPVar x1(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x2(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x3(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x4(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x5(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x6(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x7(c.newGP(VARIABLE_TYPE_GPD));
-  GPVar x8(c.newGP(VARIABLE_TYPE_GPD));
+  GpVar x1(c.newGpVar(kX86VarTypeGpd));
+  GpVar x2(c.newGpVar(kX86VarTypeGpd));
+  GpVar x3(c.newGpVar(kX86VarTypeGpd));
+  GpVar x4(c.newGpVar(kX86VarTypeGpd));
+  GpVar x5(c.newGpVar(kX86VarTypeGpd));
+  GpVar x6(c.newGpVar(kX86VarTypeGpd));
+  GpVar x7(c.newGpVar(kX86VarTypeGpd));
+  GpVar x8(c.newGpVar(kX86VarTypeGpd));
 
-  GPVar t(c.newGP(VARIABLE_TYPE_GPD));
+  GpVar t(c.newGpVar(kX86VarTypeGpd));
 
   // Setup variables (use mov with reg/imm to se if register allocator works).
   c.mov(x1, 1);
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
 
   // Call it.
   int x;

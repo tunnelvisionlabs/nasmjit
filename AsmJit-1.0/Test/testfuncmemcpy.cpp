@@ -5,7 +5,7 @@
 // Zlib - See COPYING file in this package.
 
 // Create simple DWORD memory copy function for 32/64-bit x86 platform, this
-// is enchanced version that's using Compiler class:
+// is enchanced version that's using X86Compiler class:
 //
 // void memcpy32(uint32_t* dst, const uint32_t* src, sysuint_t len);
 
@@ -28,26 +28,26 @@ int main(int argc, char* argv[])
   // Part 1:
 
   // Create Compiler.
-  Compiler c;
+  X86Compiler c;
 
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
   // Tell compiler the function prototype we want. It allocates variables representing
   // function arguments that can be accessed through Compiler or Function instance.
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<Void, uint32_t*, const uint32_t*, sysuint_t>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, uint32_t*, const uint32_t*, sysuint_t>());
 
   // Try to generate function without prolog/epilog code:
-  c.getFunction()->setHint(FUNCTION_HINT_NAKED, true);
+  c.getFunc()->setHint(kFuncHintNaked, true);
 
   // Create labels.
   Label L_Loop = c.newLabel();
   Label L_Exit = c.newLabel();
 
   // Function arguments.
-  GPVar dst(c.argGP(0));
-  GPVar src(c.argGP(1));
-  GPVar cnt(c.argGP(2));
+  GpVar dst(c.getGpArg(0));
+  GpVar src(c.getGpArg(1));
+  GpVar cnt(c.getGpArg(2));
 
   // Allocate loop variables registers (if they are not allocated already).
   c.alloc(dst);
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
   c.bind(L_Loop);
 
   // Copy DWORD (4 bytes).
-  GPVar tmp(c.newGP(VARIABLE_TYPE_GPD));
+  GpVar tmp(c.newGpVar(kX86VarTypeGpd));
   c.mov(tmp, dword_ptr(src));
   c.mov(dword_ptr(dst), tmp);
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
   // Part 2:
 
   // Make JIT function.
-  MemCpy32Fn fn = function_cast<MemCpy32Fn>(c.make());
+  MemCpy32Fn fn = asmjit_cast<MemCpy32Fn>(c.make());
 
   // Ensure that everything is ok.
   if (!fn)

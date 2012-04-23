@@ -17,12 +17,12 @@ typedef void (*VoidFn)();
 
 int main(int, char**)
 {
-  Compiler c;
+  X86Compiler c;
 
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder0<Void>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
 
   Label L_A = c.newLabel();
   Label L_B = c.newLabel();
@@ -41,7 +41,7 @@ int main(int, char**)
   c.ret();
   c.endFunction();
 
-  VoidFn fn = function_cast<VoidFn>(c.make());
+  VoidFn fn = asmjit_cast<VoidFn>(c.make());
 
   // Ensure that everything is ok.
   if (!fn)

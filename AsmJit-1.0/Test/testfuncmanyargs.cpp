@@ -22,23 +22,23 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, 
-    FunctionBuilder8<Void, void*, void*, void*, void*, void*, void*, void*, void*>());
+  c.newFunc(kX86FuncConvDefault, 
+    FuncBuilder8<Void, void*, void*, void*, void*, void*, void*, void*, void*>());
 
-  GPVar p1(c.argGP(0));
-  GPVar p2(c.argGP(1));
-  GPVar p3(c.argGP(2));
-  GPVar p4(c.argGP(3));
-  GPVar p5(c.argGP(4));
-  GPVar p6(c.argGP(5));
-  GPVar p7(c.argGP(6));
-  GPVar p8(c.argGP(7));
+  GpVar p1(c.getGpArg(0));
+  GpVar p2(c.getGpArg(1));
+  GpVar p3(c.getGpArg(2));
+  GpVar p4(c.getGpArg(3));
+  GpVar p5(c.getGpArg(4));
+  GpVar p6(c.getGpArg(5));
+  GpVar p7(c.getGpArg(6));
+  GpVar p8(c.getGpArg(7));
 
   c.add(p1, 1);
   c.add(p2, 2);
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
   // Make the function.
   uint8_t var[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
   fn(var, var, var, var, var, var, var, var);
   
   printf("Results: %d, %d, %d, %d, %d, %d, %d, %d, %d\n",

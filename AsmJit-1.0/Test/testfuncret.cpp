@@ -24,17 +24,17 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Create compiler.
-  Compiler c;
+  X86Compiler c;
 
   // Log compiler output.
   FileLogger logger(stderr);
   c.setLogger(&logger);
 
-  c.newFunction(CALL_CONV_DEFAULT, FunctionBuilder3<int, int, int, int>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder3<int, int, int, int>());
   {
-    GPVar x(c.argGP(0));
-    GPVar y(c.argGP(1));
-    GPVar op(c.argGP(2));
+    GpVar x(c.getGpArg(0));
+    GpVar y(c.getGpArg(1));
+    GpVar op(c.getGpArg(2));
 
     Label opAdd(c.newLabel());
     Label opMul(c.newLabel());
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     c.jz(opMul);
 
     {
-      GPVar result(c.newGP());
+      GpVar result(c.newGpVar());
       c.mov(result, imm(0));
       c.ret(result);
     }
@@ -54,9 +54,9 @@ int main(int argc, char* argv[])
     {
       c.bind(opAdd);
 
-      GPVar result(c.newGP());
-      ECall* ctx = c.call((void*)FuncA);
-      ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder2<int, int, int>());
+      GpVar result(c.newGpVar());
+      X86CompilerFuncCall* ctx = c.call((void*)FuncA);
+      ctx->setPrototype(kX86FuncConvDefault, FuncBuilder2<int, int, int>());
       ctx->setArgument(0, x);
       ctx->setArgument(1, y);
       ctx->setReturn(result);
@@ -66,9 +66,9 @@ int main(int argc, char* argv[])
     {
       c.bind(opMul);
 
-      GPVar result(c.newGP());
-      ECall* ctx = c.call((void*)FuncB);
-      ctx->setPrototype(CALL_CONV_DEFAULT, FunctionBuilder2<int, int, int>());
+      GpVar result(c.newGpVar());
+      X86CompilerFuncCall* ctx = c.call((void*)FuncB);
+      ctx->setPrototype(kX86FuncConvDefault, FuncBuilder2<int, int, int>());
       ctx->setArgument(0, x);
       ctx->setArgument(1, y);
       ctx->setReturn(result);
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 
   // ==========================================================================
   // Make the function.
-  MyFn fn = function_cast<MyFn>(c.make());
+  MyFn fn = asmjit_cast<MyFn>(c.make());
   int result = fn(4, 8, 1);
 
   printf("Result from JIT function: %d (Expected 32) \n", result);
