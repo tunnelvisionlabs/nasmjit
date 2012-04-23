@@ -38,7 +38,7 @@ struct MemoryMarker
   // [Interface]
   // --------------------------------------------------------------------------
 
-  virtual void mark(const void* ptr, sysuint_t size) ASMJIT_NOTHROW = 0;
+  virtual void mark(const void* ptr, size_t size) ASMJIT_NOTHROW = 0;
 
   ASMJIT_NO_COPY(MemoryMarker)
 };

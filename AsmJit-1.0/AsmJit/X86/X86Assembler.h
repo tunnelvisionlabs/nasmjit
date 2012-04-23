@@ -221,7 +221,7 @@ namespace AsmJit {
 //! // Example: Usage of Label (32-bit code).
 //! //
 //! // Create simple DWORD memory copy function:
-//! // ASMJIT_STDCALL void copy32(uint32_t* dst, const uint32_t* src, sysuint_t count);
+//! // ASMJIT_STDCALL void copy32(uint32_t* dst, const uint32_t* src, size_t count);
 //! using namespace AsmJit;
 //!
 //! // Assembler instance.
@@ -553,7 +553,7 @@ struct X86Assembler : public Assembler
   ASMJIT_API Label newLabel() ASMJIT_NOTHROW;
 
   //! @brief Register labels (used by @c Compiler).
-  ASMJIT_API void registerLabels(sysuint_t count) ASMJIT_NOTHROW;
+  ASMJIT_API void registerLabels(size_t count) ASMJIT_NOTHROW;
 
   //! @brief Bind label to the current offset.
   //!
@@ -606,9 +606,9 @@ struct X86Assembler : public Assembler
   inline void duint64(uint64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint64_t)); }
 
   //! @brief Add system-integer data to the instuction stream.
-  inline void dsysint(sysint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysint_t)); }
+  inline void dintptr(intptr_t x) ASMJIT_NOTHROW { embed(&x, sizeof(intptr_t)); }
   //! @brief Add system-integer data to the instuction stream.
-  inline void dsysuint(sysuint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysuint_t)); }
+  inline void duintptr(uintptr_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uintptr_t)); }
 
   //! @brief Add float data to the instuction stream.
   inline void dfloat(float x) ASMJIT_NOTHROW { embed(&x, sizeof(float)); }
@@ -624,7 +624,7 @@ struct X86Assembler : public Assembler
   inline void dxmm(const XmmData& x) ASMJIT_NOTHROW { embed(&x, sizeof(XmmData)); }
 
   //! @brief Add data to the instuction stream.
-  inline void data(const void* data, sysuint_t size) ASMJIT_NOTHROW { embed(data, size); }
+  inline void data(const void* data, size_t size) ASMJIT_NOTHROW { embed(data, size); }
 
   //! @brief Add data in a given structure instance to the instuction stream.
   template<typename T>

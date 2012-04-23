@@ -15,10 +15,10 @@
 using namespace AsmJit;
 
 // Generated functions prototypes.
-typedef sysint_t (*MyFn0)();
-typedef sysint_t (*MyFn1)(sysint_t);
-typedef sysint_t (*MyFn2)(sysint_t, sysint_t);
-typedef sysint_t (*MyFn3)(sysint_t, sysint_t, sysint_t);
+typedef int (*MyFn0)();
+typedef int (*MyFn1)(intptr_t);
+typedef int (*MyFn2)(intptr_t, intptr_t);
+typedef int (*MyFn3)(intptr_t, intptr_t, intptr_t);
 
 static void* compileFunction(int args, int vars, bool naked, bool pushPopSequence)
 {
@@ -31,16 +31,16 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
   switch (args)
   {
     case 0:
-      c.newFunc(kX86FuncConvDefault, FuncBuilder0<sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder0<intptr_t>());
       break;
     case 1:
-      c.newFunc(kX86FuncConvDefault, FuncBuilder1<sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder1<intptr_t, intptr_t>());
       break;
     case 2:
-      c.newFunc(kX86FuncConvDefault, FuncBuilder2<sysint_t, sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder2<intptr_t, intptr_t, intptr_t>());
       break;
     case 3:
-      c.newFunc(kX86FuncConvDefault, FuncBuilder3<sysint_t, sysint_t, sysint_t, sysint_t>());
+      c.newFunc(kX86FuncConvDefault, FuncBuilder3<intptr_t, intptr_t, intptr_t, intptr_t>());
       break;
   }
   c.getFunc()->setHint(kFuncHintNaked, naked);
@@ -84,7 +84,7 @@ static void* compileFunction(int args, int vars, bool naked, bool pushPopSequenc
 static bool testFunction(int args, int vars, bool naked, bool pushPopSequence)
 {
   void* fn = compileFunction(args, vars, naked, pushPopSequence);
-  sysint_t result = 0;
+  intptr_t result = 0;
 
   printf("Function (args=%d, vars=%d, naked=%d, pushPop=%d):", args, vars, naked, pushPopSequence);
 

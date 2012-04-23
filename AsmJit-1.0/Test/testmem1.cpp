@@ -52,11 +52,11 @@ static void stats(const char* dumpFile)
 #endif // ASMJIT_MEMORY_MANAGER_DUMP
 }
 
-static void shuffle(void **a, void **b, sysuint_t count)
+static void shuffle(void **a, void **b, size_t count)
 {
-  for (sysuint_t i = 0; i < count; ++i)
+  for (size_t i = 0; i < count; ++i)
   {
-    sysuint_t si = (sysuint_t)rand() % count;
+    size_t si = (size_t)rand() % count;
 
     void *ta = a[i];
     void *tb = b[i];
@@ -73,8 +73,8 @@ int main(int argc, char* argv[])
 {
   AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
 
-  sysuint_t i;
-  sysuint_t count = 200000;
+  size_t i;
+  size_t count = 200000;
 
   printf("Memory alloc/free test - %d allocations\n\n", (int)count);
 

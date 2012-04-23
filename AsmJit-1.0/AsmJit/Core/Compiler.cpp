@@ -273,16 +273,16 @@ void Compiler::comment(const char* fmt, ...) ASMJIT_NOTHROW
 // [AsmJit::Compiler - Embed]
 // ============================================================================
 
-void Compiler::embed(const void* data, size_t size) ASMJIT_NOTHROW
+void Compiler::embed(const void* data, size_t len) ASMJIT_NOTHROW
 {
   // Align length to 16 bytes.
-  size_t alignedSize = IntUtil::align<size_t>(size, sizeof(uintptr_t));
+  size_t alignedSize = IntUtil::align<size_t>(len, sizeof(uintptr_t));
   void* p = _zoneMemory.alloc(sizeof(CompilerEmbed) - sizeof(void*) + alignedSize);
 
   if (p == NULL)
     return;
 
-  CompilerEmbed* item = new(p) CompilerEmbed(this, data, size);
+  CompilerEmbed* item = new(p) CompilerEmbed(this, data, len);
   addItem(item);
 }
 

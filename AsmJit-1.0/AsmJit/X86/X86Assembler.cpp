@@ -29,32 +29,28 @@
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::TrampolineWriter]
+// [AsmJit::X64TrampolineWriter]
 // ============================================================================
 
 #if defined(ASMJIT_X64)
 //! @brief Class used to determine size of trampoline and as trampoline writer.
-struct TrampolineWriter
+struct X64TrampolineWriter
 {
   // Size of trampoline
-  enum {
-    TRAMPOLINE_JMP = 6,
-    TRAMPOLINE_ADDR = sizeof(sysint_t),
-
-    TRAMPOLINE_SIZE = TRAMPOLINE_JMP + TRAMPOLINE_ADDR
+  enum
+  {
+    kSizeJmp = 6,
+    kSizeAddr = 8,
+    kSizeTotal = kSizeJmp + kSizeAddr
   };
 
   // Write trampoline into code at address @a code that will jump to @a target.
-  static void writeTrampoline(uint8_t* code, void* target)
+  static void writeTrampoline(uint8_t* code, uint64_t target)
   {
-    // Jmp.
-    code[0] = 0xFF;
-    // ModM (RIP addressing).
-    code[1] = 0x25;
-    // Offset (zero).
-    ((uint32_t*)(code + 2))[0] = 0;
-    // Absolute address.
-    ((sysuint_t*)(code + TRAMPOLINE_JMP))[0] = (sysuint_t)target;
+    code[0] = 0xFF;                                       // Jmp OpCode.
+    code[1] = 0x25;                                       // ModM (RIP addressing).
+    ((uint32_t*)(code + 2))[0] = 0;                       // Offset (zero).
+    ((uint64_t*)(code + kSizeJmp))[0] = (uint64_t)target; // Absolute address.
   }
 };
 #endif // ASMJIT_X64
@@ -479,7 +475,7 @@ void X86Assembler::_emitJmpOrCallReloc(uint32_t instruction, void* target) ASMJI
 #if defined(ASMJIT_X64)
   // If we are compiling in 64-bit mode, we can use trampoline if relative jump
   // is not possible.
-  _trampolineSize += TrampolineWriter::TRAMPOLINE_SIZE;
+  _trampolineSize += X64TrampolineWriter::kSizeTotal;
 #endif // ARCHITECTURE_SPECIFIC
 
   rd.size = 4;
@@ -718,8 +714,7 @@ char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType
 }
 
 static char* X86Assembler_dumpInstruction(char* buf,
-  uint32_t code,
-  uint32_t emitOptions,
+  uint32_t code, uint32_t emitOptions,
   const Operand* o0,
   const Operand* o1,
   const Operand* o2,
@@ -745,14 +740,14 @@ static char* X86Assembler_dumpInstruction(char* buf,
   return buf;
 }
 
-static char* X86Assembler_dumpComment(char* buf, sysuint_t len, const uint8_t* binaryData, sysuint_t binaryLen, const char* comment)
+static char* X86Assembler_dumpComment(char* buf, size_t len, const uint8_t* binaryData, size_t binaryLen, const char* comment)
 {
-  sysuint_t currentLength = len;
-  sysuint_t commentLength = comment ? strlen(comment) : 0;
+  size_t currentLength = len;
+  size_t commentLength = comment ? strlen(comment) : 0;
 
   if (binaryLen || commentLength)
   {
-    sysuint_t align = 32;
+    size_t align = 32;
     char sep = ';';
 
     // Truncate if comment is too long (it shouldn't be, larger than 80 seems to
@@ -760,7 +755,7 @@ static char* X86Assembler_dumpComment(char* buf, sysuint_t len, const uint8_t* b
     if (commentLength > 80)
       commentLength = 80;
 
-    for (sysuint_t i = (binaryLen == 0); i < 2; i++)
+    for (size_t i = (binaryLen == 0); i < 2; i++)
     {
       char* bufBegin = buf;
 
@@ -789,7 +784,7 @@ static char* X86Assembler_dumpComment(char* buf, sysuint_t len, const uint8_t* b
         buf = StringUtil::copy(buf, comment, commentLength);
       }
 
-      currentLength += (sysuint_t)(buf - bufBegin);
+      currentLength += (size_t)(buf - bufBegin);
       align += 18;
       sep = '|';
     }
@@ -1116,8 +1111,8 @@ void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Oper
       if (o0->isImm() && o1->isImm())
       {
         _emitByte(0xC8);
-        _emitWord((uint16_t)(sysuint_t)reinterpret_cast<const Imm&>(*o2).getValue());
-        _emitByte((uint8_t )(sysuint_t)reinterpret_cast<const Imm&>(*o1).getValue());
+        _emitWord((uint16_t)(uintptr_t)reinterpret_cast<const Imm&>(*o2).getValue());
+        _emitByte((uint8_t )(uintptr_t)reinterpret_cast<const Imm&>(*o1).getValue());
         _FINISHED();
       }
       break;
@@ -2518,15 +2513,15 @@ _End:
     buf =X86Assembler_dumpInstruction(buf, code, _emitOptions, o0, o1, o2, memRegType);
 
     if (_logger->getLogBinary())
-      buf = X86Assembler_dumpComment(buf, (sysuint_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _inlineComment);
+      buf = X86Assembler_dumpComment(buf, (size_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _inlineComment);
     else
-      buf = X86Assembler_dumpComment(buf, (sysuint_t)(buf - bufStorage), NULL, 0, _inlineComment);
+      buf = X86Assembler_dumpComment(buf, (size_t)(buf - bufStorage), NULL, 0, _inlineComment);
 
     // We don't need to NULL terminate the resulting string.
 #if defined(ASMJIT_DEBUG)
     if (_logger)
 #endif // ASMJIT_DEBUG
-      _logger->logString(bufStorage, (sysuint_t)(buf - bufStorage));
+      _logger->logString(bufStorage, (size_t)(buf - bufStorage));
 
 #if defined(ASMJIT_DEBUG)
     if (assertIllegal)
@@ -2562,13 +2557,13 @@ void X86Assembler::_emitJcc(uint32_t code, const Label* label, uint32_t hint) AS
 // [AsmJit::Assembler - Relocation helpers]
 // ============================================================================
 
-sysuint_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
+size_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
 
-  sysint_t coff = _buffer.getOffset();
-  sysint_t csize = getCodeSize();
+  size_t coff = _buffer.getOffset();
+  size_t csize = getCodeSize();
 
   // We are copying the exact size of the generated code. Extra code for trampolines
   // is generated on-the-fly by relocator (this code doesn't exist at the moment).
@@ -2580,8 +2575,8 @@ sysuint_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJI
 #endif // ASMJIT_X64
 
   // Relocate all recorded locations.
-  sysint_t i;
-  sysint_t len = _relocData.getLength();
+  size_t i;
+  size_t len = _relocData.getLength();
 
   for (i = 0; i < len; i++)
   {
@@ -2595,7 +2590,7 @@ sysuint_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJI
 #endif // ASMJIT_X64
 
     // Be sure that reloc data structure is correct.
-    ASMJIT_ASSERT((sysint_t)(r.offset + r.size) <= csize);
+    ASMJIT_ASSERT((size_t)(r.offset + r.size) <= csize);
 
     switch (r.type)
     {
@@ -2627,11 +2622,11 @@ sysuint_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJI
     switch (r.size)
     {
       case 4:
-        *reinterpret_cast<int32_t*>(dst + r.offset) = (int32_t)val;
+        *reinterpret_cast<int32_t*>(dst + r.offset) = static_cast<int32_t>(val);
         break;
 
       case 8:
-        *reinterpret_cast<int64_t*>(dst + r.offset) = (int64_t)val;
+        *reinterpret_cast<int64_t*>(dst + r.offset) = static_cast<int64_t>(val);
         break;
 
       default:
@@ -2646,16 +2641,16 @@ sysuint_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJI
         getLogger()->logFormat("; Trampoline from %p -> %p\n", (int8_t*)addressBase + r.offset, r.address);
       }
 
-      TrampolineWriter::writeTrampoline(tramp, r.address);
-      tramp += TrampolineWriter::TRAMPOLINE_SIZE;
+      X64TrampolineWriter::writeTrampoline(tramp, (uint64_t)r.address);
+      tramp += X64TrampolineWriter::kSizeTotal;
     }
 #endif // ASMJIT_X64
   }
 
 #if defined(ASMJIT_X64)
-  return (sysuint_t)(tramp - dst);
+  return (size_t)(tramp - dst);
 #else
-  return (sysuint_t)coff;
+  return (size_t)(coff);
 #endif // ASMJIT_X64
 }
 
@@ -2841,14 +2836,15 @@ Label X86Assembler::newLabel() ASMJIT_NOTHROW
   return label;
 }
 
-void X86Assembler::registerLabels(sysuint_t count) ASMJIT_NOTHROW
+void X86Assembler::registerLabels(size_t count) ASMJIT_NOTHROW
 {
   // Duplicated newLabel() code, but we are not creating Label instances.
   LabelData l_data;
   l_data.offset = -1;
   l_data.links = NULL;
 
-  for (sysuint_t i = 0; i < count; i++) _labels.append(l_data);
+  for (size_t i = 0; i < count; i++)
+    _labels.append(l_data);
 }
 
 void X86Assembler::bind(const Label& label) ASMJIT_NOTHROW

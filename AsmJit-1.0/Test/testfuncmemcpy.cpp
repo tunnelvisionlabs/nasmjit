@@ -7,7 +7,7 @@
 // Create simple DWORD memory copy function for 32/64-bit x86 platform, this
 // is enchanced version that's using X86Compiler class:
 //
-// void memcpy32(uint32_t* dst, const uint32_t* src, sysuint_t len);
+// void memcpy32(uint32_t* dst, const uint32_t* src, size_t len);
 
 // AsmJit library
 #include <AsmJit/AsmJit.h>
@@ -20,7 +20,7 @@
 using namespace AsmJit;
 
 // This is type of function we will generate.
-typedef void (*MemCpy32Fn)(uint32_t*, const uint32_t*, sysuint_t);
+typedef void (*MemCpy32Fn)(uint32_t*, const uint32_t*, size_t);
 
 int main(int argc, char* argv[])
 {
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
   // Tell compiler the function prototype we want. It allocates variables representing
   // function arguments that can be accessed through Compiler or Function instance.
-  c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, uint32_t*, const uint32_t*, sysuint_t>());
+  c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, uint32_t*, const uint32_t*, size_t>());
 
   // Try to generate function without prolog/epilog code:
   c.getFunc()->setHint(kFuncHintNaked, true);

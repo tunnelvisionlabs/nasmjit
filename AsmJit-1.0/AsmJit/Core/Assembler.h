@@ -404,7 +404,7 @@ struct Assembler
   { _buffer.emitSizeT(x); }
 
   //! @brief Embed data into instruction stream.
-  ASMJIT_API void embed(const void* data, size_t length) ASMJIT_NOTHROW;
+  ASMJIT_API void embed(const void* data, size_t len) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Reloc]

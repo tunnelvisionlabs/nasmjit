@@ -150,24 +150,25 @@ void Assembler::_purge() ASMJIT_NOTHROW
 // [AsmJit::Assembler - Emit]
 // ============================================================================
 
-void Assembler::embed(const void* data, size_t size) ASMJIT_NOTHROW
+void Assembler::embed(const void* data, size_t len) ASMJIT_NOTHROW
 {
   if (!canEmit())
     return;
 
   if (_logger)
   {
-    sysuint_t i, j;
-    sysuint_t max;
+    size_t i, j;
+    size_t max;
+
     char buf[128];
     char dot[] = ".data ";
     char* p;
 
     memcpy(buf, dot, ASMJIT_ARRAY_SIZE(dot) - 1);
 
-    for (i = 0; i < size; i += 16)
+    for (i = 0; i < len; i += 16)
     {
-      max = (size - i < 16) ? size - i : 16;
+      max = (len - i < 16) ? len - i : 16;
       p = buf + ASMJIT_ARRAY_SIZE(dot) - 1;
 
       for (j = 0; j < max; j++)
@@ -180,7 +181,7 @@ void Assembler::embed(const void* data, size_t size) ASMJIT_NOTHROW
     }
   }
 
-  _buffer.emitData(data, size);
+  _buffer.emitData(data, len);
 }
 
 // ============================================================================

@@ -13,7 +13,7 @@
 #include <AsmJit/AsmJit.h>
 
 // This is type of function we will generate
-typedef void (*MemCopy)(void* a, void* b, sysuint_t size);
+typedef void (*MemCopy)(void* a, void* b, size_t size);
 
 int main(int argc, char* argv[])
 {
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
   c.setLogger(&logger);
 
   {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, void*, void*, sysuint_t>());
+    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, void*, void*, size_t>());
     c.getFunc()->setHint(kFuncHintNaked, true);
 
     GpVar dst(c.getGpArg(0));

@@ -1374,9 +1374,9 @@ struct X86Compiler : public Compiler
   inline void duint64(uint64_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uint64_t)); }
 
   //! @brief Add system-integer data to the instuction stream.
-  inline void dsysint(sysint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysint_t)); }
+  inline void dintptr(intptr_t x) ASMJIT_NOTHROW { embed(&x, sizeof(intptr_t)); }
   //! @brief Add system-integer data to the instuction stream.
-  inline void dsysuint(sysuint_t x) ASMJIT_NOTHROW { embed(&x, sizeof(sysuint_t)); }
+  inline void duintptr(uintptr_t x) ASMJIT_NOTHROW { embed(&x, sizeof(uintptr_t)); }
 
   //! @brief Add float data to the instuction stream.
   inline void dfloat(float x) ASMJIT_NOTHROW { embed(&x, sizeof(float)); }

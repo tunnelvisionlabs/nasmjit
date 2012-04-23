@@ -19,17 +19,17 @@ namespace AsmJit {
 // [AsmJit::Buffer]
 // ============================================================================
 
-void Buffer::emitData(const void* dataPtr, size_t dataLen) ASMJIT_NOTHROW
+void Buffer::emitData(const void* ptr, size_t len) ASMJIT_NOTHROW
 {
   size_t max = getCapacity() - getOffset();
 
-  if (max < dataLen && !realloc(getOffset() + dataLen))
+  if (max < len && !realloc(getOffset() + len))
   {
     return;
   }
 
-  memcpy(_cur, dataPtr, dataLen);
-  _cur += dataLen;
+  memcpy(_cur, ptr, len);
+  _cur += len;
 }
 
 bool Buffer::realloc(size_t to) ASMJIT_NOTHROW
