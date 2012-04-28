@@ -809,10 +809,10 @@ void X86Compiler::serialize(Assembler& a) ASMJIT_NOTHROW
     // Emit function prolog / epilog.
     x86Context.getFunc()->_preparePrologEpilog(x86Context);
 
-    _current = x86Context._func->getNext();
+    _current = x86Context._func->getEntryTarget();
     x86Context.getFunc()->_emitProlog(x86Context);
 
-    _current = x86Context._func->getEnd()->getPrev();
+    _current = x86Context._func->getExitTarget();
     x86Context.getFunc()->_emitEpilog(x86Context);
 
     // Patch memory operands (variables related).

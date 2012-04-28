@@ -43,6 +43,7 @@ Set(ASMJIT_CORE_SOURCES
   AsmJit/Core/MemoryMarker.cpp
   AsmJit/Core/Operand.cpp
   AsmJit/Core/PodVector.cpp
+  AsmJit/Core/StringBuilder.cpp
   AsmJit/Core/StringUtil.cpp
   AsmJit/Core/VirtualMemory.cpp
   AsmJit/Core/ZoneMemory.cpp
@@ -70,6 +71,7 @@ Set(ASMJIT_CORE_HEADERS
   AsmJit/Core/MemoryMarker.h
   AsmJit/Core/Operand.h
   AsmJit/Core/PodVector.h
+  AsmJit/Core/StringBuilder.h
   AsmJit/Core/StringUtil.h
   AsmJit/Core/VirtualMemory.h
   AsmJit/Core/ZoneMemory.h
@@ -159,30 +161,12 @@ EndIf()
 # Build AsmJit test executables?
 If(ASMJIT_BUILD_TEST)
   Set(ASMJIT_TEST_FILES
-    testcorecpu
-    testcoresize
-    testdummy
-    testfuncalign
-    testfunccall1
-    testfunccall2
-    testfunccall3
-    testfuncmanyargs
-    testfuncmemcpy
-    testfuncrecursive1
-    testfuncret
-    testjit
-    testjump1
-    testmem1
-    testopcode
-    testspecial1
-    testspecial2
-    testspecial3
-    testspecial4
-    testtrampoline
-    testvar2
-    testvar3
-    testvar4
-    testvar5
+    TestCpu
+    TestDummy
+    TestMem
+    TestOpCode
+    TestSizeOf
+    TestX86
   )
 
   ForEach(file ${ASMJIT_TEST_FILES})

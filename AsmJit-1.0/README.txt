@@ -99,7 +99,7 @@ Supported Compilers
 ===================
 
   - BorlandC,
-  - GNU (3.4.X+ including MinGW and 4.1.X+, 4.3.X+, 4.4.X+, 4.7+),
+  - GNU (3.4.X+, 4.0+, including MinGW),
   - MSVC (VC6.0, VC7.1, VC8.0),
   - Other compilers require testing.
 

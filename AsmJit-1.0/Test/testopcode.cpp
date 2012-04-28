@@ -8,11 +8,13 @@
 // disassembled in your IDE or by your favourite disassembler. Instructions
 // are sorted alphabetically.
 
+// [Dependencies - AsmJit]
+#include <AsmJit/AsmJit.h>
+
+// [Dependencies - C]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <AsmJit/AsmJit.h>
 
 // This is type of function we will generate
 typedef void (*MyFn)();
@@ -944,7 +946,7 @@ int main(int argc, char* argv[])
   // Make the function.
   MyFn fn = asmjit_cast<MyFn>(a.make());
 
-  // Call function (This is convenience for IDEs to go directly to disassembly).
+  // Call function (This is convenience for IDEs to go directly into disassembly).
   fn();
 
   // Free the generated function if it's not needed anymore.

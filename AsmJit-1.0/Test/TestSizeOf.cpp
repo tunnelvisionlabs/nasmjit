@@ -24,6 +24,10 @@ int main(int argc, char* argv[])
   printf("================\n");
   printf("\n");
 
+  // --------------------------------------------------------------------------
+  // [C++]
+  // --------------------------------------------------------------------------
+
   printf("Variable sizes:\n");
   printf("  uint8_t                    : %u\n", (uint32_t)sizeof(uint8_t));
   printf("  uint16_t                   : %u\n", (uint32_t)sizeof(uint16_t));
@@ -35,6 +39,10 @@ int main(int argc, char* argv[])
   printf("  double                     : %u\n", (uint32_t)sizeof(double));
   printf("  void*                      : %u\n", (uint32_t)sizeof(void*));
   printf("\n");
+
+  // --------------------------------------------------------------------------
+  // [Core]
+  // --------------------------------------------------------------------------
 
   printf("Structure sizes:\n");
   printf("  AsmJit::Operand            : %u\n", (uint32_t)sizeof(Operand));
@@ -56,6 +64,10 @@ int main(int argc, char* argv[])
   printf("  AsmJit::FuncDecl           : %u\n", (uint32_t)sizeof(FuncDecl));
   printf("  AsmJit::FuncPrototype      : %u\n", (uint32_t)sizeof(FuncPrototype));
   printf("\n");
+
+  // --------------------------------------------------------------------------
+  // [X86]
+  // --------------------------------------------------------------------------
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
   printf("  AsmJit::X86Assembler       : %u\n", (uint32_t)sizeof(X86Assembler));

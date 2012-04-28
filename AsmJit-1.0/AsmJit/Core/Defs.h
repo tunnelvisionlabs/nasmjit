@@ -31,6 +31,33 @@ enum
   kBufferGrow = 32U
 };
 
+static const size_t kInvalidSize = (size_t)-1;
+
+// ============================================================================
+// [AsmJit::kStringBuilderOpType]
+// ============================================================================
+
+//! @brief String builder operation.
+enum kStringBuilderOpType
+{
+  //! @brief Replace the current content by a given content.
+  kStringBuilderOpSet = 0,
+  //! @brief Append a given content to the current content.
+  kStringBuilderOpAppend = 1
+};
+
+// ============================================================================
+// [AsmJit::kStringBuilderNumType]
+// ============================================================================
+
+enum kStringBuilderNumFlags
+{
+  kStringBuilderNumShowSign = (1U << 0),
+  kStringBuilderNumShowSpace = (1U << 1),
+  kStringBuilderNumAlternate = (1U << 2),
+  kStringBuilderNumSigned = (1U << 31)
+};
+
 // ============================================================================
 // [AsmJit::kCpu]
 // ============================================================================

@@ -23,9 +23,10 @@ static const char letters[] = "0123456789ABCDEF";
 
 char* StringUtil::copy(char* dst, const char* src, size_t len) ASMJIT_NOTHROW
 {
-  if (src == NULL) return dst;
+  if (src == NULL)
+    return dst;
 
-  if (len == (size_t)-1)
+  if (len == kInvalidSize)
   {
     while (*src) *dst++ = *src++;
   }

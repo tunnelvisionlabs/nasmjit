@@ -4,13 +4,13 @@
 // [License]
 // Zlib - See COPYING file in this package.
 
-// this file is used to test cpu detection.
+// [Dependencies - AsmJit]
+#include <AsmJit/AsmJit.h>
 
+// [Dependencies - C]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <AsmJit/AsmJit.h>
 
 using namespace AsmJit;
 
@@ -71,8 +71,12 @@ int main(int argc, char* argv[])
 {
   const CpuInfo* cpu = CpuInfo::getGlobal();
 
-  printf("CPUID Detection\n");
-  printf("===============\n");
+  // --------------------------------------------------------------------------
+  // [Core Features]
+  // --------------------------------------------------------------------------
+
+  printf("CPU Detection\n");
+  printf("=============\n");
 
   printf("\nBasic info\n");
   printf("  Vendor string         : %s\n", cpu->getVendorString());
@@ -83,6 +87,10 @@ int main(int argc, char* argv[])
   printf("  Number of Processors  : %u\n", cpu->getNumberOfProcessors());
   printf("  Features              : 0x%0.8X\n", cpu->getFeatures());
   printf("  Bugs                  : 0x%0.8X\n", cpu->getBugs());
+
+  // --------------------------------------------------------------------------
+  // [X86 Features]
+  // --------------------------------------------------------------------------
 
 #if defined(ASMJIT_X86) || defined(ASMJIT_X64)
   const X86CpuInfo* x86Cpu = static_cast<const X86CpuInfo*>(cpu);

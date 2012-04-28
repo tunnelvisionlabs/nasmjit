@@ -68,6 +68,10 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
   inline bool isStackAlignedByOsTo16Bytes() const ASMJIT_NOTHROW
   { return hasFuncFlag(kX86FuncFlagIsStackAlignedByOsTo16Bytes); }
 
+  //! @brief Get whether the stack is aligned to 16 bytes by function itself.
+  inline bool isStackAlignedByFnTo16Bytes() const ASMJIT_NOTHROW
+  { return hasFuncFlag(kX86FuncFlagIsStackAlignedByFnTo16Bytes); }
+
   //! @brief Get whether the ESP is adjusted.
   inline bool isEspAdjusted() const ASMJIT_NOTHROW
   { return hasFuncFlag(kX86FuncFlagIsEspAdjusted); }
@@ -98,6 +102,13 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
   // --------------------------------------------------------------------------
   // [Helpers]
   // --------------------------------------------------------------------------
+
+  //! @internal
+  //!
+  //! @brief Get required stack offset needed to subtract/add Esp/Rsp in 
+  //! prolog/epilog.
+  inline int32_t _getRequiredStackOffset() const ASMJIT_NOTHROW
+  { return _funcCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize; }
 
   //! @brief Create variables from FunctionPrototype declaration. This is just
   //! parsing what FunctionPrototype generated for current function calling
@@ -137,12 +148,12 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
   //! @brief Modified and preserved XMM registers mask.
   uint32_t _xmmModifiedAndPreserved;
 
-  //! @brief ID mov movdqa instruction (@c kX86InstMovDQA or @c kX86InstMovDQU).
+  //! @brief Id of MovDQWord instruction (@c kX86InstMovDQA or @c kX86InstMovDQU).
   //!
   //! The value is based on stack alignment. If it's guaranteed that stack
   //! is aligned to 16-bytes then @c kX86InstMovDQA instruction is used, otherwise
   //! the @c kX86InstMovDQU instruction is used for 16-byte mov.
-  uint32_t _movDqaInstCode;
+  uint32_t _movDqInstCode;
 
   //! @brief Prolog / epilog stack size for PUSH/POP sequences.
   int32_t _pePushPopStackSize;

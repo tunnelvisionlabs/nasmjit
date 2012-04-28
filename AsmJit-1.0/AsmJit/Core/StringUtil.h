@@ -9,7 +9,7 @@
 #define _ASMJIT_CORE_STRINGUTIL_H
 
 // [Dependencies - AsmJit]
-#include "../Core/Build.h"
+#include "../Core/Defs.h"
 
 namespace AsmJit {
 
@@ -23,7 +23,7 @@ namespace AsmJit {
 //! @brief String utilities.
 struct StringUtil
 {
-  ASMJIT_API static char* copy(char* dst, const char* src, size_t len = (size_t)-1) ASMJIT_NOTHROW;
+  ASMJIT_API static char* copy(char* dst, const char* src, size_t len = kInvalidSize) ASMJIT_NOTHROW;
   ASMJIT_API static char* fill(char* dst, const int c, size_t len) ASMJIT_NOTHROW;
   ASMJIT_API static char* hex(char* dst, const uint8_t* src, size_t len) ASMJIT_NOTHROW;
 

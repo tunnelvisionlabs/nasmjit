@@ -105,7 +105,7 @@ struct X86CompilerContext : public CompilerContext
   inline void _unuseVarOnEndOfScope(CompilerItem* item, VarCallRecord* rec)
   {
     X86CompilerVar* v = rec->vdata;
-    if (v->lastItem == item || (rec->flags & VarCallRecord::FLAG_UNUSE_AFTER_USE))
+    if (v->lastItem == item || (rec->flags & VarCallRecord::kFlagUnuseAfterUse))
       unuseVar(v, kVarStateUnused);
   }
 

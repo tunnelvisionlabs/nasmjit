@@ -87,18 +87,18 @@ static void _SetBits(size_t* buf, size_t index, size_t len) ASMJIT_NOTHROW
   // Offset.
   buf += i;
 
-  *buf++ |= (((size_t)-1) >> (BITS_PER_ENTITY - c)) << j;
+  *buf++ |= ((~(size_t)0) >> (BITS_PER_ENTITY - c)) << j;
   len -= c;
 
   while (len >= BITS_PER_ENTITY)
   {
-    *buf++ = (size_t)-1;
+    *buf++ = ~(size_t)0;
     len -= BITS_PER_ENTITY;
   }
 
   if (len)
   {
-    *buf |= (((size_t)-1) >> (BITS_PER_ENTITY - len));
+    *buf |= ((~(size_t)0) >> (BITS_PER_ENTITY - len));
   }
 }
 
@@ -116,7 +116,7 @@ static void _ClearBits(size_t* buf, size_t index, size_t len) ASMJIT_NOTHROW
   // Offset.
   buf += i;
 
-  *buf++ &= ~((((size_t)-1) >> (BITS_PER_ENTITY - c)) << j);
+  *buf++ &= ~(((~(size_t)0) >> (BITS_PER_ENTITY - c)) << j);
   len -= c;
 
   while (len >= BITS_PER_ENTITY)
@@ -127,7 +127,7 @@ static void _ClearBits(size_t* buf, size_t index, size_t len) ASMJIT_NOTHROW
 
   if (len)
   {
-    *buf &= ((size_t)-1) << len;
+    *buf &= (~(size_t)0) << len;
   }
 }
 
@@ -371,7 +371,7 @@ MemNode* MemoryManagerPrivate::createNode(size_t size, size_t density) ASMJIT_NO
   if (vmem == NULL) return NULL;
 
   size_t blocks = (vsize / density);
-  size_t bsize = (((blocks + 7) >> 3) + sizeof(size_t) - 1) & ~(size_t)(sizeof(size_t)-1);
+  size_t bsize = (((blocks + 7) >> 3) + sizeof(size_t) - 1) & ~(size_t)(sizeof(size_t) - 1);
 
   MemNode* node = reinterpret_cast<MemNode*>(ASMJIT_MALLOC(sizeof(MemNode)));
   uint8_t* data = reinterpret_cast<uint8_t*>(ASMJIT_MALLOC(bsize * 2));
@@ -504,7 +504,7 @@ void* MemoryManagerPrivate::allocFreeable(size_t vsize) ASMJIT_NOTHROW
       ubits = *up++;
 
       // Fast skip used blocks.
-      if (ubits == (size_t)-1)
+      if (ubits == ~(size_t)0)
       { 
         if (cont > maxCont) maxCont = cont;
         cont = 0;
@@ -708,7 +708,7 @@ bool MemoryManagerPrivate::shrink(void* address, size_t used) ASMJIT_NOTHROW
   }
 
   // Free the tail blocks.
-  cont = (size_t)-1;
+  cont = ~(size_t)0;
   goto _EnterFreeLoop;
 
   for (;;)

@@ -340,24 +340,23 @@ struct VarCallRecord
 
   enum FLAGS
   {
-    FLAG_IN_GP = 0x0001,
-    FLAG_IN_MM = 0x0002,
-    FLAG_IN_XMM = 0x0004,
-    FLAG_IN_STACK = 0x0008,
+    kFlagInGp = 0x0001,
+    kFlagInMm = 0x0002,
+    kFlagInXmm = 0x0004,
+    kFlagInStack = 0x0008,
 
-    FLAG_OUT_EAX = 0x0010,
-    FLAG_OUT_EDX = 0x0020,
-    FLAG_OUT_ST0 = 0x0040,
-    FLAG_OUT_ST1 = 0x0080,
-    FLAG_OUT_MM0 = 0x0100,
-    FLAG_OUT_XMM0 = 0x0400,
-    FLAG_OUT_XMM1 = 0x0800,
+    kFlagOutEax = 0x0010,
+    kFlagOutEdx = 0x0020,
+    kFlagOutSt0 = 0x0040,
+    kFlagOutSt1 = 0x0080,
+    kFlagOutMm0 = 0x0100,
+    kFlagOutXmm0 = 0x0400,
+    kFlagOutXmm1 = 0x0800,
 
-    FLAG_IN_MEM_PTR = 0x1000,
-    FLAG_CALL_kOperandReg = 0x2000,
-    FLAG_CALL_kOperandMem = 0x4000,
-
-    FLAG_UNUSE_AFTER_USE = 0x8000
+    kFlagInMemPtr = 0x1000,
+    kFlagCallReg = 0x2000,
+    kFlagCallMem = 0x4000,
+    kFlagUnuseAfterUse = 0x8000
   };
 };
 

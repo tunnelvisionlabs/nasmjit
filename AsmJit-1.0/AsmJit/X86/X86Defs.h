@@ -1970,7 +1970,7 @@ enum kX86FuncFlags
   //!
   //! Esp is adjusted by 'sub' instruction in prolog and by add function in
   //! epilog (only if function is not naked).
-  kX86FuncFlagIsEspAdjusted = (1U << 14),
+  kX86FuncFlagIsEspAdjusted = (1U << 14)
 };
 
 // ============================================================================

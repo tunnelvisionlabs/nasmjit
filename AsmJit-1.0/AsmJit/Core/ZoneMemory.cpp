@@ -37,7 +37,7 @@ void* ZoneMemory::alloc(size_t size) ASMJIT_NOTHROW
   ZoneChunk* cur = _chunks;
 
   // Align to 4 or 8 bytes.
-  size = (size + sizeof(size_t)-1) & ~(sizeof(size_t)-1);
+  size = IntUtil::align<size_t>(size, sizeof(size_t));
 
   if (cur == NULL || cur->getRemainingBytes() < size)
   {

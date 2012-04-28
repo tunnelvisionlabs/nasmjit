@@ -39,7 +39,7 @@ X86CompilerFuncDecl::X86CompilerFuncDecl(X86Compiler* x86Compiler) ASMJIT_NOTHRO
   _gpModifiedAndPreserved(0),
   _mmModifiedAndPreserved(0),
   _xmmModifiedAndPreserved(0),
-  _movDqaInstCode(kInstNone),
+  _movDqInstCode(kInstNone),
   _pePushPopStackSize(0),
   _peMovStackSize(0),
   _peAdjustStackSize(0),
@@ -49,7 +49,7 @@ X86CompilerFuncDecl::X86CompilerFuncDecl(X86Compiler* x86Compiler) ASMJIT_NOTHRO
   _decl = &_x86Decl;
 
   // Just clear to safe defaults.
-  _funcFlags |= kX86FuncFlagPushPop;
+  _funcHints |= IntUtil::maskFromIndex(kX86FuncHintPushPop);
 
   // Stack is always aligned to 16-bytes when using 64-bit OS.
   if (CompilerUtil::isStack16ByteAligned())
@@ -57,6 +57,9 @@ X86CompilerFuncDecl::X86CompilerFuncDecl(X86Compiler* x86Compiler) ASMJIT_NOTHRO
 
   _entryLabel = x86Compiler->newLabel();
   _exitLabel = x86Compiler->newLabel();
+
+  _entryTarget = x86Compiler->_getTarget(_entryLabel.getId());
+  _exitTarget = x86Compiler->_getTarget(_exitLabel.getId());
 
   _end = Compiler_newObject<X86CompilerFuncEnd>(x86Compiler, this);
 }
@@ -211,8 +214,12 @@ void X86CompilerFuncDecl::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHR
   X86CompilerContext& x86Context = static_cast<X86CompilerContext&>(cc);
   const X86CpuInfo* cpuInfo = X86CpuInfo::getGlobal();
 
-  clearFuncFlag(kX86FuncFlagEmitEmms | kX86FuncFlagEmitSFence | kX86FuncFlagEmitLFence);
-  setFuncFlag(kX86FuncFlagPushPop);
+  clearFuncFlag(
+    kX86FuncFlagPushPop    |
+    kX86FuncFlagEmitEmms   |
+    kX86FuncFlagEmitSFence |
+    kX86FuncFlagEmitLFence |
+    kX86FuncFlagIsStackAlignedByFnTo16Bytes);
 
   uint32_t accessibleMemoryBelowStack = 0;
   if (getDecl()->getConvention() == kX86FuncConvX64U) 
@@ -243,34 +250,33 @@ void X86CompilerFuncDecl::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHR
   if (!isStackAlignedByOsTo16Bytes() && !isNaked() && (x86Context._mem16BlocksCount + (x86Context._mem8BlocksCount > 0)))
   {
     // Have to align stack to 16-bytes.
-    setFuncFlag(kX86FuncFlagIsStackAlignedByOsTo16Bytes);
-    setFuncFlag(kX86FuncFlagIsEspAdjusted);
+    setFuncFlag(kX86FuncFlagIsEspAdjusted | kX86FuncFlagIsStackAlignedByFnTo16Bytes);
   }
 
-  _gpModifiedAndPreserved  = x86Context._modifiedGpRegisters  & _x86Decl.getGpPreservedMask() & ~IntUtil::maskFromIndex(kX86RegIndexEsp);
+  _gpModifiedAndPreserved  = x86Context._modifiedGpRegisters  & _x86Decl.getGpPreservedMask() & (~IntUtil::maskFromIndex(kX86RegIndexEsp));
   _mmModifiedAndPreserved  = x86Context._modifiedMmRegisters  & _x86Decl.getMmPreservedMask();
   _xmmModifiedAndPreserved = x86Context._modifiedXmmRegisters & _x86Decl.getXmmPreservedMask();
-  _movDqaInstCode = (isStackAlignedByOsTo16Bytes() || !isNaked()) ? kX86InstMovDQA : kX86InstMovDQU;
+  _movDqInstCode = (isStackAlignedByOsTo16Bytes() | isStackAlignedByFnTo16Bytes()) ? kX86InstMovDQA : kX86InstMovDQU;
 
   // Prolog & Epilog stack size.
   {
-    int32_t memGP = IntUtil::bitCount(_gpModifiedAndPreserved) * sizeof(sysint_t);
-    int32_t memMM = IntUtil::bitCount(_mmModifiedAndPreserved) * 8;
-    int32_t memXMM = IntUtil::bitCount(_xmmModifiedAndPreserved) * 16;
+    int32_t memGpSize = IntUtil::bitCount(_gpModifiedAndPreserved) * sizeof(intptr_t);
+    int32_t memMmSize = IntUtil::bitCount(_mmModifiedAndPreserved) * 8;
+    int32_t memXmmSize = IntUtil::bitCount(_xmmModifiedAndPreserved) * 16;
 
-    if (hasFuncFlag(kX86FuncHintPushPop))
+    if (hasFuncFlag(kX86FuncFlagPushPop))
     {
-      _pePushPopStackSize = memGP;
-      _peMovStackSize = memXMM + IntUtil::align<int32_t>(memMM, 16);
+      _pePushPopStackSize = memGpSize;
+      _peMovStackSize = memXmmSize + IntUtil::align<int32_t>(memMmSize, 16);
     }
     else
     {
       _pePushPopStackSize = 0;
-      _peMovStackSize = memXMM + IntUtil::align<int32_t>(memMM + memGP, 16);
+      _peMovStackSize = memXmmSize + IntUtil::align<int32_t>(memMmSize + memGpSize, 16);
     }
   }
 
-  if (isStackAlignedByOsTo16Bytes())
+  if (isStackAlignedByFnTo16Bytes())
   {
     _peAdjustStackSize += IntUtil::delta<int32_t>(_pePushPopStackSize, 16);
   }
@@ -509,23 +515,24 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   X86CompilerContext& x86Context = static_cast<X86CompilerContext&>(cc);
   X86Compiler* x86Compiler = getCompiler();
 
+  // --------------------------------------------------------------------------
+  // [Init]
+  // --------------------------------------------------------------------------
+
   uint32_t i, mask;
   uint32_t preservedGP  = _gpModifiedAndPreserved;
   uint32_t preservedMM  = _mmModifiedAndPreserved;
   uint32_t preservedXMM = _xmmModifiedAndPreserved;
 
-  int32_t stackSubtract =
-    _funcCallStackSize +
-    _memStackSize16 + 
-    _peMovStackSize + 
-    _peAdjustStackSize;
+  int32_t stackOffset = _getRequiredStackOffset();
   int32_t nspPos;
 
+  // --------------------------------------------------------------------------
+  // [Prolog]
+  // --------------------------------------------------------------------------
+
   if (x86Compiler->getLogger())
-  {
-    // Here function prolog starts.
     x86Compiler->comment("Prolog");
-  }
 
   // Emit standard prolog entry code (but don't do it if function is set to be
   // naked).
@@ -541,25 +548,34 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   }
 
   // Align manually stack-pointer to 16-bytes.
-  if (!isStackAlignedByOsTo16Bytes())
+  if (isStackAlignedByFnTo16Bytes())
   {
     ASMJIT_ASSERT(!isNaked());
     x86Compiler->emit(kX86InstAnd, zsp, imm(-16));
   }
 
-  // Save GP registers using PUSH/POP.
-  if (preservedGP && hasFuncFlag(kX86FuncFlagPushPop))
+  // --------------------------------------------------------------------------
+  // [Save Gp - Push/Pop]
+  // --------------------------------------------------------------------------
+
+  if (preservedGP != 0 && hasFuncFlag(kX86FuncFlagPushPop))
   {
     for (i = 0, mask = 1; i < kX86RegNumGp; i++, mask <<= 1)
     {
-      if (preservedGP & mask) x86Compiler->emit(kX86InstPush, gpz(i));
+      if (preservedGP & mask)
+        x86Compiler->emit(kX86InstPush, gpz(i));
     }
   }
+
+  // --------------------------------------------------------------------------
+  // [Adjust Scack]
+  // --------------------------------------------------------------------------
 
   if (isEspAdjusted())
   {
     nspPos = _memStackSize16;
-    if (stackSubtract) x86Compiler->emit(kX86InstSub, zsp, imm(stackSubtract));
+    if (stackOffset != 0)
+      x86Compiler->emit(kX86InstSub, zsp, imm(stackOffset));
   }
   else
   {
@@ -567,21 +583,27 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     //if (_pePushPop) nspPos += IntUtil::bitCount(preservedGP) * sizeof(sysint_t);
   }
 
-  // Save XMM registers using MOVDQA/MOVDQU.
-  if (preservedXMM)
+  // --------------------------------------------------------------------------
+  // [Save Xmm - MovDqa/MovDqu]
+  // --------------------------------------------------------------------------
+
+  if (preservedXMM != 0)
   {
     for (i = 0, mask = 1; i < kX86RegNumXmm; i++, mask <<= 1)
     {
       if (preservedXMM & mask)
       {
-        x86Compiler->emit(_movDqaInstCode, dqword_ptr(zsp, nspPos), xmm(i));
+        x86Compiler->emit(_movDqInstCode, dqword_ptr(zsp, nspPos), xmm(i));
         nspPos += 16;
       }
     }
   }
 
-  // Save MM registers using MOVQ.
-  if (preservedMM)
+  // --------------------------------------------------------------------------
+  // [Save Mm - MovQ]
+  // --------------------------------------------------------------------------
+
+  if (preservedMM != 0)
   {
     for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
     {
@@ -593,8 +615,11 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  // Save GP registers using MOV.
-  if (preservedGP && !hasFuncFlag(kX86FuncFlagPushPop))
+  // --------------------------------------------------------------------------
+  // [Save Gp - Mov]
+  // --------------------------------------------------------------------------
+
+  if (preservedGP != 0 && !hasFuncFlag(kX86FuncFlagPushPop))
   {
     for (i = 0, mask = 1; i < kX86RegNumGp; i++, mask <<= 1)
     {
@@ -606,10 +631,12 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
+  // --------------------------------------------------------------------------
+  // [...]
+  // --------------------------------------------------------------------------
+
   if (x86Compiler->getLogger())
-  {
     x86Compiler->comment("Body");
-  }
 }
 
 void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
@@ -619,36 +646,46 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
 
   const X86CpuInfo* cpuInfo = X86CpuInfo::getGlobal();
 
+  // --------------------------------------------------------------------------
+  // [Init]
+  // --------------------------------------------------------------------------
+
   uint32_t i, mask;
   uint32_t preservedGP  = _gpModifiedAndPreserved;
   uint32_t preservedMM  = _mmModifiedAndPreserved;
   uint32_t preservedXMM = _xmmModifiedAndPreserved;
 
-  int32_t stackAdd =
-    _funcCallStackSize +
-    _memStackSize16 +
-    _peMovStackSize +
-    _peAdjustStackSize;
+  int32_t stackOffset = _getRequiredStackOffset();
   int32_t nspPos = isEspAdjusted() ? (_memStackSize16) : -(_peMovStackSize + _peAdjustStackSize);
+
+  // --------------------------------------------------------------------------
+  // [Epilog]
+  // --------------------------------------------------------------------------
 
   if (x86Compiler->getLogger())
     x86Compiler->comment("Epilog");
 
-  // Restore XMM registers using MOVDQA/MOVDQU.
-  if (preservedXMM)
+  // --------------------------------------------------------------------------
+  // [Restore Xmm - MovDqa/ModDqu]
+  // --------------------------------------------------------------------------
+
+  if (preservedXMM != 0)
   {
     for (i = 0, mask = 1; i < kX86RegNumXmm; i++, mask <<= 1)
     {
       if (preservedXMM & mask)
       {
-        x86Compiler->emit(_movDqaInstCode, xmm(i), dqword_ptr(zsp, nspPos));
+        x86Compiler->emit(_movDqInstCode, xmm(i), dqword_ptr(zsp, nspPos));
         nspPos += 16;
       }
     }
   }
 
-  // Restore MM registers using MOVQ.
-  if (preservedMM)
+  // --------------------------------------------------------------------------
+  // [Restore Mm - MovQ]
+  // --------------------------------------------------------------------------
+
+  if (preservedMM != 0)
   {
     for (i = 0, mask = 1; i < 8; i++, mask <<= 1)
     {
@@ -660,8 +697,11 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  // Restore GP registers using MOV.
-  if (preservedGP && !hasFuncFlag(kX86FuncFlagPushPop))
+  // --------------------------------------------------------------------------
+  // [Restore Gp - Mov]
+  // --------------------------------------------------------------------------
+
+  if (preservedGP != 0 && !hasFuncFlag(kX86FuncFlagPushPop))
   {
     for (i = 0, mask = 1; i < kX86RegNumGp; i++, mask <<= 1)
     {
@@ -673,11 +713,18 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  if (isEspAdjusted() && stackAdd != 0)
-    x86Compiler->emit(kX86InstAdd, zsp, imm(stackAdd));
+  // --------------------------------------------------------------------------
+  // [Adjust Stack]
+  // --------------------------------------------------------------------------
 
-  // Restore GP registers using POP.
-  if (preservedGP && hasFuncFlag(kX86FuncFlagPushPop))
+  if (isEspAdjusted() && stackOffset != 0)
+    x86Compiler->emit(kX86InstAdd, zsp, imm(stackOffset));
+
+  // --------------------------------------------------------------------------
+  // [Restore Gp - Push/Pop]
+  // --------------------------------------------------------------------------
+
+  if (preservedGP != 0 && hasFuncFlag(kX86FuncFlagPushPop))
   {
     for (i = kX86RegNumGp - 1, mask = 1 << i; (int32_t)i >= 0; i--, mask >>= 1)
     {
@@ -686,11 +733,17 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  // Emit Emms.
+  // --------------------------------------------------------------------------
+  // [Emms]
+  // --------------------------------------------------------------------------
+
   if (hasFuncFlag(kX86FuncFlagEmitEmms)) 
     x86Compiler->emit(kX86InstEmms);
 
-  // Emit MFence/SFence/LFence.
+  // --------------------------------------------------------------------------
+  // [MFence/SFence/LFence]
+  // --------------------------------------------------------------------------
+
   if (hasFuncFlag(kX86FuncFlagEmitSFence) & hasFuncFlag(kX86FuncFlagEmitLFence))
     x86Compiler->emit(kX86InstMFence);
   else if (hasFuncFlag(kX86FuncFlagEmitSFence))
@@ -698,12 +751,16 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   else if (hasFuncFlag(kX86FuncFlagEmitLFence))
     x86Compiler->emit(kX86InstLFence);
 
+  // --------------------------------------------------------------------------
+  // [Epilog]
+  // --------------------------------------------------------------------------
+
   // Emit standard epilog leave code (if needed).
   if (!isNaked())
   {
+    // AMD seems to prefer LEAVE instead of MOV/POP sequence.
     if (cpuInfo->getVendorId() == kCpuAmd)
     {
-      // AMD seems to prefer LEAVE instead of MOV/POP sequence.
       x86Compiler->emit(kX86InstLeave);
     }
     else
@@ -713,7 +770,7 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     }
   }
 
-  // Emit return using correct instruction.
+  // Emit return.
   if (_x86Decl.getCalleePopsStack())
     x86Compiler->emit(kX86InstRet, imm((int16_t)_x86Decl.getArgumentsStackSize()));
   else
@@ -1424,12 +1481,12 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           {
             case kX86VarTypeGpd:
             case kX86VarTypeGpq:
-              var->flags |= VarCallRecord::FLAG_IN_GP;
+              var->flags |= VarCallRecord::kFlagInGp;
               var->inCount++;
               break;
 
             case kX86VarTypeMm:
-              var->flags |= VarCallRecord::FLAG_IN_MM;
+              var->flags |= VarCallRecord::kFlagInMm;
               var->inCount++;
               break;
 
@@ -1438,7 +1495,7 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
             case kX86VarTypeXmmPS:
             case kX86VarTypeXmmSD:
             case kX86VarTypeXmmPD:
-              var->flags |= VarCallRecord::FLAG_IN_XMM;
+              var->flags |= VarCallRecord::kFlagInXmm;
               var->inCount++;
               break;
 
@@ -1462,7 +1519,7 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         x86Context._newRegisterHomeIndex(cv, IntUtil::findFirstBit(mask));
         x86Context._newRegisterHomeMask(cv, mask);
 
-        var->flags |= VarCallRecord::FLAG_CALL_kOperandReg;
+        var->flags |= VarCallRecord::kFlagCallReg;
         cv->regReadCount++;
       }
       else
@@ -1472,9 +1529,9 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           case kX86VarTypeGpd:
           case kX86VarTypeGpq:
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_EAX;
+              var->flags |= VarCallRecord::kFlagOutEax;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_EDX;
+              var->flags |= VarCallRecord::kFlagOutEdx;
             break;
 
           case kX86VarTypeX87:
@@ -1482,42 +1539,42 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
           case kX86VarTypeX87SD:
 #if defined(ASMJIT_X86)
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_ST0;
+              var->flags |= VarCallRecord::kFlagOutSt0;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_ST1;
+              var->flags |= VarCallRecord::kFlagOutSt1;
 #else
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_XMM0;
+              var->flags |= VarCallRecord::kFlagOutXmm0;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+              var->flags |= VarCallRecord::kFlagOutXmm1;
 #endif
             break;
 
           case kX86VarTypeMm:
-            var->flags |= VarCallRecord::FLAG_OUT_MM0;
+            var->flags |= VarCallRecord::kFlagOutMm0;
             break;
 
           case kX86VarTypeXmm:
           case kX86VarTypeXmmPS:
           case kX86VarTypeXmmPD:
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_XMM0;
+              var->flags |= VarCallRecord::kFlagOutXmm0;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+              var->flags |= VarCallRecord::kFlagOutXmm1;
             break;
 
           case kX86VarTypeXmmSS:
           case kX86VarTypeXmmSD:
 #if defined(ASMJIT_X86)
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_ST0;
+              var->flags |= VarCallRecord::kFlagOutSt0;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_ST1;
+              var->flags |= VarCallRecord::kFlagOutSt1;
 #else
             if (i == argumentsCount+1)
-              var->flags |= VarCallRecord::FLAG_OUT_XMM0;
+              var->flags |= VarCallRecord::kFlagOutXmm0;
             else
-              var->flags |= VarCallRecord::FLAG_OUT_XMM1;
+              var->flags |= VarCallRecord::kFlagOutXmm1;
 #endif
             break;
 
@@ -1547,7 +1604,7 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         cv->regReadCount++;
 
         __GET_VARIABLE(cv)
-        var->flags |= VarCallRecord::FLAG_CALL_kOperandReg | VarCallRecord::FLAG_CALL_kOperandMem;
+        var->flags |= VarCallRecord::kFlagCallReg | VarCallRecord::kFlagCallMem;
       }
 
       if ((o._mem.index & kOperandIdTypeMask) == kOperandIdTypeVar)
@@ -1558,7 +1615,7 @@ void X86CompilerFuncCall::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         cv->regReadCount++;
 
         __GET_VARIABLE(cv)
-        var->flags |= VarCallRecord::FLAG_CALL_kOperandReg | VarCallRecord::FLAG_CALL_kOperandMem;
+        var->flags |= VarCallRecord::kFlagCallReg | VarCallRecord::kFlagCallMem;
       }
     }
   }
@@ -1664,9 +1721,10 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   for (i = 0; i < argumentsCount; i++)
   {
-    if (processed[i]) continue;
-    const FuncArg& argType = targs[i];
+    if (processed[i])
+      continue;
 
+    const FuncArg& argType = targs[i];
     if (argType.hasRegIndex())
       continue;
 
@@ -1697,12 +1755,14 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   for (i = 0; i < argumentsCount; i++)
   {
     VarCallRecord* rec = _argumentToVarRecord[i];
-    if (!rec || processed[i]) continue;
+    if (!rec || processed[i])
+      continue;
 
     if (rec->inDone >= rec->inCount)
     {
       X86CompilerVar* cv = rec->vdata;
-      if (cv->regIndex == kRegIndexInvalid) continue;
+      if (cv->regIndex == kRegIndexInvalid)
+        continue;
 
       if (rec->outCount)
       {
@@ -1829,7 +1889,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       {
         VarCallRecord* rdst = reinterpret_cast<VarCallRecord*>(vdst->tPtr);
 
-        if (rdst->inDone >= rdst->inCount && (rdst->flags & VarCallRecord::FLAG_CALL_kOperandReg) == 0)
+        if (rdst->inDone >= rdst->inCount && (rdst->flags & VarCallRecord::kFlagCallReg) == 0)
         {
           // Safe to spill.
           if (rdst->outCount || vdst->lastItem == this)
@@ -1846,7 +1906,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
           if ((X86Util::getVarClassFromVarType(vdst->type) & kX86VarClassGp) != 0)
           {
             // Try to emit mov to register which is possible for call() operand.
-            if (x == kInvalidValue && (rdst->flags & VarCallRecord::FLAG_CALL_kOperandReg) != 0)
+            if (x == kInvalidValue && (rdst->flags & VarCallRecord::kFlagCallReg) != 0)
             {
               uint32_t rIndex;
               uint32_t rBit;
@@ -1995,12 +2055,12 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   for (i = 0; i < variablesCount; i++)
   {
     VarCallRecord& r = _variables[i];
-    if ((r.flags & VarCallRecord::FLAG_CALL_kOperandReg) &&
+    if ((r.flags & VarCallRecord::kFlagCallReg) &&
         (r.vdata->regIndex == kRegIndexInvalid))
     {
       // If the register is not allocated and the call form is 'call reg' then
       // it's possible to keep it in memory.
-      if ((r.flags & VarCallRecord::FLAG_CALL_kOperandMem) == 0)
+      if ((r.flags & VarCallRecord::kFlagCallMem) == 0)
       {
         _target = r.vdata->asGpVar().m();
         break;
@@ -2030,7 +2090,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     if (vdata && (preserved & mask) == 0)
     {
       VarCallRecord* rec = reinterpret_cast<VarCallRecord*>(vdata->tPtr);
-      if (rec && (rec->outCount || rec->flags & VarCallRecord::FLAG_UNUSE_AFTER_USE || vdata->lastItem == this))
+      if (rec && (rec->outCount || rec->flags & VarCallRecord::kFlagUnuseAfterUse || vdata->lastItem == this))
         x86Context.unuseVar(vdata, kVarStateUnused);
       else
         x86Context.spillGpVar(vdata);
@@ -2094,12 +2154,12 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
     VarCallRecord* rec = &_variables[i];
     X86CompilerVar* vdata = rec->vdata;
 
-    if (rec->flags & (VarCallRecord::FLAG_OUT_EAX | VarCallRecord::FLAG_OUT_EDX))
+    if (rec->flags & (VarCallRecord::kFlagOutEax | VarCallRecord::kFlagOutEdx))
     {
       if (X86Util::getVarClassFromVarType(vdata->type) & kX86VarClassGp)
       {
         x86Context.allocGpVar(vdata, 
-          IntUtil::maskFromIndex((rec->flags & VarCallRecord::FLAG_OUT_EAX) != 0
+          IntUtil::maskFromIndex((rec->flags & VarCallRecord::kFlagOutEax) != 0
             ? kX86RegIndexEax
             : kX86RegIndexEdx),
           kVarAllocRegister | kVarAllocWrite);
@@ -2107,7 +2167,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       }
     }
 
-    if (rec->flags & (VarCallRecord::FLAG_OUT_MM0))
+    if (rec->flags & (VarCallRecord::kFlagOutMm0))
     {
       if (X86Util::getVarClassFromVarType(vdata->type) & kX86VarClassMm)
       {
@@ -2117,12 +2177,12 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       }
     }
 
-    if (rec->flags & (VarCallRecord::FLAG_OUT_XMM0 | VarCallRecord::FLAG_OUT_XMM1))
+    if (rec->flags & (VarCallRecord::kFlagOutXmm0 | VarCallRecord::kFlagOutXmm1))
     {
       if (X86Util::getVarClassFromVarType(vdata->type) & kX86VarClassXmm)
       {
         x86Context.allocXmmVar(vdata, 
-          IntUtil::maskFromIndex((rec->flags & VarCallRecord::FLAG_OUT_XMM0) != 0
+          IntUtil::maskFromIndex((rec->flags & VarCallRecord::kFlagOutXmm0) != 0
             ? kX86RegIndexXmm0
             : kX86RegIndexXmm1),
           kVarAllocRegister | kVarAllocWrite);
@@ -2130,7 +2190,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       }
     }
 
-    if (rec->flags & (VarCallRecord::FLAG_OUT_ST0 | VarCallRecord::FLAG_OUT_ST1))
+    if (rec->flags & (VarCallRecord::kFlagOutSt0 | VarCallRecord::kFlagOutSt1))
     {
       if (X86Util::getVarClassFromVarType(vdata->type) & kX86VarClassXmm)
       {
@@ -2192,7 +2252,7 @@ bool X86CompilerFuncCall::_tryUnuseVar(CompilerVar* _v) ASMJIT_NOTHROW
   {
     if (_variables[i].vdata == cv)
     {
-      _variables[i].flags |= VarCallRecord::FLAG_UNUSE_AFTER_USE;
+      _variables[i].flags |= VarCallRecord::kFlagUnuseAfterUse;
       return true;
     }
   }
@@ -2408,7 +2468,7 @@ void X86CompilerFuncCall::_moveSpilledVariableToStack(CompilerContext& cc,
   X86Compiler* x86Compiler = x86Context.getCompiler();
 
   ASMJIT_ASSERT(!argType.hasRegIndex());
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(cv->regIndex == kRegIndexInvalid);
 
   Mem src = x86Context._getVarMem(cv);
   Mem dst = ptr(zsp, -(int)sizeof(sysint_t) + argType.getStackOffset());

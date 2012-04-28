@@ -11,10 +11,10 @@
 #include "../Core/Context.h"
 #include "../Core/CpuInfo.h"
 #include "../Core/Defs.h"
+#include "../Core/IntUtil.h"
 #include "../Core/Logger.h"
 #include "../Core/MemoryManager.h"
 #include "../Core/MemoryMarker.h"
-#include "../Core/IntUtil.h"
 #include "../Core/StringUtil.h"
 
 #include "../X86/X86Assembler.h"

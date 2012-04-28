@@ -28,6 +28,7 @@
 #include "Core/MemoryMarker.h"
 #include "Core/Operand.h"
 #include "Core/PodVector.h"
+#include "Core/StringBuilder.h"
 #include "Core/StringUtil.h"
 #include "Core/VirtualMemory.h"
 #include "Core/ZoneMemory.h"

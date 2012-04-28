@@ -10,6 +10,7 @@
 #include "../Core/Assembler.h"
 #include "../Core/Compiler.h"
 #include "../Core/CompilerFunc.h"
+#include "../Core/CompilerItem.h"
 #include "../Core/IntUtil.h"
 #include "../Core/Logger.h"
 
@@ -24,6 +25,8 @@ namespace AsmJit {
 
 CompilerFuncDecl::CompilerFuncDecl(Compiler* compiler) ASMJIT_NOTHROW :
   CompilerItem(compiler, kCompilerItemFuncDecl),
+  _entryTarget(NULL),
+  _exitTarget(NULL),
   _end(NULL),
   _decl(NULL),
   _vars(NULL),
@@ -128,7 +131,11 @@ bool CompilerFuncRet::mustEmitJump() const ASMJIT_NOTHROW
       case kCompilerItemMark:
       case kCompilerItemAlign:
       case kCompilerItemHint:
+        break;
+
       case kCompilerItemTarget:
+        if (static_cast<CompilerTarget*>(item)->getLabel().getId() == getFunc()->getExitLabel().getId())
+          return false;
         break;
 
       // Invalid items - these items shouldn't be here. We are inside the 

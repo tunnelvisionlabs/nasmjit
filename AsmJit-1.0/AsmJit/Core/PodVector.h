@@ -9,7 +9,8 @@
 #define _ASMJIT_CORE_PODVECTOR_H
 
 // [Dependencies - AsmJit]
-#include "../Core/Build.h"
+#include "../Core/Assert.h"
+#include "../Core/Defs.h"
 
 namespace AsmJit {
 
@@ -123,12 +124,12 @@ struct PodVector
     return true;
   }
 
-  //! @brief Get index of @a val or (size_t)-1 if not found.
+  //! @brief Get index of @a val or kInvalidSize if not found.
   size_t indexOf(const T& val) const ASMJIT_NOTHROW
   {
     size_t i = 0, len = _length;
     for (i = 0; i < len; i++) { if (_data[i] == val) return i; }
-    return (size_t)-1;
+    return kInvalidSize;
   }
 
   //! @brief Remove element at index @a i.

@@ -6,19 +6,18 @@
 
 // This file is used as a dummy test. It's changed during development.
 
+// [Dependencies - AsmJit]
+#include <AsmJit/AsmJit.h>
+
+// [Dependencies - C]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <AsmJit/AsmJit.h>
-
 // This is type of function we will generate
 typedef void (*MyFn)(void);
 
-static void dummyFunc(void)
-{
-
-}
+static void dummyFunc(void) {}
 
 int main(int argc, char* argv[])
 {

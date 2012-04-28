@@ -18,7 +18,7 @@
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::Logger]
+// [AsmJit::Logger - Construction / Destruction]
 // ============================================================================
 
 Logger::Logger() ASMJIT_NOTHROW :
@@ -31,6 +31,10 @@ Logger::Logger() ASMJIT_NOTHROW :
 Logger::~Logger() ASMJIT_NOTHROW
 {
 }
+
+// ============================================================================
+// [AsmJit::Logger - Logging]
+// ============================================================================
 
 void Logger::logFormat(const char* fmt, ...) ASMJIT_NOTHROW
 {
@@ -45,6 +49,10 @@ void Logger::logFormat(const char* fmt, ...) ASMJIT_NOTHROW
   logString(buf, len);
 }
 
+// ============================================================================
+// [AsmJit::Logger - Enabled]
+// ============================================================================
+
 void Logger::setEnabled(bool enabled) ASMJIT_NOTHROW
 {
   _enabled = enabled;
@@ -52,7 +60,7 @@ void Logger::setEnabled(bool enabled) ASMJIT_NOTHROW
 }
 
 // ============================================================================
-// [AsmJit::FileLogger]
+// [AsmJit::FileLogger - Construction / Destruction]
 // ============================================================================
 
 FileLogger::FileLogger(FILE* stream) ASMJIT_NOTHROW
@@ -61,15 +69,38 @@ FileLogger::FileLogger(FILE* stream) ASMJIT_NOTHROW
   setStream(stream);
 }
 
+FileLogger::~FileLogger() ASMJIT_NOTHROW
+{
+}
+
+// ============================================================================
+// [AsmJit::FileLogger - Accessors]
+// ============================================================================
+
+//! @brief Set file stream.
+void FileLogger::setStream(FILE* stream) ASMJIT_NOTHROW
+{
+  _stream = stream;
+  _used = (_enabled == true) & (_stream != NULL);
+}
+
+// ============================================================================
+// [AsmJit::FileLogger - Logging]
+// ============================================================================
+
 void FileLogger::logString(const char* buf, size_t len) ASMJIT_NOTHROW
 {
   if (!_used)
     return;
 
-  if (len == (size_t)-1)
+  if (len == kInvalidSize)
     len = strlen(buf);
   fwrite(buf, 1, len, _stream);
 }
+
+// ============================================================================
+// [AsmJit::FileLogger - Enabled]
+// ============================================================================
 
 void FileLogger::setEnabled(bool enabled) ASMJIT_NOTHROW
 {
@@ -77,11 +108,37 @@ void FileLogger::setEnabled(bool enabled) ASMJIT_NOTHROW
   _used = (_enabled == true) & (_stream != NULL);
 }
 
-//! @brief Set file stream.
-void FileLogger::setStream(FILE* stream) ASMJIT_NOTHROW
+// ============================================================================
+// [AsmJit::StringLogger - Construction / Destruction]
+// ============================================================================
+
+StringLogger::StringLogger() ASMJIT_NOTHROW
 {
-  _stream = stream;
-  _used = (_enabled == true) & (_stream != NULL);
+}
+
+StringLogger::~StringLogger() ASMJIT_NOTHROW
+{
+}
+
+// ============================================================================
+// [AsmJit::StringLogger - Logging]
+// ============================================================================
+
+void StringLogger::logString(const char* buf, size_t len) ASMJIT_NOTHROW
+{
+  if (!_used)
+    return;
+  _stringBuilder.appendString(buf, len);
+}
+
+// ============================================================================
+// [AsmJit::StringLogger - Enabled]
+// ============================================================================
+
+void StringLogger::setEnabled(bool enabled) ASMJIT_NOTHROW
+{
+  _enabled = enabled;
+  _used = enabled;
 }
 
 } // AsmJit namespace

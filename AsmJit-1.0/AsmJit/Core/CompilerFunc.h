@@ -66,6 +66,14 @@ struct CompilerFuncDecl : public CompilerItem
   inline const Label& getExitLabel() const ASMJIT_NOTHROW
   { return _exitLabel; }
 
+  //! @brief Get function entry target.
+  inline CompilerTarget* getEntryTarget() const ASMJIT_NOTHROW
+  { return _entryTarget; }
+
+  //! @brief Get function exit target.
+  inline CompilerTarget* getExitTarget() const ASMJIT_NOTHROW
+  { return _exitTarget; }
+
   //! @brief Get function end item.
   inline CompilerFuncEnd* getEnd() const ASMJIT_NOTHROW
   { return _end; }
@@ -103,7 +111,7 @@ struct CompilerFuncDecl : public CompilerItem
 
   //! @brief Clear function @a flag.
   inline void clearFuncFlag(uint32_t flag) ASMJIT_NOTHROW
-  { _funcFlags |= ~flag; }
+  { _funcFlags &= ~flag; }
   
   //! @brief Get whether the function is also a caller.
   inline bool isCaller() const ASMJIT_NOTHROW
@@ -148,6 +156,11 @@ struct CompilerFuncDecl : public CompilerItem
   Label _entryLabel;
   //! @brief Function exit label.
   Label _exitLabel;
+  
+  //! @brief Function entry target.
+  CompilerTarget* _entryTarget;
+  //! @brief Function exit target.
+  CompilerTarget* _exitTarget;
 
   //! @brief Function end item.
   CompilerFuncEnd* _end;
@@ -232,7 +245,7 @@ struct CompilerFuncRet : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @Brief Get the related function.
-  inline CompilerFuncDecl* getFunc() ASMJIT_NOTHROW
+  inline CompilerFuncDecl* getFunc() const ASMJIT_NOTHROW
   { return _func; }
 
   //! @brief Get the first return operand.

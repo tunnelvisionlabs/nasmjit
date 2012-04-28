@@ -11,6 +11,7 @@
 // [Dependencies - AsmJit]
 #include "../Core/Build.h"
 #include "../Core/Defs.h"
+#include "../Core/StringBuilder.h"
 
 // [Dependencies - C]
 #include <stdarg.h>
@@ -22,6 +23,10 @@ namespace AsmJit {
 
 //! @addtogroup AsmJit_Logging
 //! @{
+
+// ============================================================================
+// [AsmJit::Logger]
+// ============================================================================
 
 //! @brief Abstract logging class.
 //!
@@ -50,7 +55,7 @@ struct Logger
   //!
   //! Default implementation that is in @c AsmJit::Logger is to do nothing.
   //! It's virtual to fit to your logging system.
-  virtual void logString(const char* buf, size_t len = (size_t)-1) ASMJIT_NOTHROW = 0;
+  virtual void logString(const char* buf, size_t len = kInvalidSize) ASMJIT_NOTHROW = 0;
 
   //! @brief Log formatter message (like sprintf) sending output to @c logString() method.
   ASMJIT_API virtual void logFormat(const char* fmt, ...) ASMJIT_NOTHROW;
@@ -111,6 +116,10 @@ struct Logger
   ASMJIT_NO_COPY(Logger)
 };
 
+// ============================================================================
+// [AsmJit::FileLogger]
+// ============================================================================
+
 //! @brief Logger that can log to standard C @c FILE* stream.
 struct FileLogger : public Logger
 {
@@ -118,25 +127,16 @@ struct FileLogger : public Logger
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create new @c FileLogger.
+  //! @brief Create a new @c FileLogger.
   //! @param stream FILE stream where logging will be sent (can be @c NULL
   //! to disable logging).
   ASMJIT_API FileLogger(FILE* stream = NULL) ASMJIT_NOTHROW;
 
-  // --------------------------------------------------------------------------
-  // [Logging]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_API virtual void logString(const char* buf, size_t len = (size_t)-1) ASMJIT_NOTHROW;
+  //! @brief Destroy the @ref FileLogger.
+  ASMJIT_API virtual ~FileLogger() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
-  // [Enabled]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_API virtual void setEnabled(bool enabled) ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Stream]
+  // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get @c FILE* stream.
@@ -151,6 +151,18 @@ struct FileLogger : public Logger
   ASMJIT_API void setStream(FILE* stream) ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
+  // [Logging]
+  // --------------------------------------------------------------------------
+
+  ASMJIT_API virtual void logString(const char* buf, size_t len = kInvalidSize) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Enabled]
+  // --------------------------------------------------------------------------
+
+  ASMJIT_API virtual void setEnabled(bool enabled) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
   // [Members]
   // --------------------------------------------------------------------------
 
@@ -158,6 +170,58 @@ struct FileLogger : public Logger
   FILE* _stream;
 
   ASMJIT_NO_COPY(FileLogger)
+};
+
+// ============================================================================
+// [AsmJit::StringLogger]
+// ============================================================================
+
+//! @brief String logger.
+struct StringLogger : public Logger
+{
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create new @ref StringLogger.
+  ASMJIT_API StringLogger() ASMJIT_NOTHROW;
+
+  //! @brief Destroy the @ref StringLogger.
+  ASMJIT_API virtual ~StringLogger() ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Accessors]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get <code>char*</code> pointer which represents the serialized
+  //! string.
+  //!
+  //! The pointer is owned by @ref StringLogger, it can't be modified or freed.
+  inline const char* getString() const ASMJIT_NOTHROW { return _stringBuilder.getData(); }
+
+  //! @brief Clear the serialized string.
+  inline void clearString() ASMJIT_NOTHROW { _stringBuilder.clear(); }
+
+  // --------------------------------------------------------------------------
+  // [Logging]
+  // --------------------------------------------------------------------------
+
+  ASMJIT_API virtual void logString(const char* buf, size_t len = kInvalidSize) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Enabled]
+  // --------------------------------------------------------------------------
+
+  ASMJIT_API virtual void setEnabled(bool enabled) ASMJIT_NOTHROW;
+
+  // --------------------------------------------------------------------------
+  // [Members]
+  // --------------------------------------------------------------------------
+
+  //! @brief Output.
+  StringBuilder _stringBuilder;
+
+  ASMJIT_NO_COPY(StringLogger)
 };
 
 //! @}

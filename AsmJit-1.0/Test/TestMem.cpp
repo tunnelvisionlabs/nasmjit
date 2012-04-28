@@ -4,13 +4,13 @@
 // [License]
 // Zlib - See COPYING file in this package.
 
-// This file is used to test AsmJit memory manager.
+// [Dependencies - AsmJit]
+#include <AsmJit/AsmJit.h>
 
+// [Dependencies - C]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <AsmJit/AsmJit.h>
 
 static int problems = 0;
 
