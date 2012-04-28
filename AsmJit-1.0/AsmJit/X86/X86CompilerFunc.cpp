@@ -525,7 +525,7 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedXMM = _xmmModifiedAndPreserved;
 
   int32_t stackOffset = _getRequiredStackOffset();
-  int32_t nspPos;
+  int32_t stackPos;
 
   // --------------------------------------------------------------------------
   // [Prolog]
@@ -573,14 +573,14 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
 
   if (isEspAdjusted())
   {
-    nspPos = _memStackSize16;
+    stackPos = _memStackSize16 + _funcCallStackSize;
     if (stackOffset != 0)
       x86Compiler->emit(kX86InstSub, zsp, imm(stackOffset));
   }
   else
   {
-    nspPos = -(_peMovStackSize + _peAdjustStackSize);
-    //if (_pePushPop) nspPos += IntUtil::bitCount(preservedGP) * sizeof(sysint_t);
+    stackPos = -(_peMovStackSize + _peAdjustStackSize);
+    //if (_pePushPop) stackPos += IntUtil::bitCount(preservedGP) * sizeof(sysint_t);
   }
 
   // --------------------------------------------------------------------------
@@ -593,8 +593,8 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedXMM & mask)
       {
-        x86Compiler->emit(_movDqInstCode, dqword_ptr(zsp, nspPos), xmm(i));
-        nspPos += 16;
+        x86Compiler->emit(_movDqInstCode, dqword_ptr(zsp, stackPos), xmm(i));
+        stackPos += 16;
       }
     }
   }
@@ -609,8 +609,8 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedMM & mask)
       {
-        x86Compiler->emit(kX86InstMovQ, qword_ptr(zsp, nspPos), mm(i));
-        nspPos += 8;
+        x86Compiler->emit(kX86InstMovQ, qword_ptr(zsp, stackPos), mm(i));
+        stackPos += 8;
       }
     }
   }
@@ -625,8 +625,8 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedGP & mask)
       {
-        x86Compiler->emit(kX86InstMov, sysint_ptr(zsp, nspPos), gpz(i));
-        nspPos += sizeof(sysint_t);
+        x86Compiler->emit(kX86InstMov, sysint_ptr(zsp, stackPos), gpz(i));
+        stackPos += sizeof(sysint_t);
       }
     }
   }
@@ -656,7 +656,12 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t preservedXMM = _xmmModifiedAndPreserved;
 
   int32_t stackOffset = _getRequiredStackOffset();
-  int32_t nspPos = isEspAdjusted() ? (_memStackSize16) : -(_peMovStackSize + _peAdjustStackSize);
+  int32_t stackPos;
+  
+  if (isEspAdjusted()) 
+    stackPos = _memStackSize16 + _funcCallStackSize;
+  else
+    stackPos = -(_peMovStackSize + _peAdjustStackSize);
 
   // --------------------------------------------------------------------------
   // [Epilog]
@@ -675,8 +680,8 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedXMM & mask)
       {
-        x86Compiler->emit(_movDqInstCode, xmm(i), dqword_ptr(zsp, nspPos));
-        nspPos += 16;
+        x86Compiler->emit(_movDqInstCode, xmm(i), dqword_ptr(zsp, stackPos));
+        stackPos += 16;
       }
     }
   }
@@ -691,8 +696,8 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedMM & mask)
       {
-        x86Compiler->emit(kX86InstMovQ, mm(i), qword_ptr(zsp, nspPos));
-        nspPos += 8;
+        x86Compiler->emit(kX86InstMovQ, mm(i), qword_ptr(zsp, stackPos));
+        stackPos += 8;
       }
     }
   }
@@ -707,8 +712,8 @@ void X86CompilerFuncDecl::_emitEpilog(CompilerContext& cc) ASMJIT_NOTHROW
     {
       if (preservedGP & mask)
       {
-        x86Compiler->emit(kX86InstMov, gpz(i), sysint_ptr(zsp, nspPos));
-        nspPos += sizeof(sysint_t);
+        x86Compiler->emit(kX86InstMov, gpz(i), sysint_ptr(zsp, stackPos));
+        stackPos += sizeof(sysint_t);
       }
     }
   }
@@ -1660,12 +1665,12 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   uint32_t argumentsCount = _x86Decl.getArgumentsCount();
   uint32_t variablesCount = _variablesCount;
 
-  // Processed arguments.
+  // Processed arguments kFuncArgsMax.
   uint8_t processed[kFuncArgsMax] = { 0 };
 
-  x86Compiler->comment("Function Call");
+  x86Compiler->comment("Call");
 
-  // These variables are used by the instruction and we set current offset
+  // These variables are used by the instruction so we set current offset
   // to their work offsets -> The getSpillCandidate() method never returns 
   // the variable used by this instruction.
   for (i = 0; i < variablesCount; i++)
@@ -1688,9 +1693,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   {
     X86CompilerVar* cv = x86Context._x86State.gp[i];
     if (cv && cv->workOffset != offset && (preserved & mask) == 0)
-    {
       x86Context.spillGpVar(cv);
-    }
   }
 
   preserved = _x86Decl.getMmPreservedMask();
@@ -1698,9 +1701,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   {
     X86CompilerVar* cv = x86Context._x86State.mm[i];
     if (cv && cv->workOffset != offset && (preserved & mask) == 0)
-    {
       x86Context.spillMmVar(cv);
-    }
   }
 
   preserved = _x86Decl.getXmmPreservedMask();
@@ -1708,9 +1709,7 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
   {
     X86CompilerVar* cv = x86Context._x86State.xmm[i];
     if (cv && cv->workOffset != offset && (preserved & mask) == 0)
-    {
       x86Context.spillXmmVar(cv);
-    }
   }
 
   // --------------------------------------------------------------------------
@@ -1866,7 +1865,8 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
     for (i = 0; i < argumentsCount; i++)
     {
-      if (processed[i]) continue;
+      if (processed[i])
+        continue;
 
       VarCallRecord* rsrc = _argumentToVarRecord[i];
 
@@ -1889,7 +1889,12 @@ CompilerItem* X86CompilerFuncCall::translate(CompilerContext& cc) ASMJIT_NOTHROW
       {
         VarCallRecord* rdst = reinterpret_cast<VarCallRecord*>(vdst->tPtr);
 
-        if (rdst->inDone >= rdst->inCount && (rdst->flags & VarCallRecord::kFlagCallReg) == 0)
+        if (rdst == NULL)
+        {
+          x86Context.spillVar(vdst);
+          vdst = NULL;
+        }
+        else if (rdst->inDone >= rdst->inCount && (rdst->flags & VarCallRecord::kFlagCallReg) == 0)
         {
           // Safe to spill.
           if (rdst->outCount || vdst->lastItem == this)

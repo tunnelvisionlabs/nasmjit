@@ -533,6 +533,93 @@ struct X86Test_Func6 : public X86Test
 };
 
 // ============================================================================
+// [X86Test_Func7]
+// ============================================================================
+
+struct X86Test_Func7 : public X86Test
+{
+  virtual const char* getName() const { return "Func7 - Many function calls"; }
+
+  virtual void compile(X86Compiler& c)
+  {
+    c.newFunc(kX86FuncConvCompatFastCall, FuncBuilder1<int, int*>());
+    c.getFunc()->setHint(kFuncHintNaked, true);
+
+    GpVar buf(c.getGpArg(0));
+    GpVar acc0(c.newGpVar(kX86VarTypeGpd));
+    GpVar acc1(c.newGpVar(kX86VarTypeGpd));
+
+    c.mov(acc0, 0);
+    c.mov(acc1, 0);
+
+    uint i;
+    for (i = 0; i < 4; i++)
+    {
+      {
+        GpVar ret = c.newGpVar(kX86VarTypeGpd);
+        GpVar ptr = c.newGpVar(kX86VarTypeGpz);
+        GpVar idx = c.newGpVar(kX86VarTypeGpd);
+
+        c.mov(ptr, buf);
+        c.mov(idx, imm(i));
+
+        X86CompilerFuncCall* fCall = c.call((void*)calledFunc);
+        fCall->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder2<int, int*, int>());
+        fCall->setArgument(0, ptr);
+        fCall->setArgument(1, idx);
+        fCall->setReturn(ret);
+
+        c.add(acc0, ret);
+      }
+
+      {
+        GpVar ret = c.newGpVar(kX86VarTypeGpd);
+        GpVar ptr = c.newGpVar(kX86VarTypeGpz);
+        GpVar idx = c.newGpVar(kX86VarTypeGpd);
+
+        c.mov(ptr, buf);
+        c.mov(idx, imm(i));
+
+        X86CompilerFuncCall* fCall = c.call((void*)calledFunc);
+        fCall->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder2<int, int*, int>());
+        fCall->setArgument(0, ptr);
+        fCall->setArgument(1, idx);
+        fCall->setReturn(ret);
+
+        c.sub(acc1, ret);
+      }
+    }
+
+    GpVar ret(c.newGpVar());
+    c.mov(ret, acc0);
+    c.add(ret, acc1);
+    c.ret(ret);
+    c.endFunction();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
+  {
+    typedef int (*Func)(int*);
+    Func func = asmjit_cast<Func>(_func);
+
+    int buffer[4] = { 127, 87, 23, 17 };
+
+    int resultRet = func(buffer);
+    int expectedRet = 0;
+
+    result.setFormat("ret=%d", resultRet);
+    expected.setFormat("ret=%d", expectedRet);
+
+    return resultRet == expectedRet;
+  }
+
+  static int ASMJIT_FASTCALL calledFunc(int* pInt, int index)
+  {
+    return pInt[index];
+  }
+};
+
+// ============================================================================
 // [X86Test_Jump1]
 // ============================================================================
 
@@ -1085,6 +1172,7 @@ X86TestSuite::X86TestSuite() :
   testList.append(new X86Test_Func4());
   testList.append(new X86Test_Func5());
   testList.append(new X86Test_Func6());
+  testList.append(new X86Test_Func7());
   
   // --------------------------------------------------------------------------
   // [Jump]
