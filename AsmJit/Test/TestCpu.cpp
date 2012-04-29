@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
   printf("  Model                 : %u\n", cpu->getModel());
   printf("  Stepping              : %u\n", cpu->getStepping());
   printf("  Number of Processors  : %u\n", cpu->getNumberOfProcessors());
-  printf("  Features              : 0x%0.8X\n", cpu->getFeatures());
-  printf("  Bugs                  : 0x%0.8X\n", cpu->getBugs());
+  printf("  Features              : 0x%08X\n", cpu->getFeatures());
+  printf("  Bugs                  : 0x%08X\n", cpu->getBugs());
 
   // --------------------------------------------------------------------------
   // [X86 Features]

@@ -172,7 +172,7 @@ void Assembler::embed(const void* data, size_t len) ASMJIT_NOTHROW
       p = buf + ASMJIT_ARRAY_SIZE(dot) - 1;
 
       for (j = 0; j < max; j++)
-        p += sprintf(p, "%0.2X", reinterpret_cast<const uint8_t *>(data)[i+j]);
+        p += sprintf(p, "%02X", reinterpret_cast<const uint8_t *>(data)[i+j]);
 
       *p++ = '\n';
       *p = '\0';

@@ -95,6 +95,7 @@ void FileLogger::logString(const char* buf, size_t len) ASMJIT_NOTHROW
 
   if (len == kInvalidSize)
     len = strlen(buf);
+
   fwrite(buf, 1, len, _stream);
 }
 

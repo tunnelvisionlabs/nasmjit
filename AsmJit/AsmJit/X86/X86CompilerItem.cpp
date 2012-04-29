@@ -1240,6 +1240,7 @@ void X86CompilerInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
   //
   // - and reg, reg         ; Nop.
   // - or reg, reg          ; Nop.
+  // - xchg reg, reg        ; Nop.
 
   if (_variablesCount == 1 && _operandsCount > 1 && _operands[0].isVar() && _operands[1].isVar() && !_memOp)
   {
@@ -1300,6 +1301,10 @@ void X86CompilerInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
       case kX86InstOrPD:
       case kX86InstOrPS:
       case kX86InstPOr:
+        
+      // XCHG Instruction.
+      case kX86InstXchg:
+
         // Clear the write flag.
         _vars[0].vflags = kVarAllocRead;
         _vars[0].vdata->regWriteCount--;
