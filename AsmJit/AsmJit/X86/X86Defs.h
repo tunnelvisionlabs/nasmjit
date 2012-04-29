@@ -95,7 +95,7 @@ enum kX86Feature
 // [AsmJit::kX86Bug]
 // ============================================================================
 
-//! @brief X86 CPU bug.
+//! @brief X86 CPU bugs.
 enum kX86Bug
 {
   //! @brief Whether the processor contains bug seen in some 
@@ -1523,13 +1523,14 @@ enum kX86InstOp
 
 //! @internal
 //! 
-//! @brief Instruction names.
+//! @brief X86 instruction names.
 ASMJIT_VAR const char x86InstName[];
 
 // ============================================================================
 // [AsmJit::X86InstInfo]
 // ============================================================================
 
+//! @brief X86 instruction information.
 struct X86InstInfo
 {
   // --------------------------------------------------------------------------
@@ -1870,6 +1871,23 @@ enum kX86FuncConv
   //! @def kX86FuncConvDefault
   //! @brief Default calling convention for current platform / operating system.
 
+  //! @def kX86FuncConvCompatFastCall
+  //! @brief Compatibility for __fastcall calling convention.
+  //!
+  //! @note This enumeration is always set to a value which is compatible to
+  //! current compilers __fastcall calling convention. In 64-bit mode the value
+  //! is compatible to @ref kX86FuncConvX64W or @ref kX86FuncConvX64U.
+
+  //! @def kX86FuncConvCompatStdCall
+  //! @brief Compatibility for __stdcall calling convention.
+  //!
+  //! @note This enumeration is always set to a value which is compatible to
+  //! current compilers __stdcall calling convention. In 64-bit mode the value
+  //! is compatible to @ref kX86FuncConvX64W or @ref kX86FuncConvX64U.
+
+  //! @def kX86FuncConvCompatCDecl
+  //! @brief Default C calling convention based on current compiler's settings.
+
 #if defined(ASMJIT_X86)
 
   kX86FuncConvDefault = kX86FuncConvCDecl,
@@ -2107,24 +2125,30 @@ enum kX86VarType
 // [AsmJit::X86VarInfo]
 // ============================================================================
 
+//! @brief X86 variable information.
 struct X86VarInfo
 {
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
+  //! @brief Get register code base, see @ref kX86RegCode.
   inline uint32_t getCode() const ASMJIT_NOTHROW
   { return _code; }
 
+  //! @brief Get register size in bytes.
   inline uint32_t getSize() const ASMJIT_NOTHROW
   { return _size; }
 
+  //! @brief Get variable class, see @ref kX86VarClass.
   inline uint32_t getClass() const ASMJIT_NOTHROW
   { return _class; }
 
+  //! @brief Get variable flags, see @ref kX86VarFlags.
   inline uint32_t getFlags() const ASMJIT_NOTHROW
   { return _flags; }
 
+  //! @brief Get variable type name.
   inline const char* getName() const ASMJIT_NOTHROW
   { return _name; }
 
@@ -2132,10 +2156,15 @@ struct X86VarInfo
   // [Members]
   // --------------------------------------------------------------------------
 
+  //! @brief Register code base, see @ref kX86RegCode.
   uint32_t _code;
+  //! @brief Register size in bytes.
   uint16_t _size;
+  //! @brief Variable class, see @ref kX86VarClass.
   uint8_t _class;
+  //! @brief Variable flags, see @ref kX86VarFlags.
   uint8_t _flags;
+  //! @brief Variable type name.
   char _name[8];
 };
 

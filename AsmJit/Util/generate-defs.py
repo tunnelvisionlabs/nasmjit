@@ -48,42 +48,47 @@ def processFile(fileName, arch):
   data = readFile(fileName);
   ARCH = arch.upper();
 
-  din = data
+  dIn = data
   r = re.compile(arch + r"InstInfo\[\][\s]*=[\s]*{(?P<BLOCK>[^}])*}")
-  m = r.search(din)
+  m = r.search(dIn)
 
   if not m:
     print "Couldn't match " + arch + "InstInfo[] in " + fileName
     exit(0)
 
-  din = din[m.start():m.end()]
-  dout = ""
+  dIn = dIn[m.start():m.end()]
+  dOut = ""
 
-  dinst = []
-  daddr = []
-  hinst = {}
+  hInstId = {}
 
-  r = re.compile(r'\"(?P<INST>[A-Za-z0-9_ ]+)\"')
-  dpos = 0
-  for m in r.finditer(din):
-    inst = m.group("INST")
-    
-    if not inst in hinst:
-      dinst.append(inst)
-      hinst[inst] = dpos
+  dInstId = []
+  dInstAddr = []
 
-      daddr.append(dpos)
-      dpos += len(inst) + 1
+  dInstStr = []
+  dInstPos = 0
 
-  dout += "const char " + arch + "InstName[] =\n"
-  for i in xrange(len(dinst)):
-    dout += "  \"" + dinst[i] + "\\0\"\n"
-  dout += "  ;\n"
+  r = re.compile(r'INST\((?P<kId>[A-Za-z0-9_]+)\s*,\s*\"(?P<kStr>[A-Za-z0-9_ ]*)\"')
+  for m in r.finditer(dIn):
+    kId = m.group("kId")
+    kStr = m.group("kStr")
 
-  dout += "\n"
+    if not kId in hInstId:
+      dInstStr.append(kStr)
+      dInstId.append(kId)
+      hInstId[kId] = dInstPos
 
-  for i in xrange(len(dinst)):
-    dout += "#define INST_" + dinst[i].upper().replace(" ", "_") + "_INDEX" + " " + str(daddr[i]) + "\n"
+      dInstAddr.append(dInstPos)
+      dInstPos += len(kStr) + 1
+
+  dOut += "const char " + arch + "InstName[] =\n"
+  for i in xrange(len(dInstStr)):
+    dOut += "  \"" + dInstStr[i] + "\\0\"\n"
+  dOut += "  ;\n"
+
+  dOut += "\n"
+
+  for i in xrange(len(dInstId)):
+    dOut += "#define INDEX_" + dInstId[i] + " " + str(dInstAddr[i]) + "\n"
 
   mb_string = "// ${" + ARCH + "_INST_DATA:BEGIN}\n"
   me_string = "// ${" + ARCH + "_INST_DATA:END}\n"
@@ -91,8 +96,7 @@ def processFile(fileName, arch):
   mb = data.index(mb_string)
   me = data.index(me_string)
 
-  data = data[:mb + len(mb_string)] + dout + data[me:]
-
+  data = data[:mb + len(mb_string)] + dOut + data[me:]
   writeFile(fileName, data)
 
 for item in FILES:
