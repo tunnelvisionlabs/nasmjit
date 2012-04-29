@@ -71,7 +71,7 @@ X86CompilerFuncDecl* X86Compiler::newFunc_(uint32_t convention, uint32_t returnT
 {
   ASMJIT_ASSERT(_func == NULL);
 
-  X86CompilerFuncDecl* func = Compiler_newObject<X86CompilerFuncDecl>(this);
+  X86CompilerFuncDecl* func = Compiler_newItem<X86CompilerFuncDecl>(this);
 
   _func = func;
   _varNameId = 0;
@@ -85,7 +85,7 @@ X86CompilerFuncDecl* X86Compiler::newFunc_(uint32_t convention, uint32_t returnT
   return func;
 }
 
-X86CompilerFuncDecl* X86Compiler::endFunction() ASMJIT_NOTHROW
+X86CompilerFuncDecl* X86Compiler::endFunc() ASMJIT_NOTHROW
 {
   X86CompilerFuncDecl* func = getFunc();
   ASMJIT_ASSERT(func != NULL);
@@ -185,7 +185,12 @@ void X86Compiler::_emitInstruction(uint32_t code, const Operand* o0, const Opera
   }
 
   addItem(inst);
-  if (_cc) { inst->_offset = _cc->_currentOffset; inst->prepare(*_cc); }
+
+  if (_cc)
+  {
+    inst->_offset = _cc->_currentOffset;
+    inst->prepare(*_cc);
+  }
 }
 
 void X86Compiler::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
@@ -304,7 +309,7 @@ X86CompilerFuncCall* X86Compiler::_emitCall(const Operand* o0) ASMJIT_NOTHROW
     return NULL;
   }
 
-  X86CompilerFuncCall* call = Compiler_newObject<X86CompilerFuncCall>(this, func, o0);
+  X86CompilerFuncCall* call = Compiler_newItem<X86CompilerFuncCall>(this, func, o0);
   if (call == NULL)
   {
     setError(kErrorNoHeapMemory);
@@ -325,7 +330,7 @@ void X86Compiler::_emitReturn(const Operand* first, const Operand* second) ASMJI
     return;
   }
 
-  X86CompilerFuncRet* ret = Compiler_newObject<X86CompilerFuncRet>(this, func, first, second);
+  X86CompilerFuncRet* ret = Compiler_newItem<X86CompilerFuncRet>(this, func, first, second);
 
   if (ret == NULL)
   {
@@ -342,7 +347,7 @@ void X86Compiler::_emitReturn(const Operand* first, const Operand* second) ASMJI
 
 void X86Compiler::align(uint32_t m) ASMJIT_NOTHROW
 {
-  addItem(Compiler_newObject<X86CompilerAlign>(this, m));
+  addItem(Compiler_newItem<X86CompilerAlign>(this, m));
 }
 
 // ============================================================================
@@ -354,7 +359,7 @@ Label X86Compiler::newLabel() ASMJIT_NOTHROW
   Label label;
   label._base.id = static_cast<uint32_t>(_targets.getLength()) | kOperandIdTypeLabel;
 
-  CompilerTarget* target = Compiler_newObject<X86CompilerTarget>(this, label);
+  CompilerTarget* target = Compiler_newItem<X86CompilerTarget>(this, label);
   _targets.append(target);
 
   return label;
@@ -376,8 +381,8 @@ void X86Compiler::bind(const Label& label) ASMJIT_NOTHROW
 
 X86CompilerVar* X86Compiler::_newVar(const char* name, uint32_t type, uint32_t size) ASMJIT_NOTHROW
 {
-  X86CompilerVar* vdata = reinterpret_cast<X86CompilerVar*>(_zoneMemory.alloc(sizeof(X86CompilerVar)));
-  if (vdata == NULL) return NULL;
+  X86CompilerVar* var = reinterpret_cast<X86CompilerVar*>(_zoneMemory.alloc(sizeof(X86CompilerVar)));
+  if (var == NULL) return NULL;
 
   char nameBuffer[32];
   if (name == NULL)
@@ -387,51 +392,51 @@ X86CompilerVar* X86Compiler::_newVar(const char* name, uint32_t type, uint32_t s
     _varNameId++;
   }
 
-  vdata->firstItem = NULL;
-  vdata->lastItem = NULL;
-  vdata->funcScope = getFunc();
-  vdata->funcCall = NULL;
+  var->firstItem = NULL;
+  var->lastItem = NULL;
+  var->funcScope = getFunc();
+  var->funcCall = NULL;
 
-  vdata->name = _zoneMemory.sdup(name);
-  vdata->id = (uint32_t)_vars.getLength() | kOperandIdTypeVar;
-  vdata->type = type;
-  vdata->size = size;
+  var->name = _zoneMemory.sdup(name);
+  var->id = (uint32_t)_vars.getLength() | kOperandIdTypeVar;
+  var->type = type;
+  var->size = size;
 
-  vdata->homeRegisterIndex = kRegIndexInvalid;
-  vdata->prefRegisterMask = 0;
+  var->homeRegisterIndex = kRegIndexInvalid;
+  var->prefRegisterMask = 0;
 
-  vdata->homeMemoryData = NULL;
+  var->homeMemoryData = NULL;
 
-  vdata->regIndex = kRegIndexInvalid;
-  vdata->workOffset = kInvalidValue;
+  var->regIndex = kRegIndexInvalid;
+  var->workOffset = kInvalidValue;
 
-  vdata->nextActive = NULL;
-  vdata->prevActive = NULL;
+  var->nextActive = NULL;
+  var->prevActive = NULL;
 
-  vdata->priority = 10;
-  vdata->calculated = false;
-  vdata->isRegArgument = false;
-  vdata->isMemArgument = false;
+  var->priority = 10;
+  var->calculated = false;
+  var->isRegArgument = false;
+  var->isMemArgument = false;
 
-  vdata->state = kVarStateUnused;
-  vdata->changed = false;
-  vdata->saveOnUnuse = false;
+  var->state = kVarStateUnused;
+  var->changed = false;
+  var->saveOnUnuse = false;
 
-  vdata->regReadCount = 0;
-  vdata->regWriteCount = 0;
-  vdata->regRwCount = 0;
+  var->regReadCount = 0;
+  var->regWriteCount = 0;
+  var->regRwCount = 0;
 
-  vdata->regGpbLoCount = 0;
-  vdata->regGpbHiCount = 0;
+  var->regGpbLoCount = 0;
+  var->regGpbHiCount = 0;
 
-  vdata->memReadCount = 0;
-  vdata->memWriteCount = 0;
-  vdata->memRwCount = 0;
+  var->memReadCount = 0;
+  var->memWriteCount = 0;
+  var->memRwCount = 0;
 
-  vdata->tPtr = NULL;
+  var->tPtr = NULL;
 
-  _vars.append(vdata);
-  return vdata;
+  _vars.append(var);
+  return var;
 }
 
 GpVar X86Compiler::newGpVar(uint32_t varType, const char* name) ASMJIT_NOTHROW
@@ -447,8 +452,8 @@ GpVar X86Compiler::newGpVar(uint32_t varType, const char* name) ASMJIT_NOTHROW
   }
 #endif // ASMJIT_X86
 
-  X86CompilerVar* cv = _newVar(name, varType, x86VarInfo[varType].getSize());
-  return cv->asGpVar();
+  X86CompilerVar* var = _newVar(name, varType, x86VarInfo[varType].getSize());
+  return var->asGpVar();
 }
 
 GpVar X86Compiler::getGpArg(uint32_t argIndex) ASMJIT_NOTHROW
@@ -478,8 +483,8 @@ MmVar X86Compiler::newMmVar(uint32_t varType, const char* name) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT((varType < kX86VarTypeCount) && (x86VarInfo[varType].getClass() & kX86VarClassMm) != 0);
 
-  X86CompilerVar* cv = _newVar(name, varType, 8);
-  return cv->asMmVar();
+  X86CompilerVar* var = _newVar(name, varType, 8);
+  return var->asMmVar();
 }
 
 MmVar X86Compiler::getMmArg(uint32_t argIndex) ASMJIT_NOTHROW
@@ -509,8 +514,8 @@ XmmVar X86Compiler::newXmmVar(uint32_t varType, const char* name) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT((varType < kX86VarTypeCount) && (x86VarInfo[varType].getClass() & kX86VarClassXmm) != 0);
 
-  X86CompilerVar* cv = _newVar(name, varType, 16);
-  return cv->asXmmVar();
+  X86CompilerVar* var = _newVar(name, varType, 16);
+  return var->asXmmVar();
 }
 
 XmmVar X86Compiler::getXmmArg(uint32_t argIndex) ASMJIT_NOTHROW
@@ -544,7 +549,7 @@ void X86Compiler::_vhint(Var& var, uint32_t hintId, uint32_t hintValue) ASMJIT_N
   X86CompilerVar* cv = _getVar(var.getId());
   ASMJIT_ASSERT(cv != NULL);
 
-  X86CompilerHint* item = Compiler_newObject<X86CompilerHint>(this, cv, hintId, hintValue);
+  X86CompilerHint* item = Compiler_newItem<X86CompilerHint>(this, cv, hintId, hintValue);
   addItem(item);
 }
 
@@ -558,12 +563,12 @@ void X86Compiler::alloc(Var& var, uint32_t regIndex) ASMJIT_NOTHROW
   if (regIndex > 31)
     return;
 
-  _vhint(var, kVarHintAlloc, 1 << regIndex);
+  _vhint(var, kVarHintAlloc, IntUtil::maskFromIndex(regIndex));
 }
 
 void X86Compiler::alloc(Var& var, const Reg& reg) ASMJIT_NOTHROW
 {
-  _vhint(var, kVarHintAlloc, 1 << reg.getRegIndex());
+  _vhint(var, kVarHintAlloc, IntUtil::maskFromIndex(reg.getRegIndex()));
 }
 
 void X86Compiler::save(Var& var) ASMJIT_NOTHROW
@@ -685,7 +690,6 @@ void* X86Compiler::make() ASMJIT_NOTHROW
 
 void X86Compiler::serialize(Assembler& a) ASMJIT_NOTHROW
 {
-  // Context.
   X86CompilerContext x86Context(this);
   X86Assembler& x86Asm = static_cast<X86Assembler&>(a);
 
@@ -701,29 +705,30 @@ void X86Compiler::serialize(Assembler& a) ASMJIT_NOTHROW
     _cc = NULL;
 
     // ------------------------------------------------------------------------
-    // Find a function.
+    // [Find Function]
     // ------------------------------------------------------------------------
 
     for (;;)
     {
-      if (start == NULL) return;
+      if (start == NULL)
+        return;
+
       if (start->getType() == kCompilerItemFuncDecl)
         break;
-      else
-        start->emit(x86Asm);
 
+      start->emit(x86Asm);
       start = start->getNext();
     }
 
     // ------------------------------------------------------------------------
-    // Setup code generation context.
+    // [Setup CompilerContext]
     // ------------------------------------------------------------------------
 
-    CompilerItem* cur;
+    stop = static_cast<X86CompilerFuncDecl*>(start)->getEnd();
 
-    x86Context._func = reinterpret_cast<X86CompilerFuncDecl*>(start);
+    x86Context._func = static_cast<X86CompilerFuncDecl*>(start);
     x86Context._start = start;
-    x86Context._stop = stop = x86Context._func->getEnd();
+    x86Context._stop = stop;
     x86Context._extraBlock = stop->getPrev();
 
     // Detect whether the function generation was finished.
@@ -738,19 +743,21 @@ void X86Compiler::serialize(Assembler& a) ASMJIT_NOTHROW
     // - Assign/increment offset of each item.
     // - Extract variables from instructions.
     // - Prepare variables for register allocator:
-    //   - Update read(r) / write(w) / overwrite(x) statistics.
+    //   - Update read(r) / write(w) / read/write(x) statistics.
     //   - Update register / memory usage statistics.
     //   - Find scope (first / last item) of variables.
     // ------------------------------------------------------------------------
 
+    CompilerItem* cur;
     for (cur = start; ; cur = cur->getNext())
     {
       cur->prepare(x86Context);
-      if (cur == stop) break;
+      if (cur == stop)
+        break;
     }
 
-    // We set compiler context also to Compiler so new emitted instructions 
-    // can call prepare() to itself.
+    // We set compiler context also to Compiler so newly emitted instructions 
+    // can call CompilerItem::prepare() on itself.
     _cc = &x86Context;
 
     // ------------------------------------------------------------------------
@@ -781,7 +788,7 @@ void X86Compiler::serialize(Assembler& a) ASMJIT_NOTHROW
 
       x86Context._isUnreachable = true;
 
-      sysuint_t len = x86Context._backCode.getLength();
+      size_t len = x86Context._backCode.getLength();
       while (x86Context._backPos < len)
       {
         cur = x86Context._backCode[x86Context._backPos++]->getNext();

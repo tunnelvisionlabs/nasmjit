@@ -53,7 +53,7 @@ X86CompilerFuncDecl::X86CompilerFuncDecl(X86Compiler* x86Compiler) ASMJIT_NOTHRO
 
   // Stack is always aligned to 16-bytes when using 64-bit OS.
   if (CompilerUtil::isStack16ByteAligned())
-    setFuncFlag(kX86FuncFlagIsStackAlignedByOsTo16Bytes);
+    _funcHints |= IntUtil::maskFromIndex(kX86FuncHintAssume16ByteAlignment);
 
   _entryLabel = x86Compiler->newLabel();
   _exitLabel = x86Compiler->newLabel();
@@ -61,7 +61,7 @@ X86CompilerFuncDecl::X86CompilerFuncDecl(X86Compiler* x86Compiler) ASMJIT_NOTHRO
   _entryTarget = x86Compiler->_getTarget(_entryLabel.getId());
   _exitTarget = x86Compiler->_getTarget(_exitLabel.getId());
 
-  _end = Compiler_newObject<X86CompilerFuncEnd>(x86Compiler, this);
+  _end = Compiler_newItem<X86CompilerFuncEnd>(x86Compiler, this);
 }
 
 X86CompilerFuncDecl::~X86CompilerFuncDecl() ASMJIT_NOTHROW
@@ -219,16 +219,23 @@ void X86CompilerFuncDecl::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHR
     kX86FuncFlagEmitEmms   |
     kX86FuncFlagEmitSFence |
     kX86FuncFlagEmitLFence |
-    kX86FuncFlagIsStackAlignedByFnTo16Bytes);
+    kX86FuncFlagAssume16ByteAlignment |
+    kX86FuncFlagPerform16ByteAlignment);
 
   uint32_t accessibleMemoryBelowStack = 0;
   if (getDecl()->getConvention() == kX86FuncConvX64U) 
     accessibleMemoryBelowStack = 128;
 
+  if (getHint(kX86FuncHintAssume16ByteAlignment ))
+    setFuncFlag(kX86FuncFlagAssume16ByteAlignment);
+
+  if (getHint(kX86FuncHintPerform16ByteAlignment))
+    setFuncFlag(kX86FuncFlagPerform16ByteAlignment);
+
   if (getHint(kFuncHintNaked) != 0)
     setFuncFlag(kFuncFlagIsNaked);
 
-  if (isCaller() && (x86Context._memBytesTotal > 0 || isStackAlignedByOsTo16Bytes()))
+  if (isCaller() && (x86Context._memBytesTotal > 0 || isAssumed16ByteAlignment()))
     setFuncFlag(kX86FuncFlagIsEspAdjusted);
 
   if (x86Context._memBytesTotal > accessibleMemoryBelowStack)
@@ -247,16 +254,16 @@ void X86CompilerFuncDecl::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHR
     setFuncFlag(kX86FuncFlagEmitLFence);
 
   // Updated to respect comment from issue #47, align also when using MMX code.
-  if (!isStackAlignedByOsTo16Bytes() && !isNaked() && (x86Context._mem16BlocksCount + (x86Context._mem8BlocksCount > 0)))
+  if (!isAssumed16ByteAlignment() && !isNaked() && (x86Context._mem16BlocksCount + (x86Context._mem8BlocksCount > 0)))
   {
     // Have to align stack to 16-bytes.
-    setFuncFlag(kX86FuncFlagIsEspAdjusted | kX86FuncFlagIsStackAlignedByFnTo16Bytes);
+    setFuncFlag(kX86FuncFlagIsEspAdjusted | kX86FuncFlagPerform16ByteAlignment);
   }
 
   _gpModifiedAndPreserved  = x86Context._modifiedGpRegisters  & _x86Decl.getGpPreservedMask() & (~IntUtil::maskFromIndex(kX86RegIndexEsp));
   _mmModifiedAndPreserved  = x86Context._modifiedMmRegisters  & _x86Decl.getMmPreservedMask();
   _xmmModifiedAndPreserved = x86Context._modifiedXmmRegisters & _x86Decl.getXmmPreservedMask();
-  _movDqInstCode = (isStackAlignedByOsTo16Bytes() | isStackAlignedByFnTo16Bytes()) ? kX86InstMovDQA : kX86InstMovDQU;
+  _movDqInstCode = (isAssumed16ByteAlignment() | isPerformed16ByteAlignment()) ? kX86InstMovDQA : kX86InstMovDQU;
 
   // Prolog & Epilog stack size.
   {
@@ -276,7 +283,7 @@ void X86CompilerFuncDecl::_preparePrologEpilog(CompilerContext& cc) ASMJIT_NOTHR
     }
   }
 
-  if (isStackAlignedByFnTo16Bytes())
+  if (isPerformed16ByteAlignment())
   {
     _peAdjustStackSize += IntUtil::delta<int32_t>(_pePushPopStackSize, 16);
   }
@@ -548,7 +555,7 @@ void X86CompilerFuncDecl::_emitProlog(CompilerContext& cc) ASMJIT_NOTHROW
   }
 
   // Align manually stack-pointer to 16-bytes.
-  if (isStackAlignedByFnTo16Bytes())
+  if (isPerformed16ByteAlignment())
   {
     ASMJIT_ASSERT(!isNaked());
     x86Compiler->emit(kX86InstAnd, zsp, imm(-16));
@@ -819,7 +826,7 @@ void X86CompilerFuncEnd::prepare(CompilerContext& cc) ASMJIT_NOTHROW
 
 CompilerItem* X86CompilerFuncEnd::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
-  _translated = true;
+  _isTranslated = true;
   return NULL;
 }
 

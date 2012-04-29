@@ -62,16 +62,35 @@ X86CompilerTarget::~X86CompilerTarget() ASMJIT_NOTHROW
 // [AsmJit::X86CompilerTarget - Interface]
 // ============================================================================
 
-static X86CompilerTarget* X86CompilerTarget_findNext(X86CompilerTarget* target)
+static X86CompilerTarget* X86CompilerTarget_removeUnreachableItems(X86CompilerTarget* target)
 {
+  CompilerItem* prev = target->getPrev();
   CompilerItem* item = target->getNext();
 
-  while (item != NULL)
+  ASMJIT_ASSERT(prev != NULL);
+  ASMJIT_ASSERT(item != NULL);
+
+  for (;;)
   {
+    CompilerItem* next = item->getNext();
+    ASMJIT_ASSERT(next != NULL);
+
     if (item->getType() == kCompilerItemTarget)
       break;
-    item = item->getNext();
+
+    item->_prev = NULL;
+    item->_next = NULL;
+    item->_isUnreachable = true;
+
+    item = next;
   }
+
+  target->_prev = NULL;
+  target->_next = NULL;
+  target->_isTranslated = true;
+
+  prev->_next = item;
+  item->_prev = prev;
 
   return static_cast<X86CompilerTarget*>(item);
 }
@@ -89,7 +108,7 @@ CompilerItem* X86CompilerTarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
   // If this X86CompilerTarget was already translated, it's needed to change
   // the current state and return NULL to tell CompilerContext to process next
   // untranslated item.
-  if (_translated)
+  if (_isTranslated)
   {
     x86Context._restoreState(getState());
     return NULL;
@@ -97,17 +116,17 @@ CompilerItem* X86CompilerTarget::translate(CompilerContext& cc) ASMJIT_NOTHROW
 
   if (x86Context._isUnreachable)
   {
+    // If the context has "isUnreachable" flag set and there is no state then
+    // it means that this code will be never called. This is a problem, because
+    // we are unable to assign a state to current location so we can't allocate
+    // registers for variables used inside. So instead of doing anything wrong
+    // we remove the unreachable code.
     if (_state == NULL)
-    {
-      _translated = true;
-      return X86CompilerTarget_findNext(this);
-    }
-    else
-    {
-      // Assign state to the compiler context. 
-      x86Context._isUnreachable = 0;
-      x86Context._assignState(getState());
-    }
+      return X86CompilerTarget_removeUnreachableItems(this);
+
+    // Assign state to the compiler context. 
+    x86Context._isUnreachable = 0;
+    x86Context._assignState(getState());
   }
   else
   {
@@ -1208,31 +1227,36 @@ void X86CompilerInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
     v->lastItem = this;
   }
 
-  // There are some instructions that can be used to clear register or to set
-  // register to some value (ideal case is all zeros or all ones).
+  // There are some instructions that can be used to clear or to set all bits
+  // in a register:
   //
-  // xor/pxor reg, reg    ; Set all bits in reg to 0.
-  // sub/psub reg, reg    ; Set all bits in reg to 0.
-  // andn reg, reg        ; Set all bits in reg to 0.
-  // pcmpgt reg, reg      ; Set all bits in reg to 0.
-  // pcmpeq reg, reg      ; Set all bits in reg to 1.
+  // - andn reg, reg        ; Set all bits in reg to 0.
+  // - xor/pxor reg, reg    ; Set all bits in reg to 0.
+  // - sub/psub reg, reg    ; Set all bits in reg to 0.
+  // - pcmpgt reg, reg      ; Set all bits in reg to 0.
+  // - pcmpeq reg, reg      ; Set all bits in reg to 1.
+  //
+  // There are also combinations which do nothing:
+  //
+  // - and reg, reg         ; Nop.
+  // - or reg, reg          ; Nop.
 
-  if (_variablesCount == 1 &&
-      _operandsCount > 1 &&
-      _operands[0].isVar() &&
-      _operands[1].isVar() &&
-      !_memOp)
+  if (_variablesCount == 1 && _operandsCount > 1 && _operands[0].isVar() && _operands[1].isVar() && !_memOp)
   {
     switch (_code)
     {
+      // ----------------------------------------------------------------------
+      // [Zeros/Ones]
+      // ----------------------------------------------------------------------
+
+      // ANDN Instructions.
+      case kX86InstPAndN:
+
       // XOR Instructions.
       case kX86InstXor:
       case kX86InstXorPD:
       case kX86InstXorPS:
       case kX86InstPXor:
-
-      // ANDN Instructions.
-      case kX86InstPAndN:
 
       // SUB Instructions.
       case kX86InstSub:
@@ -1259,6 +1283,26 @@ void X86CompilerInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         // Clear the read flag. This prevents variable alloc/spill.
         _vars[0].vflags = kVarAllocWrite;
         _vars[0].vdata->regReadCount--;
+        break;
+
+      // ----------------------------------------------------------------------
+      // [Nop]
+      // ----------------------------------------------------------------------
+
+      // AND Instructions.
+      case kX86InstAnd:
+      case kX86InstAndPD:
+      case kX86InstAndPS:
+      case kX86InstPAnd:
+
+      // OR Instructions.
+      case kX86InstOr:
+      case kX86InstOrPD:
+      case kX86InstOrPS:
+      case kX86InstPOr:
+        // Clear the write flag.
+        _vars[0].vflags = kVarAllocRead;
+        _vars[0].vdata->regWriteCount--;
         break;
     }
   }
@@ -1578,7 +1622,8 @@ void X86CompilerJmpInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
         uint32_t start = var->firstItem->getOffset();
         uint32_t end = var->lastItem->getOffset();
 
-        if (jumpOffset >= start && jumpOffset <= end) var->lastItem = this;
+        if (jumpOffset >= start && jumpOffset <= end)
+          var->lastItem = this;
       }
       var = var->nextActive;
     } while (var != first);

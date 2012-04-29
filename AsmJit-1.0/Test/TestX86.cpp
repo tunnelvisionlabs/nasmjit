@@ -101,7 +101,7 @@ struct X86Test_FuncAlign : public X86Test
     c.lea(gvar, xvar.m());
     c.and_(gvar, imm(15));
     c.ret(gvar);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -186,7 +186,7 @@ struct X86Test_Func1 : public X86Test
     c.add(byte_ptr(p7), imm(7));
     c.add(byte_ptr(p8), imm(8));
 
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -244,7 +244,7 @@ struct X86Test_Func2 : public X86Test
     ctx->setReturn(var);
 
     c.ret(var);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -307,7 +307,7 @@ struct X86Test_Func3 : public X86Test
     c.jnz(L_Loop);
 
     c.bind(L_Exit);                                // Bind the exit label here.
-    c.endFunction();                               // End of function.
+    c.endFunc();                                   // End of function.
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -385,7 +385,7 @@ struct X86Test_Func4 : public X86Test
     // fCall->setReturn(v0);
     // c.ret(v0);
 
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -456,7 +456,7 @@ struct X86Test_Func5 : public X86Test
     fCall->setReturn(result);
     c.ret(result);
 
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -514,7 +514,7 @@ struct X86Test_Func6 : public X86Test
 
     c.bind(skip);
     c.ret(var);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -594,7 +594,7 @@ struct X86Test_Func7 : public X86Test
     c.mov(ret, acc0);
     c.add(ret, acc1);
     c.ret(ret);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -646,7 +646,7 @@ struct X86Test_Jump1 : public X86Test
     c.bind(L_C);
 
     c.ret();
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -683,7 +683,7 @@ struct X86Test_Special1 : public X86Test
 
     c.mov(dword_ptr(dst0_hi), v0_hi);
     c.mov(dword_ptr(dst0_lo), v0_lo);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -728,7 +728,7 @@ struct X86Test_Special2 : public X86Test
     c.ror(v0, c.getGpArg(3));
     
     c.mov(dword_ptr(dst0), v0);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -768,7 +768,7 @@ struct X86Test_Special3 : public X86Test
     GpVar cnt(c.getGpArg(2));
 
     c.rep_movsb(dst, src, cnt);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -807,7 +807,7 @@ struct X86Test_Special4 : public X86Test
     c.cmp(src0, src1);
     c.setz(byte_ptr(dst0));
 
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -864,7 +864,7 @@ struct X86Test_Var1 : public X86Test
     c.add(v0, v4);
 
     c.ret(v0);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -915,7 +915,7 @@ struct X86Test_Var2 : public X86Test
     c.jnz(L);
 
     c.ret(v0);
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -1004,7 +1004,7 @@ struct X86Test_Var3 : public X86Test
     c.mov(dword_ptr(a2), t);
 
     // End of function.
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
@@ -1068,7 +1068,7 @@ struct X86Test_Var4 : public X86Test
       c.mov(dword_ptr(a0, i * 4), var[i]);
     }
 
-    c.endFunction();
+    c.endFunc();
   }
 
   virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)

@@ -1917,7 +1917,11 @@ enum kX86FuncHint
   //! @brief Add sfence instruction to the function epilog.
   kX86FuncHintSFence = 10,
   //! @brief Add lfence instruction to the function epilog.
-  kX86FuncHintLFence = 11
+  kX86FuncHintLFence = 11,
+  //! @brief Assume that stack is aligned to 16-bytes.
+  kX86FuncHintAssume16ByteAlignment = 12,
+  //! @brief Perform 16-byte stack alignmend by function.
+  kX86FuncHintPerform16ByteAlignment = 13
 };
 
 // ============================================================================
@@ -1949,12 +1953,12 @@ enum kX86FuncFlags
   //! @brief Whether the function stack is aligned by 16-bytes by OS.
   //!
   //! This is always true for 64-bit mode and for linux.
-  kX86FuncFlagIsStackAlignedByOsTo16Bytes = (1U << 12),
+  kX86FuncFlagAssume16ByteAlignment = (1U << 12),
 
   //! @brief Whether the function stack (for variables) is aligned manually
   //! by function to 16-bytes.
   //!
-  //! This makes sense only if @ref kX86FuncFlagIsStackAlignedByOsTo16Bytes is 
+  //! This makes sense only if @ref kX86FuncFlagAssume16ByteAlignment is 
   //! false and MOVDQA instruction or other SSE/SSE2 instructions are used to
   //! work with variables stored on the stack.
   //!
@@ -1963,7 +1967,7 @@ enum kX86FuncFlags
   //!   1. There is 16-byte wide variable which address was used (alloc, spill,
   //!      op).
   //!   2. Function can't be naked.
-  kX86FuncFlagIsStackAlignedByFnTo16Bytes = (1U << 13),
+  kX86FuncFlagPerform16ByteAlignment = (1U << 13),
 
   //! @brief Whether the ESP register is adjusted by the stack size needed
   //! to save registers and function variables.

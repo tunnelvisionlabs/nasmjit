@@ -75,7 +75,7 @@ uint32_t Assembler::getProperty(uint32_t propertyId) const ASMJIT_NOTHROW
   if (propertyId > 31)
     return 0;
 
-  return (_properties & (1 << propertyId)) != 0;
+  return (_properties & (IntUtil::maskFromIndex(propertyId))) != 0;
 }
 
 void Assembler::setProperty(uint32_t propertyId, uint32_t value) ASMJIT_NOTHROW
@@ -84,9 +84,9 @@ void Assembler::setProperty(uint32_t propertyId, uint32_t value) ASMJIT_NOTHROW
     return;
 
   if (value)
-    _properties |= (1 << propertyId);
+    _properties |= IntUtil::maskFromIndex(propertyId);
   else
-    _properties &= ~(1 << propertyId);
+    _properties &= ~IntUtil::maskFromIndex(propertyId);
 }
 
 // ============================================================================

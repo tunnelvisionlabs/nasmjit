@@ -64,13 +64,13 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
     return reinterpret_cast<X86CompilerVar**>(_vars)[index];
   }
 
-  //! @brief Get whether the stack is aligned to 16 bytes by OS.
-  inline bool isStackAlignedByOsTo16Bytes() const ASMJIT_NOTHROW
-  { return hasFuncFlag(kX86FuncFlagIsStackAlignedByOsTo16Bytes); }
+  //! @brief Get whether it's assumed that stack is aligned to 16 bytes.
+  inline bool isAssumed16ByteAlignment() const ASMJIT_NOTHROW
+  { return hasFuncFlag(kX86FuncFlagAssume16ByteAlignment); }
 
-  //! @brief Get whether the stack is aligned to 16 bytes by function itself.
-  inline bool isStackAlignedByFnTo16Bytes() const ASMJIT_NOTHROW
-  { return hasFuncFlag(kX86FuncFlagIsStackAlignedByFnTo16Bytes); }
+  //! @brief Get whether it's required to align stack to 16 bytes by function.
+  inline bool isPerformed16ByteAlignment() const ASMJIT_NOTHROW
+  { return hasFuncFlag(kX86FuncFlagPerform16ByteAlignment); }
 
   //! @brief Get whether the ESP is adjusted.
   inline bool isEspAdjusted() const ASMJIT_NOTHROW

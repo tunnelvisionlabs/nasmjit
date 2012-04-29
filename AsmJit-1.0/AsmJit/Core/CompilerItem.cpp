@@ -33,9 +33,9 @@ CompilerItem::CompilerItem(Compiler* compiler, uint32_t type) ASMJIT_NOTHROW :
   _next(NULL),
   _comment(NULL),
   _type(static_cast<uint8_t>(type)),
-  _translated(false),
-  _reserved0(0),
-  _reserved1(0),
+  _isTranslated(false),
+  _isUnreachable(false),
+  _reserved(0),
   _offset(kInvalidValue)
 {
 }

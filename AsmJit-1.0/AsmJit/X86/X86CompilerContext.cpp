@@ -92,15 +92,15 @@ void X86CompilerContext::_clear() ASMJIT_NOTHROW
 // [AsmJit::CompilerContext - Construction / Destruction]
 // ============================================================================
 
-void X86CompilerContext::allocVar(X86CompilerVar* cv, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::allocVar(X86CompilerVar* var, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
 #if defined(ASMJIT_X64)
     case kX86VarTypeGpq:
 #endif // ASMJIT_X64
-      allocGpVar(cv, regMask, vflags);
+      allocGpVar(var, regMask, vflags);
       break;
 
     case kX86VarTypeX87:
@@ -110,7 +110,7 @@ void X86CompilerContext::allocVar(X86CompilerVar* cv, uint32_t regMask, uint32_t
       break;
 
     case kX86VarTypeMm:
-      allocMmVar(cv, regMask, vflags);
+      allocMmVar(var, regMask, vflags);
       break;
 
     case kX86VarTypeXmm:
@@ -118,22 +118,22 @@ void X86CompilerContext::allocVar(X86CompilerVar* cv, uint32_t regMask, uint32_t
     case kX86VarTypeXmmPS:
     case kX86VarTypeXmmSD:
     case kX86VarTypeXmmPD:
-      allocXmmVar(cv, regMask, vflags);
+      allocXmmVar(var, regMask, vflags);
       break;
   }
 
-  _postAlloc(cv, vflags);
+  _postAlloc(var, vflags);
 }
 
-void X86CompilerContext::saveVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::saveVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
 #if defined(ASMJIT_X64)
     case kX86VarTypeGpq:
 #endif // ASMJIT_X64
-      saveGpVar(cv);
+      saveGpVar(var);
       break;
 
     case kX86VarTypeX87:
@@ -143,7 +143,7 @@ void X86CompilerContext::saveVar(X86CompilerVar* cv) ASMJIT_NOTHROW
       break;
 
     case kX86VarTypeMm:
-      saveMmVar(cv);
+      saveMmVar(var);
       break;
 
     case kX86VarTypeXmm:
@@ -151,20 +151,20 @@ void X86CompilerContext::saveVar(X86CompilerVar* cv) ASMJIT_NOTHROW
     case kX86VarTypeXmmPS:
     case kX86VarTypeXmmSD:
     case kX86VarTypeXmmPD:
-      saveXmmVar(cv);
+      saveXmmVar(var);
       break;
   }
 }
 
-void X86CompilerContext::spillVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::spillVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
 #if defined(ASMJIT_X64)
     case kX86VarTypeGpq:
 #endif // ASMJIT_X64
-      spillGpVar(cv);
+      spillGpVar(var);
       break;
 
     case kX86VarTypeX87:
@@ -174,7 +174,7 @@ void X86CompilerContext::spillVar(X86CompilerVar* cv) ASMJIT_NOTHROW
       break;
 
     case kX86VarTypeMm:
-      spillMmVar(cv);
+      spillMmVar(var);
       break;
 
     case kX86VarTypeXmm:
@@ -182,19 +182,19 @@ void X86CompilerContext::spillVar(X86CompilerVar* cv) ASMJIT_NOTHROW
     case kX86VarTypeXmmPS:
     case kX86VarTypeXmmSD:
     case kX86VarTypeXmmPD:
-      spillXmmVar(cv);
+      spillXmmVar(var);
       break;
   }
 }
 
-void X86CompilerContext::unuseVar(X86CompilerVar* cv, uint32_t toState) ASMJIT_NOTHROW
+void X86CompilerContext::unuseVar(X86CompilerVar* var, uint32_t toState) ASMJIT_NOTHROW
 {
   ASMJIT_ASSERT(toState != kVarStateReg);
 
-  if (cv->state == kVarStateReg)
+  if (var->state == kVarStateReg)
   {
-    uint32_t regIndex = cv->regIndex;
-    switch (cv->type)
+    uint32_t regIndex = var->regIndex;
+    switch (var->type)
     {
       case kX86VarTypeGpd:
 #if defined(ASMJIT_X64)
@@ -226,12 +226,12 @@ void X86CompilerContext::unuseVar(X86CompilerVar* cv, uint32_t toState) ASMJIT_N
     }
   }
 
-  cv->state = toState;
-  cv->changed = false;
-  cv->regIndex = kRegIndexInvalid;
+  var->state = toState;
+  var->changed = false;
+  var->regIndex = kRegIndexInvalid;
 }
 
-void X86CompilerContext::allocGpVar(X86CompilerVar* cv, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
   // Fix the regMask (0 or full bit-array means that any register may be used).
   if (regMask == 0) regMask = 0xFFFFFFFF;
@@ -242,12 +242,12 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* cv, uint32_t regMask, uint32
   uint32_t mask;
 
   // Last register code (aka home).
-  uint32_t home = cv->homeRegisterIndex;
+  uint32_t home = var->homeRegisterIndex;
   // New register code.
   uint32_t idx = kRegIndexInvalid;
 
   // Preserved GP variables.
-  uint32_t preservedGP = cv->funcScope->getDecl()->getGpPreservedMask();
+  uint32_t preservedGP = var->funcScope->getDecl()->getGpPreservedMask();
 
   // Spill candidate.
   X86CompilerVar* spillCandidate = NULL;
@@ -256,16 +256,16 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* cv, uint32_t regMask, uint32
   bool nonPreservedFirst = true;
 
   if (getFunc()->isCaller())
-    nonPreservedFirst = (cv->funcCall == NULL) || (cv->funcCall->getOffset() >= cv->lastItem->getOffset());
+    nonPreservedFirst = (var->funcCall == NULL) || (var->funcCall->getOffset() >= var->lastItem->getOffset());
 
   // --------------------------------------------------------------------------
   // [Already Allocated]
   // --------------------------------------------------------------------------
 
   // Go away if variable is already allocated.
-  if (cv->state == kVarStateReg)
+  if (var->state == kVarStateReg)
   {
-    uint32_t oldIndex = cv->regIndex;
+    uint32_t oldIndex = var->regIndex;
 
     // Already allocated in the right register.
     if (IntUtil::maskFromIndex(oldIndex) & regMask) return;
@@ -284,10 +284,10 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* cv, uint32_t regMask, uint32
     ASMJIT_ASSERT(idx != kRegIndexInvalid);
 
     X86CompilerVar* other = _x86State.gp[idx];
-    emitExchangeVar(cv, idx, vflags, other);
+    emitExchangeVar(var, idx, vflags, other);
 
     _x86State.gp[oldIndex] = other;
-    _x86State.gp[idx     ] = cv;
+    _x86State.gp[idx     ] = var;
 
     if (other)
       other->regIndex = oldIndex;
@@ -295,9 +295,9 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* cv, uint32_t regMask, uint32
       _freedGpRegister(oldIndex);
 
     // Update X86CompilerVar.
-    cv->state = kVarStateReg;
-    cv->regIndex = idx;
-    cv->homeRegisterIndex = idx;
+    var->state = kVarStateReg;
+    var->regIndex = idx;
+    var->homeRegisterIndex = idx;
 
     _allocatedGpRegister(idx);
     return;
@@ -410,54 +410,54 @@ L_Spill:
   // [Alloc]
   // --------------------------------------------------------------------------
 
-  if (cv->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
+  if (var->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
   {
-    emitLoadVar(cv, idx);
+    emitLoadVar(var, idx);
   }
 
   // Update X86CompilerVar.
-  cv->state = kVarStateReg;
-  cv->regIndex = idx;
-  cv->homeRegisterIndex = idx;
+  var->state = kVarStateReg;
+  var->regIndex = idx;
+  var->homeRegisterIndex = idx;
 
   // Update CompilerState.
-  _allocatedVariable(cv);
+  _allocatedVariable(var);
 }
 
-void X86CompilerContext::saveGpVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::saveGpVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't save variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
-  emitSaveVar(cv, idx);
+  uint32_t idx = var->regIndex;
+  emitSaveVar(var, idx);
 
   // Update X86CompilerVar.
-  cv->changed = false;
+  var->changed = false;
 }
 
-void X86CompilerContext::spillGpVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::spillGpVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't spill variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
+  uint32_t idx = var->regIndex;
 
-  if (cv->changed) emitSaveVar(cv, idx);
+  if (var->changed) emitSaveVar(var, idx);
 
   // Update X86CompilerVar.
-  cv->regIndex = kRegIndexInvalid;
-  cv->state = kVarStateMem;
-  cv->changed = false;
+  var->regIndex = kRegIndexInvalid;
+  var->state = kVarStateMem;
+  var->changed = false;
 
   // Update CompilerState.
   _x86State.gp[idx] = NULL;
   _freedGpRegister(idx);
 }
 
-void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::allocMmVar(X86CompilerVar* var, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
   // Fix the regMask (0 or full bit-array means that any register may be used).
   if (regMask == 0) regMask = IntUtil::maskUpToIndex(kX86RegNumMm);
@@ -468,7 +468,7 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32
   uint32_t mask;
 
   // Last register code (aka home).
-  uint32_t home = cv->homeRegisterIndex;
+  uint32_t home = var->homeRegisterIndex;
   // New register code.
   uint32_t idx = kRegIndexInvalid;
 
@@ -477,7 +477,7 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32
   // NOTE: Currently MM variables are not preserved and there is no calling
   // convention known to me that does that. But on the other side it's possible
   // to write such calling convention.
-  uint32_t preservedMM = cv->funcScope->getDecl()->getMmPreservedMask();
+  uint32_t preservedMM = var->funcScope->getDecl()->getMmPreservedMask();
 
   // Spill candidate.
   X86CompilerVar* spillCandidate = NULL;
@@ -486,7 +486,7 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32
   bool nonPreservedFirst = true;
   if (this->getFunc()->isCaller())
   {
-    nonPreservedFirst = cv->funcCall == NULL || cv->funcCall->getOffset() >= cv->lastItem->getOffset();
+    nonPreservedFirst = var->funcCall == NULL || var->funcCall->getOffset() >= var->lastItem->getOffset();
   }
 
   // --------------------------------------------------------------------------
@@ -494,9 +494,9 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32
   // --------------------------------------------------------------------------
 
   // Go away if variable is already allocated.
-  if (cv->state == kVarStateReg)
+  if (var->state == kVarStateReg)
   {
-    uint32_t oldIndex = cv->regIndex;
+    uint32_t oldIndex = var->regIndex;
 
     // Already allocated in the right register.
     if (IntUtil::maskFromIndex(oldIndex) & regMask) return;
@@ -518,14 +518,14 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* cv, uint32_t regMask, uint32
     X86CompilerVar* other = _x86State.mm[idx];
     if (other) spillMmVar(other);
 
-    emitMoveVar(cv, idx, vflags);
+    emitMoveVar(var, idx, vflags);
     _freedMmRegister(oldIndex);
-    _x86State.mm[idx] = cv;
+    _x86State.mm[idx] = var;
 
     // Update X86CompilerVar.
-    cv->state = kVarStateReg;
-    cv->regIndex = idx;
-    cv->homeRegisterIndex = idx;
+    var->state = kVarStateReg;
+    var->regIndex = idx;
+    var->homeRegisterIndex = idx;
 
     _allocatedMmRegister(idx);
     return;
@@ -627,54 +627,54 @@ L_Spill:
   // [Alloc]
   // --------------------------------------------------------------------------
 
-  if (cv->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
+  if (var->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
   {
-    emitLoadVar(cv, idx);
+    emitLoadVar(var, idx);
   }
 
   // Update X86CompilerVar.
-  cv->state = kVarStateReg;
-  cv->regIndex = idx;
-  cv->homeRegisterIndex = idx;
+  var->state = kVarStateReg;
+  var->regIndex = idx;
+  var->homeRegisterIndex = idx;
 
   // Update CompilerState.
-  _allocatedVariable(cv);
+  _allocatedVariable(var);
 }
 
-void X86CompilerContext::saveMmVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::saveMmVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't save variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
-  emitSaveVar(cv, idx);
+  uint32_t idx = var->regIndex;
+  emitSaveVar(var, idx);
 
   // Update X86CompilerVar.
-  cv->changed = false;
+  var->changed = false;
 }
 
-void X86CompilerContext::spillMmVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::spillMmVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't spill variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
+  uint32_t idx = var->regIndex;
 
-  if (cv->changed) emitSaveVar(cv, idx);
+  if (var->changed) emitSaveVar(var, idx);
 
   // Update X86CompilerVar.
-  cv->regIndex = kRegIndexInvalid;
-  cv->state = kVarStateMem;
-  cv->changed = false;
+  var->regIndex = kRegIndexInvalid;
+  var->state = kVarStateMem;
+  var->changed = false;
 
   // Update CompilerState.
   _x86State.mm[idx] = NULL;
   _freedMmRegister(idx);
 }
 
-void X86CompilerContext::allocXmmVar(X86CompilerVar* cv, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::allocXmmVar(X86CompilerVar* var, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
   // Fix the regMask (0 or full bit-array means that any register may be used).
   if (regMask == 0) regMask = IntUtil::maskUpToIndex(kX86RegNumXmm);
@@ -685,12 +685,12 @@ void X86CompilerContext::allocXmmVar(X86CompilerVar* cv, uint32_t regMask, uint3
   uint32_t mask;
 
   // Last register code (aka home).
-  uint32_t home = cv->homeRegisterIndex;
+  uint32_t home = var->homeRegisterIndex;
   // New register code.
   uint32_t idx = kRegIndexInvalid;
 
   // Preserved XMM variables.
-  uint32_t preservedXMM = cv->funcScope->getDecl()->getXmmPreservedMask();
+  uint32_t preservedXMM = var->funcScope->getDecl()->getXmmPreservedMask();
 
   // Spill candidate.
   X86CompilerVar* spillCandidate = NULL;
@@ -699,16 +699,16 @@ void X86CompilerContext::allocXmmVar(X86CompilerVar* cv, uint32_t regMask, uint3
   bool nonPreservedFirst = true;
 
   if (this->getFunc()->isCaller())
-    nonPreservedFirst = (cv->funcCall == NULL) || (cv->funcCall->getOffset() >= cv->lastItem->getOffset());
+    nonPreservedFirst = (var->funcCall == NULL) || (var->funcCall->getOffset() >= var->lastItem->getOffset());
 
   // --------------------------------------------------------------------------
   // [Already Allocated]
   // --------------------------------------------------------------------------
 
   // Go away if variable is already allocated.
-  if (cv->state == kVarStateReg)
+  if (var->state == kVarStateReg)
   {
-    uint32_t oldIndex = cv->regIndex;
+    uint32_t oldIndex = var->regIndex;
 
     // Already allocated in the right register.
     if (IntUtil::maskFromIndex(oldIndex) & regMask) return;
@@ -730,14 +730,14 @@ void X86CompilerContext::allocXmmVar(X86CompilerVar* cv, uint32_t regMask, uint3
     X86CompilerVar* other = _x86State.xmm[idx];
     if (other) spillXmmVar(other);
 
-    emitMoveVar(cv, idx, vflags);
+    emitMoveVar(var, idx, vflags);
     _freedXmmRegister(oldIndex);
-    _x86State.xmm[idx] = cv;
+    _x86State.xmm[idx] = var;
 
     // Update X86CompilerVar.
-    cv->state = kVarStateReg;
-    cv->regIndex = idx;
-    cv->homeRegisterIndex = idx;
+    var->state = kVarStateReg;
+    var->regIndex = idx;
+    var->homeRegisterIndex = idx;
 
     _allocatedXmmRegister(idx);
     return;
@@ -840,59 +840,59 @@ L_Spill:
   // [Alloc]
   // --------------------------------------------------------------------------
 
-  if (cv->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
+  if (var->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
   {
-    emitLoadVar(cv, idx);
+    emitLoadVar(var, idx);
   }
 
   // Update X86CompilerVar.
-  cv->state = kVarStateReg;
-  cv->regIndex = idx;
-  cv->homeRegisterIndex = idx;
+  var->state = kVarStateReg;
+  var->regIndex = idx;
+  var->homeRegisterIndex = idx;
 
   // Update CompilerState.
-  _allocatedVariable(cv);
+  _allocatedVariable(var);
 }
 
-void X86CompilerContext::saveXmmVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::saveXmmVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't save variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
-  emitSaveVar(cv, idx);
+  uint32_t idx = var->regIndex;
+  emitSaveVar(var, idx);
 
   // Update X86CompilerVar.
-  cv->changed = false;
+  var->changed = false;
 }
 
-void X86CompilerContext::spillXmmVar(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::spillXmmVar(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Can't spill variable that isn't allocated.
-  ASMJIT_ASSERT(cv->state == kVarStateReg);
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->state == kVarStateReg);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
-  uint32_t idx = cv->regIndex;
+  uint32_t idx = var->regIndex;
 
-  if (cv->changed) emitSaveVar(cv, idx);
+  if (var->changed) emitSaveVar(var, idx);
 
   // Update CompilerVar.
-  cv->regIndex = kRegIndexInvalid;
-  cv->state = kVarStateMem;
-  cv->changed = false;
+  var->regIndex = kRegIndexInvalid;
+  var->state = kVarStateMem;
+  var->changed = false;
 
   // Update CompilerState.
   _x86State.xmm[idx] = NULL;
   _freedXmmRegister(idx);
 }
 
-void X86CompilerContext::emitLoadVar(X86CompilerVar* cv, uint32_t regIndex) ASMJIT_NOTHROW
+void X86CompilerContext::emitLoadVar(X86CompilerVar* var, uint32_t regIndex) ASMJIT_NOTHROW
 {
   X86Compiler* x86Compiler = getCompiler();
-  Mem m = _getVarMem(cv);
+  Mem m = _getVarMem(var);
 
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
       x86Compiler->emit(kX86InstMov, gpd(regIndex), m);
@@ -940,18 +940,18 @@ void X86CompilerContext::emitLoadVar(X86CompilerVar* cv, uint32_t regIndex) ASMJ
   return;
 
 _AddComment:
-  x86Compiler->getCurrentItem()->formatComment("Alloc %s", cv->name);
+  x86Compiler->getCurrentItem()->formatComment("Alloc %s", var->name);
 }
 
-void X86CompilerContext::emitSaveVar(X86CompilerVar* cv, uint32_t regIndex) ASMJIT_NOTHROW
+void X86CompilerContext::emitSaveVar(X86CompilerVar* var, uint32_t regIndex) ASMJIT_NOTHROW
 {
   // Caller must ensure that variable is allocated.
   ASMJIT_ASSERT(regIndex != kRegIndexInvalid);
 
   X86Compiler* x86Compiler = getCompiler();
-  Mem m = _getVarMem(cv);
+  Mem m = _getVarMem(var);
 
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
       x86Compiler->emit(kX86InstMov, m, gpd(regIndex));
@@ -999,25 +999,25 @@ void X86CompilerContext::emitSaveVar(X86CompilerVar* cv, uint32_t regIndex) ASMJ
   return;
 
 _AddComment:
-  x86Compiler->getCurrentItem()->formatComment("Spill %s", cv->name);
+  x86Compiler->getCurrentItem()->formatComment("Spill %s", var->name);
 }
 
-void X86CompilerContext::emitMoveVar(X86CompilerVar* cv, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::emitMoveVar(X86CompilerVar* var, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
 {
   // Caller must ensure that variable is allocated.
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
   X86Compiler* x86Compiler = getCompiler();
   if ((vflags & kVarAllocRead) == 0) return;
 
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
-      x86Compiler->emit(kX86InstMov, gpd(regIndex), gpd(cv->regIndex));
+      x86Compiler->emit(kX86InstMov, gpd(regIndex), gpd(var->regIndex));
       break;
 #if defined(ASMJIT_X64)
     case kX86VarTypeGpq:
-      x86Compiler->emit(kX86InstMov, gpq(regIndex), gpq(cv->regIndex));
+      x86Compiler->emit(kX86InstMov, gpq(regIndex), gpq(var->regIndex));
       break;
 #endif // ASMJIT_X64
 
@@ -1028,38 +1028,38 @@ void X86CompilerContext::emitMoveVar(X86CompilerVar* cv, uint32_t regIndex, uint
       break;
 
     case kX86VarTypeMm:
-      x86Compiler->emit(kX86InstMovQ, mm(regIndex), mm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovQ, mm(regIndex), mm(var->regIndex));
       break;
 
     case kX86VarTypeXmm:
-      x86Compiler->emit(kX86InstMovDQA, xmm(regIndex), xmm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovDQA, xmm(regIndex), xmm(var->regIndex));
       break;
     case kX86VarTypeXmmSS:
-      x86Compiler->emit(kX86InstMovSS, xmm(regIndex), xmm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovSS, xmm(regIndex), xmm(var->regIndex));
       break;
     case kX86VarTypeXmmSD:
-      x86Compiler->emit(kX86InstMovSD, xmm(regIndex), xmm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovSD, xmm(regIndex), xmm(var->regIndex));
       break;
     case kX86VarTypeXmmPS:
-      x86Compiler->emit(kX86InstMovAPS, xmm(regIndex), xmm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovAPS, xmm(regIndex), xmm(var->regIndex));
       break;
     case kX86VarTypeXmmPD:
-      x86Compiler->emit(kX86InstMovAPD, xmm(regIndex), xmm(cv->regIndex));
+      x86Compiler->emit(kX86InstMovAPD, xmm(regIndex), xmm(var->regIndex));
       break;
   }
 }
 
-void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, uint32_t vflags, X86CompilerVar* other) ASMJIT_NOTHROW
+void X86CompilerContext::emitExchangeVar(X86CompilerVar* var, uint32_t regIndex, uint32_t vflags, X86CompilerVar* other) ASMJIT_NOTHROW
 {
   // Caller must ensure that variable is allocated.
-  ASMJIT_ASSERT(cv->regIndex != kRegIndexInvalid);
+  ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
   X86Compiler* x86Compiler = getCompiler();
 
   // If other is not valid then we can just emit MOV (or other similar instruction).
   if (other == NULL)
   {
-    emitMoveVar(cv, regIndex, vflags);
+    emitMoveVar(var, regIndex, vflags);
     return;
   }
 
@@ -1067,18 +1067,18 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
   // variable away instead of exchanging them.
   if ((vflags & kVarAllocRead) == 0)
   {
-    emitMoveVar(other, cv->regIndex, kVarAllocRead);
+    emitMoveVar(other, var->regIndex, kVarAllocRead);
     return;
   }
 
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
-      x86Compiler->emit(kX86InstXchg, gpd(regIndex), gpd(cv->regIndex));
+      x86Compiler->emit(kX86InstXchg, gpd(regIndex), gpd(var->regIndex));
       break;
 #if defined(ASMJIT_X64)
     case kX86VarTypeGpq:
-      x86Compiler->emit(kX86InstXchg, gpq(regIndex), gpq(cv->regIndex));
+      x86Compiler->emit(kX86InstXchg, gpq(regIndex), gpq(var->regIndex));
       break;
 #endif // ASMJIT_X64
 
@@ -1094,7 +1094,7 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
     case kX86VarTypeMm:
     {
       MmReg a = mm(regIndex);
-      MmReg b = mm(cv->regIndex);
+      MmReg b = mm(var->regIndex);
 
       x86Compiler->emit(kX86InstPXor, a, b);
       x86Compiler->emit(kX86InstPXor, b, a);
@@ -1106,7 +1106,7 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
     case kX86VarTypeXmmPS:
     {
       XmmReg a = xmm(regIndex);
-      XmmReg b = xmm(cv->regIndex);
+      XmmReg b = xmm(var->regIndex);
 
       x86Compiler->emit(kX86InstXorPS, a, b);
       x86Compiler->emit(kX86InstXorPS, b, a);
@@ -1118,7 +1118,7 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
     case kX86VarTypeXmmPD:
     {
       XmmReg a = xmm(regIndex);
-      XmmReg b = xmm(cv->regIndex);
+      XmmReg b = xmm(var->regIndex);
 
       x86Compiler->emit(kX86InstXorPD, a, b);
       x86Compiler->emit(kX86InstXorPD, b, a);
@@ -1129,7 +1129,7 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
     case kX86VarTypeXmm:
     {
       XmmReg a = xmm(regIndex);
-      XmmReg b = xmm(cv->regIndex);
+      XmmReg b = xmm(var->regIndex);
 
       x86Compiler->emit(kX86InstPXor, a, b);
       x86Compiler->emit(kX86InstPXor, b, a);
@@ -1139,52 +1139,52 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* cv, uint32_t regIndex, 
   }
 }
 
-void X86CompilerContext::_postAlloc(X86CompilerVar* cv, uint32_t vflags) ASMJIT_NOTHROW
+void X86CompilerContext::_postAlloc(X86CompilerVar* var, uint32_t vflags) ASMJIT_NOTHROW
 {
   if (vflags & kVarAllocWrite)
-    cv->changed = true;
+    var->changed = true;
 }
 
-void X86CompilerContext::_markMemoryUsed(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::_markMemoryUsed(X86CompilerVar* var) ASMJIT_NOTHROW
 {
-  if (cv->homeMemoryData != NULL) return;
+  if (var->homeMemoryData != NULL) return;
 
-  VarMemBlock* mem = _allocMemBlock(cv->size);
+  VarMemBlock* mem = _allocMemBlock(var->size);
   if (!mem) return;
 
-  cv->homeMemoryData = mem;
+  var->homeMemoryData = mem;
 }
 
-Mem X86CompilerContext::_getVarMem(X86CompilerVar* cv) ASMJIT_NOTHROW
+Mem X86CompilerContext::_getVarMem(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   Mem m;
-  m._mem.id = cv->id;
+  m._mem.id = var->id;
 
-  if (!cv->isMemArgument)
+  if (!var->isMemArgument)
     m._mem.displacement = _adjustESP;
 
-  _markMemoryUsed(cv);
+  _markMemoryUsed(var);
   return m;
 }
 
-static int32_t getSpillScore(X86CompilerVar* v, uint32_t currentOffset)
+static int32_t getSpillScore(X86CompilerVar* var, uint32_t currentOffset)
 {
   int32_t score = 0;
 
-  ASMJIT_ASSERT(v->lastItem != NULL);
-  uint32_t lastOffset = v->lastItem->getOffset();
+  ASMJIT_ASSERT(var->lastItem != NULL);
+  uint32_t lastOffset = var->lastItem->getOffset();
 
   if (lastOffset >= currentOffset)
     score += (int32_t)(lastOffset - currentOffset);
 
   // Each write access decreases probability of spill.
-  score -= (int32_t)v->regWriteCount + (int32_t)v->regRwCount;
+  score -= static_cast<int32_t>(var->regWriteCount) + static_cast<int32_t>(var->regRwCount);
   // Each read-only access increases probability of spill.
-  score += (int32_t)v->regReadCount;
+  score += static_cast<int32_t>(var->regReadCount);
 
   // Each memory access increases probability of spill.
-  score += (int32_t)v->memWriteCount + (int32_t)v->memRwCount;
-  score += (int32_t)v->memReadCount;
+  score += static_cast<int32_t>(var->memWriteCount) + static_cast<int32_t>(var->memRwCount);
+  score += static_cast<int32_t>(var->memReadCount);
 
   return score;
 }
@@ -1238,35 +1238,35 @@ X86CompilerVar* X86CompilerContext::_getSpillCandidateGeneric(X86CompilerVar** v
   return candidate;
 }
 
-void X86CompilerContext::_addActive(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::_addActive(X86CompilerVar* var) ASMJIT_NOTHROW
 {
   // Never call with variable that is already in active list.
-  ASMJIT_ASSERT(cv->nextActive == NULL);
-  ASMJIT_ASSERT(cv->prevActive == NULL);
+  ASMJIT_ASSERT(var->nextActive == NULL);
+  ASMJIT_ASSERT(var->prevActive == NULL);
 
   if (_active == NULL)
   {
-    cv->nextActive = cv;
-    cv->prevActive = cv;
+    var->nextActive = var;
+    var->prevActive = var;
 
-    _active = cv;
+    _active = var;
   }
   else
   {
     X86CompilerVar* vlast = static_cast<X86CompilerVar*>(_active)->prevActive;
 
-    vlast->nextActive = cv;
-    static_cast<X86CompilerVar*>(_active)->prevActive = cv;
+    vlast->nextActive = var;
+    static_cast<X86CompilerVar*>(_active)->prevActive = var;
 
-    cv->nextActive = static_cast<X86CompilerVar*>(_active);
-    cv->prevActive = vlast;
+    var->nextActive = static_cast<X86CompilerVar*>(_active);
+    var->prevActive = vlast;
   }
 }
 
-void X86CompilerContext::_freeActive(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::_freeActive(X86CompilerVar* var) ASMJIT_NOTHROW
 {
-  X86CompilerVar* next = cv->nextActive;
-  X86CompilerVar* prev = cv->prevActive;
+  X86CompilerVar* next = var->nextActive;
+  X86CompilerVar* prev = var->prevActive;
 
   if (prev == next)
   {
@@ -1274,15 +1274,15 @@ void X86CompilerContext::_freeActive(X86CompilerVar* cv) ASMJIT_NOTHROW
   }
   else
   {
-    if (_active == cv)
+    if (_active == var)
       _active = next;
 
     prev->nextActive = next;
     next->prevActive = prev;
   }
 
-  cv->nextActive = NULL;
-  cv->prevActive = NULL;
+  var->nextActive = NULL;
+  var->prevActive = NULL;
 }
 
 void X86CompilerContext::_freeAllActive() ASMJIT_NOTHROW
@@ -1305,20 +1305,20 @@ void X86CompilerContext::_freeAllActive() ASMJIT_NOTHROW
   _active = NULL;
 }
 
-void X86CompilerContext::_allocatedVariable(X86CompilerVar* cv) ASMJIT_NOTHROW
+void X86CompilerContext::_allocatedVariable(X86CompilerVar* var) ASMJIT_NOTHROW
 {
-  uint32_t idx = cv->regIndex;
+  uint32_t idx = var->regIndex;
 
-  switch (cv->type)
+  switch (var->type)
   {
     case kX86VarTypeGpd:
     case kX86VarTypeGpq:
-      _x86State.gp[idx] = cv;
+      _x86State.gp[idx] = var;
       _allocatedGpRegister(idx);
       break;
 
     case kX86VarTypeMm:
-      _x86State.mm[idx] = cv;
+      _x86State.mm[idx] = var;
       _allocatedMmRegister(idx);
       break;
 
@@ -1327,7 +1327,7 @@ void X86CompilerContext::_allocatedVariable(X86CompilerVar* cv) ASMJIT_NOTHROW
     case kX86VarTypeXmmPS:
     case kX86VarTypeXmmSD:
     case kX86VarTypeXmmPD:
-      _x86State.xmm[idx] = cv;
+      _x86State.xmm[idx] = var;
       _allocatedXmmRegister(idx);
       break;
 

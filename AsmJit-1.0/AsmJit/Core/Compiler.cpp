@@ -22,22 +22,6 @@
 namespace AsmJit {
 
 // ============================================================================
-// [AsmJit::Compiler - Helpers]
-// ============================================================================
-
-static void Compiler_delItems(CompilerItem* first) ASMJIT_NOTHROW
-{
-  CompilerItem* cur = first;
-
-  while (cur)
-  {
-    CompilerItem* next = cur->getNext();
-    cur->~CompilerItem();
-    cur = next;
-  }
-}
-
-// ============================================================================
 // [AsmJit::Compiler - Construction / Destruction]
 // ============================================================================
 
@@ -96,7 +80,7 @@ uint32_t Compiler::getProperty(uint32_t propertyId)
   if (propertyId > 31)
     return 0;
 
-  return (_properties & (1 << propertyId)) != 0;
+  return (_properties & IntUtil::maskFromIndex(propertyId)) != 0;
 }
 
 void Compiler::setProperty(uint32_t propertyId, uint32_t value)
@@ -105,9 +89,9 @@ void Compiler::setProperty(uint32_t propertyId, uint32_t value)
     return;
 
   if (value)
-    _properties |= (1 << propertyId);
+    _properties |= IntUtil::maskFromIndex(propertyId);
   else
-    _properties &= ~(1 << propertyId);
+    _properties &= ~IntUtil::maskFromIndex(propertyId);
 }
 
 // ============================================================================
@@ -138,8 +122,6 @@ void Compiler::reset() ASMJIT_NOTHROW
 
 void Compiler::_purge() ASMJIT_NOTHROW
 {
-  Compiler_delItems(_first);
-
   _zoneMemory.clear();
   _linkMemory.clear();
 
@@ -265,7 +247,7 @@ void Compiler::comment(const char* fmt, ...) ASMJIT_NOTHROW
   *p++ = '\n';
   *p   = '\0';
 
-  CompilerComment* item = Compiler_newObject<CompilerComment>(this, buf);
+  CompilerComment* item = Compiler_newItem<CompilerComment>(this, buf);
   addItem(item);
 }
 

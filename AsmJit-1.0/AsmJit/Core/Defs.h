@@ -230,7 +230,7 @@ enum kFuncFlags
   //! also @c _isEspAdjusted one.
   kFuncFlagIsCaller = (1U << 0),
 
-  //! @brief Whether the function is finished using @c Compiler::endFunction().
+  //! @brief Whether the function is finished using @c Compiler::endFunc().
   kFuncFlagIsFinished = (1U << 1),
 
   //! @brief Whether the function is using naked (minimal) prolog / epilog.
@@ -521,7 +521,7 @@ enum kError
 
   //! @brief No function defined.
   kErrorNoFunction = 7,
-  //! @brief Function generation is not finished by using @c Compiler::endFunction()
+  //! @brief Function generation is not finished by using @c Compiler::endFunc()
   //! or something bad happened during generation related to function. This can
   //! be missing compiler item, etc...
   kErrorIncompleteFunction = 8,

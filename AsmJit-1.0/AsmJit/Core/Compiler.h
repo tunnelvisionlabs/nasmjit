@@ -250,42 +250,42 @@ struct Compiler
 // ============================================================================
 
 template<typename T, typename Compiler>
-inline T* Compiler_newObject(Compiler* self) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self);
 }
 
 template<typename T, typename Compiler, typename P1>
-inline T* Compiler_newObject(Compiler* self, P1 p1) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self, P1 p1) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self, p1);
 }
 
 template<typename T, typename Compiler, typename P1, typename P2>
-inline T* Compiler_newObject(Compiler* self, P1 p1, P2 p2) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self, P1 p1, P2 p2) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self, p1, p2);
 }
 
 template<typename T, typename Compiler, typename P1, typename P2, typename P3>
-inline T* Compiler_newObject(Compiler* self, P1 p1, P2 p2, P3 p3) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self, P1 p1, P2 p2, P3 p3) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self, p1, p2, p3);
 }
 
 template<typename T, typename Compiler, typename P1, typename P2, typename P3, typename P4>
-inline T* Compiler_newObject(Compiler* self, P1 p1, P2 p2, P3 p3, P4 p4) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self, P1 p1, P2 p2, P3 p3, P4 p4) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self, p1, p2, p3, p4);
 }
 
 template<typename T, typename Compiler, typename P1, typename P2, typename P3, typename P4, typename P5>
-inline T* Compiler_newObject(Compiler* self, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) ASMJIT_NOTHROW
+inline T* Compiler_newItem(Compiler* self, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) ASMJIT_NOTHROW
 {
   void* addr = self->getZoneMemory().alloc(sizeof(T));
   return new(addr) T(self, p1, p2, p3, p4, p5);

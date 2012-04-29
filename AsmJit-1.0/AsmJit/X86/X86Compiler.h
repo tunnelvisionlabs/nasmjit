@@ -599,7 +599,7 @@ struct CompilerUtil
 //! c.mov(dword_ptr(a1), x1);
 //!
 //! // End of function body.
-//! c.endFunction();
+//! c.endFunc();
 //!
 //! // Make the function.
 //! typedef void (*MyFn)(int*);
@@ -765,7 +765,7 @@ struct CompilerUtil
 //! //   var0 - register.
 //! //   var1 - register.
 //!
-//! c.endFunction();
+//! c.endFunc();
 //! @endcode
 //!
 //! The output:
@@ -846,7 +846,7 @@ struct CompilerUtil
 //! // so state-change code will be embedded here.
 //! c.je(L0);
 //! 
-//! c.endFunction();
+//! c.endFunc();
 //! @endcode
 //!
 //! The output:
@@ -1058,7 +1058,7 @@ struct X86Compiler : public Compiler
 
   //! @brief Get current function as @ref X86CompilerFuncDecl.
   //!
-  //! This method can be called within @c newFunc() and @c endFunction()
+  //! This method can be called within @c newFunc() and @c endFunc()
   //! block to get current function you are working with. It's recommended
   //! to store @c AsmJit::Function pointer returned by @c newFunc<> method,
   //! because this allows you in future implement function sections outside of
@@ -1100,7 +1100,7 @@ struct X86Compiler : public Compiler
   //!   BuildFunction2<int, int>());
   //!
   //! // End of function (also emits function @c Epilog)
-  //! c.endFunction();
+  //! c.endFunc();
   //! @endcode
   //!
   //! You can see that building functions is really easy. Previous code snipped
@@ -1130,7 +1130,7 @@ struct X86Compiler : public Compiler
   //! c.add(a0, a1);
   //!
   //! // End of function (emits function epilog and return)
-  //! c.endFunction();
+  //! c.endFunc();
   //! @endcode
   //!
   //! Arguments are like variables. How to manipulate with variables is
@@ -1157,7 +1157,7 @@ struct X86Compiler : public Compiler
   ASMJIT_API X86CompilerFuncDecl* newFunc_(uint32_t convenion, uint32_t returnType, const uint32_t* arguments, uint32_t argumentsCount) ASMJIT_NOTHROW;
 
   //! @brief End of current function scope and all variables.
-  ASMJIT_API X86CompilerFuncDecl* endFunction() ASMJIT_NOTHROW;
+  ASMJIT_API X86CompilerFuncDecl* endFunc() ASMJIT_NOTHROW;
 
   // --------------------------------------------------------------------------
   // [Emit]

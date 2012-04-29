@@ -50,9 +50,9 @@ void CompilerFuncDecl::setHint(uint32_t hint, uint32_t value) ASMJIT_NOTHROW
     return;
 
   if (value)
-    _funcHints |= (1 << hint);
+    _funcHints |= IntUtil::maskFromIndex(hint);
   else
-    _funcHints &= ~(1 << hint);
+    _funcHints &= ~IntUtil::maskFromIndex(hint);
 }
 
 uint32_t CompilerFuncDecl::getHint(uint32_t hint) const ASMJIT_NOTHROW
@@ -60,7 +60,7 @@ uint32_t CompilerFuncDecl::getHint(uint32_t hint) const ASMJIT_NOTHROW
   if (hint > 31)
     return 0;
   
-  return (_funcHints & (1 << hint)) != 0;
+  return (_funcHints & IntUtil::maskFromIndex(hint)) != 0;
 }
 
 // ============================================================================
@@ -83,7 +83,7 @@ CompilerFuncEnd::~CompilerFuncEnd() ASMJIT_NOTHROW
 
 CompilerItem* CompilerFuncEnd::translate(CompilerContext& cc) ASMJIT_NOTHROW
 {
-  _translated = true;
+  _isTranslated = true;
   return NULL;
 }
 

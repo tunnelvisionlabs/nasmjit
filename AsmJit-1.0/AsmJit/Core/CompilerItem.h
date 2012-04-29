@@ -70,8 +70,12 @@ struct CompilerItem
   { return _type; }
 
   //! @brief Get whether the item was translated.
-  inline uint8_t isTranslated() const ASMJIT_NOTHROW
-  { return _translated; }
+  inline bool isTranslated() const ASMJIT_NOTHROW
+  { return _isTranslated; }
+
+  //! @brief Get whether the item is unreachable.
+  inline bool isUnreachable() const ASMJIT_NOTHROW
+  { return _isUnreachable; }
 
   //! @brief Get the item offset in the compiler stream.
   //!
@@ -126,9 +130,9 @@ protected:
   //! @brief Mark item as translated and return next.
   inline CompilerItem* translated() ASMJIT_NOTHROW
   {
-    ASMJIT_ASSERT(_translated == false);
+    ASMJIT_ASSERT(_isTranslated == false);
 
-    _translated = true;
+    _isTranslated = true;
     return _next;
   }
 
@@ -147,15 +151,15 @@ public:
   const char* _comment;
 
   //! @brief Type of the item, see @ref kCompilerItem.
-  uint8_t _type;
+  uint32_t _type : 8;
   //! @brief Whether the item was translated, see @c translate().
-  uint8_t _translated;
-  //! @brief Reserved for future use #0.
-  uint8_t _reserved0;
-  //! @brief Reserved for future use #1.
-  uint8_t _reserved1;
+  uint32_t _isTranslated : 1;
+  //! @brief Whether the item is unreachable.
+  uint32_t _isUnreachable : 1;
+  //! @brief Reserved for future use.
+  uint32_t _reserved : 22;
 
-  //! @brief Offset (not byte-offset).
+  //! @brief Stream offset (not byte-offset).
   uint32_t _offset;
 
   ASMJIT_NO_COPY(CompilerItem)
