@@ -1785,17 +1785,17 @@ const X86InstInfo x86InstInfo[] =
 
 const X86VarInfo x86VarInfo[] = 
 {
-  /*  0 */ { kX86RegTypeGpd   , 4 , C(Gp) , 0                , 0, "Gpd"         },
-  /*  1 */ { kX86RegTypeGpq   , 8 , C(Gp) , 0                , 0, "Gpq"         },
-  /*  2 */ { kX86RegTypeX87   , 4 , C(X87), F(SP)            , 0, "X87"         },
-  /*  3 */ { kX86RegTypeX87   , 4 , C(X87), F(SP)            , 0, "X87.SS"      },
-  /*  4 */ { kX86RegTypeX87   , 8 , C(X87), F(DP)            , 0, "X87.SD"      },
-  /*  5 */ { kX86RegTypeMm    , 8 , C(Mm) , 0                , 0, "Mm"          },
-  /*  6 */ { kX86RegTypeXmm   , 16, C(Xmm), 0                , 0, "Xmm"         },
-  /*  7 */ { kX86RegTypeXmm   , 4 , C(Xmm), F(SP)            , 0, "Xmm.SS"      },
-  /*  8 */ { kX86RegTypeXmm   , 8 , C(Xmm), F(DP)            , 0, "Xmm.SD"      },
-  /*  9 */ { kX86RegTypeXmm   , 16, C(Xmm), F(SP) | F(Packed), 0, "Xmm.PS"      },
-  /* 10 */ { kX86RegTypeXmm   , 16, C(Xmm), F(DP) | F(Packed), 0, "Xmm.PD"      }
+  /*  0 */ { kX86RegTypeGpd   , 4 , C(Gp) , 0                , "Gpd"         },
+  /*  1 */ { kX86RegTypeGpq   , 8 , C(Gp) , 0                , "Gpq"         },
+  /*  2 */ { kX86RegTypeX87   , 4 , C(X87), F(SP)            , "X87"         },
+  /*  3 */ { kX86RegTypeX87   , 4 , C(X87), F(SP)            , "X87.SS"      },
+  /*  4 */ { kX86RegTypeX87   , 8 , C(X87), F(DP)            , "X87.SD"      },
+  /*  5 */ { kX86RegTypeMm    , 8 , C(Mm) , 0                , "Mm"          },
+  /*  6 */ { kX86RegTypeXmm   , 16, C(Xmm), 0                , "Xmm"         },
+  /*  7 */ { kX86RegTypeXmm   , 4 , C(Xmm), F(SP)            , "Xmm.SS"      },
+  /*  8 */ { kX86RegTypeXmm   , 8 , C(Xmm), F(DP)            , "Xmm.SD"      },
+  /*  9 */ { kX86RegTypeXmm   , 16, C(Xmm), F(SP) | F(Packed), "Xmm.PS"      },
+  /* 10 */ { kX86RegTypeXmm   , 16, C(Xmm), F(DP) | F(Packed), "Xmm.PD"      }
 };
 
 #undef F

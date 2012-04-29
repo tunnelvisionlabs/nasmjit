@@ -88,12 +88,13 @@
 # endif
 #endif // ASMJIT_API
 
-#if defined(ASMJIT_API) && !defined(ASMJIT_VAR)
-# define ASMJIT_VAR extern ASMJIT_API
-#else
-# define ASMJIT_API
-# define ASMJIT_VAR
-#endif // ASMJIT_API && !ASMJIT_VAR
+#if !defined(ASMJIT_VAR)
+# if defined(ASMJIT_API)
+#  define ASMJIT_VAR extern ASMJIT_API
+# else
+#  define ASMJIT_VAR
+# endif // ASMJIT_API
+#endif // !ASMJIT_VAR
 
 #if !defined(ASMJIT_NOTHROW)
 #define ASMJIT_NOTHROW throw()
@@ -144,18 +145,20 @@
 #endif // ASMJIT_NOP
 
 // [AsmJit - C++ Compiler Support]
-#define ASMJIT_TYPE_TO_TYPE(type) type 
+#define ASMJIT_TYPE_TO_TYPE(_Type_) _Type_ 
 #define ASMJIT_HAS_STANDARD_DEFINE_OPTIONS
 #define ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION
 
 // Support for VC6
 #if defined(_MSC_VER) && (_MSC_VER < 1400)
-#undef ASMJIT_TYPE_TO_TYPE
+
 namespace AsmJit {
   template<typename T>
   struct _Type2Type { typedef T Type; };
 }
-#define ASMJIT_TYPE_TO_TYPE(T) _Type2Type<T>::Type
+
+#undef ASMJIT_TYPE_TO_TYPE
+#define ASMJIT_TYPE_TO_TYPE(_Type_) ::AsmJit::_Type2Type<_Type_>::Type
 
 #undef ASMJIT_HAS_STANDARD_DEFINE_OPTIONS
 #undef ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION
@@ -170,6 +173,7 @@ namespace AsmJit {
 
 // Use <stdint.h>
 #include <stdint.h>
+#include <limits.h>
 
 #else
 

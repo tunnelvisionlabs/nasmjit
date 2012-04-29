@@ -18,6 +18,13 @@
 namespace AsmJit {
 
 // ============================================================================
+// [Forward Declaration]
+// ============================================================================
+
+template<typename T>
+struct TypeId;
+
+// ============================================================================
 // [AsmJit::TypeId]
 // ============================================================================
 
@@ -290,7 +297,7 @@ struct FuncBuilder0 : public FuncPrototype
 {
   inline FuncBuilder0()
   {
-    _setPrototype(TypeId<RET>::Id, NULL, 0);
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, NULL, 0);
   }
 };
 
@@ -302,10 +309,10 @@ struct FuncBuilder1 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -317,11 +324,11 @@ struct FuncBuilder2 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -333,12 +340,12 @@ struct FuncBuilder3 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -350,13 +357,13 @@ struct FuncBuilder4 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -368,14 +375,14 @@ struct FuncBuilder5 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -387,15 +394,15 @@ struct FuncBuilder6 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id,
-      TypeId<P5>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -407,16 +414,16 @@ struct FuncBuilder7 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id,
-      TypeId<P5>::Id,
-      TypeId<P6>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -428,17 +435,17 @@ struct FuncBuilder8 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id,
-      TypeId<P5>::Id,
-      TypeId<P6>::Id,
-      TypeId<P7>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -450,18 +457,18 @@ struct FuncBuilder9 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id,
-      TypeId<P5>::Id,
-      TypeId<P6>::Id,
-      TypeId<P7>::Id,
-      TypeId<P8>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P8)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
@@ -473,19 +480,19 @@ struct FuncBuilder10 : public FuncPrototype
   {
     static const uint32_t arguments[] =
     {
-      TypeId<P0>::Id,
-      TypeId<P1>::Id,
-      TypeId<P2>::Id,
-      TypeId<P3>::Id,
-      TypeId<P4>::Id,
-      TypeId<P5>::Id,
-      TypeId<P6>::Id,
-      TypeId<P7>::Id,
-      TypeId<P8>::Id,
-      TypeId<P9>::Id
+      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P8)>::Id,
+      TypeId<ASMJIT_TYPE_TO_TYPE(P9)>::Id
     };
 
-    _setPrototype(TypeId<RET>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
+    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::Id, arguments, ASMJIT_ARRAY_SIZE(arguments));
   }
 };
 
