@@ -238,7 +238,8 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
     fullMask &= ~IntUtil::maskFromIndex(kX86RegIndexEbp);
 
   // Fix the regMask (0 or full bit-array means that any register may be used).
-  if (regMask == 0) regMask = 0xFFFFFFFF;
+  if (regMask == 0)
+    regMask = 0xFFFFFFFF;
   regMask &= fullMask;
 
   // Working variables.
@@ -272,7 +273,8 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
     uint32_t oldIndex = var->regIndex;
 
     // Already allocated in the right register.
-    if (IntUtil::maskFromIndex(oldIndex) & regMask) return;
+    if (IntUtil::maskFromIndex(oldIndex) & regMask)
+      return;
 
     // Try to find unallocated register first.
     mask = regMask & ~_x86State.usedGP;
@@ -280,7 +282,7 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
     {
       idx = IntUtil::findFirstBit((nonPreservedFirst && (mask & ~preservedGP) != 0) ? mask & ~preservedGP : mask);
     }
-    // Then find the allocated and later exchange.
+    // Then find the allocated and exchange later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedGP);
@@ -311,9 +313,62 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
   // [Find Unused GP]
   // --------------------------------------------------------------------------
 
+  // Home register code.
+  if ((idx == kRegIndexInvalid) && 
+      (home != kRegIndexInvalid) &&
+      (regMask          & IntUtil::maskFromIndex(home)) != 0 &&
+      (_x86State.usedGP & IntUtil::maskFromIndex(home)) == 0)
+  {
+    idx = home;
+    goto _Alloc;
+  }
+
+  // We start from 1, because EAX/RAX register is sometimes explicitly
+  // needed. So we trying to prevent reallocation in near future.
+  if (idx == kRegIndexInvalid)
+  {
+    for (i = 1, mask = (1 << i); i < kX86RegNumGp; i++, mask <<= 1)
+    {
+      if ((regMask & mask) != 0 && (_x86State.usedGP & mask) == 0)
+      {
+        // Convenience to alloc non-preserved first or non-preserved last.
+        if (nonPreservedFirst)
+        {
+          if (idx != kRegIndexInvalid && (preservedGP & mask) != 0)
+            continue;
+          
+          idx = i;
+          // If current register is preserved, we should try to find different
+          // one that is not. This can save one push / pop in prolog / epilog.
+          if ((preservedGP & mask) == 0)
+            break;
+        }
+        else
+        {
+          if (idx != kRegIndexInvalid && (preservedGP & mask) == 0)
+            continue;
+
+          idx = i;
+          // The opposite.
+          if ((preservedGP & mask) != 0)
+            break;
+        }
+      }
+    }
+  }
+
+  // If not found, try EAX/RAX.
+  if ((idx == kRegIndexInvalid) &&
+      (regMask          & IntUtil::maskFromIndex(kX86RegIndexEax)) != 0 &&
+      (_x86State.usedGP & IntUtil::maskFromIndex(kX86RegIndexEax)) == 0)
+  {
+    idx = kX86RegIndexEax;
+    goto _Alloc;
+  }
+
   // If regMask contains restricted registers which may be used then everything
-  // is handled in this block.
-  if (regMask != fullMask)
+  // is handled inside this block.
+  if ((idx == kRegIndexInvalid) && (regMask != fullMask))
   {
     // Try to find unallocated register first.
     mask = regMask & ~_x86State.usedGP;
@@ -322,7 +377,7 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
       idx = IntUtil::findFirstBit((nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
       ASMJIT_ASSERT(idx != kRegIndexInvalid);
     }
-    // Then find the allocated and later spill.
+    // Then find the allocated and spill later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedGP);
@@ -334,46 +389,6 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
       // Jump to spill part of allocation.
       goto L_Spill;
     }
-  }
-
-  // Home register code.
-  if (idx == kRegIndexInvalid && home != kRegIndexInvalid)
-  {
-    if ((_x86State.usedGP & (1U << home)) == 0) idx = home;
-  }
-
-  // We start from 1, because EAX/RAX register is sometimes explicitly
-  // needed. So we trying to prevent reallocation in near future.
-  if (idx == kRegIndexInvalid)
-  {
-    for (i = 1, mask = (1 << i); i < kX86RegNumGp; i++, mask <<= 1)
-    {
-      if ((_x86State.usedGP & mask) == 0 && (i != kX86RegIndexEbp || _allocableEBP) && (i != kX86RegIndexEsp))
-      {
-        // Convenience to alloc non-preserved first or non-preserved last.
-        if (nonPreservedFirst)
-        {
-          if (idx != kRegIndexInvalid && (preservedGP & mask) != 0) continue;
-          idx = i;
-          // If current register is preserved, we should try to find different
-          // one that is not. This can save one push / pop in prolog / epilog.
-          if ((preservedGP & mask) == 0) break;
-        }
-        else
-        {
-          if (idx != kRegIndexInvalid && (preservedGP & mask) == 0) continue;
-          idx = i;
-          // The opposite.
-          if ((preservedGP & mask) != 0) break;
-        }
-      }
-    }
-  }
-
-  // If not found, try EAX/RAX.
-  if (idx == kRegIndexInvalid && (_x86State.usedGP & 1) == 0)
-  {
-    idx = kX86RegIndexEax;
   }
 
   // --------------------------------------------------------------------------
@@ -396,7 +411,6 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
     }
 
 L_Spill:
-
     // Prevented variables can't be spilled. _getSpillCandidate() never returns
     // prevented variables, but when jumping to L_spill it can happen.
     if (spillCandidate->workOffset == _currentOffset)
@@ -413,6 +427,7 @@ L_Spill:
   // [Alloc]
   // --------------------------------------------------------------------------
 
+_Alloc:
   if (var->state == kVarStateMem && (vflags & kVarAllocRead) != 0)
   {
     emitLoadVar(var, idx);
@@ -511,7 +526,7 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* var, uint32_t regMask, uint3
       idx = IntUtil::findFirstBit(
         (nonPreservedFirst && (mask & ~preservedMM) != 0) ? mask & ~preservedMM : mask);
     }
-    // Then find the allocated and later exchange.
+    // Then find the allocated and exchange later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedMM);
@@ -550,7 +565,7 @@ void X86CompilerContext::allocMmVar(X86CompilerVar* var, uint32_t regMask, uint3
         (nonPreservedFirst && (mask & ~preservedMM) != 0) ? mask & ~preservedMM : mask);
       ASMJIT_ASSERT(idx != kRegIndexInvalid);
     }
-    // Then find the allocated and later spill.
+    // Then find the allocated and spill later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedMM);
@@ -723,7 +738,7 @@ void X86CompilerContext::allocXmmVar(X86CompilerVar* var, uint32_t regMask, uint
       idx = IntUtil::findFirstBit(
         (nonPreservedFirst && (mask & ~preservedXMM) != 0) ? mask & ~preservedXMM : mask);
     }
-    // Then find the allocated and later exchange.
+    // Then find the allocated and exchange later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedXMM);
@@ -762,7 +777,7 @@ void X86CompilerContext::allocXmmVar(X86CompilerVar* var, uint32_t regMask, uint
         (nonPreservedFirst && (mask & ~preservedXMM) != 0) ? mask & ~preservedXMM : mask);
       ASMJIT_ASSERT(idx != kRegIndexInvalid);
     }
-    // Then find the allocated and later spill.
+    // Then find the allocated and spill later.
     else
     {
       idx = IntUtil::findFirstBit(regMask & _x86State.usedXMM);

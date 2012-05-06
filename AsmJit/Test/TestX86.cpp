@@ -200,11 +200,11 @@ struct X86Test_Func1 : public X86Test
     func(resultBuf, resultBuf, resultBuf, resultBuf,
          resultBuf, resultBuf, resultBuf, resultBuf);
 
-    result.setFormat("buf={ %d, %d, %d, %d, %d, %d, %d, %d, %d }",
+    result.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
       resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3],
       resultBuf[4], resultBuf[5], resultBuf[6], resultBuf[7],
       resultBuf[8]);
-    expected.setFormat("buf={ %d, %d, %d, %d, %d, %d, %d, %d, %d }",
+    expected.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
       expectedBuf[0], expectedBuf[1], expectedBuf[2], expectedBuf[3],
       expectedBuf[4], expectedBuf[5], expectedBuf[6], expectedBuf[7],
       expectedBuf[8]);
@@ -328,8 +328,8 @@ struct X86Test_Func3 : public X86Test
     
     func(dstBuffer, srcBuffer, kBufferSize);
 
-    result.setString("buf={ ");
-    expected.setString("buf={ ");
+    result.setString("buf={");
+    expected.setString("buf={");
 
     for (i = 0; i < kBufferSize; i++)
     {
@@ -343,8 +343,8 @@ struct X86Test_Func3 : public X86Test
       expected.appendFormat("%u", static_cast<uint>(srcBuffer[i]));
     }
 
-    result.appendString(" }");
-    expected.appendString(" }");
+    result.appendString("}");
+    expected.appendString("}");
 
     return memcmp(dstBuffer, srcBuffer, kBufferSize * sizeof(uint32_t)) == 0;
   }
@@ -823,13 +823,64 @@ struct X86Test_Special4 : public X86Test
     func(1, 0, &resultBuf[2]); // We are expecting 0 (1 != 0).
     func(1, 1, &resultBuf[3]); // We are expecting 1 (1 == 1).
 
-    result.setFormat("out={ %d, %d, %d, %d }", resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3]);
-    expected.setFormat("out={ %d, %d, %d, %d }", expectedBuf[0], expectedBuf[1], expectedBuf[2], expectedBuf[3]);
+    result.setFormat("out={%d, %d, %d, %d}", resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3]);
+    expected.setFormat("out={%d, %d, %d, %d}", expectedBuf[0], expectedBuf[1], expectedBuf[2], expectedBuf[3]);
 
     return resultBuf[0] == expectedBuf[0] &&
            resultBuf[1] == expectedBuf[1] &&
            resultBuf[2] == expectedBuf[2] &&
            resultBuf[3] == expectedBuf[3] ;
+  }
+};
+
+// ============================================================================
+// [X86Test_Special5]
+// ============================================================================
+
+struct X86Test_Special5 : public X86Test
+{
+  virtual const char* getName() const { return "Special5 - Complex imul"; }
+
+  virtual void compile(X86Compiler& c)
+  {
+    c.newFunc(kX86FuncConvDefault, FuncBuilder2<Void, int*, const int*>());
+    c.getFunc()->setHint(kFuncHintNaked, true);
+
+    GpVar dst = c.getGpArg(0);
+    GpVar src = c.getGpArg(1);
+
+    for (uint i = 0; i < 4; i++)
+    {
+      GpVar x = c.newGpVar(kX86VarTypeGpd);
+      GpVar y = c.newGpVar(kX86VarTypeGpd);
+      GpVar hi = c.newGpVar(kX86VarTypeGpd);
+
+      c.mov(x, dword_ptr(src, 0));
+      c.mov(y, dword_ptr(src, 4));
+
+      c.imul(hi, x, y);
+      c.add(dword_ptr(dst, 0), hi);
+      c.add(dword_ptr(dst, 4), x);
+    }
+
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
+  {
+    typedef void (*Func)(int*, const int*);
+    Func func = asmjit_cast<Func>(_func);
+
+    int src[2] = { 4, 9 };
+    int resultRet[2] = { 0, 0 };
+    int expectedRet[2] = { 0, (4 * 9) * 4 };
+
+    func(resultRet, src);
+
+    result.setFormat("ret={%d, %d}", resultRet[0], resultRet[1]);
+    expected.setFormat("ret={%d, %d}", expectedRet[0], expectedRet[1]);
+
+    return resultRet[0] == expectedRet[0] && resultRet[1] == expectedRet[1];
   }
 };
 
@@ -1188,6 +1239,7 @@ X86TestSuite::X86TestSuite() :
   testList.append(new X86Test_Special2());
   testList.append(new X86Test_Special3());
   testList.append(new X86Test_Special4());
+  testList.append(new X86Test_Special5());
 
   // --------------------------------------------------------------------------
   // [Var]
