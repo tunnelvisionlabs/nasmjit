@@ -233,9 +233,13 @@ void X86CompilerContext::unuseVar(X86CompilerVar* var, uint32_t toState) ASMJIT_
 
 void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint32_t vflags) ASMJIT_NOTHROW
 {
+  uint32_t fullMask = IntUtil::maskUpToIndex(kX86RegNumGp) & ~IntUtil::maskFromIndex(kX86RegIndexEsp);
+  if (!_allocableEBP)
+    fullMask &= ~IntUtil::maskFromIndex(kX86RegIndexEbp);
+
   // Fix the regMask (0 or full bit-array means that any register may be used).
   if (regMask == 0) regMask = 0xFFFFFFFF;
-  regMask &= IntUtil::maskUpToIndex(kX86RegNumGp);
+  regMask &= fullMask;
 
   // Working variables.
   uint32_t i;
@@ -309,14 +313,13 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
 
   // If regMask contains restricted registers which may be used then everything
   // is handled in this block.
-  if (regMask != IntUtil::maskUpToIndex(kX86RegNumGp))
+  if (regMask != fullMask)
   {
     // Try to find unallocated register first.
     mask = regMask & ~_x86State.usedGP;
     if (mask != 0)
     {
-      idx = IntUtil::findFirstBit(
-        (nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
+      idx = IntUtil::findFirstBit((nonPreservedFirst && (mask & ~preservedGP) != 0) ? (mask & ~preservedGP) : mask);
       ASMJIT_ASSERT(idx != kRegIndexInvalid);
     }
     // Then find the allocated and later spill.
