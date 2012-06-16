@@ -412,7 +412,7 @@
 
             if (_isEspAdjusted)
             {
-                nspPos = _memStackSize16;
+                nspPos = _memStackSize16 + _functionCallStackSize;
                 if (stackSubtract != 0)
                     Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)(stackSubtract));
             }
@@ -485,7 +485,7 @@
             int nspPos;
 
             nspPos = (_isEspAdjusted)
-              ? (_memStackSize16)
+              ? (_memStackSize16 + _functionCallStackSize)
               : -(_peMovStackSize + _peAdjustStackSize);
 
             if (Compiler.Logger != null)
