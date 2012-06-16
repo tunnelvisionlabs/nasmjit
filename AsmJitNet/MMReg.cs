@@ -1,6 +1,6 @@
 ﻿namespace AsmJitNet
 {
-    public sealed class MMReg : BaseReg
+    public sealed class MMReg : BaseReg, IMmOperand
     {
         public MMReg(RegCode code)
             : base(code, 8)

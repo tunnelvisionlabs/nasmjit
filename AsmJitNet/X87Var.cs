@@ -1,6 +1,6 @@
 ﻿namespace AsmJitNet
 {
-    public class X87Var : BaseVar
+    public class X87Var : BaseVar, IX87Operand
     {
         public X87Var()
             : base(RegType.X87, VariableType.X87)

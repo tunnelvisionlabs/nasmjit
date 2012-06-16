@@ -2,7 +2,7 @@
 {
     using System.Diagnostics.Contracts;
 
-    public class MMVar : BaseVar
+    public class MMVar : BaseVar, IMmOperand
     {
         public MMVar()
             : base(RegType.MM, VariableType.MM)

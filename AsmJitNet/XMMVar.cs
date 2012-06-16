@@ -2,7 +2,7 @@
 {
     using System.Diagnostics.Contracts;
 
-    public class XMMVar : BaseVar
+    public class XMMVar : BaseVar, IXmmOperand
     {
         public XMMVar()
             : base(RegType.XMM, VariableType.XMM)

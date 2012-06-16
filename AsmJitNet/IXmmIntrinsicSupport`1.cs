@@ -1,7 +1,7 @@
 ﻿namespace AsmJitNet
 {
     public interface IXmmIntrinsicSupport<TXMM> : IIntrinsicSupport
-        where TXMM : Operand
+        where TXMM : IXmmOperand
     {
     }
 }

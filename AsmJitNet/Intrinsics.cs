@@ -11,7 +11,7 @@
         /// Add with carry.
         /// </summary>
         public static void Adc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -24,7 +24,7 @@
         /// Add with carry.
         /// </summary>
         public static void Adc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -37,7 +37,7 @@
         /// Add with carry.
         /// </summary>
         public static void Adc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -50,7 +50,7 @@
         /// Add with carry.
         /// </summary>
         public static void Adc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -75,7 +75,7 @@
         /// Add.
         /// </summary>
         public static void Add<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -88,7 +88,7 @@
         /// Add.
         /// </summary>
         public static void Add<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -101,7 +101,7 @@
         /// Add.
         /// </summary>
         public static void Add<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -114,7 +114,7 @@
         /// Add.
         /// </summary>
         public static void Add<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -139,7 +139,7 @@
         /// Logical AND.
         /// </summary>
         public static void And<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -152,7 +152,7 @@
         /// Logical AND.
         /// </summary>
         public static void And<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -165,7 +165,7 @@
         /// Logical AND.
         /// </summary>
         public static void And<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -178,7 +178,7 @@
         /// Logical AND.
         /// </summary>
         public static void And<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -203,7 +203,7 @@
         /// Bit scan forward
         /// </summary>
         public static void Bsf<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -216,7 +216,7 @@
         /// Bit scan forward
         /// </summary>
         public static void Bsf<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -229,7 +229,7 @@
         /// Bit scan reverse
         /// </summary>
         public static void Bsr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -242,7 +242,7 @@
         /// Bit scan reverse
         /// </summary>
         public static void Bsr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -255,7 +255,7 @@
         /// Byte swap (32 bit or 64 bit registers only) (i486)
         /// </summary>
         public static void Bswap<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -267,7 +267,7 @@
         /// Bit test
         /// </summary>
         public static void Bt<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -280,7 +280,7 @@
         /// Bit test
         /// </summary>
         public static void Bt<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -293,7 +293,7 @@
         /// Bit test
         /// </summary>
         public static void Bt<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -318,7 +318,7 @@
         /// Bit test and complement
         /// </summary>
         public static void Btc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -331,7 +331,7 @@
         /// Bit test and complement
         /// </summary>
         public static void Btc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -344,7 +344,7 @@
         /// Bit test and complement
         /// </summary>
         public static void Btc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -369,7 +369,7 @@
         /// Bit test and reset
         /// </summary>
         public static void Btr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -382,7 +382,7 @@
         /// Bit test and reset
         /// </summary>
         public static void Btr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -395,7 +395,7 @@
         /// Bit test and reset
         /// </summary>
         public static void Btr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -420,7 +420,7 @@
         /// Bit test and set
         /// </summary>
         public static void Bts<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -433,7 +433,7 @@
         /// Bit test and set
         /// </summary>
         public static void Bts<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -446,7 +446,7 @@
         /// Bit test and set
         /// </summary>
         public static void Bts<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -470,40 +470,142 @@
         /// <summary>
         /// Convert byte to word (sign extend)
         /// </summary>
-        public static void Cbw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+        public static void Cbw(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Cbw);
+        }
+
+        /// <summary>
+        /// Convert byte to word (sign extend)
+        /// </summary>
+        public static void Cbw(this Compiler compiler, GPVar dst)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cbw, dst);
+            compiler.EmitInstruction(InstructionCode.Cbw, dst);
         }
 
         /// <summary>
         /// Convert word to dword (sign extend)
         /// </summary>
-        public static void Cwde<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+        public static void Cwde(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Cwde);
+        }
+
+        /// <summary>
+        /// Convert word to dword (sign extend)
+        /// </summary>
+        public static void Cwde(this Compiler compiler, GPVar dst)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst != null);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cwde, dst);
+            compiler.EmitInstruction(InstructionCode.Cwde, dst);
         }
 
         /// <summary>
         /// Convert dword to qword (sign extend)
         /// </summary>
-        public static void Cdqe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+        public static void Cdqe(this Assembler assembler)
         {
-            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cdqe));
+
+            assembler.EmitInstruction(InstructionCode.Cdqe);
+        }
+
+        /// <summary>
+        /// Convert dword to qword (sign extend)
+        /// </summary>
+        public static void Cdqe(this Compiler compiler, GPVar dst)
+        {
+            Contract.Requires(compiler != null);
             Contract.Requires(dst != null);
 
             if (!Util.IsX64)
                 throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cdqe));
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Cdqe, dst);
+            compiler.EmitInstruction(InstructionCode.Cdqe, dst);
+        }
+
+        /// <summary>
+        /// Convert word to dword (sign extend)
+        /// </summary>
+        public static void Cwd(this Assembler assembler)
+        {
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Cwd);
+        }
+
+        /// <summary>
+        /// Convert word to dword (sign extend)
+        /// </summary>
+        public static void Cwd(this Compiler compiler, GPVar dstLo, GPVar dstHi)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(dstLo != null);
+            Contract.Requires(dstHi != null);
+
+            compiler.EmitInstruction(InstructionCode.Cwd, dstLo, dstHi);
+        }
+
+        /// <summary>
+        /// Convert dword to qword (sign extend)
+        /// </summary>
+        public static void Cdq(this Assembler assembler)
+        {
+            Contract.Requires(assembler != null);
+
+            assembler.EmitInstruction(InstructionCode.Cdq);
+        }
+
+        /// <summary>
+        /// Convert dword to qword (sign extend)
+        /// </summary>
+        public static void Cdq(this Compiler compiler, GPVar dstLo, GPVar dstHi)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(dstLo != null);
+            Contract.Requires(dstHi != null);
+
+            compiler.EmitInstruction(InstructionCode.Cdq, dstLo, dstHi);
+        }
+
+        /// <summary>
+        /// Convert qword to dqword (sign extend)
+        /// </summary>
+        public static void Cqo(this Assembler assembler)
+        {
+            Contract.Requires(assembler != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cdqe));
+
+            assembler.EmitInstruction(InstructionCode.Cqo);
+        }
+
+        /// <summary>
+        /// Convert qword to dqword (sign extend)
+        /// </summary>
+        public static void Cqo(this Compiler compiler, GPVar dstLo, GPVar dstHi)
+        {
+            Contract.Requires(compiler != null);
+            Contract.Requires(dstLo != null);
+            Contract.Requires(dstHi != null);
+
+            if (!Util.IsX64)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X64.", InstructionCode.Cdqe));
+
+            compiler.EmitInstruction(InstructionCode.Cqo, dstLo, dstHi);
         }
 
         /// <summary>
@@ -537,7 +639,7 @@
         /// Conditional move
         /// </summary>
         public static void CMov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Condition cc, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -550,7 +652,7 @@
         /// Conditional move
         /// </summary>
         public static void CMov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Condition cc, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -560,7 +662,7 @@
         }
 
         public static void Cmova<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -570,7 +672,7 @@
         }
 
         public static void Cmova<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -580,7 +682,7 @@
         }
 
         public static void Cmovae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -590,7 +692,7 @@
         }
 
         public static void Cmovae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -600,7 +702,7 @@
         }
 
         public static void Cmovb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -610,7 +712,7 @@
         }
 
         public static void Cmovb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -620,7 +722,7 @@
         }
 
         public static void Cmovbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -630,7 +732,7 @@
         }
 
         public static void Cmovbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -640,7 +742,7 @@
         }
 
         public static void Cmovc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -650,7 +752,7 @@
         }
 
         public static void Cmovc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -660,7 +762,7 @@
         }
 
         public static void Cmove<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -670,7 +772,7 @@
         }
 
         public static void Cmove<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -680,7 +782,7 @@
         }
 
         public static void Cmovg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -690,7 +792,7 @@
         }
 
         public static void Cmovg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -700,7 +802,7 @@
         }
 
         public static void Cmovge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -710,7 +812,7 @@
         }
 
         public static void Cmovge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -720,7 +822,7 @@
         }
 
         public static void Cmovl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -730,7 +832,7 @@
         }
 
         public static void Cmovl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -740,7 +842,7 @@
         }
 
         public static void Cmovle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -750,7 +852,7 @@
         }
 
         public static void Cmovle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -760,7 +862,7 @@
         }
 
         public static void Cmovna<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -770,7 +872,7 @@
         }
 
         public static void Cmovna<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -780,7 +882,7 @@
         }
 
         public static void Cmovnae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -790,7 +892,7 @@
         }
 
         public static void Cmovnae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -800,7 +902,7 @@
         }
 
         public static void Cmovnb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -810,7 +912,7 @@
         }
 
         public static void Cmovnb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -820,7 +922,7 @@
         }
 
         public static void Cmovnbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -830,7 +932,7 @@
         }
 
         public static void Cmovnbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -840,7 +942,7 @@
         }
 
         public static void Cmovnc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -850,7 +952,7 @@
         }
 
         public static void Cmovnc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -860,7 +962,7 @@
         }
 
         public static void Cmovne<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -870,7 +972,7 @@
         }
 
         public static void Cmovne<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -880,7 +982,7 @@
         }
 
         public static void Cmovng<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -890,7 +992,7 @@
         }
 
         public static void Cmovng<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -900,7 +1002,7 @@
         }
 
         public static void Cmovnge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -910,7 +1012,7 @@
         }
 
         public static void Cmovnge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -920,7 +1022,7 @@
         }
 
         public static void Cmovnl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -930,7 +1032,7 @@
         }
 
         public static void Cmovnl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -940,7 +1042,7 @@
         }
 
         public static void Cmovnle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -950,7 +1052,7 @@
         }
 
         public static void Cmovnle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -960,7 +1062,7 @@
         }
 
         public static void Cmovno<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -970,7 +1072,7 @@
         }
 
         public static void Cmovno<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -980,7 +1082,7 @@
         }
 
         public static void Cmovnp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -990,7 +1092,7 @@
         }
 
         public static void Cmovnp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1000,7 +1102,7 @@
         }
 
         public static void Cmovns<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1010,7 +1112,7 @@
         }
 
         public static void Cmovns<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1020,7 +1122,7 @@
         }
 
         public static void Cmovnz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1030,7 +1132,7 @@
         }
 
         public static void Cmovnz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1040,7 +1142,7 @@
         }
 
         public static void Cmovo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1050,7 +1152,7 @@
         }
 
         public static void Cmovo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1060,7 +1162,7 @@
         }
 
         public static void Cmovp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1070,7 +1172,7 @@
         }
 
         public static void Cmovp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1080,7 +1182,7 @@
         }
 
         public static void Cmovpe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1090,7 +1192,7 @@
         }
 
         public static void Cmovpe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1100,7 +1202,7 @@
         }
 
         public static void Cmovpo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1110,7 +1212,7 @@
         }
 
         public static void Cmovpo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1120,7 +1222,7 @@
         }
 
         public static void Cmovs<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1130,7 +1232,7 @@
         }
 
         public static void Cmovs<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1140,7 +1242,7 @@
         }
 
         public static void Cmovz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1150,7 +1252,7 @@
         }
 
         public static void Cmovz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1160,7 +1262,7 @@
         }
 
         public static void Cmp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1170,7 +1272,7 @@
         }
 
         public static void Cmp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1180,7 +1282,7 @@
         }
 
         public static void Cmp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1190,7 +1292,7 @@
         }
 
         public static void Cmp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1317,7 +1419,7 @@
         }
 
         public static void Daa<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1329,7 +1431,7 @@
         }
 
         public static void Das<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1341,7 +1443,7 @@
         }
 
         public static void Dec<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1361,7 +1463,7 @@
         /// Unsigned divide
         /// </summary>
         public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1376,7 +1478,7 @@
         /// Unsigned divide
         /// </summary>
         public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1403,7 +1505,7 @@
         /// Signed divide
         /// </summary>
         public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1417,7 +1519,7 @@
         /// Signed divide
         /// </summary>
         public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1431,7 +1533,7 @@
         /// Signed multiply
         /// </summary>
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -1445,7 +1547,7 @@
         /// Signed multiply
         /// </summary>
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -1456,7 +1558,7 @@
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1466,7 +1568,7 @@
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1476,7 +1578,7 @@
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1486,7 +1588,7 @@
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src, Imm imm)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1497,7 +1599,7 @@
         }
 
         public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src, Imm imm)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1508,7 +1610,7 @@
         }
 
         public static void Inc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1780,7 +1882,7 @@
         }
 
         public static void Jmp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1821,7 +1923,7 @@
         }
 
         public static void Lea<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1835,13 +1937,13 @@
         /// High level procedure exit
         /// </summary>
         public static void Leave<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, )
-        where TGP : Operand where TX87 : Operand where TMM : Operand where TXMM : Operand { Contract.Requires(intrinsicSupport != null);
+        where TGP : Operand, IGpOperand where TX87 : Operand, IX87Operand where TMM : Operand, IMmOperand where TXMM : Operand, IXmmOperand { Contract.Requires(intrinsicSupport != null);
             intrinsicSupport.EmitInstruction(InstructionCode.Leave);
         }
 #endif
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1851,7 +1953,7 @@
         }
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1861,7 +1963,7 @@
         }
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1880,7 +1982,7 @@
         }
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1899,7 +2001,7 @@
         }
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, SegmentReg src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1918,7 +2020,7 @@
         }
 
         public static void Mov<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, SegmentReg dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1928,7 +2030,7 @@
         }
 
         public static void MovPtr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, IntPtr src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1938,7 +2040,7 @@
         }
 
         public static void MovPtr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, IntPtr dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(src != null);
@@ -1948,7 +2050,7 @@
         }
 
         public static void Movsx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1958,7 +2060,7 @@
         }
 
         public static void Movsx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1968,7 +2070,7 @@
         }
 
         public static void Movsxd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1981,7 +2083,7 @@
         }
 
         public static void Movsxd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -1994,7 +2096,7 @@
         }
 
         public static void Movzx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2004,7 +2106,7 @@
         }
 
         public static void Movzx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2017,7 +2119,7 @@
         /// Unsigned multiply
         /// </summary>
         public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -2031,7 +2133,7 @@
         /// Unsigned multiply
         /// </summary>
         public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -2045,7 +2147,7 @@
         /// Two's complement negation
         /// </summary>
         public static void Neg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2078,7 +2180,7 @@
         /// One's complement negation
         /// </summary>
         public static void Not<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2101,7 +2203,7 @@
         /// Logical OR.
         /// </summary>
         public static void Or<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2114,7 +2216,7 @@
         /// Logical OR.
         /// </summary>
         public static void Or<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2127,7 +2229,7 @@
         /// Logical OR.
         /// </summary>
         public static void Or<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2140,7 +2242,7 @@
         /// Logical OR.
         /// </summary>
         public static void Or<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2162,7 +2264,7 @@
         }
 
         public static void Pop<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2221,7 +2323,7 @@
         }
 
         public static void Push<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(src != null);
@@ -2288,7 +2390,7 @@
         }
 
         public static void Rcl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2298,7 +2400,7 @@
         }
 
         public static void Rcl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2308,7 +2410,7 @@
         }
 
         public static void Rcl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2327,7 +2429,7 @@
         }
 
         public static void Rcr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2337,7 +2439,7 @@
         }
 
         public static void Rcr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2347,7 +2449,7 @@
         }
 
         public static void Rcr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2978,7 +3080,7 @@
         }
 
         public static void Rol<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2988,7 +3090,7 @@
         }
 
         public static void Rol<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -2998,7 +3100,7 @@
         }
 
         public static void Rol<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3017,7 +3119,7 @@
         }
 
         public static void Ror<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3027,7 +3129,7 @@
         }
 
         public static void Ror<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3037,7 +3139,7 @@
         }
 
         public static void Ror<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3056,7 +3158,7 @@
         }
 
         public static void Sahf<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP var)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(var != null);
@@ -3068,7 +3170,7 @@
         }
 
         public static void Sal<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3078,7 +3180,7 @@
         }
 
         public static void Sal<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3088,7 +3190,7 @@
         }
 
         public static void Sal<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3107,7 +3209,7 @@
         }
 
         public static void Sar<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3117,7 +3219,7 @@
         }
 
         public static void Sar<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3127,7 +3229,7 @@
         }
 
         public static void Sar<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3149,7 +3251,7 @@
         /// Integer subtraction with borrow.
         /// </summary>
         public static void Sbb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3162,7 +3264,7 @@
         /// Integer subtraction with borrow.
         /// </summary>
         public static void Sbb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3175,7 +3277,7 @@
         /// Integer subtraction with borrow.
         /// </summary>
         public static void Sbb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3188,7 +3290,7 @@
         /// Integer subtraction with borrow.
         /// </summary>
         public static void Sbb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3213,7 +3315,7 @@
         /// Set byte on condition
         /// </summary>
         public static void Set<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Condition cc, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3235,7 +3337,7 @@
         }
 
         public static void Seta<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3254,7 +3356,7 @@
         }
 
         public static void Setae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3273,7 +3375,7 @@
         }
 
         public static void Setb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3292,7 +3394,7 @@
         }
 
         public static void Setbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3311,7 +3413,7 @@
         }
 
         public static void Setc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3330,7 +3432,7 @@
         }
 
         public static void Sete<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3349,7 +3451,7 @@
         }
 
         public static void Setg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3368,7 +3470,7 @@
         }
 
         public static void Setge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3387,7 +3489,7 @@
         }
 
         public static void Setl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3406,7 +3508,7 @@
         }
 
         public static void Setle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3425,7 +3527,7 @@
         }
 
         public static void Setna<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3444,7 +3546,7 @@
         }
 
         public static void Setnae<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3463,7 +3565,7 @@
         }
 
         public static void Setnb<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3482,7 +3584,7 @@
         }
 
         public static void Setnbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3501,7 +3603,7 @@
         }
 
         public static void Setnc<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3520,7 +3622,7 @@
         }
 
         public static void Setne<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3539,7 +3641,7 @@
         }
 
         public static void Setng<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3558,7 +3660,7 @@
         }
 
         public static void Setnge<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3577,7 +3679,7 @@
         }
 
         public static void Setnl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3596,7 +3698,7 @@
         }
 
         public static void Setnle<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3615,7 +3717,7 @@
         }
 
         public static void Setno<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3634,7 +3736,7 @@
         }
 
         public static void Setnp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3653,7 +3755,7 @@
         }
 
         public static void Setns<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3672,7 +3774,7 @@
         }
 
         public static void Setnz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3691,7 +3793,7 @@
         }
 
         public static void Seto<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3710,7 +3812,7 @@
         }
 
         public static void Setp<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3729,7 +3831,7 @@
         }
 
         public static void Setpe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3748,7 +3850,7 @@
         }
 
         public static void Setpo<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3767,7 +3869,7 @@
         }
 
         public static void Sets<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3786,7 +3888,7 @@
         }
 
         public static void Setz<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3805,7 +3907,7 @@
         }
 
         public static void Shl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3815,7 +3917,7 @@
         }
 
         public static void Shl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3825,7 +3927,7 @@
         }
 
         public static void Shl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3844,7 +3946,7 @@
         }
 
         public static void Shr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3854,7 +3956,7 @@
         }
 
         public static void Shr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3864,7 +3966,7 @@
         }
 
         public static void Shr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3883,7 +3985,7 @@
         }
 
         public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, TGP src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3894,7 +3996,7 @@
         }
 
         public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, Imm src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3905,7 +4007,7 @@
         }
 
         public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, TGP src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3916,7 +4018,7 @@
         }
 
         public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, Imm src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3927,7 +4029,7 @@
         }
 
         public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, TGP src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3938,7 +4040,7 @@
         }
 
         public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, Imm src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3949,7 +4051,7 @@
         }
 
         public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, TGP src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3960,7 +4062,7 @@
         }
 
         public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, Imm src2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3985,7 +4087,7 @@
         }
 
         public static void Sub<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3995,7 +4097,7 @@
         }
 
         public static void Sub<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4005,7 +4107,7 @@
         }
 
         public static void Sub<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4015,7 +4117,7 @@
         }
 
         public static void Sub<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4034,7 +4136,7 @@
         }
 
         public static void Test<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP op1, TGP op2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(op1 != null);
@@ -4044,7 +4146,7 @@
         }
 
         public static void Test<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP op1, Imm op2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(op1 != null);
@@ -4054,7 +4156,7 @@
         }
 
         public static void Test<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem op1, TGP op2)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(op1 != null);
@@ -4080,7 +4182,7 @@
         }
 
         public static void Xadd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4090,7 +4192,7 @@
         }
 
         public static void Xadd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4100,7 +4202,7 @@
         }
 
         public static void Xchg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4110,7 +4212,7 @@
         }
 
         public static void Xchg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4120,7 +4222,7 @@
         }
 
         public static void Xchg<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4130,7 +4232,7 @@
         }
 
         public static void Xor<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4140,7 +4242,7 @@
         }
 
         public static void Xor<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4150,7 +4252,7 @@
         }
 
         public static void Xor<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Imm src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4160,7 +4262,7 @@
         }
 
         public static void Xor<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4182,6 +4284,10 @@
 
         #region X87 Instructions
 
+        #endregion
+
+        #region MMX Instructions
+
         public static void Emms(this IIntrinsicSupport intrinsicSupport)
         {
             Contract.Requires(intrinsicSupport != null);
@@ -4189,12 +4295,8 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Emms);
         }
 
-        #endregion
-
-        #region MMX Instructions
-
         public static void Movd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, Mem dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4204,10 +4306,10 @@
         }
 
         public static void Movd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4217,7 +4319,7 @@
         }
 
         public static void Movd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4227,10 +4329,10 @@
         }
 
         public static void Movd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TGP src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4240,7 +4342,7 @@
         }
 
         public static void Movq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4250,7 +4352,7 @@
         }
 
         public static void Movq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, Mem dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4260,10 +4362,10 @@
         }
 
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4276,7 +4378,7 @@
         }
 
         public static void Movq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4286,10 +4388,10 @@
         }
 
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TGP src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4303,10 +4405,10 @@
 
         //! @brief Pack with Signed Saturation (MMX).
         public static void packsswb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4317,10 +4419,10 @@
 
         //! @brief Pack with Signed Saturation (MMX).
         public static void packsswb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, Mem src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4331,10 +4433,10 @@
 
         //! @brief Pack with Signed Saturation (MMX).
         public static void packssdw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4345,10 +4447,10 @@
 
         //! @brief Pack with Signed Saturation (MMX).
         public static void packssdw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, Mem src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4358,7 +4460,7 @@
         }
 
         public static void Packuswb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4368,7 +4470,7 @@
         }
 
         public static void Packuswb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4378,7 +4480,7 @@
         }
 
         public static void Paddb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4388,7 +4490,7 @@
         }
 
         public static void Paddb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4398,7 +4500,7 @@
         }
 
         public static void Paddw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4408,7 +4510,7 @@
         }
 
         public static void Paddw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4418,7 +4520,7 @@
         }
 
         public static void Paddd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4428,7 +4530,7 @@
         }
 
         public static void Paddd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4438,7 +4540,7 @@
         }
 
         public static void Paddsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4448,7 +4550,7 @@
         }
 
         public static void Paddsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4458,7 +4560,7 @@
         }
 
         public static void Paddsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4468,7 +4570,7 @@
         }
 
         public static void Paddsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4478,7 +4580,7 @@
         }
 
         public static void Paddusb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4488,7 +4590,7 @@
         }
 
         public static void Paddusb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4498,7 +4600,7 @@
         }
 
         public static void Paddusw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4508,7 +4610,7 @@
         }
 
         public static void Paddusw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4518,7 +4620,7 @@
         }
 
         public static void Pand<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4528,7 +4630,7 @@
         }
 
         public static void Pand<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4538,7 +4640,7 @@
         }
 
         public static void Pandn<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4548,7 +4650,7 @@
         }
 
         public static void Pandn<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4558,7 +4660,7 @@
         }
 
         public static void Pcmpeqb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4568,7 +4670,7 @@
         }
 
         public static void Pcmpeqb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4578,7 +4680,7 @@
         }
 
         public static void Pcmpeqw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4588,7 +4690,7 @@
         }
 
         public static void Pcmpeqw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4598,7 +4700,7 @@
         }
 
         public static void Pcmpeqd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4608,7 +4710,7 @@
         }
 
         public static void Pcmpeqd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4618,7 +4720,7 @@
         }
 
         public static void Pcmpgtb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4628,7 +4730,7 @@
         }
 
         public static void Pcmpgtb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4638,7 +4740,7 @@
         }
 
         public static void Pcmpgtw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4648,7 +4750,7 @@
         }
 
         public static void Pcmpgtw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4658,7 +4760,7 @@
         }
 
         public static void Pcmpgtd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4668,7 +4770,7 @@
         }
 
         public static void Pcmpgtd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4678,7 +4780,7 @@
         }
 
         public static void Pmulhw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4688,7 +4790,7 @@
         }
 
         public static void Pmulhw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4698,7 +4800,7 @@
         }
 
         public static void Pmullw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4708,7 +4810,7 @@
         }
 
         public static void Pmullw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4718,7 +4820,7 @@
         }
 
         public static void Por<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4728,7 +4830,7 @@
         }
 
         public static void Por<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4738,7 +4840,7 @@
         }
 
         public static void Pmaddwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4748,7 +4850,7 @@
         }
 
         public static void Pmaddwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4758,7 +4860,7 @@
         }
 
         public static void Pslld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4768,7 +4870,7 @@
         }
 
         public static void Pslld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4778,7 +4880,7 @@
         }
 
         public static void Pslld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4788,7 +4890,7 @@
         }
 
         public static void Psllq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4798,7 +4900,7 @@
         }
 
         public static void Psllq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4808,7 +4910,7 @@
         }
 
         public static void Psllq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4818,7 +4920,7 @@
         }
 
         public static void Psllw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4828,7 +4930,7 @@
         }
 
         public static void Psllw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4838,7 +4940,7 @@
         }
 
         public static void Psllw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4848,7 +4950,7 @@
         }
 
         public static void Psrad<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4858,7 +4960,7 @@
         }
 
         public static void Psrad<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4868,7 +4970,7 @@
         }
 
         public static void Psrad<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4878,7 +4980,7 @@
         }
 
         public static void Psraw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4888,7 +4990,7 @@
         }
 
         public static void Psraw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4898,7 +5000,7 @@
         }
 
         public static void Psraw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4908,7 +5010,7 @@
         }
 
         public static void Psrld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4918,7 +5020,7 @@
         }
 
         public static void Psrld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4928,7 +5030,7 @@
         }
 
         public static void Psrld<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4938,7 +5040,7 @@
         }
 
         public static void Psrlq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4948,7 +5050,7 @@
         }
 
         public static void Psrlq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4958,7 +5060,7 @@
         }
 
         public static void Psrlq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4968,7 +5070,7 @@
         }
 
         public static void Psrlw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4978,7 +5080,7 @@
         }
 
         public static void Psrlw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4988,7 +5090,7 @@
         }
 
         public static void Psrlw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Imm src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4998,7 +5100,7 @@
         }
 
         public static void Psubb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5008,7 +5110,7 @@
         }
 
         public static void Psubb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5018,7 +5120,7 @@
         }
 
         public static void Psubw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5028,7 +5130,7 @@
         }
 
         public static void Psubw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5038,7 +5140,7 @@
         }
 
         public static void Psubd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5048,7 +5150,7 @@
         }
 
         public static void Psubd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5058,7 +5160,7 @@
         }
 
         public static void Psubsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5068,7 +5170,7 @@
         }
 
         public static void Psubsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5078,7 +5180,7 @@
         }
 
         public static void Psubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5088,7 +5190,7 @@
         }
 
         public static void Psubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5098,7 +5200,7 @@
         }
 
         public static void Psubusb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5108,7 +5210,7 @@
         }
 
         public static void Psubusb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5118,7 +5220,7 @@
         }
 
         public static void Psubusw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5128,7 +5230,7 @@
         }
 
         public static void Psubusw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5138,7 +5240,7 @@
         }
 
         public static void Punpckhbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5148,7 +5250,7 @@
         }
 
         public static void Punpckhbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5158,7 +5260,7 @@
         }
 
         public static void Punpckhwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5168,7 +5270,7 @@
         }
 
         public static void Punpckhwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5178,7 +5280,7 @@
         }
 
         public static void Punpckhdq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5188,7 +5290,7 @@
         }
 
         public static void Punpckhdq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5198,7 +5300,7 @@
         }
 
         public static void Punpcklbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5208,7 +5310,7 @@
         }
 
         public static void Punpcklbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5218,7 +5320,7 @@
         }
 
         public static void Punpcklwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5228,7 +5330,7 @@
         }
 
         public static void Punpcklwd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5238,7 +5340,7 @@
         }
 
         public static void Punpckldq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5248,7 +5350,7 @@
         }
 
         public static void Punpckldq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5258,7 +5360,7 @@
         }
 
         public static void Pxor<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5268,7 +5370,7 @@
         }
 
         public static void Pxor<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5289,7 +5391,7 @@
         }
 
         public static void Pf2id<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5299,7 +5401,7 @@
         }
 
         public static void Pf2id<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5309,7 +5411,7 @@
         }
 
         public static void Pf2iw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5319,7 +5421,7 @@
         }
 
         public static void Pf2iw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5329,7 +5431,7 @@
         }
 
         public static void Pfacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5339,7 +5441,7 @@
         }
 
         public static void Pfacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5349,7 +5451,7 @@
         }
 
         public static void Pfadd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5359,7 +5461,7 @@
         }
 
         public static void Pfadd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5369,7 +5471,7 @@
         }
 
         public static void Pfcmpeq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5379,7 +5481,7 @@
         }
 
         public static void Pfcmpeq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5389,7 +5491,7 @@
         }
 
         public static void Pfcmpge<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5399,7 +5501,7 @@
         }
 
         public static void Pfcmpge<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5409,7 +5511,7 @@
         }
 
         public static void Pfcmpgt<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5419,7 +5521,7 @@
         }
 
         public static void Pfcmpgt<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5429,7 +5531,7 @@
         }
 
         public static void Pfmax<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5439,7 +5541,7 @@
         }
 
         public static void Pfmax<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5449,7 +5551,7 @@
         }
 
         public static void Pfmin<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5459,7 +5561,7 @@
         }
 
         public static void Pfmin<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5469,7 +5571,7 @@
         }
 
         public static void Pfmul<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5479,7 +5581,7 @@
         }
 
         public static void Pfmul<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5489,7 +5591,7 @@
         }
 
         public static void Pfnacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5499,7 +5601,7 @@
         }
 
         public static void Pfnacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5509,7 +5611,7 @@
         }
 
         public static void Pfpnacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5519,7 +5621,7 @@
         }
 
         public static void Pfpnacc<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5529,7 +5631,7 @@
         }
 
         public static void Pfrcp<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5539,7 +5641,7 @@
         }
 
         public static void Pfrcp<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5549,7 +5651,7 @@
         }
 
         public static void Pfrcpit1<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5559,7 +5661,7 @@
         }
 
         public static void Pfrcpit1<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5569,7 +5671,7 @@
         }
 
         public static void Pfrcpit2<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5579,7 +5681,7 @@
         }
 
         public static void Pfrcpit2<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5589,7 +5691,7 @@
         }
 
         public static void Pfrsqit1<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5599,7 +5701,7 @@
         }
 
         public static void Pfrsqit1<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5609,7 +5711,7 @@
         }
 
         public static void Pfrsqrt<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5619,7 +5721,7 @@
         }
 
         public static void Pfrsqrt<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5629,7 +5731,7 @@
         }
 
         public static void Pfsub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5639,7 +5741,7 @@
         }
 
         public static void Pfsub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5649,7 +5751,7 @@
         }
 
         public static void Pfsubr<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5659,7 +5761,7 @@
         }
 
         public static void Pfsubr<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5669,7 +5771,7 @@
         }
 
         public static void Pi2fd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5679,7 +5781,7 @@
         }
 
         public static void Pi2fd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5689,7 +5791,7 @@
         }
 
         public static void Pi2fw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5699,7 +5801,7 @@
         }
 
         public static void Pi2fw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5709,7 +5811,7 @@
         }
 
         public static void Pswapd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5719,7 +5821,7 @@
         }
 
         public static void Pswapd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5733,7 +5835,7 @@
         #region SSE Instructions
 
         public static void Addps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5743,7 +5845,7 @@
         }
 
         public static void Addps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5753,7 +5855,7 @@
         }
 
         public static void Addss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5763,7 +5865,7 @@
         }
 
         public static void Addss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5773,7 +5875,7 @@
         }
 
         public static void Andnps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5783,7 +5885,7 @@
         }
 
         public static void Andnps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5793,7 +5895,7 @@
         }
 
         public static void Andps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5803,7 +5905,7 @@
         }
 
         public static void Andps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5813,7 +5915,7 @@
         }
 
         public static void Cmpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5824,7 +5926,7 @@
         }
 
         public static void Cmpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5835,7 +5937,7 @@
         }
 
         public static void Cmpss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5846,7 +5948,7 @@
         }
 
         public static void Cmpss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5857,7 +5959,7 @@
         }
 
         public static void Comiss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5867,7 +5969,7 @@
         }
 
         public static void Comiss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5877,7 +5979,7 @@
         }
 
         public static void Cvtpi2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5887,7 +5989,7 @@
         }
 
         public static void Cvtpi2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5897,7 +5999,7 @@
         }
 
         public static void Cvtps2pi<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5907,7 +6009,7 @@
         }
 
         public static void Cvtps2pi<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5917,7 +6019,7 @@
         }
 
         public static void Cvtsi2ss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5927,7 +6029,7 @@
         }
 
         public static void Cvtsi2ss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5937,7 +6039,7 @@
         }
 
         public static void Cvtss2si<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5947,7 +6049,7 @@
         }
 
         public static void Cvtss2si<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5957,7 +6059,7 @@
         }
 
         public static void Cvttps2pi<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5967,7 +6069,7 @@
         }
 
         public static void Cvttps2pi<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5977,7 +6079,7 @@
         }
 
         public static void Cvttss2si<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5987,7 +6089,7 @@
         }
 
         public static void Cvttss2si<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -5997,7 +6099,7 @@
         }
 
         public static void Divps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6007,7 +6109,7 @@
         }
 
         public static void Divps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6017,7 +6119,7 @@
         }
 
         public static void Divss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6027,7 +6129,7 @@
         }
 
         public static void Divss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6045,10 +6147,10 @@
         }
 
         public static void Maskmovq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst_ptr, TMM data, TMM mask)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst_ptr != null);
@@ -6059,7 +6161,7 @@
         }
 
         public static void Maxps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6069,7 +6171,7 @@
         }
 
         public static void Maxps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6079,7 +6181,7 @@
         }
 
         public static void Maxss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6089,7 +6191,7 @@
         }
 
         public static void Maxss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6099,7 +6201,7 @@
         }
 
         public static void Minps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6109,7 +6211,7 @@
         }
 
         public static void Minps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6119,7 +6221,7 @@
         }
 
         public static void Minss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6129,7 +6231,7 @@
         }
 
         public static void Minss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6139,7 +6241,7 @@
         }
 
         public static void Movaps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6149,7 +6251,7 @@
         }
 
         public static void Movaps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6159,7 +6261,7 @@
         }
 
         public static void Movaps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6169,7 +6271,7 @@
         }
 
         public static void Movd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6179,10 +6281,10 @@
         }
 
         public static void Movd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6192,7 +6294,7 @@
         }
 
         public static void Movd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6202,10 +6304,10 @@
         }
 
         public static void Movd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6215,7 +6317,7 @@
         }
 
         public static void Movq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6225,7 +6327,7 @@
         }
 
         public static void Movq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6235,10 +6337,10 @@
         }
 
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6251,7 +6353,7 @@
         }
 
         public static void Movq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6261,10 +6363,10 @@
         }
 
         public static void Movq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6277,7 +6379,7 @@
         }
 
         public static void Movntq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, Mem dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6287,7 +6389,7 @@
         }
 
         public static void Movhlps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6297,7 +6399,7 @@
         }
 
         public static void Movhps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6307,7 +6409,7 @@
         }
 
         public static void Movhps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6317,7 +6419,7 @@
         }
 
         public static void Movlhps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6327,7 +6429,7 @@
         }
 
         public static void Movlps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6337,7 +6439,7 @@
         }
 
         public static void Movlps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6347,7 +6449,7 @@
         }
 
         public static void Movntps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6357,7 +6459,7 @@
         }
 
         public static void Movss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6367,7 +6469,7 @@
         }
 
         public static void Movss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6377,7 +6479,7 @@
         }
 
         public static void Movss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6387,7 +6489,7 @@
         }
 
         public static void Movups<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6397,7 +6499,7 @@
         }
 
         public static void Movups<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6407,7 +6509,7 @@
         }
 
         public static void Movups<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6417,7 +6519,7 @@
         }
 
         public static void Mulps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6427,7 +6529,7 @@
         }
 
         public static void Mulps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6437,7 +6539,7 @@
         }
 
         public static void Mulss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6447,7 +6549,7 @@
         }
 
         public static void Mulss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6457,7 +6559,7 @@
         }
 
         public static void Orps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6467,7 +6569,7 @@
         }
 
         public static void Orps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6477,7 +6579,7 @@
         }
 
         public static void Pavgb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6487,7 +6589,7 @@
         }
 
         public static void Pavgb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6497,7 +6599,7 @@
         }
 
         public static void Pavgw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6507,7 +6609,7 @@
         }
 
         public static void Pavgw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6517,10 +6619,10 @@
         }
 
         public static void Pextrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6531,10 +6633,10 @@
         }
 
         public static void Pinsrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TGP src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6545,7 +6647,7 @@
         }
 
         public static void Pinsrw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src, Imm imm8)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6556,10 +6658,10 @@
         }
 
         public static void Pextrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6570,7 +6672,7 @@
         }
 
         public static void Pextrw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6581,7 +6683,7 @@
         }
 
         public static void Pmaxsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6591,7 +6693,7 @@
         }
 
         public static void Pmaxsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6601,7 +6703,7 @@
         }
 
         public static void Pmaxub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6611,7 +6713,7 @@
         }
 
         public static void Pmaxub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6621,7 +6723,7 @@
         }
 
         public static void Pminsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6631,7 +6733,7 @@
         }
 
         public static void Pminsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6641,7 +6743,7 @@
         }
 
         public static void Pminub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6651,7 +6753,7 @@
         }
 
         public static void Pminub<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6661,10 +6763,10 @@
         }
 
         public static void Pmovmskb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6674,7 +6776,7 @@
         }
 
         public static void Pmulhuw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6684,7 +6786,7 @@
         }
 
         public static void Pmulhuw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6694,7 +6796,7 @@
         }
 
         public static void Psadbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6704,7 +6806,7 @@
         }
 
         public static void Psadbw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6714,7 +6816,7 @@
         }
 
         public static void Pshufw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src, Imm imm8)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6725,7 +6827,7 @@
         }
 
         public static void Pshufw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src, Imm imm8)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6736,7 +6838,7 @@
         }
 
         public static void Rcpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6746,7 +6848,7 @@
         }
 
         public static void Rcpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6756,7 +6858,7 @@
         }
 
         public static void Rcpss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6766,7 +6868,7 @@
         }
 
         public static void Rcpss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6775,17 +6877,17 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Rcpss, dst, src);
         }
 
-        public static void Prefetch(this IIntrinsicSupport intrinsicSupport, Mem mem, Imm hint)
+        public static void Prefetch(this IIntrinsicSupport intrinsicSupport, Mem mem, PrefetchHint hint)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(mem != null);
-            Contract.Requires(hint != null);
+            Contract.Requires(hint >= PrefetchHint.NTA && hint <= PrefetchHint.T2);
 
-            intrinsicSupport.EmitInstruction(InstructionCode.Prefetch, mem, hint);
+            intrinsicSupport.EmitInstruction(InstructionCode.Prefetch, mem, (Imm)(int)hint);
         }
 
         public static void Psadbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6795,7 +6897,7 @@
         }
 
         public static void Psadbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6805,7 +6907,7 @@
         }
 
         public static void Rsqrtps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6815,7 +6917,7 @@
         }
 
         public static void Rsqrtps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6825,7 +6927,7 @@
         }
 
         public static void Rsqrtss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6835,7 +6937,7 @@
         }
 
         public static void Rsqrtss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6852,7 +6954,7 @@
         }
 
         public static void Shufps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6863,7 +6965,7 @@
         }
 
         public static void Shufps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6874,7 +6976,7 @@
         }
 
         public static void Sqrtps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6884,7 +6986,7 @@
         }
 
         public static void Sqrtps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6894,7 +6996,7 @@
         }
 
         public static void Sqrtss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6904,7 +7006,7 @@
         }
 
         public static void Sqrtss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6914,7 +7016,7 @@
         }
 
         public static void Stmxcsr<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6923,7 +7025,7 @@
         }
 
         public static void Subps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6933,7 +7035,7 @@
         }
 
         public static void Subps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6943,7 +7045,7 @@
         }
 
         public static void Subss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6953,7 +7055,7 @@
         }
 
         public static void Subss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6963,7 +7065,7 @@
         }
 
         public static void Ucomiss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6973,7 +7075,7 @@
         }
 
         public static void Ucomiss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6983,7 +7085,7 @@
         }
 
         public static void Unpckhps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -6993,7 +7095,7 @@
         }
 
         public static void Unpckhps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7003,7 +7105,7 @@
         }
 
         public static void Unpcklps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7013,7 +7115,7 @@
         }
 
         public static void Unpcklps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7023,7 +7125,7 @@
         }
 
         public static void Xorps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7033,7 +7135,7 @@
         }
 
         public static void Xorps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7047,7 +7149,7 @@
         #region SSE2
 
         public static void Addpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7057,7 +7159,7 @@
         }
 
         public static void Addpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7067,7 +7169,7 @@
         }
 
         public static void Addsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7077,7 +7179,7 @@
         }
 
         public static void Addsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7087,7 +7189,7 @@
         }
 
         public static void Andnpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7097,7 +7199,7 @@
         }
 
         public static void Andnpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7107,7 +7209,7 @@
         }
 
         public static void Andpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7117,7 +7219,7 @@
         }
 
         public static void Andpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7135,7 +7237,7 @@
         }
 
         public static void Cmppd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7146,7 +7248,7 @@
         }
 
         public static void Cmppd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7157,7 +7259,7 @@
         }
 
         public static void Cmpsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7168,7 +7270,7 @@
         }
 
         public static void Cmpsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7179,7 +7281,7 @@
         }
 
         public static void Comisd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7189,7 +7291,7 @@
         }
 
         public static void Comisd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7199,7 +7301,7 @@
         }
 
         public static void Cvtdq2pd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7209,7 +7311,7 @@
         }
 
         public static void Cvtdq2pd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7219,7 +7321,7 @@
         }
 
         public static void Cvtdq2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7229,7 +7331,7 @@
         }
 
         public static void Cvtdq2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7239,7 +7341,7 @@
         }
 
         public static void Cvtpd2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7249,7 +7351,7 @@
         }
 
         public static void Cvtpd2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7259,10 +7361,10 @@
         }
 
         public static void Cvtpd2pi<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7272,7 +7374,7 @@
         }
 
         public static void Cvtpd2pi<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7282,7 +7384,7 @@
         }
 
         public static void Cvtpd2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7292,7 +7394,7 @@
         }
 
         public static void Cvtpd2ps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7302,10 +7404,10 @@
         }
 
         public static void Cvtpi2pd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7315,7 +7417,7 @@
         }
 
         public static void Cvtpi2pd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7325,7 +7427,7 @@
         }
 
         public static void Cvtps2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7335,7 +7437,7 @@
         }
 
         public static void Cvtps2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7345,7 +7447,7 @@
         }
 
         public static void Cvtps2pd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7355,7 +7457,7 @@
         }
 
         public static void Cvtps2pd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7365,10 +7467,10 @@
         }
 
         public static void Cvtsd2si<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7378,7 +7480,7 @@
         }
 
         public static void Cvtsd2si<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7388,7 +7490,7 @@
         }
 
         public static void Cvtsd2ss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7398,7 +7500,7 @@
         }
 
         public static void Cvtsd2ss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7408,10 +7510,10 @@
         }
 
         public static void Cvtsi2sd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7421,7 +7523,7 @@
         }
 
         public static void Cvtsi2sd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7431,7 +7533,7 @@
         }
 
         public static void Cvtss2sd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7441,7 +7543,7 @@
         }
 
         public static void Cvtss2sd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7451,10 +7553,10 @@
         }
 
         public static void Cvttpd2pi<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TMM dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7464,7 +7566,7 @@
         }
 
         public static void Cvttpd2pi<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7474,7 +7576,7 @@
         }
 
         public static void Cvttpd2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7484,7 +7586,7 @@
         }
 
         public static void Cvttpd2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7494,7 +7596,7 @@
         }
 
         public static void Cvttps2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7504,7 +7606,7 @@
         }
 
         public static void Cvttps2dq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7514,10 +7616,10 @@
         }
 
         public static void Cvttsd2si<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7527,7 +7629,7 @@
         }
 
         public static void Cvttsd2si<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7537,7 +7639,7 @@
         }
 
         public static void Divpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7547,7 +7649,7 @@
         }
 
         public static void Divpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7557,7 +7659,7 @@
         }
 
         public static void Divsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7567,7 +7669,7 @@
         }
 
         public static void Divsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7584,10 +7686,10 @@
         }
 
         public static void Maskmovdqu<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst_ptr, TXMM src, TXMM mask)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst_ptr != null);
@@ -7598,7 +7700,7 @@
         }
 
         public static void Maxpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7608,7 +7710,7 @@
         }
 
         public static void Maxpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7618,7 +7720,7 @@
         }
 
         public static void Maxsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7628,7 +7730,7 @@
         }
 
         public static void Maxsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7645,7 +7747,7 @@
         }
 
         public static void Minpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7655,7 +7757,7 @@
         }
 
         public static void Minpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7665,7 +7767,7 @@
         }
 
         public static void Minsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7675,7 +7777,7 @@
         }
 
         public static void Minsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7685,7 +7787,7 @@
         }
 
         public static void Movdqa<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7695,7 +7797,7 @@
         }
 
         public static void Movdqa<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7705,7 +7807,7 @@
         }
 
         public static void Movdqa<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7715,7 +7817,7 @@
         }
 
         public static void Movdqu<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7725,7 +7827,7 @@
         }
 
         public static void Movdqu<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7735,7 +7837,7 @@
         }
 
         public static void Movdqu<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7745,10 +7847,10 @@
         }
 
         public static void Movmskps<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7758,10 +7860,10 @@
         }
 
         public static void Movmskpd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7771,7 +7873,7 @@
         }
 
         public static void Movsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7781,7 +7883,7 @@
         }
 
         public static void Movsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7791,7 +7893,7 @@
         }
 
         public static void Movsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7801,7 +7903,7 @@
         }
 
         public static void Movapd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7811,7 +7913,7 @@
         }
 
         public static void Movapd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7821,7 +7923,7 @@
         }
 
         public static void Movapd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7831,7 +7933,7 @@
         }
 
         public static void Movdq2q<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7841,7 +7943,7 @@
         }
 
         public static void Movdq2q<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7851,7 +7953,7 @@
         }
 
         public static void Movhpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7861,7 +7963,7 @@
         }
 
         public static void Movhpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7871,7 +7973,7 @@
         }
 
         public static void Movlpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7881,7 +7983,7 @@
         }
 
         public static void Movlpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7891,7 +7993,7 @@
         }
 
         public static void Movntdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7901,7 +8003,7 @@
         }
 
         public static void Movnti<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7911,7 +8013,7 @@
         }
 
         public static void Movntpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7921,7 +8023,7 @@
         }
 
         public static void Movupd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7931,7 +8033,7 @@
         }
 
         public static void Movupd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7941,7 +8043,7 @@
         }
 
         public static void Movupd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7951,7 +8053,7 @@
         }
 
         public static void Mulpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7961,7 +8063,7 @@
         }
 
         public static void Mulpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7971,7 +8073,7 @@
         }
 
         public static void Mulsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7981,7 +8083,7 @@
         }
 
         public static void Mulsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -7991,7 +8093,7 @@
         }
 
         public static void Orpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8001,7 +8103,7 @@
         }
 
         public static void Orpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8011,7 +8113,7 @@
         }
 
         public static void Packsswb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8021,7 +8123,7 @@
         }
 
         public static void Packsswb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8031,7 +8133,7 @@
         }
 
         public static void Packssdw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8041,7 +8143,7 @@
         }
 
         public static void Packssdw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8051,7 +8153,7 @@
         }
 
         public static void Packuswb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8061,7 +8163,7 @@
         }
 
         public static void Packuswb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8071,7 +8173,7 @@
         }
 
         public static void Paddb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8081,7 +8183,7 @@
         }
 
         public static void Paddb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8091,7 +8193,7 @@
         }
 
         public static void Paddw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8101,7 +8203,7 @@
         }
 
         public static void Paddw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8111,7 +8213,7 @@
         }
 
         public static void Paddd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8121,7 +8223,7 @@
         }
 
         public static void Paddd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8131,7 +8233,7 @@
         }
 
         public static void Paddq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8141,7 +8243,7 @@
         }
 
         public static void Paddq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8151,7 +8253,7 @@
         }
 
         public static void Paddq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8161,7 +8263,7 @@
         }
 
         public static void Paddq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8171,7 +8273,7 @@
         }
 
         public static void Paddsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8181,7 +8283,7 @@
         }
 
         public static void Paddsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8191,7 +8293,7 @@
         }
 
         public static void Paddsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8201,7 +8303,7 @@
         }
 
         public static void Paddsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8211,7 +8313,7 @@
         }
 
         public static void Paddusb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8221,7 +8323,7 @@
         }
 
         public static void Paddusb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8231,7 +8333,7 @@
         }
 
         public static void Paddusw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8241,7 +8343,7 @@
         }
 
         public static void Paddusw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8251,7 +8353,7 @@
         }
 
         public static void Pand<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8261,7 +8363,7 @@
         }
 
         public static void Pand<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8271,7 +8373,7 @@
         }
 
         public static void Pandn<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8281,7 +8383,7 @@
         }
 
         public static void Pandn<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8298,7 +8400,7 @@
         }
 
         public static void Pavgb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8308,7 +8410,7 @@
         }
 
         public static void Pavgb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8318,7 +8420,7 @@
         }
 
         public static void Pavgw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8328,7 +8430,7 @@
         }
 
         public static void Pavgw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8338,7 +8440,7 @@
         }
 
         public static void Pcmpeqb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8348,7 +8450,7 @@
         }
 
         public static void Pcmpeqb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8358,7 +8460,7 @@
         }
 
         public static void Pcmpeqw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8368,7 +8470,7 @@
         }
 
         public static void Pcmpeqw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8378,7 +8480,7 @@
         }
 
         public static void Pcmpeqd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8388,7 +8490,7 @@
         }
 
         public static void Pcmpeqd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8398,7 +8500,7 @@
         }
 
         public static void Pcmpgtb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8408,7 +8510,7 @@
         }
 
         public static void Pcmpgtb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8418,7 +8520,7 @@
         }
 
         public static void Pcmpgtw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8428,7 +8530,7 @@
         }
 
         public static void Pcmpgtw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8438,7 +8540,7 @@
         }
 
         public static void Pcmpgtd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8448,7 +8550,7 @@
         }
 
         public static void Pcmpgtd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8458,7 +8560,7 @@
         }
 
         public static void Pmaxsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8468,7 +8570,7 @@
         }
 
         public static void Pmaxsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8478,7 +8580,7 @@
         }
 
         public static void Pmaxub<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8488,7 +8590,7 @@
         }
 
         public static void Pmaxub<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8498,7 +8600,7 @@
         }
 
         public static void Pminsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8508,7 +8610,7 @@
         }
 
         public static void Pminsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8518,7 +8620,7 @@
         }
 
         public static void Pminub<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8528,7 +8630,7 @@
         }
 
         public static void Pminub<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8538,10 +8640,10 @@
         }
 
         public static void Pmovmskb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8551,7 +8653,7 @@
         }
 
         public static void Pmulhw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8561,7 +8663,7 @@
         }
 
         public static void Pmulhw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8571,7 +8673,7 @@
         }
 
         public static void Pmulhuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8581,7 +8683,7 @@
         }
 
         public static void Pmulhuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8591,7 +8693,7 @@
         }
 
         public static void Pmullw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8601,7 +8703,7 @@
         }
 
         public static void Pmullw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8611,7 +8713,7 @@
         }
 
         public static void Pmuludq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8621,7 +8723,7 @@
         }
 
         public static void Pmuludq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8631,7 +8733,7 @@
         }
 
         public static void Pmuludq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8641,7 +8743,7 @@
         }
 
         public static void Pmuludq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8651,7 +8753,7 @@
         }
 
         public static void Por<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8661,7 +8763,7 @@
         }
 
         public static void Por<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8671,7 +8773,7 @@
         }
 
         public static void Pslld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8681,7 +8783,7 @@
         }
 
         public static void Pslld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8691,7 +8793,7 @@
         }
 
         public static void Pslld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8701,7 +8803,7 @@
         }
 
         public static void Psllq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8711,7 +8813,7 @@
         }
 
         public static void Psllq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8721,7 +8823,7 @@
         }
 
         public static void Psllq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8731,7 +8833,7 @@
         }
 
         public static void Psllw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8741,7 +8843,7 @@
         }
 
         public static void Psllw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8751,7 +8853,7 @@
         }
 
         public static void Psllw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8761,7 +8863,7 @@
         }
 
         public static void Pslldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8771,7 +8873,7 @@
         }
 
         public static void Psrad<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8781,7 +8883,7 @@
         }
 
         public static void Psrad<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8791,7 +8893,7 @@
         }
 
         public static void Psrad<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8801,7 +8903,7 @@
         }
 
         public static void Psraw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8811,7 +8913,7 @@
         }
 
         public static void Psraw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8821,7 +8923,7 @@
         }
 
         public static void Psraw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8831,7 +8933,7 @@
         }
 
         public static void Psubb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8841,7 +8943,7 @@
         }
 
         public static void Psubb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8851,7 +8953,7 @@
         }
 
         public static void Psubw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8861,7 +8963,7 @@
         }
 
         public static void Psubw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8871,7 +8973,7 @@
         }
 
         public static void Psubd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8881,7 +8983,7 @@
         }
 
         public static void Psubd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8891,7 +8993,7 @@
         }
 
         public static void Psubq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8901,7 +9003,7 @@
         }
 
         public static void Psubq<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8911,7 +9013,7 @@
         }
 
         public static void Psubq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8921,7 +9023,7 @@
         }
 
         public static void Psubq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8931,7 +9033,7 @@
         }
 
         public static void Pmaddwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8941,7 +9043,7 @@
         }
 
         public static void Pmaddwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8951,7 +9053,7 @@
         }
 
         public static void Pshufd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8962,7 +9064,7 @@
         }
 
         public static void Pshufd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8973,7 +9075,7 @@
         }
 
         public static void Pshufhw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8984,7 +9086,7 @@
         }
 
         public static void Pshufhw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -8995,7 +9097,7 @@
         }
 
         public static void Pshuflw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9006,7 +9108,7 @@
         }
 
         public static void Pshuflw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9017,7 +9119,7 @@
         }
 
         public static void Psrld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9027,7 +9129,7 @@
         }
 
         public static void Psrld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9037,7 +9139,7 @@
         }
 
         public static void Psrld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9047,7 +9149,7 @@
         }
 
         public static void Psrlq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9057,7 +9159,7 @@
         }
 
         public static void Psrlq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9067,7 +9169,7 @@
         }
 
         public static void Psrlq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9077,7 +9179,7 @@
         }
 
         public static void Psrldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9087,7 +9189,7 @@
         }
 
         public static void Psrlw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9097,7 +9199,7 @@
         }
 
         public static void Psrlw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9107,7 +9209,7 @@
         }
 
         public static void Psrlw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Imm src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9117,7 +9219,7 @@
         }
 
         public static void Psubsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9127,7 +9229,7 @@
         }
 
         public static void Psubsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9137,7 +9239,7 @@
         }
 
         public static void Psubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9147,7 +9249,7 @@
         }
 
         public static void Psubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9157,7 +9259,7 @@
         }
 
         public static void Psubusb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9167,7 +9269,7 @@
         }
 
         public static void Psubusb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9177,7 +9279,7 @@
         }
 
         public static void Psubusw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9187,7 +9289,7 @@
         }
 
         public static void Psubusw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9197,7 +9299,7 @@
         }
 
         public static void Punpckhbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9207,7 +9309,7 @@
         }
 
         public static void Punpckhbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9217,7 +9319,7 @@
         }
 
         public static void Punpckhwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9227,7 +9329,7 @@
         }
 
         public static void Punpckhwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9237,7 +9339,7 @@
         }
 
         public static void Punpckhdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9247,7 +9349,7 @@
         }
 
         public static void Punpckhdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9257,7 +9359,7 @@
         }
 
         public static void Punpckhqdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9267,7 +9369,7 @@
         }
 
         public static void Punpckhqdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9277,7 +9379,7 @@
         }
 
         public static void Punpcklbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9287,7 +9389,7 @@
         }
 
         public static void Punpcklbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9297,7 +9399,7 @@
         }
 
         public static void Punpcklwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9307,7 +9409,7 @@
         }
 
         public static void Punpcklwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9317,7 +9419,7 @@
         }
 
         public static void Punpckldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9327,7 +9429,7 @@
         }
 
         public static void Punpckldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9337,7 +9439,7 @@
         }
 
         public static void Punpcklqdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9347,7 +9449,7 @@
         }
 
         public static void Punpcklqdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9357,7 +9459,7 @@
         }
 
         public static void Pxor<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9367,7 +9469,7 @@
         }
 
         public static void Pxor<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9377,7 +9479,7 @@
         }
 
         public static void Shufpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9388,7 +9490,7 @@
         }
 
         public static void Shufpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9399,7 +9501,7 @@
         }
 
         public static void Sqrtpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9409,7 +9511,7 @@
         }
 
         public static void Sqrtpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9419,7 +9521,7 @@
         }
 
         public static void Sqrtsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9429,7 +9531,7 @@
         }
 
         public static void Sqrtsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9439,7 +9541,7 @@
         }
 
         public static void Subpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9449,7 +9551,7 @@
         }
 
         public static void Subpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9459,7 +9561,7 @@
         }
 
         public static void Subsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9469,7 +9571,7 @@
         }
 
         public static void Subsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9479,7 +9581,7 @@
         }
 
         public static void Ucomisd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9489,7 +9591,7 @@
         }
 
         public static void Ucomisd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9499,7 +9601,7 @@
         }
 
         public static void Unpckhpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9509,7 +9611,7 @@
         }
 
         public static void Unpckhpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9519,7 +9621,7 @@
         }
 
         public static void Unpcklpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9529,7 +9631,7 @@
         }
 
         public static void Unpcklpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9539,7 +9641,7 @@
         }
 
         public static void Xorpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9549,7 +9651,7 @@
         }
 
         public static void Xorpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9563,7 +9665,7 @@
         #region SSE3
 
         public static void Addsubpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9573,7 +9675,7 @@
         }
 
         public static void Addsubpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9583,7 +9685,7 @@
         }
 
         public static void Addsubps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9593,7 +9695,7 @@
         }
 
         public static void Addsubps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9611,7 +9713,7 @@
         }
 
         public static void Haddpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9621,7 +9723,7 @@
         }
 
         public static void Haddpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9631,7 +9733,7 @@
         }
 
         public static void Haddps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9641,7 +9743,7 @@
         }
 
         public static void Haddps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9651,7 +9753,7 @@
         }
 
         public static void Hsubpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9661,7 +9763,7 @@
         }
 
         public static void Hsubpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9671,7 +9773,7 @@
         }
 
         public static void Hsubps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9681,7 +9783,7 @@
         }
 
         public static void Hsubps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9691,7 +9793,7 @@
         }
 
         public static void Lddqu<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9708,7 +9810,7 @@
         }
 
         public static void Movddup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9718,7 +9820,7 @@
         }
 
         public static void Movddup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9728,7 +9830,7 @@
         }
 
         public static void Movshdup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9738,7 +9840,7 @@
         }
 
         public static void Movshdup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9748,7 +9850,7 @@
         }
 
         public static void Movsldup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9758,7 +9860,7 @@
         }
 
         public static void Movsldup<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9779,7 +9881,7 @@
         #region SSSE3
 
         public static void Psignb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9789,7 +9891,7 @@
         }
 
         public static void Psignb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9799,7 +9901,7 @@
         }
 
         public static void Psignb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9809,7 +9911,7 @@
         }
 
         public static void Psignb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9819,7 +9921,7 @@
         }
 
         public static void Psignw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9829,7 +9931,7 @@
         }
 
         public static void Psignw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9839,7 +9941,7 @@
         }
 
         public static void Psignw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9849,7 +9951,7 @@
         }
 
         public static void Psignw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9859,7 +9961,7 @@
         }
 
         public static void Psignd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9869,7 +9971,7 @@
         }
 
         public static void Psignd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9879,7 +9981,7 @@
         }
 
         public static void Psignd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9889,7 +9991,7 @@
         }
 
         public static void Psignd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9899,7 +10001,7 @@
         }
 
         public static void Phaddw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9909,7 +10011,7 @@
         }
 
         public static void Phaddw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9919,7 +10021,7 @@
         }
 
         public static void Phaddw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9929,7 +10031,7 @@
         }
 
         public static void Phaddw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9939,7 +10041,7 @@
         }
 
         public static void Phaddd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9949,7 +10051,7 @@
         }
 
         public static void Phaddd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9959,7 +10061,7 @@
         }
 
         public static void Phaddd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9969,7 +10071,7 @@
         }
 
         public static void Phaddd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9979,7 +10081,7 @@
         }
 
         public static void Phaddsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9989,7 +10091,7 @@
         }
 
         public static void Phaddsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -9999,7 +10101,7 @@
         }
 
         public static void Phaddsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10009,7 +10111,7 @@
         }
 
         public static void Phaddsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10019,7 +10121,7 @@
         }
 
         public static void Phsubw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10029,7 +10131,7 @@
         }
 
         public static void Phsubw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10039,7 +10141,7 @@
         }
 
         public static void Phsubw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10049,7 +10151,7 @@
         }
 
         public static void Phsubw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10059,7 +10161,7 @@
         }
 
         public static void Phsubd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10069,7 +10171,7 @@
         }
 
         public static void Phsubd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10079,7 +10181,7 @@
         }
 
         public static void Phsubd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10089,7 +10191,7 @@
         }
 
         public static void Phsubd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10099,7 +10201,7 @@
         }
 
         public static void Phsubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10109,7 +10211,7 @@
         }
 
         public static void Phsubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10119,7 +10221,7 @@
         }
 
         public static void Phsubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10129,7 +10231,7 @@
         }
 
         public static void Phsubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10139,7 +10241,7 @@
         }
 
         public static void Pmaddubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10149,7 +10251,7 @@
         }
 
         public static void Pmaddubsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10159,7 +10261,7 @@
         }
 
         public static void Pmaddubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10169,7 +10271,7 @@
         }
 
         public static void Pmaddubsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10179,7 +10281,7 @@
         }
 
         public static void Pabsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10189,7 +10291,7 @@
         }
 
         public static void Pabsb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10199,7 +10301,7 @@
         }
 
         public static void Pabsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10209,7 +10311,7 @@
         }
 
         public static void Pabsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10219,7 +10321,7 @@
         }
 
         public static void Pabsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10229,7 +10331,7 @@
         }
 
         public static void Pabsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10239,7 +10341,7 @@
         }
 
         public static void Pabsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10249,7 +10351,7 @@
         }
 
         public static void Pabsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10259,7 +10361,7 @@
         }
 
         public static void Pabsd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10269,7 +10371,7 @@
         }
 
         public static void Pabsd<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10279,7 +10381,7 @@
         }
 
         public static void Pabsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10289,7 +10391,7 @@
         }
 
         public static void Pabsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10299,7 +10401,7 @@
         }
 
         public static void Pmulhrsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10309,7 +10411,7 @@
         }
 
         public static void Pmulhrsw<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10319,7 +10421,7 @@
         }
 
         public static void Pmulhrsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10329,7 +10431,7 @@
         }
 
         public static void Pmulhrsw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10339,7 +10441,7 @@
         }
 
         public static void Pshufb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10349,7 +10451,7 @@
         }
 
         public static void Pshufb<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10359,7 +10461,7 @@
         }
 
         public static void Pshufb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10369,7 +10471,7 @@
         }
 
         public static void Pshufb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10379,7 +10481,7 @@
         }
 
         public static void Palignr<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, TMM src, Imm imm8)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10390,7 +10492,7 @@
         }
 
         public static void Palignr<TMM>(this IMmIntrinsicSupport<TMM> intrinsicSupport, TMM dst, Mem src, Imm imm8)
-            where TMM : Operand
+            where TMM : Operand, IMmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10401,7 +10503,7 @@
         }
 
         public static void Palignr<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10412,7 +10514,7 @@
         }
 
         public static void Palignr<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10427,7 +10529,7 @@
         #region SSE 4.1
 
         public static void Blendpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10438,7 +10540,7 @@
         }
 
         public static void Blendpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10449,7 +10551,7 @@
         }
 
         public static void Blendps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10460,7 +10562,7 @@
         }
 
         public static void Blendps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10471,7 +10573,7 @@
         }
 
         public static void Blendvpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10481,7 +10583,7 @@
         }
 
         public static void Blendvpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10491,7 +10593,7 @@
         }
 
         public static void Blendvps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10501,7 +10603,7 @@
         }
 
         public static void Blendvps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10511,7 +10613,7 @@
         }
 
         public static void Dppd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10522,7 +10624,7 @@
         }
 
         public static void Dppd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10533,7 +10635,7 @@
         }
 
         public static void Dpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10544,7 +10646,7 @@
         }
 
         public static void Dpps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10555,7 +10657,7 @@
         }
 
         public static void Extractps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10566,7 +10668,7 @@
         }
 
         public static void Extractps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10577,7 +10679,7 @@
         }
 
         public static void Movntdqa<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10587,7 +10689,7 @@
         }
 
         public static void Mpsadbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10598,7 +10700,7 @@
         }
 
         public static void Mpsadbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10609,7 +10711,7 @@
         }
 
         public static void Packusdw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10619,7 +10721,7 @@
         }
 
         public static void Packusdw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10629,7 +10731,7 @@
         }
 
         public static void Pblendvb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10639,7 +10741,7 @@
         }
 
         public static void Pblendvb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10649,7 +10751,7 @@
         }
 
         public static void Pblendw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10660,7 +10762,7 @@
         }
 
         public static void Pblendw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10671,7 +10773,7 @@
         }
 
         public static void Pcmpeqq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10681,7 +10783,7 @@
         }
 
         public static void Pcmpeqq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10691,10 +10793,10 @@
         }
 
         public static void Pextrb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10705,7 +10807,7 @@
         }
 
         public static void Pextrb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10716,10 +10818,10 @@
         }
 
         public static void Pextrd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10730,7 +10832,7 @@
         }
 
         public static void Pextrd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10741,10 +10843,10 @@
         }
 
         public static void Pextrq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TGP dst, TXMM src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10755,7 +10857,7 @@
         }
 
         public static void Pextrq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, Mem dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10766,7 +10868,7 @@
         }
 
         public static void Phminposuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10776,7 +10878,7 @@
         }
 
         public static void Phminposuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10786,10 +10888,10 @@
         }
 
         public static void Pinsrb<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10800,7 +10902,7 @@
         }
 
         public static void Pinsrb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10811,10 +10913,10 @@
         }
 
         public static void Pinsrw<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10825,7 +10927,7 @@
         }
 
         public static void Pinsrw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10836,10 +10938,10 @@
         }
 
         public static void Pinsrd<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10850,7 +10952,7 @@
         }
 
         public static void Pinsrd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10861,10 +10963,10 @@
         }
 
         public static void Pinsrq<TGP, TX87, TMM, TXMM>(this IIntrinsicSupport<TGP, TX87, TMM, TXMM> intrinsicSupport, TXMM dst, TGP src, Imm imm8)
-            where TGP : Operand
-            where TX87 : Operand
-            where TMM : Operand
-            where TXMM : Operand
+            where TGP : Operand, IGpOperand
+            where TX87 : Operand, IX87Operand
+            where TMM : Operand, IMmOperand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10875,7 +10977,7 @@
         }
 
         public static void Pinsrq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10886,7 +10988,7 @@
         }
 
         public static void Pmaxuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10896,7 +10998,7 @@
         }
 
         public static void Pmaxuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10906,7 +11008,7 @@
         }
 
         public static void Pmaxsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10916,7 +11018,7 @@
         }
 
         public static void Pmaxsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10926,7 +11028,7 @@
         }
 
         public static void Pmaxsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10936,7 +11038,7 @@
         }
 
         public static void Pmaxsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10946,7 +11048,7 @@
         }
 
         public static void Pmaxud<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10956,7 +11058,7 @@
         }
 
         public static void Pmaxud<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10966,7 +11068,7 @@
         }
 
         public static void Pminsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10976,7 +11078,7 @@
         }
 
         public static void Pminsb<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10986,7 +11088,7 @@
         }
 
         public static void Pminuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -10996,7 +11098,7 @@
         }
 
         public static void Pminuw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11006,7 +11108,7 @@
         }
 
         public static void Pminud<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11016,7 +11118,7 @@
         }
 
         public static void Pminud<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11026,7 +11128,7 @@
         }
 
         public static void Pminsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11036,7 +11138,7 @@
         }
 
         public static void Pminsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11046,7 +11148,7 @@
         }
 
         public static void Pmovsxbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11056,7 +11158,7 @@
         }
 
         public static void Pmovsxbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11066,7 +11168,7 @@
         }
 
         public static void Pmovsxbd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11076,7 +11178,7 @@
         }
 
         public static void Pmovsxbd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11086,7 +11188,7 @@
         }
 
         public static void Pmovsxbq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11096,7 +11198,7 @@
         }
 
         public static void Pmovsxbq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11106,7 +11208,7 @@
         }
 
         public static void Pmovsxwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11116,7 +11218,7 @@
         }
 
         public static void Pmovsxwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11126,7 +11228,7 @@
         }
 
         public static void Pmovsxwq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11136,7 +11238,7 @@
         }
 
         public static void Pmovsxwq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11146,7 +11248,7 @@
         }
 
         public static void Pmovsxdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11156,7 +11258,7 @@
         }
 
         public static void Pmovsxdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11166,7 +11268,7 @@
         }
 
         public static void Pmovzxbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11176,7 +11278,7 @@
         }
 
         public static void Pmovzxbw<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11186,7 +11288,7 @@
         }
 
         public static void Pmovzxbd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11196,7 +11298,7 @@
         }
 
         public static void Pmovzxbd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11206,7 +11308,7 @@
         }
 
         public static void Pmovzxbq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11216,7 +11318,7 @@
         }
 
         public static void Pmovzxbq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11226,7 +11328,7 @@
         }
 
         public static void Pmovzxwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11236,7 +11338,7 @@
         }
 
         public static void Pmovzxwd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11246,7 +11348,7 @@
         }
 
         public static void Pmovzxwq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11256,7 +11358,7 @@
         }
 
         public static void Pmovzxwq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11266,7 +11368,7 @@
         }
 
         public static void Pmovzxdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11276,7 +11378,7 @@
         }
 
         public static void Pmovzxdq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11286,7 +11388,7 @@
         }
 
         public static void Pmuldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11296,7 +11398,7 @@
         }
 
         public static void Pmuldq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11306,7 +11408,7 @@
         }
 
         public static void Pmulld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11316,7 +11418,7 @@
         }
 
         public static void Pmulld<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11326,7 +11428,7 @@
         }
 
         public static void Ptest<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM op1, TXMM op2)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(op1 != null);
@@ -11336,7 +11438,7 @@
         }
 
         public static void Ptest<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM op1, Mem op2)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(op1 != null);
@@ -11346,7 +11448,7 @@
         }
 
         public static void Roundps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11357,7 +11459,7 @@
         }
 
         public static void Roundps<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11368,7 +11470,7 @@
         }
 
         public static void Roundss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11379,7 +11481,7 @@
         }
 
         public static void Roundss<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11390,7 +11492,7 @@
         }
 
         public static void Roundpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11401,7 +11503,7 @@
         }
 
         public static void Roundpd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11412,7 +11514,7 @@
         }
 
         public static void Roundsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11423,7 +11525,7 @@
         }
 
         public static void Roundsd<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11438,7 +11540,7 @@
         #region SSE 4.2
 
         public static void Crc32<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11448,7 +11550,7 @@
         }
 
         public static void Crc32<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11458,7 +11560,7 @@
         }
 
         public static void Pcmpestri<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11469,7 +11571,7 @@
         }
 
         public static void Pcmpestri<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11480,7 +11582,7 @@
         }
 
         public static void Pcmpestrm<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11491,7 +11593,7 @@
         }
 
         public static void Pcmpestrm<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11502,7 +11604,7 @@
         }
 
         public static void Pcmpistri<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11513,7 +11615,7 @@
         }
 
         public static void Pcmpistri<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11524,7 +11626,7 @@
         }
 
         public static void Pcmpistrm<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11535,7 +11637,7 @@
         }
 
         public static void Pcmpistrm<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src, Imm imm8)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11546,7 +11648,7 @@
         }
 
         public static void Pcmpgtq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, TXMM src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11556,7 +11658,7 @@
         }
 
         public static void Pcmpgtq<TXMM>(this IXmmIntrinsicSupport<TXMM> intrinsicSupport, TXMM dst, Mem src)
-            where TXMM : Operand
+            where TXMM : Operand, IXmmOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11566,7 +11668,7 @@
         }
 
         public static void Popcnt<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11576,7 +11678,7 @@
         }
 
         public static void Popcnt<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11610,7 +11712,7 @@
         #region Intel instructions
 
         public static void Movbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, Mem src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -11620,7 +11722,7 @@
         }
 
         public static void Movbe<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src)
-            where TGP : Operand
+            where TGP : Operand, IGpOperand
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);

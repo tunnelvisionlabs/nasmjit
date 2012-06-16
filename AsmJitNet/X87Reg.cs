@@ -1,6 +1,6 @@
 ﻿namespace AsmJitNet
 {
-    public class X87Reg : BaseReg
+    public class X87Reg : BaseReg, IX87Operand
     {
         public X87Reg(RegCode code)
             : base(code, 10)

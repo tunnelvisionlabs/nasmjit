@@ -2,7 +2,7 @@
 {
     using System.Diagnostics.Contracts;
 
-    public class GPVar : BaseVar
+    public class GPVar : BaseVar, IGpOperand
     {
         public GPVar()
             : base(Register.NativeRegisterType, VariableInfo.NativeVariableType)

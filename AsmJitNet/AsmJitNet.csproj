@@ -185,6 +185,9 @@
     <Compile Include="Condition.cs" />
     <Compile Include="Contracts\IIntrinsicSupportContracts.cs" />
     <Compile Include="Contracts\JitMethodBaseContracts.cs" />
+    <Compile Include="IX87Operand.cs" />
+    <Compile Include="IXmmOperand.cs" />
+    <Compile Include="IMmOperand.cs" />
     <Compile Include="CpuBugs.cs" />
     <Compile Include="CpuFeatures.cs" />
     <Compile Include="CpuInfo.cs" />
@@ -192,6 +195,7 @@
     <Compile Include="EmbeddedData.cs" />
     <Compile Include="EmitOptions.cs" />
     <Compile Include="FunctionEnd.cs" />
+    <Compile Include="IGpOperand.cs" />
     <Compile Include="IMemoryMarker.cs" />
     <Compile Include="IX86IntrinsicSupport`1.cs" />
     <Compile Include="IIntrinsicSupport.cs" />
