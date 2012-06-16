@@ -600,6 +600,106 @@
             return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
         }
 
+        public static Mem ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, 0);
+        }
+
+        public static Mem byte_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.BYTE);
+        }
+
+        public static Mem word_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.WORD);
+        }
+
+        public static Mem dword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DWORD);
+        }
+
+        public static Mem qword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.QWORD);
+        }
+
+        public static Mem tword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.TWORD);
+        }
+
+        public static Mem dqword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DQWORD);
+        }
+
+        public static Mem mmword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.QWORD);
+        }
+
+        public static Mem xmmword_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DQWORD);
+        }
+
+        public static Mem sysint_ptr(GPReg @base, GPReg index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, (AsmJitNet.Size)IntPtr.Size);
+        }
+
         public static Mem ptr(GPVar @base, int displacement = 0)
         {
             Contract.Requires(@base != null);
@@ -678,6 +778,106 @@
             Contract.Ensures(Contract.Result<Mem>() != null);
 
             return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
+        }
+
+        public static Mem ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, 0);
+        }
+
+        public static Mem byte_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.BYTE);
+        }
+
+        public static Mem word_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.WORD);
+        }
+
+        public static Mem dword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DWORD);
+        }
+
+        public static Mem qword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.QWORD);
+        }
+
+        public static Mem tword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.TWORD);
+        }
+
+        public static Mem dqword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DQWORD);
+        }
+
+        public static Mem mmword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.QWORD);
+        }
+
+        public static Mem xmmword_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, AsmJitNet.Size.DQWORD);
+        }
+
+        public static Mem sysint_ptr(GPVar @base, GPVar index, int shift, int displacement = 0)
+        {
+            Contract.Requires(@base != null);
+            Contract.Requires(index != null);
+            Contract.Requires(shift >= 0 && shift <= 3);
+            Contract.Ensures(Contract.Result<Mem>() != null);
+
+            return MemPtrBuild(@base, index, shift, displacement, (AsmJitNet.Size)IntPtr.Size);
         }
 
         private static Mem MemPtrAbs(IntPtr target, int displacement, SegmentPrefix segmentPrefix, Size size)
