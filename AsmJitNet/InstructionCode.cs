@@ -30,6 +30,7 @@
         Bts,           // X86/X64
         Call,          // X86/X64
         Cbw,           // X86/X64
+        Cdq,           // X86/X64
         Cdqe,          // X64 only
         Clc,           // X86/X64
         Cld,           // X86/X64
@@ -79,6 +80,7 @@
         Comisd,        // SSE2
         Comiss,        // SSE
         Cpuid,         // X86/X64 (i486)
+        Cqo,           // X64 only
         Crc32,         // SSE4.2
         Cvtdq2pd,      // SSE2
         Cvtdq2ps,      // SSE2
@@ -102,6 +104,7 @@
         Cvttps2pi,     // SSE
         Cvttsd2si,     // SSE2
         Cvttss2si,     // SSE
+        Cwd,           // X86/X64
         Cwde,          // X86/X64
         Daa,           // X86 only
         Das,           // X86 only

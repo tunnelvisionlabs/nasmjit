@@ -90,6 +90,12 @@
                     // Special...
                     break;
 
+                case InstructionCode.Cdq:
+                case InstructionCode.Cqo:
+                case InstructionCode.Cwd:
+                    // Special...
+                    break;
+
                 case InstructionCode.Cmpxchg:
                 case InstructionCode.Cmpxchg8b:
                 case InstructionCode.Cmpxchg16b:
@@ -550,6 +556,30 @@
                                 vdata.RegisterRWCount++;
                                 var.VarFlags |= VariableAlloc.ReadWrite | VariableAlloc.Special;
                                 var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
+                                gpRestrictMask &= ~var.RegMask;
+                                break;
+
+                            default:
+                                throw new NotSupportedException(string.Format("The {0} instruction does not support {1} arguments.", InstructionDescription.FromInstruction(_code).Name, i));
+                            }
+                            break;
+
+                        case InstructionCode.Cdq:
+                        case InstructionCode.Cqo:
+                        case InstructionCode.Cwd:
+                            switch (i)
+                            {
+                            case 0:
+                                vdata.RegisterReadCount++;
+                                var.VarFlags |= VariableAlloc.Read | VariableAlloc.Special;
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Eax);
+                                gpRestrictMask &= ~var.RegMask;
+                                break;
+
+                            case 1:
+                                vdata.RegisterWriteCount++;
+                                var.VarFlags |= VariableAlloc.Write | VariableAlloc.Special;
+                                var.RegMask = RegisterMask.FromIndex(RegIndex.Edx);
                                 gpRestrictMask &= ~var.RegMask;
                                 break;
 
@@ -1263,6 +1293,12 @@
                 case InstructionCode.Cbw:
                 case InstructionCode.Cdqe:
                 case InstructionCode.Cwde:
+                    a.EmitInstruction(_code);
+                    return;
+
+                case InstructionCode.Cdq:
+                case InstructionCode.Cqo:
+                case InstructionCode.Cwd:
                     a.EmitInstruction(_code);
                     return;
 
