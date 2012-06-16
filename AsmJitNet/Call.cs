@@ -609,7 +609,7 @@
             // --------------------------------------------------------------------------
             // STEP 2:
             //
-            // Move all arguments to the stack which all already in registers.
+            // Move all arguments to the stack which are already in registers.
             // --------------------------------------------------------------------------
 
             for (int i = 0; i < argumentsCount; i++)
@@ -698,13 +698,12 @@
             // Now it's safe to do, because the non-needed variables should be spilled.
             // --------------------------------------------------------------------------
 
-            temporaryGpReg = FindTemporaryGpRegister(cc);
+            temporaryGpReg = FindTemporaryGpRegister(cc, true);
             temporaryXmmReg = FindTemporaryXmmRegister(cc);
 
             // If failed to get temporary register then we need just to pick one.
             if (temporaryGpReg == RegIndex.Invalid)
             {
-                // TODO.
                 throw new NotImplementedException();
             }
             if (temporaryXmmReg == RegIndex.Invalid)
@@ -1012,7 +1011,7 @@
                     }
 
                     if (temporaryGpReg == RegIndex.Invalid)
-                        temporaryGpReg = FindTemporaryGpRegister(cc);
+                        temporaryGpReg = FindTemporaryGpRegister(cc, true);
 
                     cc.AllocGPVar(r.vdata, RegisterMask.FromIndex(temporaryGpReg),
                       VariableAlloc.Register | VariableAlloc.Read);
@@ -1815,16 +1814,23 @@
             throw new ArgumentException("Incompatible argument.");
         }
 
-        private RegIndex FindTemporaryGpRegister(CompilerContext cc)
+        private RegIndex FindTemporaryGpRegister(CompilerContext cc, bool spillIfNecessary)
         {
             RegisterMask passedGP = Prototype.PassedGP;
             RegIndex candidate = RegIndex.Invalid;
+
+            RegisterMask reserved = RegisterMask.FromIndex(RegIndex.Esp);
+            if (!cc.AllocableEbp)
+                reserved |= RegisterMask.FromIndex(RegIndex.Ebp);
 
             // Find all registers used to pass function arguments. We shouldn't use these
             // if possible.
             for (int i = 0; i < (int)RegNum.GP; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                if ((reserved & mask).RegisterCount != 0)
+                    continue;
+
                 if (cc.State.GP[i] == null)
                 {
                     // If this register is used to pass arguments to function, we will mark
@@ -1834,6 +1840,30 @@
                     else
                         return (RegIndex)i;
                 }
+            }
+
+            if (candidate == RegIndex.Invalid && spillIfNecessary)
+            {
+                for (int i = 0; i < (int)RegNum.GP; i++)
+                {
+                    RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
+                    if ((reserved & mask).RegisterCount != 0)
+                        continue;
+
+                    candidate = (RegIndex)i;
+                    if ((passedGP & mask) == RegisterMask.Zero)
+                        break;
+
+                    // If this register is used to pass arguments to function, we will mark
+                    // it and use it only if there is no other one.
+                    if ((passedGP & mask) != RegisterMask.Zero)
+                        candidate = (RegIndex)i;
+                    else
+                        return (RegIndex)i;
+                }
+
+                Contract.Assert(cc.State.GP[(int)candidate] != null);
+                cc.SpillGPVar(cc.State.GP[(int)candidate]);
             }
 
             return candidate;

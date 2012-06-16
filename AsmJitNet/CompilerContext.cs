@@ -124,6 +124,14 @@
             }
         }
 
+        public bool AllocableEbp
+        {
+            get
+            {
+                return _allocableEBP;
+            }
+        }
+
         public Function Function
         {
             get
