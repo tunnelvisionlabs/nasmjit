@@ -717,7 +717,9 @@
                         Assembler.DumpOperand(buffer, memOp, Register.NativeRegisterType);
                     }
 
-                    logger.LogFormat("; {0}| {1}| {2}| {3}| r={4}w={5}x={6}| r={7}w={8}x={9}|" + Environment.NewLine,
+                    string registerAccess = string.Format("r={0}w={1}x={2}", vdata.RegisterReadCount, vdata.RegisterWriteCount, vdata.RegisterRWCount);
+                    string memoryAccess = string.Format("r={0}w={1}x={2}", vdata.MemoryReadCount, vdata.MemoryWriteCount, vdata.MemoryRWCount);
+                    logger.LogFormat("; {0,-3}| {1,-9}| {2,-3}| {3,-15}| {4,-18}| {5,-18}|" + Environment.NewLine,
                         // Variable id.
                         (uint)(i & Operand.OperandIdValueMask),
                         // Variable type.
@@ -727,13 +729,9 @@
                         // Variable memory home.
                         buffer,
                         // Register access count.
-                        vdata.RegisterReadCount,
-                        vdata.RegisterWriteCount,
-                        vdata.RegisterRWCount,
+                        registerAccess,
                         // Memory access count.
-                        vdata.MemoryReadCount,
-                        vdata.MemoryWriteCount,
-                        vdata.MemoryRWCount
+                        memoryAccess
                         );
 
                     first = false;
