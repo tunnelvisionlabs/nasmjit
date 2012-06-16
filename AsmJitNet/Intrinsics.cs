@@ -4284,6 +4284,902 @@
 
         #region X87 Instructions
 
+        //! @brief Compute 2^x - 1 (FPU).
+        public static void F2xm1(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.F2xm1);
+        }
+
+        //! @brief Absolute Value of st(0) (FPU).
+        public static void Fabs(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fabs);
+        }
+
+        //! @brief Add @a src to @a dst and store result in @a dst (FPU).
+        //!
+        //! @note One of dst or src must be st(0).
+        public static void Fadd(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fadd, dst, src);
+        }
+
+        //! @brief Add @a src to st(0) and store result in st(0) (FPU).
+        //!
+        //! @note SP-FP or DP-FP determined by @a adr size.
+        public static void Fadd(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fadd, src);
+        }
+
+        //! @brief Add st(0) to @a dst and POP register stack (FPU).
+        public static void Faddp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            Faddp(intrinsicSupport, Register.st((RegIndex)1));
+        }
+
+        public static void Faddp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Faddp, dst);
+        }
+
+        //! @brief Load Binary Coded Decimal (FPU).
+        public static void Fbld(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fbld, src);
+        }
+
+        //! @brief Store BCD Integer and Pop (FPU).
+        public static void Fbstp(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fbstp, dst);
+        }
+
+        //! @brief Change st(0) Sign (FPU).
+        public static void Fchs(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fchs);
+        }
+
+        //! @brief Clear Exceptions (FPU).
+        //!
+        //! Clear floating-point exception flags after checking for pending unmasked
+        //! floating-point exceptions.
+        //!
+        //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE, and IE),
+        //! the exception summary status flag (ES), the stack fault flag (SF), and
+        //! the busy flag (B) in the FPU status word. The FCLEX instruction checks
+        //! for and handles any pending unmasked floating-point exceptions before
+        //! clearing the exception flags.
+        public static void Fclex(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fclex);
+        }
+
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovb<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovb, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovbe<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovbe, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmove<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmove, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovnb<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovnb, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovnbe<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovnbe, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovne<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovne, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovnu<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovnu, src);
+        }
+        //! @brief FP Conditional Move (FPU).
+        public static void Fcmovu<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 src)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcmovu, src);
+        }
+
+        //! @brief Compare st(0) with @a reg (FPU).
+        public static void Fcom(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcom, Register.st((RegIndex)1));
+        }
+
+        public static void Fcom<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcom, reg);
+        }
+
+        //! @brief Compare st(0) with 4-byte or 8-byte FP at @a src (FPU).
+        public static void Fcom(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcom, src);
+        }
+
+        //! @brief Compare st(0) with @a reg and pop the stack (FPU).
+        public static void Fcomp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            Fcomp(intrinsicSupport, Register.st((RegIndex)1));
+        }
+
+        public static void Fcomp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcomp, reg);
+        }
+
+        //! @brief Compare st(0) with 4-byte or 8-byte FP at @a adr and pop the
+        //! stack (FPU).
+        public static void Fcomp(this IIntrinsicSupport intrinsicSupport, Mem mem)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcomp, mem);
+        }
+
+        //! @brief Compare st(0) with st(1) and pop register stack twice (FPU).
+        public static void Fcompp(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcompp);
+        }
+
+        //! @brief Compare st(0) and @a reg and Set EFLAGS (FPU).
+        public static void Fcomi<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcomi, reg);
+        }
+
+        //! @brief Compare st(0) and @a reg and Set EFLAGS and pop the stack (FPU).
+        public static void Fcomip<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcomip, reg);
+        }
+
+        //! @brief Cosine (FPU).
+        //!
+        //! This instruction calculates the cosine of the source operand in
+        //! register st(0) and stores the result in st(0).
+        public static void Fcos(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcos);
+        }
+
+        //! @brief Decrement Stack-Top Pointer (FPU).
+        //!
+        //! Subtracts one from the TOP field of the FPU status word (decrements
+        //! the top-ofstack pointer). If the TOP field contains a 0, it is set
+        //! to 7. The effect of this instruction is to rotate the stack by one
+        //! position. The contents of the FPU data registers and tag register
+        //! are not affected.
+        public static void Fdecstp(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdecstp);
+        }
+
+        //! @brief Divide @a dst by @a src (FPU).
+        //!
+        //! @note One of @a dst or @a src register must be st(0).
+        public static void Fdiv(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdiv, dst, src);
+        }
+        //! @brief Divide st(0) by 32-bit or 64-bit FP value (FPU).
+        public static void Fdiv(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdiv, src);
+        }
+
+        //! @brief Divide @a reg by st(0) (FPU).
+        public static void Fdivp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            Fdivp(intrinsicSupport, Register.st((RegIndex)1));
+        }
+
+        public static void Fdivp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivp, reg);
+        }
+
+        //! @brief Reverse Divide @a dst by @a src (FPU).
+        //!
+        //! @note One of @a dst or @a src register must be st(0).
+        public static void Fdivr(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivr, dst, src);
+        }
+        //! @brief Reverse Divide st(0) by 32-bit or 64-bit FP value (FPU).
+        public static void Fdivr(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivr, src);
+        }
+
+        //! @brief Reverse Divide @a reg by st(0) (FPU).
+        public static void Fdivrp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivrp, Register.st((RegIndex)1));
+        }
+
+        public static void Fdivrp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivrp, reg);
+        }
+
+        //! @brief Free Floating-Point Register (FPU).
+        //!
+        //! Sets the tag in the FPU tag register associated with register @a reg
+        //! to empty (11B). The contents of @a reg and the FPU stack-top pointer
+        //! (TOP) are not affected.
+        public static void Ffree<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Ffree, reg);
+        }
+
+        //! @brief Add 16-bit or 32-bit integer to st(0) (FPU).
+        public static void Fiadd(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fiadd, src);
+        }
+
+        //! @brief Compare st(0) with 16-bit or 32-bit Integer (FPU).
+        public static void Ficom(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Ficom, src);
+        }
+
+        //! @brief Compare st(0) with 16-bit or 32-bit Integer and pop the stack (FPU).
+        public static void Ficomp(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Ficomp, src);
+        }
+
+        //! @brief Divide st(0) by 32-bit or 16-bit integer (@a src) (FPU).
+        public static void Fidiv(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fidiv, src);
+        }
+
+        //! @brief Reverse Divide st(0) by 32-bit or 16-bit integer (@a src) (FPU).
+        public static void Fidivr(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fidivr, src);
+        }
+
+        //! @brief Load 16-bit, 32-bit or 64-bit Integer and push it to the stack (FPU).
+        //!
+        //! Converts the signed-integer source operand into double extended-precision
+        //! floating point format and pushes the value onto the FPU register stack.
+        //! The source operand can be a word, doubleword, or quadword integer. It is
+        //! loaded without rounding errors. The sign of the source operand is
+        //! preserved.
+        public static void Fild(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4 || src.Size == 8);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fild, src);
+        }
+
+        //! @brief Multiply st(0) by 16-bit or 32-bit integer and store it
+        //! to st(0) (FPU).
+        public static void Fimul(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fimul, src);
+        }
+
+        //! @brief Increment Stack-Top Pointer (FPU).
+        //!
+        //! Adds one to the TOP field of the FPU status word (increments the
+        //! top-of-stack pointer). If the TOP field contains a 7, it is set to 0.
+        //! The effect of this instruction is to rotate the stack by one position.
+        //! The contents of the FPU data registers and tag register are not affected.
+        //! This operation is not equivalent to popping the stack, because the tag
+        //! for the previous top-of-stack register is not marked empty.
+        public static void Fincstp(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fincstp);
+        }
+
+        //! @brief Initialize Floating-Point Unit (FPU).
+        //!
+        //! Initialize FPU after checking for pending unmasked floating-point
+        //! exceptions.
+        public static void Finit(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Finit);
+        }
+
+        //! @brief Subtract 16-bit or 32-bit integer from st(0) and store result to
+        //! st(0) (FPU).
+        public static void Fisub(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fisub, src);
+        }
+
+        //! @brief Reverse Subtract 16-bit or 32-bit integer from st(0) and
+        //! store result to  st(0) (FPU).
+        public static void Fisubr(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 2 || src.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fisubr, src);
+        }
+
+        //! @brief Initialize Floating-Point Unit (FPU).
+        //!
+        //! Initialize FPU without checking for pending unmasked floating-point
+        //! exceptions.
+        public static void Fninit(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fninit);
+        }
+
+        //! @brief Store st(0) as 16-bit or 32-bit Integer to @a dst (FPU).
+        public static void Fist(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            Contract.Assert(dst.Size == 2 || dst.Size == 4);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fist, dst);
+        }
+
+        //! @brief Store st(0) as 16-bit, 32-bit or 64-bit Integer to @a dst and pop
+        //! stack (FPU).
+        public static void Fistp(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            Contract.Assert(dst.Size == 2 || dst.Size == 4 || dst.Size == 8);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fistp, dst);
+        }
+
+        //! @brief Push 32-bit, 64-bit or 80-bit Floating Point Value onto the FPU
+        //! register stack (FPU).
+        public static void Fld(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 4 || src.Size == 8 || src.Size == 10);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fld, src);
+        }
+
+        //! @brief Push @a reg onto the FPU register stack (FPU).
+        public static void Fld<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fld, reg);
+        }
+
+        //! @brief Push +1.0 onto the FPU register stack (FPU).
+        public static void Fld1(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fld1);
+        }
+
+        //! @brief Push log2(10) onto the FPU register stack (FPU).
+        public static void Fldl2t(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldl2t);
+        }
+
+        //! @brief Push log2(e) onto the FPU register stack (FPU).
+        public static void Fldl2e(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldl2e);
+        }
+
+        //! @brief Push pi onto the FPU register stack (FPU).
+        public static void Fldpi(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldpi);
+        }
+
+        //! @brief Push log10(2) onto the FPU register stack (FPU).
+        public static void Fldlg2(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldlg2);
+        }
+
+        //! @brief Push ln(2) onto the FPU register stack (FPU).
+        public static void Fldln2(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldln2);
+        }
+
+        //! @brief Push +0.0 onto the FPU register stack (FPU).
+        public static void Fldz(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldz);
+        }
+
+        //! @brief Load x87 FPU Control Word (2 bytes) (FPU).
+        public static void Fldcw(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldcw, src);
+        }
+
+        //! @brief Load x87 FPU Environment (14 or 28 bytes) (FPU).
+        public static void Fldenv(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fldenv, src);
+        }
+
+        //! @brief Multiply @a dst by @a src and store result in @a dst (FPU).
+        //!
+        //! @note One of dst or src must be st(0).
+        public static void Fmul(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fmul, dst, src);
+        }
+        //! @brief Multiply st(0) by @a src and store result in st(0) (FPU).
+        //!
+        //! @note SP-FP or DP-FP determined by @a adr size.
+        public static void Fmul(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fmul, src);
+        }
+
+        //! @brief Multiply st(0) by @a dst and POP register stack (FPU).
+        public static void Fmulp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fmulp, Register.st((RegIndex)1));
+        }
+
+        public static void Fmulp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fmulp, dst);
+        }
+
+        //! @brief Clear Exceptions (FPU).
+        //!
+        //! Clear floating-point exception flags without checking for pending
+        //! unmasked floating-point exceptions.
+        //!
+        //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE, and IE),
+        //! the exception summary status flag (ES), the stack fault flag (SF), and
+        //! the busy flag (B) in the FPU status word. The FCLEX instruction does
+        //! not checks for and handles any pending unmasked floating-point exceptions
+        //! before clearing the exception flags.
+        public static void Fnclex(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnclex);
+        }
+
+        //! @brief No Operation (FPU).
+        public static void Fnop(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnop);
+        }
+
+        //! @brief Save FPU State (FPU).
+        //!
+        //! Store FPU environment to m94byte or m108byte without
+        //! checking for pending unmasked FP exceptions.
+        //! Then re-initialize the FPU.
+        public static void Fnsave(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnsave, dst);
+        }
+
+        //! @brief Store x87 FPU Environment (FPU).
+        //!
+        //! Store FPU environment to @a dst (14 or 28 Bytes) without checking for
+        //! pending unmasked floating-point exceptions. Then mask all floating
+        //! point exceptions.
+        public static void Fnstenv(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnstenv, dst);
+        }
+
+        //! @brief Store x87 FPU Control Word (FPU).
+        //!
+        //! Store FPU control word to @a dst (2 Bytes) without checking for pending
+        //! unmasked floating-point exceptions.
+        public static void Fnstcw(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnstcw, dst);
+        }
+
+        //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+        public static void Fnstsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
+            where TGP : Operand, IGpOperand
+        {
+            Contract.Assert(dst.IsRegCode(RegCode.AX));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnstsw, dst);
+        }
+        //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+        public static void Fnstsw(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fnstsw, dst);
+        }
+
+        //! @brief Partial Arctangent (FPU).
+        //!
+        //! Replace st(1) with arctan(st(1)/st(0)) and pop the register stack.
+        public static void Fpatan(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fpatan);
+        }
+
+        //! @brief Partial Remainder (FPU).
+        //!
+        //! Replace st(0) with the remainder obtained from dividing st(0) by st(1).
+        public static void Fprem(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fprem);
+        }
+
+        //! @brief Partial Remainder (FPU).
+        //!
+        //! Replace st(0) with the IEEE remainder obtained from dividing st(0) by
+        //! st(1).
+        public static void Fprem1(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fprem1);
+        }
+
+        //! @brief Partial Tangent (FPU).
+        //!
+        //! Replace st(0) with its tangent and push 1 onto the FPU stack.
+        public static void Fptan(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fptan);
+        }
+
+        //! @brief Round to Integer (FPU).
+        //!
+        //! Rount st(0) to an Integer.
+        public static void Frndint(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Frndint);
+        }
+
+        //! @brief Restore FPU State (FPU).
+        //!
+        //! Load FPU state from src (94 or 108 bytes).
+        public static void Frstor(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Frstor, src);
+        }
+
+        //! @brief Save FPU State (FPU).
+        //!
+        //! Store FPU state to 94 or 108-bytes after checking for
+        //! pending unmasked FP exceptions. Then reinitialize
+        //! the FPU.
+        public static void Fsave(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsave, dst);
+        }
+
+        //! @brief Scale (FPU).
+        //!
+        //! Scale st(0) by st(1).
+        public static void Fscale(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fscale);
+        }
+
+        //! @brief Sine (FPU).
+        //!
+        //! This instruction calculates the sine of the source operand in
+        //! register st(0) and stores the result in st(0).
+        public static void Fsin(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsin);
+        }
+
+        //! @brief Sine and Cosine (FPU).
+        //!
+        //! Compute the sine and cosine of st(0); replace st(0) with
+        //! the sine, and push the cosine onto the register stack.
+        public static void Fsincos(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsincos);
+        }
+
+        //! @brief Square Root (FPU).
+        //!
+        //! Calculates square root of st(0) and stores the result in st(0).
+        public static void Fsqrt(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsqrt);
+        }
+
+        //! @brief Store Floating Point Value (FPU).
+        //!
+        //! Store st(0) as 32-bit or 64-bit floating point value to @a dst.
+        public static void Fst(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            Contract.Assert(dst.Size == 4 || dst.Size == 8);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fst, dst);
+        }
+
+        //! @brief Store Floating Point Value (FPU).
+        //!
+        //! Store st(0) to @a reg.
+        public static void Fst<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fst, reg);
+        }
+
+        //! @brief Store Floating Point Value and Pop Register Stack (FPU).
+        //!
+        //! Store st(0) as 32-bit or 64-bit floating point value to @a dst
+        //! and pop register stack.
+        public static void Fstp(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            Contract.Assert(dst.Size == 4 || dst.Size == 8 || dst.Size == 10);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstp, dst);
+        }
+
+        //! @brief Store Floating Point Value and Pop Register Stack (FPU).
+        //!
+        //! Store st(0) to @a reg and pop register stack.
+        public static void Fstp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstp, reg);
+        }
+
+        //! @brief Store x87 FPU Control Word (FPU).
+        //!
+        //! Store FPU control word to @a dst (2 Bytes) after checking for pending
+        //! unmasked floating-point exceptions.
+        public static void Fstcw(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstcw, dst);
+        }
+
+        //! @brief Store x87 FPU Environment (FPU).
+        //!
+        //! Store FPU environment to @a dst (14 or 28 Bytes) after checking for
+        //! pending unmasked floating-point exceptions. Then mask all floating
+        //! point exceptions.
+        public static void Fstenv(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstenv, dst);
+        }
+
+        //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+        public static void Fstsw<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst)
+            where TGP : Operand, IGpOperand
+        {
+            Contract.Assert(dst.IsRegCode(RegCode.AX));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstsw, dst);
+        }
+
+        //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
+        public static void Fstsw(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fstsw, dst);
+        }
+
+        //! @brief Subtract @a src from @a dst and store result in @a dst (FPU).
+        //!
+        //! @note One of dst or src must be st(0).
+        public static void Fsub(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsub, dst, src);
+        }
+        //! @brief Subtract @a src from st(0) and store result in st(0) (FPU).
+        //!
+        //! @note SP-FP or DP-FP determined by @a adr size.
+        public static void Fsub(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 4 || src.Size == 8);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsub, src);
+        }
+
+        //! @brief Subtract st(0) from @a dst and POP register stack (FPU).
+        public static void Fsubp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubp, Register.st((RegIndex)1));
+        }
+
+        public static void Fsubp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubp, dst);
+        }
+
+        //! @brief Reverse Subtract @a src from @a dst and store result in @a dst (FPU).
+        //!
+        //! @note One of dst or src must be st(0).
+        public static void Fsubr(this IX87IntrinsicSupport<X87Reg> intrinsicSupport, X87Reg dst, X87Reg src)
+        {
+            Contract.Assert(dst.RegisterIndex == 0 || src.RegisterIndex == 0);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubr, dst, src);
+        }
+
+        //! @brief Reverse Subtract @a src from st(0) and store result in st(0) (FPU).
+        //!
+        //! @note SP-FP or DP-FP determined by @a adr size.
+        public static void Fsubr(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            Contract.Assert(src.Size == 4 || src.Size == 8);
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubr, src);
+        }
+
+        //! @brief Reverse Subtract st(0) from @a dst and POP register stack (FPU).
+        public static void Fsubrp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubrp, Register.st((RegIndex)1));
+        }
+
+        public static void Fsubrp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubrp, dst);
+        }
+
+        //! @brief Floating point test - Compare st(0) with 0.0. (FPU).
+        public static void Ftst(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Ftst);
+        }
+
+        //! @brief Unordered Compare st(0) with @a reg (FPU).
+        public static void Fucom(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucom, Register.st((RegIndex)1));
+        }
+
+        public static void Fucom<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucom, reg);
+        }
+
+        //! @brief Unordered Compare st(0) and @a reg, check for ordered values
+        //! and Set EFLAGS (FPU).
+        public static void Fucomi<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomi, reg);
+        }
+
+        //! @brief UnorderedCompare st(0) and @a reg, Check for ordered values
+        //! and Set EFLAGS and pop the stack (FPU).
+        public static void Fucomip(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomip, Register.st((RegIndex)1));
+        }
+
+        public static void Fucomip<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomip, reg);
+        }
+
+        //! @brief Unordered Compare st(0) with @a reg and pop register stack (FPU).
+        public static void Fucomp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomp, Register.st((RegIndex)1));
+        }
+
+        public static void Fucomp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomp, reg);
+        }
+
+        //! @brief Unordered compare st(0) with st(1) and pop register stack twice
+        //! (FPU).
+        public static void Fucompp(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucompp);
+        }
+
+        public static void Fwait(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fwait);
+        }
+
+        //! @brief Examine st(0) (FPU).
+        //!
+        //! Examines the contents of the ST(0) register and sets the condition code
+        //! flags C0, C2, and C3 in the FPU status word to indicate the class of
+        //! value or number in the register.
+        public static void Fxam(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxam);
+        }
+
+        //! @brief Exchange Register Contents (FPU).
+        //!
+        //! Exchange content of st(0) with @a reg.
+        public static void Fxch(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxch, Register.st((RegIndex)1));
+        }
+
+        public static void Fxch<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
+            where TX87 : Operand, IX87Operand
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxch, reg);
+        }
+
+        //! @brief Restore FP And MMX(tm) State And Streaming SIMD Extension State
+        //! (FPU, MMX, SSE).
+        //!
+        //! Load FP and MMX(tm) technology and Streaming SIMD Extension state from
+        //! src (512 bytes).
+        public static void Fxrstor(this IIntrinsicSupport intrinsicSupport, Mem src)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxrstor, src);
+        }
+
+        //! @brief Store FP and MMX(tm) State and Streaming SIMD Extension State
+        //! (FPU, MMX, SSE).
+        //!
+        //! Store FP and MMX(tm) technology state and Streaming SIMD Extension state
+        //! to dst (512 bytes).
+        public static void Fxsave(this IIntrinsicSupport intrinsicSupport, Mem dst)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxsave, dst);
+        }
+
+        //! @brief Extract Exponent and Significand (FPU).
+        //!
+        //! Separate value in st(0) into exponent and significand, store exponent
+        //! in st(0), and push the significand onto the register stack.
+        public static void Fxtract(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxtract);
+        }
+
+        //! @brief Compute y * log2(x).
+        //!
+        //! Replace st(1) with (st(1) * log2st(0)) and pop the register stack.
+        public static void Fyl2x(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fyl2x);
+        }
+
+        //! @brief Compute y * log_2(x+1).
+        //!
+        //! Replace st(1) with (st(1) * (log2st(0) + 1.0)) and pop the register stack.
+        public static void Fyl2xp1(this IIntrinsicSupport intrinsicSupport)
+        {
+            intrinsicSupport.EmitInstruction(InstructionCode.Fyl2xp1);
+        }
+
         #endregion
 
         #region MMX Instructions
