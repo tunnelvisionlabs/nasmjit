@@ -1527,6 +1527,11 @@
 
             case InstructionGroup.J:
                 {
+                    if (o0.IsImm)
+                    {
+                        throw new NotImplementedException();
+                    }
+
                     if (o0.IsLabel)
                     {
                         AssemblerLabelData l_data = _labelData[((Label)o0).Id & Operand.OperandIdValueMask];
@@ -1594,7 +1599,7 @@
                         goto end;
                     }
 
-                    break;
+                    throw new NotImplementedException();
                 }
 
             case InstructionGroup.JMP:
@@ -1670,7 +1675,7 @@
                         goto end;
                     }
 
-                    break;
+                    throw new NotImplementedException();
                 }
 
             case InstructionGroup.LEA:
@@ -2812,7 +2817,7 @@
                 }
             }
 
-            goto end;
+            throw new InvalidOperationException();
 
         emitImmediate:
             {
