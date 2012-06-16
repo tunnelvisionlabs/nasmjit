@@ -5,11 +5,11 @@
         public static readonly Operand[] EmptyOperands = new Operand[0];
         public static readonly Operand None = new NoneOperand();
 
-        internal const int InvalidValue = -1;
-        internal const int OperandIdValueMask = unchecked((int)0x3FFFFFFF);
-        internal const int OperandIdTypeMask = unchecked((int)0xC0000000);
-        internal const int OperandIdTypeLabel = unchecked((int)0x40000000);
-        internal const int OperandIdTypeVar = unchecked((int)0x80000000);
+        public const int InvalidValue = -1;
+        public const int OperandIdValueMask = unchecked((int)0x3FFFFFFF);
+        public const int OperandIdTypeMask = unchecked((int)0xC0000000);
+        public const int OperandIdTypeLabel = unchecked((int)0x40000000);
+        public const int OperandIdTypeVar = unchecked((int)0x80000000);
 
         private readonly byte _size;
         private readonly int _id;

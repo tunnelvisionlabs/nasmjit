@@ -737,7 +737,7 @@ instructionDescriptions =
             }
         }
 
-        internal static InstructionDescription FromInstruction(InstructionCode code)
+        public static InstructionDescription FromInstruction(InstructionCode code)
         {
             InstructionDescription description = instructionDescriptions[(int)code];
             if (description.Code != code)
