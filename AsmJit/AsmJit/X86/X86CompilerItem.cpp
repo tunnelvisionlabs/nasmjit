@@ -1331,7 +1331,7 @@ CompilerItem* X86CompilerInst::translate(CompilerContext& cc) ASMJIT_NOTHROW
     // used this instruction.
     for (i = 0; i < variablesCount; i++)
     {
-      _vars->vdata->workOffset = x86Context._currentOffset;
+      _vars[i].vdata->workOffset = x86Context._currentOffset;
     }
 
     // Alloc variables used by the instruction (special first).
