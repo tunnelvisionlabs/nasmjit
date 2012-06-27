@@ -971,7 +971,7 @@
                 address += " + ";
 
                 if (HasShift)
-                    address += (int)Math.Pow(2, (int)Shift) + "*";
+                    address += (1 << (int)Shift) + "*";
 
                 address += Index.ToString();
             }
