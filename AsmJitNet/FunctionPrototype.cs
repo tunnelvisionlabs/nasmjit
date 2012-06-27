@@ -143,14 +143,6 @@
             }
         }
 
-        public RegisterMask PassedMM
-        {
-            get
-            {
-                return _passedMM;
-            }
-        }
-
         public RegisterMask PassedXMM
         {
             get

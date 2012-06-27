@@ -13,15 +13,12 @@
         private readonly bool _calleePopsStack;
         private readonly ArgumentsDirection _argumentsDirection;
         private readonly RegisterMask _preservedGP;
-        private readonly RegisterMask _preservedMM;
         private readonly RegisterMask _preservedXMM;
         private readonly ReadOnlyCollection<RegIndex> _argumentsGPList;
         private readonly ReadOnlyCollection<RegIndex> _argumentsXMMList;
 
         /// <summary>Bitmask for preserved GP registers.</summary>
         private readonly RegisterMask _argumentsGP;
-        /// <summary>Bitmask for preserved MM registers.</summary>
-        private readonly RegisterMask _argumentsMM;
         /// <summary>Bitmask for preserved XMM registers.</summary>
         private readonly RegisterMask _argumentsXMM;
 
