@@ -8,7 +8,7 @@
     <ProjectGuid>{03B87F76-C672-449A-9272-A866C6B62481}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsmJitNet</RootNamespace>
+    <RootNamespace>NAsmJit</RootNamespace>
     <AssemblyName>NAsmJit</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

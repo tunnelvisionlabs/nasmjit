@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     using Encoding = System.Text.Encoding;
     using System;

@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     using System;
     using System.Collections.ObjectModel;
@@ -72,21 +72,21 @@
 
                 switch (_callingConvention)
                 {
-                case AsmJitNet.CallingConvention.Cdecl:
+                case NAsmJit.CallingConvention.Cdecl:
                     _calleePopsStack = false;
                     break;
 
-                case AsmJitNet.CallingConvention.StdCall:
+                case NAsmJit.CallingConvention.StdCall:
                     _calleePopsStack = true;
                     break;
 
-                case AsmJitNet.CallingConvention.MsThisCall:
+                case NAsmJit.CallingConvention.MsThisCall:
                     _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
                     _argumentsGP = RegisterMask.FromIndex(RegIndex.Ecx);
                     break;
 
-                case AsmJitNet.CallingConvention.MsFastCall:
+                case NAsmJit.CallingConvention.MsFastCall:
                     _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
                     argumentsGPList[1] = RegIndex.Edx;
@@ -94,7 +94,7 @@
                                    RegisterMask.FromIndex(RegIndex.Edx);
                     break;
 
-                case AsmJitNet.CallingConvention.BorlandFastCall:
+                case NAsmJit.CallingConvention.BorlandFastCall:
                     _calleePopsStack = true;
                     _argumentsDirection = ArgumentsDirection.LeftToRight;
                     argumentsGPList[0] = RegIndex.Eax;
@@ -106,7 +106,7 @@
                                    RegisterMask.FromIndex(RegIndex.Ecx);
                     break;
 
-                case AsmJitNet.CallingConvention.GccFastCall:
+                case NAsmJit.CallingConvention.GccFastCall:
                     _calleePopsStack = true;
                     argumentsGPList[0] = RegIndex.Ecx;
                     argumentsGPList[1] = RegIndex.Edx;
@@ -115,14 +115,14 @@
                                    RegisterMask.FromIndex(RegIndex.Edx);
                     break;
 
-                case AsmJitNet.CallingConvention.GccRegParm1:
+                case NAsmJit.CallingConvention.GccRegParm1:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
 
                     _argumentsGP = RegisterMask.FromIndex(RegIndex.Eax);
                     break;
 
-                case AsmJitNet.CallingConvention.GccRegParm2:
+                case NAsmJit.CallingConvention.GccRegParm2:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
                     argumentsGPList[1] = RegIndex.Edx;
@@ -131,7 +131,7 @@
                                    RegisterMask.FromIndex(RegIndex.Edx);
                     break;
 
-                case AsmJitNet.CallingConvention.GccRegParm3:
+                case NAsmJit.CallingConvention.GccRegParm3:
                     _calleePopsStack = false;
                     argumentsGPList[0] = RegIndex.Eax;
                     argumentsGPList[1] = RegIndex.Edx;

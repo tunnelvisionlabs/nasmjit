@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     /// <summary>
     /// Operand types that can be encoded in operand

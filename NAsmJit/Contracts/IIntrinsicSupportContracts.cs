@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet.Contracts
+﻿namespace NAsmJit.Contracts
 {
     using System;
     using System.Diagnostics.Contracts;

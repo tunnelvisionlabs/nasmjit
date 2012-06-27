@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     public class GPReg : BaseReg, IGpOperand
     {

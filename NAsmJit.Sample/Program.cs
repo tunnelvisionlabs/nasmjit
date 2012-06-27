@@ -1,7 +1,7 @@
 ﻿namespace NAsmJit.Sample
 {
     using System;
-    using AsmJitNet;
+    using NAsmJit;
     using System.Collections.Generic;
     using Marshal = System.Runtime.InteropServices.Marshal;
 

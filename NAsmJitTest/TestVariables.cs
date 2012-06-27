@@ -3,7 +3,7 @@
     using System;
     using System.Linq;
     using System.Text;
-    using AsmJitNet;
+    using NAsmJit;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Marshal = System.Runtime.InteropServices.Marshal;
     using UnmanagedFunctionPointer = System.Runtime.InteropServices.UnmanagedFunctionPointerAttribute;

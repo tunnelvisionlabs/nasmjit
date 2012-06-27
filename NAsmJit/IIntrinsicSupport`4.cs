@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     public interface IIntrinsicSupport<TGP, TX87, TMM, TXMM> : IIntrinsicSupport
         where TGP : IGpOperand

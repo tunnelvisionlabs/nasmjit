@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     using System;
     using System.Diagnostics.Contracts;
@@ -372,42 +372,42 @@
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.BYTE);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(IntPtr target, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.WORD);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(IntPtr target, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.DWORD);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(IntPtr target, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.QWORD);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(IntPtr target, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.TWORD);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(IntPtr target, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
         {
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, displacement, segmentPrefix, AsmJitNet.Size.DQWORD);
+            return MemPtrAbs(target, displacement, segmentPrefix, NAsmJit.Size.DQWORD);
         }
 
         public static Mem ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -423,7 +423,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.BYTE);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -431,7 +431,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.WORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -439,7 +439,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.DWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -447,7 +447,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.QWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -455,7 +455,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.TWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(IntPtr target, GPReg index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -463,7 +463,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.DQWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.DQWORD);
         }
 
         public static Mem ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -479,7 +479,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.BYTE);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -487,7 +487,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.WORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -495,7 +495,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.DWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -503,7 +503,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.QWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -511,7 +511,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.TWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(IntPtr target, GPVar index, ScalingFactor scalingFactor, int displacement = 0, SegmentPrefix segmentPrefix = SegmentPrefix.None)
@@ -519,7 +519,7 @@
             Contract.Requires(index != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, AsmJitNet.Size.DQWORD);
+            return MemPtrAbs(target, index, scalingFactor, displacement, segmentPrefix, NAsmJit.Size.DQWORD);
         }
 
         public static Mem ptr(GPReg @base, int displacement = 0)
@@ -535,7 +535,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.BYTE);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(GPReg @base, int displacement = 0)
@@ -543,7 +543,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.WORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(GPReg @base, int displacement = 0)
@@ -551,7 +551,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPReg @base, int displacement = 0)
@@ -559,7 +559,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPReg @base, int displacement = 0)
@@ -567,7 +567,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.TWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPReg @base, int displacement = 0)
@@ -575,7 +575,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPReg @base, int displacement = 0)
@@ -583,7 +583,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPReg @base, int displacement = 0)
@@ -591,7 +591,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPReg @base, int displacement = 0)
@@ -599,7 +599,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
+            return MemPtrBuild(@base, displacement, (NAsmJit.Size)IntPtr.Size);
         }
 
         public static Mem ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -619,7 +619,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.BYTE);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -629,7 +629,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.WORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -639,7 +639,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -649,7 +649,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -659,7 +659,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.TWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -669,7 +669,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -679,7 +679,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -689,7 +689,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPReg @base, GPReg index, ScalingFactor scalingFactor, int displacement = 0)
@@ -699,7 +699,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, (AsmJitNet.Size)IntPtr.Size);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, (NAsmJit.Size)IntPtr.Size);
         }
 
         public static Mem ptr(GPVar @base, int displacement = 0)
@@ -715,7 +715,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.BYTE);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(GPVar @base, int displacement = 0)
@@ -723,7 +723,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.WORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(GPVar @base, int displacement = 0)
@@ -731,7 +731,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPVar @base, int displacement = 0)
@@ -739,7 +739,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPVar @base, int displacement = 0)
@@ -747,7 +747,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.TWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPVar @base, int displacement = 0)
@@ -755,7 +755,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPVar @base, int displacement = 0)
@@ -763,7 +763,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPVar @base, int displacement = 0)
@@ -771,7 +771,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPVar @base, int displacement = 0)
@@ -779,7 +779,7 @@
             Contract.Requires(@base != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, displacement, (AsmJitNet.Size)IntPtr.Size);
+            return MemPtrBuild(@base, displacement, (NAsmJit.Size)IntPtr.Size);
         }
 
         public static Mem ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -799,7 +799,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.BYTE);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.BYTE);
         }
 
         public static Mem word_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -809,7 +809,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.WORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.WORD);
         }
 
         public static Mem dword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -819,7 +819,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DWORD);
         }
 
         public static Mem qword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -829,7 +829,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem tword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -839,7 +839,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.TWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.TWORD);
         }
 
         public static Mem dqword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -849,7 +849,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem mmword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -859,7 +859,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.QWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.QWORD);
         }
 
         public static Mem xmmword_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -869,7 +869,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, AsmJitNet.Size.DQWORD);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, NAsmJit.Size.DQWORD);
         }
 
         public static Mem sysint_ptr(GPVar @base, GPVar index, ScalingFactor scalingFactor, int displacement = 0)
@@ -879,7 +879,7 @@
             Contract.Requires(scalingFactor >= ScalingFactor.Times1 && scalingFactor <= ScalingFactor.Times8);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            return MemPtrBuild(@base, index, scalingFactor, displacement, (AsmJitNet.Size)IntPtr.Size);
+            return MemPtrBuild(@base, index, scalingFactor, displacement, (NAsmJit.Size)IntPtr.Size);
         }
 
         private static Mem MemPtrAbs(IntPtr target, int displacement, SegmentPrefix segmentPrefix, Size size)

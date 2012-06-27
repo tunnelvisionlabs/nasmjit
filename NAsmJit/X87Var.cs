@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     public class X87Var : BaseVar, IX87Operand
     {

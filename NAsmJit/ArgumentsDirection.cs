@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     /// <summary>
     /// Arguments direction used by Function.

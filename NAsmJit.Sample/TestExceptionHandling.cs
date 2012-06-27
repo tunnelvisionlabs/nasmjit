@@ -2,7 +2,7 @@
 {
     using System;
     using Marshal = System.Runtime.InteropServices.Marshal;
-    using AsmJitNet;
+    using NAsmJit;
 
     public class TestExceptionHandling
     {

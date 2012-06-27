@@ -5,7 +5,7 @@
     using System.Linq;
     using System.Text;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using AsmJitNet;
+    using NAsmJit;
     using Marshal = System.Runtime.InteropServices.Marshal;
 
     [TestClass]

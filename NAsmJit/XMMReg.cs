@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     public sealed class XMMReg : BaseReg, IXmmOperand
     {

@@ -1,4 +1,4 @@
-﻿namespace AsmJitNet
+﻿namespace NAsmJit
 {
     public class X87Reg : BaseReg, IX87Operand
     {

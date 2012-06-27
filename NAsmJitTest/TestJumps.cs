@@ -1,7 +1,7 @@
 ﻿namespace NAsmJitTest
 {
     using System;
-    using AsmJitNet;
+    using NAsmJit;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Marshal = System.Runtime.InteropServices.Marshal;
 
