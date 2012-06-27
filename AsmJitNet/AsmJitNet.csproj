@@ -230,6 +230,7 @@
     <Compile Include="MMVar.cs" />
     <Compile Include="PrefetchHint.cs" />
     <Compile Include="RegisterMask.cs" />
+    <Compile Include="ScalingFactor.cs" />
     <Compile Include="SegmentReg.cs" />
     <Compile Include="VendorInfo.cs" />
     <Compile Include="VirtualMemoryManager.cs" />

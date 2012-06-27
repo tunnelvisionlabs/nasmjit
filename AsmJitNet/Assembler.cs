@@ -3173,7 +3173,7 @@
                     if (mem.Shift != 0)
                     {
                         buf.Append(" * ");
-                        buf.Append("1248"[mem.Shift & 3]);
+                        buf.Append("1248"[(int)mem.Shift & 3]);
                     }
                 }
 
@@ -3464,7 +3464,7 @@
             byte baseReg = (byte)((int)mem.Base & 0x7);
             byte indexReg = (byte)((int)mem.Index & 0x7);
             IntPtr disp = mem.Displacement;
-            int shift = mem.Shift;
+            ScalingFactor shift = mem.Shift;
 
             if (mem.MemoryType == MemoryType.Native)
             {
