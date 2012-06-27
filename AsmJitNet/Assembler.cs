@@ -174,7 +174,12 @@
 
         public Label DefineLabel()
         {
-            Label label = new Label(_labelData.Count | Operand.OperandIdTypeLabel);
+            return DefineLabel(null);
+        }
+
+        public Label DefineLabel(string name)
+        {
+            Label label = new Label(_labelData.Count | Operand.OperandIdTypeLabel, name);
             _labelData.Add(new AssemblerLabelData());
             return label;
         }
@@ -207,7 +212,7 @@
 
             // Log.
             if (Logger != null)
-                Logger.LogFormat("L.{0}:" + Environment.NewLine, label.Id & Operand.OperandIdValueMask);
+                Logger.LogFormat("{0}:" + Environment.NewLine, label.Name);
 
             long pos = Offset;
 
@@ -426,7 +431,7 @@
 
             if (Logger != null)
             {
-                Logger.LogFormat(IntPtr.Size == 4 ? ".dd L.{0}\n" : ".dq L.{1}\n", label.Id & Operand.OperandIdValueMask);
+                Logger.LogFormat(IntPtr.Size == 4 ? ".dd {0}\n" : ".dq {0}\n", label.Name);
             }
 
             r_data.Type = RelocationType.RelativeToAbsolute;
@@ -3153,7 +3158,7 @@
                 case MemoryType.Label:
                     {
                         // [label + index*scale + displacement]
-                        buf.AppendFormat("L.{0}", (int)mem.Base & Operand.OperandIdValueMask);
+                        buf.Append(mem.BaseLabel.Name);
                         break;
                     }
                 case MemoryType.Absolute:
@@ -3197,7 +3202,7 @@
             }
             else if (op.IsLabel)
             {
-                buf.AppendFormat("L.{0}", op.Id & Operand.OperandIdValueMask);
+                buf.Append(((Label)op).Name);
                 return;
             }
             else

@@ -5,6 +5,8 @@
 
     public sealed class Mem : Operand
     {
+        private readonly Label _label;
+
         private readonly MemoryType _type;
 
         private readonly SegmentPrefix _segmentPrefix;
@@ -253,6 +255,14 @@
             get
             {
                 return _type;
+            }
+        }
+
+        public Label BaseLabel
+        {
+            get
+            {
+                return _label;
             }
         }
 

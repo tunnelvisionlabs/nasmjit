@@ -7,6 +7,8 @@
     {
         public static readonly Label Empty = new Label();
 
+        private readonly string _name;
+
         /// <summary>
         /// Create new, unassociated label
         /// </summary>
@@ -19,11 +21,29 @@
         {
         }
 
+        public Label(int id, string name)
+            : base(id | OperandIdTypeLabel)
+        {
+            if (!string.IsNullOrEmpty(name))
+                _name = name;
+        }
+
         public override OperandType OperandType
         {
             get
             {
                 return OperandType.Label;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                if (_name != null)
+                    return _name;
+
+                return "L." + (Id & Operand.OperandIdValueMask);
             }
         }
     }
