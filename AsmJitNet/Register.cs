@@ -388,6 +388,46 @@
         public static readonly GPReg ndi = new GPReg(_nativeRegisterType, RegIndex.Edi);
 
         /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st0 = new X87Reg(RegCode.ST0);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st1 = new X87Reg(RegCode.ST1);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st2 = new X87Reg(RegCode.ST2);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st3 = new X87Reg(RegCode.ST3);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st4 = new X87Reg(RegCode.ST4);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st5 = new X87Reg(RegCode.ST5);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st6 = new X87Reg(RegCode.ST6);
+
+        /// <summary>
+        /// X87 floating point register.
+        /// </summary>
+        public static readonly X87Reg st7 = new X87Reg(RegCode.ST7);
+
+        /// <summary>
         /// 64-bit MM register.
         /// </summary>
         public static readonly MMReg mm0 = new MMReg(RegCode.MM0);

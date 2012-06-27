@@ -4316,7 +4316,7 @@
         /// <summary>Add st(0) to @a dst and POP register stack (FPU).</summary>
         public static void Faddp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            Faddp(intrinsicSupport, Register.st((RegIndex)1));
+            Faddp(intrinsicSupport, Register.st1);
         }
 
         public static void Faddp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
@@ -4411,7 +4411,7 @@
         /// <summary>Compare st(0) with @a reg (FPU).</summary>
         public static void Fcom(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fcom, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fcom, Register.st1);
         }
 
         public static void Fcom<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -4429,7 +4429,7 @@
         /// <summary>Compare st(0) with @a reg and pop the stack (FPU).</summary>
         public static void Fcomp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            Fcomp(intrinsicSupport, Register.st((RegIndex)1));
+            Fcomp(intrinsicSupport, Register.st1);
         }
 
         public static void Fcomp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -4505,7 +4505,7 @@
         /// <summary>Divide @a reg by st(0) (FPU).</summary>
         public static void Fdivp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            Fdivp(intrinsicSupport, Register.st((RegIndex)1));
+            Fdivp(intrinsicSupport, Register.st1);
         }
 
         public static void Fdivp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -4531,7 +4531,7 @@
         /// <summary>Reverse Divide @a reg by st(0) (FPU).</summary>
         public static void Fdivrp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fdivrp, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fdivrp, Register.st1);
         }
 
         public static void Fdivrp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -4762,7 +4762,7 @@
         /// <summary>Multiply st(0) by @a dst and POP register stack (FPU).</summary>
         public static void Fmulp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fmulp, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fmulp, Register.st1);
         }
 
         public static void Fmulp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
@@ -5038,7 +5038,7 @@
         /// <summary>Subtract st(0) from @a dst and POP register stack (FPU).</summary>
         public static void Fsubp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fsubp, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubp, Register.st1);
         }
 
         public static void Fsubp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
@@ -5068,7 +5068,7 @@
         /// <summary>Reverse Subtract st(0) from @a dst and POP register stack (FPU).</summary>
         public static void Fsubrp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fsubrp, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fsubrp, Register.st1);
         }
 
         public static void Fsubrp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 dst)
@@ -5086,7 +5086,7 @@
         /// <summary>Unordered Compare st(0) with @a reg (FPU).</summary>
         public static void Fucom(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fucom, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucom, Register.st1);
         }
 
         public static void Fucom<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -5107,7 +5107,7 @@
         /// and Set EFLAGS and pop the stack (FPU).</summary>
         public static void Fucomip(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fucomip, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomip, Register.st1);
         }
 
         public static void Fucomip<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -5119,7 +5119,7 @@
         /// <summary>Unordered Compare st(0) with @a reg and pop register stack (FPU).</summary>
         public static void Fucomp(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fucomp, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fucomp, Register.st1);
         }
 
         public static void Fucomp<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)
@@ -5157,7 +5157,7 @@
         /// </remarks>
         public static void Fxch(this IX87IntrinsicSupport<X87Reg> intrinsicSupport)
         {
-            intrinsicSupport.EmitInstruction(InstructionCode.Fxch, Register.st((RegIndex)1));
+            intrinsicSupport.EmitInstruction(InstructionCode.Fxch, Register.st1);
         }
 
         public static void Fxch<TX87>(this IX87IntrinsicSupport<TX87> intrinsicSupport, TX87 reg)

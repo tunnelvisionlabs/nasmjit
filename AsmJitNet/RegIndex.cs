@@ -57,6 +57,23 @@
         /// <summary>ID for R15 register (64-bit only).</summary>
         R15 = 15,
 
+        /// <summary>ID for st0 register.</summary>
+        St0 = 0,
+        /// <summary>ID for st1 register.</summary>
+        St1 = 1,
+        /// <summary>ID for st2 register.</summary>
+        St2 = 2,
+        /// <summary>ID for st3 register.</summary>
+        St3 = 3,
+        /// <summary>ID for st4 register.</summary>
+        St4 = 4,
+        /// <summary>ID for st5 register.</summary>
+        St5 = 5,
+        /// <summary>ID for st6 register.</summary>
+        St6 = 6,
+        /// <summary>ID for st7 register.</summary>
+        St7 = 7,
+
         /// <summary>ID for mm0 register.</summary>
         Mm0 = 0,
         /// <summary>ID for mm1 register.</summary>
