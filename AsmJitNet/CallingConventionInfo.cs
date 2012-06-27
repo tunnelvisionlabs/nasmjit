@@ -18,11 +18,11 @@
         private readonly ReadOnlyCollection<RegIndex> _argumentsGPList;
         private readonly ReadOnlyCollection<RegIndex> _argumentsXMMList;
 
-        //! @brief Bitmask for preserved GP registers.
+        /// <summary>Bitmask for preserved GP registers.</summary>
         private readonly RegisterMask _argumentsGP;
-        //! @brief Bitmask for preserved MM registers.
+        /// <summary>Bitmask for preserved MM registers.</summary>
         private readonly RegisterMask _argumentsMM;
-        //! @brief Bitmask for preserved XMM registers.
+        /// <summary>Bitmask for preserved XMM registers.</summary>
         private readonly RegisterMask _argumentsXMM;
 
         static CallingConventionInfo()

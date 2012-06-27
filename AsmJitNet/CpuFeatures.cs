@@ -5,68 +5,68 @@
     [Flags]
     public enum CpuFeatures : uint
     {
-        //! @brief Cpu has RDTSC instruction.
+        /// <summary>Cpu has RDTSC instruction.</summary>
         RDTSC = 1U << 0,
-        //! @brief Cpu has RDTSCP instruction.
+        /// <summary>Cpu has RDTSCP instruction.</summary>
         RDTSCP = 1U << 1,
-        //! @brief Cpu has CMOV instruction (conditional move)
+        /// <summary>Cpu has CMOV instruction (conditional move)</summary>
         CMOV = 1U << 2,
-        //! @brief Cpu has CMPXCHG8B instruction
+        /// <summary>Cpu has CMPXCHG8B instruction</summary>
         CMPXCHG8B = 1U << 3,
-        //! @brief Cpu has CMPXCHG16B instruction (64 bit processors)
+        /// <summary>Cpu has CMPXCHG16B instruction (64 bit processors)</summary>
         CMPXCHG16B = 1U << 4,
-        //! @brief Cpu has CLFUSH instruction
+        /// <summary>Cpu has CLFUSH instruction</summary>
         CLFLUSH = 1U << 5,
-        //! @brief Cpu has PREFETCH instruction
+        /// <summary>Cpu has PREFETCH instruction</summary>
         PREFETCH = 1U << 6,
-        //! @brief Cpu supports LAHF and SAHF instrictions.
+        /// <summary>Cpu supports LAHF and SAHF instrictions.</summary>
         LAHF_SAHF = 1U << 7,
-        //! @brief Cpu supports FXSAVE and FXRSTOR instructions.
+        /// <summary>Cpu supports FXSAVE and FXRSTOR instructions.</summary>
         FXSR = 1U << 8,
-        //! @brief Cpu supports FXSAVE and FXRSTOR instruction optimizations (FFXSR).
+        /// <summary>Cpu supports FXSAVE and FXRSTOR instruction optimizations (FFXSR).</summary>
         FFXSR = 1U << 9,
 
-        //! @brief Cpu has MMX.
+        /// <summary>Cpu has MMX.</summary>
         MMX = 1U << 10,
-        //! @brief Cpu has extended MMX.
+        /// <summary>Cpu has extended MMX.</summary>
         MMX_EXT = 1U << 11,
-        //! @brief Cpu has 3dNow!
+        /// <summary>Cpu has 3dNow</summary>!
         AMD3DNOW = 1U << 12,
-        //! @brief Cpu has enchanced 3dNow!
+        /// <summary>Cpu has enchanced 3dNow</summary>!
         AMD3DNOW_EXT = 1U << 13,
-        //! @brief Cpu has SSE.
+        /// <summary>Cpu has SSE.</summary>
         SSE = 1U << 14,
-        //! @brief Cpu has SSE2.
+        /// <summary>Cpu has SSE2.</summary>
         SSE2 = 1U << 15,
-        //! @brief Cpu has SSE3.
+        /// <summary>Cpu has SSE3.</summary>
         SSE3 = 1U << 16,
-        //! @brief Cpu has Supplemental SSE3 (SSSE3).
+        /// <summary>Cpu has Supplemental SSE3 (SSSE3).</summary>
         SSSE3 = 1U << 17,
-        //! @brief Cpu has SSE4.A.
+        /// <summary>Cpu has SSE4.A.</summary>
         SSE4_A = 1U << 18,
-        //! @brief Cpu has SSE4.1.
+        /// <summary>Cpu has SSE4.1.</summary>
         SSE4_1 = 1U << 19,
-        //! @brief Cpu has SSE4.2.
+        /// <summary>Cpu has SSE4.2.</summary>
         SSE4_2 = 1U << 20,
-        //! @brief Cpu has AVX.
+        /// <summary>Cpu has AVX.</summary>
         AVX = 1U << 22,
-        //! @brief Cpu has Misaligned SSE (MSSE).
+        /// <summary>Cpu has Misaligned SSE (MSSE).</summary>
         MSSE = 1U << 23,
-        //! @brief Cpu supports MONITOR and MWAIT instructions.
+        /// <summary>Cpu supports MONITOR and MWAIT instructions.</summary>
         MONITOR_MWAIT = 1U << 24,
-        //! @brief Cpu supports MOVBE instruction.
+        /// <summary>Cpu supports MOVBE instruction.</summary>
         MOVBE = 1U << 25,
-        //! @brief Cpu supports POPCNT instruction.
+        /// <summary>Cpu supports POPCNT instruction.</summary>
         POPCNT = 1U << 26,
-        //! @brief Cpu supports LZCNT instruction.
+        /// <summary>Cpu supports LZCNT instruction.</summary>
         LZCNT = 1U << 27,
-        //! @brief Cpu supports PCLMULDQ set of instructions.
+        /// <summary>Cpu supports PCLMULDQ set of instructions.</summary>
         PCLMULDQ = 1U << 28,
-        //! @brief Cpu supports multithreading.
+        /// <summary>Cpu supports multithreading.</summary>
         MULTI_THREADING = 1U << 29,
-        //! @brief Cpu supports execute disable bit (execute protection).
+        /// <summary>Cpu supports execute disable bit (execute protection).</summary>
         EXECUTE_DISABLE_BIT = 1U << 30,
-        //! @brief Cpu supports 64 bits.
+        /// <summary>Cpu supports 64 bits.</summary>
         X64_BIT = 1U << 31
     }
 }

@@ -94,7 +94,7 @@
         GccFastCall,
 
         /// <summary>
-        /// @brief GCC specific regparm(1) convention.
+        /// GCC specific regparm(1) convention.
         /// </summary>
         /// <remarks>
         /// The first parameter (evaluated from left-to-right) is in EAX register,
@@ -113,7 +113,7 @@
         GccRegParm1,
 
         /// <summary>
-        /// @brief GCC specific regparm(2) convention.
+        /// GCC specific regparm(2) convention.
         /// </summary>
         /// <remarks>
         /// Two first parameters (evaluated from left-to-right) are in EAX:EDX 
@@ -132,7 +132,7 @@
         GccRegParm2,
 
         /// <summary>
-        /// @brief GCC specific fastcall with 3 parameters in registers.
+        /// GCC specific fastcall with 3 parameters in registers.
         /// </summary>
         /// <remarks>
         /// Three first parameters (evaluated from left-to-right) are in 

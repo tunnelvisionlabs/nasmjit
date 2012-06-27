@@ -2,18 +2,18 @@
 {
     public enum CpuVendor
     {
-        //! @brief Unknown CPU vendor.
+        /// <summary>Unknown CPU vendor.</summary>
         Unknown = 0,
 
-        //! @brief Intel CPU vendor.
+        /// <summary>Intel CPU vendor.</summary>
         Intel = 1,
-        //! @brief AMD CPU vendor.
+        /// <summary>AMD CPU vendor.</summary>
         Amd = 2,
-        //! @brief National Semiconductor CPU vendor (applies also to Cyrix processors).
+        /// <summary>National Semiconductor CPU vendor (applies also to Cyrix processors).</summary>
         Nsm = 3,
-        //! @brief Transmeta CPU vendor.
+        /// <summary>Transmeta CPU vendor.</summary>
         Transmeta = 4,
-        //! @brief VIA CPU vendor.
+        /// <summary>VIA CPU vendor.</summary>
         Via = 5
     }
 }

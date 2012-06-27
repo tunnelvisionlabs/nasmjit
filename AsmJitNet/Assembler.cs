@@ -3730,20 +3730,20 @@
             EmitModRM(o, op, immSize);
         }
 
-        //! @brief Emit FPU instruction with no operands.
+        /// <summary>Emit FPU instruction with no operands.</summary>
         private void EmitFpu(int opCode)
         {
             EmitOpCode(opCode);
         }
 
-        //! @brief Emit FPU instruction with one operand @a sti (index of FPU register).
+        /// <summary>Emit FPU instruction with one operand @a sti (index of FPU register).</summary>
         private void EmitFpuSTI(int opCode, int sti)
         {
             Contract.Requires(sti >= 0 && sti < 8);
             EmitOpCode(opCode + sti);
         }
 
-        //! @brief Emit FPU instruction with one operand @a opReg and memory operand @a mem.
+        /// <summary>Emit FPU instruction with one operand @a opReg and memory operand @a mem.</summary>
         private void EmitFpuMEM(int opCode, byte opReg, Mem mem)
         {
             Contract.Requires(mem != null);
@@ -3769,7 +3769,7 @@
             EmitModM(opReg, mem, 0);
         }
 
-        //! @brief Emit MMX/SSE instruction.
+        /// <summary>Emit MMX/SSE instruction.</summary>
         private void EmitMmu(uint opCode, bool rexw, byte opReg, Operand src, IntPtr immSize)
         {
             Contract.Requires(src != null);
@@ -3799,7 +3799,7 @@
                 EmitModM(opReg, (Mem)src, (int)immSize);
         }
 
-        //! @brief Emit displacement.
+        /// <summary>Emit displacement.</summary>
         private LabelLink EmitDisplacement(AssemblerLabelData l_data, long inlinedDisplacement, int size)
         {
             Contract.Requires(l_data != null);
@@ -3826,10 +3826,10 @@
             return link;
         }
 
-        //! @brief Emit relative relocation to absolute pointer @a target. It's needed
-        //! to add what instruction is emitting this, because in x64 mode the relative
-        //! displacement can be impossible to calculate and in this case the trampoline
-        //! is used.
+        /// <summary>Emit relative relocation to absolute pointer @a target. It's needed
+        /// to add what instruction is emitting this, because in x64 mode the relative
+        /// displacement can be impossible to calculate and in this case the trampoline
+        /// is used.</summary>
         private void EmitJmpOrCallReloc(int instruction, IntPtr target)
         {
             RelocationData rd = new RelocationData();
@@ -3857,7 +3857,7 @@
         // helpers thats used by assembler. They call emitX86() adding NULLs
         // to first, second and third operand, if needed.
 
-        //! @brief Private method for emitting jcc.
+        /// <summary>Private method for emitting jcc.</summary>
         public void EmitJcc(InstructionCode code, Label label, Hint hint)
         {
             if (hint == Hint.None)

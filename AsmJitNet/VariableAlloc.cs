@@ -20,7 +20,7 @@
         Read = 0x01,
 
         /// <summary>
-        /// @brief Allocating variable to write only (overwrite).
+        /// Allocating variable to write only (overwrite).
         /// </summary>
         /// <remarks>
         /// Overwriting means that if variable is in memory, there is no generated
@@ -31,7 +31,7 @@
         Write = 0x02,
 
         /// <summary>
-        /// @brief Allocating variable to read / write.
+        /// Allocating variable to read / write.
         /// </summary>
         /// <remarks>
         /// Variable allocated for read / write is marked as changed. This means that

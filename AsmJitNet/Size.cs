@@ -2,17 +2,17 @@
 {
     public enum Size
     {
-        //! @brief 1 byte size.
+        /// <summary>1 byte size.</summary>
         BYTE = 1,
-        //! @brief 2 bytes size.
+        /// <summary>2 bytes size.</summary>
         WORD = 2,
-        //! @brief 4 bytes size.
+        /// <summary>4 bytes size.</summary>
         DWORD = 4,
-        //! @brief 8 bytes size.
+        /// <summary>8 bytes size.</summary>
         QWORD = 8,
-        //! @brief 10 bytes size.
+        /// <summary>10 bytes size.</summary>
         TWORD = 10,
-        //! @brief 16 bytes size.
+        /// <summary>16 bytes size.</summary>
         DQWORD = 16
     }
 }

@@ -2,7 +2,7 @@
 {
     public enum Condition
     {
-        //! @brief No condition code.
+        /// <summary>No condition code.</summary>
         None = -1,
 
         // Condition codes from processor manuals.
