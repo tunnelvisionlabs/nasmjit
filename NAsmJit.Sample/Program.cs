@@ -1,4 +1,4 @@
-﻿namespace AsmJit.Sample
+﻿namespace NAsmJit.Sample
 {
     using System;
     using AsmJitNet;

@@ -8,7 +8,7 @@
     <ProjectGuid>{95722EF0-B44A-4555-B6A5-D5DD370D66F2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsmJit.Sample</RootNamespace>
+    <RootNamespace>NAsmJit.Sample</RootNamespace>
     <AssemblyName>NAsmJit.Sample</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
