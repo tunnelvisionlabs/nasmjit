@@ -5,17 +5,17 @@
 
     public sealed class Mem : Operand
     {
-        private MemoryType _type;
+        private readonly MemoryType _type;
 
-        private SegmentPrefix _segmentPrefix;
+        private readonly SegmentPrefix _segmentPrefix;
 
-        private bool _sizePrefix;
+        private readonly bool _sizePrefix;
 
         private RegIndex _base;
 
         private RegIndex _index;
 
-        private ScalingFactor _scalingFactor;
+        private readonly ScalingFactor _scalingFactor;
 
         private IntPtr _target;
 
@@ -203,6 +203,7 @@
                 throw new ArgumentNullException("label");
 
             _type = MemoryType.Label;
+            _label = label;
             _segmentPrefix = SegmentPrefix.None;
 
             _base = (RegIndex)label.Id;
@@ -213,11 +214,9 @@
             _displacement = displacement;
         }
 
-        public Mem(Label @base, GPReg index, ScalingFactor scalingFactor, IntPtr displacement, int size = 0)
-            : this(@base, displacement, size)
+        public Mem(Label label, GPReg index, ScalingFactor scalingFactor, IntPtr displacement, int size = 0)
+            : this(label, displacement, size)
         {
-            if (@base == null)
-                throw new ArgumentNullException("base");
             if (index == null)
                 throw new ArgumentNullException("index");
             if (scalingFactor < ScalingFactor.Times1 || scalingFactor > ScalingFactor.Times8)
@@ -228,11 +227,9 @@
             _scalingFactor = scalingFactor;
         }
 
-        public Mem(Label @base, GPVar index, ScalingFactor scalingFactor, IntPtr displacement, int size = 0)
-            : this(@base, displacement, size)
+        public Mem(Label label, GPVar index, ScalingFactor scalingFactor, IntPtr displacement, int size = 0)
+            : this(label, displacement, size)
         {
-            if (@base == null)
-                throw new ArgumentNullException("base");
             if (index == null)
                 throw new ArgumentNullException("index");
             if (scalingFactor < ScalingFactor.Times1 || scalingFactor > ScalingFactor.Times8)
@@ -338,11 +335,6 @@
             get
             {
                 return _target;
-            }
-
-            internal set
-            {
-                _target = value;
             }
         }
 
