@@ -18,8 +18,8 @@ Thumbs.db
 *.cache
 *.ilk
 *.log
-/AsmJitNet.opensdf
-/AsmJitNet.sdf
+/NAsmJit.opensdf
+/NAsmJit.sdf
 [Bb]in/
 [Dd]ebug*/
 *.lib
