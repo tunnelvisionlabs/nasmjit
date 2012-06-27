@@ -123,5 +123,10 @@
             Mem m = new Mem(var.Id, memSize);
             return m;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}:{1}", Id & OperandIdValueMask, VariableType);
+        }
     }
 }

@@ -46,5 +46,10 @@
                 return "L." + (Id & Operand.OperandIdValueMask);
             }
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

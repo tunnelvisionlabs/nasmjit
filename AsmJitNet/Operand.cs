@@ -142,6 +142,8 @@
             return IsMem || IsRegType(regType);
         }
 
+        public abstract override string ToString();
+
         private sealed class NoneOperand : Operand
         {
             public override OperandType OperandType
@@ -150,6 +152,11 @@
                 {
                     return OperandType.None;
                 }
+            }
+
+            public override string ToString()
+            {
+                return "none";
             }
         }
     }

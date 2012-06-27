@@ -56,5 +56,10 @@
 
             return new Imm(i);
         }
+
+        public override string ToString()
+        {
+            return "0x" + _value.ToString("X") + (IsUnsigned ? "U" : string.Empty);
+        }
     }
 }

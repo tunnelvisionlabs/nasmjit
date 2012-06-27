@@ -63,5 +63,10 @@
                 return (RegIndex)((int)Code & (int)RegIndex.Mask);
             }
         }
+
+        public override string ToString()
+        {
+            return Code.ToString();
+        }
     }
 }
