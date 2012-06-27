@@ -9,7 +9,7 @@
     <ProjectGuid>{2D2546B5-4F7D-4DE0-BF96-C00CDC9A6F6C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsmJitNetTest</RootNamespace>
+    <RootNamespace>NAsmJitTest</RootNamespace>
     <AssemblyName>NAsmJitTest</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -1,4 +1,4 @@
-﻿namespace AsmJitNetTest
+﻿namespace NAsmJitTest
 {
     using System;
     using System.Linq;
