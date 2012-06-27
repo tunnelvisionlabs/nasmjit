@@ -1504,8 +1504,29 @@
         /// <summary>
         /// Signed divide
         /// </summary>
-        public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Idiv(this Assembler intrinsicSupport, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, src);
+        }
+
+        /// <summary>
+        /// Signed divide
+        /// </summary>
+        public static void Idiv(this Assembler intrinsicSupport, Mem src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Idiv, src);
+        }
+
+        /// <summary>
+        /// Signed divide
+        /// </summary>
+        public static void Idiv(this Compiler intrinsicSupport, GPVar dstRem, GPVar dstQuot, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1518,8 +1539,7 @@
         /// <summary>
         /// Signed divide
         /// </summary>
-        public static void Idiv<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
-            where TGP : Operand, IGpOperand
+        public static void Idiv(this Compiler intrinsicSupport, GPVar dstRem, GPVar dstQuot, Mem src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1532,8 +1552,29 @@
         /// <summary>
         /// Signed multiply
         /// </summary>
-        public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Imul(this Assembler intrinsicSupport, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Imul, src);
+        }
+
+        /// <summary>
+        /// Signed multiply
+        /// </summary>
+        public static void Imul(this Assembler intrinsicSupport, Mem src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Imul, src);
+        }
+
+        /// <summary>
+        /// Signed multiply
+        /// </summary>
+        public static void Imul(this Compiler intrinsicSupport, GPVar dstHi, GPVar dstLo, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -1546,8 +1587,7 @@
         /// <summary>
         /// Signed multiply
         /// </summary>
-        public static void Imul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
-            where TGP : Operand, IGpOperand
+        public static void Imul(this Compiler intrinsicSupport, GPVar dstHi, GPVar dstLo, Mem src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -2118,8 +2158,29 @@
         /// <summary>
         /// Unsigned multiply
         /// </summary>
-        public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Mul(this Assembler intrinsicSupport, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mul, src);
+        }
+
+        /// <summary>
+        /// Unsigned multiply
+        /// </summary>
+        public static void Mul(this Assembler intrinsicSupport, Mem src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Mul, src);
+        }
+
+        /// <summary>
+        /// Unsigned multiply
+        /// </summary>
+        public static void Mul(this Compiler intrinsicSupport, GPVar dstHi, GPVar dstLo, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -2132,8 +2193,7 @@
         /// <summary>
         /// Unsigned multiply
         /// </summary>
-        public static void Mul<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstHi, TGP dstLo, Mem src)
-            where TGP : Operand, IGpOperand
+        public static void Mul(this Compiler intrinsicSupport, GPVar dstHi, GPVar dstLo, Mem src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstHi != null);
@@ -3157,8 +3217,17 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Ror, dst, src);
         }
 
-        public static void Sahf<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP var)
-            where TGP : Operand, IGpOperand
+        public static void Sahf(this Assembler intrinsicSupport)
+        {
+            Contract.Requires(intrinsicSupport != null);
+
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Sahf));
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Sahf);
+        }
+
+        public static void Sahf(this Compiler intrinsicSupport, GPVar var)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(var != null);
