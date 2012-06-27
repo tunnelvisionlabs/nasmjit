@@ -222,7 +222,9 @@
 
         private struct ThreadData
         {
+#pragma warning disable 649 // Field 'field' is never assigned to, and will always have its default value 'value'
             public unsafe ExceptionData* _exceptionData;
+#pragma warning restore 649
         }
 
         private struct ExceptionData
