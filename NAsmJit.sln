@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsmJit", "AsmJit\AsmJit.vcxproj", "{7CF67962-1EE0-4C5E-98C1-FA5340CCCD47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJitTest", "AsmJitNetTest\NAsmJitTest.csproj", "{2D2546B5-4F7D-4DE0-BF96-C00CDC9A6F6C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJitTest", "NAsmJitTest\NAsmJitTest.csproj", "{2D2546B5-4F7D-4DE0-BF96-C00CDC9A6F6C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CECBD065-D8CF-4077-87A4-985FC8F81E43}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJit", "AsmJitNet\NAsmJit.csproj", "{03B87F76-C672-449A-9272-A866C6B62481}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJit", "NAsmJit\NAsmJit.csproj", "{03B87F76-C672-449A-9272-A866C6B62481}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJit.Sample", "AsmJit.Sample\NAsmJit.Sample.csproj", "{95722EF0-B44A-4555-B6A5-D5DD370D66F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAsmJit.Sample", "NAsmJit.Sample\NAsmJit.Sample.csproj", "{95722EF0-B44A-4555-B6A5-D5DD370D66F2}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
