@@ -3238,8 +3238,15 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Sahf, var);
         }
 
-        public static void Sal<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Sal(this Assembler intrinsicSupport, GPReg dst)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Sal, dst, Register.cl);
+        }
+
+        public static void Sal(this Compiler intrinsicSupport, GPVar dst, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3277,8 +3284,15 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Sal, dst, src);
         }
 
-        public static void Sar<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Sar(this Assembler intrinsicSupport, GPReg dst)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Sar, dst, Register.cl);
+        }
+
+        public static void Sar(this Compiler intrinsicSupport, GPVar dst, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -3975,8 +3989,15 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Setz, dst);
         }
 
-        public static void Shl<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Shl(this Assembler intrinsicSupport, GPReg dst)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shl, dst, Register.cl);
+        }
+
+        public static void Shl(this Compiler intrinsicSupport, GPVar dst, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4014,8 +4035,15 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Shl, dst, src);
         }
 
-        public static void Shr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Shr(this Assembler intrinsicSupport, GPReg dst)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shr, dst, Register.cl);
+        }
+
+        public static void Shr(this Compiler intrinsicSupport, GPVar dst, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4053,8 +4081,16 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Shr, dst, src);
         }
 
-        public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, TGP src2)
-            where TGP : Operand, IGpOperand
+        public static void Shld(this Assembler intrinsicSupport, GPReg dst, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shld, dst, src, Register.cl);
+        }
+
+        public static void Shld(this Compiler intrinsicSupport, GPVar dst, GPVar src1, GPVar src2)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4075,8 +4111,16 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Shld, dst, src1, src2);
         }
 
-        public static void Shld<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, TGP src2)
-            where TGP : Operand, IGpOperand
+        public static void Shld(this Assembler intrinsicSupport, Mem dst, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shld, dst, src, Register.cl);
+        }
+
+        public static void Shld(this Compiler intrinsicSupport, Mem dst, GPVar src1, GPVar src2)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4097,8 +4141,16 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Shld, dst, src1, src2);
         }
 
-        public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src1, TGP src2)
-            where TGP : Operand, IGpOperand
+        public static void Shrd(this Assembler intrinsicSupport, GPReg dst, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shrd, dst, src, Register.cl);
+        }
+
+        public static void Shrd(this Compiler intrinsicSupport, GPVar dst, GPVar src1, GPVar src2)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
@@ -4119,8 +4171,16 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Shrd, dst, src1, src2);
         }
 
-        public static void Shrd<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, Mem dst, TGP src1, TGP src2)
-            where TGP : Operand, IGpOperand
+        public static void Shrd(this Assembler intrinsicSupport, Mem dst, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(dst != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Shrd, dst, src, Register.cl);
+        }
+
+        public static void Shrd(this Compiler intrinsicSupport, Mem dst, GPVar src1, GPVar src2)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dst != null);
