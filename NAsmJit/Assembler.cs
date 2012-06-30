@@ -1251,7 +1251,7 @@
                     }
 
                     // AL, AX, EAX, RAX register shortcuts (not a shortcut for EAX/RAX when immediate fits in imm8)
-                    if (o0.IsRegIndex(0) && o1.IsImm
+                    if (o0.IsRegIndex(RegIndex.Eax) && o1.IsImm
                         && (o0.Size < 4 || !Util.IsInt8(((Imm)o1).Value.ToInt64())))
                     {
                         if (o0.Size == 2)
@@ -2215,7 +2215,7 @@
                         goto end;
                     }
 
-                    if (o0.IsRegIndex(0) && o1.IsImm)
+                    if (o0.IsRegIndex(RegIndex.Eax) && o1.IsImm)
                     {
                         immSize = o0.Size <= 4 ? o0.Size : 4;
 
