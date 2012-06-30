@@ -1250,8 +1250,9 @@
                         goto end;
                     }
 
-                    // AL, AX, EAX, RAX register shortcuts
-                    if (o0.IsRegIndex(0) && o1.IsImm)
+                    // AL, AX, EAX, RAX register shortcuts (not a shortcut for EAX/RAX when immediate fits in imm8)
+                    if (o0.IsRegIndex(0) && o1.IsImm
+                        && (o0.Size < 4 || !Util.IsInt8(((Imm)o1).Value.ToInt64())))
                     {
                         if (o0.Size == 2)
                             EmitByte(0x66); // 16 bit
