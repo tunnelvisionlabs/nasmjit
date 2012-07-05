@@ -11,11 +11,35 @@
         None = 0,
 
         // X86, MM, XMM
+
+        /// <summary>
+        /// 1-byte general purpose register.
+        /// </summary>
         GB = 0x0001,
+
+        /// <summary>
+        /// 2-byte general purpose register.
+        /// </summary>
         GW = 0x0002,
+
+        /// <summary>
+        /// 4-byte general purpose register.
+        /// </summary>
         GD = 0x0004,
+
+        /// <summary>
+        /// 8-byte general purpose register.
+        /// </summary>
         GQ = 0x0008,
+
+        /// <summary>
+        /// MMX register.
+        /// </summary>
         MM = 0x0010,
+
+        /// <summary>
+        /// XMM register.
+        /// </summary>
         XMM = 0x0020,
         MEM = 0x0040,
         IMM = 0x0080,
