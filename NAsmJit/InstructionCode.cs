@@ -223,6 +223,8 @@
         Imul,          // X86/X64
         Inc,           // X86/X64
         Int3,          // X86/X64
+        Int,           // X86/X64
+        Into,          // X86/X64
 
         J,             // Begin (jcc)
         Ja = J,        // X86/X64 (jcc)

@@ -1531,6 +1531,18 @@
                     break;
                 }
 
+            case InstructionGroup.INT:
+                {
+                    if (o0.IsImm && Util.IsUInt8(((Imm)o0).Value.ToInt64()))
+                    {
+                        EmitByte(0xCD);
+                        EmitByte((byte)((Imm)o0).Value.ToInt32());
+                        goto end;
+                    }
+
+                    break;
+                }
+
             case InstructionGroup.J:
                 {
                     if (o0.IsImm)

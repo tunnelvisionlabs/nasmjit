@@ -248,6 +248,8 @@ instructionDescriptions =
   MAKE_INST(InstructionCode.Imul             , "imul"             , InstructionGroup.IMUL          , InstructionFlags.SPECIAL       , 0                   , 0                   , 0, 0         , 0),
   MAKE_INST(InstructionCode.Inc              , "inc"              , InstructionGroup.INC_DEC       , InstructionFlags.LOCKABLE          , NAsmJit.OperandFlags.GQDWB_MEM        , 0                   , 0, 0x00000040, 0x000000FE),
   MAKE_INST(InstructionCode.Int3             , "int3"             , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000CC, 0),
+  MAKE_INST(InstructionCode.Int              , "int"              , InstructionGroup.EMIT          , InstructionFlags.NONE          , NAsmJit.OperandFlags.IMM              , 0                   , 0, 0x000000CD, 0),
+  MAKE_INST(InstructionCode.Into             , "into"             , InstructionGroup.EMIT          , InstructionFlags.NONE          , 0                   , 0                   , 0, 0x000000CE, 0),
 
   MAKE_INST(InstructionCode.Ja               , "ja"               , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x7       , 0),
   MAKE_INST(InstructionCode.Jae              , "jae"              , InstructionGroup.J             , InstructionFlags.JUMP          , 0                   , 0                   , 0, 0x3       , 0),

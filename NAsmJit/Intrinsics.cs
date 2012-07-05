@@ -1673,6 +1673,23 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Int3);
         }
 
+        public static void Int(this IIntrinsicSupport intrinsicSupport, Imm interrupt)
+        {
+            Contract.Requires(intrinsicSupport != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Int, interrupt);
+        }
+
+        public static void Into(this IIntrinsicSupport intrinsicSupport)
+        {
+            Contract.Requires(intrinsicSupport != null);
+
+            if (!Util.IsX86)
+                throw new NotSupportedException(string.Format("The '{0}' instruction is only supported on X86.", InstructionCode.Into));
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Into);
+        }
+
         public static void J(this IIntrinsicSupport intrinsicSupport, Condition cc, Label label, Hint hint = Hint.None)
         {
             Contract.Requires(intrinsicSupport != null);

@@ -12,6 +12,8 @@
         ENTER,
         IMUL,
         INC_DEC,
+        // user-defined interrupt instruction
+        INT,
         J,
         JMP,
         LEA,
