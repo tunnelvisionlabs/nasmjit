@@ -7,11 +7,17 @@
     {
         void EmitInstruction(InstructionCode code);
 
-        void EmitInstruction(InstructionCode code, Operand operand0);
+        void EmitInstruction(InstructionCode code, Mem operand0);
 
-        void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1);
+        void EmitInstruction(InstructionCode code, Imm operand0);
 
-        void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2);
+        void EmitInstruction(InstructionCode code, Label operand0);
+
+        void EmitInstruction(InstructionCode code, Mem operand0, Imm operand1);
+
+        void EmitInstruction(InstructionCode code, Mem operand0, SegmentReg operand1);
+
+        void EmitInstruction(InstructionCode code, SegmentReg operand0, Mem operand1);
 
         void EmitJcc(InstructionCode code, Label label, Hint hint);
     }

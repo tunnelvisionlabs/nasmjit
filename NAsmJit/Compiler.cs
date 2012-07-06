@@ -1029,7 +1029,7 @@
             EmitInstructionImpl(code, Operand.EmptyOperands);
         }
 
-        public void EmitInstruction(InstructionCode code, Operand operand0)
+        public void EmitInstruction(InstructionCode code, Mem operand0)
         {
             if (operand0 == null)
                 throw new ArgumentNullException("operand0");
@@ -1037,7 +1037,55 @@
             EmitInstructionImpl(code, operand0);
         }
 
-        public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
+        public void EmitInstruction(InstructionCode code, Imm operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, Label operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, X87Var operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+
+            EmitInstructionImpl(code, operand0);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, Imm operand1)
         {
             if (operand0 == null)
                 throw new ArgumentNullException("operand0");
@@ -1045,6 +1093,424 @@
                 throw new ArgumentNullException("operand1");
 
             EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, SegmentReg operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, GPVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, SegmentReg operand0, GPVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, X87Var operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, MMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, XMMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, SegmentReg operand0, Mem operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, Imm operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, SegmentReg operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, Mem operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, GPVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, MMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, XMMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, X87Var operand0, Mem operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, X87Var operand0, X87Var operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, Imm operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, Mem operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, GPVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, MMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, XMMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, Imm operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, Mem operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, GPVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, MMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, XMMVar operand1)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+
+            EmitInstructionImpl(code, operand0, operand1);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, GPVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, Mem operand0, XMMVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, Mem operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, GPVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, MMVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, XMMVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, MMVar operand1, MMVar operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, GPVar operand0, XMMVar operand1, XMMVar operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, Mem operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, GPVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, MMVar operand0, MMVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, Mem operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, GPVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
+        }
+
+        public void EmitInstruction(InstructionCode code, XMMVar operand0, XMMVar operand1, Imm operand2)
+        {
+            if (operand0 == null)
+                throw new ArgumentNullException("operand0");
+            if (operand1 == null)
+                throw new ArgumentNullException("operand1");
+            if (operand2 == null)
+                throw new ArgumentNullException("operand2");
+
+            EmitInstructionImpl(code, operand0, operand1, operand2);
         }
 
         public void EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)

@@ -15,14 +15,28 @@
             throw new NotImplementedException();
         }
 
-        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Operand operand0)
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Mem operand0)
         {
             Contract.Requires(operand0 != null);
 
             throw new NotImplementedException();
         }
 
-        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Operand operand0, Operand operand1)
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Imm operand0)
+        {
+            Contract.Requires(operand0 != null);
+
+            throw new NotImplementedException();
+        }
+
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Label operand0)
+        {
+            Contract.Requires(operand0 != null);
+
+            throw new NotImplementedException();
+        }
+
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Mem operand0, Imm operand1)
         {
             Contract.Requires(operand0 != null);
             Contract.Requires(operand1 != null);
@@ -30,11 +44,18 @@
             throw new NotImplementedException();
         }
 
-        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Operand operand0, Operand operand1, Operand operand2)
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, Mem operand0, SegmentReg operand1)
         {
             Contract.Requires(operand0 != null);
             Contract.Requires(operand1 != null);
-            Contract.Requires(operand2 != null);
+
+            throw new NotImplementedException();
+        }
+
+        void IIntrinsicSupport.EmitInstruction(InstructionCode code, SegmentReg operand0, Mem operand1)
+        {
+            Contract.Requires(operand0 != null);
+            Contract.Requires(operand1 != null);
 
             throw new NotImplementedException();
         }

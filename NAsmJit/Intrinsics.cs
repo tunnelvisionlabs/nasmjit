@@ -2106,6 +2106,7 @@
             intrinsicSupport.EmitInstruction(InstructionCode.Mov, dst, src);
         }
 
+#if false
         public static void MovPtr<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, IntPtr src)
             where TGP : Operand, IGpOperand
         {
@@ -2125,6 +2126,7 @@
             Imm imm = dst;
             intrinsicSupport.EmitInstruction(InstructionCode.MovPtr, imm, src);
         }
+#endif
 
         public static void Movsx<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dst, TGP src)
             where TGP : Operand, IGpOperand
