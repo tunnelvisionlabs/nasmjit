@@ -1462,8 +1462,29 @@
         /// <summary>
         /// Unsigned divide
         /// </summary>
-        public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, TGP src)
-            where TGP : Operand, IGpOperand
+        public static void Div(this Assembler intrinsicSupport, GPReg src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Div, src);
+        }
+
+        /// <summary>
+        /// Unsigned divide
+        /// </summary>
+        public static void Div(this Assembler intrinsicSupport, Mem src)
+        {
+            Contract.Requires(intrinsicSupport != null);
+            Contract.Requires(src != null);
+
+            intrinsicSupport.EmitInstruction(InstructionCode.Div, src);
+        }
+
+        /// <summary>
+        /// Unsigned divide
+        /// </summary>
+        public static void Div(this Compiler intrinsicSupport, GPVar dstRem, GPVar dstQuot, GPVar src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
@@ -1477,8 +1498,7 @@
         /// <summary>
         /// Unsigned divide
         /// </summary>
-        public static void Div<TGP>(this IX86IntrinsicSupport<TGP> intrinsicSupport, TGP dstRem, TGP dstQuot, Mem src)
-            where TGP : Operand, IGpOperand
+        public static void Div(this Compiler intrinsicSupport, GPVar dstRem, GPVar dstQuot, Mem src)
         {
             Contract.Requires(intrinsicSupport != null);
             Contract.Requires(dstRem != null);
