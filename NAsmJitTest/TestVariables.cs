@@ -247,7 +247,7 @@
             {
                 int var = 0;
                 RegIndex index = 0;
-                RegisterMask preserved = compiler.Function.Prototype.PreservedGP;
+                RegisterMask preserved = compiler.Function.Declaration.PreservedGP;
 
                 do
                 {
@@ -308,7 +308,7 @@
             GPVar address = c.NewGP();
             c.Mov(address, (Imm)calledFn);
 
-            Call ctx = c.Call(address, CallingConvention.Default, typeof(Func<int, int, int, int>));
+            CompilerFunctionCall ctx = c.Call(address, CallingConvention.Default, typeof(Func<int, int, int, int>));
             ctx.SetArgument(0, v2);
             ctx.SetArgument(1, v1);
             ctx.SetArgument(2, v0);
@@ -381,7 +381,7 @@
             c.Mov(address, (Imm)calledFn);
 
             c.Mov(argument, 1);
-            Call ctx = c.Call(address, CallingConvention.MsFastCall, typeof(Action<int>));
+            CompilerFunctionCall ctx = c.Call(address, CallingConvention.MsFastCall, typeof(Action<int>));
             ctx.SetArgument(0, argument);
             //c.Unuse(argument);
 
@@ -444,7 +444,7 @@
             c.Mov(y, c.ArgGP(0));
             c.Jmp(l1);
             c.MarkLabel(l0);
-            Call ctx = c.Call(calledFunction, CallingConvention.Cdecl, typeof(Func<int, int>));
+            CompilerFunctionCall ctx = c.Call(calledFunction, CallingConvention.Cdecl, typeof(Func<int, int>));
             ctx.SetArgument(0, c.ArgGP(0));
             ctx.SetReturn(y);
             c.MarkLabel(l1);
@@ -593,7 +593,7 @@
                     c.MarkLabel(opAdd);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcA, CallingConvention.Default, typeof(Func<int, int, int>));
+                    CompilerFunctionCall call = c.Call(funcA, CallingConvention.Default, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);
@@ -604,7 +604,7 @@
                     c.MarkLabel(opMul);
 
                     GPVar result = c.NewGP();
-                    Call call = c.Call(funcB, CallingConvention.Default, typeof(Func<int, int, int>));
+                    CompilerFunctionCall call = c.Call(funcB, CallingConvention.Default, typeof(Func<int, int, int>));
                     call.SetArgument(0, x);
                     call.SetArgument(1, y);
                     call.SetReturn(result);

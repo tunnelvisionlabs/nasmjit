@@ -5,9 +5,9 @@
     using System.Linq;
     using System.Text;
 
-    public class Function : Emittable
+    public class CompilerFunction : CompilerItem
     {
-        private readonly FunctionPrototype _functionPrototype;
+        private readonly FunctionDeclaration _functionPrototype;
         internal VarData[] _argumentVariables;
 
         private FunctionHints _hints;
@@ -51,11 +51,9 @@
 
         private readonly Label _entryLabel;
         private readonly Label _exitLabel;
-        private readonly Prolog _prolog;
-        private readonly Epilog _epilog;
-        private readonly FunctionEnd _end;
+        private readonly CompilerFunctionEnd _end;
 
-        private Function(Compiler compiler, FunctionPrototype prototype)
+        private CompilerFunction(Compiler compiler, FunctionDeclaration prototype)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -66,29 +64,27 @@
             _entryLabel = compiler.DefineLabel();
             _exitLabel = compiler.DefineLabel();
 
-            _prolog = new Prolog(compiler, this);
-            _epilog = new Epilog(compiler, this);
-            _end = new FunctionEnd(compiler);
+            _end = new CompilerFunctionEnd(compiler, this);
         }
 
-        public Function(Compiler compiler, CallingConvention callingConvention, Type delegateType)
-            : this(compiler, new FunctionPrototype(callingConvention, delegateType))
+        public CompilerFunction(Compiler compiler, CallingConvention callingConvention, Type delegateType)
+            : this(compiler, new FunctionDeclaration(callingConvention, delegateType))
         {
             Contract.Requires(compiler != null);
         }
 
-        public Function(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
-            : this(compiler, new FunctionPrototype(callingConvention, arguments, returnValue))
+        public CompilerFunction(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+            : this(compiler, new FunctionDeclaration(callingConvention, arguments, returnValue))
         {
             Contract.Requires(compiler != null);
             Contract.Requires(arguments != null);
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Function;
+                return ItemType.Function;
             }
         }
 
@@ -101,11 +97,11 @@
             }
         }
 
-        public FunctionPrototype Prototype
+        public FunctionDeclaration Declaration
         {
             get
             {
-                Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+                Contract.Ensures(Contract.Result<FunctionDeclaration>() != null);
 
                 return _functionPrototype;
             }
@@ -144,31 +140,11 @@
             }
         }
 
-        public Prolog Prolog
+        public CompilerFunctionEnd End
         {
             get
             {
-                Contract.Ensures(Contract.Result<Prolog>() != null);
-
-                return _prolog;
-            }
-        }
-
-        public Epilog Epilog
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<Epilog>() != null);
-
-                return _epilog;
-            }
-        }
-
-        public FunctionEnd End
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<FunctionEnd>() != null);
+                Contract.Ensures(Contract.Result<CompilerFunctionEnd>() != null);
 
                 return _end;
             }
@@ -195,14 +171,28 @@
             }
         }
 
+        public bool IsNaked
+        {
+            get
+            {
+                return _isNaked;
+            }
+        }
+
+        public int FunctionCallStackSize
+        {
+            get
+            {
+                return _functionCallStackSize;
+            }
+        }
+
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
             Contract.Invariant(_functionPrototype != null);
             Contract.Invariant(_entryLabel != null);
             Contract.Invariant(_exitLabel != null);
-            Contract.Invariant(_prolog != null);
-            Contract.Invariant(_epilog != null);
             Contract.Invariant(_end != null);
         }
 
@@ -241,7 +231,7 @@
             string argName = null;
             for (int i = 0; i < count; i++)
             {
-                FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
+                FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
                 if (debug)
                     argName = "arg_" + i;
 
@@ -623,7 +613,7 @@
 
                 for (i = 0; i < argumentsCount; i++)
                 {
-                    FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
+                    FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
                     VarData vdata = _argumentVariables[i];
 
                     if (first)
@@ -700,7 +690,7 @@
                         Mem memOp = new Mem();
                         if (vdata.IsMemArgument)
                         {
-                            FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
+                            FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
 
                             memOp.Base = cc.ArgumentsBaseReg;
                             memOp.Displacement += cc.ArgumentsBaseOffset;
@@ -867,7 +857,7 @@
             }
         }
 
-        internal void PrepareVariables(Emittable first)
+        internal void PrepareVariables(CompilerItem first)
         {
             int i;
             int count = _functionPrototype.Arguments.Length;
@@ -877,9 +867,9 @@
                 VarData vdata = _argumentVariables[i];
 
                 // This is where variable scope starts.
-                vdata.FirstEmittable = first;
+                vdata.FirstItem = first;
                 // If this will not be changed then it will be deallocated immediately.
-                vdata.LastEmittable = first;
+                vdata.LastItem = first;
             }
         }
 
@@ -894,7 +884,7 @@
             {
                 VarData vdata = _argumentVariables[i];
 
-                if (vdata.FirstEmittable != null ||
+                if (vdata.FirstItem != null ||
                     vdata.IsRegArgument ||
                     vdata.IsMemArgument)
                 {

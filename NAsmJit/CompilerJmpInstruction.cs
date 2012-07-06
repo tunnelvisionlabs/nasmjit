@@ -3,14 +3,14 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class Jmp : Instruction
+    public class CompilerJmpInstruction : CompilerInstruction
     {
-        private Target _jumpTarget;
-        private Jmp _jumpNext;
+        private CompilerTarget _jumpTarget;
+        private CompilerJmpInstruction _jumpNext;
         private StateData _state;
         private bool _isTaken;
 
-        public Jmp(Compiler compiler, InstructionCode code, Operand[] operands)
+        public CompilerJmpInstruction(Compiler compiler, InstructionCode code, Operand[] operands)
             : base(compiler, code, operands)
         {
             if (code < InstructionDescription.JumpBegin || code > InstructionDescription.JumpEnd)
@@ -30,7 +30,7 @@
                 || (Operands.Length > 1 && Operands[1].IsImm && ((Imm)Operands[1]).Value == (IntPtr)Hint.Taken);
         }
 
-        public Target JumpTarget
+        public CompilerTarget JumpTarget
         {
             get
             {
@@ -38,7 +38,7 @@
             }
         }
 
-        public Jmp JumpNext
+        public CompilerJmpInstruction JumpNext
         {
             get
             {
@@ -75,16 +75,16 @@
 
                 do
                 {
-                    if (var.FirstEmittable != null)
+                    if (var.FirstItem != null)
                     {
-                        if (var.LastEmittable == null)
+                        if (var.LastItem == null)
                             throw new CompilerException();
 
-                        int start = var.FirstEmittable.Offset;
-                        int end = var.LastEmittable.Offset;
+                        int start = var.FirstItem.Offset;
+                        int end = var.LastItem.Offset;
 
                         if (jumpOffset >= start && jumpOffset <= end)
-                            var.LastEmittable = this;
+                            var.LastItem = this;
                     }
                     var = var.NextActive;
                 } while (var != first);
@@ -93,12 +93,12 @@
             cc.CurrentOffset++;
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             // translate using Instruction
-            Emittable ret = base.TranslateImpl(cc);
+            CompilerItem ret = base.TranslateImpl(cc);
 
-            // we jump with emittable if it's InstructionCode.JMP (unconditional) and points to yet unknown location.
+            // we jump with item if it's InstructionCode.JMP (unconditional) and points to yet unknown location.
             if (Code == InstructionCode.Jmp && !JumpTarget.IsTranslated)
             {
                 cc.AddBackwardCode(this);
@@ -152,8 +152,8 @@
             {
                 // Calculate the code size.
                 uint codeSize = 0;
-                Emittable cur = this.Next;
-                Emittable target = JumpTarget;
+                CompilerItem cur = this.Next;
+                CompilerItem target = JumpTarget;
 
                 while (cur != null)
                 {
@@ -207,22 +207,22 @@
                 // add it after the end of function body (after epilog, using 'ExtraBlock').
                 Compiler compiler = cc.Compiler;
 
-                Emittable ext = cc.ExtraBlock;
-                Emittable old = compiler.CurrentEmittable;
-                compiler.CurrentEmittable = ext;
+                CompilerItem ext = cc.ExtraBlock;
+                CompilerItem old = compiler.CurrentItem;
+                compiler.CurrentItem = ext;
 
                 cc.RestoreState(_jumpTarget.State, _jumpTarget.Offset);
 
-                if (compiler.CurrentEmittable != ext)
+                if (compiler.CurrentItem != ext)
                 {
                     // Add the jump to the target.
                     compiler.Jmp(_jumpTarget.Label);
-                    ext = compiler.CurrentEmittable;
+                    ext = compiler.CurrentItem;
 
                     // The cc._restoreState() method emitted some instructions so we need to
                     // patch the jump.
                     Label L = compiler.DefineLabel();
-                    compiler.CurrentEmittable = cc.ExtraBlock;
+                    compiler.CurrentItem = cc.ExtraBlock;
                     compiler.MarkLabel(L);
 
                     // Finally, patch the jump target.
@@ -230,11 +230,11 @@
                         throw new CompilerException();
 
                     Operands[0] = L;                              // Operand part (Label).
-                    _jumpTarget = compiler.GetTarget(L.Id); // Emittable part (ETarget).
+                    _jumpTarget = compiler.GetTarget(L.Id); // Item part (ETarget).
                 }
 
                 cc.ExtraBlock = ext;
-                compiler.CurrentEmittable = old;
+                compiler.CurrentItem = old;
 
                 // Assign state back.
                 cc.AssignState(_state);

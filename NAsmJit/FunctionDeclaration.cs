@@ -7,12 +7,12 @@
     using System.Linq;
     using Expression = System.Linq.Expressions.Expression;
 
-    public sealed class FunctionPrototype
+    public sealed class FunctionDeclaration
     {
         private const int InvalidValue = -1;
 
-        private static readonly ConcurrentDictionary<Type, List<FunctionPrototype>> _prototypes =
-            new ConcurrentDictionary<Type, List<FunctionPrototype>>();
+        private static readonly ConcurrentDictionary<Type, List<FunctionDeclaration>> _prototypes =
+            new ConcurrentDictionary<Type, List<FunctionDeclaration>>();
 
         private readonly CallingConvention _callingConvention;
         private Argument[] _arguments;
@@ -23,7 +23,7 @@
         private RegisterMask _passedMM;
         private RegisterMask _passedXMM;
 
-        internal FunctionPrototype(CallingConvention callingConvention, Type delegateType)
+        internal FunctionDeclaration(CallingConvention callingConvention, Type delegateType)
         {
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
@@ -65,7 +65,7 @@
             }
         }
 
-        internal FunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        internal FunctionDeclaration(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(arguments != null);
 
@@ -79,20 +79,20 @@
             SetPrototype(arguments, returnValue);
         }
 
-        public static FunctionPrototype GetFunctionPrototype(CallingConvention callingConvention, Type delegateType)
+        public static FunctionDeclaration GetFunctionPrototype(CallingConvention callingConvention, Type delegateType)
         {
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
-            Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+            Contract.Ensures(Contract.Result<FunctionDeclaration>() != null);
             Contract.EndContractBlock();
 
-            List<FunctionPrototype> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionPrototype>());
+            List<FunctionDeclaration> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionDeclaration>());
             lock (prototypes)
             {
-                FunctionPrototype prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
+                FunctionDeclaration prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
                 if (prototype == null)
                 {
-                    prototype = new FunctionPrototype(callingConvention, delegateType);
+                    prototype = new FunctionDeclaration(callingConvention, delegateType);
                     prototypes.Add(prototype);
                 }
 
@@ -100,11 +100,11 @@
             }
         }
 
-        public static FunctionPrototype GetFunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public static FunctionDeclaration GetFunctionPrototype(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
-            Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+            Contract.Ensures(Contract.Result<FunctionDeclaration>() != null);
             Contract.EndContractBlock();
 
             bool isAction = returnValue == VariableType.Invalid;
@@ -121,13 +121,13 @@
                 delegateType = Expression.GetFuncType(typeArgs.ToArray());
             }
 
-            List<FunctionPrototype> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionPrototype>());
+            List<FunctionDeclaration> prototypes = _prototypes.GetOrAdd(delegateType, key => new List<FunctionDeclaration>());
             lock (prototypes)
             {
-                FunctionPrototype prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
+                FunctionDeclaration prototype = prototypes.FirstOrDefault(i => i.CallingConvention == callingConvention);
                 if (prototype == null)
                 {
-                    prototype = new FunctionPrototype(callingConvention, arguments, returnValue);
+                    prototype = new FunctionDeclaration(callingConvention, arguments, returnValue);
                     prototypes.Add(prototype);
                 }
 

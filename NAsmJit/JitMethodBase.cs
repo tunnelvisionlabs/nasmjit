@@ -77,11 +77,11 @@
             get;
         }
 
-        public FunctionPrototype Prototype
+        public FunctionDeclaration Declaration
         {
             get
             {
-                return FunctionPrototype.GetFunctionPrototype(CallingConvention, ArgumentTypes.ToArray(), ReturnType);
+                return FunctionDeclaration.GetFunctionPrototype(CallingConvention, ArgumentTypes.ToArray(), ReturnType);
             }
         }
 

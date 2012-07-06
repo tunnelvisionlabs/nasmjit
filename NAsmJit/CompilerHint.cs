@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class VariableHint : Emittable
+    public class CompilerHint : CompilerItem
     {
         private readonly VarData _varData;
 
@@ -11,7 +11,7 @@
 
         private readonly int _hintValue;
 
-        public VariableHint(Compiler compiler, VarData varData, VariableHintKind hintKind, int hintValue)
+        public CompilerHint(Compiler compiler, VarData varData, VariableHintKind hintKind, int hintValue)
             : base(compiler)
         {
             if (varData == null)
@@ -24,11 +24,11 @@
             _hintValue = hintValue;
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.VariableHint;
+                return ItemType.VariableHint;
             }
         }
 
@@ -36,7 +36,7 @@
         {
             get
             {
-                // Variable hint is NOP, but it can generate other emittables which can do something
+                // Variable hint is NOP, but it can generate other items which can do something
                 return 0;
             }
         }
@@ -61,14 +61,14 @@
         {
             Offset = cc.CurrentOffset;
 
-            // First emittable (begin of variable scope).
-            if (_varData.FirstEmittable == null)
-                _varData.FirstEmittable = this;
+            // First item (begin of variable scope).
+            if (_varData.FirstItem == null)
+                _varData.FirstItem = this;
 
-            Emittable oldLast = _varData.LastEmittable;
+            CompilerItem oldLast = _varData.LastItem;
 
-            // Last emittable (end of variable scope).
-            _varData.LastEmittable = this;
+            // Last item (end of variable scope).
+            _varData.LastItem = this;
 
             switch (_hintKind)
             {
@@ -91,7 +91,7 @@
             }
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             switch (_hintKind)
             {

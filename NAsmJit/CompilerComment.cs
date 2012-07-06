@@ -3,9 +3,9 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public sealed class Comment : Emittable
+    public sealed class CompilerComment : CompilerItem
     {
-        public Comment(Compiler compiler, string comment)
+        public CompilerComment(Compiler compiler, string comment)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -13,11 +13,11 @@
             Comment = comment;
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Comment;
+                return ItemType.Comment;
             }
         }
 

@@ -147,7 +147,7 @@
             c.Mov(tmp, var);
             c.Dec(tmp);
 
-            Call call = c.Call(c.Function.EntryLabel, CallingConvention.Default, typeof(Func<int, int>));
+            CompilerFunctionCall call = c.Call(c.Function.EntryLabel, CallingConvention.Default, typeof(Func<int, int>));
             call.SetArgument(0, tmp);
             call.SetReturn(tmp);
             c.Mul(c.NewGP(VariableType.INT32), var, tmp);

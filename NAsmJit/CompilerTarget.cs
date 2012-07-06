@@ -3,14 +3,14 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public sealed class Target : Emittable
+    public sealed class CompilerTarget : CompilerItem
     {
         private readonly Label _label;
-        private Jmp _from;
+        private CompilerJmpInstruction _from;
         private StateData _state;
         private int _jumpsCount;
 
-        public Target(Compiler compiler, Label label)
+        public CompilerTarget(Compiler compiler, Label label)
             : base(compiler)
         {
             if (label == null)
@@ -21,11 +21,11 @@
             _label = label;
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Target;
+                return ItemType.Target;
             }
         }
 
@@ -45,7 +45,7 @@
             }
         }
 
-        public Jmp From
+        public CompilerJmpInstruction From
         {
             get
             {
@@ -89,11 +89,11 @@
             Offset = cc.CurrentOffset++;
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             // If this Target was already translated, it's needed to change the current
             // state and return null to tell CompilerContext to process next untranslated
-            // emittable.
+            // item.
             if (IsTranslated)
             {
                 cc.RestoreState(_state);

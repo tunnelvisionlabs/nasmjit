@@ -8,16 +8,16 @@
     public class CompilerContext
     {
         private readonly Compiler _compiler;
-        private Function _function;
-        private Emittable _start;
-        private Emittable _stop;
-        private Emittable _extraBlock;
+        private CompilerFunction _function;
+        private CompilerItem _start;
+        private CompilerItem _stop;
+        private CompilerItem _extraBlock;
         private readonly StateData _state = new StateData(0);
         private VarData _active;
         private ForwardJumpData _forwardJumps;
 
         /// <summary>
-        /// Current offset, used in Prepare() stage. Each Emittable should increment it.
+        /// Current offset, used in Prepare() stage. Each item should increment it.
         /// </summary>
         private int _currentOffset;
 
@@ -93,9 +93,9 @@
         private bool _emitComments;
 
         /// <summary>
-        /// List of emittables which need to be translated. These emittables are filled with AddBackwardCode().
+        /// List of items which need to be translated. These items are filled with AddBackwardCode().
         /// </summary>
-        private readonly List<Jmp> _backCode = new List<Jmp>();
+        private readonly List<CompilerJmpInstruction> _backCode = new List<CompilerJmpInstruction>();
 
         /// <summary>
         /// Backward code position
@@ -132,7 +132,7 @@
             }
         }
 
-        public Function Function
+        public CompilerFunction Function
         {
             get
             {
@@ -148,7 +148,7 @@
             }
         }
 
-        public Emittable Start
+        public CompilerItem Start
         {
             get
             {
@@ -161,7 +161,7 @@
             }
         }
 
-        public Emittable Stop
+        public CompilerItem Stop
         {
             get
             {
@@ -174,7 +174,7 @@
             }
         }
 
-        public Emittable ExtraBlock
+        public CompilerItem ExtraBlock
         {
             get
             {
@@ -349,11 +349,11 @@
             }
         }
 
-        internal ReadOnlyCollection<Jmp> BackwardsCode
+        internal ReadOnlyCollection<CompilerJmpInstruction> BackwardsCode
         {
             get
             {
-                Contract.Ensures(Contract.Result<ReadOnlyCollection<Jmp>>() != null);
+                Contract.Ensures(Contract.Result<ReadOnlyCollection<CompilerJmpInstruction>>() != null);
 
                 return _backCode.AsReadOnly();
             }
@@ -487,13 +487,13 @@
             }
         }
 
-        internal void PatchMemoryOperands(Emittable start, Emittable stop)
+        internal void PatchMemoryOperands(CompilerItem start, CompilerItem stop)
         {
-            Emittable current;
+            CompilerItem current;
 
             for (current = start; ; current = current.Next)
             {
-                Instruction instruction = current as Instruction;
+                CompilerInstruction instruction = current as CompilerInstruction;
                 if (instruction != null)
                 {
                     Mem mem = instruction.MemoryOperand;
@@ -682,7 +682,7 @@
             RegIndex idx = RegIndex.Invalid;
 
             // Preserved GP variables.
-            RegisterMask preservedGP = varData.Scope.Prototype.PreservedGP;
+            RegisterMask preservedGP = varData.Scope.Declaration.PreservedGP;
 
             // Spill candidate.
             VarData spillCandidate = null;
@@ -694,7 +694,7 @@
             if (Function.IsCaller)
             {
                 nonPreservedFirst = varData.FirstCallable == null ||
-                       varData.FirstCallable.Offset >= varData.LastEmittable.Offset;
+                       varData.FirstCallable.Offset >= varData.LastItem.Offset;
             }
 
             // --------------------------------------------------------------------------
@@ -966,21 +966,21 @@
 
         private VarData GetSpillCandidateGP()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.GP);
         }
 
         private VarData GetSpillCandidateMM()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.MM);
         }
 
         private VarData GetSpillCandidateXMM()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.XMM);
         }
@@ -988,7 +988,7 @@
         private VarData GetSpillCandidateGeneric(IList<VarData> varArray)
         {
             Contract.Requires(varArray != null);
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             int i;
 
@@ -997,7 +997,7 @@
             int candidateScore = 0;
             int count = varArray.Count;
 
-            int currentOffset = _compiler.CurrentEmittable.Offset;
+            int currentOffset = _compiler.CurrentItem.Offset;
 
             for (i = 0; i < count; i++)
             {
@@ -1030,10 +1030,10 @@
 
             int score = 0;
 
-            if (vdata.LastEmittable == null)
+            if (vdata.LastItem == null)
                 throw new ArgumentException();
 
-            int lastOffset = vdata.LastEmittable.Offset;
+            int lastOffset = vdata.LastItem.Offset;
 
             if (lastOffset >= currentOffset)
                 score += lastOffset - currentOffset;
@@ -1061,7 +1061,7 @@
             Contract.Requires(vdata != null);
             Contract.Requires(Function != null);
 
-            AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Prototype.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
+            AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Declaration.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
         }
 
         public void SpillMMVar(VarData vdata)
@@ -1075,7 +1075,7 @@
             Contract.Requires(vdata != null);
             Contract.Requires(Function != null);
 
-            AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Prototype.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
+            AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Declaration.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
         }
 
         public void SpillXMMVar(VarData vdata)
@@ -1114,7 +1114,7 @@
             if (this.Function.IsCaller)
             {
                 nonPreservedFirst = vdata.FirstCallable == null ||
-                                    vdata.FirstCallable.Offset >= vdata.LastEmittable.Offset;
+                                    vdata.FirstCallable.Offset >= vdata.LastItem.Offset;
             }
 
             // --------------------------------------------------------------------------
@@ -1419,7 +1419,7 @@
             return;
 
         addComment:
-            _compiler.CurrentEmittable.Comment = string.Format("Alloc {0}", varData.Name);
+            _compiler.CurrentItem.Comment = string.Format("Alloc {0}", varData.Name);
         }
 
         internal Mem GetVarMem(VarData varData)
@@ -1550,7 +1550,7 @@
             return;
 
         addComment:
-            _compiler.CurrentEmittable.Comment = string.Format("Spill {0}", vdata.Name);
+            _compiler.CurrentItem.Comment = string.Format("Spill {0}", vdata.Name);
         }
 
         public void EmitMoveVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
@@ -1656,34 +1656,34 @@
             vdata.RegisterIndex = RegIndex.Invalid;
         }
 
-        public void UnuseVarOnEndOfScope(Emittable e, VarData vdata)
+        public void UnuseVarOnEndOfScope(CompilerItem e, VarData vdata)
         {
             Contract.Requires(e != null);
             Contract.Requires(vdata != null);
 
-            if (vdata.LastEmittable == e)
+            if (vdata.LastItem == e)
                 UnuseVar(vdata, VariableState.Unused);
         }
 
-        public void UnuseVarOnEndOfScope(Emittable e, VarAllocRecord rec)
+        public void UnuseVarOnEndOfScope(CompilerItem e, VarAllocRecord rec)
         {
             Contract.Requires(e != null);
             Contract.Requires(rec != null);
             Contract.Requires(rec.VarData != null);
 
             VarData v = rec.VarData;
-            if (v.LastEmittable == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
+            if (v.LastItem == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
         }
 
-        internal void UnuseVarOnEndOfScope(Emittable e, VarCallRecord rec)
+        internal void UnuseVarOnEndOfScope(CompilerItem e, VarCallRecord rec)
         {
             Contract.Requires(e != null);
             Contract.Requires(rec != null);
             Contract.Requires(rec.vdata != null);
 
             VarData v = rec.vdata;
-            if (v.LastEmittable == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
+            if (v.LastItem == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
         }
 
@@ -1860,7 +1860,7 @@
             }
         }
 
-        public void AddBackwardCode(Jmp from)
+        public void AddBackwardCode(CompilerJmpInstruction from)
         {
             if (from == null)
                 throw new ArgumentNullException("from");
@@ -1869,7 +1869,7 @@
             _backCode.Add(from);
         }
 
-        public void AddForwardJump(Jmp instruction)
+        public void AddForwardJump(CompilerJmpInstruction instruction)
         {
             ForwardJumpData j = new ForwardJumpData()
             {

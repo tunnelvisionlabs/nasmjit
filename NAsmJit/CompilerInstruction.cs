@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class Instruction : Emittable
+    public class CompilerInstruction : CompilerItem
     {
         private InstructionCode _code;
 
@@ -44,7 +44,7 @@
         /// </summary>
         bool _isGPBHiUsed;
 
-        public Instruction(Compiler compiler, InstructionCode code, Operand[] operands)
+        public CompilerInstruction(Compiler compiler, InstructionCode code, Operand[] operands)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -238,11 +238,11 @@
             }
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Instruction;
+                return ItemType.Instruction;
             }
         }
 
@@ -1135,8 +1135,8 @@
                 }
             }
 
-            // Traverse all variables and update firstEmittable / lastEmittable. This
-            // function is called from iterator that scans emittables using forward
+            // Traverse all variables and update firstItem / lastItem. This
+            // function is called from iterator that scans items using forward
             // direction so we can use this knowledge to optimize the process.
             //
             // Similar to ECall::prepare().
@@ -1151,11 +1151,11 @@
                         _variables[i].RegMask &= gpRestrictMask;
                 }
 
-                // Update first/last emittable (begin of variable scope).
-                if (v.FirstEmittable == null)
-                    v.FirstEmittable = this;
+                // Update first/last item (begin of variable scope).
+                if (v.FirstItem == null)
+                    v.FirstItem = this;
 
-                v.LastEmittable = this;
+                v.LastItem = this;
             }
 
             // There are some instructions that can be used to clear register or to set
@@ -1215,7 +1215,7 @@
             cc.CurrentOffset++;
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             int i;
             int variablesCount = (_variables != null) ? _variables.Length : 0;

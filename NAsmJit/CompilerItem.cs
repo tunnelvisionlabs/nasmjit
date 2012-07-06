@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public abstract class Emittable
+    public abstract class CompilerItem
     {
         protected internal const int InvalidValue = -1;
 
@@ -11,15 +11,15 @@
 
         private int _offset;
 
-        private Emittable _previous;
+        private CompilerItem _previous;
 
-        private Emittable _next;
+        private CompilerItem _next;
 
         private string _comment;
 
         private bool _translated;
 
-        protected Emittable(Compiler compiler)
+        protected CompilerItem(Compiler compiler)
         {
             if (compiler == null)
                 throw new ArgumentNullException("compiler");
@@ -52,7 +52,7 @@
             }
         }
 
-        public Emittable Previous
+        public CompilerItem Previous
         {
             get
             {
@@ -65,7 +65,7 @@
             }
         }
 
-        public Emittable Next
+        public CompilerItem Next
         {
             get
             {
@@ -91,7 +91,7 @@
             }
         }
 
-        public abstract EmittableType EmittableType
+        public abstract ItemType ItemType
         {
             get;
         }
@@ -126,11 +126,11 @@
             PrepareImpl(cc);
         }
 
-        public Emittable Translate(CompilerContext cc)
+        public CompilerItem Translate(CompilerContext cc)
         {
             Contract.Requires(cc != null);
 
-            Emittable next = TranslateImpl(cc);
+            CompilerItem next = TranslateImpl(cc);
             Contract.Assert(!_translated || next == null);
             _translated = true;
             return next;
@@ -172,7 +172,7 @@
             _offset = cc.CurrentOffset;
         }
 
-        protected virtual Emittable TranslateImpl(CompilerContext cc)
+        protected virtual CompilerItem TranslateImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
             return Next;
