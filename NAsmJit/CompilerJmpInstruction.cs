@@ -69,8 +69,8 @@
             // Now patch all variables where jump location is in the active range.
             if (_jumpTarget.Offset != InvalidValue && cc.Active != null)
             {
-                VarData first = cc.Active;
-                VarData var = first;
+                CompilerVar first = cc.Active;
+                CompilerVar var = first;
                 int jumpOffset = _jumpTarget.Offset;
 
                 do
@@ -128,8 +128,8 @@
             // Need to traverse over all active variables and unuse them if their scope ends here
             if (cc.Active != null)
             {
-                VarData first = cc.Active;
-                VarData var = first;
+                CompilerVar first = cc.Active;
+                CompilerVar var = first;
 
                 do
                 {

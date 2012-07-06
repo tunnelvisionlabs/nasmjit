@@ -284,7 +284,7 @@
     <Compile Include="VarAllocRecord.cs" />
     <Compile Include="VarCallFlags.cs" />
     <Compile Include="VarCallRecord.cs" />
-    <Compile Include="VarData.cs" />
+    <Compile Include="CompilerVar.cs" />
     <Compile Include="VariableAlloc.cs" />
     <Compile Include="VariableClass.cs" />
     <Compile Include="VariableFlags.cs" />

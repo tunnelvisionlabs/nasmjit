@@ -14,7 +14,7 @@
         {
         }
 
-        public static MMVar FromData(VarData vdata)
+        public static MMVar FromData(CompilerVar vdata)
         {
             Contract.Requires(vdata != null);
 

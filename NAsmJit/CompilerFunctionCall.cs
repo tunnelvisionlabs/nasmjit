@@ -215,7 +215,7 @@
                     if (o.Id == InvalidValue)
                         throw new CompilerException();
 
-                    VarData vdata = Compiler.GetVarData(o.Id);
+                    CompilerVar vdata = Compiler.GetVarData(o.Id);
                     Contract.Assert(vdata != null);
 
                     if (vdata.WorkOffset == Offset)
@@ -230,7 +230,7 @@
                 {
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData(o.Id);
+                        CompilerVar vdata = Compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
                         cc.MarkMemoryUsed(vdata);
@@ -241,7 +241,7 @@
                     }
                     else if (((int)((Mem)o).Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)((Mem)o).Base);
+                        CompilerVar vdata = Compiler.GetVarData((int)((Mem)o).Base);
                         Contract.Assert(vdata != null);
 
                         if (vdata.WorkOffset == Offset)
@@ -255,7 +255,7 @@
 
                     if (((int)((Mem)o).Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)((Mem)o).Index);
+                        CompilerVar vdata = Compiler.GetVarData((int)((Mem)o).Index);
                         Contract.Assert(vdata != null);
 
                         if (vdata.WorkOffset == Offset)
@@ -281,8 +281,8 @@
             // and preserved-last register allocation.
             if (cc.Active != null)
             {
-                VarData first = cc.Active;
-                VarData active = first;
+                CompilerVar first = cc.Active;
+                CompilerVar active = first;
                 do
                 {
                     if (active.FirstCallable == null)
@@ -304,10 +304,10 @@
             int curIndex = 0;
             int varIndex = -1;
 
-            Action<VarData> __GET_VARIABLE =
+            Action<CompilerVar> __GET_VARIABLE =
                 __vardata__ =>
                 {
-                    VarData _candidate = __vardata__;
+                    CompilerVar _candidate = __vardata__;
 
                     for (varIndex = curIndex; ; )
                     {
@@ -336,7 +336,7 @@
 
                 if (o.IsVar)
                 {
-                    VarData vdata = Compiler.GetVarData(o.Id);
+                    CompilerVar vdata = Compiler.GetVarData(o.Id);
                     Contract.Assert(vdata != null);
 
                     __GET_VARIABLE(vdata);
@@ -478,14 +478,14 @@
 
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData(o.Id);
+                        CompilerVar vdata = Compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
                         vdata.MemoryReadCount++;
                     }
                     else if (((int)((Mem)o).Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)((Mem)o).Base);
+                        CompilerVar vdata = Compiler.GetVarData((int)((Mem)o).Base);
                         Contract.Assert(vdata != null);
 
                         vdata.RegisterReadCount++;
@@ -496,7 +496,7 @@
 
                     if (((int)((Mem)o).Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)((Mem)o).Index);
+                        CompilerVar vdata = Compiler.GetVarData((int)((Mem)o).Index);
                         Contract.Assert(vdata != null);
 
                         vdata.RegisterReadCount++;
@@ -519,7 +519,7 @@
             // Same code is in EInstruction::prepare().
             for (i = 0; i < _variables.Length; i++)
             {
-                VarData v = _variables[i].vdata;
+                CompilerVar v = _variables[i].vdata;
 
                 // First item (begin of variable scope).
                 if (v.FirstItem == null)
@@ -577,7 +577,7 @@
             for (int i = 0; i < RegNum.GP; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.GP[i];
+                CompilerVar vdata = cc.State.GP[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                     cc.SpillGPVar(vdata);
             }
@@ -586,7 +586,7 @@
             for (int i = 0; i < RegNum.MM; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.MM[i];
+                CompilerVar vdata = cc.State.MM[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                     cc.SpillMMVar(vdata);
             }
@@ -595,7 +595,7 @@
             for (int i = 0; i < RegNum.XMM; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.XMM[i];
+                CompilerVar vdata = cc.State.XMM[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
                     cc.SpillXMMVar(vdata);
             }
@@ -620,7 +620,7 @@
                 if (operand.IsVar)
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
-                    VarData vdata = compiler.GetVarData(operand.Id);
+                    CompilerVar vdata = compiler.GetVarData(operand.Id);
                     Contract.Assert(vdata != null);
 
                     if (vdata.RegisterIndex != RegIndex.Invalid)
@@ -647,7 +647,7 @@
 
                 if (rec.InDone >= rec.InCount)
                 {
-                    VarData vdata = rec.vdata;
+                    CompilerVar vdata = rec.vdata;
                     if (vdata.RegisterIndex == RegIndex.Invalid)
                         continue;
 
@@ -727,7 +727,7 @@
                 if (operand.IsVar)
                 {
                     VarCallRecord rec = _argumentToVarRecord[i];
-                    VarData vdata = compiler.GetVarData(operand.Id);
+                    CompilerVar vdata = compiler.GetVarData(operand.Id);
                     Contract.Assert(vdata != null);
 
                     MoveSpilledVariableToStack(cc, vdata, argType, temporaryGpReg, temporaryXmmReg);
@@ -796,11 +796,11 @@
                     Operand osrc = _args[i];
                     if (!osrc.IsVar)
                         throw new CompilerException();
-                    VarData vsrc = compiler.GetVarData(osrc.Id);
+                    CompilerVar vsrc = compiler.GetVarData(osrc.Id);
                     Contract.Assert(vsrc != null);
 
                     FunctionDeclaration.Argument srcArgType = targs[i];
-                    VarData vdst = GetOverlappingVariable(cc, srcArgType);
+                    CompilerVar vdst = GetOverlappingVariable(cc, srcArgType);
 
                     if (vsrc == vdst)
                     {
@@ -1033,7 +1033,7 @@
             for (int i = 0; i < (int)RegNum.GP; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.GP[i];
+                CompilerVar vdata = cc.State.GP[i];
                 if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
@@ -1048,7 +1048,7 @@
             for (int i = 0; i < (int)RegNum.MM; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.MM[i];
+                CompilerVar vdata = cc.State.MM[i];
                 if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
@@ -1063,7 +1063,7 @@
             for (int i = 0; i < (int)RegNum.XMM; i++)
             {
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
-                VarData vdata = cc.State.XMM[i];
+                CompilerVar vdata = cc.State.XMM[i];
                 if (vdata != null && (preserved & mask) == RegisterMask.Zero)
                 {
                     VarCallRecord rec = (VarCallRecord)(vdata.Temp);
@@ -1100,7 +1100,7 @@
             for (int i = 0; i < variablesCount; i++)
             {
                 VarCallRecord rec = _variables[i];
-                VarData vdata = rec.vdata;
+                CompilerVar vdata = rec.vdata;
 
                 if ((rec.Flags & (VarCallFlags.OUT_EAX | VarCallFlags.OUT_EDX)) != 0)
                 {
@@ -1186,7 +1186,7 @@
             return Next;
         }
 
-        protected override bool TryUnuseVarImpl(VarData v)
+        protected override bool TryUnuseVarImpl(CompilerVar v)
         {
             for (int i = 0; i < _variables.Length; i++)
             {
@@ -1200,7 +1200,7 @@
             return false;
         }
 
-        private void MoveAllocatedVariableToStack(CompilerContext cc, VarData vdata, FunctionDeclaration.Argument argType)
+        private void MoveAllocatedVariableToStack(CompilerContext cc, CompilerVar vdata, FunctionDeclaration.Argument argType)
         {
             Contract.Requires(cc != null);
             Contract.Requires(vdata != null);
@@ -1350,7 +1350,7 @@
             return candidate;
         }
 
-        private void MoveSpilledVariableToStack(CompilerContext cc, VarData vdata, FunctionDeclaration.Argument argType, RegIndex temporaryGpReg, RegIndex temporaryXmmReg)
+        private void MoveSpilledVariableToStack(CompilerContext cc, CompilerVar vdata, FunctionDeclaration.Argument argType, RegIndex temporaryGpReg, RegIndex temporaryXmmReg)
         {
             Contract.Requires(cc != null);
             Contract.Requires(vdata != null);
@@ -1499,7 +1499,7 @@
             }
         }
 
-        private VarData GetOverlappingVariable(CompilerContext cc, FunctionDeclaration.Argument argType)
+        private CompilerVar GetOverlappingVariable(CompilerContext cc, FunctionDeclaration.Argument argType)
         {
             Contract.Requires(cc != null);
             Contract.Requires(argType != null);
@@ -1528,7 +1528,7 @@
             }
         }
 
-        private void MoveSrcVariableToRegister(CompilerContext cc, VarData vdata, FunctionDeclaration.Argument argType)
+        private void MoveSrcVariableToRegister(CompilerContext cc, CompilerVar vdata, FunctionDeclaration.Argument argType)
         {
             Contract.Requires(cc != null);
             Contract.Requires(vdata != null);

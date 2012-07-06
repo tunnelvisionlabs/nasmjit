@@ -5,13 +5,13 @@
 
     public class CompilerHint : CompilerItem
     {
-        private readonly VarData _varData;
+        private readonly CompilerVar _varData;
 
         private readonly VariableHintKind _hintKind;
 
         private readonly int _hintValue;
 
-        public CompilerHint(Compiler compiler, VarData varData, VariableHintKind hintKind, int hintValue)
+        public CompilerHint(Compiler compiler, CompilerVar varData, VariableHintKind hintKind, int hintValue)
             : base(compiler)
         {
             if (varData == null)

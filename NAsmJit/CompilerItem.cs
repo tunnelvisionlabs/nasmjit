@@ -17,7 +17,9 @@
 
         private string _comment;
 
-        private bool _translated;
+        private bool _isTranslated;
+
+        private bool _isUnreachable;
 
         protected CompilerItem(Compiler compiler)
         {
@@ -105,11 +107,30 @@
             }
         }
 
+        /// <summary>
+        /// Get whether the item was translated.
+        /// </summary>
         public bool IsTranslated
         {
             get
             {
-                return _translated;
+                return _isTranslated;
+            }
+        }
+
+        /// <summary>
+        /// Get whether the item is unreachable.
+        /// </summary>
+        public bool IsUnreachable
+        {
+            get
+            {
+                return _isUnreachable;
+            }
+
+            set
+            {
+                _isUnreachable = value;
             }
         }
 
@@ -131,8 +152,8 @@
             Contract.Requires(cc != null);
 
             CompilerItem next = TranslateImpl(cc);
-            Contract.Assert(!_translated || next == null);
-            _translated = true;
+            Contract.Assert(!_isTranslated || next == null);
+            _isTranslated = true;
             return next;
         }
 
@@ -158,7 +179,7 @@
         /// @c true only if the variable will be unused by the instruction,
         /// otherwise @c false is returned.
         /// </returns>
-        public bool TryUnuseVar(VarData v)
+        public bool TryUnuseVar(CompilerVar v)
         {
             Contract.Requires(v != null);
 
@@ -188,7 +209,7 @@
             Contract.Requires(a != null);
         }
 
-        protected virtual bool TryUnuseVarImpl(VarData v)
+        protected virtual bool TryUnuseVarImpl(CompilerVar v)
         {
             Contract.Requires(v != null);
             return false;

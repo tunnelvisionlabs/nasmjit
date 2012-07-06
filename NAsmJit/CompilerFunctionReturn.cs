@@ -87,7 +87,7 @@
                         if (o.Id == Operand.InvalidValue)
                             throw new CompilerException();
 
-                        VarData vdata = Compiler.GetVarData(o.Id);
+                        CompilerVar vdata = Compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
                         // First item (begin of variable scope).
@@ -141,7 +141,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -183,7 +183,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -219,7 +219,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -241,7 +241,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -254,7 +254,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -286,7 +286,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -313,7 +313,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -324,7 +324,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -354,7 +354,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -403,7 +403,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -449,7 +449,7 @@
             {
                 if (ret[i] != null && ret[i].IsVar)
                 {
-                    VarData vdata = compiler.GetVarData(ret[i].Id);
+                    CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                     Contract.Assert(vdata != null);
                     cc.UnuseVarOnEndOfScope(this, vdata);
                 }

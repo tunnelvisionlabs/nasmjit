@@ -28,7 +28,7 @@
         private CompilerFunction _function;
 
         private readonly List<CompilerTarget> _targetData = new List<CompilerTarget>();
-        private readonly List<VarData> _varData = new List<VarData>();
+        private readonly List<CompilerVar> _vars = new List<CompilerVar>();
         private int _varNameId;
         private CompilerContext _cc;
 
@@ -93,11 +93,11 @@
             }
         }
 
-        internal IList<VarData> Variables
+        internal IList<CompilerVar> Variables
         {
             get
             {
-                return _varData;
+                return _vars;
             }
         }
 
@@ -167,10 +167,10 @@
             AddItem(_targetData[id]);
         }
 
-        public VarData NewVarData(string name, VariableType variableType, int size)
+        public CompilerVar NewVar(string name, VariableType variableType, int size)
         {
             Contract.Requires(Function != null);
-            Contract.Ensures(Contract.Result<VarData>() != null);
+            Contract.Ensures(Contract.Result<CompilerVar>() != null);
 
             if (name == null)
             {
@@ -178,9 +178,9 @@
                 _varNameId++;
             }
 
-            VarData varData = new VarData(Function, _varData.Count | Operand.OperandIdTypeVar, variableType, size, name);
-            _varData.Add(varData);
-            return varData;
+            CompilerVar var = new CompilerVar(Function, _vars.Count | Operand.OperandIdTypeVar, variableType, size, name);
+            _vars.Add(var);
+            return var;
         }
 
         public GPVar ArgGP(int index)
@@ -202,7 +202,7 @@
             if (index >= prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             GPVar var = new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
@@ -230,8 +230,8 @@
                     _logger.LogString("*** COMPILER WARNING: Translated QWORD variable to DWORD, FIX YOUR CODE! ***" + Environment.NewLine);
             }
 
-            VarData varData = NewVarData(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
-            return GPVar.FromData(varData);
+            CompilerVar var = NewVar(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
+            return GPVar.FromData(var);
         }
 
         public MMVar ArgMM(int index)
@@ -252,7 +252,7 @@
             if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             if (vdata.Size != 12)
                 throw new NotSupportedException();
 
@@ -268,11 +268,11 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
                 throw new ArgumentException();
 
-            VarData vdata = NewVarData(name, variableType, 8);
-            if (vdata.Size != 8)
+            CompilerVar var = NewVar(name, variableType, 8);
+            if (var.Size != 8)
                 throw new NotSupportedException();
 
-            return MMVar.FromData(vdata);
+            return MMVar.FromData(var);
         }
 
         public XMMVar ArgXMM(int index)
@@ -293,7 +293,7 @@
             if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             if (vdata.Size != 16)
                 throw new NotSupportedException();
 
@@ -309,11 +309,11 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.XMM) == 0)
                 throw new ArgumentException();
 
-            VarData vdata = NewVarData(name, variableType, 16);
-            if (vdata.Size != 16)
+            CompilerVar var = NewVar(name, variableType, 16);
+            if (var.Size != 16)
                 throw new NotSupportedException();
 
-            return XMMVar.FromData(vdata);
+            return XMMVar.FromData(var);
         }
 
         public CompilerFunction EndFunction()
@@ -357,7 +357,6 @@
         {
             Contract.Requires(a != null);
 
-            // context
             CompilerContext cc = new CompilerContext(this);
 
             CompilerItem start = _first;
@@ -372,7 +371,9 @@
                 _cc = null;
 
                 // ------------------------------------------------------------------------
-                // Find a function.
+                // [Find Function]
+                // ------------------------------------------------------------------------
+
                 while (true)
                 {
                     if (start == null)
@@ -380,18 +381,19 @@
 
                     if (start.ItemType == ItemType.Function)
                         break;
-                    else
-                        start.Emit(a);
 
+                    start.Emit(a);
                     start = start.Next;
                 }
-                // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------
-                // Setup code generation context.
+                // [Setup CompilerContext]
+                // ------------------------------------------------------------------------
+
                 cc.Function = (CompilerFunction)start;
+                stop = cc.Function.End;
                 cc.Start = start;
-                cc.Stop = stop = cc.Function.End;
+                cc.Stop = stop;
                 cc.ExtraBlock = stop.Previous;
 
                 // Detect whether the function generation was finished.
@@ -406,7 +408,7 @@
                 // - Assign/increment offset to each item.
                 // - Extract variables from instructions.
                 // - Prepare variables for register allocator:
-                //   - Update read(r) / write(w) / overwrite(x) statistics.
+                //   - Update read(r) / write(w) / read/write(x) statistics.
                 //   - Update register / memory usage statistics.
                 //   - Find scope (first / last item) of variables.
                 for (CompilerItem cur = start; ; cur = cur.Next)
@@ -418,7 +420,7 @@
                 // ------------------------------------------------------------------------
 
                 // We set compiler context also to Compiler so new emitted instructions
-                // can call prepare() to itself.
+                // can call CompilerItem.Prepare() on itself.
                 _cc = cc;
 
                 /* ------------------------------------------------------------------------
@@ -643,7 +645,7 @@
             if (var.Id == Operand.InvalidValue)
                 return;
 
-            VarData vdata = GetVarData(var.Id);
+            CompilerVar vdata = GetVarData(var.Id);
             Contract.Assert(vdata != null);
 
             CompilerHint e = new CompilerHint(this, vdata, hintId, hintValue);
@@ -1225,24 +1227,24 @@
             }
         }
 
-        internal VarData GetVarData(int id)
+        internal CompilerVar GetVarData(int id)
         {
             if (id == Operand.InvalidValue)
                 throw new ArgumentException();
-            Contract.Ensures(Contract.Result<VarData>() != null);
+            Contract.Ensures(Contract.Result<CompilerVar>() != null);
 
             int index = id & Operand.OperandIdValueMask;
-            if (index >= _varData.Count)
+            if (index >= _vars.Count)
                 throw new ArgumentException();
 
-            return _varData[id & Operand.OperandIdValueMask];
+            return _vars[id & Operand.OperandIdValueMask];
         }
 
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
             Contract.Invariant(Contract.ForAll(_targetData, i => i != null));
-            Contract.Invariant(Contract.ForAll(_varData, i => i != null));
+            Contract.Invariant(Contract.ForAll(_vars, i => i != null));
         }
     }
 }

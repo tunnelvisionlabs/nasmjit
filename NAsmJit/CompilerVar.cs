@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public sealed class VarData
+    public sealed class CompilerVar
     {
         private readonly CompilerFunction _scope;
         private readonly int _id;
@@ -11,7 +11,7 @@
         private readonly int _size;
         private readonly string _name;
 
-        public VarData(CompilerFunction scope, int id, VariableType type, int size, string name)
+        public CompilerVar(CompilerFunction scope, int id, VariableType type, int size, string name)
         {
             if (scope == null)
                 throw new ArgumentNullException("scope");
@@ -229,13 +229,13 @@
             set;
         }
 
-        public VarData NextActive
+        public CompilerVar NextActive
         {
             get;
             set;
         }
 
-        public VarData PreviousActive
+        public CompilerVar PreviousActive
         {
             get;
             set;

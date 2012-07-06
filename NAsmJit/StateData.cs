@@ -9,15 +9,15 @@
     {
         public const int RegisterCount = 16 + 8 + 16;
 
-        private readonly VarData[] _registers;
+        private readonly CompilerVar[] _registers;
 
         public StateData(int memVarsCount)
         {
             if (memVarsCount < 0)
                 throw new ArgumentOutOfRangeException("memVarsCount");
 
-            _registers = new VarData[RegisterCount];
-            MemVarsData = new VarData[memVarsCount];
+            _registers = new CompilerVar[RegisterCount];
+            MemVarsData = new CompilerVar[memVarsCount];
         }
 
         public StateData(StateData other, int memVarsCount)
@@ -27,7 +27,7 @@
             if (memVarsCount < 0)
                 throw new ArgumentOutOfRangeException("memVarsCount");
 
-            _registers = (VarData[])other._registers.Clone();
+            _registers = (CompilerVar[])other._registers.Clone();
             Contract.Assume(_registers.Length == other._registers.Length);
 
             UsedGP = other.UsedGP;
@@ -36,46 +36,46 @@
             ChangedGP = other.ChangedGP;
             ChangedMM = other.ChangedMM;
             ChangedXMM = other.ChangedXMM;
-            MemVarsData = new VarData[memVarsCount];
+            MemVarsData = new CompilerVar[memVarsCount];
         }
 
-        public IList<VarData> Registers
+        public IList<CompilerVar> Registers
         {
             get
             {
-                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+                Contract.Ensures(Contract.Result<IList<CompilerVar>>() != null);
 
                 return _registers;
             }
         }
 
-        public IList<VarData> GP
+        public IList<CompilerVar> GP
         {
             get
             {
-                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+                Contract.Ensures(Contract.Result<IList<CompilerVar>>() != null);
 
-                return new ArraySegment<VarData>(_registers, 0, 16);
+                return new ArraySegment<CompilerVar>(_registers, 0, 16);
             }
         }
 
-        public IList<VarData> MM
+        public IList<CompilerVar> MM
         {
             get
             {
-                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+                Contract.Ensures(Contract.Result<IList<CompilerVar>>() != null);
 
-                return new ArraySegment<VarData>(_registers, 16, 8);
+                return new ArraySegment<CompilerVar>(_registers, 16, 8);
             }
         }
 
-        public IList<VarData> XMM
+        public IList<CompilerVar> XMM
         {
             get
             {
-                Contract.Ensures(Contract.Result<IList<VarData>>() != null);
+                Contract.Ensures(Contract.Result<IList<CompilerVar>>() != null);
 
-                return new ArraySegment<VarData>(_registers, 24, 16);
+                return new ArraySegment<CompilerVar>(_registers, 24, 16);
             }
         }
 
@@ -115,7 +115,7 @@
             set;
         }
 
-        public VarData[] MemVarsData
+        public CompilerVar[] MemVarsData
         {
             get;
             set;

@@ -14,7 +14,7 @@
         {
         }
 
-        public static GPVar FromData(VarData vdata)
+        public static GPVar FromData(CompilerVar vdata)
         {
             Contract.Requires(vdata != null);
 

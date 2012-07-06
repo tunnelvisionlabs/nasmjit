@@ -2,7 +2,7 @@
 {
     public sealed class VarAllocRecord
     {
-        public VarData VarData
+        public CompilerVar VarData
         {
             get;
             set;

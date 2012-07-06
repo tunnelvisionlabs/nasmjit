@@ -14,7 +14,7 @@
         {
         }
 
-        public static XMMVar FromData(VarData vdata)
+        public static XMMVar FromData(CompilerVar vdata)
         {
             Contract.Requires(vdata != null);
 

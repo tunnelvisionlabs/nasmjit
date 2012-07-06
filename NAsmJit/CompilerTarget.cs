@@ -102,12 +102,16 @@
 
             if (cc.Unreachable)
             {
-                cc.Unreachable = false;
-
-                // Assign state to the compiler context. 
+                // If the context has "isUnreachable" flag set and there is no state then
+                // it means that this code will be never called. This is a problem, because
+                // we are unable to assign a state to current location so we can't allocate
+                // registers for variables used inside. So instead of doing anything wrong
+                // we remove the unreachable code.
                 if (_state == null)
-                    throw new CompilerException();
+                    return RemoveUnreachableItems();
 
+                // Assign state to the compiler context.
+                cc.Unreachable = false;
                 cc.AssignState(_state);
             }
             else
@@ -121,6 +125,38 @@
         protected override void EmitImpl(Assembler a)
         {
             a.MarkLabel(_label);
+        }
+
+        private CompilerTarget RemoveUnreachableItems()
+        {
+            Contract.Requires(Previous != null);
+            Contract.Requires(Next != null);
+
+            CompilerItem prev = Previous;
+            CompilerItem item = Next;
+
+            while (true)
+            {
+                CompilerItem next = item.Next;
+                Contract.Assert(next != null);
+
+                if (item.ItemType == ItemType.Target)
+                    break;
+
+                item.Previous = null;
+                item.Next = null;
+                item.IsUnreachable = true;
+
+                item = next;
+            }
+
+            this.Previous = null;
+            this.Next = null;
+
+            prev.Next = item;
+            item.Previous = prev;
+
+            return (CompilerTarget)item;
         }
     }
 }

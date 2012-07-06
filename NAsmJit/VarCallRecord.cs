@@ -2,7 +2,7 @@
 {
     internal class VarCallRecord
     {
-        public VarData vdata
+        public CompilerVar vdata
         {
             get;
             set;

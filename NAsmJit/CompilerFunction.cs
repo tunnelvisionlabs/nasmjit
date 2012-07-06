@@ -8,13 +8,13 @@
     public class CompilerFunction : CompilerItem
     {
         private readonly FunctionDeclaration _functionPrototype;
-        internal VarData[] _argumentVariables;
+        internal CompilerVar[] _argumentVariables;
 
         private FunctionHints _hints;
 
-        private readonly bool _isStackAlignedByOsTo16Bytes = CompilerUtil.IsStack16ByteAligned;
+        private bool _isAssumed16ByteAlignment = CompilerUtil.IsStack16ByteAligned;
 
-        private bool _isStackAlignedByFnTo16Bytes;
+        private bool _isPerformed16ByteAlignment;
 
         private bool _isNaked;
 
@@ -155,24 +155,24 @@
         }
 
         /// <summary>
-        /// Get whether the stack is aligned to 16 bytes by OS.
+        /// Get whether it's assumed that stack is aligned to 16 bytes.
         /// </summary>
-        public bool IsStackAlignedByOsTo16Bytes
+        public bool IsAssumed16ByteAlignment
         {
             get
             {
-                return _isStackAlignedByOsTo16Bytes;
+                return _isAssumed16ByteAlignment;
             }
         }
 
         /// <summary>
-        /// Get whether the stack is aligned to 16 bytes by function itself.
+        /// Get whether it's required to align stack to 16 bytes by function.
         /// </summary>
-        public bool IsStackAlignedByFnTo16Bytes
+        public bool IsPerformed16ByteAlignment
         {
             get
             {
-                return _isStackAlignedByFnTo16Bytes;
+                return _isPerformed16ByteAlignment;
             }
         }
 
@@ -282,7 +282,7 @@
             if (count == 0)
                 return;
 
-            _argumentVariables = new VarData[count];
+            _argumentVariables = new CompilerVar[count];
 
             bool debug = Compiler.Logger != null;
             string argName = null;
@@ -293,21 +293,21 @@
                     argName = "arg_" + i;
 
                 int size = VariableInfo.GetVariableSize(a._variableType);
-                VarData varData = Compiler.NewVarData(argName, a._variableType, size);
+                CompilerVar var = Compiler.NewVar(argName, a._variableType, size);
 
                 if (a._registerIndex != RegIndex.Invalid)
                 {
-                    varData.IsRegArgument = true;
-                    varData.RegisterIndex = a._registerIndex;
+                    var.IsRegArgument = true;
+                    var.RegisterIndex = a._registerIndex;
                 }
 
                 if (a._stackOffset != InvalidValue)
                 {
-                    varData.IsMemArgument = true;
-                    varData.HomeMemoryOffset = a._stackOffset;
+                    var.IsMemArgument = true;
+                    var.HomeMemoryOffset = a._stackOffset;
                 }
 
-                _argumentVariables[i] = varData;
+                _argumentVariables[i] = var;
             }
         }
 
@@ -319,18 +319,21 @@
             _emitEMMS = false;
             _emitSFence = false;
             _emitLFence = false;
-            _isStackAlignedByFnTo16Bytes = false;
+            _isAssumed16ByteAlignment = false;
+            _isPerformed16ByteAlignment = false;
 
             uint accessibleMemoryBelowStack = 0;
             if (_functionPrototype.CallingConvention == CallingConvention.X64U)
                 accessibleMemoryBelowStack = 128;
 
-            if (_isCaller && (cc.MemBytesTotal > 0 || _isStackAlignedByOsTo16Bytes))
+            if (_isCaller && (cc.MemBytesTotal > 0 || _isAssumed16ByteAlignment))
                 _isEspAdjusted = true;
 
             if (cc.MemBytesTotal > accessibleMemoryBelowStack)
                 _isEspAdjusted = true;
 
+            _isAssumed16ByteAlignment = (_hints & FunctionHints.Assume16ByteAlignment) != 0;
+            _isPerformed16ByteAlignment = (_hints & FunctionHints.Perform16ByteAlignment) != 0;
             _isNaked = (_hints & FunctionHints.Naked) != 0;
             _pePushPop = (_hints & FunctionHints.PushPopSequence) != 0;
             _emitEMMS = (_hints & FunctionHints.Emms) != 0;
@@ -338,10 +341,10 @@
             _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
 
             // Updated to respect comment from issue #47, align also when using MMX code.
-            if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount + cc.Mem8BlocksCount > 0))
+            if (!_isAssumed16ByteAlignment && !_isNaked && (cc.Mem16BlocksCount + cc.Mem8BlocksCount > 0))
             {
                 // Have to align stack to 16-bytes.
-                _isStackAlignedByFnTo16Bytes = true;
+                _isPerformed16ByteAlignment = true;
                 _isEspAdjusted = true;
             }
 
@@ -349,7 +352,7 @@
             _modifiedAndPreservedMM = cc.ModifiedMMRegisters & _functionPrototype.PreservedMM;
             _modifiedAndPreservedXMM = cc.ModifiedXMMRegisters & _functionPrototype.PreservedXMM;
 
-            _movDqInstruction = (IsStackAlignedByOsTo16Bytes || IsStackAlignedByFnTo16Bytes) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
+            _movDqInstruction = (IsAssumed16ByteAlignment || IsPerformed16ByteAlignment) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
 
             // Prolog & Epilog stack size.
             {
@@ -369,7 +372,7 @@
                 }
             }
 
-            if (IsStackAlignedByFnTo16Bytes)
+            if (IsPerformed16ByteAlignment)
             {
                 _peAdjustStackSize += Util.DeltaTo16(_pePushPopStackSize);
             }
@@ -440,7 +443,7 @@
             }
 
             // Align manually stack-pointer to 16-bytes.
-            if (_isStackAlignedByFnTo16Bytes)
+            if (_isPerformed16ByteAlignment)
             {
                 if (_isNaked)
                     throw new CompilerException();
@@ -716,7 +719,7 @@
                 for (i = 0; i < argumentsCount; i++)
                 {
                     FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
-                    VarData vdata = _argumentVariables[i];
+                    CompilerVar vdata = _argumentVariables[i];
 
                     if (first)
                     {
@@ -766,7 +769,7 @@
 
                 for (i = 0; i < variablesCount; i++)
                 {
-                    VarData vdata = Compiler.GetVarData(i);
+                    CompilerVar vdata = Compiler.GetVarData(i);
                     Contract.Assert(vdata != null);
 
                     // If this variable is not related to this function then skip it.
@@ -966,7 +969,7 @@
 
             for (i = 0; i < count; i++)
             {
-                VarData vdata = _argumentVariables[i];
+                CompilerVar vdata = _argumentVariables[i];
 
                 // This is where variable scope starts.
                 vdata.FirstItem = first;
@@ -984,7 +987,7 @@
 
             for (i = 0; i < count; i++)
             {
-                VarData vdata = _argumentVariables[i];
+                CompilerVar vdata = _argumentVariables[i];
 
                 if (vdata.FirstItem != null ||
                     vdata.IsRegArgument ||
