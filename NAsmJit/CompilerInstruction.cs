@@ -1256,7 +1256,7 @@
                 // used this instruction.
                 for (i = 0; i < variablesCount; i++)
                 {
-                    _variables[0].VarData.WorkOffset = cc.CurrentOffset;
+                    _variables[i].VarData.WorkOffset = cc.CurrentOffset;
                 }
 
                 // Alloc variables used by the instruction (special first).
