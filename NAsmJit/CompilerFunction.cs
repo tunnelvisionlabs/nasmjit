@@ -417,7 +417,7 @@
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
             int stackOffset = RequiredStackOffset;
-            int nspPos;
+            int stackPos;
 
             // --------------------------------------------------------------------------
             // [Prolog]
@@ -468,14 +468,14 @@
 
             if (_isEspAdjusted)
             {
-                nspPos = _memStackSize16 + _functionCallStackSize;
+                stackPos = _memStackSize16 + _functionCallStackSize;
                 if (stackOffset != 0)
                     Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)stackOffset);
             }
             else
             {
-                nspPos = -(_peMovStackSize + _peAdjustStackSize);
-                //if (_pePushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
+                stackPos = -(_peMovStackSize + _peAdjustStackSize);
+                //if (_pePushPop) stackPos += bitCount(preservedGP) * sizeof(sysint_t);
             }
 
             // --------------------------------------------------------------------------
@@ -489,8 +489,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
-                        nspPos += 16;
+                        Compiler.Emit(_movDqInstruction, Mem.dqword_ptr(Register.nsp, stackPos), Register.xmm((RegIndex)i));
+                        stackPos += 16;
                     }
                 }
             }
@@ -506,8 +506,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, nspPos), Register.mm((RegIndex)i));
-                        nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, stackPos), Register.mm((RegIndex)i));
+                        stackPos += 8;
                     }
                 }
             }
@@ -523,8 +523,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedGP & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, nspPos), Register.gpn((RegIndex)i));
-                        nspPos += IntPtr.Size;
+                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, stackPos), Register.gpn((RegIndex)i));
+                        stackPos += IntPtr.Size;
                     }
                 }
             }
@@ -548,9 +548,12 @@
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
             int stackOffset = RequiredStackOffset;
-            int nspPos = _isEspAdjusted
-              ? (_memStackSize16 + _functionCallStackSize)
-              : -(_peMovStackSize + _peAdjustStackSize);
+            int stackPos;
+
+            if (IsEspAdjusted)
+                stackPos = _memStackSize16 + _functionCallStackSize;
+            else
+                stackPos = -(_peMovStackSize + _peAdjustStackSize);
 
             // --------------------------------------------------------------------------
             // [Epilog]
@@ -570,8 +573,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
-                        nspPos += 16;
+                        Compiler.Emit(_movDqInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, stackPos));
+                        stackPos += 16;
                     }
                 }
             }
@@ -587,8 +590,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, nspPos));
-                        nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, stackPos));
+                        stackPos += 8;
                     }
                 }
             }
@@ -604,8 +607,8 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedGP & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, nspPos));
-                        nspPos += IntPtr.Size;
+                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, stackPos));
+                        stackPos += IntPtr.Size;
                     }
                 }
             }

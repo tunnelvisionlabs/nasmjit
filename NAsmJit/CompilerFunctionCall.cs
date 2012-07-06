@@ -553,9 +553,9 @@
             // Processed arguments.
             bool[] processed = new bool[FUNC_MAX_ARGS];
 
-            compiler.Comment("Function Call");
+            compiler.Comment("Call");
 
-            // These variables are used by the instruction and we set current offset
+            // These variables are used by the instruction so we set current offset
             // to their work offsets -> The SpillCandidate method never returns 
             // the variable used by this instruction.
             for (int i = 0; i < variablesCount; i++)
@@ -579,9 +579,7 @@
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.GP[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
-                {
                     cc.SpillGPVar(vdata);
-                }
             }
 
             preserved = Declaration.PreservedMM;
@@ -590,9 +588,7 @@
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.MM[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
-                {
                     cc.SpillMMVar(vdata);
-                }
             }
 
             preserved = Declaration.PreservedXMM;
@@ -601,9 +597,7 @@
                 RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                 VarData vdata = cc.State.XMM[i];
                 if (vdata != null && vdata.WorkOffset != offset && (preserved & mask) == RegisterMask.Zero)
-                {
                     cc.SpillXMMVar(vdata);
-                }
             }
 
             // --------------------------------------------------------------------------
@@ -820,7 +814,12 @@
                     {
                         VarCallRecord rdst = (VarCallRecord)(vdst.Temp);
 
-                        if (rdst.InDone >= rdst.InCount && (rdst.Flags & VarCallFlags.CALL_OPERAND_REG) == 0)
+                        if (rdst == null)
+                        {
+                            cc.SpillVar(vdst);
+                            vdst = null;
+                        }
+                        else if (rdst.InDone >= rdst.InCount && (rdst.Flags & VarCallFlags.CALL_OPERAND_REG) == 0)
                         {
                             // Safe to spill.
                             if (rdst.OutCount != 0 || vdst.LastItem == this)
