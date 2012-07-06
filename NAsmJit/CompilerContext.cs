@@ -668,10 +668,14 @@
             Contract.Requires(var != null);
             Contract.Requires(Function != null);
 
+            RegisterMask fullMask = RegisterMask.MaskToIndex(RegNum.GP) & ~RegisterMask.FromIndex(RegIndex.Esp);
+            if (!_allocableEBP)
+                fullMask &= ~RegisterMask.FromIndex(RegIndex.Ebp);
+
               // Fix the regMask (0 or full bit-array means that any register may be used).
             if (regMask == RegisterMask.Zero)
                 regMask = RegisterMask.MaskToIndex(RegNum.GP);
-            regMask &= RegisterMask.MaskToIndex(RegNum.GP);
+            regMask &= fullMask;
 
             int i;
             RegisterMask mask;
@@ -750,7 +754,7 @@
 
             // If regMask contains restricted registers which may be used then everything
             // is handled in this block.
-            if (regMask != RegisterMask.MaskToIndex(RegNum.GP))
+            if (regMask != fullMask)
             {
                 // Try to find unallocated register first.
                 mask = regMask & ~_state.UsedGP;
