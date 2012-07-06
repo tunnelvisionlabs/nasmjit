@@ -232,6 +232,7 @@
     <Compile Include="RegisterMask.cs" />
     <Compile Include="ScalingFactor.cs" />
     <Compile Include="SegmentReg.cs" />
+    <Compile Include="StringLogger.cs" />
     <Compile Include="VendorInfo.cs" />
     <Compile Include="VirtualMemoryManager.cs" />
     <Compile Include="CompilerMark.cs" />

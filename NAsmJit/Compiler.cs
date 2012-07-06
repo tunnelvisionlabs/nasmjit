@@ -479,10 +479,10 @@
                 // Emit function prolog / epilog
                 cc.Function.PreparePrologEpilog(cc);
 
-                _current = cc.Function.Next;
+                _current = cc.Function.EntryTarget;
                 cc.Function.EmitProlog(cc);
 
-                _current = cc.Function.End.Previous;
+                _current = cc.Function.ExitTarget;
                 cc.Function.EmitEpilog(cc);
 
                 // Patch memory operands (variables related)

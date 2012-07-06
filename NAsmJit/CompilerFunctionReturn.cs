@@ -495,7 +495,12 @@
                 case ItemType.Mark:
                 case ItemType.Align:
                 case ItemType.VariableHint:
+                    break;
+
                 case ItemType.Target:
+                    if (((CompilerTarget)e).Label.Id == Function.ExitLabel.Id)
+                        return false;
+
                     break;
 
                 // These items shouldn't be here. We are inside the function, after

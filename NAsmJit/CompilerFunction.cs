@@ -38,7 +38,7 @@
 
         private RegisterMask _modifiedAndPreservedXMM;
 
-        private InstructionCode _movDqaInstruction;
+        private InstructionCode _movDqInstruction;
 
         private int _pePushPopStackSize;
         private int _peMovStackSize;
@@ -49,8 +49,15 @@
 
         private int _functionCallStackSize;
 
+        /// <summary>Function entry label.</summary>
         private readonly Label _entryLabel;
+        /// <summary>Function exit label.</summary>
         private readonly Label _exitLabel;
+        /// <summary>Function entry target.</summary>
+        private readonly CompilerTarget _entryTarget;
+        /// <summary>Function exit target.</summary>
+        private readonly CompilerTarget _exitTarget;
+        /// <summary>Function end item.</summary>
         private readonly CompilerFunctionEnd _end;
 
         private CompilerFunction(Compiler compiler, FunctionDeclaration prototype)
@@ -63,6 +70,8 @@
 
             _entryLabel = compiler.DefineLabel();
             _exitLabel = compiler.DefineLabel();
+            _entryTarget = compiler.GetTarget(_entryLabel.Id);
+            _exitTarget = compiler.GetTarget(_exitLabel.Id);
 
             _end = new CompilerFunctionEnd(compiler, this);
         }
@@ -127,6 +136,46 @@
             }
         }
 
+        /// <summary>Get function entry target.</summary>
+        public CompilerTarget EntryTarget
+        {
+            get
+            {
+                return _entryTarget;
+            }
+        }
+
+        /// <summary>Get function exit target.</summary>
+        public CompilerTarget ExitTarget
+        {
+            get
+            {
+                return _exitTarget;
+            }
+        }
+
+        /// <summary>
+        /// Get whether the stack is aligned to 16 bytes by OS.
+        /// </summary>
+        public bool IsStackAlignedByOsTo16Bytes
+        {
+            get
+            {
+                return _isStackAlignedByOsTo16Bytes;
+            }
+        }
+
+        /// <summary>
+        /// Get whether the stack is aligned to 16 bytes by function itself.
+        /// </summary>
+        public bool IsStackAlignedByFnTo16Bytes
+        {
+            get
+            {
+                return _isStackAlignedByFnTo16Bytes;
+            }
+        }
+
         public bool IsEspAdjusted
         {
             get
@@ -184,6 +233,14 @@
             get
             {
                 return _functionCallStackSize;
+            }
+        }
+
+        private int RequiredStackOffset
+        {
+            get
+            {
+                return _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
             }
         }
 
@@ -258,10 +315,11 @@
         {
             Contract.Requires(cc != null);
 
-            _pePushPop = true;
+            _pePushPop = false;
             _emitEMMS = false;
             _emitSFence = false;
             _emitLFence = false;
+            _isStackAlignedByFnTo16Bytes = false;
 
             uint accessibleMemoryBelowStack = 0;
             if (_functionPrototype.CallingConvention == CallingConvention.X64U)
@@ -291,27 +349,27 @@
             _modifiedAndPreservedMM = cc.ModifiedMMRegisters & _functionPrototype.PreservedMM;
             _modifiedAndPreservedXMM = cc.ModifiedXMMRegisters & _functionPrototype.PreservedXMM;
 
-            _movDqaInstruction = (_isStackAlignedByOsTo16Bytes || !_isNaked) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
+            _movDqInstruction = (IsStackAlignedByOsTo16Bytes || IsStackAlignedByFnTo16Bytes) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
 
             // Prolog & Epilog stack size.
             {
-                int memGP = _modifiedAndPreservedGP.RegisterCount * IntPtr.Size;
-                int memMM = _modifiedAndPreservedMM.RegisterCount * 8;
-                int memXMM = _modifiedAndPreservedXMM.RegisterCount * 16;
+                int memGpSize = _modifiedAndPreservedGP.RegisterCount * IntPtr.Size;
+                int memMmSize = _modifiedAndPreservedMM.RegisterCount * 8;
+                int memXmmSize = _modifiedAndPreservedXMM.RegisterCount * 16;
 
                 if (_pePushPop)
                 {
-                    _pePushPopStackSize = memGP;
-                    _peMovStackSize = memXMM + Util.AlignTo16(memMM);
+                    _pePushPopStackSize = memGpSize;
+                    _peMovStackSize = memXmmSize + Util.AlignTo16(memMmSize);
                 }
                 else
                 {
                     _pePushPopStackSize = 0;
-                    _peMovStackSize = memXMM + Util.AlignTo16(memMM + memGP);
+                    _peMovStackSize = memXmmSize + Util.AlignTo16(memMmSize + memGpSize);
                 }
             }
 
-            if (_isStackAlignedByFnTo16Bytes)
+            if (IsStackAlignedByFnTo16Bytes)
             {
                 _peAdjustStackSize += Util.DeltaTo16(_pePushPopStackSize);
             }
@@ -358,14 +416,15 @@
             RegisterMask preservedMM = _modifiedAndPreservedMM;
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
-            int stackSubtract = _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
+            int stackOffset = RequiredStackOffset;
             int nspPos;
 
+            // --------------------------------------------------------------------------
+            // [Prolog]
+            // --------------------------------------------------------------------------
+
             if (Compiler.Logger != null)
-            {
-                // Here function prolog starts.
                 Compiler.Comment("Prolog");
-            }
 
             // Emit standard prolog entry code (but don't do it if function is set to be
             // naked).
@@ -389,7 +448,10 @@
                 Compiler.Emit(InstructionCode.And, Register.nsp, (Imm)(-16));
             }
 
-            // Save GP registers using PUSH/POP.
+            // --------------------------------------------------------------------------
+            // [Save Gp - Push/Pop]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
                 for (int i = 0; i < RegNum.GP; i++)
@@ -400,11 +462,15 @@
                 }
             }
 
+            // --------------------------------------------------------------------------
+            // [Adjust Scack]
+            // --------------------------------------------------------------------------
+
             if (_isEspAdjusted)
             {
                 nspPos = _memStackSize16 + _functionCallStackSize;
-                if (stackSubtract != 0)
-                    Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)(stackSubtract));
+                if (stackOffset != 0)
+                    Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)stackOffset);
             }
             else
             {
@@ -412,7 +478,10 @@
                 //if (_pePushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
             }
 
-            // Save XMM registers using MOVDQA/MOVDQU.
+            // --------------------------------------------------------------------------
+            // [Save Xmm - MovDqa/MovDqu]
+            // --------------------------------------------------------------------------
+
             if (preservedXMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < RegNum.XMM; i++)
@@ -420,13 +489,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqaInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
+                        Compiler.Emit(_movDqInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
                         nspPos += 16;
                     }
                 }
             }
 
-            // Save MM registers using MOVQ.
+            // --------------------------------------------------------------------------
+            // [Save Mm - MovQ]
+            // --------------------------------------------------------------------------
+
             if (preservedMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < 8; i++)
@@ -440,7 +512,10 @@
                 }
             }
 
-            // Save GP registers using MOV.
+            // --------------------------------------------------------------------------
+            // [Save Gp - Mov]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
                 for (int i = 0; i < RegNum.GP; i++)
@@ -454,36 +529,40 @@
                 }
             }
 
+            // --------------------------------------------------------------------------
+            // [...]
+            // --------------------------------------------------------------------------
+
             if (Compiler.Logger != null)
-            {
                 Compiler.Comment("Body");
-            }
         }
 
         internal void EmitEpilog(CompilerContext cc)
         {
+            // --------------------------------------------------------------------------
+            // [Init]
+            // --------------------------------------------------------------------------
+
             RegisterMask preservedGP = _modifiedAndPreservedGP;
             RegisterMask preservedMM = _modifiedAndPreservedMM;
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
-            int stackAdd =
-              _functionCallStackSize +
-              _memStackSize16 +
-              _peMovStackSize +
-              _peAdjustStackSize;
-
-            int nspPos;
-
-            nspPos = (_isEspAdjusted)
+            int stackOffset = RequiredStackOffset;
+            int nspPos = _isEspAdjusted
               ? (_memStackSize16 + _functionCallStackSize)
               : -(_peMovStackSize + _peAdjustStackSize);
 
-            if (Compiler.Logger != null)
-            {
-                Compiler.Comment("Epilog");
-            }
+            // --------------------------------------------------------------------------
+            // [Epilog]
+            // --------------------------------------------------------------------------
 
-            // Restore XMM registers using MOVDQA/MOVDQU.
+            if (Compiler.Logger != null)
+                Compiler.Comment("Epilog");
+
+            // --------------------------------------------------------------------------
+            // [Restore Xmm - MovDqa/ModDqu]
+            // --------------------------------------------------------------------------
+
             if (preservedXMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < RegNum.XMM; i++)
@@ -491,13 +570,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
+                        Compiler.Emit(_movDqInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
                         nspPos += 16;
                     }
                 }
             }
 
-            // Restore MM registers using MOVQ.
+            // --------------------------------------------------------------------------
+            // [Restore Mm - MovQ]
+            // --------------------------------------------------------------------------
+
             if (preservedMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < 8; i++)
@@ -511,7 +593,10 @@
                 }
             }
 
-            // Restore GP registers using MOV.
+            // --------------------------------------------------------------------------
+            // [Restore Gp - Mov]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
                 for (int i = 0; i < (int)RegNum.GP; i++)
@@ -525,12 +610,17 @@
                 }
             }
 
-            if (_isEspAdjusted && stackAdd != 0)
-            {
-                Compiler.Emit(InstructionCode.Add, Register.nsp, (Imm)stackAdd);
-            }
+            // --------------------------------------------------------------------------
+            // [Adjust Stack]
+            // --------------------------------------------------------------------------
 
-            // Restore GP registers using POP.
+            if (_isEspAdjusted && stackOffset != 0)
+                Compiler.Emit(InstructionCode.Add, Register.nsp, (Imm)stackOffset);
+
+            // --------------------------------------------------------------------------
+            // [Restore Gp - Push/Pop]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
                 for (int i = RegNum.GP - 1; i >= 0; i--)
@@ -543,11 +633,17 @@
                 }
             }
 
-            // Emit Emms.
+            // --------------------------------------------------------------------------
+            // [Emms]
+            // --------------------------------------------------------------------------
+
             if (_emitEMMS)
                 Compiler.Emit(InstructionCode.Emms);
 
-            // Emit SFence / LFence / MFence.
+            // --------------------------------------------------------------------------
+            // [MFence/SFence/LFence]
+            // --------------------------------------------------------------------------
+
             if (_emitSFence && _emitLFence)
                 Compiler.Emit(InstructionCode.Mfence); // MFence == SFence & LFence.
             else if (_emitSFence)
@@ -555,14 +651,17 @@
             else if (_emitLFence)
                 Compiler.Emit(InstructionCode.Lfence); // Only LFence.
 
-            // Emit standard epilog leave code (if needed).
+            // --------------------------------------------------------------------------
+            // [Epilog]
+            // --------------------------------------------------------------------------
+
             if (!_isNaked)
             {
                 CpuInfo cpuInfo = CpuInfo.Instance;
 
+                // AMD seems to prefer LEAVE instead of MOV/POP sequence.
                 if (cpuInfo.VendorId == CpuVendor.Amd)
                 {
-                    // AMD seems to prefer LEAVE instead of MOV/POP sequence.
                     Compiler.Emit(InstructionCode.Leave);
                 }
                 else
@@ -572,7 +671,7 @@
                 }
             }
 
-            // Emit return using correct instruction.
+            // Emit return.
             if (_functionPrototype.CalleePopsStack)
             {
                 Compiler.Emit(InstructionCode.Ret, (Imm)((short)_functionPrototype.ArgumentsStackSize));
