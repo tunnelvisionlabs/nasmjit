@@ -1171,6 +1171,7 @@
             //
             // - and reg, reg         ; Nop.
             // - or reg, reg          ; Nop.
+            // - xchg reg, reg        ; Nop.
 
             if (_variables.Length == 1 && _operands.Length > 1 && _operands[0].IsVar && _operands[1].IsVar && _memoryOperand == null)
             {
@@ -1231,6 +1232,9 @@
                 case InstructionCode.Orpd:
                 case InstructionCode.Orps:
                 case InstructionCode.Por:
+
+                // XCHG Instruction.
+                case InstructionCode.Xchg:
                     // Clear the write flag.
                     _variables[0].VarFlags = VariableAlloc.Read;
                     _variables[0].VarData.RegisterWriteCount--;

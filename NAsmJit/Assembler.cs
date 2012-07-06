@@ -407,7 +407,7 @@
                     max = (size - i < 16) ? size - i : 16;
 
                     for (j = 0; j < max; j++)
-                        buf.AppendFormat("{0:x}", data[i + j]);
+                        buf.AppendFormat("{0:2X}", data[i + j]);
 
                     buf.AppendLine();
 
