@@ -720,7 +720,7 @@
                 {
                     idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? mask & ~preservedGP : mask).FirstRegister;
                 }
-                // Then find the allocated and later exchange.
+                // Then find the allocated and exchange later.
                 else
                 {
                     idx = (regMask & _state.UsedGP).FirstRegister;
@@ -752,9 +752,62 @@
             // [Find Unused GP]
             // --------------------------------------------------------------------------
 
+            // Home register code.
+            if (idx == RegIndex.Invalid
+                && home != RegIndex.Invalid
+                && (regMask & RegisterMask.FromIndex(home)) != RegisterMask.Zero
+                && (State.UsedGP & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
+            {
+                idx = home;
+                goto _Alloc;
+            }
+
+            // We start from 1, because EAX/RAX register is sometimes explicitly
+            // needed. So we trying to prevent reallocation in near future.
+            if (idx == RegIndex.Invalid)
+            {
+                for (i = 1, mask = RegisterMask.FromIndex((RegIndex)i); i < (int)RegNum.GP; i++, mask = RegisterMask.FromIndex((RegIndex)i))
+                {
+                    if ((regMask & mask) != RegisterMask.Zero && (_state.UsedGP & mask) == RegisterMask.Zero)
+                    {
+                        // Convenience to alloc non-preserved first or non-preserved last.
+                        if (nonPreservedFirst)
+                        {
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) != RegisterMask.Zero)
+                                continue;
+
+                            idx = (RegIndex)i;
+                            // If current register is preserved, we should try to find different
+                            // one that is not. This can save one push / pop in prolog / epilog.
+                            if ((preservedGP & mask) == RegisterMask.Zero)
+                                break;
+                        }
+                        else
+                        {
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) == RegisterMask.Zero)
+                                continue;
+
+                            idx = (RegIndex)i;
+                            // The opposite.
+                            if ((preservedGP & mask) != RegisterMask.Zero)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // If not found, try EAX/RAX.
+            if (idx == RegIndex.Invalid
+                && (regMask & RegisterMask.FromIndex(RegIndex.Eax)) != RegisterMask.Zero
+                && (_state.UsedGP & RegisterMask.FromIndex(RegIndex.Eax)) == RegisterMask.Zero)
+            {
+                idx = RegIndex.Eax;
+                goto _Alloc;
+            }
+
             // If regMask contains restricted registers which may be used then everything
-            // is handled in this block.
-            if (regMask != fullMask)
+            // is handled inside this block.
+            if (idx == RegIndex.Invalid && regMask != fullMask)
             {
                 // Try to find unallocated register first.
                 mask = regMask & ~_state.UsedGP;
@@ -763,7 +816,7 @@
                     idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? (mask & ~preservedGP) : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
-                // Then find the allocated and later spill.
+                // Then find the allocated and spill later.
                 else
                 {
                     idx = (regMask & _state.UsedGP).FirstRegister;
@@ -776,51 +829,6 @@
                     doSpill = true;
                     goto L_Spill;
                 }
-            }
-
-            // Home register code.
-            if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
-            {
-                if ((_state.UsedGP & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
-                    idx = home;
-            }
-
-            // We start from 1, because EAX/RAX register is sometimes explicitly
-            // needed. So we trying to prevent reallocation in near future.
-            if (idx == RegIndex.Invalid)
-            {
-                for (i = 1, mask = RegisterMask.FromIndex((RegIndex)i); i < (int)RegNum.GP; i++, mask = RegisterMask.FromIndex((RegIndex)i))
-                {
-                    if ((_state.UsedGP & mask) == RegisterMask.Zero && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
-                    {
-                        // Convenience to alloc non-preserved first or non-preserved last.
-                        if (nonPreservedFirst)
-                        {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) != RegisterMask.Zero)
-                                continue;
-                            idx = (RegIndex)i;
-                            // If current register is preserved, we should try to find different
-                            // one that is not. This can save one push / pop in prolog / epilog.
-                            if ((preservedGP & mask) == RegisterMask.Zero)
-                                break;
-                        }
-                        else
-                        {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) == RegisterMask.Zero)
-                                continue;
-                            idx = (RegIndex)i;
-                            // The opposite.
-                            if ((preservedGP & mask) != RegisterMask.Zero)
-                                break;
-                        }
-                    }
-                }
-            }
-
-            // If not found, try EAX/RAX.
-            if (idx == RegIndex.Invalid && (_state.UsedGP & RegisterMask.FromIndex(RegIndex.Eax)) == RegisterMask.Zero)
-            {
-                idx = RegIndex.Eax;
             }
 
             // --------------------------------------------------------------------------
@@ -861,6 +869,7 @@
             // [Alloc]
             // --------------------------------------------------------------------------
 
+        _Alloc:
             if (var.State == VariableState.Memory && (variableAlloc & VariableAlloc.Read) != 0)
             {
                 EmitLoadVar(var, idx);
@@ -1143,7 +1152,7 @@
                 {
                     idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                 }
-                // Then find the allocated and later exchange.
+                // Then find the allocated and exchange later.
                 else
                 {
                     idx = (regMask & used).FirstRegister;
@@ -1182,7 +1191,7 @@
                     idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
-                // Then find the allocated and later spill.
+                // Then find the allocated and spill later.
                 else
                 {
                     idx = (regMask & used).FirstRegister;
