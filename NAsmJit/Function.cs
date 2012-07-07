@@ -648,7 +648,7 @@
                     }
 
                     // original format string: "; %-3u| %-9s| %-3u| %-15s|\n"
-                    logger.LogFormat("; {0}| {1}| {2}| {3}|" + Environment.NewLine,
+                    logger.LogFormat("; {0,-3}| {1,-9}| {2,-3}| {3,-15}|" + Environment.NewLine,
                         // Argument index.
                         i,
                         // Argument type.
