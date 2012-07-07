@@ -8,16 +8,16 @@
     public class CompilerContext
     {
         private readonly Compiler _compiler;
-        private Function _function;
-        private Emittable _start;
-        private Emittable _stop;
-        private Emittable _extraBlock;
+        private CompilerFunction _function;
+        private CompilerItem _start;
+        private CompilerItem _stop;
+        private CompilerItem _extraBlock;
         private readonly StateData _state = new StateData(0);
-        private VarData _active;
+        private CompilerVar _active;
         private ForwardJumpData _forwardJumps;
 
         /// <summary>
-        /// Current offset, used in Prepare() stage. Each Emittable should increment it.
+        /// Current offset, used in Prepare() stage. Each item should increment it.
         /// </summary>
         private int _currentOffset;
 
@@ -93,9 +93,9 @@
         private bool _emitComments;
 
         /// <summary>
-        /// List of emittables which need to be translated. These emittables are filled with AddBackwardCode().
+        /// List of items which need to be translated. These items are filled with AddBackwardCode().
         /// </summary>
-        private readonly List<Jmp> _backCode = new List<Jmp>();
+        private readonly List<CompilerJmpInstruction> _backCode = new List<CompilerJmpInstruction>();
 
         /// <summary>
         /// Backward code position
@@ -132,7 +132,7 @@
             }
         }
 
-        public Function Function
+        public CompilerFunction Function
         {
             get
             {
@@ -148,7 +148,7 @@
             }
         }
 
-        public Emittable Start
+        public CompilerItem Start
         {
             get
             {
@@ -161,7 +161,7 @@
             }
         }
 
-        public Emittable Stop
+        public CompilerItem Stop
         {
             get
             {
@@ -174,7 +174,7 @@
             }
         }
 
-        public Emittable ExtraBlock
+        public CompilerItem ExtraBlock
         {
             get
             {
@@ -187,7 +187,7 @@
             }
         }
 
-        public VarData Active
+        public CompilerVar Active
         {
             get
             {
@@ -349,11 +349,11 @@
             }
         }
 
-        internal ReadOnlyCollection<Jmp> BackwardsCode
+        internal ReadOnlyCollection<CompilerJmpInstruction> BackwardsCode
         {
             get
             {
-                Contract.Ensures(Contract.Result<ReadOnlyCollection<Jmp>>() != null);
+                Contract.Ensures(Contract.Result<ReadOnlyCollection<CompilerJmpInstruction>>() != null);
 
                 return _backCode.AsReadOnly();
             }
@@ -487,20 +487,20 @@
             }
         }
 
-        internal void PatchMemoryOperands(Emittable start, Emittable stop)
+        internal void PatchMemoryOperands(CompilerItem start, CompilerItem stop)
         {
-            Emittable current;
+            CompilerItem current;
 
             for (current = start; ; current = current.Next)
             {
-                Instruction instruction = current as Instruction;
+                CompilerInstruction instruction = current as CompilerInstruction;
                 if (instruction != null)
                 {
                     Mem mem = instruction.MemoryOperand;
 
                     if (mem != null && (mem.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData varData = _compiler.GetVarData(mem.Id);
+                        CompilerVar varData = _compiler.GetVarData(mem.Id);
                         Contract.Assert(varData != null);
 
                         if (varData.IsMemArgument)
@@ -527,44 +527,44 @@
             }
         }
 
-        internal bool IsActive(VarData varData)
+        internal bool IsActive(CompilerVar var)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
-            return varData.NextActive != null;
+            return var.NextActive != null;
         }
 
-        internal void AddActive(VarData varData)
+        internal void AddActive(CompilerVar var)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
-            if (varData.NextActive != null)
+            if (var.NextActive != null)
                 throw new ArgumentException();
-            if (varData.PreviousActive != null)
+            if (var.PreviousActive != null)
                 throw new ArgumentException();
 
             if (_active == null)
             {
-                varData.NextActive = varData;
-                varData.PreviousActive = varData;
-                _active = varData;
+                var.NextActive = var;
+                var.PreviousActive = var;
+                _active = var;
             }
             else
             {
-                VarData vlast = _active.PreviousActive;
-                vlast.NextActive = varData;
-                _active.PreviousActive = varData;
-                varData.NextActive = _active;
-                varData.PreviousActive = vlast;
+                CompilerVar vlast = _active.PreviousActive;
+                vlast.NextActive = var;
+                _active.PreviousActive = var;
+                var.NextActive = _active;
+                var.PreviousActive = vlast;
             }
         }
 
-        internal void FreeActive(VarData vdata)
+        internal void FreeActive(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            VarData next = vdata.NextActive;
-            VarData prev = vdata.PreviousActive;
+            CompilerVar next = var.NextActive;
+            CompilerVar prev = var.PreviousActive;
 
             if (prev == next)
             {
@@ -572,28 +572,28 @@
             }
             else
             {
-                if (_active == vdata)
+                if (_active == var)
                     _active = next;
                 prev.NextActive = next;
                 next.PreviousActive = prev;
             }
 
-            vdata.NextActive = null;
-            vdata.PreviousActive = null;
+            var.NextActive = null;
+            var.PreviousActive = null;
         }
 
-        public void AllocVar(VarData varData, RegisterMask regMask, VariableAlloc variableAlloc)
+        public void AllocVar(CompilerVar var, RegisterMask regMask, VariableAlloc variableAlloc)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
-            switch (varData.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
             case VariableType.GPQ:
-                if (varData.Type == VariableType.GPQ && !Util.IsX64)
+                if (var.Type == VariableType.GPQ && !Util.IsX64)
                     throw new NotSupportedException();
 
-                AllocGPVar(varData, regMask, variableAlloc);
+                AllocGPVar(var, regMask, variableAlloc);
                 break;
 
             case VariableType.X87:
@@ -603,7 +603,7 @@
                 break;
 
             case VariableType.MM:
-                AllocMMVar(varData, regMask, variableAlloc);
+                AllocMMVar(var, regMask, variableAlloc);
                 break;
 
             case VariableType.XMM:
@@ -611,27 +611,27 @@
             case VariableType.XMM_4F:
             case VariableType.XMM_1D:
             case VariableType.XMM_2D:
-                AllocXMMVar(varData, regMask, variableAlloc);
+                AllocXMMVar(var, regMask, variableAlloc);
                 break;
             }
 
-            PostAlloc(varData, variableAlloc);
+            PostAlloc(var, variableAlloc);
         }
 
-        public void SaveVar(VarData vdata)
+        public void SaveVar(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            if (vdata == null)
-                throw new ArgumentNullException("vdata");
-            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+            if (var == null)
+                throw new ArgumentNullException("var");
+            if (var.State != VariableState.Register || var.RegisterIndex == RegIndex.Invalid)
                 throw new ArgumentException("Can't save a variable that isn't allocated.");
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
             case VariableType.GPQ:
-                if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                if (var.Type == VariableType.GPQ && !Util.IsX64)
                     throw new NotSupportedException();
 
                 break;
@@ -656,36 +656,40 @@
                 throw new ArgumentException("The variable type is not supported.");
             }
 
-            RegIndex idx = vdata.RegisterIndex;
-            EmitSaveVar(vdata, idx);
+            RegIndex idx = var.RegisterIndex;
+            EmitSaveVar(var, idx);
 
             // Update VarData.
-            vdata.Changed = false;
+            var.Changed = false;
         }
 
-        public void AllocGPVar(VarData varData, RegisterMask regMask, VariableAlloc variableAlloc)
+        public void AllocGPVar(CompilerVar var, RegisterMask regMask, VariableAlloc variableAlloc)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
             Contract.Requires(Function != null);
+
+            RegisterMask fullMask = RegisterMask.MaskToIndex(RegNum.GP) & ~RegisterMask.FromIndex(RegIndex.Esp);
+            if (!_allocableEBP)
+                fullMask &= ~RegisterMask.FromIndex(RegIndex.Ebp);
 
               // Fix the regMask (0 or full bit-array means that any register may be used).
             if (regMask == RegisterMask.Zero)
                 regMask = RegisterMask.MaskToIndex(RegNum.GP);
-            regMask &= RegisterMask.MaskToIndex(RegNum.GP);
+            regMask &= fullMask;
 
             int i;
             RegisterMask mask;
 
             // Last register code (aka home).
-            RegIndex home = varData.HomeRegisterIndex;
+            RegIndex home = var.HomeRegisterIndex;
             // New register code.
             RegIndex idx = RegIndex.Invalid;
 
             // Preserved GP variables.
-            RegisterMask preservedGP = varData.Scope.Prototype.PreservedGP;
+            RegisterMask preservedGP = var.Scope.Declaration.PreservedGP;
 
             // Spill candidate.
-            VarData spillCandidate = null;
+            CompilerVar spillCandidate = null;
             // spill caused by direct jump to L_Spill
             bool doSpill = false;
 
@@ -693,8 +697,8 @@
             bool nonPreservedFirst = true;
             if (Function.IsCaller)
             {
-                nonPreservedFirst = varData.FirstCallable == null ||
-                       varData.FirstCallable.Offset >= varData.LastEmittable.Offset;
+                nonPreservedFirst = var.FirstCallable == null ||
+                       var.FirstCallable.Offset >= var.LastItem.Offset;
             }
 
             // --------------------------------------------------------------------------
@@ -702,9 +706,9 @@
             // --------------------------------------------------------------------------
 
             // Go away if variable is already allocated.
-            if (varData.State == VariableState.Register)
+            if (var.State == VariableState.Register)
             {
-                RegIndex oldIndex = varData.RegisterIndex;
+                RegIndex oldIndex = var.RegisterIndex;
 
                 // Already allocated in the right register.
                 if ((RegisterMask.FromIndex(oldIndex) & regMask) != RegisterMask.Zero)
@@ -716,7 +720,7 @@
                 {
                     idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? mask & ~preservedGP : mask).FirstRegister;
                 }
-                // Then find the allocated and later exchange.
+                // Then find the allocated and exchange later.
                 else
                 {
                     idx = (regMask & _state.UsedGP).FirstRegister;
@@ -724,11 +728,11 @@
 
                 Contract.Assert(idx != RegIndex.Invalid);
 
-                VarData other = _state.GP[(int)idx];
-                EmitExchangeVar(varData, idx, variableAlloc, other);
+                CompilerVar other = _state.GP[(int)idx];
+                EmitExchangeVar(var, idx, variableAlloc, other);
 
                 _state.GP[(int)oldIndex] = other;
-                _state.GP[(int)idx] = varData;
+                _state.GP[(int)idx] = var;
 
                 if (other != null)
                     other.RegisterIndex = oldIndex;
@@ -736,9 +740,9 @@
                     FreedGPRegister(oldIndex);
 
                 // Update VarData.
-                varData.State = VariableState.Register;
-                varData.RegisterIndex = idx;
-                varData.HomeRegisterIndex = idx;
+                var.State = VariableState.Register;
+                var.RegisterIndex = idx;
+                var.HomeRegisterIndex = idx;
 
                 AllocatedGPRegister(idx);
                 return;
@@ -748,9 +752,62 @@
             // [Find Unused GP]
             // --------------------------------------------------------------------------
 
+            // Home register code.
+            if (idx == RegIndex.Invalid
+                && home != RegIndex.Invalid
+                && (regMask & RegisterMask.FromIndex(home)) != RegisterMask.Zero
+                && (State.UsedGP & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
+            {
+                idx = home;
+                goto _Alloc;
+            }
+
+            // We start from 1, because EAX/RAX register is sometimes explicitly
+            // needed. So we trying to prevent reallocation in near future.
+            if (idx == RegIndex.Invalid)
+            {
+                for (i = 1, mask = RegisterMask.FromIndex((RegIndex)i); i < (int)RegNum.GP; i++, mask = RegisterMask.FromIndex((RegIndex)i))
+                {
+                    if ((regMask & mask) != RegisterMask.Zero && (_state.UsedGP & mask) == RegisterMask.Zero)
+                    {
+                        // Convenience to alloc non-preserved first or non-preserved last.
+                        if (nonPreservedFirst)
+                        {
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) != RegisterMask.Zero)
+                                continue;
+
+                            idx = (RegIndex)i;
+                            // If current register is preserved, we should try to find different
+                            // one that is not. This can save one push / pop in prolog / epilog.
+                            if ((preservedGP & mask) == RegisterMask.Zero)
+                                break;
+                        }
+                        else
+                        {
+                            if (idx != RegIndex.Invalid && (preservedGP & mask) == RegisterMask.Zero)
+                                continue;
+
+                            idx = (RegIndex)i;
+                            // The opposite.
+                            if ((preservedGP & mask) != RegisterMask.Zero)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // If not found, try EAX/RAX.
+            if (idx == RegIndex.Invalid
+                && (regMask & RegisterMask.FromIndex(RegIndex.Eax)) != RegisterMask.Zero
+                && (_state.UsedGP & RegisterMask.FromIndex(RegIndex.Eax)) == RegisterMask.Zero)
+            {
+                idx = RegIndex.Eax;
+                goto _Alloc;
+            }
+
             // If regMask contains restricted registers which may be used then everything
-            // is handled in this block.
-            if (regMask != RegisterMask.MaskToIndex(RegNum.GP))
+            // is handled inside this block.
+            if (idx == RegIndex.Invalid && regMask != fullMask)
             {
                 // Try to find unallocated register first.
                 mask = regMask & ~_state.UsedGP;
@@ -759,7 +816,7 @@
                     idx = ((nonPreservedFirst && (mask & ~preservedGP) != RegisterMask.Zero) ? (mask & ~preservedGP) : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
-                // Then find the allocated and later spill.
+                // Then find the allocated and spill later.
                 else
                 {
                     idx = (regMask & _state.UsedGP).FirstRegister;
@@ -772,51 +829,6 @@
                     doSpill = true;
                     goto L_Spill;
                 }
-            }
-
-            // Home register code.
-            if (idx == RegIndex.Invalid && home != RegIndex.Invalid)
-            {
-                if ((_state.UsedGP & RegisterMask.FromIndex(home)) == RegisterMask.Zero)
-                    idx = home;
-            }
-
-            // We start from 1, because EAX/RAX register is sometimes explicitly
-            // needed. So we trying to prevent reallocation in near future.
-            if (idx == RegIndex.Invalid)
-            {
-                for (i = 1, mask = RegisterMask.FromIndex((RegIndex)i); i < (int)RegNum.GP; i++, mask = RegisterMask.FromIndex((RegIndex)i))
-                {
-                    if ((_state.UsedGP & mask) == RegisterMask.Zero && (i != (int)RegIndex.Ebp || _allocableEBP) && (i != (int)RegIndex.Esp))
-                    {
-                        // Convenience to alloc non-preserved first or non-preserved last.
-                        if (nonPreservedFirst)
-                        {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) != RegisterMask.Zero)
-                                continue;
-                            idx = (RegIndex)i;
-                            // If current register is preserved, we should try to find different
-                            // one that is not. This can save one push / pop in prolog / epilog.
-                            if ((preservedGP & mask) == RegisterMask.Zero)
-                                break;
-                        }
-                        else
-                        {
-                            if (idx != RegIndex.Invalid && (preservedGP & mask) == RegisterMask.Zero)
-                                continue;
-                            idx = (RegIndex)i;
-                            // The opposite.
-                            if ((preservedGP & mask) != RegisterMask.Zero)
-                                break;
-                        }
-                    }
-                }
-            }
-
-            // If not found, try EAX/RAX.
-            if (idx == RegIndex.Invalid && (_state.UsedGP & RegisterMask.FromIndex(RegIndex.Eax)) == RegisterMask.Zero)
-            {
-                idx = RegIndex.Eax;
             }
 
             // --------------------------------------------------------------------------
@@ -857,32 +869,33 @@
             // [Alloc]
             // --------------------------------------------------------------------------
 
-            if (varData.State == VariableState.Memory && (variableAlloc & VariableAlloc.Read) != 0)
+        _Alloc:
+            if (var.State == VariableState.Memory && (variableAlloc & VariableAlloc.Read) != 0)
             {
-                EmitLoadVar(varData, idx);
+                EmitLoadVar(var, idx);
             }
 
             // Update VarData.
-            varData.State = VariableState.Register;
-            varData.RegisterIndex = idx;
-            varData.HomeRegisterIndex = idx;
+            var.State = VariableState.Register;
+            var.RegisterIndex = idx;
+            var.HomeRegisterIndex = idx;
 
             // Update StateData.
-            AllocatedVariable(varData);
+            AllocatedVariable(var);
         }
 
-        public void EmitExchangeVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags, VarData other)
+        public void EmitExchangeVar(CompilerVar var, RegIndex regIndex, VariableAlloc vflags, CompilerVar other)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
             Contract.Requires(other != null);
 
-            if (vdata.RegisterIndex == RegIndex.Invalid)
+            if (var.RegisterIndex == RegIndex.Invalid)
                 throw new CompilerException("Caller must ensure that variable is allocated.");
 
             // If other is not valid then we can just emit MOV (or other similar instruction).
             if (other == null)
             {
-                EmitMoveVar(vdata, regIndex, vflags);
+                EmitMoveVar(var, regIndex, vflags);
                 return;
             }
 
@@ -890,21 +903,21 @@
             // variable away instead of exchanging them.
             if ((vflags & VariableAlloc.Read) == 0)
             {
-                EmitMoveVar(other, vdata.RegisterIndex, VariableAlloc.Read);
+                EmitMoveVar(other, var.RegisterIndex, VariableAlloc.Read);
                 return;
             }
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
-                _compiler.Emit(InstructionCode.Xchg, Register.gpd(regIndex), Register.gpd(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Xchg, Register.gpd(regIndex), Register.gpd(var.RegisterIndex));
                 break;
 
             case VariableType.GPQ:
                 if (!Util.IsX64)
                     throw new NotSupportedException();
 
-                _compiler.Emit(InstructionCode.Xchg, Register.gpq(regIndex), Register.gpq(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Xchg, Register.gpq(regIndex), Register.gpq(var.RegisterIndex));
                 break;
 
             case VariableType.X87:
@@ -919,7 +932,7 @@
             case VariableType.MM:
                 {
                     MMReg a = Register.mm(regIndex);
-                    MMReg b = Register.mm(vdata.RegisterIndex);
+                    MMReg b = Register.mm(var.RegisterIndex);
 
                     _compiler.Emit(InstructionCode.Pxor, a, b);
                     _compiler.Emit(InstructionCode.Pxor, b, a);
@@ -931,7 +944,7 @@
             case VariableType.XMM_4F:
                 {
                     XMMReg a = Register.xmm(regIndex);
-                    XMMReg b = Register.xmm(vdata.RegisterIndex);
+                    XMMReg b = Register.xmm(var.RegisterIndex);
 
                     _compiler.Emit(InstructionCode.Xorps, a, b);
                     _compiler.Emit(InstructionCode.Xorps, b, a);
@@ -943,7 +956,7 @@
             case VariableType.XMM_2D:
                 {
                     XMMReg a = Register.xmm(regIndex);
-                    XMMReg b = Register.xmm(vdata.RegisterIndex);
+                    XMMReg b = Register.xmm(var.RegisterIndex);
 
                     _compiler.Emit(InstructionCode.Xorpd, a, b);
                     _compiler.Emit(InstructionCode.Xorpd, b, a);
@@ -954,7 +967,7 @@
             case VariableType.XMM:
                 {
                     XMMReg a = Register.xmm(regIndex);
-                    XMMReg b = Register.xmm(vdata.RegisterIndex);
+                    XMMReg b = Register.xmm(var.RegisterIndex);
 
                     _compiler.Emit(InstructionCode.Pxor, a, b);
                     _compiler.Emit(InstructionCode.Pxor, b, a);
@@ -964,45 +977,45 @@
             }
         }
 
-        private VarData GetSpillCandidateGP()
+        private CompilerVar GetSpillCandidateGP()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.GP);
         }
 
-        private VarData GetSpillCandidateMM()
+        private CompilerVar GetSpillCandidateMM()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.MM);
         }
 
-        private VarData GetSpillCandidateXMM()
+        private CompilerVar GetSpillCandidateXMM()
         {
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             return GetSpillCandidateGeneric(_state.XMM);
         }
 
-        private VarData GetSpillCandidateGeneric(IList<VarData> varArray)
+        private CompilerVar GetSpillCandidateGeneric(IList<CompilerVar> varArray)
         {
             Contract.Requires(varArray != null);
-            Contract.Requires(_compiler.CurrentEmittable != null);
+            Contract.Requires(_compiler.CurrentItem != null);
 
             int i;
 
-            VarData candidate = null;
+            CompilerVar candidate = null;
             int candidatePriority = 0;
             int candidateScore = 0;
             int count = varArray.Count;
 
-            int currentOffset = _compiler.CurrentEmittable.Offset;
+            int currentOffset = _compiler.CurrentItem.Offset;
 
             for (i = 0; i < count; i++)
             {
                 // Get variable.
-                VarData vdata = varArray[i];
+                CompilerVar vdata = varArray[i];
 
                 // Never spill variables needed for next instruction.
                 if (vdata == null || vdata.WorkOffset == _currentOffset)
@@ -1024,69 +1037,72 @@
             return candidate;
         }
 
-        private static int GetSpillScore(VarData vdata, int currentOffset)
+        private static int GetSpillScore(CompilerVar var, int currentOffset)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
             int score = 0;
 
-            if (vdata.LastEmittable == null)
+            if (var.LastItem == null)
                 throw new ArgumentException();
 
-            int lastOffset = vdata.LastEmittable.Offset;
+            int lastOffset = var.LastItem.Offset;
 
             if (lastOffset >= currentOffset)
                 score += lastOffset - currentOffset;
 
             // Each write access decreases probability of spill.
-            score -= vdata.RegisterWriteCount + vdata.RegisterRWCount;
+            score -= var.RegisterWriteCount + var.RegisterRWCount;
             // Each read-only access increases probability of spill.
-            score += vdata.RegisterReadCount;
+            score += var.RegisterReadCount;
 
             // Each memory access increases probability of spill.
-            score += vdata.MemoryWriteCount + vdata.MemoryRWCount;
-            score += vdata.MemoryReadCount;
+            score += var.MemoryWriteCount + var.MemoryRWCount;
+            score += var.MemoryReadCount;
 
             return score;
         }
 
-        public void SpillGPVar(VarData vdata)
+        public void SpillGPVar(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
-            SpillVar(vdata, _state.GP, FreedGPRegister);
+            Contract.Requires(var != null);
+            Contract.Requires(var.State == VariableState.Register);
+            Contract.Requires(var.RegisterIndex != RegIndex.Invalid);
+
+            SpillVar(var, _state.GP, FreedGPRegister);
         }
 
-        public void AllocMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
+        public void AllocMMVar(CompilerVar var, RegisterMask regMask, VariableAlloc vflags)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
             Contract.Requires(Function != null);
 
-            AllocNonGPVar(vdata, regMask, vflags, RegNum.MM, vdata.Scope.Prototype.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
+            AllocNonGPVar(var, regMask, vflags, RegNum.MM, var.Scope.Declaration.PreservedMM, _state.UsedMM, _state.MM, AllocatedMMRegister, SpillMMVar, FreedMMRegister);
         }
 
-        public void SpillMMVar(VarData vdata)
+        public void SpillMMVar(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
-            SpillVar(vdata, _state.MM, FreedMMRegister);
+            Contract.Requires(var != null);
+            SpillVar(var, _state.MM, FreedMMRegister);
         }
 
-        public void AllocXMMVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags)
+        public void AllocXMMVar(CompilerVar var, RegisterMask regMask, VariableAlloc vflags)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
             Contract.Requires(Function != null);
 
-            AllocNonGPVar(vdata, regMask, vflags, RegNum.XMM, vdata.Scope.Prototype.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
+            AllocNonGPVar(var, regMask, vflags, RegNum.XMM, var.Scope.Declaration.PreservedXMM, _state.UsedXMM, _state.XMM, AllocatedXMMRegister, SpillXMMVar, FreedXMMRegister);
         }
 
-        public void SpillXMMVar(VarData vdata)
+        public void SpillXMMVar(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
-            SpillVar(vdata, _state.XMM, FreedXMMRegister);
+            Contract.Requires(var != null);
+            SpillVar(var, _state.XMM, FreedXMMRegister);
         }
 
-        private void AllocNonGPVar(VarData vdata, RegisterMask regMask, VariableAlloc vflags, int regNum, RegisterMask preserved, RegisterMask used, IList<VarData> stateData, Action<RegIndex> allocatedAction, Action<VarData> spillAction, Action<RegIndex> freeAction)
+        private void AllocNonGPVar(CompilerVar var, RegisterMask regMask, VariableAlloc vflags, int regNum, RegisterMask preserved, RegisterMask used, IList<CompilerVar> stateData, Action<RegIndex> allocatedAction, Action<CompilerVar> spillAction, Action<RegIndex> freeAction)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
             Contract.Requires(stateData != null);
             Contract.Requires(freeAction != null);
             Contract.Requires(Function != null);
@@ -1098,14 +1114,14 @@
             regMask &= RegisterMask.MaskToIndex(regNum);
 
             // Last register code (aka home).
-            RegIndex home = vdata.HomeRegisterIndex;
+            RegIndex home = var.HomeRegisterIndex;
             // New register code.
             RegIndex idx = RegIndex.Invalid;
 
             RegisterMask mask = RegisterMask.Zero;
 
             // Spill candidate.
-            VarData spillCandidate = null;
+            CompilerVar spillCandidate = null;
             // spill caused by direct jump to L_Spill
             bool doSpill = false;
 
@@ -1113,8 +1129,8 @@
             bool nonPreservedFirst = true;
             if (this.Function.IsCaller)
             {
-                nonPreservedFirst = vdata.FirstCallable == null ||
-                                    vdata.FirstCallable.Offset >= vdata.LastEmittable.Offset;
+                nonPreservedFirst = var.FirstCallable == null ||
+                                    var.FirstCallable.Offset >= var.LastItem.Offset;
             }
 
             // --------------------------------------------------------------------------
@@ -1122,9 +1138,9 @@
             // --------------------------------------------------------------------------
 
             // Go away if variable is already allocated.
-            if (vdata.State == VariableState.Register)
+            if (var.State == VariableState.Register)
             {
-                RegIndex oldIndex = vdata.RegisterIndex;
+                RegIndex oldIndex = var.RegisterIndex;
 
                 // Already allocated in the right register.
                 if ((RegisterMask.FromIndex(oldIndex) & regMask) != RegisterMask.Zero)
@@ -1136,25 +1152,25 @@
                 {
                     idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                 }
-                // Then find the allocated and later exchange.
+                // Then find the allocated and exchange later.
                 else
                 {
                     idx = (regMask & used).FirstRegister;
                 }
                 Contract.Assert(idx != RegIndex.Invalid);
 
-                VarData other = stateData[(int)idx];
+                CompilerVar other = stateData[(int)idx];
                 if (other != null)
                     spillAction(other);
 
-                EmitMoveVar(vdata, idx, vflags);
+                EmitMoveVar(var, idx, vflags);
                 FreedMMRegister(oldIndex);
-                stateData[(int)idx] = vdata;
+                stateData[(int)idx] = var;
 
                 // Update VarData.
-                vdata.State = VariableState.Register;
-                vdata.RegisterIndex = idx;
-                vdata.HomeRegisterIndex = idx;
+                var.State = VariableState.Register;
+                var.RegisterIndex = idx;
+                var.HomeRegisterIndex = idx;
 
                 allocatedAction(idx);
                 return;
@@ -1175,7 +1191,7 @@
                     idx = ((nonPreservedFirst && (mask & ~preserved) != RegisterMask.Zero) ? mask & ~preserved : mask).FirstRegister;
                     Contract.Assert(idx != RegIndex.Invalid);
                 }
-                // Then find the allocated and later spill.
+                // Then find the allocated and spill later.
                 else
                 {
                     idx = (regMask & used).FirstRegister;
@@ -1264,40 +1280,40 @@
             // [Alloc]
             // --------------------------------------------------------------------------
 
-            if (vdata.State == VariableState.Memory && (vflags & VariableAlloc.Read) != 0)
+            if (var.State == VariableState.Memory && (vflags & VariableAlloc.Read) != 0)
             {
-                EmitLoadVar(vdata, idx);
+                EmitLoadVar(var, idx);
             }
 
             // Update VarData.
-            vdata.State = VariableState.Register;
-            vdata.RegisterIndex = idx;
-            vdata.HomeRegisterIndex = idx;
+            var.State = VariableState.Register;
+            var.RegisterIndex = idx;
+            var.HomeRegisterIndex = idx;
 
             // Update StateData.
-            AllocatedVariable(vdata);
+            AllocatedVariable(var);
         }
 
-        private void SpillVar(VarData vdata, IList<VarData> stateData, Action<RegIndex> freeAction)
+        private void SpillVar(CompilerVar var, IList<CompilerVar> stateData, Action<RegIndex> freeAction)
         {
-            if (vdata == null)
-                throw new ArgumentNullException("vdata");
+            if (var == null)
+                throw new ArgumentNullException("var");
             Contract.Requires(stateData != null);
             Contract.Requires(freeAction != null);
             Contract.EndContractBlock();
 
-            if (vdata.State != VariableState.Register || vdata.RegisterIndex == RegIndex.Invalid)
+            if (var.State != VariableState.Register || var.RegisterIndex == RegIndex.Invalid)
                 throw new ArgumentException("Can't spill a variable that isn't allocated.");
 
-            RegIndex idx = vdata.RegisterIndex;
+            RegIndex idx = var.RegisterIndex;
 
-            if (vdata.Changed)
-                EmitSaveVar(vdata, idx);
+            if (var.Changed)
+                EmitSaveVar(var, idx);
 
             // Update VarData.
-            vdata.RegisterIndex = RegIndex.Invalid;
-            vdata.State = VariableState.Memory;
-            vdata.Changed = false;
+            var.RegisterIndex = RegIndex.Invalid;
+            var.State = VariableState.Memory;
+            var.Changed = false;
 
             // Update StateData.
             stateData[(int)idx] = null;
@@ -1335,31 +1351,31 @@
         }
 
         // TODO: Find code which uses this and improve.
-        internal void NewRegisterHomeIndex(VarData vdata, RegIndex idx)
+        internal void NewRegisterHomeIndex(CompilerVar var, RegIndex idx)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            if (vdata.HomeRegisterIndex == RegIndex.Invalid)
-                vdata.HomeRegisterIndex = idx;
+            if (var.HomeRegisterIndex == RegIndex.Invalid)
+                var.HomeRegisterIndex = idx;
 
-            vdata.PreferredRegisterMask |= RegisterMask.FromIndex(idx);
+            var.PreferredRegisterMask |= RegisterMask.FromIndex(idx);
         }
 
         // TODO: Find code which uses this and improve.
-        internal void NewRegisterHomeMask(VarData vdata, RegisterMask mask)
+        internal void NewRegisterHomeMask(CompilerVar var, RegisterMask mask)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            vdata.PreferredRegisterMask |= mask;
+            var.PreferredRegisterMask |= mask;
         }
 
-        public void EmitLoadVar(VarData varData, RegIndex regIndex)
+        public void EmitLoadVar(CompilerVar var, RegIndex regIndex)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
-            Mem m = GetVarMem(varData);
+            Mem m = GetVarMem(var);
 
-            switch (varData.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
                 _compiler.Emit(InstructionCode.Mov, Register.gpd(regIndex), m);
@@ -1419,42 +1435,42 @@
             return;
 
         addComment:
-            _compiler.CurrentEmittable.Comment = string.Format("Alloc {0}", varData.Name);
+            _compiler.CurrentItem.Comment = string.Format("Alloc {0}", var.Name);
         }
 
-        internal Mem GetVarMem(VarData varData)
+        internal Mem GetVarMem(CompilerVar var)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
             Contract.Ensures(Contract.Result<Mem>() != null);
 
-            Mem m = new Mem(varData.Id);
-            if (!varData.IsMemArgument)
+            Mem m = new Mem(var.Id);
+            if (!var.IsMemArgument)
                 m.Displacement = (IntPtr)_adjustESP;
 
-            MarkMemoryUsed(varData);
+            MarkMemoryUsed(var);
             return m;
         }
 
-        private void PostAlloc(VarData varData, VariableAlloc variableAlloc)
+        private void PostAlloc(CompilerVar var, VariableAlloc variableAlloc)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
             if ((variableAlloc & VariableAlloc.Write) != 0)
-                varData.Changed = true;
+                var.Changed = true;
         }
 
-        public void SpillVar(VarData vdata)
+        public void SpillVar(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
             case VariableType.GPQ:
-                if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                if (var.Type == VariableType.GPQ && !Util.IsX64)
                     throw new NotSupportedException();
 
-                SpillGPVar(vdata);
+                SpillGPVar(var);
                 break;
 
             case VariableType.X87:
@@ -1464,7 +1480,7 @@
                 throw new NotImplementedException("X87 variables are not yet implemented.");
 
             case VariableType.MM:
-                SpillMMVar(vdata);
+                SpillMMVar(var);
                 break;
 
             case VariableType.XMM:
@@ -1472,25 +1488,25 @@
             case VariableType.XMM_4F:
             case VariableType.XMM_1D:
             case VariableType.XMM_2D:
-                SpillXMMVar(vdata);
+                SpillXMMVar(var);
                 break;
             default:
                 throw new CompilerException("Invalid variable type.");
             }
         }
 
-        public void EmitSaveVar(VarData vdata, RegIndex regIndex)
+        public void EmitSaveVar(CompilerVar var, RegIndex regIndex)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            if (vdata == null)
-                throw new ArgumentNullException("vdata");
+            if (var == null)
+                throw new ArgumentNullException("var");
             if (regIndex == RegIndex.Invalid)
                 throw new ArgumentException("Caller must ensure that variable is allocated.");
 
-            Mem m = GetVarMem(vdata);
+            Mem m = GetVarMem(var);
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
                 _compiler.Emit(InstructionCode.Mov, m, Register.gpd(regIndex));
@@ -1550,30 +1566,30 @@
             return;
 
         addComment:
-            _compiler.CurrentEmittable.Comment = string.Format("Spill {0}", vdata.Name);
+            _compiler.CurrentItem.Comment = string.Format("Spill {0}", var.Name);
         }
 
-        public void EmitMoveVar(VarData vdata, RegIndex regIndex, VariableAlloc vflags)
+        public void EmitMoveVar(CompilerVar var, RegIndex regIndex, VariableAlloc vflags)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            if (vdata.RegisterIndex == RegIndex.Invalid)
+            if (var.RegisterIndex == RegIndex.Invalid)
                 throw new ArgumentException("Caller must ensure that variable is allocated.");
 
             if ((vflags & VariableAlloc.Read) == 0)
                 return;
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
-                _compiler.Emit(InstructionCode.Mov, Register.gpd(regIndex), Register.gpd(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Mov, Register.gpd(regIndex), Register.gpd(var.RegisterIndex));
                 break;
 
             case VariableType.GPQ:
                 if (!Util.IsX64)
                     throw new NotSupportedException();
 
-                _compiler.Emit(InstructionCode.Mov, Register.gpq(regIndex), Register.gpq(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Mov, Register.gpq(regIndex), Register.gpq(var.RegisterIndex));
                 break;
 
             case VariableType.X87:
@@ -1583,44 +1599,44 @@
                 throw new NotImplementedException("X87 variables are not yet implemented.");
 
             case VariableType.MM:
-                _compiler.Emit(InstructionCode.Movq, Register.mm(regIndex), Register.mm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movq, Register.mm(regIndex), Register.mm(var.RegisterIndex));
                 break;
 
             case VariableType.XMM:
-                _compiler.Emit(InstructionCode.Movdqa, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movdqa, Register.xmm(regIndex), Register.xmm(var.RegisterIndex));
                 break;
             case VariableType.XMM_1F:
-                _compiler.Emit(InstructionCode.Movss, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movss, Register.xmm(regIndex), Register.xmm(var.RegisterIndex));
                 break;
             case VariableType.XMM_1D:
-                _compiler.Emit(InstructionCode.Movsd, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movsd, Register.xmm(regIndex), Register.xmm(var.RegisterIndex));
                 break;
             case VariableType.XMM_4F:
-                _compiler.Emit(InstructionCode.Movaps, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movaps, Register.xmm(regIndex), Register.xmm(var.RegisterIndex));
                 break;
             case VariableType.XMM_2D:
-                _compiler.Emit(InstructionCode.Movapd, Register.xmm(regIndex), Register.xmm(vdata.RegisterIndex));
+                _compiler.Emit(InstructionCode.Movapd, Register.xmm(regIndex), Register.xmm(var.RegisterIndex));
                 break;
             default:
                 throw new CompilerException("Invalid variable type.");
             }
         }
 
-        public void UnuseVar(VarData vdata, VariableState toState)
+        public void UnuseVar(CompilerVar var, VariableState toState)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
             if (toState == VariableState.Register)
                 throw new ArgumentException();
 
-            if (vdata.State == VariableState.Register)
+            if (var.State == VariableState.Register)
             {
-                RegIndex registerIndex = vdata.RegisterIndex;
-                switch (vdata.Type)
+                RegIndex registerIndex = var.RegisterIndex;
+                switch (var.Type)
                 {
                 case VariableType.GPD:
                 case VariableType.GPQ:
-                    if (vdata.Type == VariableType.GPQ && !Util.IsX64)
+                    if (var.Type == VariableType.GPQ && !Util.IsX64)
                         throw new NotSupportedException();
 
                     _state.GP[(int)registerIndex] = null;
@@ -1651,58 +1667,58 @@
                 }
             }
 
-            vdata.State = toState;
-            vdata.Changed = false;
-            vdata.RegisterIndex = RegIndex.Invalid;
+            var.State = toState;
+            var.Changed = false;
+            var.RegisterIndex = RegIndex.Invalid;
         }
 
-        public void UnuseVarOnEndOfScope(Emittable e, VarData vdata)
+        public void UnuseVarOnEndOfScope(CompilerItem e, CompilerVar vdata)
         {
             Contract.Requires(e != null);
             Contract.Requires(vdata != null);
 
-            if (vdata.LastEmittable == e)
+            if (vdata.LastItem == e)
                 UnuseVar(vdata, VariableState.Unused);
         }
 
-        public void UnuseVarOnEndOfScope(Emittable e, VarAllocRecord rec)
+        public void UnuseVarOnEndOfScope(CompilerItem e, VarAllocRecord rec)
         {
             Contract.Requires(e != null);
             Contract.Requires(rec != null);
             Contract.Requires(rec.VarData != null);
 
-            VarData v = rec.VarData;
-            if (v.LastEmittable == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
+            CompilerVar v = rec.VarData;
+            if (v.LastItem == e || (rec.VarFlags & VariableAlloc.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
         }
 
-        internal void UnuseVarOnEndOfScope(Emittable e, VarCallRecord rec)
+        internal void UnuseVarOnEndOfScope(CompilerItem e, VarCallRecord rec)
         {
             Contract.Requires(e != null);
             Contract.Requires(rec != null);
             Contract.Requires(rec.vdata != null);
 
-            VarData v = rec.vdata;
-            if (v.LastEmittable == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
+            CompilerVar v = rec.vdata;
+            if (v.LastItem == e || (rec.Flags & VarCallFlags.UnuseAfterUse) != 0)
                 UnuseVar(v, VariableState.Unused);
         }
 
-        internal void AllocatedVariable(VarData vdata)
+        internal void AllocatedVariable(CompilerVar var)
         {
-            Contract.Requires(vdata != null);
+            Contract.Requires(var != null);
 
-            RegIndex idx = vdata.RegisterIndex;
+            RegIndex idx = var.RegisterIndex;
 
-            switch (vdata.Type)
+            switch (var.Type)
             {
             case VariableType.GPD:
             case VariableType.GPQ:
-                _state.GP[(int)idx] = vdata;
+                _state.GP[(int)idx] = var;
                 AllocatedGPRegister(idx);
                 break;
 
             case VariableType.MM:
-                _state.MM[(int)idx] = vdata;
+                _state.MM[(int)idx] = var;
                 AllocatedMMRegister(idx);
                 break;
 
@@ -1711,7 +1727,7 @@
             case VariableType.XMM_4F:
             case VariableType.XMM_1D:
             case VariableType.XMM_2D:
-                _state.XMM[(int)idx] = vdata;
+                _state.XMM[(int)idx] = var;
                 AllocatedXMMRegister(idx);
                 break;
 
@@ -1738,18 +1754,18 @@
             _modifiedXMMRegisters |= RegisterMask.FromIndex(index);
         }
 
-        internal void MarkMemoryUsed(VarData varData)
+        internal void MarkMemoryUsed(CompilerVar var)
         {
-            Contract.Requires(varData != null);
+            Contract.Requires(var != null);
 
-            if (varData.HomeMemoryData != null)
+            if (var.HomeMemoryData != null)
                 return;
 
-            VarMemBlock mem = AllocMemBlock(varData.Size);
+            VarMemBlock mem = AllocMemBlock(var.Size);
             if (mem == null)
                 return;
 
-            varData.HomeMemoryData = mem;
+            var.HomeMemoryData = mem;
         }
 
         private VarMemBlock AllocMemBlock(int size)
@@ -1820,7 +1836,7 @@
 
                 if (o.IsVar)
                 {
-                    VarData vdata = _compiler.GetVarData(o.Id);
+                    CompilerVar vdata = _compiler.GetVarData(o.Id);
                     Contract.Assert(vdata != null);
 
                     operands[i] = new GPReg(((BaseVar)o).RegisterType, vdata.RegisterIndex);
@@ -1832,7 +1848,7 @@
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
                         // Memory access. We just increment here actual displacement.
-                        VarData vdata = _compiler.GetVarData(o.Id);
+                        CompilerVar vdata = _compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
                         mem.Displacement += vdata.IsMemArgument
@@ -1843,7 +1859,7 @@
                     }
                     else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = _compiler.GetVarData((int)mem.Base);
+                        CompilerVar vdata = _compiler.GetVarData((int)mem.Base);
                         Contract.Assert(vdata != null);
 
                         mem.Base = vdata.RegisterIndex;
@@ -1851,7 +1867,7 @@
 
                     if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = _compiler.GetVarData((int)mem.Index);
+                        CompilerVar vdata = _compiler.GetVarData((int)mem.Index);
                         Contract.Assert(vdata != null);
 
                         mem.Index = vdata.RegisterIndex;
@@ -1860,7 +1876,7 @@
             }
         }
 
-        public void AddBackwardCode(Jmp from)
+        public void AddBackwardCode(CompilerJmpInstruction from)
         {
             if (from == null)
                 throw new ArgumentNullException("from");
@@ -1869,7 +1885,7 @@
             _backCode.Add(from);
         }
 
-        public void AddForwardJump(Jmp instruction)
+        public void AddForwardJump(CompilerJmpInstruction instruction)
         {
             ForwardJumpData j = new ForwardJumpData()
             {
@@ -1885,7 +1901,7 @@
         {
             // Get count of variables stored in memory.
             int memVarsCount = 0;
-            VarData cur = _active;
+            CompilerVar cur = _active;
             if (cur != null)
             {
                 do
@@ -1950,10 +1966,10 @@
 
             Compiler compiler = Compiler;
             _state.CopyFrom(state);
-            _state.MemVarsData = new VarData[0];
+            _state.MemVarsData = new CompilerVar[0];
 
             int i;
-            VarData vdata;
+            CompilerVar vdata;
 
             // Unuse all variables first.
             vdata = _active;
@@ -2031,7 +2047,7 @@
 
             {
                 // UNUSED.
-                VarData vdata = _active;
+                CompilerVar vdata = _active;
                 if (vdata != null)
                 {
                     do
@@ -2108,8 +2124,8 @@
 
                 int regIndex = i - @base;
 
-                VarData fromVar = fromState.Registers[i];
-                VarData toVar = toState.Registers[i];
+                CompilerVar fromVar = fromState.Registers[i];
+                CompilerVar toVar = toState.Registers[i];
 
                 if (fromVar != toVar)
                 {
@@ -2145,8 +2161,8 @@
                 if (i == 16 || i == 24)
                     @base = i;
 
-                VarData fromVar = fromState.Registers[i];
-                VarData toVar = toState.Registers[i];
+                CompilerVar fromVar = fromState.Registers[i];
+                CompilerVar toVar = toState.Registers[i];
 
                 if (fromVar != toVar)
                 {
@@ -2179,7 +2195,7 @@
             // --------------------------------------------------------------------------
 
             {
-                VarData vdata = _active;
+                CompilerVar vdata = _active;
                 if (vdata != null)
                 {
                     do

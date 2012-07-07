@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class Instruction : Emittable
+    public class CompilerInstruction : CompilerItem
     {
         private InstructionCode _code;
 
@@ -44,7 +44,7 @@
         /// </summary>
         bool _isGPBHiUsed;
 
-        public Instruction(Compiler compiler, InstructionCode code, Operand[] operands)
+        public CompilerInstruction(Compiler compiler, InstructionCode code, Operand[] operands)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -238,11 +238,11 @@
             }
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Instruction;
+                return ItemType.Instruction;
             }
         }
 
@@ -329,7 +329,7 @@
                     if (o.Id == InvalidValue)
                         throw new CompilerException();
 
-                    VarData vdata = Compiler.GetVarData(o.Id);
+                    CompilerVar vdata = Compiler.GetVarData(o.Id);
                     Contract.Assert(vdata != null);
 
                     if (vo.IsGPVar)
@@ -363,7 +363,7 @@
                     {
                         if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
-                            VarData vdata = Compiler.GetVarData(o.Id);
+                            CompilerVar vdata = Compiler.GetVarData(o.Id);
                             Contract.Assert(vdata != null);
 
                             cc.MarkMemoryUsed(vdata);
@@ -378,7 +378,7 @@
                         }
                         else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
-                            VarData vdata = Compiler.GetVarData((int)mem.Base);
+                            CompilerVar vdata = Compiler.GetVarData((int)mem.Base);
                             Contract.Assert(vdata != null);
 
                             if (vdata.WorkOffset != Offset)
@@ -393,7 +393,7 @@
 
                         if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                         {
-                            VarData vdata = Compiler.GetVarData((int)mem.Index);
+                            CompilerVar vdata = Compiler.GetVarData((int)mem.Index);
                             Contract.Assert(vdata != null);
 
                             if (vdata.WorkOffset != Offset)
@@ -423,10 +423,10 @@
             VarAllocRecord var = null;
             int varIndex = -1;
 
-            Action<VarData> __GET_VARIABLE =
+            Action<CompilerVar> __GET_VARIABLE =
                 __vardata__ =>
                 {
-                    VarData candidate = __vardata__;
+                    CompilerVar candidate = __vardata__;
 
                     for (varIndex = curIndex; ; )
                     {
@@ -471,7 +471,7 @@
 
                 if (o.IsVar)
                 {
-                    VarData vdata = Compiler.GetVarData(o.Id);
+                    CompilerVar vdata = Compiler.GetVarData(o.Id);
                     Contract.Assert(vdata != null);
 
                     __GET_VARIABLE(vdata);
@@ -1086,7 +1086,7 @@
                     Mem mem = (Mem)o;
                     if ((o.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData(o.Id);
+                        CompilerVar vdata = Compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
@@ -1113,7 +1113,7 @@
                     }
                     else if (((int)mem.Base & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)mem.Base);
+                        CompilerVar vdata = Compiler.GetVarData((int)mem.Base);
                         Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
@@ -1124,7 +1124,7 @@
 
                     if (((int)mem.Index & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
                     {
-                        VarData vdata = Compiler.GetVarData((int)mem.Index);
+                        CompilerVar vdata = Compiler.GetVarData((int)mem.Index);
                         Contract.Assert(vdata != null);
 
                         __GET_VARIABLE(vdata);
@@ -1135,14 +1135,14 @@
                 }
             }
 
-            // Traverse all variables and update firstEmittable / lastEmittable. This
-            // function is called from iterator that scans emittables using forward
+            // Traverse all variables and update firstItem / lastItem. This
+            // function is called from iterator that scans items using forward
             // direction so we can use this knowledge to optimize the process.
             //
             // Similar to ECall::prepare().
             for (i = 0; i < _variables.Length; i++)
             {
-                VarData v = _variables[i].VarData;
+                CompilerVar v = _variables[i].VarData;
 
                 // Update GP register allocator restrictions.
                 if (VariableInfo.IsVariableInteger(v.Type))
@@ -1151,38 +1151,44 @@
                         _variables[i].RegMask &= gpRestrictMask;
                 }
 
-                // Update first/last emittable (begin of variable scope).
-                if (v.FirstEmittable == null)
-                    v.FirstEmittable = this;
+                // Update first/last item (begin of variable scope).
+                if (v.FirstItem == null)
+                    v.FirstItem = this;
 
-                v.LastEmittable = this;
+                v.LastItem = this;
             }
 
-            // There are some instructions that can be used to clear register or to set
-            // register to some value (ideal case is all zeros or all ones).
+            // There are some instructions that can be used to clear or to set all bits
+            // in a register:
             //
-            // xor/pxor reg, reg    ; Set all bits in reg to 0.
-            // sub/psub reg, reg    ; Set all bits in reg to 0.
-            // andn reg, reg        ; Set all bits in reg to 0.
-            // pcmpgt reg, reg      ; Set all bits in reg to 0.
-            // pcmpeq reg, reg      ; Set all bits in reg to 1.
+            // - andn reg, reg        ; Set all bits in reg to 0.
+            // - xor/pxor reg, reg    ; Set all bits in reg to 0.
+            // - sub/psub reg, reg    ; Set all bits in reg to 0.
+            // - pcmpgt reg, reg      ; Set all bits in reg to 0.
+            // - pcmpeq reg, reg      ; Set all bits in reg to 1.
+            //
+            // There are also combinations which do nothing:
+            //
+            // - and reg, reg         ; Nop.
+            // - or reg, reg          ; Nop.
+            // - xchg reg, reg        ; Nop.
 
-            if (_variables.Length == 1 &&
-                _operands.Length > 1 &&
-                _operands[0].IsVar &&
-                _operands[1].IsVar &&
-                _memoryOperand == null)
+            if (_variables.Length == 1 && _operands.Length > 1 && _operands[0].IsVar && _operands[1].IsVar && _memoryOperand == null)
             {
                 switch ((InstructionCode)_code)
                 {
+                // ----------------------------------------------------------------------
+                // [Zeros/Ones]
+                // ----------------------------------------------------------------------
+
+                // ANDN Instructions.
+                case InstructionCode.Pandn:
+
                 // XOR Instructions.
                 case InstructionCode.Xor:
                 case InstructionCode.Xorpd:
                 case InstructionCode.Xorps:
                 case InstructionCode.Pxor:
-
-                // ANDN Instructions.
-                case InstructionCode.Pandn:
 
                 // SUB Instructions.
                 case InstructionCode.Sub:
@@ -1210,12 +1216,35 @@
                     _variables[0].VarFlags = VariableAlloc.Write;
                     _variables[0].VarData.RegisterReadCount--;
                     break;
+
+                // ----------------------------------------------------------------------
+                // [Nop]
+                // ----------------------------------------------------------------------
+
+                // AND Instructions.
+                case InstructionCode.And:
+                case InstructionCode.Andpd:
+                case InstructionCode.Andps:
+                case InstructionCode.Pand:
+
+                // OR Instructions.
+                case InstructionCode.Or:
+                case InstructionCode.Orpd:
+                case InstructionCode.Orps:
+                case InstructionCode.Por:
+
+                // XCHG Instruction.
+                case InstructionCode.Xchg:
+                    // Clear the write flag.
+                    _variables[0].VarFlags = VariableAlloc.Read;
+                    _variables[0].VarData.RegisterWriteCount--;
+                    break;
                 }
             }
             cc.CurrentOffset++;
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             int i;
             int variablesCount = (_variables != null) ? _variables.Length : 0;
@@ -1227,7 +1256,7 @@
                 // used this instruction.
                 for (i = 0; i < variablesCount; i++)
                 {
-                    _variables[0].VarData.WorkOffset = cc.CurrentOffset;
+                    _variables[i].VarData.WorkOffset = cc.CurrentOffset;
                 }
 
                 // Alloc variables used by the instruction (special first).
@@ -1252,7 +1281,7 @@
 
             if (_memoryOperand != null && (_memoryOperand.Id & Operand.OperandIdTypeMask) == Operand.OperandIdTypeVar)
             {
-                VarData vdata = Compiler.GetVarData(_memoryOperand.Id);
+                CompilerVar vdata = Compiler.GetVarData(_memoryOperand.Id);
                 Contract.Assert(vdata != null);
 
                 switch (vdata.State)
@@ -1451,7 +1480,7 @@
             }
         }
 
-        protected override bool TryUnuseVarImpl(VarData v)
+        protected override bool TryUnuseVarImpl(CompilerVar v)
         {
             for (uint i = 0; i < _variables.Length; i++)
             {

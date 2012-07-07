@@ -3,15 +3,15 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public sealed class VarData
+    public sealed class CompilerVar
     {
-        private readonly Function _scope;
+        private readonly CompilerFunction _scope;
         private readonly int _id;
         private readonly VariableType _type;
         private readonly int _size;
         private readonly string _name;
 
-        public VarData(Function scope, int id, VariableType type, int size, string name)
+        public CompilerVar(CompilerFunction scope, int id, VariableType type, int size, string name)
         {
             if (scope == null)
                 throw new ArgumentNullException("scope");
@@ -61,11 +61,11 @@
             set;
         }
 
-        public Function Scope
+        public CompilerFunction Scope
         {
             get
             {
-                Contract.Ensures(Contract.Result<Function>() != null);
+                Contract.Ensures(Contract.Result<CompilerFunction>() != null);
 
                 return _scope;
             }
@@ -200,42 +200,42 @@
         }
 
         /// <summary>
-        /// The first emittable where the variable is accessed.
+        /// The first item where the variable is accessed.
         /// </summary>
         /// <remarks>
         /// If this member is @c NULL then variable is unused.
         /// </remarks>
-        public Emittable FirstEmittable
+        public CompilerItem FirstItem
         {
             get;
             set;
         }
 
         /// <summary>
-        /// The first callable (ECall) which is after the @c FirstEmittable.
+        /// The first callable (ECall) which is after the @c FirstItem.
         /// </summary>
-        public Emittable FirstCallable
+        public CompilerItem FirstCallable
         {
             get;
             set;
         }
 
         /// <summary>
-        /// The last emittable where the variable is accessed.
+        /// The last item where the variable is accessed.
         /// </summary>
-        public Emittable LastEmittable
+        public CompilerItem LastItem
         {
             get;
             set;
         }
 
-        public VarData NextActive
+        public CompilerVar NextActive
         {
             get;
             set;
         }
 
-        public VarData PreviousActive
+        public CompilerVar PreviousActive
         {
             get;
             set;

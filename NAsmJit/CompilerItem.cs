@@ -3,7 +3,7 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public abstract class Emittable
+    public abstract class CompilerItem
     {
         protected internal const int InvalidValue = -1;
 
@@ -11,15 +11,17 @@
 
         private int _offset;
 
-        private Emittable _previous;
+        private CompilerItem _previous;
 
-        private Emittable _next;
+        private CompilerItem _next;
 
         private string _comment;
 
-        private bool _translated;
+        private bool _isTranslated;
 
-        protected Emittable(Compiler compiler)
+        private bool _isUnreachable;
+
+        protected CompilerItem(Compiler compiler)
         {
             if (compiler == null)
                 throw new ArgumentNullException("compiler");
@@ -52,7 +54,7 @@
             }
         }
 
-        public Emittable Previous
+        public CompilerItem Previous
         {
             get
             {
@@ -65,7 +67,7 @@
             }
         }
 
-        public Emittable Next
+        public CompilerItem Next
         {
             get
             {
@@ -91,7 +93,7 @@
             }
         }
 
-        public abstract EmittableType EmittableType
+        public abstract ItemType ItemType
         {
             get;
         }
@@ -105,11 +107,30 @@
             }
         }
 
+        /// <summary>
+        /// Get whether the item was translated.
+        /// </summary>
         public bool IsTranslated
         {
             get
             {
-                return _translated;
+                return _isTranslated;
+            }
+        }
+
+        /// <summary>
+        /// Get whether the item is unreachable.
+        /// </summary>
+        public bool IsUnreachable
+        {
+            get
+            {
+                return _isUnreachable;
+            }
+
+            set
+            {
+                _isUnreachable = value;
             }
         }
 
@@ -126,13 +147,13 @@
             PrepareImpl(cc);
         }
 
-        public Emittable Translate(CompilerContext cc)
+        public CompilerItem Translate(CompilerContext cc)
         {
             Contract.Requires(cc != null);
 
-            Emittable next = TranslateImpl(cc);
-            Contract.Assert(!_translated || next == null);
-            _translated = true;
+            CompilerItem next = TranslateImpl(cc);
+            Contract.Assert(!_isTranslated || next == null);
+            _isTranslated = true;
             return next;
         }
 
@@ -158,7 +179,7 @@
         /// @c true only if the variable will be unused by the instruction,
         /// otherwise @c false is returned.
         /// </returns>
-        public bool TryUnuseVar(VarData v)
+        public bool TryUnuseVar(CompilerVar v)
         {
             Contract.Requires(v != null);
 
@@ -172,7 +193,7 @@
             _offset = cc.CurrentOffset;
         }
 
-        protected virtual Emittable TranslateImpl(CompilerContext cc)
+        protected virtual CompilerItem TranslateImpl(CompilerContext cc)
         {
             Contract.Requires(cc != null);
             return Next;
@@ -188,7 +209,7 @@
             Contract.Requires(a != null);
         }
 
-        protected virtual bool TryUnuseVarImpl(VarData v)
+        protected virtual bool TryUnuseVarImpl(CompilerVar v)
         {
             Contract.Requires(v != null);
             return false;

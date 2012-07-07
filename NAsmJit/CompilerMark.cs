@@ -1,17 +1,17 @@
 ﻿namespace NAsmJit
 {
-    public class Dummy : Emittable
+    public sealed class CompilerMark : CompilerItem
     {
-        public Dummy(Compiler compiler)
+        public CompilerMark(Compiler compiler)
             : base(compiler)
         {
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Dummy;
+                return ItemType.Mark;
             }
         }
 

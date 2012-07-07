@@ -3,13 +3,13 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public class Ret : Emittable
+    public class CompilerFunctionReturn : CompilerItem
     {
-        private readonly Function _function;
+        private readonly CompilerFunction _function;
         private readonly Operand _first;
         private readonly Operand _second;
 
-        public Ret(Compiler compiler, Function function, Operand first, Operand second)
+        public CompilerFunctionReturn(Compiler compiler, CompilerFunction function, Operand first, Operand second)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -20,11 +20,11 @@
             _second = second;
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Return;
+                return ItemType.Return;
             }
         }
 
@@ -36,11 +36,11 @@
             }
         }
 
-        public Function Function
+        public CompilerFunction Function
         {
             get
             {
-                Contract.Ensures(Contract.Result<Function>() != null);
+                Contract.Ensures(Contract.Result<CompilerFunction>() != null);
 
                 return _function;
             }
@@ -73,7 +73,7 @@
         {
             Offset = cc.CurrentOffset;
 
-            VariableType retValType = Function.Prototype.ReturnValue;
+            VariableType retValType = Function.Declaration.ReturnValue;
             if (retValType != VariableType.Invalid)
             {
                 for (int i = 0; i < 2; i++)
@@ -87,15 +87,15 @@
                         if (o.Id == Operand.InvalidValue)
                             throw new CompilerException();
 
-                        VarData vdata = Compiler.GetVarData(o.Id);
+                        CompilerVar vdata = Compiler.GetVarData(o.Id);
                         Contract.Assert(vdata != null);
 
-                        // First emittable (begin of variable scope).
-                        if (vdata.FirstEmittable == null)
-                            vdata.FirstEmittable = this;
+                        // First item (begin of variable scope).
+                        if (vdata.FirstItem == null)
+                            vdata.FirstItem = this;
 
-                        // Last emittable (end of variable scope).
-                        vdata.LastEmittable = this;
+                        // Last item (end of variable scope).
+                        vdata.LastItem = this;
 
                         if (vdata.WorkOffset == Offset)
                             continue;
@@ -116,13 +116,13 @@
             cc.CurrentOffset++;
         }
 
-        protected override Emittable TranslateImpl(CompilerContext cc)
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
         {
             Compiler compiler = cc.Compiler;
             Operand[] ret = { _first, _second };
 
             // Check whether the return value is compatible.
-            VariableType retValType = Function.Prototype.ReturnValue;
+            VariableType retValType = Function.Declaration.ReturnValue;
             int i;
 
             switch (retValType)
@@ -141,7 +141,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -183,7 +183,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -219,7 +219,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -241,7 +241,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -254,7 +254,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -286,7 +286,7 @@
                     {
                         if (((BaseVar)ret[i]).IsGPVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -313,7 +313,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -324,7 +324,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -354,7 +354,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -403,7 +403,7 @@
                         }
                         else if (((BaseVar)ret[i]).IsXMMVar)
                         {
-                            VarData vdata = compiler.GetVarData(ret[i].Id);
+                            CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                             Contract.Assert(vdata != null);
 
                             srci = vdata.RegisterIndex;
@@ -449,7 +449,7 @@
             {
                 if (ret[i] != null && ret[i].IsVar)
                 {
-                    VarData vdata = compiler.GetVarData(ret[i].Id);
+                    CompilerVar vdata = compiler.GetVarData(ret[i].Id);
                     Contract.Assert(vdata != null);
                     cc.UnuseVarOnEndOfScope(this, vdata);
                 }
@@ -475,41 +475,47 @@
 
         public bool ShouldEmitJumpToEpilog()
         {
-            // Iterate over next emittables. If we found emittable that emits real 
+            // Iterate over next items. If we found item that emits real 
             // instruction then we must return @c true.
-            Emittable e = this.Next;
+            CompilerItem e = this.Next;
 
             while (e != null)
             {
-                switch (e.EmittableType)
+                switch (e.ItemType)
                 {
-                // Non-interesting emittables.
-                case EmittableType.Comment:
-                case EmittableType.Dummy:
-                case EmittableType.Align:
-                case EmittableType.Block:
-                case EmittableType.VariableHint:
-                case EmittableType.Target:
-                    break;
-
-                // Interesting emittables.
-                case EmittableType.EmbeddedData:
-                case EmittableType.Instruction:
-                case EmittableType.JumpTable:
-                case EmittableType.Call:
-                case EmittableType.Return:
+                // Interesting items.
+                case ItemType.EmbeddedData:
+                case ItemType.Instruction:
+                case ItemType.Call:
+                case ItemType.Return:
                     return true;
 
-                // These emittables shouldn't be here. We are inside function, after
-                // prolog.
-                case EmittableType.Function:
-                case EmittableType.Prolog:
+                // Non-interesting items.
+                case ItemType.Comment:
+                case ItemType.Mark:
+                case ItemType.Align:
+                case ItemType.VariableHint:
                     break;
 
-                // Stop station, we can't go forward from here.
-                case EmittableType.Epilog:
+                case ItemType.Target:
+                    if (((CompilerTarget)e).Label.Id == Function.ExitLabel.Id)
+                        return false;
+
+                    break;
+
+                // These items shouldn't be here. We are inside the function, after
+                // prolog.
+                case ItemType.Function:
+                    throw new InvalidOperationException();
+
+                // We can't go forward from here.
+                case ItemType.FunctionEnd:
                     return false;
+
+                default:
+                    throw new NotImplementedException();
                 }
+
                 e = e.Next;
             }
 

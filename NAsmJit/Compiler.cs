@@ -20,15 +20,15 @@
 
         private readonly CompilerProperties _properties;
         private EmitOptions _emitOptions;
-        private Emittable _first;
-        private Emittable _last;
-        private Emittable _current;
+        private CompilerItem _first;
+        private CompilerItem _last;
+        private CompilerItem _current;
 
         [ContractPublicPropertyName("Function")]
-        private Function _function;
+        private CompilerFunction _function;
 
-        private readonly List<Target> _targetData = new List<Target>();
-        private readonly List<VarData> _varData = new List<VarData>();
+        private readonly List<CompilerTarget> _targetData = new List<CompilerTarget>();
+        private readonly List<CompilerVar> _vars = new List<CompilerVar>();
         private int _varNameId;
         private CompilerContext _cc;
 
@@ -72,7 +72,7 @@
             }
         }
 
-        public Function Function
+        public CompilerFunction Function
         {
             get
             {
@@ -80,7 +80,7 @@
             }
         }
 
-        public Emittable CurrentEmittable
+        public CompilerItem CurrentItem
         {
             get
             {
@@ -93,60 +93,58 @@
             }
         }
 
-        internal IList<VarData> Variables
+        internal IList<CompilerVar> Variables
         {
             get
             {
-                return _varData;
+                return _vars;
             }
         }
 
-        public Function NewFunction(CallingConvention callingConvention, Type delegateType)
+        public CompilerFunction NewFunction(CallingConvention callingConvention, Type delegateType)
         {
             if (delegateType == null)
                 throw new ArgumentNullException("delegateType");
             Contract.Requires(Function == null);
             Contract.Ensures(_function != null);
-            Contract.Ensures(Contract.Result<Function>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunction>() != null);
             Contract.EndContractBlock();
 
             if (delegateType == typeof(Action))
                 return NewFunction(callingConvention, new VariableType[0], VariableType.Invalid);
 
-            Function f = new Function(this, callingConvention, delegateType);
-            _function = f;
-
-            AddEmittable(f);
-            MarkLabel(f.EntryLabel);
-            AddEmittable(f.Prolog);
-
+            CompilerFunction function = new CompilerFunction(this, callingConvention, delegateType);
+            _function = function;
             _varNameId = 0;
-            f.CreateVariables();
-            return f;
+
+            AddItem(function);
+            MarkLabel(function.EntryLabel);
+            function.CreateVariables();
+
+            return function;
         }
 
-        public Function NewFunction(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunction NewFunction(CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             if (arguments == null)
                 throw new ArgumentNullException("arguments");
             Contract.Requires(Function == null);
             Contract.Ensures(_function != null);
-            Contract.Ensures(Contract.Result<Function>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunction>() != null);
             Contract.EndContractBlock();
 
             if (_function != null)
                 throw new InvalidOperationException();
 
-            Function f = new Function(this, callingConvention, arguments, returnValue);
-            _function = f;
-
-            AddEmittable(f);
-            MarkLabel(f.EntryLabel);
-            AddEmittable(f.Prolog);
-
+            CompilerFunction function = new CompilerFunction(this, callingConvention, arguments, returnValue);
+            _function = function;
             _varNameId = 0;
-            f.CreateVariables();
-            return f;
+
+            AddItem(function);
+            MarkLabel(function.EntryLabel);
+            function.CreateVariables();
+
+            return function;
         }
 
         public Label DefineLabel()
@@ -154,7 +152,7 @@
             Contract.Ensures(Contract.Result<Label>() != null);
 
             Label label = new Label(_targetData.Count);
-            _targetData.Add(new Target(this, label));
+            _targetData.Add(new CompilerTarget(this, label));
             return label;
         }
 
@@ -166,13 +164,13 @@
             if (id >= _targetData.Count)
                 throw new ArgumentException();
 
-            AddEmittable(_targetData[id]);
+            AddItem(_targetData[id]);
         }
 
-        public VarData NewVarData(string name, VariableType variableType, int size)
+        public CompilerVar NewVar(string name, VariableType variableType, int size)
         {
             Contract.Requires(Function != null);
-            Contract.Ensures(Contract.Result<VarData>() != null);
+            Contract.Ensures(Contract.Result<CompilerVar>() != null);
 
             if (name == null)
             {
@@ -180,9 +178,9 @@
                 _varNameId++;
             }
 
-            VarData varData = new VarData(Function, _varData.Count | Operand.OperandIdTypeVar, variableType, size, name);
-            _varData.Add(varData);
-            return varData;
+            CompilerVar var = new CompilerVar(Function, _vars.Count | Operand.OperandIdTypeVar, variableType, size, name);
+            _vars.Add(var);
+            return var;
         }
 
         public GPVar ArgGP(int index)
@@ -190,21 +188,21 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
-            Contract.Requires(Function.Prototype != null);
-            Contract.Requires(Function.Prototype != null);
-            Contract.Requires(Function.Prototype.Arguments != null);
+            Contract.Requires(Function.Declaration != null);
+            Contract.Requires(Function.Declaration != null);
+            Contract.Requires(Function.Declaration.Arguments != null);
             Contract.Ensures(Contract.Result<GPVar>() != null);
             Contract.EndContractBlock();
 
-            Function f = Function;
+            CompilerFunction f = Function;
             if (f == null)
                 throw new InvalidOperationException("No function.");
 
-            FunctionPrototype prototype = f.Prototype;
+            FunctionDeclaration prototype = f.Declaration;
             if (index >= prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             GPVar var = new GPVar(vdata.Id, vdata.Size, VariableInfo.GetVariableInfo(vdata.Type).RegisterType, vdata.Type);
             return var;
         }
@@ -232,8 +230,8 @@
                     _logger.LogString("*** COMPILER WARNING: Translated QWORD variable to DWORD, FIX YOUR CODE! ***" + Environment.NewLine);
             }
 
-            VarData varData = NewVarData(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
-            return GPVar.FromData(varData);
+            CompilerVar var = NewVar(name, variableType, VariableInfo.GetVariableInfo(variableType).Size);
+            return GPVar.FromData(var);
         }
 
         public MMVar ArgMM(int index)
@@ -241,20 +239,20 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
-            Contract.Requires(Function.Prototype != null);
-            Contract.Requires(Function.Prototype.Arguments != null);
+            Contract.Requires(Function.Declaration != null);
+            Contract.Requires(Function.Declaration.Arguments != null);
             Contract.Ensures(Contract.Result<MMVar>() != null);
             Contract.EndContractBlock();
 
-            Function f = Function;
+            CompilerFunction f = Function;
             if (f == null)
                 throw new InvalidOperationException("No function.");
 
-            FunctionPrototype prototype = f.Prototype;
+            FunctionDeclaration prototype = f.Declaration;
             if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             if (vdata.Size != 12)
                 throw new NotSupportedException();
 
@@ -270,11 +268,11 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.MM) == 0)
                 throw new ArgumentException();
 
-            VarData vdata = NewVarData(name, variableType, 8);
-            if (vdata.Size != 8)
+            CompilerVar var = NewVar(name, variableType, 8);
+            if (var.Size != 8)
                 throw new NotSupportedException();
 
-            return MMVar.FromData(vdata);
+            return MMVar.FromData(var);
         }
 
         public XMMVar ArgXMM(int index)
@@ -282,20 +280,20 @@
             if (index < 0)
                 throw new ArgumentOutOfRangeException("index");
             Contract.Requires(Function != null);
-            Contract.Requires(Function.Prototype != null);
-            Contract.Requires(Function.Prototype.Arguments != null);
+            Contract.Requires(Function.Declaration != null);
+            Contract.Requires(Function.Declaration.Arguments != null);
             Contract.Ensures(Contract.Result<XMMVar>() != null);
             Contract.EndContractBlock();
 
-            Function f = Function;
+            CompilerFunction f = Function;
             if (f == null)
                 throw new InvalidOperationException("No function.");
 
-            FunctionPrototype prototype = f.Prototype;
+            FunctionDeclaration prototype = f.Declaration;
             if (index < prototype.Arguments.Length)
                 throw new ArgumentException();
 
-            VarData vdata = Function._argumentVariables[index];
+            CompilerVar vdata = Function._argumentVariables[index];
             if (vdata.Size != 16)
                 throw new NotSupportedException();
 
@@ -311,14 +309,14 @@
             if ((VariableInfo.GetVariableInfo(variableType).Class & VariableClass.XMM) == 0)
                 throw new ArgumentException();
 
-            VarData vdata = NewVarData(name, variableType, 16);
-            if (vdata.Size != 16)
+            CompilerVar var = NewVar(name, variableType, 16);
+            if (var.Size != 16)
                 throw new NotSupportedException();
 
-            return XMMVar.FromData(vdata);
+            return XMMVar.FromData(var);
         }
 
-        public Function EndFunction()
+        public CompilerFunction EndFunction()
         {
             Contract.Requires(Function != null);
             Contract.Ensures(Function == null);
@@ -326,14 +324,13 @@
             if (_function == null)
                 throw new InvalidOperationException("No function.");
 
-            Function f = _function;
-            MarkLabel(f.ExitLabel);
-            AddEmittable(f.Epilog);
-            AddEmittable(f.End);
+            CompilerFunction function = _function;
+            MarkLabel(function.ExitLabel);
+            AddItem(function.End);
 
             _function.Finished = true;
             _function = null;
-            return f;
+            return function;
         }
 
         public IntPtr Make()
@@ -360,11 +357,10 @@
         {
             Contract.Requires(a != null);
 
-            // context
             CompilerContext cc = new CompilerContext(this);
 
-            Emittable start = _first;
-            Emittable stop = null;
+            CompilerItem start = _first;
+            CompilerItem stop = null;
 
             // register all labels
             a.RegisterLabels(_targetData.Count);
@@ -375,26 +371,29 @@
                 _cc = null;
 
                 // ------------------------------------------------------------------------
-                // Find a function.
+                // [Find Function]
+                // ------------------------------------------------------------------------
+
                 while (true)
                 {
                     if (start == null)
                         return;
 
-                    if (start.EmittableType == EmittableType.Function)
+                    if (start.ItemType == ItemType.Function)
                         break;
-                    else
-                        start.Emit(a);
 
+                    start.Emit(a);
                     start = start.Next;
                 }
-                // ------------------------------------------------------------------------
 
                 // ------------------------------------------------------------------------
-                // Setup code generation context.
-                cc.Function = (Function)start;
+                // [Setup CompilerContext]
+                // ------------------------------------------------------------------------
+
+                cc.Function = (CompilerFunction)start;
+                stop = cc.Function.End;
                 cc.Start = start;
-                cc.Stop = stop = cc.Function.End;
+                cc.Stop = stop;
                 cc.ExtraBlock = stop.Previous;
 
                 // Detect whether the function generation was finished.
@@ -406,13 +405,13 @@
 
                 // ------------------------------------------------------------------------
                 // Step 1:
-                // - Assign/increment offset to each emittable.
+                // - Assign/increment offset to each item.
                 // - Extract variables from instructions.
                 // - Prepare variables for register allocator:
-                //   - Update read(r) / write(w) / overwrite(x) statistics.
+                //   - Update read(r) / write(w) / read/write(x) statistics.
                 //   - Update register / memory usage statistics.
-                //   - Find scope (first / last emittable) of variables.
-                for (Emittable cur = start; ; cur = cur.Next)
+                //   - Find scope (first / last item) of variables.
+                for (CompilerItem cur = start; ; cur = cur.Next)
                 {
                     cur.Prepare(cc);
                     if (cur == stop)
@@ -421,7 +420,7 @@
                 // ------------------------------------------------------------------------
 
                 // We set compiler context also to Compiler so new emitted instructions
-                // can call prepare() to itself.
+                // can call CompilerItem.Prepare() on itself.
                 _cc = cc;
 
                 /* ------------------------------------------------------------------------
@@ -438,14 +437,14 @@
 
                 // translate special instructions and run alloc registers
                 {
-                    Emittable cur = start;
+                    CompilerItem cur = start;
                     do
                     {
                         do
                         {
-                            // assign current offset for each emittable back to CompilerContext.
+                            // assign current offset for each item back to CompilerContext.
                             cc.CurrentOffset = cur.Offset;
-                            // assign previous emittable to compiler so each variable spill/alloc will be emitted before
+                            // assign previous item to compiler so each variable spill/alloc will be emitted before
                             _current = cur.Previous;
                             cur = cur.Translate(cc);
                         } while (cur != null);
@@ -482,10 +481,10 @@
                 // Emit function prolog / epilog
                 cc.Function.PreparePrologEpilog(cc);
 
-                _current = cc.Function.Prolog;
+                _current = cc.Function.EntryTarget;
                 cc.Function.EmitProlog(cc);
 
-                _current = cc.Function.Epilog;
+                _current = cc.Function.ExitTarget;
                 cc.Function.EmitEpilog(cc);
 
                 // Patch memory operands (variables related)
@@ -506,11 +505,11 @@
                     a.RegisterLabels(_targetData.Count - a.LabelData.Count);
                 }
 
-                Emittable extraBlock = cc.ExtraBlock;
+                CompilerItem extraBlock = cc.ExtraBlock;
 
                 // Step 3:
                 // - Emit instructions to Assembler stream.
-                for (Emittable cur = start; ; cur = cur.Next)
+                for (CompilerItem cur = start; ; cur = cur.Next)
                 {
                     cur.Emit(a);
                     if (cur == extraBlock)
@@ -521,7 +520,7 @@
                 // ------------------------------------------------------------------------
                 // Step 4:
                 // - Emit everything else (post action).
-                for (Emittable cur = start; ; cur = cur.Next)
+                for (CompilerItem cur = start; ; cur = cur.Next)
                 {
                     cur.Post(a);
                     if (cur == extraBlock)
@@ -534,68 +533,68 @@
             }
         }
 
-        public void AddEmittable(Emittable emittable)
+        public void AddItem(CompilerItem item)
         {
-            Contract.Requires(emittable != null);
+            Contract.Requires(item != null);
 
-            if (emittable == null)
-                throw new ArgumentNullException("emittable");
-            if (emittable.Previous != null)
+            if (item == null)
+                throw new ArgumentNullException("item");
+            if (item.Previous != null)
                 throw new ArgumentException();
-            if (emittable.Next != null)
+            if (item.Next != null)
                 throw new ArgumentException();
 
             if (_current == null)
             {
                 if (_first == null)
                 {
-                    _first = emittable;
-                    _last = emittable;
+                    _first = item;
+                    _last = item;
                 }
                 else
                 {
-                    emittable.Next = _first;
-                    _first.Previous = emittable;
-                    _first = emittable;
+                    item.Next = _first;
+                    _first.Previous = item;
+                    _first = item;
                 }
             }
             else
             {
-                Emittable previous = _current;
-                Emittable next = _current.Next;
+                CompilerItem previous = _current;
+                CompilerItem next = _current.Next;
 
-                emittable.Previous = previous;
-                emittable.Next = next;
+                item.Previous = previous;
+                item.Next = next;
 
-                previous.Next = emittable;
+                previous.Next = item;
                 if (next != null)
-                    next.Previous = emittable;
+                    next.Previous = item;
                 else
-                    _last = emittable;
+                    _last = item;
             }
 
-            _current = emittable;
+            _current = item;
         }
 
-        public void AddEmittableAfter(Emittable emittable, Emittable reference)
+        public void AddItemAfter(CompilerItem item, CompilerItem reference)
         {
-            if (emittable == null)
-                throw new ArgumentNullException("emittable");
+            if (item == null)
+                throw new ArgumentNullException("item");
             if (reference == null)
                 throw new ArgumentNullException("reference");
-            if (emittable.Previous != null || emittable.Next != null)
-                throw new ArgumentException("The emittable is already linked.");
+            if (item.Previous != null || item.Next != null)
+                throw new ArgumentException("The item is already linked.");
 
-            Emittable previous = reference;
-            Emittable next = reference.Next;
-            emittable.Previous = previous;
-            emittable.Next = next;
+            CompilerItem previous = reference;
+            CompilerItem next = reference.Next;
+            item.Previous = previous;
+            item.Next = next;
 
-            previous.Next = emittable;
+            previous.Next = item;
             if (next != null)
-                next.Previous = emittable;
+                next.Previous = item;
             else
-                _last = emittable;
+                _last = item;
         }
 
         public void Comment(string format, params object[] args)
@@ -604,7 +603,7 @@
             Contract.Requires(args != null);
 
             string text = string.Format(format, args);
-            AddEmittable(new Comment(this, text));
+            AddItem(new CompilerComment(this, text));
         }
 
         public void Alloc(BaseVar var)
@@ -646,14 +645,14 @@
             if (var.Id == Operand.InvalidValue)
                 return;
 
-            VarData vdata = GetVarData(var.Id);
+            CompilerVar vdata = GetVarData(var.Id);
             Contract.Assert(vdata != null);
 
-            VariableHint e = new VariableHint(this, vdata, hintId, hintValue);
-            AddEmittable(e);
+            CompilerHint e = new CompilerHint(this, vdata, hintId, hintValue);
+            AddItem(e);
         }
 
-        internal Target GetTarget(int id)
+        internal CompilerTarget GetTarget(int id)
         {
             if ((id & Operand.OperandIdTypeMask) != Operand.OperandIdTypeLabel)
                 throw new ArgumentException("The ID is not a label.");
@@ -736,10 +735,10 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(GPVar dst, CallingConvention callingConvention, Type delegateType)
+        public CompilerFunctionCall Call(GPVar dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(dst != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, delegateType);
         }
@@ -747,11 +746,11 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(GPVar dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunctionCall Call(GPVar dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
         }
@@ -759,10 +758,10 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Mem dst, CallingConvention callingConvention, Type delegateType)
+        public CompilerFunctionCall Call(Mem dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(dst != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, delegateType);
         }
@@ -770,11 +769,11 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Mem dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunctionCall Call(Mem dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
         }
@@ -782,10 +781,10 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Imm dst, CallingConvention callingConvention, Type delegateType)
+        public CompilerFunctionCall Call(Imm dst, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(dst != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, delegateType);
         }
@@ -793,11 +792,11 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Imm dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunctionCall Call(Imm dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(dst != null);
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(dst, callingConvention, arguments, returnValue);
         }
@@ -805,9 +804,9 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(IntPtr dst, CallingConvention callingConvention, Type delegateType)
+        public CompilerFunctionCall Call(IntPtr dst, CallingConvention callingConvention, Type delegateType)
         {
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall((Imm)dst, callingConvention, delegateType);
         }
@@ -815,10 +814,10 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(IntPtr dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunctionCall Call(IntPtr dst, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall((Imm)dst, callingConvention, arguments, returnValue);
         }
@@ -826,11 +825,11 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Label label, CallingConvention callingConvention, Type delegateType)
+        public CompilerFunctionCall Call(Label label, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(label != null);
             Contract.Requires(delegateType != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(label, callingConvention, delegateType);
         }
@@ -838,11 +837,11 @@
         /// <summary>
         /// Call procedure.
         /// </summary>
-        public Call Call(Label label, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        public CompilerFunctionCall Call(Label label, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(label != null);
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
             return _emitCall(label, callingConvention, arguments, returnValue);
         }
@@ -854,7 +853,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
         }
 
         public void Call<T>(JitAction<T> function, Operand arg0)
@@ -865,7 +864,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
         }
 
@@ -878,7 +877,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
         }
@@ -893,7 +892,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -910,7 +909,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -925,7 +924,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
         }
 
@@ -938,7 +937,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
         }
@@ -953,7 +952,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetReturn(returnOperand0, returnOperand1 ?? Operand.None);
@@ -970,7 +969,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -989,7 +988,7 @@
             if (!function.IsCompiled)
                 throw new NotImplementedException("The compiler doesn't support late bindings.");
 
-            Call call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
+            CompilerFunctionCall call = Call(function.CompiledAddress, function.CallingConvention, function.ArgumentTypes.ToArray(), function.ReturnType);
             call.SetArgument(0, arg0);
             call.SetArgument(1, arg1);
             call.SetArgument(2, arg2);
@@ -1009,19 +1008,19 @@
             _emitOptions |= EmitOptions.RexPrefix;
         }
 
-        private Instruction NewInstruction(InstructionCode code, Operand[] operands)
+        private CompilerInstruction NewInstruction(InstructionCode code, Operand[] operands)
         {
             Contract.Requires(operands != null);
             Contract.Requires(Contract.ForAll(operands, i => i != null));
-            Contract.Ensures(Contract.Result<Instruction>() != null);
+            Contract.Ensures(Contract.Result<CompilerInstruction>() != null);
 
             if (code >= InstructionDescription.JumpBegin && code <= InstructionDescription.JumpEnd)
             {
-                return new Jmp(this, code, operands);
+                return new CompilerJmpInstruction(this, code, operands);
             }
             else
             {
-                return new Instruction(this, code, operands);
+                return new CompilerInstruction(this, code, operands);
             }
         }
 
@@ -1097,8 +1096,8 @@
             Contract.Requires(operands != null);
             Contract.Requires(Contract.ForAll(operands, i => i != null));
 
-            Instruction e = NewInstruction(instructionCode, operands);
-            AddEmittable(e);
+            CompilerInstruction e = NewInstruction(instructionCode, operands);
+            AddItem(e);
             if (_cc != null)
             {
                 e.Offset = _cc.CurrentOffset;
@@ -1122,32 +1121,32 @@
             }
         }
 
-        private Call _emitCall(Operand o0, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+        private CompilerFunctionCall _emitCall(Operand o0, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
         {
             Contract.Requires(o0 != null);
             Contract.Requires(arguments != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
-            Function fn = Function;
+            CompilerFunction fn = Function;
             if (fn == null)
                 throw new InvalidOperationException("No function.");
 
-            Call call = new Call(this, fn, o0, callingConvention, arguments, returnValue);
-            AddEmittable(call);
+            CompilerFunctionCall call = new CompilerFunctionCall(this, fn, o0, callingConvention, arguments, returnValue);
+            AddItem(call);
             return call;
         }
 
-        private Call _emitCall(Operand o0, CallingConvention callingConvention, Type delegateType)
+        private CompilerFunctionCall _emitCall(Operand o0, CallingConvention callingConvention, Type delegateType)
         {
             Contract.Requires(o0 != null);
-            Contract.Ensures(Contract.Result<Call>() != null);
+            Contract.Ensures(Contract.Result<CompilerFunctionCall>() != null);
 
-            Function fn = Function;
+            CompilerFunction fn = Function;
             if (fn == null)
                 throw new InvalidOperationException("No function.");
 
-            Call call = new Call(this, fn, o0, callingConvention, delegateType);
-            AddEmittable(call);
+            CompilerFunctionCall call = new CompilerFunctionCall(this, fn, o0, callingConvention, delegateType);
+            AddItem(call);
             return call;
         }
 
@@ -1155,12 +1154,12 @@
         {
             Contract.Requires(Function != null);
 
-            Function fn = Function;
+            CompilerFunction fn = Function;
             if (fn == null)
                 throw new InvalidOperationException("There is no function defined for the compiler.");
 
-            Ret eRet = new Ret(this, fn, first, second);
-            AddEmittable(eRet);
+            CompilerFunctionReturn eRet = new CompilerFunctionReturn(this, fn, first, second);
+            AddItem(eRet);
         }
 
         internal static VariableType TypeToId(Type type)
@@ -1228,24 +1227,24 @@
             }
         }
 
-        internal VarData GetVarData(int id)
+        internal CompilerVar GetVarData(int id)
         {
             if (id == Operand.InvalidValue)
                 throw new ArgumentException();
-            Contract.Ensures(Contract.Result<VarData>() != null);
+            Contract.Ensures(Contract.Result<CompilerVar>() != null);
 
             int index = id & Operand.OperandIdValueMask;
-            if (index >= _varData.Count)
+            if (index >= _vars.Count)
                 throw new ArgumentException();
 
-            return _varData[id & Operand.OperandIdValueMask];
+            return _vars[id & Operand.OperandIdValueMask];
         }
 
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
             Contract.Invariant(Contract.ForAll(_targetData, i => i != null));
-            Contract.Invariant(Contract.ForAll(_varData, i => i != null));
+            Contract.Invariant(Contract.ForAll(_vars, i => i != null));
         }
     }
 }

@@ -5,16 +5,16 @@
     using System.Linq;
     using System.Text;
 
-    public class Function : Emittable
+    public class CompilerFunction : CompilerItem
     {
-        private readonly FunctionPrototype _functionPrototype;
-        internal VarData[] _argumentVariables;
+        private readonly FunctionDeclaration _functionPrototype;
+        internal CompilerVar[] _argumentVariables;
 
         private FunctionHints _hints;
 
-        private readonly bool _isStackAlignedByOsTo16Bytes = CompilerUtil.IsStack16ByteAligned;
+        private bool _isAssumed16ByteAlignment = CompilerUtil.IsStack16ByteAligned;
 
-        private bool _isStackAlignedByFnTo16Bytes;
+        private bool _isPerformed16ByteAlignment;
 
         private bool _isNaked;
 
@@ -38,7 +38,7 @@
 
         private RegisterMask _modifiedAndPreservedXMM;
 
-        private InstructionCode _movDqaInstruction;
+        private InstructionCode _movDqInstruction;
 
         private int _pePushPopStackSize;
         private int _peMovStackSize;
@@ -49,13 +49,18 @@
 
         private int _functionCallStackSize;
 
+        /// <summary>Function entry label.</summary>
         private readonly Label _entryLabel;
+        /// <summary>Function exit label.</summary>
         private readonly Label _exitLabel;
-        private readonly Prolog _prolog;
-        private readonly Epilog _epilog;
-        private readonly FunctionEnd _end;
+        /// <summary>Function entry target.</summary>
+        private readonly CompilerTarget _entryTarget;
+        /// <summary>Function exit target.</summary>
+        private readonly CompilerTarget _exitTarget;
+        /// <summary>Function end item.</summary>
+        private readonly CompilerFunctionEnd _end;
 
-        private Function(Compiler compiler, FunctionPrototype prototype)
+        private CompilerFunction(Compiler compiler, FunctionDeclaration prototype)
             : base(compiler)
         {
             Contract.Requires(compiler != null);
@@ -65,30 +70,30 @@
 
             _entryLabel = compiler.DefineLabel();
             _exitLabel = compiler.DefineLabel();
+            _entryTarget = compiler.GetTarget(_entryLabel.Id);
+            _exitTarget = compiler.GetTarget(_exitLabel.Id);
 
-            _prolog = new Prolog(compiler, this);
-            _epilog = new Epilog(compiler, this);
-            _end = new FunctionEnd(compiler);
+            _end = new CompilerFunctionEnd(compiler, this);
         }
 
-        public Function(Compiler compiler, CallingConvention callingConvention, Type delegateType)
-            : this(compiler, new FunctionPrototype(callingConvention, delegateType))
+        public CompilerFunction(Compiler compiler, CallingConvention callingConvention, Type delegateType)
+            : this(compiler, new FunctionDeclaration(callingConvention, delegateType))
         {
             Contract.Requires(compiler != null);
         }
 
-        public Function(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
-            : this(compiler, new FunctionPrototype(callingConvention, arguments, returnValue))
+        public CompilerFunction(Compiler compiler, CallingConvention callingConvention, VariableType[] arguments, VariableType returnValue)
+            : this(compiler, new FunctionDeclaration(callingConvention, arguments, returnValue))
         {
             Contract.Requires(compiler != null);
             Contract.Requires(arguments != null);
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.Function;
+                return ItemType.Function;
             }
         }
 
@@ -101,11 +106,11 @@
             }
         }
 
-        public FunctionPrototype Prototype
+        public FunctionDeclaration Declaration
         {
             get
             {
-                Contract.Ensures(Contract.Result<FunctionPrototype>() != null);
+                Contract.Ensures(Contract.Result<FunctionDeclaration>() != null);
 
                 return _functionPrototype;
             }
@@ -131,6 +136,46 @@
             }
         }
 
+        /// <summary>Get function entry target.</summary>
+        public CompilerTarget EntryTarget
+        {
+            get
+            {
+                return _entryTarget;
+            }
+        }
+
+        /// <summary>Get function exit target.</summary>
+        public CompilerTarget ExitTarget
+        {
+            get
+            {
+                return _exitTarget;
+            }
+        }
+
+        /// <summary>
+        /// Get whether it's assumed that stack is aligned to 16 bytes.
+        /// </summary>
+        public bool IsAssumed16ByteAlignment
+        {
+            get
+            {
+                return _isAssumed16ByteAlignment;
+            }
+        }
+
+        /// <summary>
+        /// Get whether it's required to align stack to 16 bytes by function.
+        /// </summary>
+        public bool IsPerformed16ByteAlignment
+        {
+            get
+            {
+                return _isPerformed16ByteAlignment;
+            }
+        }
+
         public bool IsEspAdjusted
         {
             get
@@ -144,31 +189,11 @@
             }
         }
 
-        public Prolog Prolog
+        public CompilerFunctionEnd End
         {
             get
             {
-                Contract.Ensures(Contract.Result<Prolog>() != null);
-
-                return _prolog;
-            }
-        }
-
-        public Epilog Epilog
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<Epilog>() != null);
-
-                return _epilog;
-            }
-        }
-
-        public FunctionEnd End
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<FunctionEnd>() != null);
+                Contract.Ensures(Contract.Result<CompilerFunctionEnd>() != null);
 
                 return _end;
             }
@@ -195,20 +220,49 @@
             }
         }
 
+        public bool IsNaked
+        {
+            get
+            {
+                return _isNaked;
+            }
+        }
+
+        public int FunctionCallStackSize
+        {
+            get
+            {
+                return _functionCallStackSize;
+            }
+        }
+
+        private int RequiredStackOffset
+        {
+            get
+            {
+                return _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
+            }
+        }
+
         [ContractInvariantMethod]
         private void ObjectInvariants()
         {
             Contract.Invariant(_functionPrototype != null);
             Contract.Invariant(_entryLabel != null);
             Contract.Invariant(_exitLabel != null);
-            Contract.Invariant(_prolog != null);
-            Contract.Invariant(_epilog != null);
             Contract.Invariant(_end != null);
         }
 
         protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset++;
+            PrepareVariables(this);
+        }
+
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
+        {
+            AllocVariables(cc);
+            return base.TranslateImpl(cc);
         }
 
         public void SetHint(FunctionHints hint, bool value)
@@ -235,32 +289,32 @@
             if (count == 0)
                 return;
 
-            _argumentVariables = new VarData[count];
+            _argumentVariables = new CompilerVar[count];
 
             bool debug = Compiler.Logger != null;
             string argName = null;
             for (int i = 0; i < count; i++)
             {
-                FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
+                FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
                 if (debug)
                     argName = "arg_" + i;
 
                 int size = VariableInfo.GetVariableSize(a._variableType);
-                VarData varData = Compiler.NewVarData(argName, a._variableType, size);
+                CompilerVar var = Compiler.NewVar(argName, a._variableType, size);
 
                 if (a._registerIndex != RegIndex.Invalid)
                 {
-                    varData.IsRegArgument = true;
-                    varData.RegisterIndex = a._registerIndex;
+                    var.IsRegArgument = true;
+                    var.RegisterIndex = a._registerIndex;
                 }
 
                 if (a._stackOffset != InvalidValue)
                 {
-                    varData.IsMemArgument = true;
-                    varData.HomeMemoryOffset = a._stackOffset;
+                    var.IsMemArgument = true;
+                    var.HomeMemoryOffset = a._stackOffset;
                 }
 
-                _argumentVariables[i] = varData;
+                _argumentVariables[i] = var;
             }
         }
 
@@ -268,21 +322,25 @@
         {
             Contract.Requires(cc != null);
 
-            _pePushPop = true;
+            _pePushPop = false;
             _emitEMMS = false;
             _emitSFence = false;
             _emitLFence = false;
+            _isAssumed16ByteAlignment = false;
+            _isPerformed16ByteAlignment = false;
 
             uint accessibleMemoryBelowStack = 0;
             if (_functionPrototype.CallingConvention == CallingConvention.X64U)
                 accessibleMemoryBelowStack = 128;
 
-            if (_isCaller && (cc.MemBytesTotal > 0 || _isStackAlignedByOsTo16Bytes))
+            if (_isCaller && (cc.MemBytesTotal > 0 || _isAssumed16ByteAlignment))
                 _isEspAdjusted = true;
 
             if (cc.MemBytesTotal > accessibleMemoryBelowStack)
                 _isEspAdjusted = true;
 
+            _isAssumed16ByteAlignment = (_hints & FunctionHints.Assume16ByteAlignment) != 0;
+            _isPerformed16ByteAlignment = (_hints & FunctionHints.Perform16ByteAlignment) != 0;
             _isNaked = (_hints & FunctionHints.Naked) != 0;
             _pePushPop = (_hints & FunctionHints.PushPopSequence) != 0;
             _emitEMMS = (_hints & FunctionHints.Emms) != 0;
@@ -290,10 +348,10 @@
             _emitLFence = (_hints & FunctionHints.LoadFence) != 0;
 
             // Updated to respect comment from issue #47, align also when using MMX code.
-            if (!_isStackAlignedByOsTo16Bytes && !_isNaked && (cc.Mem16BlocksCount + cc.Mem8BlocksCount > 0))
+            if (!_isAssumed16ByteAlignment && !_isNaked && (cc.Mem16BlocksCount + cc.Mem8BlocksCount > 0))
             {
                 // Have to align stack to 16-bytes.
-                _isStackAlignedByFnTo16Bytes = true;
+                _isPerformed16ByteAlignment = true;
                 _isEspAdjusted = true;
             }
 
@@ -301,27 +359,27 @@
             _modifiedAndPreservedMM = cc.ModifiedMMRegisters & _functionPrototype.PreservedMM;
             _modifiedAndPreservedXMM = cc.ModifiedXMMRegisters & _functionPrototype.PreservedXMM;
 
-            _movDqaInstruction = (_isStackAlignedByOsTo16Bytes || !_isNaked) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
+            _movDqInstruction = (IsAssumed16ByteAlignment || IsPerformed16ByteAlignment) ? InstructionCode.Movdqa : InstructionCode.Movdqu;
 
             // Prolog & Epilog stack size.
             {
-                int memGP = _modifiedAndPreservedGP.RegisterCount * IntPtr.Size;
-                int memMM = _modifiedAndPreservedMM.RegisterCount * 8;
-                int memXMM = _modifiedAndPreservedXMM.RegisterCount * 16;
+                int memGpSize = _modifiedAndPreservedGP.RegisterCount * IntPtr.Size;
+                int memMmSize = _modifiedAndPreservedMM.RegisterCount * 8;
+                int memXmmSize = _modifiedAndPreservedXMM.RegisterCount * 16;
 
                 if (_pePushPop)
                 {
-                    _pePushPopStackSize = memGP;
-                    _peMovStackSize = memXMM + Util.AlignTo16(memMM);
+                    _pePushPopStackSize = memGpSize;
+                    _peMovStackSize = memXmmSize + Util.AlignTo16(memMmSize);
                 }
                 else
                 {
                     _pePushPopStackSize = 0;
-                    _peMovStackSize = memXMM + Util.AlignTo16(memMM + memGP);
+                    _peMovStackSize = memXmmSize + Util.AlignTo16(memMmSize + memGpSize);
                 }
             }
 
-            if (_isStackAlignedByFnTo16Bytes)
+            if (IsPerformed16ByteAlignment)
             {
                 _peAdjustStackSize += Util.DeltaTo16(_pePushPopStackSize);
             }
@@ -368,14 +426,15 @@
             RegisterMask preservedMM = _modifiedAndPreservedMM;
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
-            int stackSubtract = _functionCallStackSize + _memStackSize16 + _peMovStackSize + _peAdjustStackSize;
-            int nspPos;
+            int stackOffset = RequiredStackOffset;
+            int stackPos;
+
+            // --------------------------------------------------------------------------
+            // [Prolog]
+            // --------------------------------------------------------------------------
 
             if (Compiler.Logger != null)
-            {
-                // Here function prolog starts.
                 Compiler.Comment("Prolog");
-            }
 
             // Emit standard prolog entry code (but don't do it if function is set to be
             // naked).
@@ -391,7 +450,7 @@
             }
 
             // Align manually stack-pointer to 16-bytes.
-            if (_isStackAlignedByFnTo16Bytes)
+            if (_isPerformed16ByteAlignment)
             {
                 if (_isNaked)
                     throw new CompilerException();
@@ -399,7 +458,10 @@
                 Compiler.Emit(InstructionCode.And, Register.nsp, (Imm)(-16));
             }
 
-            // Save GP registers using PUSH/POP.
+            // --------------------------------------------------------------------------
+            // [Save Gp - Push/Pop]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
                 for (int i = 0; i < RegNum.GP; i++)
@@ -410,19 +472,26 @@
                 }
             }
 
+            // --------------------------------------------------------------------------
+            // [Adjust Scack]
+            // --------------------------------------------------------------------------
+
             if (_isEspAdjusted)
             {
-                nspPos = _memStackSize16 + _functionCallStackSize;
-                if (stackSubtract != 0)
-                    Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)(stackSubtract));
+                stackPos = _memStackSize16 + _functionCallStackSize;
+                if (stackOffset != 0)
+                    Compiler.Emit(InstructionCode.Sub, Register.nsp, (Imm)stackOffset);
             }
             else
             {
-                nspPos = -(_peMovStackSize + _peAdjustStackSize);
-                //if (_pePushPop) nspPos += bitCount(preservedGP) * sizeof(sysint_t);
+                stackPos = -(_peMovStackSize + _peAdjustStackSize);
+                //if (_pePushPop) stackPos += bitCount(preservedGP) * sizeof(sysint_t);
             }
 
-            // Save XMM registers using MOVDQA/MOVDQU.
+            // --------------------------------------------------------------------------
+            // [Save Xmm - MovDqa/MovDqu]
+            // --------------------------------------------------------------------------
+
             if (preservedXMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < RegNum.XMM; i++)
@@ -430,13 +499,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqaInstruction, Mem.dqword_ptr(Register.nsp, nspPos), Register.xmm((RegIndex)i));
-                        nspPos += 16;
+                        Compiler.Emit(_movDqInstruction, Mem.dqword_ptr(Register.nsp, stackPos), Register.xmm((RegIndex)i));
+                        stackPos += 16;
                     }
                 }
             }
 
-            // Save MM registers using MOVQ.
+            // --------------------------------------------------------------------------
+            // [Save Mm - MovQ]
+            // --------------------------------------------------------------------------
+
             if (preservedMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < 8; i++)
@@ -444,13 +516,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, nspPos), Register.mm((RegIndex)i));
-                        nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Mem.qword_ptr(Register.nsp, stackPos), Register.mm((RegIndex)i));
+                        stackPos += 8;
                     }
                 }
             }
 
-            // Save GP registers using MOV.
+            // --------------------------------------------------------------------------
+            // [Save Gp - Mov]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
                 for (int i = 0; i < RegNum.GP; i++)
@@ -458,42 +533,49 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedGP & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, nspPos), Register.gpn((RegIndex)i));
-                        nspPos += IntPtr.Size;
+                        Compiler.Emit(InstructionCode.Mov, Mem.sysint_ptr(Register.nsp, stackPos), Register.gpn((RegIndex)i));
+                        stackPos += IntPtr.Size;
                     }
                 }
             }
 
+            // --------------------------------------------------------------------------
+            // [...]
+            // --------------------------------------------------------------------------
+
             if (Compiler.Logger != null)
-            {
                 Compiler.Comment("Body");
-            }
         }
 
         internal void EmitEpilog(CompilerContext cc)
         {
+            // --------------------------------------------------------------------------
+            // [Init]
+            // --------------------------------------------------------------------------
+
             RegisterMask preservedGP = _modifiedAndPreservedGP;
             RegisterMask preservedMM = _modifiedAndPreservedMM;
             RegisterMask preservedXMM = _modifiedAndPreservedXMM;
 
-            int stackAdd =
-              _functionCallStackSize +
-              _memStackSize16 +
-              _peMovStackSize +
-              _peAdjustStackSize;
+            int stackOffset = RequiredStackOffset;
+            int stackPos;
 
-            int nspPos;
+            if (IsEspAdjusted)
+                stackPos = _memStackSize16 + _functionCallStackSize;
+            else
+                stackPos = -(_peMovStackSize + _peAdjustStackSize);
 
-            nspPos = (_isEspAdjusted)
-              ? (_memStackSize16 + _functionCallStackSize)
-              : -(_peMovStackSize + _peAdjustStackSize);
+            // --------------------------------------------------------------------------
+            // [Epilog]
+            // --------------------------------------------------------------------------
 
             if (Compiler.Logger != null)
-            {
                 Compiler.Comment("Epilog");
-            }
 
-            // Restore XMM registers using MOVDQA/MOVDQU.
+            // --------------------------------------------------------------------------
+            // [Restore Xmm - MovDqa/ModDqu]
+            // --------------------------------------------------------------------------
+
             if (preservedXMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < RegNum.XMM; i++)
@@ -501,13 +583,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedXMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(_movDqaInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, nspPos));
-                        nspPos += 16;
+                        Compiler.Emit(_movDqInstruction, Register.xmm((RegIndex)i), Mem.dqword_ptr(Register.nsp, stackPos));
+                        stackPos += 16;
                     }
                 }
             }
 
-            // Restore MM registers using MOVQ.
+            // --------------------------------------------------------------------------
+            // [Restore Mm - MovQ]
+            // --------------------------------------------------------------------------
+
             if (preservedMM != RegisterMask.Zero)
             {
                 for (int i = 0; i < 8; i++)
@@ -515,13 +600,16 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedMM & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, nspPos));
-                        nspPos += 8;
+                        Compiler.Emit(InstructionCode.Movq, Register.mm((RegIndex)i), Mem.qword_ptr(Register.nsp, stackPos));
+                        stackPos += 8;
                     }
                 }
             }
 
-            // Restore GP registers using MOV.
+            // --------------------------------------------------------------------------
+            // [Restore Gp - Mov]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && !_pePushPop)
             {
                 for (int i = 0; i < (int)RegNum.GP; i++)
@@ -529,18 +617,23 @@
                     RegisterMask mask = RegisterMask.FromIndex((RegIndex)i);
                     if ((preservedGP & mask) != RegisterMask.Zero)
                     {
-                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, nspPos));
-                        nspPos += IntPtr.Size;
+                        Compiler.Emit(InstructionCode.Mov, Register.gpn((RegIndex)i), Mem.sysint_ptr(Register.nsp, stackPos));
+                        stackPos += IntPtr.Size;
                     }
                 }
             }
 
-            if (_isEspAdjusted && stackAdd != 0)
-            {
-                Compiler.Emit(InstructionCode.Add, Register.nsp, (Imm)stackAdd);
-            }
+            // --------------------------------------------------------------------------
+            // [Adjust Stack]
+            // --------------------------------------------------------------------------
 
-            // Restore GP registers using POP.
+            if (_isEspAdjusted && stackOffset != 0)
+                Compiler.Emit(InstructionCode.Add, Register.nsp, (Imm)stackOffset);
+
+            // --------------------------------------------------------------------------
+            // [Restore Gp - Push/Pop]
+            // --------------------------------------------------------------------------
+
             if (preservedGP != RegisterMask.Zero && _pePushPop)
             {
                 for (int i = RegNum.GP - 1; i >= 0; i--)
@@ -553,11 +646,17 @@
                 }
             }
 
-            // Emit Emms.
+            // --------------------------------------------------------------------------
+            // [Emms]
+            // --------------------------------------------------------------------------
+
             if (_emitEMMS)
                 Compiler.Emit(InstructionCode.Emms);
 
-            // Emit SFence / LFence / MFence.
+            // --------------------------------------------------------------------------
+            // [MFence/SFence/LFence]
+            // --------------------------------------------------------------------------
+
             if (_emitSFence && _emitLFence)
                 Compiler.Emit(InstructionCode.Mfence); // MFence == SFence & LFence.
             else if (_emitSFence)
@@ -565,14 +664,17 @@
             else if (_emitLFence)
                 Compiler.Emit(InstructionCode.Lfence); // Only LFence.
 
-            // Emit standard epilog leave code (if needed).
+            // --------------------------------------------------------------------------
+            // [Epilog]
+            // --------------------------------------------------------------------------
+
             if (!_isNaked)
             {
                 CpuInfo cpuInfo = CpuInfo.Instance;
 
+                // AMD seems to prefer LEAVE instead of MOV/POP sequence.
                 if (cpuInfo.VendorId == CpuVendor.Amd)
                 {
-                    // AMD seems to prefer LEAVE instead of MOV/POP sequence.
                     Compiler.Emit(InstructionCode.Leave);
                 }
                 else
@@ -582,7 +684,7 @@
                 }
             }
 
-            // Emit return using correct instruction.
+            // Emit return.
             if (_functionPrototype.CalleePopsStack)
             {
                 Compiler.Emit(InstructionCode.Ret, (Imm)((short)_functionPrototype.ArgumentsStackSize));
@@ -623,8 +725,8 @@
 
                 for (i = 0; i < argumentsCount; i++)
                 {
-                    FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
-                    VarData vdata = _argumentVariables[i];
+                    FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
+                    CompilerVar vdata = _argumentVariables[i];
 
                     if (first)
                     {
@@ -674,7 +776,7 @@
 
                 for (i = 0; i < variablesCount; i++)
                 {
-                    VarData vdata = Compiler.GetVarData(i);
+                    CompilerVar vdata = Compiler.GetVarData(i);
                     Contract.Assert(vdata != null);
 
                     // If this variable is not related to this function then skip it.
@@ -700,7 +802,7 @@
                         Mem memOp = new Mem();
                         if (vdata.IsMemArgument)
                         {
-                            FunctionPrototype.Argument a = _functionPrototype.Arguments[i];
+                            FunctionDeclaration.Argument a = _functionPrototype.Arguments[i];
 
                             memOp.Base = cc.ArgumentsBaseReg;
                             memOp.Displacement += cc.ArgumentsBaseOffset;
@@ -867,19 +969,19 @@
             }
         }
 
-        internal void PrepareVariables(Emittable first)
+        internal void PrepareVariables(CompilerItem first)
         {
             int i;
             int count = _functionPrototype.Arguments.Length;
 
             for (i = 0; i < count; i++)
             {
-                VarData vdata = _argumentVariables[i];
+                CompilerVar vdata = _argumentVariables[i];
 
                 // This is where variable scope starts.
-                vdata.FirstEmittable = first;
+                vdata.FirstItem = first;
                 // If this will not be changed then it will be deallocated immediately.
-                vdata.LastEmittable = first;
+                vdata.LastItem = first;
             }
         }
 
@@ -892,9 +994,9 @@
 
             for (i = 0; i < count; i++)
             {
-                VarData vdata = _argumentVariables[i];
+                CompilerVar vdata = _argumentVariables[i];
 
-                if (vdata.FirstEmittable != null ||
+                if (vdata.FirstItem != null ||
                     vdata.IsRegArgument ||
                     vdata.IsMemArgument)
                 {

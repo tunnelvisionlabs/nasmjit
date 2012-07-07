@@ -4,6 +4,9 @@
     using System.Collections.ObjectModel;
     using System.Diagnostics.Contracts;
 
+    /// <summary>
+    /// X86 instruction information.
+    /// </summary>
     public sealed class InstructionDescription
     {
         public const InstructionCode JumpBegin = InstructionCode.J;

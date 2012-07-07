@@ -33,6 +33,16 @@
         /// <summary>
         /// Add lfence instruction to the function epilog
         /// </summary>
-        LoadFence = 1 << 4
+        LoadFence = 1 << 4,
+
+        /// <summary>
+        /// Assume that stack is aligned to 16-bytes.
+        /// </summary>
+        Assume16ByteAlignment = 1 << 5,
+
+        /// <summary>
+        /// Perform 16-byte stack alignment by function.
+        /// </summary>
+        Perform16ByteAlignment = 1 << 6,
     }
 }

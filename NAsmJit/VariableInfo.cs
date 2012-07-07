@@ -3,6 +3,9 @@
     using System;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// X86 variable information.
+    /// </summary>
     public class VariableInfo
     {
         private readonly RegType _registerType;
@@ -67,6 +70,9 @@
             }
         }
 
+        /// <summary>
+        /// Get register size in bytes.
+        /// </summary>
         public int Size
         {
             get
@@ -75,6 +81,9 @@
             }
         }
 
+        /// <summary>
+        /// Get variable class, see @ref kX86VarClass.
+        /// </summary>
         public VariableClass Class
         {
             get
@@ -83,6 +92,9 @@
             }
         }
 
+        /// <summary>
+        /// Get variable flags, see @ref kX86VarFlags.
+        /// </summary>
         public VariableFlags Flags
         {
             get
@@ -91,6 +103,9 @@
             }
         }
 
+        /// <summary>
+        /// Get variable type name.
+        /// </summary>
         public string Name
         {
             get
@@ -101,7 +116,7 @@
 
         public static bool IsVariableFloat(VariableType variableType)
         {
-            return (variableInfo[variableType].Flags & (VariableFlags.DpFp | VariableFlags.SpFp)) != 0;
+            return (variableInfo[variableType].Flags & (VariableFlags.DoublePrecision | VariableFlags.SinglePrecision)) != 0;
         }
 
         public static bool IsVariableInteger(VariableType variableType)
@@ -132,17 +147,17 @@
         private static readonly Dictionary<VariableType, VariableInfo> variableInfo =
             new Dictionary<VariableType, VariableInfo>()
             {
-                { VariableType.GPD, new VariableInfo(RegType.GPD, 4, VariableClass.GP, 0, "GP.D") },
-                { VariableType.GPQ, new VariableInfo(RegType.GPQ, 8, VariableClass.GP, 0, "GP.Q") },
-                { VariableType.X87, new VariableInfo(RegType.X87, 4, VariableClass.X87, VariableFlags.SpFp, "X87") },
-                { VariableType.X87_1F, new VariableInfo(RegType.X87, 4, VariableClass.X87, VariableFlags.SpFp, "X87.1F") },
-                { VariableType.X87_1D, new VariableInfo(RegType.X87, 8, VariableClass.X87, VariableFlags.DpFp, "X87.1D") },
-                { VariableType.MM, new VariableInfo(RegType.MM, 8, VariableClass.MM, VariableFlags.Vector, "MM") },
-                { VariableType.XMM, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, 0, "XMM") },
-                { VariableType.XMM_1F, new VariableInfo(RegType.XMM, 4, VariableClass.XMM, VariableFlags.SpFp, "XMM.1F") },
-                { VariableType.XMM_1D, new VariableInfo(RegType.XMM, 8, VariableClass.XMM, VariableFlags.DpFp, "XMM.1D") },
-                { VariableType.XMM_4F, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, VariableFlags.SpFp | VariableFlags.Vector, "XMM.4F") },
-                { VariableType.XMM_2D, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, VariableFlags.DpFp | VariableFlags.Vector, "XMM.2D") },
+                { VariableType.GPD, new VariableInfo(RegType.GPD, 4, VariableClass.GP, 0, "Gpd") },
+                { VariableType.GPQ, new VariableInfo(RegType.GPQ, 8, VariableClass.GP, 0, "Gpq") },
+                { VariableType.X87, new VariableInfo(RegType.X87, 4, VariableClass.X87, VariableFlags.SinglePrecision, "X87") },
+                { VariableType.X87_1F, new VariableInfo(RegType.X87, 4, VariableClass.X87, VariableFlags.SinglePrecision, "X87.SS") },
+                { VariableType.X87_1D, new VariableInfo(RegType.X87, 8, VariableClass.X87, VariableFlags.DoublePrecision, "X87.SD") },
+                { VariableType.MM, new VariableInfo(RegType.MM, 8, VariableClass.MM, VariableFlags.Packed, "Mm") },
+                { VariableType.XMM, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, 0, "Xmm") },
+                { VariableType.XMM_1F, new VariableInfo(RegType.XMM, 4, VariableClass.XMM, VariableFlags.SinglePrecision, "Xmm.SS") },
+                { VariableType.XMM_1D, new VariableInfo(RegType.XMM, 8, VariableClass.XMM, VariableFlags.DoublePrecision, "Xmm.SD") },
+                { VariableType.XMM_4F, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, VariableFlags.SinglePrecision | VariableFlags.Packed, "Xmm.PS") },
+                { VariableType.XMM_2D, new VariableInfo(RegType.XMM, 16, VariableClass.XMM, VariableFlags.DoublePrecision | VariableFlags.Packed, "Xmm.PD") },
             };
     }
 }

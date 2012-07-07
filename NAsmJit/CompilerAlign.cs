@@ -4,9 +4,9 @@
     using System.Diagnostics.Contracts;
 
     /// <summary>
-    /// Emittable used to align assembler code.
+    /// Item used to align assembler code.
     /// </summary>
-    public class Align : Emittable
+    public class CompilerAlign : CompilerItem
     {
         private readonly int _size;
 
@@ -15,7 +15,7 @@
         /// </summary>
         /// <param name="compiler">The compiler.</param>
         /// <param name="size">The alignment size in bytes.</param>
-        public Align(Compiler compiler, int size = 0)
+        public CompilerAlign(Compiler compiler, int size = 0)
             : base(compiler)
         {
             if (size < 0)
@@ -26,11 +26,11 @@
             _size = size;
         }
 
-        public sealed override EmittableType EmittableType
+        public sealed override ItemType ItemType
         {
             get
             {
-                return EmittableType.Align;
+                return ItemType.Align;
             }
         }
 

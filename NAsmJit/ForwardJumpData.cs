@@ -2,7 +2,7 @@
 {
     public sealed class ForwardJumpData
     {
-        public Jmp Inst
+        public CompilerJmpInstruction Inst
         {
             get;
             set;

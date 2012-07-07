@@ -3,11 +3,11 @@
     using System;
     using System.Diagnostics.Contracts;
 
-    public sealed class EmbeddedData : Emittable
+    public sealed class CompilerEmbed : CompilerItem
     {
         private readonly byte[] _data;
 
-        public EmbeddedData(Compiler compiler, byte[] data)
+        public CompilerEmbed(Compiler compiler, byte[] data)
             : base(compiler)
         {
             if (data == null)
@@ -18,11 +18,11 @@
             _data = data;
         }
 
-        public override EmittableType EmittableType
+        public override ItemType ItemType
         {
             get
             {
-                return EmittableType.EmbeddedData;
+                return ItemType.EmbeddedData;
             }
         }
 
