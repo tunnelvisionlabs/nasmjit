@@ -256,6 +256,13 @@
         protected override void PrepareImpl(CompilerContext cc)
         {
             Offset = cc.CurrentOffset++;
+            PrepareVariables(this);
+        }
+
+        protected override CompilerItem TranslateImpl(CompilerContext cc)
+        {
+            AllocVariables(cc);
+            return base.TranslateImpl(cc);
         }
 
         public void SetHint(FunctionHints hint, bool value)
