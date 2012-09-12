@@ -1,4 +1,4 @@
-mkdir ..\Build
-cd ..\Build
+mkdir ..\build
+cd ..\build
 cmake .. -G"Borland Makefiles" -DCMAKE_BUILD_TYPE=Debug -DASMJIT_BUILD_LIBRARY=1 -DASMJIT_BUILD_TEST=1
-cd ..\Util
+cd ..\scripts
