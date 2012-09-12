@@ -15,7 +15,7 @@
 
 # Files to process.
 FILES = [
-  { "file": "../AsmJit/X86/X86Defs.cpp", "arch": "x86" }
+  { "file": "../src/asmjit/x86/x86defs.cpp", "arch": "x86" }
 ]
 
 # =============================================================================
