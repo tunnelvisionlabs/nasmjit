@@ -23,7 +23,7 @@ CMake_Minimum_Required(VERSION 2.8.7)
 Set(ASMJIT_PROJECT_STR "")
 
 If(NOT CMAKE_PROJECT_NAME)
-  Project(AsmJit C CXX)
+  Project(asmjit C CXX)
   Set(ASMJIT_PROJECT_STR "Project")
 Else()
   # Do not create a project if this CMakeLists.txt is included by a different
