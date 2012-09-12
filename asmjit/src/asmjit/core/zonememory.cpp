@@ -89,10 +89,6 @@ void ZoneMemory::clear() ASMJIT_NOTHROW
   if (cur == NULL)
     return;
 
-  _chunks->pos = 0;
-  _chunks->prev = NULL;
-  _total = 0;
-
   cur = cur->prev;
   while (cur != NULL)
   {
@@ -100,6 +96,10 @@ void ZoneMemory::clear() ASMJIT_NOTHROW
     ASMJIT_FREE(cur);
     cur = prev;
   }
+
+  _chunks->pos = 0;
+  _chunks->prev = NULL;
+  _total = 0;
 }
 
 void ZoneMemory::reset() ASMJIT_NOTHROW
