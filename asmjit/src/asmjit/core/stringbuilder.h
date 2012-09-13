@@ -38,13 +38,12 @@ struct StringBuilder
   ASMJIT_API StringBuilder() ASMJIT_NOTHROW;
   ASMJIT_API ~StringBuilder() ASMJIT_NOTHROW;
 
-  inline StringBuilder(_DontInitialize&) ASMJIT_NOTHROW {}
+  inline StringBuilder(const _DontInitialize&) ASMJIT_NOTHROW {}
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
-public:
   //! @brief Get string builder capacity.
   inline size_t getCapacity() const ASMJIT_NOTHROW
   { return _capacity; }
