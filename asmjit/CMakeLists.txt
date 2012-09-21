@@ -52,7 +52,7 @@ If(NOT ASMJIT_DIR)
   Set(ASMJIT_SRC_DIR "src")
   Message("-- Initializing ASMJIT_DIR=${ASMJIT_DIR}")
 Else()
-  Set(ASMJIT_SRC_DIR "{$ASMJIT_DIR}/src")
+  Set(ASMJIT_SRC_DIR "${ASMJIT_DIR}/src")
   Message("-- Using Custom ASMJIT_DIR=${ASMJIT_DIR}")
 EndIf()
 
