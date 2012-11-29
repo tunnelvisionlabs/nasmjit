@@ -52,13 +52,16 @@ void* ZoneMemory::alloc(size_t size) ASMJIT_NOTHROW
 
     cur->prev = _chunks;
     cur->pos = 0;
-    cur->size = _chunkSize;
+    cur->size = chSize;
+
     _chunks = cur;
   }
 
   uint8_t* p = cur->data + cur->pos;
   cur->pos += size;
   _total += size;
+
+  ASMJIT_ASSERT(cur->pos <= cur->size);
   return (void*)p;
 }
 
