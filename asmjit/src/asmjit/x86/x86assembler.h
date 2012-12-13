@@ -1693,6 +1693,14 @@ struct X86Assembler : public Assembler
     ASMJIT_ASSERT(dst.isRegType(kX86RegTypeGpw) || dst.isRegType(kX86RegTypeGpz));
     _emitInstruction(kX86InstPop, &dst);
   }
+  //! @brief Pop a Segment Register from the Stack.
+  //!
+  //! @note There is no instruction to pop a cs segment register.
+  inline void pop(const SegmentReg& dst)
+  {
+    ASMJIT_ASSERT(dst.getRegIndex() != kX86SegCs);
+    _emitInstruction(kX86InstPop, &dst);
+  }
 
   inline void pop(const Mem& dst)
   {
@@ -1736,6 +1744,11 @@ struct X86Assembler : public Assembler
   inline void push(const GpReg& src)
   {
     ASMJIT_ASSERT(src.isRegType(kX86RegTypeGpw) || src.isRegType(kX86RegTypeGpz));
+    _emitInstruction(kX86InstPush, &src);
+  }
+  //! @brief Push Segment Register Onto the Stack.
+  inline void push(const SegmentReg& src)
+  {
     _emitInstruction(kX86InstPush, &src);
   }
   //! @brief Push WORD/DWORD/QWORD Onto the Stack.

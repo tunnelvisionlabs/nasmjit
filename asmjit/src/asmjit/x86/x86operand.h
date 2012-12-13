@@ -31,6 +31,8 @@ struct X87Var;
 struct XmmReg;
 struct XmmVar;
 
+struct SegmentReg;
+
 //! @addtogroup AsmJit_X86
 //! @{
 

@@ -1641,6 +1641,30 @@ _Emit_Mov_Sreg_RM:
 
     case kX86InstGroupPush:
     {
+      if (o0->isRegType(kX86RegTypeSeg))
+      {
+        static const uint32_t opcodeList[] =
+        {
+          0x06,   // ES.
+          0x0E,   // CS.
+          0x16,   // SS.
+          0x1E,   // DS.
+          0x0FA0, // FS.
+          0x0FA8  // GS.
+        };
+
+        unsigned int segment = reinterpret_cast<const SegmentReg*>(o0)->getRegIndex();
+        ASMJIT_ASSERT(segment < kX86SegCount);
+
+        unsigned int opcode = opcodeList[segment];
+
+        if (opcode > 0xFF)
+          _emitByte(opcode >> 8);
+        _emitByte(opcode & 0xFF);
+
+        _FINISHED();
+      }
+
       // This section is only for immediates, memory/register operands are handled in kX86InstGroupPop.
       if (o0->isImm())
       {
@@ -1663,6 +1687,31 @@ _Emit_Mov_Sreg_RM:
 
     case kX86InstGroupPop:
     {
+      if (o0->isRegType(kX86RegTypeSeg))
+      {
+        static const uint32_t opcodeList[] =
+        {
+          0x07,   // ES.
+          0,      // CS.
+          0x17,   // SS.
+          0x1F,   // DS.
+          0x0FA1, // FS.
+          0x0FA9  // GS.
+        };
+
+        unsigned int segment = reinterpret_cast<const SegmentReg*>(o0)->getRegIndex();
+        ASMJIT_ASSERT(segment < kX86SegCount);
+
+        unsigned int opcode = opcodeList[segment];
+        ASMJIT_ASSERT(opcode != 0);
+
+        if (opcode > 0xFF)
+          _emitByte(opcode >> 8);
+        _emitByte(opcode & 0xFF);
+
+        _FINISHED();
+      }
+
       if (o0->isReg())
       {
         ASMJIT_ASSERT(o0->isRegType(kX86RegTypeGpw) || o0->isRegType(kX86RegTypeGpz));
