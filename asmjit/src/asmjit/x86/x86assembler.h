@@ -869,10 +869,26 @@ struct X86Assembler : public Assembler
 
   //! @brief Convert Word to DWord (Sign Extend).
   //!
+  //! DX:AX <- Sign Extend AX
+  inline void cwd()
+  {
+    _emitInstruction(kX86InstCwd);
+  }
+
+  //! @brief Convert Word to DWord (Sign Extend).
+  //!
   //! EAX <- Sign Extend AX
   inline void cwde()
   {
     _emitInstruction(kX86InstCwde);
+  }
+
+  //! @brief Convert DWord to QWord (Sign Extend).
+  //!
+  //! EDX:EAX <- Sign Extend EAX
+  inline void cdq()
+  {
+    _emitInstruction(kX86InstCdq);
   }
 
 #if defined(ASMJIT_X64)
@@ -1109,6 +1125,16 @@ struct X86Assembler : public Assembler
   {
     _emitInstruction(kX86InstCpuId);
   }
+
+#if defined(ASMJIT_X64)
+  //! @brief Convert QWord to DQWord (Sign Extend).
+  //!
+  //! RDX:RAX <- Sign Extend RAX
+  inline void cqo()
+  {
+    _emitInstruction(kX86InstCqo);
+  }
+#endif // ASMJIT_X64
 
 #if defined(ASMJIT_X86)
   //! @brief Decimal adjust AL after addition

@@ -803,6 +803,7 @@ enum kX86InstCode
   kX86InstBts,             // X86/X64
   kX86InstCall,            // X86/X64
   kX86InstCbw,             // X86/X64
+  kX86InstCdq,             // X86/X64
   kX86InstCdqe,            // X64 only
   kX86InstClc,             // X86/X64
   kX86InstCld,             // X86/X64
@@ -852,6 +853,7 @@ enum kX86InstCode
   kX86InstComISD,          // SSE2
   kX86InstComISS,          // SSE
   kX86InstCpuId,           // X86/X64 (i486)
+  kX86InstCqo,             // X64 only
   kX86InstCrc32,           // SSE4.2
   kX86InstCvtDQ2PD,        // SSE2
   kX86InstCvtDQ2PS,        // SSE2
@@ -875,6 +877,7 @@ enum kX86InstCode
   kX86InstCvttPS2PI,       // SSE
   kX86InstCvttSD2SI,       // SSE2
   kX86InstCvttSS2SI,       // SSE
+  kX86InstCwd,             // X86/X64
   kX86InstCwde,            // X86/X64
   kX86InstDaa,             // X86 only
   kX86InstDas,             // X86 only

@@ -412,7 +412,7 @@ void X86CompilerContext::allocGpVar(X86CompilerVar* var, uint32_t regMask, uint3
 
 L_Spill:
     // Prevented variables can't be spilled. _getSpillCandidate() never returns
-    // prevented variables, but when jumping to L_spill it can happen.
+    // prevented variables, but when jumping to L_Spill it could happen.
     if (spillCandidate->workOffset == _currentOffset)
     {
       _compiler->setError(kErrorOverlappedRegisters);

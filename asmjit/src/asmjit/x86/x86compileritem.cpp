@@ -285,8 +285,11 @@ X86CompilerInst::X86CompilerInst(X86Compiler* x86Compiler, uint32_t code, Operan
         break;
 
       case kX86InstCbw:
+      case kX86InstCdq:
       case kX86InstCdqe:
+      case kX86InstCwd:
       case kX86InstCwde:
+      case kX86InstCqo:
         // Special...
         break;
 
@@ -667,6 +670,29 @@ void X86CompilerInst::prepare(CompilerContext& cc) ASMJIT_NOTHROW
               case 0:
                 vdata->regRwCount++;
                 var->vflags |= kVarAllocReadWrite | kVarAllocSpecial;
+                var->regMask = IntUtil::maskFromIndex(kX86RegIndexEax);
+                gpRestrictMask &= ~var->regMask;
+                break;
+
+              default:
+                ASMJIT_ASSERT(0);
+            }
+            break;
+
+          case kX86InstCdq:
+          case kX86InstCwd:
+          case kX86InstCqo:
+            switch (i)
+            {
+              case 0:
+                vdata->regWriteCount++;
+                var->vflags |= kVarAllocWrite | kVarAllocSpecial;
+                var->regMask = IntUtil::maskFromIndex(kX86RegIndexEdx);
+                gpRestrictMask &= ~var->regMask;
+                break;
+              case 1:
+                vdata->regReadCount++;
+                var->vflags |= kVarAllocRead | kVarAllocSpecial;
                 var->regMask = IntUtil::maskFromIndex(kX86RegIndexEax);
                 gpRestrictMask &= ~var->regMask;
                 break;
@@ -1396,8 +1422,11 @@ void X86CompilerInst::emit(Assembler& a) ASMJIT_NOTHROW
         return;
 
       case kX86InstCbw:
+      case kX86InstCdq:
       case kX86InstCdqe:
+      case kX86InstCwd:
       case kX86InstCwde:
+      case kX86InstCqo:
         x86Asm._emitInstruction(_code);
         return;
 

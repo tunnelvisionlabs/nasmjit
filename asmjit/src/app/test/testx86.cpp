@@ -1155,7 +1155,7 @@ struct X86Test_Var4 : public X86Test
 
 struct X86Test_Dummy : public X86Test
 {
-  virtual const char* getName() const { return "Var4 - 32 variables at once"; }
+  virtual const char* getName() const { return "Dummy - Used to write new tests"; }
 
   virtual void compile(X86Compiler& c)
   {

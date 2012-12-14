@@ -405,6 +405,7 @@ X86CompilerVar* X86Compiler::_newVar(const char* name, uint32_t type, uint32_t s
   var->homeRegisterIndex = kRegIndexInvalid;
   var->prefRegisterMask = 0;
 
+  var->homeMemoryOffset = 0;
   var->homeMemoryData = NULL;
 
   var->regIndex = kRegIndexInvalid;

@@ -1018,7 +1018,7 @@ struct X86Compiler : public Compiler
 {
   // Special X86 instructions:
   // - cpuid,
-  // - cbw, cwde, cdqe,
+  // - cbw, cwd, cwde, cdq, cdqe, cqo
   // - cmpxchg
   // - cmpxchg8b, cmpxchg16b,
   // - daa, das,
@@ -1608,13 +1608,27 @@ struct X86Compiler : public Compiler
   { _emitInstruction(kX86InstCbw, &dst); }
 
   //! @brief Convert Word to DWord (Sign Extend).
+  inline void cwd(const GpVar& dst, const GpVar& src)
+  { _emitInstruction(kX86InstCwd, &dst, &src); }
+
+  //! @brief Convert Word to DWord (Sign Extend).
   inline void cwde(const GpVar& dst)
   { _emitInstruction(kX86InstCwde, &dst); }
+
+  //! @brief Convert Word to DWord (Sign Extend).
+  inline void cdq(const GpVar& dst, const GpVar& src)
+  { _emitInstruction(kX86InstCdq, &dst, &src); }
 
 #if defined(ASMJIT_X64)
   //! @brief Convert DWord to QWord (Sign Extend).
   inline void cdqe(const GpVar& dst)
   { _emitInstruction(kX86InstCdqe, &dst); }
+#endif // ASMJIT_X64
+
+#if defined(ASMJIT_X64)
+  //! @brief Convert QWord to DQWord (Sign Extend).
+  inline void cqo(const GpVar& dst, const GpVar& src)
+  { _emitInstruction(kX86InstCqo, &dst, &src); }
 #endif // ASMJIT_X64
 
   //! @brief Clear Carry flag
