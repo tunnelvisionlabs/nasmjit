@@ -967,13 +967,16 @@ void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Oper
       // Alternate Form - AL, AX, EAX, RAX.
       if (o0->isRegIndex(0) && o1->isImm())
       {
-        if (o0->getSize() == 2)
-          _emitByte(0x66); // 16-bit.
-        else if (o0->getSize() == 8)
-          _emitByte(0x48); // REX.W.
+        if (o0->getSize() == 1 || !IntUtil::isInt8(static_cast<const Imm*>(o1)->getValue()))
+        {
+          if (o0->getSize() == 2)
+            _emitByte(0x66); // 16-bit.
+          else if (o0->getSize() == 8)
+            _emitByte(0x48); // REX.W.
 
-        _emitByte((opReg << 3) | (0x04 + (o0->getSize() != 1)));
-        _FINISHED_IMMEDIATE(o1, IntUtil::_min<uint32_t>(o0->getSize(), 4));
+          _emitByte((opReg << 3) | (0x04 + (o0->getSize() != 1)));
+          _FINISHED_IMMEDIATE(o1, IntUtil::_min<uint32_t>(o0->getSize(), 4));
+        }
       }
 
       if (o0->isRegMem() && o1->isImm())
