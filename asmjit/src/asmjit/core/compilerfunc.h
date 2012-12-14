@@ -190,6 +190,8 @@ struct CompilerFuncDecl : public CompilerItem
 //! except that it overrides @c translate() to return @c NULL.
 struct CompilerFuncEnd : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerFuncEnd)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -219,8 +221,6 @@ struct CompilerFuncEnd : public CompilerItem
 
   //! @brief Related function.
   CompilerFuncDecl* _func;
-
-  ASMJIT_NO_COPY(CompilerFuncEnd)
 };
 
 // ============================================================================
@@ -230,6 +230,8 @@ struct CompilerFuncEnd : public CompilerItem
 //! @brief Compiler return from function item.
 struct CompilerFuncRet : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerFuncRet)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -279,8 +281,6 @@ struct CompilerFuncRet : public CompilerItem
   CompilerFuncDecl* _func;
   //! @brief Return operand(s).
   Operand _ret[2];
-
-  ASMJIT_NO_COPY(CompilerFuncRet)
 };
 
 // ============================================================================
@@ -290,6 +290,8 @@ struct CompilerFuncRet : public CompilerItem
 //! @brief Compiler function call item.
 struct CompilerFuncCall : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerFuncCall)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -344,8 +346,6 @@ struct CompilerFuncCall : public CompilerItem
   Operand _ret[2];
   //! @brief Arguments operands.
   Operand* _args;
-
-  ASMJIT_NO_COPY(CompilerFuncCall)
 };
 
 } // AsmJit namespace

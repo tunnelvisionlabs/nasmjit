@@ -735,17 +735,31 @@ enum kX86EmitOption
   //! This option should be used carefully, because there are unencodable
   //! combinations. If you want to access ah, bh, ch or dh registers then you
   //! can't emit REX prefix and it will cause an illegal instruction error.
-  kX86EmitOptionRex = (1 << 0),
+  kX86EmitOptionRex = 0x1,
 
   //! @brief Tell @c Assembler or @c Compiler to emit and validate lock prefix.
   //!
   //! If this option is used and instruction doesn't support LOCK prefix then
   //! invalid instruction error is generated.
-  kX86EmitOptionLock = (1 << 1),
+  kX86EmitOptionLock = 0x2,
 
-  //! @brief Emit short/near jump or conditional jump instead of far one, 
-  //! saving some bytes.
-  kX86EmitOptionShortJump = (1 << 2)
+  //! @brief Emit short/near jump or conditional jump instead of far one to
+  //! some bytes.
+  //!
+  //! @note This option could be dangerous in case that the short jump is not
+  //! possible (displacement can't fit into signed 8-bit integer). AsmJit can
+  //! automatically generate back short jumps, but always generates long forward
+  //! jumps, because the information about the code size between the instruction
+  //! and target is not known.
+  kX86EmitOptionShortJump = 0x4,
+
+  //! @brief Emit full immediate instead of BYTE in all cases.
+  //!
+  //! @note AsmJit is able to emit both forms of immediate value. In case that
+  //! the instruction supports short form and immediate can fit into a signed 
+  //! 8-bit integer short for is preferred, but if for any reason the full form
+  //! is required it can be overridden by using this option.
+  kX86EmitOptionFullImmediate = 0x8
 };
 
 // ============================================================================

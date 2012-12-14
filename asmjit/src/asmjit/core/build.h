@@ -228,7 +228,8 @@ typedef uint64_t sysuint_t;
 #define ASMJIT_NO_COPY(__type__) \
 private: \
   inline __type__(const __type__& other); \
-  inline __type__& operator=(const __type__& other);
+  inline __type__& operator=(const __type__& other); \
+public:
 
 // ============================================================================
 // [AsmJit - Debug]

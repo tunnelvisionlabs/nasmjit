@@ -36,6 +36,8 @@ namespace AsmJit {
 //! @brief Lock - used in thread-safe code for locking.
 struct Lock
 {
+  ASMJIT_NO_COPY(Lock)
+
   // --------------------------------------------------------------------------
   // [Windows]
   // --------------------------------------------------------------------------
@@ -88,9 +90,6 @@ struct Lock
 
   //! @brief Handle.
   Handle _handle;
-
-  // Disable copy.
-  ASMJIT_NO_COPY(Lock)
 };
 
 // ============================================================================
@@ -100,6 +99,8 @@ struct Lock
 //! @brief Scope auto locker.
 struct AutoLock
 {
+  ASMJIT_NO_COPY(AutoLock)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -122,8 +123,6 @@ struct AutoLock
 
   //! @brief Pointer to target (lock).
   Lock& _target;
-
-  ASMJIT_NO_COPY(AutoLock)
 };
 
 //! @}

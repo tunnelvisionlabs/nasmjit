@@ -31,6 +31,8 @@ namespace AsmJit {
 template <typename T>
 struct PodVector
 {
+  ASMJIT_NO_COPY(PodVector<T>)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -213,8 +215,6 @@ struct PodVector
   size_t _length;
   //! @brief Capacity of buffer (maximum items that can fit to current array).
   size_t _capacity;
-
-  ASMJIT_NO_COPY(PodVector<T>)
 };
 
 //! @}

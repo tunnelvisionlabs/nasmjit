@@ -27,6 +27,8 @@ namespace AsmJit {
 //! @brief Compiler align item.
 struct X86CompilerAlign : public CompilerAlign
 {
+  ASMJIT_NO_COPY(X86CompilerAlign)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -49,8 +51,6 @@ struct X86CompilerAlign : public CompilerAlign
   // --------------------------------------------------------------------------
 
   ASMJIT_API virtual void emit(Assembler& a) ASMJIT_NOTHROW;
-
-  ASMJIT_NO_COPY(X86CompilerAlign)
 };
 
 // ============================================================================
@@ -60,6 +60,8 @@ struct X86CompilerAlign : public CompilerAlign
 //! @brief @ref X86Compiler variable hint item.
 struct X86CompilerHint : public CompilerHint
 {
+  ASMJIT_NO_COPY(X86CompilerHint)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -89,12 +91,6 @@ struct X86CompilerHint : public CompilerHint
   // --------------------------------------------------------------------------
 
   ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(X86CompilerHint)
 };
 
 // ============================================================================
@@ -104,6 +100,8 @@ struct X86CompilerHint : public CompilerHint
 //! @brief X86Compiler target item.
 struct X86CompilerTarget : public CompilerTarget
 {
+  ASMJIT_NO_COPY(X86CompilerTarget)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -132,12 +130,6 @@ struct X86CompilerTarget : public CompilerTarget
   ASMJIT_API virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   ASMJIT_API virtual CompilerItem* translate(CompilerContext& cc) ASMJIT_NOTHROW;
   ASMJIT_API virtual void emit(Assembler& a) ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(X86CompilerTarget)
 };
 
 // ============================================================================
@@ -147,6 +139,8 @@ struct X86CompilerTarget : public CompilerTarget
 //! @brief @ref X86Compiler instruction item.
 struct X86CompilerInst : public CompilerInst
 {
+  ASMJIT_NO_COPY(X86CompilerInst)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -219,8 +213,6 @@ struct X86CompilerInst : public CompilerInst
   Mem* _memOp;
   //! @brief Variables (extracted from operands).
   VarAllocRecord* _vars;
-
-  ASMJIT_NO_COPY(X86CompilerInst)
 };
 
 // ============================================================================
@@ -230,6 +222,8 @@ struct X86CompilerInst : public CompilerInst
 //! @brief @ref X86Compiler "jmp" instruction item.
 struct X86CompilerJmpInst : public X86CompilerInst
 {
+  ASMJIT_NO_COPY(X86CompilerJmpInst)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -277,8 +271,6 @@ struct X86CompilerJmpInst : public X86CompilerInst
   X86CompilerJmpInst *_jumpNext;
   //! @brief State associated with the jump.
   X86CompilerState* _state;
-
-  ASMJIT_NO_COPY(X86CompilerJmpInst)
 };
 
 //! @}

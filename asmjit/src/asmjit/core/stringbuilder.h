@@ -31,6 +31,8 @@ namespace AsmJit {
 //! logging or HTML output.
 struct StringBuilder
 {
+  ASMJIT_NO_COPY(StringBuilder)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -154,8 +156,6 @@ struct StringBuilder
   size_t _capacity;
   //! @brief Whether the string can be freed.
   size_t _canFree;
-
-  ASMJIT_NO_COPY(StringBuilder)
 };
 
 // ============================================================================
@@ -165,6 +165,8 @@ struct StringBuilder
 template<size_t N>
 struct StringBuilderT : public StringBuilder
 {
+  ASMJIT_NO_COPY(StringBuilderT<N>)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -186,8 +188,6 @@ struct StringBuilderT : public StringBuilder
 
   //! @brief Embedded data.
   char _embeddedData[(N + sizeof(uintptr_t)) & ~(sizeof(uintptr_t) - 1)];
-
-  ASMJIT_NO_COPY(StringBuilderT<N>)
 };
 
 //! @}

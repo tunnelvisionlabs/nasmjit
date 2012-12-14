@@ -65,7 +65,7 @@ char* StringBuilder::prepare(uint32_t op, size_t len) ASMJIT_NOTHROW
 
     if (_capacity < len)
     {
-      if (len >= IntUtil::typeMax<size_t>() - sizeof(uintptr_t) * 2)
+      if (len >= IntUtil::maxValue<size_t>() - sizeof(uintptr_t) * 2)
         return NULL;
 
       size_t to = IntUtil::align<size_t>(len, sizeof(uintptr_t));
@@ -106,7 +106,7 @@ char* StringBuilder::prepare(uint32_t op, size_t len) ASMJIT_NOTHROW
       return _data + _length;
 
     // Overflow.
-    if (IntUtil::typeMax<size_t>() - sizeof(uintptr_t) * 2 - _length < len)
+    if (IntUtil::maxValue<size_t>() - sizeof(uintptr_t) * 2 - _length < len)
       return NULL;
 
     size_t after = _length + len;
@@ -125,7 +125,7 @@ char* StringBuilder::prepare(uint32_t op, size_t len) ASMJIT_NOTHROW
       if (to < after)
       {
         to = after;
-        if (to < (IntUtil::typeMax<size_t>() - 1024 * 32))
+        if (to < (IntUtil::maxValue<size_t>() - 1024 * 32))
           to = IntUtil::align<size_t>(to, 1024 * 32);
       }
 
@@ -159,7 +159,7 @@ bool StringBuilder::reserve(size_t to) ASMJIT_NOTHROW
   if (_capacity >= to)
     return true;
 
-  if (to >= IntUtil::typeMax<size_t>() - sizeof(uintptr_t) * 2)
+  if (to >= IntUtil::maxValue<size_t>() - sizeof(uintptr_t) * 2)
     return false;
 
   to = IntUtil::align<size_t>(to, sizeof(uintptr_t));
@@ -316,7 +316,7 @@ bool StringBuilder::_opNumber(uint32_t op, uint64_t i, uint32_t base, size_t wid
 
 bool StringBuilder::_opHex(uint32_t op, const void* data, size_t len) ASMJIT_NOTHROW
 {
-  if (len >= IntUtil::typeMax<size_t>() / 2)
+  if (len >= IntUtil::maxValue<size_t>() / 2)
     return false;
 
   char* dst = prepare(op, len);

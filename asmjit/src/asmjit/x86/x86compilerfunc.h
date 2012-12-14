@@ -28,6 +28,8 @@ namespace AsmJit {
 //! @brief @ref X86Compiler specific function declaration item.
 struct X86CompilerFuncDecl : public CompilerFuncDecl
 {
+  ASMJIT_NO_COPY(X86CompilerFuncDecl)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -166,8 +168,6 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
   int32_t _memStackSize;
   //! @brief Like @c _memStackSize, but aligned to 16-bytes.
   int32_t _memStackSize16;
-
-  ASMJIT_NO_COPY(X86CompilerFuncDecl)
 };
 
 // ============================================================================
@@ -177,6 +177,8 @@ struct X86CompilerFuncDecl : public CompilerFuncDecl
 //! @brief @ref X86Compiler function end item.
 struct X86CompilerFuncEnd : public CompilerFuncEnd
 {
+  ASMJIT_NO_COPY(X86CompilerFuncEnd)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -204,12 +206,6 @@ struct X86CompilerFuncEnd : public CompilerFuncEnd
 
   ASMJIT_API virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
   ASMJIT_API virtual CompilerItem* translate(CompilerContext& cc) ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(X86CompilerFuncEnd)
 };
 
 // ============================================================================
@@ -219,6 +215,8 @@ struct X86CompilerFuncEnd : public CompilerFuncEnd
 //! @brief Function return.
 struct X86CompilerFuncRet : public CompilerFuncRet
 {
+  ASMJIT_NO_COPY(X86CompilerFuncRet)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -254,12 +252,6 @@ struct X86CompilerFuncRet : public CompilerFuncRet
   // --------------------------------------------------------------------------
 
   ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(X86CompilerFuncRet)
 };
 
 // ============================================================================
@@ -269,6 +261,8 @@ struct X86CompilerFuncRet : public CompilerFuncRet
 //! @brief Compiler function call item.
 struct X86CompilerFuncCall : public CompilerFuncCall
 {
+  ASMJIT_NO_COPY(X86CompilerFuncCall)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -362,8 +356,6 @@ struct X86CompilerFuncCall : public CompilerFuncCall
   VarCallRecord* _variables;
   //! @brief Argument index to @c VarCallRecord.
   VarCallRecord* _argumentToVarRecord[kFuncArgsMax];
-
-  ASMJIT_NO_COPY(X86CompilerFuncCall)
 };
 
 //! @}

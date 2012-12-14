@@ -56,11 +56,23 @@ union I64FPUnion
 namespace IntUtil
 {
   // --------------------------------------------------------------------------
+  // [Min/Max]
+  // --------------------------------------------------------------------------
+
+  // NOTE: Because some environments declare min() and max() as macros, we
+  // decided to use different name so we never collide.
+
+  template<typename T>
+  static inline T _min(const T& a, const T& b) ASMJIT_NOTHROW { return a < b ? a : b; }
+  template<typename T>
+  static inline T _max(const T& a, const T& b) ASMJIT_NOTHROW { return a > b ? a : b; }
+
+  // --------------------------------------------------------------------------
   // [Limits]
   // --------------------------------------------------------------------------
 
   template<typename T>
-  static inline T typeMax() ASMJIT_NOTHROW { return ~T(0); }
+  static inline T maxValue() ASMJIT_NOTHROW { return ~T(0); }
 
   // --------------------------------------------------------------------------
   // [IsInt / IsUInt]

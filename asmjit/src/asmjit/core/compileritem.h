@@ -28,6 +28,8 @@ namespace AsmJit {
 //! various compilation steps.
 struct CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerItem)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -161,8 +163,6 @@ public:
 
   //! @brief Stream offset (not byte-offset).
   uint32_t _offset;
-
-  ASMJIT_NO_COPY(CompilerItem)
 };
 
 // ============================================================================
@@ -175,6 +175,8 @@ public:
 //! specific location in the compiler stream.
 struct CompilerMark : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerMark)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -189,12 +191,6 @@ struct CompilerMark : public CompilerItem
   // --------------------------------------------------------------------------
 
   ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(CompilerMark)
 };
 
 // ============================================================================
@@ -208,6 +204,8 @@ struct CompilerMark : public CompilerItem
 //! the logger is present.
 struct CompilerComment : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerComment)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -228,12 +226,6 @@ struct CompilerComment : public CompilerItem
   // --------------------------------------------------------------------------
 
   ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [Members]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_NO_COPY(CompilerComment)
 };
 
 // ============================================================================
@@ -246,6 +238,8 @@ struct CompilerComment : public CompilerItem
 //! considered to be RAW, there is no analysis.
 struct CompilerEmbed : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerEmbed)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -287,8 +281,6 @@ struct CompilerEmbed : public CompilerItem
   size_t _length;
   //! @brief Data buffer (that will be embedded to the assembler stream).
   uint8_t _data[sizeof(void*)];
-
-  ASMJIT_NO_COPY(CompilerEmbed)
 };
 
 // ============================================================================
@@ -298,6 +290,8 @@ struct CompilerEmbed : public CompilerItem
 //! @brief Compiler align item.
 struct CompilerAlign : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerAlign)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -331,8 +325,6 @@ struct CompilerAlign : public CompilerItem
 
   //! @brief Align size.
   uint32_t _size;
-
-  ASMJIT_NO_COPY(CompilerAlign)
 };
 
 // ============================================================================
@@ -342,6 +334,12 @@ struct CompilerAlign : public CompilerItem
 //! @brief Compiler variable hint item.
 struct CompilerHint : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerHint)
+
+  // --------------------------------------------------------------------------
+  // [Construction / Destruction]
+  // --------------------------------------------------------------------------
+
   //! @brief Create a new @ref CompilerHint instance.
   ASMJIT_API CompilerHint(Compiler* compiler, CompilerVar* var, uint32_t hintId, uint32_t hintValue) ASMJIT_NOTHROW;
   //! @brief Destroy the @ref CompilerHint instance.
@@ -381,8 +379,6 @@ struct CompilerHint : public CompilerItem
   uint32_t _hintId;
   //! @brief Variable hint value.
   uint32_t _hintValue;
-
-  ASMJIT_NO_COPY(CompilerHint)
 };
 
 // ============================================================================
@@ -392,6 +388,8 @@ struct CompilerHint : public CompilerItem
 //! @brief Compiler target item.
 struct CompilerTarget : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerTarget)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -439,8 +437,6 @@ struct CompilerTarget : public CompilerItem
   CompilerState* _state;
   //! @brief Count of jumps here.
   uint32_t _jumpsCount;
-
-  ASMJIT_NO_COPY(CompilerTarget)
 };
 
 // ============================================================================
@@ -450,6 +446,8 @@ struct CompilerTarget : public CompilerItem
 //! @brief Compiler instruction item.
 struct CompilerInst : public CompilerItem
 {
+  ASMJIT_NO_COPY(CompilerInst)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -537,8 +535,6 @@ struct CompilerInst : public CompilerItem
 
   //! @brief Operands.
   Operand* _operands;
-
-  ASMJIT_NO_COPY(CompilerInst)
 };
 
 } // AsmJit namespace

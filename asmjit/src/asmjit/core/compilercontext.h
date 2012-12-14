@@ -25,6 +25,8 @@ namespace AsmJit {
 
 struct CompilerContext
 {
+  ASMJIT_NO_COPY(CompilerContext)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -77,8 +79,6 @@ struct CompilerContext
   uint32_t _currentOffset;
   //! @brief Whether current code is unreachable.
   uint32_t _isUnreachable;
-
-  ASMJIT_NO_COPY(CompilerContext)
 };
 
 } // AsmJit namespace

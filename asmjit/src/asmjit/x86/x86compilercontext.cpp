@@ -1022,7 +1022,7 @@ _AddComment:
 
 void X86CompilerContext::emitMoveVar(X86CompilerVar* var, uint32_t regIndex, uint32_t vflags) ASMJIT_NOTHROW
 {
-  // Caller must ensure that variable is allocated.
+  // Caller must ensure that the given variable is allocated.
   ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
   X86Compiler* x86Compiler = getCompiler();
@@ -1069,7 +1069,7 @@ void X86CompilerContext::emitMoveVar(X86CompilerVar* var, uint32_t regIndex, uin
 
 void X86CompilerContext::emitExchangeVar(X86CompilerVar* var, uint32_t regIndex, uint32_t vflags, X86CompilerVar* other) ASMJIT_NOTHROW
 {
-  // Caller must ensure that variable is allocated.
+  // Caller must ensure that the given variable is allocated.
   ASMJIT_ASSERT(var->regIndex != kRegIndexInvalid);
 
   X86Compiler* x86Compiler = getCompiler();
@@ -1107,7 +1107,7 @@ void X86CompilerContext::emitExchangeVar(X86CompilerVar* var, uint32_t regIndex,
       break;
 
     // NOTE: MM and XMM registers shoudln't be exchanged using this way, it's
-    // correct, but it sucks.
+    // correct, but instead of using one instruction we need three.
 
     case kX86VarTypeMm:
     {

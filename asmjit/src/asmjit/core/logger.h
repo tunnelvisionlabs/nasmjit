@@ -38,6 +38,8 @@ namespace AsmJit {
 //! or disable logging.
 struct Logger
 {
+  ASMJIT_NO_COPY(Logger)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -112,8 +114,6 @@ struct Logger
 
   //! @brief Whether to log instruction in binary form.
   bool _logBinary;
-
-  ASMJIT_NO_COPY(Logger)
 };
 
 // ============================================================================
@@ -123,6 +123,8 @@ struct Logger
 //! @brief Logger that can log to standard C @c FILE* stream.
 struct FileLogger : public Logger
 {
+  ASMJIT_NO_COPY(FileLogger)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -168,8 +170,6 @@ struct FileLogger : public Logger
 
   //! @brief C file stream.
   FILE* _stream;
-
-  ASMJIT_NO_COPY(FileLogger)
 };
 
 // ============================================================================
@@ -179,6 +179,8 @@ struct FileLogger : public Logger
 //! @brief String logger.
 struct StringLogger : public Logger
 {
+  ASMJIT_NO_COPY(StringLogger)
+
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -220,8 +222,6 @@ struct StringLogger : public Logger
 
   //! @brief Output.
   StringBuilder _stringBuilder;
-
-  ASMJIT_NO_COPY(StringLogger)
 };
 
 //! @}
