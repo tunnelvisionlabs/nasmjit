@@ -49,12 +49,12 @@ Message("")
 
 If(NOT ASMJIT_DIR)
   Set(ASMJIT_DIR ${CMAKE_CURRENT_LIST_DIR})
-  Set(ASMJIT_SRC_DIR "src")
   Message("-- Initializing ASMJIT_DIR=${ASMJIT_DIR}")
 Else()
-  Set(ASMJIT_SRC_DIR "${ASMJIT_DIR}/src")
   Message("-- Using Custom ASMJIT_DIR=${ASMJIT_DIR}")
 EndIf()
+
+Set(ASMJIT_SRC_DIR "${ASMJIT_DIR}/src")
 
 # =============================================================================
 # [AsmJit - Dependencies]
