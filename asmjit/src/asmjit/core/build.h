@@ -96,10 +96,6 @@
 # endif // ASMJIT_API
 #endif // !ASMJIT_VAR
 
-#if !defined(ASMJIT_NOTHROW)
-#define ASMJIT_NOTHROW throw()
-#endif // ASMJIT_NOTHROW
-
 // [AsmJit - Memory Management]
 #if !defined(ASMJIT_MALLOC)
 # define ASMJIT_MALLOC ::malloc
@@ -279,7 +275,7 @@ struct Void {};
 //! cross-platform software with various compiler support, consider using
 //! @c asmjit_cast<> instead of @c reinterpret_cast<>.
 template<typename T, typename Z>
-static inline T asmjit_cast(Z* p) ASMJIT_NOTHROW { return (T)p; }
+static inline T asmjit_cast(Z* p) { return (T)p; }
 
 // ============================================================================
 // [AsmJit - OS Support]

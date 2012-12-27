@@ -1555,49 +1555,49 @@ struct X86InstInfo
   // --------------------------------------------------------------------------
 
   //! @brief Get instruction code, see @ref kX86InstCode.
-  inline uint32_t getCode() const ASMJIT_NOTHROW
+  inline uint32_t getCode() const
   { return _code; }
 
   //! @brief Get instruction name string (null terminated string).
-  inline const char* getName() const ASMJIT_NOTHROW
+  inline const char* getName() const
   { return x86InstName + static_cast<uint32_t>(_nameIndex); }
 
   //! @brief Get instruction name index (index to @ref x86InstName array).
-  inline uint32_t getNameIndex() const ASMJIT_NOTHROW
+  inline uint32_t getNameIndex() const
   { return _nameIndex; }
 
   //! @brief Get instruction group, see @ref kX86InstGroup.
-  inline uint32_t getGroup() const ASMJIT_NOTHROW
+  inline uint32_t getGroup() const
   { return _group; }
 
   //! @brief Get instruction flags, see @ref kX86InstFlags.
-  inline uint32_t getFlags() const ASMJIT_NOTHROW
+  inline uint32_t getFlags() const
   { return _group; }
 
   //! @brief Get whether the instruction is conditional or standard jump.
-  inline bool isJump() const ASMJIT_NOTHROW
+  inline bool isJump() const
   { return (_flags & kX86InstFlagJump) != 0; }
 
   //! @brief Get whether the instruction is MOV type.
-  inline bool isMov() const ASMJIT_NOTHROW
+  inline bool isMov() const
   { return (_flags & kX86InstFlagMov) != 0; }
 
   //! @brief Get whether the instruction is X87 FPU type.
-  inline bool isFpu() const ASMJIT_NOTHROW
+  inline bool isFpu() const
   { return (_flags & kX86InstFlagFpu) != 0; }
 
   //! @brief Get whether the instruction can be prefixed by LOCK prefix.
-  inline bool isLockable() const ASMJIT_NOTHROW
+  inline bool isLockable() const
   { return (_flags & kX86InstFlagLockable) != 0; }
 
   //! @brief Get whether the instruction is special type (this is used by
   //! @c Compiler to manage additional variables or functionality).
-  inline bool isSpecial() const ASMJIT_NOTHROW
+  inline bool isSpecial() const
   { return (_flags & kX86InstFlagSpecial) != 0; }
 
   //! @brief Get whether the instruction is special type and it performs
   //! memory access.
-  inline bool isSpecialMem() const ASMJIT_NOTHROW
+  inline bool isSpecialMem() const
   { return (_flags & kX86InstFlagSpecialMem) != 0; }
 
   // --------------------------------------------------------------------------
@@ -2150,23 +2150,23 @@ struct X86VarInfo
   // --------------------------------------------------------------------------
 
   //! @brief Get register code base, see @ref kX86RegCode.
-  inline uint32_t getCode() const ASMJIT_NOTHROW
+  inline uint32_t getCode() const
   { return _code; }
 
   //! @brief Get register size in bytes.
-  inline uint32_t getSize() const ASMJIT_NOTHROW
+  inline uint32_t getSize() const
   { return _size; }
 
   //! @brief Get variable class, see @ref kX86VarClass.
-  inline uint32_t getClass() const ASMJIT_NOTHROW
+  inline uint32_t getClass() const
   { return _class; }
 
   //! @brief Get variable flags, see @ref kX86VarFlags.
-  inline uint32_t getFlags() const ASMJIT_NOTHROW
+  inline uint32_t getFlags() const
   { return _flags; }
 
   //! @brief Get variable type name.
-  inline const char* getName() const ASMJIT_NOTHROW
+  inline const char* getName() const
   { return _name; }
 
   // --------------------------------------------------------------------------

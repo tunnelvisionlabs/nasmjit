@@ -31,23 +31,23 @@ struct CompilerContext
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API CompilerContext(Compiler* compiler) ASMJIT_NOTHROW;
-  ASMJIT_API virtual ~CompilerContext() ASMJIT_NOTHROW;
+  ASMJIT_API CompilerContext(Compiler* compiler);
+  ASMJIT_API virtual ~CompilerContext();
 
   // --------------------------------------------------------------------------
   // [Accessor]
   // --------------------------------------------------------------------------
 
-  inline Compiler* getCompiler() const ASMJIT_NOTHROW
+  inline Compiler* getCompiler() const
   { return _compiler; }
   
-  inline CompilerFuncDecl* getFunc() const ASMJIT_NOTHROW
+  inline CompilerFuncDecl* getFunc() const
   { return _func; }
 
-  inline CompilerItem* getExtraBlock() const ASMJIT_NOTHROW
+  inline CompilerItem* getExtraBlock() const
   { return _extraBlock; }
   
-  inline void setExtraBlock(CompilerItem* item) ASMJIT_NOTHROW
+  inline void setExtraBlock(CompilerItem* item)
   { _extraBlock = item; }
 
   // --------------------------------------------------------------------------

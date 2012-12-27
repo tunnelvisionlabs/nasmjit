@@ -32,8 +32,6 @@ int main(int argc, char* argv[])
   logger.setLogBinary(true);
   a.setLogger(&logger);
 
-  a.add(eax, 1);
-
   // We don't want to crash :)
   a.ret();
 

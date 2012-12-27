@@ -33,14 +33,14 @@ struct MemoryMarker
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API MemoryMarker() ASMJIT_NOTHROW;
-  ASMJIT_API virtual ~MemoryMarker() ASMJIT_NOTHROW;
+  ASMJIT_API MemoryMarker();
+  ASMJIT_API virtual ~MemoryMarker();
 
   // --------------------------------------------------------------------------
   // [Interface]
   // --------------------------------------------------------------------------
 
-  virtual void mark(const void* ptr, size_t size) ASMJIT_NOTHROW = 0;
+  virtual void mark(const void* ptr, size_t size) = 0;
 };
 
 //! @}

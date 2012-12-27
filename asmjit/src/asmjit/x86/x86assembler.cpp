@@ -65,13 +65,13 @@ struct X64TrampolineWriter
 // [AsmJit::X86Assembler - Construction / Destruction]
 // ============================================================================
 
-X86Assembler::X86Assembler(Context* context) ASMJIT_NOTHROW :
+X86Assembler::X86Assembler(Context* context) :
   Assembler(context)
 {
   _properties = IntUtil::maskFromIndex(kX86PropertyOptimizedAlign);
 }
 
-X86Assembler::~X86Assembler() ASMJIT_NOTHROW
+X86Assembler::~X86Assembler()
 {
 }
 
@@ -79,7 +79,7 @@ X86Assembler::~X86Assembler() ASMJIT_NOTHROW
 // [AsmJit::X86Assembler - Buffer - Setters (X86-Extensions)]
 // ============================================================================
 
-void X86Assembler::setVarAt(size_t pos, sysint_t i, uint8_t isUnsigned, uint32_t size) ASMJIT_NOTHROW
+void X86Assembler::setVarAt(size_t pos, sysint_t i, uint8_t isUnsigned, uint32_t size)
 {
   if (size == 1 && !isUnsigned) setByteAt (pos, (int8_t  )i);
   else if (size == 1 &&  isUnsigned) setByteAt (pos, (uint8_t )i);
@@ -102,7 +102,7 @@ void X86Assembler::setVarAt(size_t pos, sysint_t i, uint8_t isUnsigned, uint32_t
 // ============================================================================
 
 void X86Assembler::_emitModM(
-  uint8_t opReg, const Mem& mem, sysint_t immSize) ASMJIT_NOTHROW
+  uint8_t opReg, const Mem& mem, sysint_t immSize)
 {
   ASMJIT_ASSERT(mem.getType() == kOperandMem);
 
@@ -308,7 +308,7 @@ void X86Assembler::_emitModM(
 }
 
 void X86Assembler::_emitModRM(
-  uint8_t opReg, const Operand& op, sysint_t immSize) ASMJIT_NOTHROW
+  uint8_t opReg, const Operand& op, sysint_t immSize)
 {
   ASMJIT_ASSERT(op.getType() == kOperandReg || op.getType() == kOperandMem);
 
@@ -318,9 +318,9 @@ void X86Assembler::_emitModRM(
     _emitModM(opReg, reinterpret_cast<const Mem&>(op), immSize);
 }
 
-void X86Assembler::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
+void X86Assembler::_emitSegmentPrefix(const Operand& rm)
 {
-  static const uint8_t segmentPrefixCode[6] =
+  static const uint8_t segmentCode[6] =
   {
     0x26, // ES
     0x2E, // SS
@@ -330,19 +330,18 @@ void X86Assembler::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
     0x65  // GS
   };
 
-  uint32_t segmentPrefix;
-  
   if (!rm.isMem())
     return;
 
-  if ((segmentPrefix = reinterpret_cast<const Mem&>(rm).getSegmentPrefix()) >= kX86RegNumSeg)
+  uint32_t seg = reinterpret_cast<const Mem&>(rm).getSegment();
+  if (seg >= kX86RegNumSeg)
     return;
 
-  _emitByte(segmentPrefixCode[segmentPrefix]);
+  _emitByte(segmentCode[seg]);
 }
 
 void X86Assembler::_emitX86Inl(
-  uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t reg, bool forceRexPrefix) ASMJIT_NOTHROW
+  uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t reg, bool forceRexPrefix)
 {
   // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
@@ -364,7 +363,7 @@ void X86Assembler::_emitX86Inl(
 
 void X86Assembler::_emitX86RM(
   uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t o,
-  const Operand& op, sysint_t immSize, bool forceRexPrefix) ASMJIT_NOTHROW
+  const Operand& op, sysint_t immSize, bool forceRexPrefix)
 {
   // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
@@ -389,19 +388,19 @@ void X86Assembler::_emitX86RM(
   _emitModRM(o, op, immSize);
 }
 
-void X86Assembler::_emitFpu(uint32_t opCode) ASMJIT_NOTHROW
+void X86Assembler::_emitFpu(uint32_t opCode)
 {
   _emitOpCode(opCode);
 }
 
-void X86Assembler::_emitFpuSTI(uint32_t opCode, uint32_t sti) ASMJIT_NOTHROW
+void X86Assembler::_emitFpuSTI(uint32_t opCode, uint32_t sti)
 {
   // Illegal stack offset.
   ASMJIT_ASSERT(0 <= sti && sti < 8);
   _emitOpCode(opCode + sti);
 }
 
-void X86Assembler::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem) ASMJIT_NOTHROW
+void X86Assembler::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem)
 {
   // Segment prefix.
   _emitSegmentPrefix(mem);
@@ -423,7 +422,7 @@ void X86Assembler::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem) A
 }
 
 void X86Assembler::_emitMmu(uint32_t opCode, uint8_t rexw, uint8_t opReg,
-  const Operand& src, sysint_t immSize) ASMJIT_NOTHROW
+  const Operand& src, sysint_t immSize)
 {
   // Segment prefix.
   _emitSegmentPrefix(src);
@@ -450,7 +449,7 @@ void X86Assembler::_emitMmu(uint32_t opCode, uint8_t rexw, uint8_t opReg,
 }
 
 X86Assembler::LabelLink* X86Assembler::_emitDisplacement(
-  LabelData& l_data, sysint_t inlinedDisplacement, int size) ASMJIT_NOTHROW
+  LabelData& l_data, sysint_t inlinedDisplacement, int size)
 {
   ASMJIT_ASSERT(l_data.offset == -1);
   ASMJIT_ASSERT(size == 1 || size == 4);
@@ -472,7 +471,7 @@ X86Assembler::LabelLink* X86Assembler::_emitDisplacement(
   return link;
 }
 
-void X86Assembler::_emitJmpOrCallReloc(uint32_t instruction, void* target) ASMJIT_NOTHROW
+void X86Assembler::_emitJmpOrCallReloc(uint32_t instruction, void* target)
 {
   RelocData rd;
 
@@ -498,7 +497,7 @@ void X86Assembler::_emitJmpOrCallReloc(uint32_t instruction, void* target) ASMJI
 //!
 //! @brief Get whether the extended register (additional eight registers
 //! introduced by 64-bit mode) is used.
-static inline bool X86Assembler_isExtRegisterUsed(const Operand& op) ASMJIT_NOTHROW
+static inline bool X86Assembler_isExtRegisterUsed(const Operand& op)
 {
   // Hacky, but correct.
   // - If operand type is register then extended register is register with
@@ -507,9 +506,9 @@ static inline bool X86Assembler_isExtRegisterUsed(const Operand& op) ASMJIT_NOTH
   //   label (in _mem.base) and kInvalidValue, we just decrement the value
   //   by 8 and check if it's at interval 0 to 7 inclusive (if it's there
   //   then it's extended register.
-  return (op.isReg() && (op._reg.code & kRegIndexMask) >= 8U) ||
-         (op.isMem() && ((((uint32_t)op._mem.base   - 8U) <  8U) ||
-                         (((uint32_t)op._mem.index  - 8U) <  8U) ));
+  return (op.isReg() && (op._reg.code & kRegIndexMask)  >= 8U) ||
+         (op.isMem() && ((((uint32_t)op._mem.base  - 8U) < 8U) ||
+                         (((uint32_t)op._mem.index - 8U) < 8U) ));
 }
 
 // Logging helpers.
@@ -534,7 +533,7 @@ static const char* AssemblerX86_operandSize[] =
   "dqword ptr "
 };
 
-static const char X86Assembler_segmentPrefixName[] =
+static const char X86Assembler_segmentName[] =
   "es:\0"
   "cs:\0"
   "ss:\0"
@@ -543,13 +542,13 @@ static const char X86Assembler_segmentPrefixName[] =
   "gs:\0"
   "\0\0\0\0";
 
-static char* X86Assembler_dumpInstruction(char* buf, uint32_t code) ASMJIT_NOTHROW
+static char* X86Assembler_dumpInstructionName(char* buf, uint32_t code)
 {
   ASMJIT_ASSERT(code < _kX86InstCount);
   return StringUtil::copy(buf, x86InstInfo[code].getName());
 }
 
-char* X86Assembler_dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJIT_NOTHROW
+char* X86Assembler_dumpRegister(char* buf, uint32_t type, uint32_t index)
 {
   // NE == Not-Encodable.
   const char reg8l[] = "al\0\0" "cl\0\0" "dl\0\0" "bl\0\0" "spl\0"  "bpl\0"  "sil\0"  "dil\0" ;
@@ -626,7 +625,7 @@ _EmitID:
 
     case kX86RegTypeSeg:
       if (index < kX86RegNumSeg)
-        return StringUtil::copy(buf, &X86Assembler_segmentPrefixName[index*4], 2);
+        return StringUtil::copy(buf, &X86Assembler_segmentName[index*4], 2);
       
       goto _EmitNE;
 
@@ -635,7 +634,7 @@ _EmitID:
   }
 }
 
-char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType) ASMJIT_NOTHROW
+char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType, uint32_t loggerFlags)
 {
   if (op->isReg())
   {
@@ -645,15 +644,15 @@ char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType
   else if (op->isMem())
   {
     const Mem& mem = reinterpret_cast<const Mem&>(*op);
-    uint32_t segmentPrefix = mem.getSegmentPrefix();
+    uint32_t seg = mem.getSegment();
 
     bool isAbsolute = false;
 
     if (op->getSize() <= 16)
       buf = StringUtil::copy(buf, AssemblerX86_operandSize[op->getSize()]);
 
-    if (segmentPrefix < kX86RegNumSeg)
-      buf = StringUtil::copy(buf, &X86Assembler_segmentPrefixName[segmentPrefix * 4]);
+    if (seg < kX86RegNumSeg)
+      buf = StringUtil::copy(buf, &X86Assembler_segmentName[seg * 4]);
 
     *buf++ = '[';
 
@@ -661,13 +660,13 @@ char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType
     {
       case kOperandMemNative:
       {
-        // [base + index*scale + displacement]
+        // [base + index << shift + displacement]
         buf = X86Assembler_dumpRegister(buf, memRegType, mem.getBase());
         break;
       }
       case kOperandMemLabel:
       {
-        // [label + index*scale + displacement]
+        // [label + index << shift + displacement]
         buf += sprintf(buf, "L.%u", mem.getBase() & kOperandIdValueMask);
         break;
       }
@@ -695,10 +694,29 @@ char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType
     if (mem.getDisplacement() && !isAbsolute)
     {
       sysint_t d = mem.getDisplacement();
-      *buf++ = ' ';
-      *buf++ = (d < 0) ? '-' : '+';
-      *buf++ = ' ';
-      buf = StringUtil::utoa(buf, d < 0 ? -d : d);
+      uint32_t base = 10;
+      char sign = '+';
+
+      if (d < 0)
+      {
+        d = -d;
+        sign = '-';
+      }
+
+      buf[0] = ' ';
+      buf[1] = sign;
+      buf[2] = ' ';
+      buf += 3;
+
+      if ((loggerFlags & kLoggerOutputHexDisplacement) != 0 && d > 9)
+      {
+        buf[0] = '0';
+        buf[1] = 'x';
+        buf += 2;
+        base = 16;
+      }
+
+      buf = StringUtil::utoa(buf, static_cast<uintptr_t>(d), base);
     }
 
     *buf++ = ']';
@@ -707,7 +725,21 @@ char* X86Assembler_dumpOperand(char* buf, const Operand* op, uint32_t memRegType
   else if (op->isImm())
   {
     const Imm& i = reinterpret_cast<const Imm&>(*op);
-    return StringUtil::itoa(buf, (sysint_t)i.getValue());
+
+    sysuint_t value = i.getUValue();
+    uint32_t base = 10;
+
+    if ((loggerFlags & kLoggerOutputHexImmediate) && value > 9)
+      base = 16;
+
+    if (i.isUnsigned() || base == 16)
+    {
+      return StringUtil::utoa(buf, value, base);
+    }
+    else
+    {
+      return StringUtil::itoa(buf, static_cast<sysint_t>(value), base);
+    }
   }
   else if (op->isLabel())
   {
@@ -724,8 +756,10 @@ static char* X86Assembler_dumpInstruction(char* buf,
   const Operand* o0,
   const Operand* o1,
   const Operand* o2,
-  uint32_t memRegType) ASMJIT_NOTHROW
+  uint32_t memRegType,
+  uint32_t loggerFlags)
 {
+  // Rex, lock, and short prefix.
   if (emitOptions & kX86EmitOptionRex)
     buf = StringUtil::copy(buf, "rex ", 4);
   
@@ -735,13 +769,13 @@ static char* X86Assembler_dumpInstruction(char* buf,
   if (emitOptions & kX86EmitOptionShortJump)
     buf = StringUtil::copy(buf, "short ", 6);
 
-  // Dump instruction.
-  buf = X86Assembler_dumpInstruction(buf, code);
+  // Dump instruction name.
+  buf = X86Assembler_dumpInstructionName(buf, code);
 
   // Dump operands.
-  if (!o0->isNone()) { *buf++ = ' ';               buf = X86Assembler_dumpOperand(buf, o0, memRegType); }
-  if (!o1->isNone()) { *buf++ = ','; *buf++ = ' '; buf = X86Assembler_dumpOperand(buf, o1, memRegType); }
-  if (!o2->isNone()) { *buf++ = ','; *buf++ = ' '; buf = X86Assembler_dumpOperand(buf, o2, memRegType); }
+  if (!o0->isNone()) { *buf++ = ' ';               buf = X86Assembler_dumpOperand(buf, o0, memRegType, loggerFlags); }
+  if (!o1->isNone()) { *buf++ = ','; *buf++ = ' '; buf = X86Assembler_dumpOperand(buf, o1, memRegType, loggerFlags); }
+  if (!o2->isNone()) { *buf++ = ','; *buf++ = ' '; buf = X86Assembler_dumpOperand(buf, o2, memRegType, loggerFlags); }
 
   return buf;
 }
@@ -805,22 +839,22 @@ static const _OpReg _patchedHiRegs[4] =
   { kOperandReg, 1, {0        ,0       }, kInvalidValue, kX86RegTypeGpbLo | 7 }
 };
 
-void X86Assembler::_emitInstruction(uint32_t code) ASMJIT_NOTHROW
+void X86Assembler::_emitInstruction(uint32_t code)
 {
   _emitInstruction(code, &noOperand, &noOperand, &noOperand);
 }
 
-void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOTHROW
+void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0)
 {
   _emitInstruction(code, o0, &noOperand, &noOperand);
 }
 
-void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1) ASMJIT_NOTHROW
+void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1)
 {
   _emitInstruction(code, o0, o1, &noOperand);
 }
 
-void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
+void X86Assembler::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2)
 {
   ASMJIT_ASSERT(o0 != NULL);
   ASMJIT_ASSERT(o1 != NULL);
@@ -2529,6 +2563,7 @@ _End:
 
     // Detect truncated operand.
     Imm immTemporary(0);
+    uint32_t loggerFlags = 0;
 
     // Use the original operands, because BYTE some of them were replaced.
     if (bLoHiUsed)
@@ -2564,9 +2599,15 @@ _End:
       }
     }
 
-    buf =X86Assembler_dumpInstruction(buf, code, _emitOptions, o0, o1, o2, memRegType);
+    if (_logger)
+    {
+      buf = StringUtil::copy(buf, _logger->getInstructionPrefix());
+      loggerFlags = _logger->getFlags();
+    }
 
-    if (_logger->getLogBinary())
+    buf = X86Assembler_dumpInstruction(buf, code, _emitOptions, o0, o1, o2, memRegType, loggerFlags);
+
+    if ((loggerFlags & kLoggerOutputBinary) != 0)
       buf = X86Assembler_dumpComment(buf, (size_t)(buf - bufStorage), getCode() + beginOffset, getOffset() - beginOffset, _inlineComment);
     else
       buf = X86Assembler_dumpComment(buf, (size_t)(buf - bufStorage), NULL, 0, _inlineComment);
@@ -2594,7 +2635,7 @@ _Cleanup:
   _emitOptions = 0;
 }
 
-void X86Assembler::_emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW
+void X86Assembler::_emitJcc(uint32_t code, const Label* label, uint32_t hint)
 {
   if (hint == kCondHintNone)
   {
@@ -2611,7 +2652,7 @@ void X86Assembler::_emitJcc(uint32_t code, const Label* label, uint32_t hint) AS
 // [AsmJit::Assembler - Relocation helpers]
 // ============================================================================
 
-size_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
+size_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
@@ -2712,7 +2753,7 @@ size_t X86Assembler::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_N
 // [AsmJit::Assembler - EmbedLabel]
 // ============================================================================
 
-void X86Assembler::embedLabel(const Label& label) ASMJIT_NOTHROW
+void X86Assembler::embedLabel(const Label& label)
 {
   ASMJIT_ASSERT(label.getId() != kInvalidValue);
   if (!canEmit()) return;
@@ -2758,10 +2799,13 @@ void X86Assembler::embedLabel(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::Assembler - Align]
 // ============================================================================
 
-void X86Assembler::align(uint32_t m) ASMJIT_NOTHROW
+void X86Assembler::align(uint32_t m)
 {
-  if (!canEmit()) return;
-  if (_logger) _logger->logFormat(".align %u", (uint)m);
+  if (!canEmit())
+    return;
+
+  if (_logger) 
+    _logger->logFormat("%s.align %u\n", _logger->getInstructionPrefix(), (uint)m);
 
   if (!m) return;
 
@@ -2877,7 +2921,7 @@ void X86Assembler::align(uint32_t m) ASMJIT_NOTHROW
 // [AsmJit::Assembler - Label]
 // ============================================================================
 
-Label X86Assembler::newLabel() ASMJIT_NOTHROW
+Label X86Assembler::newLabel()
 {
   Label label;
   label._base.id = (uint32_t)_labels.getLength() | kOperandIdTypeLabel;
@@ -2890,7 +2934,7 @@ Label X86Assembler::newLabel() ASMJIT_NOTHROW
   return label;
 }
 
-void X86Assembler::registerLabels(size_t count) ASMJIT_NOTHROW
+void X86Assembler::registerLabels(size_t count)
 {
   // Duplicated newLabel() code, but we are not creating Label instances.
   LabelData l_data;
@@ -2901,7 +2945,7 @@ void X86Assembler::registerLabels(size_t count) ASMJIT_NOTHROW
     _labels.append(l_data);
 }
 
-void X86Assembler::bind(const Label& label) ASMJIT_NOTHROW
+void X86Assembler::bind(const Label& label)
 {
   // Only labels created by newLabel() can be used by Assembler.
   ASMJIT_ASSERT(label.getId() != kInvalidValue);
@@ -2983,7 +3027,7 @@ void X86Assembler::bind(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::Assembler - Make]
 // ============================================================================
 
-void* X86Assembler::make() ASMJIT_NOTHROW
+void* X86Assembler::make()
 {
   // Do nothing on error state or when no instruction was emitted.
   if (_error || getCodeSize() == 0)

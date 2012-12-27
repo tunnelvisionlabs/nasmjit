@@ -37,7 +37,7 @@ struct CompilerItem
   //! @brief Create new @ref CompilerItem.
   //!
   //! @note Always use @ref Compiler to create an item!
-  ASMJIT_API CompilerItem(Compiler* compiler, uint32_t type) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerItem(Compiler* compiler, uint32_t type);
 
   //! @brief Destroy @ref CompilerItem.
   //!
@@ -45,38 +45,38 @@ struct CompilerItem
   //! when code generation finished or in the case that @ref Compiler was 
   //! destroyed early (for example if an error happened). Never destroy items
   //! manually!
-  ASMJIT_API virtual ~CompilerItem() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerItem();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get associated compiler instance.
-  inline Compiler* getCompiler() const ASMJIT_NOTHROW
+  inline Compiler* getCompiler() const
   { return _compiler; }
 
   //! @brief Get previous item in the compiler stream.
-  inline CompilerItem* getPrev() const ASMJIT_NOTHROW
+  inline CompilerItem* getPrev() const
   { return _prev; }
 
   //! @brief Get next item in the compiler stream.
-  inline CompilerItem* getNext() const ASMJIT_NOTHROW
+  inline CompilerItem* getNext() const
   { return _next; }
 
   //! @brief Get comment string.
-  inline const char* getComment() const ASMJIT_NOTHROW
+  inline const char* getComment() const
   { return _comment; }
 
   //! @brief Get type of item, see @ref kCompilerItem.
-  inline uint32_t getType() const ASMJIT_NOTHROW
+  inline uint32_t getType() const
   { return _type; }
 
   //! @brief Get whether the item was translated.
-  inline bool isTranslated() const ASMJIT_NOTHROW
+  inline bool isTranslated() const
   { return _isTranslated; }
 
   //! @brief Get whether the item is unreachable.
-  inline bool isUnreachable() const ASMJIT_NOTHROW
+  inline bool isUnreachable() const
   { return _isUnreachable; }
 
   //! @brief Get the item offset in the compiler stream.
@@ -84,7 +84,7 @@ struct CompilerItem
   //! The offset is not byte offset, each item increments offset by 1 and this
   //! value is then used by register allocator. The offset is set by compiler
   //! by the register allocator, don't use it in your code.
-  inline uint32_t getOffset() const ASMJIT_NOTHROW
+  inline uint32_t getOffset() const
   { return _offset; }
 
   // --------------------------------------------------------------------------
@@ -92,13 +92,13 @@ struct CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Step 1. Extract item variables, update statistics, ...
-  ASMJIT_API virtual void prepare(CompilerContext& cc) ASMJIT_NOTHROW;
+  ASMJIT_API virtual void prepare(CompilerContext& cc);
   //! @brief Step 2. Translate instruction, alloc variables, ...
-  ASMJIT_API virtual CompilerItem* translate(CompilerContext& cc) ASMJIT_NOTHROW;
+  ASMJIT_API virtual CompilerItem* translate(CompilerContext& cc);
   //! @brief Step 3. Emit to @c Assembler.
-  ASMJIT_API virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+  ASMJIT_API virtual void emit(Assembler& a);
   //! @brief Step 4. Last post step (verify, add data, etc).
-  ASMJIT_API virtual void post(Assembler& a) ASMJIT_NOTHROW;
+  ASMJIT_API virtual void post(Assembler& a);
 
   // --------------------------------------------------------------------------
   // [Misc]
@@ -106,23 +106,23 @@ struct CompilerItem
 
   //! @brief Get maximum size of of this when serialized into @ref Assembler 
   //! item in bytes.
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 
   //! @brief Try to unuse the variable @a.
   //!
   //! Returns @c true only if the variable will be unused by the instruction,
   //! otherwise @c false is returned.
-  ASMJIT_API virtual bool _tryUnuseVar(CompilerVar* v) ASMJIT_NOTHROW;
+  ASMJIT_API virtual bool _tryUnuseVar(CompilerVar* v);
 
   // --------------------------------------------------------------------------
   // [Comment]
   // --------------------------------------------------------------------------
 
   //! @brief Set comment string to @a str.
-  ASMJIT_API void setComment(const char* str) ASMJIT_NOTHROW;
+  ASMJIT_API void setComment(const char* str);
 
   //! @brief Format comment string using @a fmt string and variable argument list.
-  ASMJIT_API void formatComment(const char* fmt, ...) ASMJIT_NOTHROW;
+  ASMJIT_API void formatComment(const char* fmt, ...);
 
   // --------------------------------------------------------------------------
   // [Protected]
@@ -130,7 +130,7 @@ struct CompilerItem
 
 protected:
   //! @brief Mark item as translated and return next.
-  inline CompilerItem* translated() ASMJIT_NOTHROW
+  inline CompilerItem* translated()
   {
     ASMJIT_ASSERT(_isTranslated == false);
 
@@ -182,15 +182,15 @@ struct CompilerMark : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerMark instance.
-  ASMJIT_API CompilerMark(Compiler* compiler) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerMark(Compiler* compiler);
   //! @brief Destroy the @ref CompilerMark instance.
-  ASMJIT_API virtual ~CompilerMark() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerMark();
 
   // --------------------------------------------------------------------------
   // [Misc]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 };
 
 // ============================================================================
@@ -211,21 +211,21 @@ struct CompilerComment : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerComment instance.
-  ASMJIT_API CompilerComment(Compiler* compiler, const char* comment = NULL) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerComment(Compiler* compiler, const char* comment = NULL);
   //! @brief Destroy the @ref CompilerComment instance.
-  ASMJIT_API virtual ~CompilerComment() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerComment();
 
   // --------------------------------------------------------------------------
   // [Interface]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+  ASMJIT_API virtual void emit(Assembler& a);
 
   // --------------------------------------------------------------------------
   // [Misc]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 };
 
 // ============================================================================
@@ -245,33 +245,33 @@ struct CompilerEmbed : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerEmbed instance.
-  ASMJIT_API CompilerEmbed(Compiler* compiler, const void* data, size_t length) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerEmbed(Compiler* compiler, const void* data, size_t length);
   //! @brief Destroy the @ref CompilerEmbed instance.
-  ASMJIT_API virtual ~CompilerEmbed() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerEmbed();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get pointer to embedded data.
-  uint8_t* getData() const ASMJIT_NOTHROW
+  uint8_t* getData() const
   { return const_cast<uint8_t*>(_data); }
 
   //! @brief Get length of embedded data.
-  size_t getLength() const ASMJIT_NOTHROW
+  size_t getLength() const
   { return _length; }
 
   // --------------------------------------------------------------------------
   // [Interface]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual void emit(Assembler& a) ASMJIT_NOTHROW;
+  ASMJIT_API virtual void emit(Assembler& a);
 
   // --------------------------------------------------------------------------
   // [Misc]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -297,27 +297,27 @@ struct CompilerAlign : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerAlign instance.
-  ASMJIT_API CompilerAlign(Compiler* compiler, uint32_t size = 0) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerAlign(Compiler* compiler, uint32_t size = 0);
   //! @brief Destroy the @ref CompilerAlign instance.
-  ASMJIT_API virtual ~CompilerAlign() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerAlign();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get align size in bytes.
-  inline uint32_t getSize() const ASMJIT_NOTHROW
+  inline uint32_t getSize() const
   { return _size; }
 
   //! @brief Set align size in bytes to @a size.
-  inline void setSize(uint32_t size) ASMJIT_NOTHROW
+  inline void setSize(uint32_t size)
   { _size = size; }
 
   // --------------------------------------------------------------------------
   // [Misc]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -341,32 +341,32 @@ struct CompilerHint : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerHint instance.
-  ASMJIT_API CompilerHint(Compiler* compiler, CompilerVar* var, uint32_t hintId, uint32_t hintValue) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerHint(Compiler* compiler, CompilerVar* var, uint32_t hintId, uint32_t hintValue);
   //! @brief Destroy the @ref CompilerHint instance.
-  ASMJIT_API virtual ~CompilerHint() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerHint();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get variable.
-  inline CompilerVar* getVar() const ASMJIT_NOTHROW
+  inline CompilerVar* getVar() const
   { return _var; }
 
   //! @brief Get hint it (see @ref kVarHint).
-  inline uint32_t getHintId() const ASMJIT_NOTHROW
+  inline uint32_t getHintId() const
   { return _hintId; }
   
   //! @brief Set hint it (see @ref kVarHint).
-  inline void setHintId(uint32_t hintId) ASMJIT_NOTHROW
+  inline void setHintId(uint32_t hintId)
   { _hintId = hintId; }
 
   //! @brief Get hint value.
-  inline uint32_t getHintValue() const ASMJIT_NOTHROW
+  inline uint32_t getHintValue() const
   { return _hintValue; }
   
   //! @brief Set hint value.
-  inline void setHintValue(uint32_t hintValue) ASMJIT_NOTHROW
+  inline void setHintValue(uint32_t hintValue)
   { _hintValue = hintValue; }
 
   // --------------------------------------------------------------------------
@@ -395,35 +395,35 @@ struct CompilerTarget : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerTarget instance.
-  ASMJIT_API CompilerTarget(Compiler* compiler, const Label& target) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerTarget(Compiler* compiler, const Label& target);
   //! @brief Destroy the @ref CompilerTarget instance.
-  ASMJIT_API virtual ~CompilerTarget() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerTarget();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Return label bound to this target.
-  inline const Label& getLabel() const ASMJIT_NOTHROW
+  inline const Label& getLabel() const
   { return _label; }
 
   //! @brief Get first jmp instruction.
-  inline CompilerInst* getFrom() const ASMJIT_NOTHROW
+  inline CompilerInst* getFrom() const
   { return _from; }
 
   //! @brief Get register allocator state for this target.
-  inline CompilerState* getState() const ASMJIT_NOTHROW
+  inline CompilerState* getState() const
   { return _state; }
 
   //! @brief Get number of jumps to this target.
-  inline uint32_t getJumpsCount() const ASMJIT_NOTHROW
+  inline uint32_t getJumpsCount() const
   { return _jumpsCount; }
 
   // --------------------------------------------------------------------------
   // [Misc]
   // --------------------------------------------------------------------------
 
-  ASMJIT_API virtual int getMaxSize() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual int getMaxSize() const;
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -453,16 +453,16 @@ struct CompilerInst : public CompilerItem
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref CompilerInst instance.
-  ASMJIT_API CompilerInst(Compiler* compiler, uint32_t code, Operand* opData, uint32_t opCount) ASMJIT_NOTHROW;
+  ASMJIT_API CompilerInst(Compiler* compiler, uint32_t code, Operand* opData, uint32_t opCount);
   //! @brief Destroy the @ref CompilerInst instance.
-  ASMJIT_API virtual ~CompilerInst() ASMJIT_NOTHROW;
+  ASMJIT_API virtual ~CompilerInst();
 
   // --------------------------------------------------------------------------
   // [Accessors]
   // --------------------------------------------------------------------------
 
   //! @brief Get instruction code, see @c kInstCode.
-  inline uint32_t getCode() const ASMJIT_NOTHROW
+  inline uint32_t getCode() const
   { return _code; }
 
   //! @brief Set instruction code to @a code.
@@ -470,41 +470,41 @@ struct CompilerInst : public CompilerItem
   //! Please do not modify instruction code if you are not know what you are
   //! doing. Incorrect instruction code or operands can raise assertion() at
   //! runtime.
-  inline void setCode(uint32_t code) ASMJIT_NOTHROW
+  inline void setCode(uint32_t code)
   { _code = code; }
 
   //! @brief Get emit options (compiler specific).
-  inline uint32_t getEmitOptions() const ASMJIT_NOTHROW
+  inline uint32_t getEmitOptions() const
   { return _emitOptions; }
 
   //! @brief Get instruction flags (compiler specific).
-  inline uint32_t getInstFlags() const ASMJIT_NOTHROW
+  inline uint32_t getInstFlags() const
   { return _instFlags; }
 
   //! @brief Get whether the instruction has flag @a flag.
-  inline bool hasInstFlag(uint8_t flag) const ASMJIT_NOTHROW
+  inline bool hasInstFlag(uint8_t flag) const
   { return (_instFlags & flag) != 0; }
 
   //! @brief Set instruction @a flag.
-  inline void setInstFlag(uint8_t flag) ASMJIT_NOTHROW
+  inline void setInstFlag(uint8_t flag)
   { _instFlags |= flag; }
 
   //! @brief Clear instruction @a flag.
-  inline void clearInstFlag(uint8_t flag) ASMJIT_NOTHROW
+  inline void clearInstFlag(uint8_t flag)
   { _instFlags &= ~flag; }
 
   //! @brief Get count of operands in operands array.
-  inline uint32_t getOperandsCount() const ASMJIT_NOTHROW
+  inline uint32_t getOperandsCount() const
   { return _operandsCount; }
 
   //! @brief Get count of variables in variables array.
-  inline uint32_t getVariablesCount() const ASMJIT_NOTHROW
+  inline uint32_t getVariablesCount() const
   { return _variablesCount; }
 
   //! @brief Get operands array (3 operands total).
-  inline Operand* getOperands() ASMJIT_NOTHROW { return _operands; }
+  inline Operand* getOperands() { return _operands; }
   //! @brief Get operands array (3 operands total).
-  inline const Operand* getOperands() const ASMJIT_NOTHROW { return _operands; }
+  inline const Operand* getOperands() const { return _operands; }
 
   // --------------------------------------------------------------------------
   // [GetJumpTarget]
@@ -515,7 +515,7 @@ struct CompilerInst : public CompilerItem
   //! If this instruction is conditional or normal jump then return value is
   //! the label location (@ref CompilerTarget), otherwise the return value is 
   //! @c NULL.
-  ASMJIT_API virtual CompilerTarget* getJumpTarget() const ASMJIT_NOTHROW;
+  ASMJIT_API virtual CompilerTarget* getJumpTarget() const;
 
   // --------------------------------------------------------------------------
   // [Members]
