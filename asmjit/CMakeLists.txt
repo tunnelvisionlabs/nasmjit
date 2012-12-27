@@ -20,11 +20,10 @@ CMake_Minimum_Required(VERSION 2.8.7)
 
 # Create AsmJit project. In case that you called Project() before the AsmJit
 # CMakeLists.txt the project won't be created (just included).
-Set(ASMJIT_PROJECT_STR "")
+Set(ASMJIT_PROJECT_STR "Project")
 
 If(NOT CMAKE_PROJECT_NAME)
   Project(asmjit C CXX)
-  Set(ASMJIT_PROJECT_STR "Project")
 Else()
   # Do not create a project if this CMakeLists.txt is included by a different
   # project. This allows easy static library build including debugger support.
@@ -109,7 +108,7 @@ Macro(AsmJitAddSrc dst_var base_path)
 
   List(APPEND "${dst_var}" ${dst_src} ${dst_hdr})
   List(APPEND "${dst_var}_TEST" ${dst_test})
-  Source_Group(${dst_path} FILES ${dst_src} ${dst_hdr} ${dst_test})
+  Source_Group(${base_path} FILES ${dst_src} ${dst_hdr} ${dst_test})
 EndMacro()
 
 # =============================================================================
