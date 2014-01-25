@@ -2717,14 +2717,14 @@ struct X86X64Compiler : public BaseCompiler {
   INST_2x(psadbw, kInstPsadbw, XmmVar, Mem)
 
   //! @brief Packed SP-FP Square Root Reciprocal (SSE).
-  INST_2x(rsqrtps, kInstSqrtps, XmmVar, XmmVar)
+  INST_2x(rsqrtps, kInstRsqrtps, XmmVar, XmmVar)
   //! @overload
-  INST_2x(rsqrtps, kInstSqrtps, XmmVar, Mem)
+  INST_2x(rsqrtps, kInstRsqrtps, XmmVar, Mem)
 
   //! @brief Scalar SP-FP Square Root Reciprocal (SSE).
-  INST_2x(rsqrtss, kInstSqrtss, XmmVar, XmmVar)
+  INST_2x(rsqrtss, kInstRsqrtss, XmmVar, XmmVar)
   //! @overload
-  INST_2x(rsqrtss, kInstSqrtss, XmmVar, Mem)
+  INST_2x(rsqrtss, kInstRsqrtss, XmmVar, Mem)
 
   //! @brief Store fence (SSE).
   INST_0x(sfence, kInstSfence)
