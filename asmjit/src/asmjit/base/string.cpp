@@ -12,9 +12,6 @@
 #include "../base/intutil.h"
 #include "../base/string.h"
 
-// [Dependencies - C]
-#include <stdarg.h>
-
 // [Api-Begin]
 #include "../base/apibegin.h"
 

@@ -12,6 +12,9 @@
 #include "../base/assert.h"
 #include "../base/defs.h"
 
+// [Dependencies - C]
+#include <stdarg.h>
+
 // [Api-Begin]
 #include "../base/apibegin.h"
 
@@ -50,8 +53,7 @@ ASMJIT_ENUM(kStringFormat) {
 
 //! @brief String utilities.
 struct StringUtil {
-  static ASMJIT_INLINE size_t nlen(const char* s, size_t maxlen)
-  {
+  static ASMJIT_INLINE size_t nlen(const char* s, size_t maxlen) {
     size_t i;
     for (i = 0; i < maxlen; i++)
       if (!s[i])
