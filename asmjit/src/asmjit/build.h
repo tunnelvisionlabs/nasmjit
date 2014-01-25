@@ -248,7 +248,8 @@ public:
 #endif // __MINGW32__ || __MINGW64__
 
 #if defined(_MSC_VER) && (_MSC_VER < 1600)
-# if (_MSC_VER < 1300)
+# if !defined(ASMJIT_SUPRESS_STD_TYPES)
+#  if (_MSC_VER < 1300)
 typedef signed char int8_t;
 typedef signed short int16_t;
 typedef signed int int32_t;
@@ -257,7 +258,7 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned __int64 uint64_t;
-# else
+#  else
 typedef signed __int8 int8_t;
 typedef signed __int16 int16_t;
 typedef signed __int32 int32_t;
@@ -266,7 +267,8 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
-# endif // _MSC_VER
+#  endif // _MSC_VER
+# endif // ASMJIT_SUPRESS_STD_TYPES
 #else
 # include <stdint.h>
 # include <limits.h>
