@@ -12,19 +12,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+using namespace asmjit;
+
 static int problems = 0;
 
-static void gen(void* a, void* b, int i)
-{
+static void gen(void* a, void* b, int i) {
   int pattern = rand() % 256;
   *(int *)a  = i;
   *(int *)b  = i;
-  memset((char*)a + sizeof(int), pattern, i - sizeof(int));
-  memset((char*)b + sizeof(int), pattern, i - sizeof(int));
+  ::memset((char*)a + sizeof(int), pattern, i - sizeof(int));
+  ::memset((char*)b + sizeof(int), pattern, i - sizeof(int));
 }
 
-static void verify(void* a, void* b)
-{
+static void verify(void* a, void* b) {
   int ai = *(int*)a;
   int bi = *(int*)b;
   if (ai != bi || memcmp(a, b, ai) != 0)
@@ -34,28 +34,20 @@ static void verify(void* a, void* b)
   }
 }
 
-static void die()
-{
+static void die() {
   printf("Couldn't allocate virtual memory, this test needs at least 100MB of free virtual memory.\n");
   exit(1);
 }
 
-static void stats(const char* dumpFile)
-{
-  AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
+static void stats() {
+  MemoryManager* memmgr = MemoryManager::getGlobal();
 
   printf("-- Used: %d\n", (int)memmgr->getUsedBytes());
   printf("-- Allocated: %d\n", (int)memmgr->getAllocatedBytes());
-
-#if defined(ASMJIT_MEMORY_MANAGER_DUMP)
-  reinterpret_cast<AsmJit::VirtualMemoryManager*>(memmgr)->dump(dumpFile);
-#endif // ASMJIT_MEMORY_MANAGER_DUMP
 }
 
-static void shuffle(void **a, void **b, size_t count)
-{
-  for (size_t i = 0; i < count; ++i)
-  {
+static void shuffle(void **a, void **b, size_t count) {
+  for (size_t i = 0; i < count; ++i) {
     size_t si = (size_t)rand() % count;
 
     void *ta = a[i];
@@ -69,66 +61,61 @@ static void shuffle(void **a, void **b, size_t count)
   }
 }
 
-int main(int argc, char* argv[])
-{
-  AsmJit::MemoryManager* memmgr = AsmJit::MemoryManager::getGlobal();
+int main(int argc, char* argv[]) {
+  MemoryManager* memmgr = MemoryManager::getGlobal();
 
   size_t i;
   size_t count = 200000;
 
   printf("Memory alloc/free test - %d allocations\n\n", (int)count);
 
-  void** a = (void**)malloc(sizeof(void*) * count);
-  void** b = (void**)malloc(sizeof(void*) * count);
+  void** a = (void**)::malloc(sizeof(void*) * count);
+  void** b = (void**)::malloc(sizeof(void*) * count);
   if (!a || !b) die();
 
   srand(100);
   printf("Allocating virtual memory...");
 
-  for (i = 0; i < count; i++)
-  {
+  for (i = 0; i < count; i++) {
     int r = (rand() % 1000) + 4;
 
     a[i] = memmgr->alloc(r);
     if (a[i] == NULL) die();
 
-    memset(a[i], 0, r);
+    ::memset(a[i], 0, r);
   }
 
   printf("done\n");
-  stats("dump0.dot");
+  stats();
 
   printf("\n");
   printf("Freeing virtual memory...");
 
-  for (i = 0; i < count; i++)
-  {
-    if (!memmgr->free(a[i]))
-    {
+  for (i = 0; i < count; i++) {
+    if (memmgr->release(a[i]) != kErrorOk) {
       printf("Failed to free %p\n", b[i]);
       problems++;
     }
   }
 
   printf("done\n");
-  stats("dump1.dot");
+  stats();
 
   printf("\n");
   printf("Verified alloc/free test - %d allocations\n\n", (int)count);
 
   printf("Alloc...");
-  for (i = 0; i < count; i++)
-  {
+  for (i = 0; i < count; i++) {
     int r = (rand() % 1000) + 4;
 
     a[i] = memmgr->alloc(r);
-    b[i] = malloc(r);
+    b[i] = ::malloc(r);
     if (a[i] == NULL || b[i] == NULL) die();
 
     gen(a[i], b[i], r);
   }
   printf("done\n");
-  stats("dump2.dot");
+  stats();
 
   printf("\n");
   printf("Shuffling...");
@@ -137,48 +124,43 @@ int main(int argc, char* argv[])
 
   printf("\n");
   printf("Verify and free...");
-  for (i = 0; i < count/2; i++)
-  {
+  for (i = 0; i < count / 2; i++) {
     verify(a[i], b[i]);
-    if (!memmgr->free(a[i]))
-    {
-      printf("Failed to free %p\n", b[i]);
+    if (memmgr->release(a[i]) != kErrorOk) {
+      printf("Failed to free %p\n", a[i]);
       problems++;
     }
     free(b[i]);
   }
   printf("done\n");
-  stats("dump3.dot");
+  stats();
 
   printf("\n");
   printf("Alloc...");
-  for (i = 0; i < count/2; i++)
-  {
+  for (i = 0; i < count / 2; i++) {
     int r = (rand() % 1000) + 4;
 
     a[i] = memmgr->alloc(r);
-    b[i] = malloc(r);
+    b[i] = ::malloc(r);
     if (a[i] == NULL || b[i] == NULL) die();
 
     gen(a[i], b[i], r);
   }
   printf("done\n");
-  stats("dump4.dot");
+  stats();
 
   printf("\n");
   printf("Verify and free...");
-  for (i = 0; i < count; i++)
-  {
+  for (i = 0; i < count; i++) {
     verify(a[i], b[i]);
-    if (!memmgr->free(a[i]))
-    {
-      printf("Failed to free %p\n", b[i]);
+    if (memmgr->release(a[i]) != kErrorOk) {
+      printf("Failed to free %p\n", a[i]);
       problems++;
     }
     free(b[i]);
   }
   printf("done\n");
-  stats("dump5.dot");
+  stats();
 
   printf("\n");
   if (problems)
@@ -186,8 +168,8 @@ int main(int argc, char* argv[])
   else
     printf("Status: Success\n");
 
-  free(a);
-  free(b);
+  ::free(a);
+  ::free(b);
 
   return 0;
 }

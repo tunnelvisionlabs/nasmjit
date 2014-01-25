@@ -9,159 +9,436 @@
 #define _ASMJIT_X86_X86FUNC_H
 
 // [Dependencies - AsmJit]
-#include "../core/defs.h"
-#include "../core/func.h"
-
+#include "../base/defs.h"
+#include "../base/func.h"
 #include "../x86/x86defs.h"
 
 // [Api-Begin]
-#include "../core/apibegin.h"
+#include "../base/apibegin.h"
 
-namespace AsmJit {
+namespace asmjit {
+namespace x86x64 {
 
-//! @addtogroup AsmJit_X86
+//! @addtogroup asmjit_x86x64
 //! @{
 
 // ============================================================================
-// [AsmJit::TypeId]
+// [asmjit::kFuncConv]
 // ============================================================================
 
-ASMJIT_DECLARE_TYPE_CORE(kX86VarTypeIntPtr);
-ASMJIT_DECLARE_TYPE_ID(void, kVarTypeInvalid);
-ASMJIT_DECLARE_TYPE_ID(Void, kVarTypeInvalid);
+//! @brief X86 function calling conventions.
+//!
+//! Calling convention is scheme how function arguments are passed into
+//! function and how functions returns values. In assembler programming
+//! it's needed to always comply with function calling conventions, because
+//! even small inconsistency can cause undefined behavior or crash.
+//!
+//! List of calling conventions for 32-bit x86 mode:
+//! - @c kFuncConvCDecl - Calling convention for C runtime.
+//! - @c kFuncConvStdCall - Calling convention for WinAPI functions.
+//! - @c kFuncConvMsThisCall - Calling convention for C++ members under
+//!      Windows (produced by MSVC and all MSVC compatible compilers).
+//! - @c kFuncConvMsFastCall - Fastest calling convention that can be used
+//!      by MSVC compiler.
+//! - @c kFuncConv_BORNANDFASTCALL - Borland fastcall convention.
+//! - @c kFuncConvGccFastCall - GCC fastcall convention (2 register arguments).
+//! - @c kFuncConvGccRegParm1 - GCC regparm(1) convention.
+//! - @c kFuncConvGccRegParm2 - GCC regparm(2) convention.
+//! - @c kFuncConvGccRegParm3 - GCC regparm(3) convention.
+//!
+//! List of calling conventions for 64-bit x86 mode (x64):
+//! - @c kFuncConvX64W - Windows 64-bit calling convention (WIN64 ABI).
+//! - @c kFuncConvX64U - Unix 64-bit calling convention (AMD64 ABI).
+//!
+//! There is also @c kFuncConvHost that is defined to fit best to your
+//! compiler.
+//!
+//! These types are used together with @c asmjit::Compiler::addFunc()
+//! method.
+ASMJIT_ENUM(kFuncConv) {
+  // --------------------------------------------------------------------------
+  // [X64]
+  // --------------------------------------------------------------------------
 
-ASMJIT_DECLARE_TYPE_ID(int8_t, kX86VarTypeGpd);
-ASMJIT_DECLARE_TYPE_ID(uint8_t, kX86VarTypeGpd);
+  //! @brief X64 calling convention for Windows platform (WIN64 ABI).
+  //!
+  //! For first four arguments are used these registers:
+  //! - 1. 32/64-bit integer or floating point argument - rcx/xmm0
+  //! - 2. 32/64-bit integer or floating point argument - rdx/xmm1
+  //! - 3. 32/64-bit integer or floating point argument - r8/xmm2
+  //! - 4. 32/64-bit integer or floating point argument - r9/xmm3
+  //!
+  //! Note first four arguments here means arguments at positions from 1 to 4
+  //! (included). For example if second argument is not passed in register then
+  //! rdx/xmm1 register is unused.
+  //!
+  //! All other arguments are pushed on the stack in right-to-left direction.
+  //! Stack is aligned by 16 bytes. There is 32-byte shadow space on the stack
+  //! that can be used to save up to four 64-bit registers (probably designed to
+  //! be used to save first four arguments passed in registers).
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except for first 4 parameters that's in registers)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - RAX register.
+  //! - Floating points - XMM0 register.
+  //!
+  //! Stack is always aligned by 16 bytes.
+  //!
+  //! More information about this calling convention can be found on MSDN:
+  //! http://msdn.microsoft.com/en-us/library/9b372w95.aspx .
+  kFuncConvX64W = 1,
 
-ASMJIT_DECLARE_TYPE_ID(int16_t, kX86VarTypeGpd);
-ASMJIT_DECLARE_TYPE_ID(uint16_t, kX86VarTypeGpd);
+  //! @brief X64 calling convention for Unix platforms (AMD64 ABI).
+  //!
+  //! First six 32 or 64-bit integer arguments are passed in rdi, rsi, rdx,
+  //! rcx, r8, r9 registers. First eight floating point or Xmm arguments
+  //! are passed in xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 registers.
+  //! This means that in registers can be transferred up to 14 arguments total.
+  //!
+  //! There is also RED ZONE below the stack pointer that can be used for
+  //! temporary storage. The red zone is the space from [rsp-128] to [rsp-8].
+  //!
+  //! Arguments direction:
+  //! - Right to Left (Except for arguments passed in registers).
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - RAX register.
+  //! - Floating points - XMM0 register.
+  //!
+  //! Stack is always aligned by 16 bytes.
+  kFuncConvX64U = 2,
 
-ASMJIT_DECLARE_TYPE_ID(int32_t, kX86VarTypeGpd);
-ASMJIT_DECLARE_TYPE_ID(uint32_t, kX86VarTypeGpd);
+  // --------------------------------------------------------------------------
+  // [X86]
+  // --------------------------------------------------------------------------
 
-#if defined(ASMJIT_X64)
-ASMJIT_DECLARE_TYPE_ID(int64_t, kX86VarTypeGpq);
-ASMJIT_DECLARE_TYPE_ID(uint64_t, kX86VarTypeGpq);
-#endif // ASMJIT_X64
+  //! @brief Cdecl calling convention (used by C runtime).
+  //!
+  //! Compatible across MSVC and GCC.
+  //!
+  //! Arguments direction:
+  //! - Right to Left
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  kFuncConvCDecl = 3,
 
-ASMJIT_DECLARE_TYPE_ID(float, kX86VarTypeFloat);
-ASMJIT_DECLARE_TYPE_ID(double, kX86VarTypeDouble);
+  //! @brief Stdcall calling convention (used by WinAPI).
+  //!
+  //! Compatible across MSVC and GCC.
+  //!
+  //! Arguments direction:
+  //! - Right to Left
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  kFuncConvStdCall = 4,
+
+  //! @brief MSVC specific calling convention used by MSVC/Intel compilers
+  //! for struct/class methods.
+  //!
+  //! This is MSVC (and Intel) only calling convention used in Windows
+  //! world for C++ class methods. Implicit 'this' pointer is stored in
+  //! ECX register instead of storing it on the stack.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except this pointer in ECX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  //!
+  //! C++ class methods that have variable count of arguments uses different
+  //! calling convention called cdecl.
+  //!
+  //! @note This calling convention is always used by MSVC for class methods,
+  //! it's implicit and there is no way how to override it.
+  kFuncConvMsThisCall = 5,
+
+  //! @brief MSVC specific fastcall.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  //!
+  //! @note This calling convention differs to GCC one in stack cleaning
+  //! mechanism.
+  kFuncConvMsFastCall = 6,
+
+  //! @brief Borland specific fastcall with 2 parameters in registers.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX
+  //! registers, all others on the stack in left-to-right order.
+  //!
+  //! Arguments direction:
+  //! - Left to Right (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  //!
+  //! @note Arguments on the stack are in left-to-right order that differs
+  //! to other fastcall conventions used in different compilers.
+  kFuncConvBorlandFastCall = 7,
+
+  //! @brief GCC specific fastcall convention.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in ECX:EDX
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in ECX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Callee.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  //!
+  //! @note This calling convention should be compatible with
+  //! @c kFuncConvMsFastCall.
+  kFuncConvGccFastCall = 8,
+
+  //! @brief GCC specific regparm(1) convention.
+  //!
+  //! The first parameter (evaluated from left-to-right) is in EAX register,
+  //! all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first one integer argument in EAX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  kFuncConvGccRegParm1 = 9,
+
+  //! @brief GCC specific regparm(2) convention.
+  //!
+  //! Two first parameters (evaluated from left-to-right) are in EAX:EDX
+  //! registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first two integer arguments in EAX:EDX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  kFuncConvGccRegParm2 = 10,
+
+  //! @brief GCC specific fastcall with 3 parameters in registers.
+  //!
+  //! Three first parameters (evaluated from left-to-right) are in
+  //! EAX:EDX:ECX registers, all others on the stack in right-to-left order.
+  //!
+  //! Arguments direction:
+  //! - Right to Left (except to first three integer arguments in EAX:EDX:ECX)
+  //!
+  //! Stack is cleaned by:
+  //! - Caller.
+  //!
+  //! Return value:
+  //! - Integer types - EAX:EDX registers.
+  //! - Floating points - fp0 register.
+  kFuncConvGccRegParm3 = 11,
+
+  // --------------------------------------------------------------------------
+  // [Host]
+  // --------------------------------------------------------------------------
+
+  //! @def kFuncConvHost
+  //! @brief Default calling convention for current platform / operating system.
+
+  //! @def kFuncConvHostCDecl
+  //! @brief Default C calling convention based on current compiler's settings.
+
+  //! @def kFuncConvHostStdCall
+  //! @brief Compatibility for __stdcall calling convention.
+  //!
+  //! @note This enumeration is always set to a value which is compatible with
+  //! current compilers __stdcall calling convention. In 64-bit mode the value
+  //! is compatible with @ref kFuncConvX64W or @ref kFuncConvX64U.
+
+  //! @def kFuncConvHostFastCall
+  //! @brief Compatibility for __fastcall calling convention.
+  //!
+  //! @note This enumeration is always set to a value which is compatible with
+  //! current compilers __fastcall calling convention. In 64-bit mode the value
+  //! is compatible with @ref kFuncConvX64W or @ref kFuncConvX64U.
+
+#if defined(ASMJIT_HOST_X86)
+
+  kFuncConvHost = kFuncConvCDecl,
+  kFuncConvHostCDecl = kFuncConvCDecl,
+  kFuncConvHostStdCall = kFuncConvStdCall,
+
+# if defined(_MSC_VER)
+  kFuncConvHostFastCall = kFuncConvMsFastCall
+# elif defined(__GNUC__)
+  kFuncConvHostFastCall = kFuncConvGccFastCall
+# elif defined(__BORLANDC__)
+  kFuncConvHostFastCall = kFuncConvBorlandFastCall
+# else
+#  error "asmjit/x86/x86func.h - asmjit::kFuncConvHostFastCall not supported."
+# endif
+
+#else
+
+# if defined(ASMJIT_OS_WINDOWS)
+  kFuncConvHost = kFuncConvX64W,
+# else
+  kFuncConvHost = kFuncConvX64U,
+# endif
+
+  kFuncConvHostCDecl = kFuncConvHost,
+  kFuncConvHostStdCall = kFuncConvHost,
+  kFuncConvHostFastCall = kFuncConvHost
+
+#endif // ASMJIT_HOST
+};
 
 // ============================================================================
-// [AsmJit::X86FuncDecl]
+// [asmjit::kFuncHint]
+// ============================================================================
+
+//! @brief X86 function hints.
+ASMJIT_ENUM(kFuncHint) {
+  //! @brief Use push/pop sequences instead of mov sequences in function prolog
+  //! and epilog.
+  kFuncHintPushPop = 16,
+  //! @brief Add emms instruction to the function epilog.
+  kFuncHintEmms = 17,
+  //! @brief Add sfence instruction to the function epilog.
+  kFuncHintSFence = 18,
+  //! @brief Add lfence instruction to the function epilog.
+  kFuncHintLFence = 19
+};
+
+// ============================================================================
+// [asmjit::kFuncFlags]
+// ============================================================================
+
+//! @brief X86 function flags.
+ASMJIT_ENUM(kFuncFlags) {
+  //! @brief Whether to emit register load/save sequence using push/pop pairs.
+  kFuncFlagPushPop = 0x00010000,
+
+  //! @brief Whether to emit "enter" instead of three instructions in case
+  //! that the function is not naked or misaligned.
+  kFuncFlagEnter = 0x00020000,
+
+  //! @brief Whether to emit "leave" instead of two instructions in case
+  //! that the function is not naked or misaligned.
+  kFuncFlagLeave = 0x00040000,
+
+  //! @brief Whether it's required to move arguments to a new stack location,
+  //! because of manual aligning.
+  kFuncFlagMoveArgs = 0x00080000,
+
+  //! @brief Whether to emit EMMS instruction in epilog (auto-detected).
+  kFuncFlagEmms = 0x01000000,
+
+  //! @brief Whether to emit SFence instruction in epilog (auto-detected).
+  //!
+  //! @note @ref kFuncFlagSFence and @ref kFuncFlagLFence
+  //! combination will result in emitting mfence.
+  kFuncFlagSFence = 0x02000000,
+
+  //! @brief Whether to emit LFence instruction in epilog (auto-detected).
+  //!
+  //! @note @ref kFuncFlagSFence and @ref kFuncFlagLFence
+  //! combination will result in emitting mfence.
+  kFuncFlagLFence = 0x04000000
+};
+
+// ============================================================================
+// [asmjit::X86X64FuncDecl]
 // ============================================================================
 
 //! @brief X86 function, including calling convention, arguments and their
 //! register indices or stack positions.
-struct X86FuncDecl : public FuncDecl
-{
+struct X86X64FuncDecl : public FuncDecl {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create a new @ref FunctionX86 instance.
-  inline X86FuncDecl()
-  { reset(); }
+  //! @brief Create a new @ref X86X64FuncDecl instance.
+  ASMJIT_INLINE X86X64FuncDecl() { reset(); }
 
   // --------------------------------------------------------------------------
-  // [Accessors - Core]
+  // [Accessors - X86]
   // --------------------------------------------------------------------------
 
-  //! @brief Get stack size needed for function arguments passed on the stack.
-  inline uint32_t getArgumentsStackSize() const
-  { return _argumentsStackSize; }
+  //! @brief Get used registers (mask).
+  //!
+  //! @note The result depends on the function calling convention AND the
+  //! function prototype. Returned mask contains only registers actually used
+  //! to pass function arguments.
+  ASMJIT_INLINE uint32_t getUsed(uint32_t c) const { return _used.get(c); }
 
-  //! @brief Get bit-mask of GP registers used to pass function arguments.
-  inline uint32_t getGpArgumentsMask() const
-  { return _gpArgumentsMask; }
+  //! @brief Get passed registers (mask).
+  //!
+  //! @note The result depends on the function calling convention used; the
+  //! prototype of the function doesn't affect the mask returned.
+  ASMJIT_INLINE uint32_t getPassed(uint32_t c) const { return _passed.get(c); }
 
-  //! @brief Get bit-mask of MM registers used to pass function arguments.
-  inline uint32_t getMmArgumentsMask() const
-  { return _mmArgumentsMask; }
+  //! @brief Get preserved registers (mask).
+  //!
+  //! @note The result depends on the function calling convention used; the
+  //! prototype of the function doesn't affect the mask returned.
+  ASMJIT_INLINE uint32_t getPreserved(uint32_t c) const { return _preserved.get(c); }
 
-  //! @brief Get bit-mask of XMM registers used to pass function arguments.
-  inline uint32_t getXmmArgumentsMask() const
-  { return _xmmArgumentsMask; }
+  //! @brief Get ther order of passed registers (Gp).
+  //!
+  //! @note The result depends on the function calling convention used; the
+  //! prototype of the function doesn't affect the mask returned.
+  ASMJIT_INLINE const uint8_t* getPassedOrderGp() const { return _passedOrderGp; }
+
+  //! @brief Get ther order of passed registers (Xmm).
+  //!
+  //! @note The result depends on the function calling convention used; the
+  //! prototype of the function doesn't affect the mask returned.
+  ASMJIT_INLINE const uint8_t* getPassedOrderXmm() const { return _passedOrderXmm; }
 
   // --------------------------------------------------------------------------
-  // [Accessors - Convention]
+  // [FindArgByReg]
   // --------------------------------------------------------------------------
 
-  //! @brief Get function calling convention, see @c kX86FuncConv.
-  inline uint32_t getConvention() const
-  { return _convention; }
-
-  //! @brief Get whether the callee pops the stack.
-  inline uint32_t getCalleePopsStack() const
-  { return _calleePopsStack; }
-
-  //! @brief Get direction of arguments passed on the stack.
-  //!
-  //! Direction should be always @c kFuncArgsRTL.
-  //!
-  //! @note This is related to used calling convention, it's not affected by
-  //! number of function arguments or their types.
-  inline uint32_t getArgumentsDirection() const
-  { return _argumentsDirection; }
-
-  //! @brief Get registers used to pass first integer parameters by current
-  //! calling convention.
-  //!
-  //! @note This is related to used calling convention, it's not affected by
-  //! number of function arguments or their types.
-  inline const uint8_t* getGpList() const
-  { return _gpList; }
-
-  //! @brief Get registers used to pass first SP-FP or DP-FPparameters by
-  //! current calling convention.
-  //!
-  //! @note This is related to used calling convention, it's not affected by
-  //! number of function arguments or their types.
-  inline const uint8_t* getXmmList() const
-  { return _xmmList; }
-
-  //! @brief Get bit-mask of GP registers which might be used for arguments.
-  inline uint32_t getGpListMask() const
-  { return _gpListMask; }
-
-  //! @brief Get bit-mask of MM registers which might be used for arguments.
-  inline uint32_t getMmListMask() const
-  { return _mmListMask; }
-
-  //! @brief Get bit-mask of XMM registers which might be used for arguments.
-  inline uint32_t getXmmListMask() const
-  { return _xmmListMask; }
-
-  //! @brief Get bit-mask of general purpose registers that's preserved
-  //! (non-volatile).
-  //!
-  //! @note This is related to used calling convention, it's not affected by
-  //! number of function arguments or their types.
-  inline uint32_t getGpPreservedMask() const
-  { return _gpPreservedMask; }
-
-  //! @brief Get bit-mask of MM registers that's preserved (non-volatile).
-  //!
-  //! @note No standardized calling function is not preserving MM registers.
-  //! This member is here for extension writers who need for some reason custom
-  //! calling convention that can be called through code generated by AsmJit
-  //! (or other runtime code generator).
-  inline uint32_t getMmPreservedMask() const
-  { return _mmPreservedMask; }
-
-  //! @brief Get bit-mask of XMM registers that's preserved (non-volatile).
-  //!
-  //! @note This is related to used calling convention, it's not affected by
-  //! number of function arguments or their types.
-  inline uint32_t getXmmPreservedMask() const
-  { return _xmmPreservedMask; }
-
-  // --------------------------------------------------------------------------
-  // [Methods]
-  // --------------------------------------------------------------------------
-
-  //! @brief Find argument ID by the register code.
-  ASMJIT_API uint32_t findArgumentByRegCode(uint32_t regCode) const;
+  //! @brief Find argument ID by register class and index.
+  ASMJIT_API uint32_t findArgByReg(uint32_t rClass, uint32_t rIndex) const;
 
   // --------------------------------------------------------------------------
   // [SetPrototype]
@@ -172,7 +449,7 @@ struct X86FuncDecl : public FuncDecl
   //! This will set function calling convention and setup arguments variables.
   //!
   //! @note This function will allocate variables, it can be called only once.
-  ASMJIT_API void setPrototype(uint32_t convention, uint32_t returnType, const uint32_t* arguments, uint32_t argumentsCount);
+  ASMJIT_API bool setPrototype(uint32_t convention, const FuncPrototype& prototype);
 
   // --------------------------------------------------------------------------
   // [Reset]
@@ -181,77 +458,59 @@ struct X86FuncDecl : public FuncDecl
   ASMJIT_API void reset();
 
   // --------------------------------------------------------------------------
-  // [Members - Core]
+  // [Members]
   // --------------------------------------------------------------------------
 
-  //! @brief Count of bytes consumed by arguments on the stack.
-  uint16_t _argumentsStackSize;
-  //! @brief Bitmask for GP registers used as passed function arguments.
-  uint16_t _gpArgumentsMask;
-  //! @brief Bitmask for MM registers used as passed function arguments.
-  uint16_t _mmArgumentsMask;
-  //! @brief Bitmask for XMM registers used as passed function arguments.
-  uint16_t _xmmArgumentsMask;
+  //! @brief Used registers .
+  RegMask _used;
 
-  // --------------------------------------------------------------------------
-  // [Membes - Convention]
-  //
-  // This section doesn't depend on function arguments or return type. It 
-  // depends only on function calling convention and it's filled according to
-  // that value.
-  // --------------------------------------------------------------------------
+  //! @brief Passed registers (defined by the calling convention).
+  RegMask _passed;
+  //! @brief Preserved registers (defined by the calling convention).
+  RegMask _preserved;
 
-  //! @brief Calling convention.
-  uint8_t _convention;
-  //! @brief Whether a callee pops stack.
-  uint8_t _calleePopsStack;
-  //! @brief Direction for arguments passed on the stack, see @c kFuncArgsDirection.
-  uint8_t _argumentsDirection;
-  //! @brief Reserved for future use #1 (alignment).
-  uint8_t _reserved1;
-
-  //! @brief List of register IDs used for GP arguments (order is important).
-  //!
-  //! @note All registers in _gpList are also specified in @ref _gpListMask.
-  //! Unused fields are filled by @ref kRegIndexInvalid.
-  uint8_t _gpList[16];
-  //! @brief List of register IDs used for XMM arguments (order is important).
-  //!
-  //! @note All registers in _gpList are also specified in @ref _xmmListMask.
-  //! Unused fields are filled by @ref kRegIndexInvalid.
-  uint8_t _xmmList[16];
-
-  //! @brief Bitmask for GP registers which might be used by arguments.
-  //!
-  //! @note All registers in _gpListMask are also specified in @ref _gpList.
-  uint16_t _gpListMask;
-  //! @brief Bitmask for MM registers which might be used by arguments.
-  uint16_t _mmListMask;
-  //! @brief Bitmask for XMM registers which might be used by arguments.
-  //!
-  //! @note All registers in _xmmListMask are also specified in @ref _xmmList.
-  uint16_t _xmmListMask;
-
-  //! @brief Bitmask for GP registers preserved across the function call.
-  //!
-  //! @note Preserved register mask is complement to @ref _gpListMask.
-  uint16_t _gpPreservedMask;
-  //! @brief Bitmask for MM registers preserved across the function call.
-  //!
-  //! @note Preserved register mask is complement to @ref _mmListMask.
-  uint16_t _mmPreservedMask;
-  //! @brief Bitmask for XMM registers preserved across the function call.
-  //!
-  //! @note Preserved register mask is complement to @ref _xmmListMask.
-  uint16_t _xmmPreservedMask;
+  //! @brief Order of registers defined to pass function arguments (Gp).
+  uint8_t _passedOrderGp[kFuncArgCount];
+  //! @brief Order of registers defined to pass function arguments (Xmm).
+  uint8_t _passedOrderXmm[kFuncArgCount];
 };
 
 //! @}
 
-} // AsmJit namespace
+} // x86x64 namespace
+} // asmjit namespace
+
+// ============================================================================
+// [asmjit::TypeId]
+// ============================================================================
+
+namespace asmjit {
+
+// TODO: [Func] Port.
+ASMJIT_DECLARE_TYPE_CORE(kVarTypeIntPtr);
+
+ASMJIT_DECLARE_TYPE_ID(void, kVarTypeInvalid);
+ASMJIT_DECLARE_TYPE_ID(Void, kVarTypeInvalid);
+
+ASMJIT_DECLARE_TYPE_ID(int8_t, kVarTypeInt8);
+ASMJIT_DECLARE_TYPE_ID(uint8_t, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(int16_t, kVarTypeInt16);
+ASMJIT_DECLARE_TYPE_ID(uint16_t, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(int32_t, kVarTypeInt32);
+ASMJIT_DECLARE_TYPE_ID(uint32_t, kVarTypeUInt32);
+
+ASMJIT_DECLARE_TYPE_ID(int64_t, kVarTypeInt64);
+ASMJIT_DECLARE_TYPE_ID(uint64_t, kVarTypeUInt64);
+
+ASMJIT_DECLARE_TYPE_ID(float, kVarTypeFp32);
+ASMJIT_DECLARE_TYPE_ID(double, kVarTypeFp64);
+
+} // asmjit namespace
 
 // [Api-End]
-#include "../core/apiend.h"
+#include "../base/apiend.h"
 
 // [Guard]
 #endif // _ASMJIT_X86_X86FUNC_H

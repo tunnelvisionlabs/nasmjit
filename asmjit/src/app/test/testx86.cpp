@@ -5,652 +5,223 @@
 // Zlib - See COPYING file in this package.
 
 // [Dependencies - AsmJit]
-#include <asmjit/x86.h>
+#include <asmjit/asmjit.h>
+
+// [Dependencies - Test]
+#include "genblend.h"
 
 // [Dependencies - C]
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-using namespace AsmJit;
+using namespace asmjit;
+using namespace asmjit::host;
 
 // ============================================================================
 // [X86Test]
 // ============================================================================
 
-//! @brief Interface used to test X86Compiler.
-struct X86Test
-{
-  // --------------------------------------------------------------------------
-  // [Interface]
-  // --------------------------------------------------------------------------
-
+//! @brief Interface used to test Compiler.
+struct X86Test {
+  X86Test(const char* name = NULL) { _name.setString(name); }
   virtual ~X86Test() {}
-  virtual const char* getName() const = 0;
 
-  virtual void compile(X86Compiler& c) = 0;
-  virtual bool run(void* func, StringBuilder& output, StringBuilder& expected) = 0;
+  ASMJIT_INLINE const char* getName() const { return _name.getData(); }
+
+  virtual void compile(Compiler& c) = 0;
+  virtual bool run(void* func, StringBuilder& result, StringBuilder& expect) = 0;
+
+  StringBuilder _name;
 };
 
 // ============================================================================
-// [X86Test_FuncAlign]
+// [X86Test_AlignBase]
 // ============================================================================
 
-struct X86Test_FuncAlign : public X86Test
-{
-  X86Test_FuncAlign(uint argsCount, uint varsCount, bool naked, bool pushPop) :
-    _argsCount(argsCount),
-    _varsCount(varsCount),
+struct X86Test_AlignBase : public X86Test {
+  X86Test_AlignBase(uint32_t argCount, uint32_t varCount, bool naked, bool pushPop) :
+    _argCount(argCount),
+    _varCount(varCount),
     _naked(naked),
-    _pushPop(pushPop)
-  {
-    _name.setFormat("FuncAlign - Args=%u, Vars=%u, Naked=%s, PushPop=%s",
-      argsCount,
-      varsCount,
-      naked   ? "true" : "false",
-      pushPop ? "true" : "false");
+    _pushPop(pushPop) {
+
+    _name.setFormat("[Align] Args=%u Vars=%u Naked=%c PushPop=%c",
+      argCount,
+      varCount,
+      naked ? 'Y' : 'N',
+      pushPop ? 'Y' : 'N');
   }
 
-  virtual ~X86Test_FuncAlign() {}
-
-  virtual const char* getName() const
-  {
-    return _name.getData();
+  static void add(PodVector<X86Test*>& tests) {
+    for (unsigned int i = 0; i <= 6; i++) {
+      for (unsigned int j = 0; j <= 4; j++) {
+        tests.append(new X86Test_AlignBase(i, j, false, false));
+        tests.append(new X86Test_AlignBase(i, j, false, true ));
+        tests.append(new X86Test_AlignBase(i, j, true , false));
+        tests.append(new X86Test_AlignBase(i, j, true , true ));
+      }
+    }
   }
 
-  virtual void compile(X86Compiler& c)
-  {
-    switch (_argsCount)
-    {
-      case 0: c.newFunc(kX86FuncConvDefault, FuncBuilder0<int>()); break;
-      case 1: c.newFunc(kX86FuncConvDefault, FuncBuilder1<int, int>()); break;
-      case 2: c.newFunc(kX86FuncConvDefault, FuncBuilder2<int, int, int>()); break;
-      case 3: c.newFunc(kX86FuncConvDefault, FuncBuilder3<int, int, int, int>()); break;
+  virtual void compile(Compiler& c) {
+    switch (_argCount) {
+      case 0: c.addFunc(kFuncConvHost, FuncBuilder0<int>()); break;
+      case 1: c.addFunc(kFuncConvHost, FuncBuilder1<int, int>()); break;
+      case 2: c.addFunc(kFuncConvHost, FuncBuilder2<int, int, int>()); break;
+      case 3: c.addFunc(kFuncConvHost, FuncBuilder3<int, int, int, int>()); break;
+      case 4: c.addFunc(kFuncConvHost, FuncBuilder4<int, int, int, int, int>()); break;
+      case 5: c.addFunc(kFuncConvHost, FuncBuilder5<int, int, int, int, int, int>()); break;
+      case 6: c.addFunc(kFuncConvHost, FuncBuilder6<int, int, int, int, int, int, int>()); break;
     }
 
-    if (_naked  ) c.getFunc()->setHint(kFuncHintNaked, true);
-    if (_pushPop) c.getFunc()->setHint(kX86FuncHintPushPop, true);
+    c.getFunc()->setHint(kFuncHintNaked, _naked);
+    c.getFunc()->setHint(kFuncHintPushPop, _pushPop);
 
-    GpVar gvar(c.newGpVar());
-    XmmVar xvar(c.newXmmVar(kX86VarTypeXmm));
+    GpVar gpVar(c, kVarTypeIntPtr);
+    GpVar gpSum(c, kVarTypeInt32);
+    XmmVar xmmVar(c, kVarTypeXmm);
 
     // Alloc, use and spill preserved registers.
-    if (_varsCount)
-    {
-      uint var = 0;
-      uint index = 0;
-      uint mask = 1;
-      uint preserved = c.getFunc()->getDecl()->getGpPreservedMask();
+    if (_varCount) {
+      c.comment("Var");
+
+      uint32_t varIndex = 0;
+      uint32_t regIndex = 0;
+      uint32_t regMask = 0x1;
+      uint32_t preservedMask = c.getFunc()->getDecl()->getPreserved(kRegClassGp);
 
       do {
-        if ((preserved & mask) != 0 && (index != kX86RegIndexEsp && index != kX86RegIndexEbp))
-        {
-          GpVar somevar(c.newGpVar(kX86VarTypeGpd));
-          c.alloc(somevar, index);
-          c.mov(somevar, imm(0));
-          c.spill(somevar);
-          var++;
+        if ((preservedMask & regMask) != 0 && (regIndex != kRegIndexSp && regIndex != kRegIndexBp)) {
+          GpVar tmp(c, kVarTypeInt32);
+          c.alloc(tmp, regIndex);
+          c.xor_(tmp, tmp);
+          c.spill(tmp);
+          varIndex++;
         }
 
-        index++;
-        mask <<= 1;
-      } while (var < _varsCount && index < kX86RegNumGp);
+        regIndex++;
+        regMask <<= 1;
+      } while (varIndex < _varCount && regIndex < kRegCountGp);
     }
 
-    c.alloc(gvar, zax);
-    c.lea(gvar, xvar.m());
-    c.and_(gvar, imm(15));
-    c.ret(gvar);
+    // Do a sum of arguments to verify possible relocation when misaligned.
+    if (_argCount) {
+      uint32_t argIndex;
+
+      c.comment("Arg");
+      c.xor_(gpSum, gpSum);
+
+      for (argIndex = 0; argIndex < _argCount; argIndex++) {
+        GpVar gpArg(c, kVarTypeInt32);
+
+        c.setArg(argIndex, gpArg);
+        c.add(gpSum, gpArg);
+      }
+    }
+
+    // Check alignment of xmmVar (has to be 16).
+    c.comment("Ret");
+    c.lea(gpVar, xmmVar.m());
+    c.shl(gpVar.r32(), 28);
+
+    // Add a sum of arguments to check whether they are correct.
+    if (_argCount)
+      c.or_(gpVar.r32(), gpSum);
+
+    c.ret(gpVar);
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef intptr_t (*Func0)();
-    typedef intptr_t (*Func1)(int);
-    typedef intptr_t (*Func2)(int, int);
-    typedef intptr_t (*Func3)(int, int, int);
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func0)();
+    typedef int (*Func1)(int);
+    typedef int (*Func2)(int, int);
+    typedef int (*Func3)(int, int, int);
+    typedef int (*Func4)(int, int, int, int);
+    typedef int (*Func5)(int, int, int, int, int);
+    typedef int (*Func6)(int, int, int, int, int, int);
 
-    intptr_t resultRet = 0;
-    intptr_t expectedRet = 0;
+    unsigned int resultRet = 0;
+    unsigned int expectRet = 0;
 
-    switch (_argsCount)
-    {
+    switch (_argCount) {
       case 0:
         resultRet = asmjit_cast<Func0>(_func)();
+        expectRet = 0;
         break;
       case 1:
         resultRet = asmjit_cast<Func1>(_func)(1);
+        expectRet = 1;
         break;
       case 2:
         resultRet = asmjit_cast<Func2>(_func)(1, 2);
+        expectRet = 1 + 2;
         break;
       case 3:
         resultRet = asmjit_cast<Func3>(_func)(1, 2, 3);
+        expectRet = 1 + 2 + 3;
+        break;
+      case 4:
+        resultRet = asmjit_cast<Func4>(_func)(1, 2, 3, 4);
+        expectRet = 1 + 2 + 3 + 4;
+        break;
+      case 5:
+        resultRet = asmjit_cast<Func5>(_func)(1, 2, 3, 4, 5);
+        expectRet = 1 + 2 + 3 + 4 + 5;
+        break;
+      case 6:
+        resultRet = asmjit_cast<Func6>(_func)(1, 2, 3, 4, 5, 6);
+        expectRet = 1 + 2 + 3 + 4 + 5 + 6;
         break;
     }
 
-    result.setFormat("%i", static_cast<int>(resultRet));
-    expected.setFormat("%i", static_cast<int>(expectedRet));
+    result.setFormat("ret={%u, %u}", resultRet >> 28, resultRet & 0x0FFFFFFFU);
+    expect.setFormat("ret={%u, %u}", expectRet >> 28, expectRet & 0x0FFFFFFFU);
 
-    return resultRet == expectedRet;
+    return resultRet == expectRet;
   }
 
-  StringBuilder _name;
-  uint _argsCount;
-  uint _varsCount;
+  unsigned int _argCount;
+  unsigned int _varCount;
 
   bool _naked;
   bool _pushPop;
 };
 
 // ============================================================================
-// [X86Test_Func1]
+// [X86Test_JumpCross]
 // ============================================================================
 
-struct X86Test_Func1 : public X86Test
-{
-  virtual const char* getName() const { return "Func1 - Many function arguments"; }
+struct X86Test_JumpCross : public X86Test {
+  X86Test_JumpCross() : X86Test("[Jump] Cross jump") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, 
-      FuncBuilder8<Void, void*, void*, void*, void*, void*, void*, void*, void*>());
-
-    GpVar p1(c.getGpArg(0));
-    GpVar p2(c.getGpArg(1));
-    GpVar p3(c.getGpArg(2));
-    GpVar p4(c.getGpArg(3));
-    GpVar p5(c.getGpArg(4));
-    GpVar p6(c.getGpArg(5));
-    GpVar p7(c.getGpArg(6));
-    GpVar p8(c.getGpArg(7));
-
-    c.add(p1, 1);
-    c.add(p2, 2);
-    c.add(p3, 3);
-    c.add(p4, 4);
-    c.add(p5, 5);
-    c.add(p6, 6);
-    c.add(p7, 7);
-    c.add(p8, 8);
-
-    // Move some data into buffer provided by arguments so we can verify if it
-    // really works without looking into assembler output.
-    c.add(byte_ptr(p1), imm(1));
-    c.add(byte_ptr(p2), imm(2));
-    c.add(byte_ptr(p3), imm(3));
-    c.add(byte_ptr(p4), imm(4));
-    c.add(byte_ptr(p5), imm(5));
-    c.add(byte_ptr(p6), imm(6));
-    c.add(byte_ptr(p7), imm(7));
-    c.add(byte_ptr(p8), imm(8));
-
-    c.endFunc();
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_JumpCross());
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(void*, void*, void*, void*, void*, void*, void*, void*);
-    Func func = asmjit_cast<Func>(_func);
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<Void>());
 
-    uint8_t resultBuf[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    uint8_t expectedBuf[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    Label L_1(c);
+    Label L_2(c);
+    Label L_3(c);
 
-    func(resultBuf, resultBuf, resultBuf, resultBuf,
-         resultBuf, resultBuf, resultBuf, resultBuf);
+    c.jmp(L_2);
 
-    result.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
-      resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3],
-      resultBuf[4], resultBuf[5], resultBuf[6], resultBuf[7],
-      resultBuf[8]);
-    expected.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
-      expectedBuf[0], expectedBuf[1], expectedBuf[2], expectedBuf[3],
-      expectedBuf[4], expectedBuf[5], expectedBuf[6], expectedBuf[7],
-      expectedBuf[8]);
+    c.bind(L_1);
+    c.jmp(L_3);
 
-    return memcmp(resultBuf, expectedBuf, 9) == 0;
-  }
-};
+    c.bind(L_2);
+    c.jmp(L_1);
 
-// ============================================================================
-// [X86Test_Func2]
-// ============================================================================
-
-struct X86Test_Func2 : public X86Test
-{
-  virtual const char* getName() const { return "Func2 - Register arguments handling (FastCall/X64)"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder1<int, int>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
-
-    // Call a function.
-    GpVar address(c.newGpVar());
-    GpVar var(c.getGpArg(0));
-
-    c.mov(address, imm((sysint_t)(void*)calledFunc));
-    X86CompilerFuncCall* ctx;
-
-    ctx = c.call(address);
-    ctx->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder1<int, int>());
-    ctx->setArgument(0, var);
-    ctx->setReturn(var);
-
-    ctx = c.call(address);
-    ctx->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder1<int, int>());
-    ctx->setArgument(0, var);
-    ctx->setReturn(var);
-
-    c.ret(var);
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef int (*Func)(int);
-    Func func = asmjit_cast<Func>(_func);
-
-    int resultRet = func(9);
-    int expectedRet = 9*9 * 9*9;
-
-    result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
-
-    return resultRet == expectedRet;
-  }
-
-  // Function that is called inside the generated one. Because this test is 
-  // mainly about register arguments, we need to use the fastcall calling 
-  // convention under 32-bit mode.
-  static int ASMJIT_FASTCALL calledFunc(int a) { return a * a; }
-};
-
-// ============================================================================
-// [X86Test_Func3]
-// ============================================================================
-
-struct X86Test_Func3 : public X86Test
-{
-  virtual const char* getName() const { return "Func3 - Memcpy32 function"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, uint32_t*, const uint32_t*, size_t>());
-    c.getFunc()->setHint(kFuncHintNaked, true);    // Omit unnecessary prolog/epilog.
-
-    Label L_Loop = c.newLabel();                   // Create base labels we use
-    Label L_Exit = c.newLabel();                   // in our function.
-
-    GpVar dst(c.getGpArg(0));                      // Get reference to function
-    GpVar src(c.getGpArg(1));                      // arguments.
-    GpVar cnt(c.getGpArg(2));
-
-    c.alloc(dst);                                  // Allocate all registers now,
-    c.alloc(src);                                  // because we want to keep them
-    c.alloc(cnt);                                  // in physical registers only.
-
-    c.test(cnt, cnt);                              // Exit if length is zero.
-    c.jz(L_Exit);
-
-    c.bind(L_Loop);                                // Bind the loop label here.
-
-    GpVar tmp(c.newGpVar(kX86VarTypeGpd));         // Copy a single dword (4 bytes).
-    c.mov(tmp, dword_ptr(src));
-    c.mov(dword_ptr(dst), tmp);
-
-    c.add(src, 4);                                 // Increment dst/src pointers.
-    c.add(dst, 4);
-
-    c.dec(cnt);                                    // Loop until cnt isn't zero.
-    c.jnz(L_Loop);
-
-    c.bind(L_Exit);                                // Bind the exit label here.
-    c.endFunc();                                   // End of function.
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(uint32_t*, const uint32_t*, size_t);
-    Func func = asmjit_cast<Func>(_func);
-
-    enum { kBufferSize = 32 };
-    uint32_t dstBuffer[kBufferSize];
-    uint32_t srcBuffer[kBufferSize];
-  
-    uint i;
-    for (i = 0; i < kBufferSize; i++)
-    {
-      dstBuffer[i] = 0;
-      srcBuffer[i] = i;
-    }
-    
-    func(dstBuffer, srcBuffer, kBufferSize);
-
-    result.setString("buf={");
-    expected.setString("buf={");
-
-    for (i = 0; i < kBufferSize; i++)
-    {
-      if (i != 0)
-      {
-        result.appendString(", ");
-        expected.appendString(", ");
-      }
-
-      result.appendFormat("%u", static_cast<uint>(dstBuffer[i]));
-      expected.appendFormat("%u", static_cast<uint>(srcBuffer[i]));
-    }
-
-    result.appendString("}");
-    expected.appendString("}");
-
-    return memcmp(dstBuffer, srcBuffer, kBufferSize * sizeof(uint32_t)) == 0;
-  }
-};
-
-// ============================================================================
-// [X86Test_Func4]
-// ============================================================================
-
-struct X86Test_Func4 : public X86Test
-{
-  virtual const char* getName() const { return "Func4 - Simple function call"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<int, int, int, int>());
-
-    GpVar v0(c.getGpArg(0));
-    GpVar v1(c.getGpArg(1));
-    GpVar v2(c.getGpArg(2));
-
-    // Just do something;)
-    c.shl(v0, imm(1));
-    c.shl(v1, imm(1));
-    c.shl(v2, imm(1));
-
-    // Call function.
-    GpVar address(c.newGpVar());
-    c.mov(address, imm((sysint_t)(void*)calledFunc));
-
-    X86CompilerFuncCall* fCall = c.call(address);
-    fCall->setPrototype(kX86FuncConvDefault, FuncBuilder3<Void, int, int, int>());
-    fCall->setArgument(0, v2);
-    fCall->setArgument(1, v1);
-    fCall->setArgument(2, v0);
-
-    // TODO: FuncCall return value.
-    // fCall->setReturn(v0);
-    // c.ret(v0);
-
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef int (*Func)(int, int, int);
-    Func func = asmjit_cast<Func>(_func);
-
-    int resultRet = func(3, 2, 1);
-    int expectedRet = 36;
-
-    result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
-
-    return resultRet == expectedRet;
-  }
-
-  static int calledFunc(int a, int b, int c) { return (a + b) * c; }
-};
-
-// ============================================================================
-// [X86Test_Func5]
-// ============================================================================
-
-struct X86Test_Func5 : public X86Test
-{
-  virtual const char* getName() const { return "Func5 - Conditional function call"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<int, int, int, int>());
-
-    GpVar x(c.getGpArg(0));
-    GpVar y(c.getGpArg(1));
-    GpVar op(c.getGpArg(2));
-
-    GpVar result;
-    X86CompilerFuncCall* fCall;
-
-    Label opAdd(c.newLabel());
-    Label opMul(c.newLabel());
-
-    c.cmp(op, 0);
-    c.jz(opAdd);
-    c.cmp(op, 1);
-    c.jz(opMul);
-
-    result = c.newGpVar();
-    c.mov(result, imm(0));
-    c.ret(result);
-
-    c.bind(opAdd);
-    result = c.newGpVar();
-
-    fCall = c.call((void*)calledFuncAdd);
-    fCall->setPrototype(kX86FuncConvDefault, FuncBuilder2<int, int, int>());
-    fCall->setArgument(0, x);
-    fCall->setArgument(1, y);
-    fCall->setReturn(result);
-    c.ret(result);
-
-    c.bind(opMul);
-    result = c.newGpVar();
-
-    fCall = c.call((void*)calledFuncMul);
-    fCall->setPrototype(kX86FuncConvDefault, FuncBuilder2<int, int, int>());
-    fCall->setArgument(0, x);
-    fCall->setArgument(1, y);
-    fCall->setReturn(result);
-    c.ret(result);
-
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef int (*Func)(int, int, int);
-    Func func = asmjit_cast<Func>(_func);
-
-    int arg1 = 4;
-    int arg2 = 8;
-
-    int resultAdd = func(arg1, arg2, 0);
-    int expectedAdd = calledFuncAdd(arg1, arg2);
-
-    int resultMul = func(arg1, arg2, 1);
-    int expectedMul = calledFuncMul(arg1, arg2);
-
-    result.setFormat("add=%d, mul=%d", resultAdd, resultMul);
-    expected.setFormat("add=%d, mul=%d", expectedAdd, expectedMul);
-
-    return (resultAdd == expectedAdd) && (resultMul == expectedMul);
-  }
-
-  static int calledFuncAdd(int x, int y) { return x + y; }
-  static int calledFuncMul(int x, int y) { return x * y; }
-};
-
-// ============================================================================
-// [X86Test_Func6]
-// ============================================================================
-
-struct X86Test_Func6 : public X86Test
-{
-  virtual const char* getName() const { return "Func6 - Recursive function call"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    Label skip(c.newLabel());
-
-    X86CompilerFuncDecl* func = c.newFunc(kX86FuncConvDefault, FuncBuilder1<int, int>());
-    func->setHint(kFuncHintNaked, true);
-
-    GpVar var(c.getGpArg(0));
-    c.cmp(var, imm(1));
-    c.jle(skip);
-
-    GpVar tmp(c.newGpVar(kX86VarTypeInt32));
-    c.mov(tmp, var);
-    c.dec(tmp);
-
-    X86CompilerFuncCall* fCall = c.call(func->getEntryLabel());
-    fCall->setPrototype(kX86FuncConvDefault, FuncBuilder1<int, int>());
-    fCall->setArgument(0, tmp);
-    fCall->setReturn(tmp);
-    c.mul(c.newGpVar(kX86VarTypeInt32), var, tmp);
-
-    c.bind(skip);
-    c.ret(var);
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef int (*Func)(int);
-    Func func = asmjit_cast<Func>(_func);
-
-    int resultRet = func(5);
-    int expectedRet = 1 * 2 * 3 * 4 * 5;
-
-    result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
-
-    return resultRet == expectedRet;
-  }
-};
-
-// ============================================================================
-// [X86Test_Func7]
-// ============================================================================
-
-struct X86Test_Func7 : public X86Test
-{
-  virtual const char* getName() const { return "Func7 - Many function calls"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvCompatFastCall, FuncBuilder1<int, int*>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
-
-    GpVar buf(c.getGpArg(0));
-    GpVar acc0(c.newGpVar(kX86VarTypeGpd));
-    GpVar acc1(c.newGpVar(kX86VarTypeGpd));
-
-    c.mov(acc0, 0);
-    c.mov(acc1, 0);
-
-    uint i;
-    for (i = 0; i < 4; i++)
-    {
-      {
-        GpVar ret = c.newGpVar(kX86VarTypeGpd);
-        GpVar ptr = c.newGpVar(kX86VarTypeGpz);
-        GpVar idx = c.newGpVar(kX86VarTypeGpd);
-
-        c.mov(ptr, buf);
-        c.mov(idx, imm(i));
-
-        X86CompilerFuncCall* fCall = c.call((void*)calledFunc);
-        fCall->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder2<int, int*, int>());
-        fCall->setArgument(0, ptr);
-        fCall->setArgument(1, idx);
-        fCall->setReturn(ret);
-
-        c.add(acc0, ret);
-      }
-
-      {
-        GpVar ret = c.newGpVar(kX86VarTypeGpd);
-        GpVar ptr = c.newGpVar(kX86VarTypeGpz);
-        GpVar idx = c.newGpVar(kX86VarTypeGpd);
-
-        c.mov(ptr, buf);
-        c.mov(idx, imm(i));
-
-        X86CompilerFuncCall* fCall = c.call((void*)calledFunc);
-        fCall->setPrototype(kX86FuncConvCompatFastCall, FuncBuilder2<int, int*, int>());
-        fCall->setArgument(0, ptr);
-        fCall->setArgument(1, idx);
-        fCall->setReturn(ret);
-
-        c.sub(acc1, ret);
-      }
-    }
-
-    GpVar ret(c.newGpVar());
-    c.mov(ret, acc0);
-    c.add(ret, acc1);
-    c.ret(ret);
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef int (*Func)(int*);
-    Func func = asmjit_cast<Func>(_func);
-
-    int buffer[4] = { 127, 87, 23, 17 };
-
-    int resultRet = func(buffer);
-    int expectedRet = 0;
-
-    result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
-
-    return resultRet == expectedRet;
-  }
-
-  static int ASMJIT_FASTCALL calledFunc(int* pInt, int index)
-  {
-    return pInt[index];
-  }
-};
-
-// ============================================================================
-// [X86Test_Jump1]
-// ============================================================================
-
-struct X86Test_Jump1 : public X86Test
-{
-  virtual const char* getName() const { return "Jump1 - Unrecheable code"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
-
-    Label L_A = c.newLabel();
-    Label L_B = c.newLabel();
-    Label L_C = c.newLabel();
-
-    c.jmp(L_B);
-
-    c.bind(L_A);
-    c.jmp(L_C);
-
-    c.bind(L_B);
-    c.jmp(L_A);
-
-    c.bind(L_C);
+    c.bind(L_3);
 
     c.ret();
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
     typedef void (*Func)(void);
     Func func = asmjit_cast<Func>(_func);
 
@@ -660,247 +231,85 @@ struct X86Test_Jump1 : public X86Test
 };
 
 // ============================================================================
-// [X86Test_Special1]
+// [X86Test_JumpUnreachable]
 // ============================================================================
 
-struct X86Test_Special1 : public X86Test
-{
-  virtual const char* getName() const { return "Special1 - imul"; }
+struct X86Test_JumpUnreachable : public X86Test {
+  X86Test_JumpUnreachable() : X86Test("[Jump] Unreachable code") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder4<Void, int*, int*, int, int>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_JumpUnreachable());
+  }
 
-    GpVar dst0_hi(c.getGpArg(0));
-    GpVar dst0_lo(c.getGpArg(1));
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<Void>());
 
-    GpVar v0_hi(c.newGpVar(kX86VarTypeGpd));
-    GpVar v0_lo(c.getGpArg(2));
+    Label L_1(c);
+    Label L_2(c);
+    Label L_3(c);
+    Label L_4(c);
+    Label L_5(c);
+    Label L_6(c);
+    Label L_7(c);
 
-    GpVar src0(c.getGpArg(3));
-    c.imul(v0_hi, v0_lo, src0);
+    GpVar v0(c, kVarTypeUInt32, "v0");
+    GpVar v1(c, kVarTypeUInt32, "v1");
 
-    c.mov(dword_ptr(dst0_hi), v0_hi);
-    c.mov(dword_ptr(dst0_lo), v0_lo);
+    c.bind(L_2);
+    c.bind(L_3);
+
+    c.jmp(L_1);
+
+    c.bind(L_5);
+    c.mov(v0, 0);
+
+    c.bind(L_6);
+    c.jmp(L_3);
+    c.mov(v1, 1);
+    c.jmp(L_1);
+
+    c.bind(L_4);
+    c.jmp(L_2);
+    c.bind(L_7);
+    c.add(v0, v1);
+
+    c.bind(L_1);
+    c.ret();
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(int*, int*, int, int);
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(void);
     Func func = asmjit_cast<Func>(_func);
 
-    int v0 = 4;
-    int v1 = 4;
+    func();
 
-    int resultHi;
-    int resultLo;
+    result.appendString("ret={}");
+    expect.appendString("ret={}");
 
-    int expectedHi = 0;
-    int expectedLo = v0 * v1;
-
-    func(&resultHi, &resultLo, v0, v1);
-
-    result.setFormat("hi=%d, lo=%d", resultHi, resultLo);
-    expected.setFormat("hi=%d, lo=%d", expectedHi, expectedLo);
-
-    return resultHi == expectedHi && resultLo == expectedLo;
+    return true;
   }
 };
 
 // ============================================================================
-// [X86Test_Special2]
+// [X86Test_AllocBase]
 // ============================================================================
 
-struct X86Test_Special2 : public X86Test
-{
-  virtual const char* getName() const { return "Special2 - shl and ror"; }
+struct X86Test_AllocBase : public X86Test {
+  X86Test_AllocBase() : X86Test("[Alloc] Base") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder4<Void, int*, int, int, int>());
-
-    GpVar dst0(c.getGpArg(0));
-    GpVar v0(c.getGpArg(1));
-
-    c.shl(v0, c.getGpArg(2));
-    c.ror(v0, c.getGpArg(3));
-    
-    c.mov(dword_ptr(dst0), v0);
-    c.endFunc();
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocBase());
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(int*, int, int, int);
-    Func func = asmjit_cast<Func>(_func);
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<int>());
 
-    int v0 = 0x000000FF;
-
-    int resultRet;
-    int expectedRet = 0x0000FF00;
-
-    func(&resultRet, v0, 16, 8);
-
-    result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
-
-    return resultRet == expectedRet;
-  }
-};
-
-// ============================================================================
-// [X86Test_Special3]
-// ============================================================================
-
-struct X86Test_Special3 : public X86Test
-{
-  virtual const char* getName() const { return "Special3 - rep movsb"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, void*, void*, size_t>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
-
-    GpVar dst(c.getGpArg(0));
-    GpVar src(c.getGpArg(1));
-    GpVar cnt(c.getGpArg(2));
-
-    c.rep_movsb(dst, src, cnt);
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(void*, void*, size_t);
-    Func func = asmjit_cast<Func>(_func);
-
-    char dst[20];
-    char src[20] = "Hello AsmJit!";
-    func(dst, src, strlen(src) + 1);
-
-    result.setFormat("ret=\"%s\"", dst);
-    expected.setFormat("ret=\"%s\"", src);
-
-    return ::memcmp(dst, src, strlen(src) + 1) == 0;
-  }
-};
-
-// ============================================================================
-// [X86Test_Special4]
-// ============================================================================
-
-struct X86Test_Special4 : public X86Test
-{
-  virtual const char* getName() const { return "Special4 - setz"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder3<Void, int, int, char*>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
-
-    GpVar src0(c.getGpArg(0));
-    GpVar src1(c.getGpArg(1));
-    GpVar dst0(c.getGpArg(2));
-
-    c.cmp(src0, src1);
-    c.setz(byte_ptr(dst0));
-
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(int, int, char*);
-    Func func = asmjit_cast<Func>(_func);
-
-    char resultBuf[4];
-    char expectedBuf[4] = { 1, 0, 0, 1 };
-
-    func(0, 0, &resultBuf[0]); // We are expecting 1 (0 == 0).
-    func(0, 1, &resultBuf[1]); // We are expecting 0 (0 != 1).
-    func(1, 0, &resultBuf[2]); // We are expecting 0 (1 != 0).
-    func(1, 1, &resultBuf[3]); // We are expecting 1 (1 == 1).
-
-    result.setFormat("out={%d, %d, %d, %d}", resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3]);
-    expected.setFormat("out={%d, %d, %d, %d}", expectedBuf[0], expectedBuf[1], expectedBuf[2], expectedBuf[3]);
-
-    return resultBuf[0] == expectedBuf[0] &&
-           resultBuf[1] == expectedBuf[1] &&
-           resultBuf[2] == expectedBuf[2] &&
-           resultBuf[3] == expectedBuf[3] ;
-  }
-};
-
-// ============================================================================
-// [X86Test_Special5]
-// ============================================================================
-
-struct X86Test_Special5 : public X86Test
-{
-  virtual const char* getName() const { return "Special5 - Complex imul"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder2<Void, int*, const int*>());
-    c.getFunc()->setHint(kFuncHintNaked, true);
-
-    GpVar dst = c.getGpArg(0);
-    GpVar src = c.getGpArg(1);
-
-    for (uint i = 0; i < 4; i++)
-    {
-      GpVar x = c.newGpVar(kX86VarTypeGpd);
-      GpVar y = c.newGpVar(kX86VarTypeGpd);
-      GpVar hi = c.newGpVar(kX86VarTypeGpd);
-
-      c.mov(x, dword_ptr(src, 0));
-      c.mov(y, dword_ptr(src, 4));
-
-      c.imul(hi, x, y);
-      c.add(dword_ptr(dst, 0), hi);
-      c.add(dword_ptr(dst, 4), x);
-    }
-
-    c.endFunc();
-  }
-
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(int*, const int*);
-    Func func = asmjit_cast<Func>(_func);
-
-    int src[2] = { 4, 9 };
-    int resultRet[2] = { 0, 0 };
-    int expectedRet[2] = { 0, (4 * 9) * 4 };
-
-    func(resultRet, src);
-
-    result.setFormat("ret={%d, %d}", resultRet[0], resultRet[1]);
-    expected.setFormat("ret={%d, %d}", expectedRet[0], expectedRet[1]);
-
-    return resultRet[0] == expectedRet[0] && resultRet[1] == expectedRet[1];
-  }
-};
-
-// ============================================================================
-// [X86Test_Var1]
-// ============================================================================
-
-struct X86Test_Var1 : public X86Test
-{
-  virtual const char* getName() const { return "Var1 - Simple register alloc/spill"; }
-
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder0<int>());
-
-    GpVar v0(c.newGpVar(kX86VarTypeGpd));
-    GpVar v1(c.newGpVar(kX86VarTypeGpd));
-    GpVar v2(c.newGpVar(kX86VarTypeGpd));
-    GpVar v3(c.newGpVar(kX86VarTypeGpd));
-    GpVar v4(c.newGpVar(kX86VarTypeGpd));
+    GpVar v0(c, kVarTypeInt32, "v0");
+    GpVar v1(c, kVarTypeInt32, "v1");
+    GpVar v2(c, kVarTypeInt32, "v2");
+    GpVar v3(c, kVarTypeInt32, "v3");
+    GpVar v4(c, kVarTypeInt32, "v4");
 
     c.xor_(v0, v0);
 
@@ -918,45 +327,45 @@ struct X86Test_Var1 : public X86Test
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
     typedef int (*Func)(void);
     Func func = asmjit_cast<Func>(_func);
 
     int resultRet = func();
-    int expectedRet = 1 + 2 + 3 + 4;
+    int expectRet = 1 + 2 + 3 + 4;
 
     result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
+    expect.setFormat("ret=%d", expectRet);
 
-    return resultRet == expectedRet;
+    return resultRet == expectRet;
   }
 };
 
 // ============================================================================
-// [X86Test_Var2]
+// [X86Test_AllocManual]
 // ============================================================================
 
-struct X86Test_Var2 : public X86Test
-{
-  virtual const char* getName() const { return "Var2 - Controlled register alloc/spill"; }
+struct X86Test_AllocManual : public X86Test {
+  X86Test_AllocManual() : X86Test("[Alloc] Manual alloc/spill") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder0<int>());
-    c.getFunc()->setHint(kFuncHintNaked, false);
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocManual());
+  }
 
-    GpVar v0(c.newGpVar(kX86VarTypeGpd));
-    GpVar v1(c.newGpVar(kX86VarTypeGpd));
-    GpVar cnt(c.newGpVar(kX86VarTypeGpd));
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<int>());
+
+    GpVar v0(c, kVarTypeInt32, "v0");
+    GpVar v1(c, kVarTypeInt32, "v0");
+    GpVar cnt(c, kVarTypeInt32, "cnt");
 
     c.xor_(v0, v0);
     c.xor_(v1, v1);
     c.spill(v0);
     c.spill(v1);
 
-    Label L(c.newLabel());
-    c.mov(cnt, imm(32));
+    Label L(c);
+    c.mov(cnt, 32);
     c.bind(L);
 
     c.inc(v1);
@@ -969,180 +378,170 @@ struct X86Test_Var2 : public X86Test
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
     typedef int (*Func)(void);
     Func func = asmjit_cast<Func>(_func);
 
     int resultRet = func();
-    int expectedRet = 
+    int expectRet =
       0  +  1 +  2 +  3 +  4 +  5 +  6 +  7 +  8 +  9 +
       10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 +
       20 + 21 + 22 + 23 + 24 + 25 + 26 + 27 + 28 + 29 +
       30 + 31 + 32;
 
     result.setFormat("ret=%d", resultRet);
-    expected.setFormat("ret=%d", expectedRet);
+    expect.setFormat("ret=%d", expectRet);
 
-    return resultRet == expectedRet;
+    return resultRet == expectRet;
   }
 };
 
 // ============================================================================
-// [X86Test_Var3]
+// [X86Test_AllocMany1]
 // ============================================================================
 
-struct X86Test_Var3 : public X86Test
-{
-  virtual const char* getName() const { return "Var3 - 8 variables at once"; }
+struct X86Test_AllocMany1 : public X86Test {
+  X86Test_AllocMany1() : X86Test("[Alloc] Many #1") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder2<Void, int*, int*>());
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocMany1());
+  }
 
-    // Function arguments.
-    GpVar a1(c.getGpArg(0));
-    GpVar a2(c.getGpArg(1));
+  virtual void compile(Compiler& c) {
+    unsigned int i;
+    enum { kCount = 8 };
+
+    GpVar a0(c, kVarTypeIntPtr, "a0");
+    GpVar a1(c, kVarTypeIntPtr, "a1");
+
+    c.addFunc(kFuncConvHost, FuncBuilder2<Void, int*, int*>());
+    c.setArg(0, a0);
+    c.setArg(1, a1);
 
     // Create some variables.
-    GpVar x1(c.newGpVar(kX86VarTypeGpd));
-    GpVar x2(c.newGpVar(kX86VarTypeGpd));
-    GpVar x3(c.newGpVar(kX86VarTypeGpd));
-    GpVar x4(c.newGpVar(kX86VarTypeGpd));
-    GpVar x5(c.newGpVar(kX86VarTypeGpd));
-    GpVar x6(c.newGpVar(kX86VarTypeGpd));
-    GpVar x7(c.newGpVar(kX86VarTypeGpd));
-    GpVar x8(c.newGpVar(kX86VarTypeGpd));
+    GpVar t(c, kVarTypeInt32);
+    GpVar x[kCount];
 
-    GpVar t(c.newGpVar(kX86VarTypeGpd));
+    for (i = 0; i < kCount; i++) {
+      x[i] = c.newGpVar(kVarTypeInt32);
+    }
 
     // Setup variables (use mov with reg/imm to se if register allocator works).
-    c.mov(x1, 1);
-    c.mov(x2, 2);
-    c.mov(x3, 3);
-    c.mov(x4, 4);
-    c.mov(x5, 5);
-    c.mov(x6, 6);
-    c.mov(x7, 7);
-    c.mov(x8, 8);
+    for (i = 0; i < kCount; i++) {
+      c.mov(x[i], static_cast<int>(i + 1));
+    }
 
     // Make sum (addition).
     c.xor_(t, t);
-    c.add(t, x1);
-    c.add(t, x2);
-    c.add(t, x3);
-    c.add(t, x4);
-    c.add(t, x5);
-    c.add(t, x6);
-    c.add(t, x7);
-    c.add(t, x8);
+    for (i = 0; i < kCount; i++) {
+      c.add(t, x[i]);
+    }
 
     // Store result to a given pointer in first argument.
-    c.mov(dword_ptr(a1), t);
+    c.mov(dword_ptr(a0), t);
+
+    // Clear t.
+    c.xor_(t, t);
 
     // Make sum (subtraction).
-    c.xor_(t, t);
-    c.sub(t, x1);
-    c.sub(t, x2);
-    c.sub(t, x3);
-    c.sub(t, x4);
-    c.sub(t, x5);
-    c.sub(t, x6);
-    c.sub(t, x7);
-    c.sub(t, x8);
+    for (i = 0; i < kCount; i++) {
+      c.sub(t, x[i]);
+    }
 
     // Store result to a given pointer in second argument.
-    c.mov(dword_ptr(a2), t);
+    c.mov(dword_ptr(a1), t);
 
     // End of function.
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
     typedef void (*Func)(int*, int*);
     Func func = asmjit_cast<Func>(_func);
 
     int resultX;
     int resultY;
 
-    int expectedX =  36;
-    int expectedY = -36;
+    int expectX =  36;
+    int expectY = -36;
 
     func(&resultX, &resultY);
 
-    result.setFormat("x=%d, y=%d", resultX, resultY);
-    expected.setFormat("x=%d, y=%d", expectedX, expectedY);
+    result.setFormat("ret={x=%d, y=%d}", resultX, resultY);
+    expect.setFormat("ret={x=%d, y=%d}", expectX, expectY);
 
-    return resultX == expectedX && resultY == expectedY;
+    return resultX == expectX && resultY == expectY;
   }
 };
 
 // ============================================================================
-// [X86Test_Var4]
+// [X86Test_AllocMany2]
 // ============================================================================
 
-struct X86Test_Var4 : public X86Test
-{
-  virtual const char* getName() const { return "Var4 - 32 variables at once"; }
+struct X86Test_AllocMany2 : public X86Test {
+  X86Test_AllocMany2() : X86Test("[Alloc] Many #2") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    int i;
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocMany2());
+  }
+
+  virtual void compile(Compiler& c) {
+    unsigned int i;
+
     GpVar var[32];
+    GpVar a(c, kVarTypeIntPtr, "a");
 
-    c.newFunc(kX86FuncConvDefault, FuncBuilder1<Void, int*>());
+    c.addFunc(kFuncConvHost, FuncBuilder1<Void, int*>());
+    c.setArg(0, a);
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      var[i] = c.newGpVar(kX86VarTypeGpd);
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++) {
+      var[i] = c.newGpVar(kVarTypeInt32);
+    }
+
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++) {
       c.xor_(var[i], var[i]);
     }
 
-    GpVar v0(c.newGpVar(kX86VarTypeGpd));
-    Label L(c.newLabel());
+    GpVar v0(c, kVarTypeInt32);
+    Label L(c);
 
-    c.mov(v0, imm(32));
+    c.mov(v0, 32);
     c.bind(L);
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      c.add(var[i], imm(i));
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++) {
+      c.add(var[i], i);
     }
 
     c.dec(v0);
     c.jnz(L);
 
-    GpVar a0(c.getGpArg(0));
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++)
-    {
-      c.mov(dword_ptr(a0, i * 4), var[i]);
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(var); i++) {
+      c.mov(dword_ptr(a, i * 4), var[i]);
     }
 
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
     typedef void (*Func)(int*);
     Func func = asmjit_cast<Func>(_func);
 
     int i;
     int resultBuf[32];
-    int expectedBuf[32];
+    int expectBuf[32];
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(resultBuf); i++)
-      expectedBuf[i] = i * 32;
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(resultBuf); i++) {
+      expectBuf[i] = i * 32;
+    }
 
     bool success = true;
     func(resultBuf);
 
-    for (i = 0; i < ASMJIT_ARRAY_SIZE(resultBuf); i++)
-    {
+    for (i = 0; i < ASMJIT_ARRAY_SIZE(resultBuf); i++) {
       result.appendFormat("%d", resultBuf[i]);
-      expected.appendFormat("%d", expectedBuf[1]);
+      expect.appendFormat("%d", expectBuf[1]);
 
-      success &= (resultBuf[i] == expectedBuf[i]);
+      success &= (resultBuf[i] == expectBuf[i]);
     }
 
     return success;
@@ -1150,26 +549,980 @@ struct X86Test_Var4 : public X86Test
 };
 
 // ============================================================================
-// [X86Test_Dummy]
+// [X86Test_AllocImul1]
 // ============================================================================
 
-struct X86Test_Dummy : public X86Test
-{
-  virtual const char* getName() const { return "Dummy - Used to write new tests"; }
+struct X86Test_AllocImul1 : public X86Test {
+  X86Test_AllocImul1() : X86Test("[Alloc] Imul #1") {}
 
-  virtual void compile(X86Compiler& c)
-  {
-    c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocImul1());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar dstHi(c, kVarTypeIntPtr, "dstHi");
+    GpVar dstLo(c, kVarTypeIntPtr, "dstLo");
+
+    GpVar vHi(c, kVarTypeInt32, "vHi");
+    GpVar vLo(c, kVarTypeInt32, "vLo");
+    GpVar src(c, kVarTypeInt32, "src");
+
+    c.addFunc(kFuncConvHost, FuncBuilder4<Void, int*, int*, int, int>());
+    c.setArg(0, dstHi);
+    c.setArg(1, dstLo);
+    c.setArg(2, vLo);
+    c.setArg(3, src);
+
+    c.imul(vHi, vLo, src);
+
+    c.mov(dword_ptr(dstHi), vHi);
+    c.mov(dword_ptr(dstLo), vLo);
     c.endFunc();
   }
 
-  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expected)
-  {
-    typedef void (*Func)(void);
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(int*, int*, int, int);
     Func func = asmjit_cast<Func>(_func);
 
-    func();
-    return true;
+    int v0 = 4;
+    int v1 = 4;
+
+    int resultHi;
+    int resultLo;
+
+    int expectHi = 0;
+    int expectLo = v0 * v1;
+
+    func(&resultHi, &resultLo, v0, v1);
+
+    result.setFormat("hi=%d, lo=%d", resultHi, resultLo);
+    expect.setFormat("hi=%d, lo=%d", expectHi, expectLo);
+
+    return resultHi == expectHi && resultLo == expectLo;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocImul2]
+// ============================================================================
+
+struct X86Test_AllocImul2 : public X86Test {
+  X86Test_AllocImul2() : X86Test("[Alloc] Imul #2") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocImul2());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar dst(c, kVarTypeIntPtr, "dst");
+    GpVar src(c, kVarTypeIntPtr, "src");
+
+    c.addFunc(kFuncConvHost, FuncBuilder2<Void, int*, const int*>());
+    c.setArg(0, dst);
+    c.setArg(1, src);
+
+    for (unsigned int i = 0; i < 4; i++) {
+      GpVar x(c, kVarTypeInt32, "x");
+      GpVar y(c, kVarTypeInt32, "y");
+      GpVar hi(c, kVarTypeInt32, "hi");
+
+      c.mov(x, dword_ptr(src, 0));
+      c.mov(y, dword_ptr(src, 4));
+
+      c.imul(hi, x, y);
+      c.add(dword_ptr(dst, 0), hi);
+      c.add(dword_ptr(dst, 4), x);
+    }
+
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(int*, const int*);
+    Func func = asmjit_cast<Func>(_func);
+
+    int src[2] = { 4, 9 };
+    int resultRet[2] = { 0, 0 };
+    int expectRet[2] = { 0, (4 * 9) * 4 };
+
+    func(resultRet, src);
+
+    result.setFormat("ret={%d, %d}", resultRet[0], resultRet[1]);
+    expect.setFormat("ret={%d, %d}", expectRet[0], expectRet[1]);
+
+    return resultRet[0] == expectRet[0] && resultRet[1] == expectRet[1];
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocSetz]
+// ============================================================================
+
+struct X86Test_AllocSetz : public X86Test {
+  X86Test_AllocSetz() : X86Test("[Alloc] Setz") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocSetz());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar src0(c, kVarTypeInt32, "src0");
+    GpVar src1(c, kVarTypeInt32, "src1");
+    GpVar dst0(c, kVarTypeIntPtr, "dst0");
+
+    c.addFunc(kFuncConvHost, FuncBuilder3<Void, int, int, char*>());
+    c.setArg(0, src0);
+    c.setArg(1, src1);
+    c.setArg(2, dst0);
+
+    c.cmp(src0, src1);
+    c.setz(byte_ptr(dst0));
+
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(int, int, char*);
+    Func func = asmjit_cast<Func>(_func);
+
+    char resultBuf[4];
+    char expectBuf[4] = { 1, 0, 0, 1 };
+
+    func(0, 0, &resultBuf[0]); // We are expecting 1 (0 == 0).
+    func(0, 1, &resultBuf[1]); // We are expecting 0 (0 != 1).
+    func(1, 0, &resultBuf[2]); // We are expecting 0 (1 != 0).
+    func(1, 1, &resultBuf[3]); // We are expecting 1 (1 == 1).
+
+    result.setFormat("out={%d, %d, %d, %d}", resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3]);
+    expect.setFormat("out={%d, %d, %d, %d}", expectBuf[0], expectBuf[1], expectBuf[2], expectBuf[3]);
+
+    return resultBuf[0] == expectBuf[0] &&
+           resultBuf[1] == expectBuf[1] &&
+           resultBuf[2] == expectBuf[2] &&
+           resultBuf[3] == expectBuf[3] ;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocShlRor]
+// ============================================================================
+
+struct X86Test_AllocShlRor : public X86Test {
+  X86Test_AllocShlRor() : X86Test("[Alloc] Shl/Ror") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocShlRor());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar dst(c, kVarTypeIntPtr, "dst");
+    GpVar var(c, kVarTypeInt32, "var");
+    GpVar vShlParam(c, kVarTypeInt32, "vShlParam");
+    GpVar vRorParam(c, kVarTypeInt32, "vRorParam");
+
+    c.addFunc(kFuncConvHost, FuncBuilder4<Void, int*, int, int, int>());
+    c.setArg(0, dst);
+    c.setArg(1, var);
+    c.setArg(2, vShlParam);
+    c.setArg(3, vRorParam);
+
+    c.shl(var, vShlParam);
+    c.ror(var, vRorParam);
+
+    c.mov(dword_ptr(dst), var);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(int*, int, int, int);
+    Func func = asmjit_cast<Func>(_func);
+
+    int v0 = 0x000000FF;
+
+    int resultRet;
+    int expectRet = 0x0000FF00;
+
+    func(&resultRet, v0, 16, 8);
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocGpLo]
+// ============================================================================
+
+struct X86Test_AllocGpLo : public X86Test {
+  X86Test_AllocGpLo() : X86Test("[Alloc] GP.LO") {}
+
+  enum { kCount = 32 };
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocGpLo());
+  }
+
+  virtual void compile(Compiler& c) {
+    unsigned int i;
+
+    GpVar rPtr(c, kVarTypeUIntPtr);
+    GpVar rSum(c, kVarTypeUInt32);
+
+    GpVar rVar[kCount];
+    for (i = 0; i < kCount; i++) {
+      rVar[i] = c.newGpVar(kVarTypeUInt32);
+    }
+
+    c.addFunc(kFuncConvHost, FuncBuilder1<uint32_t, uint32_t*>());
+    c.setArg(0, rPtr);
+
+    // Init pseudo-regs with values from our array.
+    for (i = 0; i < kCount; i++) {
+      c.mov(rVar[i], dword_ptr(rPtr, i * 4));
+    }
+
+    for (i = 2; i < kCount; i++) {
+      // Add and truncate to 8 bit; no purpose, just mess with jit.
+      c.add  (rVar[i  ], rVar[i-1]);
+      c.movzx(rVar[i  ], rVar[i  ].r8());
+      c.movzx(rVar[i-2], rVar[i-1].r8());
+      c.movzx(rVar[i-1], rVar[i-2].r8());
+    }
+
+    // Sum up all computed values.
+    c.mov(rSum, 0);
+    for (i = 0; i < kCount; i++) {
+      c.add(rSum, rVar[i]);
+    }
+
+    // Return the sum.
+    c.ret(rSum);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(uint32_t*);
+    Func func = asmjit_cast<Func>(_func);
+
+    unsigned int i;
+
+    uint32_t buf[kCount];
+    uint32_t resultRet;
+    uint32_t expectRet;
+
+    expectRet = 0;
+    for (i = 0; i < kCount; i++) {
+      buf[i] = 1;
+    }
+
+    for (i = 2; i < kCount; i++) {
+      buf[i  ]+= buf[i-1];
+      buf[i  ] = buf[i  ] & 0xFF;
+      buf[i-2] = buf[i-1] & 0xFF;
+      buf[i-1] = buf[i-2] & 0xFF;
+    }
+
+    for (i = 0; i < kCount; i++) {
+      expectRet += buf[i];
+    }
+
+    for (i = 0; i < kCount; i++) {
+      buf[i] = 1;
+    }
+    resultRet = func(buf);
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocRepMovsb]
+// ============================================================================
+
+struct X86Test_AllocRepMovsb : public X86Test {
+  X86Test_AllocRepMovsb() : X86Test("[Special] Rep Movsb") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocSetz());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar dst(c, kVarTypeIntPtr, "dst");
+    GpVar src(c, kVarTypeIntPtr, "src");
+    GpVar cnt(c, kVarTypeIntPtr, "cnt");
+
+    c.addFunc(kFuncConvHost, FuncBuilder3<Void, void*, void*, size_t>());
+    c.setArg(0, dst);
+    c.setArg(1, src);
+    c.setArg(2, cnt);
+
+    c.rep_movsb(dst, src, cnt);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(void*, void*, size_t);
+    Func func = asmjit_cast<Func>(_func);
+
+    char dst[20];
+    char src[20] = "Hello AsmJit!";
+    func(dst, src, strlen(src) + 1);
+
+    result.setFormat("ret=\"%s\"", dst);
+    expect.setFormat("ret=\"%s\"", src);
+
+    return ::memcmp(dst, src, strlen(src) + 1) == 0;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocArgs]
+// ============================================================================
+
+struct X86Test_AllocArgs : public X86Test {
+  X86Test_AllocArgs() : X86Test("[Alloc] Args") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocArgs());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar var[8];
+    unsigned int i;
+
+    c.addFunc(kFuncConvHost,
+      FuncBuilder8<Void, void*, void*, void*, void*, void*, void*, void*, void*>());
+
+    for (i = 0; i < 8; i++) {
+      var[i] = c.newGpVar();
+    }
+
+    for (i = 0; i < 8; i++) {
+      c.setArg(i, var[i]);
+    }
+
+    for (i = 0; i < 8; i++) {
+      c.add(var[i], static_cast<int>(i + 1));
+    }
+
+    // Move some data into buffer provided by arguments so we can verify if it
+    // really works without looking into assembler output.
+    for (i = 0; i < 8; i++) {
+      c.add(byte_ptr(var[i]), static_cast<int>(i + 1));
+    }
+
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(void*, void*, void*, void*, void*, void*, void*, void*);
+    Func func = asmjit_cast<Func>(_func);
+
+    uint8_t resultBuf[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t expectBuf[9] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+
+    func(resultBuf, resultBuf, resultBuf, resultBuf,
+         resultBuf, resultBuf, resultBuf, resultBuf);
+
+    result.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
+      resultBuf[0], resultBuf[1], resultBuf[2], resultBuf[3],
+      resultBuf[4], resultBuf[5], resultBuf[6], resultBuf[7],
+      resultBuf[8]);
+    expect.setFormat("buf={%d, %d, %d, %d, %d, %d, %d, %d, %d}",
+      expectBuf[0], expectBuf[1], expectBuf[2], expectBuf[3],
+      expectBuf[4], expectBuf[5], expectBuf[6], expectBuf[7],
+      expectBuf[8]);
+
+    return ::memcmp(resultBuf, expectBuf, 9) == 0;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocMemcpy]
+// ============================================================================
+
+struct X86Test_AllocMemcpy : public X86Test {
+  X86Test_AllocMemcpy() : X86Test("[Alloc] Memcpy") {}
+
+   enum { kCount = 32 };
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocMemcpy());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar dst(c, kVarTypeIntPtr, "dst");
+    GpVar src(c, kVarTypeIntPtr, "src");
+    GpVar cnt(c, kVarTypeUIntPtr, "cnt");
+
+    Label L_Loop(c);                               // Create base labels we use
+    Label L_Exit(c);                               // in our function.
+
+    c.addFunc(kFuncConvHost, FuncBuilder3<Void, uint32_t*, const uint32_t*, size_t>());
+    c.setArg(0, dst);
+    c.setArg(1, src);
+    c.setArg(2, cnt);
+
+    c.alloc(dst);                                  // Allocate all registers now,
+    c.alloc(src);                                  // because we want to keep them
+    c.alloc(cnt);                                  // in physical registers only.
+
+    c.test(cnt, cnt);                              // Exit if length is zero.
+    c.jz(L_Exit);
+
+    c.bind(L_Loop);                                // Bind the loop label here.
+
+    GpVar tmp(c, kVarTypeInt32);                   // Copy a single dword (4 bytes).
+    c.mov(tmp, dword_ptr(src));
+    c.mov(dword_ptr(dst), tmp);
+
+    c.add(src, 4);                                 // Increment dst/src pointers.
+    c.add(dst, 4);
+
+    c.dec(cnt);                                    // Loop until cnt isn't zero.
+    c.jnz(L_Loop);
+
+    c.bind(L_Exit);                                // Bind the exit label here.
+    c.endFunc();                                   // End of function.
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(uint32_t*, const uint32_t*, size_t);
+    Func func = asmjit_cast<Func>(_func);
+
+    uint32_t i;
+
+    uint32_t dstBuffer[kCount];
+    uint32_t srcBuffer[kCount];
+
+    for (i = 0; i < kCount; i++) {
+      dstBuffer[i] = 0;
+      srcBuffer[i] = i;
+    }
+
+    func(dstBuffer, srcBuffer, kCount);
+
+    result.setString("buf={");
+    expect.setString("buf={");
+
+    for (i = 0; i < kCount; i++) {
+      if (i != 0) {
+        result.appendString(", ");
+        expect.appendString(", ");
+      }
+
+      result.appendFormat("%u", static_cast<unsigned int>(dstBuffer[i]));
+      expect.appendFormat("%u", static_cast<unsigned int>(srcBuffer[i]));
+    }
+
+    result.appendString("}");
+    expect.appendString("}");
+
+    return ::memcmp(dstBuffer, srcBuffer, kCount * sizeof(uint32_t)) == 0;
+  }
+};
+
+// ============================================================================
+// [X86Test_AllocBlend]
+// ============================================================================
+
+struct X86Test_AllocBlend : public X86Test {
+  X86Test_AllocBlend() : X86Test("[Alloc] Blend") {}
+
+  enum { kCount = 17 };
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_AllocBlend());
+  }
+
+  static uint32_t blendSrcOver(uint32_t d, uint32_t s) {
+    uint32_t saInv = ~s >> 24;
+
+    uint32_t d_20 = (d     ) & 0x00FF00FF;
+    uint32_t d_31 = (d >> 8) & 0x00FF00FF;
+
+    d_20 *= saInv;
+    d_31 *= saInv;
+
+    d_20 = ((d_20 + ((d_20 >> 8) & 0x00FF00FFU) + 0x00800080U) & 0xFF00FF00U) >> 8;
+    d_31 = ((d_31 + ((d_31 >> 8) & 0x00FF00FFU) + 0x00800080U) & 0xFF00FF00U);
+
+    return d_20 + d_31 + s;
+  }
+
+  virtual void compile(Compiler& c) {
+    asmgen::blend(c);
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef void (*Func)(void*, const void*, size_t);
+    Func func = asmjit_cast<Func>(_func);
+
+    uint32_t i;
+
+    uint32_t dstBuffer[kCount] = { 0x00000000, 0x10101010, 0x20100804, 0x30200003, 0x40204040, 0x5000004D, 0x60302E2C, 0x706F6E6D, 0x807F4F2F, 0x90349001, 0xA0010203, 0xB03204AB, 0xC023AFBD, 0xD0D0D0C0, 0xE0AABBCC, 0xFFFFFFFF, 0xF8F4F2F1 };
+    uint32_t srcBuffer[kCount] = { 0xE0E0E0E0, 0xA0008080, 0x341F1E1A, 0xFEFEFEFE, 0x80302010, 0x49490A0B, 0x998F7798, 0x00000000, 0x01010101, 0xA0264733, 0xBAB0B1B9, 0xFF000000, 0xDAB0A0C1, 0xE0BACFDA, 0x99887766, 0xFFFFFF80, 0xEE0A5FEC };
+    uint32_t expBuffer[kCount];
+
+    for (i = 0; i < kCount; i++) {
+      expBuffer[i] = blendSrcOver(dstBuffer[i], srcBuffer[i]);
+    }
+
+    func(dstBuffer, srcBuffer, kCount);
+
+    result.setString("buf={");
+    expect.setString("buf={");
+
+    for (i = 0; i < kCount; i++) {
+      if (i != 0) {
+        result.appendString(", ");
+        expect.appendString(", ");
+      }
+
+      result.appendFormat("%0.8X", static_cast<unsigned int>(dstBuffer[i]));
+      expect.appendFormat("%0.8X", static_cast<unsigned int>(expBuffer[i]));
+    }
+
+    result.appendString("}");
+    expect.appendString("}");
+
+    return ::memcmp(expBuffer, dstBuffer, kCount * sizeof(uint32_t)) == 0;
+  }
+};
+
+// ============================================================================
+// [X86Test_CallBase]
+// ============================================================================
+
+struct X86Test_CallBase : public X86Test {
+  X86Test_CallBase() : X86Test("[Call] CDecl") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallBase());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar v0(c, kVarTypeInt32, "v0");
+    GpVar v1(c, kVarTypeInt32, "v1");
+    GpVar v2(c, kVarTypeInt32, "v2");
+
+    c.addFunc(kFuncConvHost, FuncBuilder3<int, int, int, int>());
+    c.setArg(0, v0);
+    c.setArg(1, v1);
+    c.setArg(2, v2);
+
+    // Just do something.
+    c.shl(v0, 1);
+    c.shl(v1, 1);
+    c.shl(v2, 1);
+
+    // Call function.
+    GpVar address(c, kVarTypeIntPtr, "address");
+    c.mov(address, imm_ptr((void*)calledFunc));
+
+    X86X64CallNode* call = c.call(address, kFuncConvHost, FuncBuilder3<int, int, int, int>());
+    call->setArg(0, v2);
+    call->setArg(1, v1);
+    call->setArg(2, v0);
+    call->setRet(0, v0);
+
+    c.ret(v0);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(int, int, int);
+    Func func = asmjit_cast<Func>(_func);
+
+    int resultRet = func(3, 2, 1);
+    int expectRet = 36;
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+
+  static int calledFunc(int a, int b, int c) { return (a + b) * c; }
+};
+
+// ============================================================================
+// [X86Test_CallFast]
+// ============================================================================
+
+struct X86Test_CallFast : public X86Test {
+  X86Test_CallFast() : X86Test("[Call] Fastcall") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallFast());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar var(c, kVarTypeInt32, "var");
+    GpVar address(c, kVarTypeIntPtr, "address");
+
+    c.addFunc(kFuncConvHost, FuncBuilder1<int, int>());
+    c.setArg(0, var);
+
+    c.mov(address, imm_ptr((void*)calledFunc));
+    X86X64CallNode* call;
+
+    call = c.call(address, kFuncConvHostFastCall, FuncBuilder1<int, int>());
+    call->setArg(0, var);
+    call->setRet(0, var);
+
+    call = c.call(address, kFuncConvHostFastCall, FuncBuilder1<int, int>());
+    call->setArg(0, var);
+    call->setRet(0, var);
+
+    c.ret(var);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(int);
+    Func func = asmjit_cast<Func>(_func);
+
+    int resultRet = func(9);
+    int expectRet = (9 * 9) * (9 * 9);
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+
+  // Function that is called inside the generated one. Because this test is
+  // mainly about register arguments, we need to use the fastcall calling
+  // convention when running 32-bit.
+  static int ASMJIT_FASTCALL calledFunc(int a) { return a * a; }
+};
+
+// ============================================================================
+// [X86Test_CallManyArgs]
+// ============================================================================
+
+struct X86Test_CallManyArgs : public X86Test {
+  X86Test_CallManyArgs() : X86Test("[Call] Many Args") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallManyArgs());
+  }
+
+  static int calledFunc(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
+    return (a * b * c * d * e) + (f * g * h * i * j);
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar va(c, kVarTypeInt32, "va");
+    GpVar vb(c, kVarTypeInt32, "vb");
+    GpVar vc(c, kVarTypeInt32, "vc");
+    GpVar vd(c, kVarTypeInt32, "vd");
+    GpVar ve(c, kVarTypeInt32, "ve");
+    GpVar vf(c, kVarTypeInt32, "vf");
+    GpVar vg(c, kVarTypeInt32, "vg");
+    GpVar vh(c, kVarTypeInt32, "vh");
+    GpVar vi(c, kVarTypeInt32, "vi");
+    GpVar vj(c, kVarTypeInt32, "vj");
+
+    c.addFunc(kFuncConvHost, FuncBuilder0<int>());
+
+    // Call function.
+    GpVar address(c, kVarTypeIntPtr, "address");
+    c.mov(address, imm_ptr((void*)calledFunc));
+
+    c.mov(va, 0x03);
+    c.mov(vb, 0x12);
+    c.mov(vc, 0xA0);
+    c.mov(vd, 0x0B);
+    c.mov(ve, 0x2F);
+    c.mov(vf, 0x02);
+    c.mov(vg, 0x0C);
+    c.mov(vh, 0x12);
+    c.mov(vi, 0x18);
+    c.mov(vj, 0x1E);
+
+    X86X64CallNode* call = c.call(address, kFuncConvHost, FuncBuilder10<int, int, int, int, int, int, int, int, int, int, int>());
+    call->setArg(0, va);
+    call->setArg(1, vb);
+    call->setArg(2, vc);
+    call->setArg(3, vd);
+    call->setArg(4, ve);
+    call->setArg(5, vf);
+    call->setArg(6, vg);
+    call->setArg(7, vh);
+    call->setArg(8, vi);
+    call->setArg(9, vj);
+    call->setRet(0, va);
+
+    c.ret(va);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(void);
+    Func func = asmjit_cast<Func>(_func);
+
+    int resultRet = func();
+    int expectRet = calledFunc(0x03, 0x12, 0xA0, 0x0B, 0x2F, 0x02, 0x0C, 0x12, 0x18, 0x1E);
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+};
+
+// ============================================================================
+// [X86Test_CallConditional]
+// ============================================================================
+
+struct X86Test_CallConditional : public X86Test {
+  X86Test_CallConditional() : X86Test("[Call] Conditional") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallConditional());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar x(c, kVarTypeInt32, "x");
+    GpVar y(c, kVarTypeInt32, "y");
+    GpVar op(c, kVarTypeInt32, "op");
+
+    X86X64CallNode* call;
+    GpVar result;
+
+    c.addFunc(kFuncConvHost, FuncBuilder3<int, int, int, int>());
+    c.setArg(0, x);
+    c.setArg(1, y);
+    c.setArg(2, op);
+
+    Label opAdd(c);
+    Label opMul(c);
+
+    c.cmp(op, 0);
+    c.jz(opAdd);
+    c.cmp(op, 1);
+    c.jz(opMul);
+
+    result = c.newGpVar(kVarTypeInt32, "result");
+    c.mov(result, 0);
+    c.ret(result);
+
+    c.bind(opAdd);
+    result = c.newGpVar(kVarTypeInt32, "result");
+
+    call = c.call((void*)calledFuncAdd, kFuncConvHost, FuncBuilder2<int, int, int>());
+    call->setArg(0, x);
+    call->setArg(1, y);
+    call->setRet(0, result);
+    c.ret(result);
+
+    c.bind(opMul);
+    result = c.newGpVar(kVarTypeInt32, "result");
+
+    call = c.call((void*)calledFuncMul, kFuncConvHost, FuncBuilder2<int, int, int>());
+    call->setArg(0, x);
+    call->setArg(1, y);
+    call->setRet(0, result);
+
+    c.ret(result);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(int, int, int);
+    Func func = asmjit_cast<Func>(_func);
+
+    int arg1 = 4;
+    int arg2 = 8;
+
+    int resultAdd = func(arg1, arg2, 0);
+    int expectAdd = calledFuncAdd(arg1, arg2);
+
+    int resultMul = func(arg1, arg2, 1);
+    int expectMul = calledFuncMul(arg1, arg2);
+
+    result.setFormat("ret={add=%d, mul=%d}", resultAdd, resultMul);
+    expect.setFormat("ret={add=%d, mul=%d}", expectAdd, expectMul);
+
+    return (resultAdd == expectAdd) && (resultMul == expectMul);
+  }
+
+  static int calledFuncAdd(int x, int y) { return x + y; }
+  static int calledFuncMul(int x, int y) { return x * y; }
+};
+
+// ============================================================================
+// [X86Test_CallMultiple]
+// ============================================================================
+
+struct X86Test_CallMultiple : public X86Test {
+  X86Test_CallMultiple() : X86Test("[Call] Multiple") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallMultiple());
+  }
+
+  virtual void compile(Compiler& c) {
+    unsigned int i;
+
+    GpVar buf(c, kVarTypeIntPtr, "buf");
+    GpVar acc0(c, kVarTypeInt32, "acc0");
+    GpVar acc1(c, kVarTypeInt32, "acc1");
+
+    c.addFunc(kFuncConvHostFastCall, FuncBuilder1<int, int*>());
+    c.setArg(0, buf);
+
+    c.mov(acc0, 0);
+    c.mov(acc1, 0);
+
+    for (i = 0; i < 4; i++) {
+      GpVar ret(c, kVarTypeInt32);
+      GpVar ptr(c, kVarTypeIntPtr);
+      GpVar idx(c, kVarTypeInt32);
+      X86X64CallNode* call;
+
+      c.mov(ptr, buf);
+      c.mov(idx, static_cast<int>(i));
+
+      call = c.call((void*)calledFunc, kFuncConvHostFastCall, FuncBuilder2<int, int*, int>());
+      call->setArg(0, ptr);
+      call->setArg(1, idx);
+      call->setRet(0, ret);
+
+      c.add(acc0, ret);
+
+      c.mov(ptr, buf);
+      c.mov(idx, static_cast<int>(i));
+
+      call = c.call((void*)calledFunc, kFuncConvHostFastCall, FuncBuilder2<int, int*, int>());
+      call->setArg(0, ptr);
+      call->setArg(1, idx);
+      call->setRet(0, ret);
+
+      c.sub(acc1, ret);
+    }
+
+    c.add(acc0, acc1);
+    c.ret(acc0);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(int*);
+    Func func = asmjit_cast<Func>(_func);
+
+    int buffer[4] = { 127, 87, 23, 17 };
+
+    int resultRet = func(buffer);
+    int expectRet = 0;
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+
+  static int ASMJIT_FASTCALL calledFunc(int* pInt, int index) {
+    return pInt[index];
+  }
+};
+
+// ============================================================================
+// [X86Test_CallRecursive]
+// ============================================================================
+
+struct X86Test_CallRecursive : public X86Test {
+  X86Test_CallRecursive() : X86Test("[Call] Recursive") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallRecursive());
+  }
+
+  virtual void compile(Compiler& c) {
+    GpVar val(c, kVarTypeInt32, "val");
+    Label skip(c);
+
+    X86X64FuncNode* func = c.addFunc(kFuncConvHost, FuncBuilder1<int, int>());
+    c.setArg(0, val);
+
+    c.cmp(val, 1);
+    c.jle(skip);
+
+    GpVar tmp(c, kVarTypeInt32, "tmp");
+    c.mov(tmp, val);
+    c.dec(tmp);
+
+    X86X64CallNode* call = c.call(func->getEntryLabel(), kFuncConvHost, FuncBuilder1<int, int>());
+    call->setArg(0, tmp);
+    call->setRet(0, tmp);
+    c.mul(c.newGpVar(kVarTypeInt32), val, tmp);
+
+    c.bind(skip);
+    c.ret(val);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(int);
+    Func func = asmjit_cast<Func>(_func);
+
+    int resultRet = func(5);
+    int expectRet = 1 * 2 * 3 * 4 * 5;
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+};
+
+// ============================================================================
+// [X86Test_Dummy]
+// ============================================================================
+
+struct X86Test_Dummy : public X86Test {
+  X86Test_Dummy() : X86Test("[Dummy] Dummy") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_Dummy());
+  }
+
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<uint32_t>());
+
+    GpVar r(c, kVarTypeUInt32);
+    GpVar a(c, kVarTypeUInt32);
+    GpVar b(c, kVarTypeUInt32);
+
+    c.alloc(r, eax);
+    c.alloc(a, ecx);
+    c.alloc(b, edx);
+
+    c.mov(a, 16);
+    c.mov(b, 99);
+
+    c.mul(r, a, b);
+    c.alloc(a, esi);
+    c.alloc(b, ecx);
+    c.alloc(r, edi);
+    c.mul(a, b, r);
+
+    c.ret(b);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef uint32_t (*Func)(void);
+    Func func = asmjit_cast<Func>(_func);
+
+    return func() == 0;
   }
 };
 
@@ -1177,8 +1530,7 @@ struct X86Test_Dummy : public X86Test
 // [X86TestSuite]
 // ============================================================================
 
-struct X86TestSuite
-{
+struct X86TestSuite {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
@@ -1190,175 +1542,137 @@ struct X86TestSuite
   // [Methods]
   // --------------------------------------------------------------------------
 
-  void run();
+  int run();
 
   // --------------------------------------------------------------------------
   // [Members]
   // --------------------------------------------------------------------------
 
-  PodVector<X86Test*> testList;
-  StringBuilder testOutput;
+  PodVector<X86Test*> tests;
+  StringBuilder output;
 
   int result;
+  int binSize;
+  bool alwaysPrintLog;
 };
 
+#define ADD_TEST(_Class_) \
+  _Class_::add(tests)
+
 X86TestSuite::X86TestSuite() :
-  result(EXIT_SUCCESS)
-{
-  uint i, j;
+  result(EXIT_SUCCESS),
+  binSize(0),
+  alwaysPrintLog(false) {
 
-  // --------------------------------------------------------------------------
-  // [FuncAlign]
-  // --------------------------------------------------------------------------
+  // Align.
+  ADD_TEST(X86Test_AlignBase);
 
-  for (i = 0; i < 4; i++)
-  {
-    for (j = 0; j < 4; j++)
-    {
-      // Performed always. If function is not naked (this means that standard
-      // prolog/epilog sequence is always generated) then the alignment should
-      // be always possible.
-      if (true)
-      {
-        testList.append(new X86Test_FuncAlign(i, j, false, false));
-        testList.append(new X86Test_FuncAlign(i, j, false, true ));
-      }
+  // Jump.
+  ADD_TEST(X86Test_JumpCross);
+  ADD_TEST(X86Test_JumpUnreachable);
 
-      // If stack is aligned to 16 bytes by default then naked function should
-      // support this alignment as well. We didn't use X64 mode only, because
-      // on Linux/BSD the stack is aligned to 16 bytes by default (ABI). On
-      // Windows the situation is a bit different, because it's not in ABI,
-      // but some compilers (MinGW) perform the stack alignment.
-      if (CompilerUtil::isStack16ByteAligned())
-      {
-        testList.append(new X86Test_FuncAlign(i, j, true, false));
-        testList.append(new X86Test_FuncAlign(i, j, true, true ));
-      }
-    }
-  }
+  // Allocator.
+  ADD_TEST(X86Test_AllocBase);
+  ADD_TEST(X86Test_AllocManual);
+  ADD_TEST(X86Test_AllocMany1);
+  ADD_TEST(X86Test_AllocMany2);
+  ADD_TEST(X86Test_AllocImul1);
+  ADD_TEST(X86Test_AllocImul2);
+  ADD_TEST(X86Test_AllocSetz);
+  ADD_TEST(X86Test_AllocShlRor);
+  ADD_TEST(X86Test_AllocRepMovsb);
+  ADD_TEST(X86Test_AllocGpLo);
+  ADD_TEST(X86Test_AllocArgs);
+  ADD_TEST(X86Test_AllocMemcpy);
+  ADD_TEST(X86Test_AllocBlend);
 
-  // --------------------------------------------------------------------------
-  // [Func]
-  // --------------------------------------------------------------------------
+  // Call.
+  ADD_TEST(X86Test_CallBase);
+  ADD_TEST(X86Test_CallFast);
+  ADD_TEST(X86Test_CallManyArgs);
+  ADD_TEST(X86Test_CallConditional);
+  ADD_TEST(X86Test_CallMultiple);
+  ADD_TEST(X86Test_CallRecursive);
 
-  testList.append(new X86Test_Func1());
-  testList.append(new X86Test_Func2());
-  testList.append(new X86Test_Func3());
-  testList.append(new X86Test_Func4());
-  testList.append(new X86Test_Func5());
-  testList.append(new X86Test_Func6());
-  testList.append(new X86Test_Func7());
-  
-  // --------------------------------------------------------------------------
-  // [Jump]
-  // --------------------------------------------------------------------------
-  
-  testList.append(new X86Test_Jump1());
-
-  // --------------------------------------------------------------------------
-  // [Special]
-  // --------------------------------------------------------------------------
-  
-  testList.append(new X86Test_Special1());
-  testList.append(new X86Test_Special2());
-  testList.append(new X86Test_Special3());
-  testList.append(new X86Test_Special4());
-  testList.append(new X86Test_Special5());
-
-  // --------------------------------------------------------------------------
-  // [Var]
-  // --------------------------------------------------------------------------
-
-  testList.append(new X86Test_Var1());
-  testList.append(new X86Test_Var2());
-  testList.append(new X86Test_Var3());
-  testList.append(new X86Test_Var4());
-
-  // --------------------------------------------------------------------------
-  // [Dummy]
-  // --------------------------------------------------------------------------
-
-  testList.append(new X86Test_Dummy());
+  // Dummy.
+  //ADD_TEST(X86Test_Dummy);
 }
 
-X86TestSuite::~X86TestSuite()
-{
+X86TestSuite::~X86TestSuite() {
   size_t i;
-  size_t testCount = testList.getLength();
+  size_t count = tests.getLength();
 
-  for (i = 0; i < testCount; i++)
-  {
-    X86Test* test = testList[i];
+  for (i = 0; i < count; i++) {
+    X86Test* test = tests[i];
     delete test;
   }
 }
 
-void X86TestSuite::run()
-{
+int X86TestSuite::run() {
   size_t i;
-  size_t testCount = testList.getLength();
+  size_t count = tests.getLength();
 
-  for (i = 0; i < testCount; i++)
-  {
-    X86Compiler compiler;
+  FILE* file = stdout;
+
+  for (i = 0; i < count; i++) {
+    JitRuntime runtime;
+
     StringLogger logger;
+    logger.setOption(kLoggerOptionBinaryForm, true);
 
-    logger.setLogBinary(true);
+    Compiler compiler(&runtime);
     compiler.setLogger(&logger);
 
-    X86Test* test = testList[i];
+    X86Test* test = tests[i];
     test->compile(compiler);
 
-    void *func = compiler.make();
+    void* func = compiler.make();
 
-    // In case that compilation fails uncomment this section to log immediately
-    // after "compiler.make()".
-    //
-    // fprintf(stdout, "%s\n", logger.getString());
-    // fflush(stdout);
-
-    if (func != NULL)
-    {
-      StringBuilder output;
-      StringBuilder expected;
-
-      if (test->run(func, output, expected))
-      {
-        fprintf(stdout, "[Success] %s.\n", test->getName());
-      }
-      else
-      {
-        fprintf(stdout, "[Failure] %s.\n", test->getName());
-        fprintf(stdout, "-------------------------------------------------------------------------------\n");
-        fprintf(stdout, "%s", logger.getString());
-        fprintf(stdout, "\n");
-        fprintf(stdout, "Result  : %s\n", output.getData());
-        fprintf(stdout, "Expected: %s\n", expected.getData());
-        fprintf(stdout, "-------------------------------------------------------------------------------\n");
-      }
-
-      MemoryManager::getGlobal()->free(func);
-    }
-    else
-    {
-      fprintf(stdout, "[Failure] %s.\n", test->getName());
-      fprintf(stdout, "-------------------------------------------------------------------------------\n");
-      fprintf(stdout, "%s\n", logger.getString());
-      fprintf(stdout, "-------------------------------------------------------------------------------\n");
+    if (alwaysPrintLog) {
+      fprintf(file, "\n%s", logger.getString());
+      fflush(file);
     }
 
-    fflush(stdout);
+    if (func != NULL) {
+      StringBuilder result;
+      StringBuilder expect;
+
+      if (test->run(func, result, expect)) {
+        fprintf(file, "[Success] %s.\n", test->getName());
+      }
+      else {
+        fprintf(file, "\n%s", logger.getString());
+        fprintf(file, "-------------------------------------------------------------------------------\n");
+        fprintf(file, "[Failure] %s.\n", test->getName());
+        fprintf(file, "-------------------------------------------------------------------------------\n");
+        fprintf(file, "Result  : %s\n", result.getData());
+        fprintf(file, "Expected: %s\n", expect.getData());
+        fprintf(file, "===============================================================================\n");
+      }
+
+      runtime.release(func);
+    }
+    else {
+      fprintf(file, "[Failure] %s.\n", test->getName());
+      fprintf(file, "-------------------------------------------------------------------------------\n");
+      fprintf(file, "%s\n", logger.getString());
+      fprintf(file, "===============================================================================\n");
+    }
+
+    fflush(file);
   }
 
-  fputs("\n", stdout);
-  fputs(testOutput.getData(), stdout);
-  fflush(stdout);
+  fputs("\n", file);
+  fputs(output.getData(), file);
+  fflush(file);
+
+  return result;
 }
 
-int main(int argc, char* argv[])
-{
-  X86TestSuite testSuite;
-  testSuite.run();
+// ============================================================================
+// [Main]
+// ============================================================================
 
-  return testSuite.result;
+int main(int argc, char* argv[]) {
+  return X86TestSuite().run();
 }

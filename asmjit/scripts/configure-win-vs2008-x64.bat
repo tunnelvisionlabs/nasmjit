@@ -7,5 +7,3 @@ mkdir ..\%ASMJIT_BUILD_DIR%
 cd ..\%ASMJIT_BUILD_DIR%
 cmake .. -G"Visual Studio 9 2008 Win64" -DASMJIT_BUILD_SAMPLES=1
 cd %ASMJIT_SCRIPTS_DIR%
-
-pause

@@ -11,7 +11,7 @@
 //! @mainpage
 //!
 //! @brief AsmJit is a complete x86/x64 JIT Assembler for C++ language.
-//! 
+//!
 //! It supports FPU, MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 intrinsics, powerful
 //! compiler that helps to write portable functions for 32-bit (x86) and 64-bit
 //! (x64) architectures. AsmJit can be used to create functions at runtime that
@@ -25,32 +25,32 @@
 //! @section AsmJit_Main_Introduction Introduction
 //!
 //! AsmJit library contains two main classes for code generation with different
-//! goals. First main code generation class is called @c AsmJit::Assembler and 
-//! contains low level API that can be used to generate JIT binary code. It 
-//! directly emits binary stream that represents encoded x86/x64 assembler 
-//! opcodes. Together with operands and labels it can be used to generate 
-//! complete code. For details look to @ref AsmJit_Core and @ref AsmJit_Compiler
+//! goals. First main code generation class is called @c asmjit::Assembler and
+//! contains low level API that can be used to generate JIT binary code. It
+//! directly emits binary stream that represents encoded x86/x64 assembler
+//! opcodes. Together with operands and labels it can be used to generate
+//! complete code. For details look to @ref asmjit_base and @ref asmjit_compiler
 //! sections.
 //!
-//! There is also class named @c AsmJit::Compiler that allows to develop 
+//! There is also class named @c asmjit::BaseCompiler that allows to develop
 //! cross-platform assembler code without worring about function calling
 //! conventions and registers allocation. It can be also used to write 32-bit
-//! and 64-bit portable code. Compiler is recommended class to use for code
+//! and 64-bit portable code. Compiler is a recommended concept to use for code
 //! generation.
 //!
-//! Everything in AsmJit library is in @c AsmJit namespace.
+//! Everything in AsmJit library is in @c asmjit namespace.
 //!
 //! @section AsmJit_Main_CodeGeneration Code Generation
 //!
-//! - @ref AsmJit_Core "Assembler core" - Operands, intrinsics and low-level assembler.
-//! - @ref AsmJit_Compiler "Compiler" - High level code generation.
-//! - @ref AsmJit_CpuInfo "Cpu Information" - Get information about host processor.
-//! - @ref AsmJit_Logging "Logging" - Logging and error handling.
+//! - @ref asmjit_base "Assembler core" - Operands, intrinsics and low-level assembler.
+//! - @ref asmjit_compiler "Compiler" - High level code generation.
+//! - @ref asmjit_cpuinfo "Cpu Information" - Get information about host processor.
+//! - @ref asmjit_logging "Logging" - Logging and error handling.
 //! - @ref AsmJit_MemoryManagement "Memory Management" - Virtual memory management.
 //!
 //! @section AsmJit_Main_Configuration Configuration, Definitions and Utilities
 //!
-//! - @ref AsmJit_Config "Configuration" - Macros used to configure AsmJit.
+//! - @ref asmjit_config "Configuration" - Macros used to configure AsmJit.
 //!
 //! @section AsmJit_Main_HomePage AsmJit Homepage
 //!
@@ -71,55 +71,54 @@
 //!   be freely used by callee. The caller must free all registers before calling
 //!   other function.
 
-
-//! @defgroup AsmJit_Core Assembler core (operands, intrinsics and low-level assembler).
+//! @defgroup asmjit_base Platform neutral API, abstract classes and operands.
 //!
-//! Contains classes related to @c AsmJit::Assembler that're directly used 
-//! to generate machine code stream. It's one of oldest and fastest method 
-//! to generate machine code using AsmJit library.
+//! Contains all AsmJit classes and helper functions that are neutral or
+//! abstract. All abstract classes are reimplemented for every supported
+//! architecture.
 //!
-//! - See @c AsmJit::Assembler class for low level code generation 
+//! - See @c asmjit::Assembler class for low level code generation
 //!   documentation.
-//! - See @c AsmJit::Operand for AsmJit operand's overview.
+//! - See @c asmjit::Operand for AsmJit operand's overview.
 //!
 //! @section AsmJit_Core_Registers Registers
 //!
-//! There are static objects that represents X86 and X64 registers. They can 
-//! be used directly (like @c eax, @c mm, @c xmm, ...) or created through 
+//! There are static objects that represents X86 and X64 registers. They can
+//! be used directly (like @c eax, @c mm, @c xmm, ...) or created through
 //! these functions:
 //!
-//! - @c AsmJit::mk_gpb() - make general purpose byte register
-//! - @c AsmJit::mk_gpw() - make general purpose word register
-//! - @c AsmJit::mk_gpd() - make general purpose dword register
-//! - @c AsmJit::mk_gpq() - make general purpose qword register
-//! - @c AsmJit::mk_mm() - make mmx register
-//! - @c AsmJit::mk_xmm() - make sse register
-//! - @c AsmJit::st() - make x87 register
+//! - @c asmjit::gpb_lo() - Get Gp-LO register (BYTE).
+//! - @c asmjit::gpb_hi() - Get Gp-HI register (BYTE).
+//! - @c asmjit::gpw() - Get Gp register (WORD).
+//! - @c asmjit::gpd() - Get Gp register (DWORD).
+//! - @c asmjit::gpq() - Get Gp register (QWORD).
+//! - @c asmjit::gpz() - Get Gp register (DWORD/QWORD).
+//! - @c asmjit::fp()  - Get Fp register.
+//! - @c asmjit::mm()  - Get Mmx register (QWORD).
+//! - @c asmjit::xmm() - Get Xmm register (DQWORD).
 //!
 //! @section AsmJit_Core_Addressing Addressing
 //!
 //! X86 and x64 architectures contains several addressing modes and most ones
 //! are possible with AsmJit library. Memory represents are represented by
-//! @c AsmJit::Mem class. These functions are used to make operands that 
+//! @c asmjit::BaseMem class. These functions are used to make operands that
 //! represents memory addresses:
 //!
-//! - @c AsmJit::ptr()
-//! - @c AsmJit::byte_ptr()
-//! - @c AsmJit::word_ptr()
-//! - @c AsmJit::dword_ptr()
-//! - @c AsmJit::qword_ptr()
-//! - @c AsmJit::tword_ptr()
-//! - @c AsmJit::dqword_ptr()
-//! - @c AsmJit::mmword_ptr()
-//! - @c AsmJit::xmmword_ptr()
-//! - @c AsmJit::sysint_ptr()
+//! - @c asmjit::ptr()
+//! - @c asmjit::byte_ptr()
+//! - @c asmjit::word_ptr()
+//! - @c asmjit::dword_ptr()
+//! - @c asmjit::qword_ptr()
+//! - @c asmjit::tword_ptr()
+//! - @c asmjit::dqword_ptr()
+//! - @c asmjit::intptr_ptr()
 //!
-//! Most useful function to make pointer should be @c AsmJit::ptr(). It creates
+//! Most useful function to make pointer should be @c asmjit::ptr(). It creates
 //! pointer to the target with unspecified size. Unspecified size works in all
 //! intrinsics where are used registers (this means that size is specified by
-//! register operand or by instruction itself). For example @c AsmJit::ptr() 
-//! can't be used with @c AsmJit::Assembler::inc() instruction. In this case
-//! size must be specified and it's also reason to make difference between 
+//! register operand or by instruction itself). For example @c asmjit::ptr()
+//! can't be used with @c asmjit::Assembler::inc() instruction. In this case
+//! size must be specified and it's also reason to make difference between
 //! pointer sizes.
 //!
 //! Supported are simple address forms (register + displacement) and complex
@@ -127,53 +126,51 @@
 //!
 //! @section AsmJit_Core_Immediates Immediates
 //!
-//! Immediate values are constants thats passed directly after instruction 
-//! opcode. To create such value use @c AsmJit::imm() or @c AsmJit::uimm()
+//! Immediate values are constants thats passed directly after instruction
+//! opcode. To create such value use @c asmjit::imm() or @c asmjit::imm_u()
 //! methods to create signed or unsigned immediate value.
 //!
-//! @sa @c AsmJit::Compiler.
+//! @sa @c asmjit::BaseCompiler.
 
-
-//! @defgroup AsmJit_Compiler Compiler (high-level code generation).
+//! @defgroup asmjit_compiler Compiler (high-level code generation).
 //!
-//! Contains classes related to @c AsmJit::Compiler that can be used
+//! Contains classes related to @c asmjit::Compiler that can be used
 //! to generate code using high-level constructs.
 //!
-//! - See @c Compiler class for high level code generation 
+//! - See @c Compiler class for high level code generation
 //!   documentation - calling conventions, function declaration
 //!   and variables management.
 
-//! @defgroup AsmJit_Config Configuration.
+//! @defgroup asmjit_config Configuration.
 //!
 //! Contains macros that can be redefined to fit into any project.
 
-
-//! @defgroup AsmJit_CpuInfo CPU information.
+//! @defgroup asmjit_cpuinfo CPU information.
 //!
-//! X86 or x64 cpuid instruction allows to get information about processor 
-//! vendor and it's features. It's always used to detect features like MMX, 
+//! X86 or x64 cpuid instruction allows to get information about processor
+//! vendor and it's features. It's always used to detect features like MMX,
 //! SSE and other newer ones.
 //!
-//! AsmJit library supports low level cpuid call implemented internally as 
-//! C++ function using inline assembler or intrinsics and also higher level 
-//! CPU features detection. The low level function (also used by higher level 
-//! one) is @c AsmJit::cpuid().
+//! AsmJit library supports low level cpuid call implemented internally as
+//! C++ function using inline assembler or intrinsics and also higher level
+//! CPU features detection. The low level function (also used by higher level
+//! one) is @c asmjit::cpuid().
 //!
-//! AsmJit library also contains higher level function @c AsmJit::getCpuInfo()
+//! AsmJit library also contains higher level function @c asmjit::getCpu()
 //! that returns features detected by the library. The detection process is
-//! done only once and it's cached for all next calls. @c AsmJit::CpuInfo 
-//! structure not contains only information through @c AsmJit::cpuid(), but
-//! there is also small multiplatform code to detect number of processors 
+//! done only once and the returned object is always the same. @c asmjit::BaseCpu
+//! structure not contains only information through @c asmjit::cpuid(), but
+//! there is also small multiplatform code to detect number of processors
 //! (or cores) through operating system API.
 //!
-//! It's recommended to use @c AsmJit::cpuInfo to detect and check for
+//! It's recommended to use @c asmjit::cpuInfo to detect and check for
 //! host processor features.
 //!
-//! Example how to use AsmJit::cpuid():
+//! Example how to use asmjit::cpuid():
 //!
 //! @code
-//! // All functions and structures are in AsmJit namesapce.
-//! using namespace AsmJit;
+//! // All functions and structures are in asmjit namesapce.
+//! using namespace asmjit;
 //!
 //! // Here will be retrieved result of cpuid call.
 //! CpuId out;
@@ -181,62 +178,57 @@
 //! // Use cpuid function to do the job.
 //! cpuid(0 /* eax */, &out /* eax, ebx, ecx, edx */);
 //!
-//! // Id eax argument to cpuid is 0, ebx, ecx and edx registers 
+//! // If eax argument to cpuid is 0, ebx, ecx and edx registers
 //! // are filled with cpu vendor.
 //! char vendor[13];
 //! memcpy(i->vendor, &out.ebx, 4);
 //! memcpy(i->vendor + 4, &out.edx, 4);
 //! memcpy(i->vendor + 8, &out.ecx, 4);
 //! vendor[12] = '\0';
-//! 
+//!
 //! // Print vendor
 //! puts(vendor);
 //! @endcode
 //!
-//! If you want to use AsmJit::cpuid() function instead of higher level 
-//! @c AsmJit::getCpuInfo(), please read processor manuals provided by Intel,
-//! AMD or other manufacturers for cpuid instruction details.
+//! If the high-level interface of asmjit::BaseCpu is not enough, you can use
+//! low-level asmjit::cpuid() when running on x86/x64 host, but please read
+//! processor manuals provided by Intel, AMD or other manufacturer for cpuid
+//! details.
 //!
-//! Example of using @c AsmJit::getCpuInfo():
+//! Example of using @c asmjit::BaseCpu::getHost():
 //!
 //! @code
-//! // All functions and structures are in AsmJit namesapce.
-//! using namespace AsmJit;
+//! // All functions and structures are in asmjit namesapce.
+//! using namespace asmjit;
 //!
-//! // Call to cpuInfo return CpuInfo structure that shouldn't be modified.
+//! // Call to cpuInfo return BaseCpu structure that shouldn't be modified.
 //! // Make it const by default.
-//! const CpuInfo *i = getCpuInfo();
+//! const BaseCpu* cpu = BaseCpu::getHost();
 //!
 //! // Now you are able to get specific features.
 //!
 //! // Processor has SSE2
-//! if (i->features & kX86FeatureSse2)
-//! {
+//! if (cpu->features & kCpuFeatureSse2) {
 //!   // your code...
 //! }
 //! // Processor has MMX
-//! else if (i->features & kX86Feature_MMX)
-//! {
+//! else if (cpu->features & kCpuFeature_MMX) {
 //!   // your code...
 //! }
 //! // Processor is old, no SSE2 or MMX support.
-//! else
-//! {
+//! else {
 //!   // your code...
 //! }
 //! @endcode
 //!
-//! Better example is in AsmJit/Test/testcpu.cpp file.
-//!
-//! @sa AsmJit::cpuid, @c AsmJit::cpuInfo.
+//! Better example is in app/test/testcpu.cpp file.
 
 
-//! @defgroup AsmJit_Logging Logging and error handling.
+//! @defgroup asmjit_logging Logging and error handling.
 //!
-//! Contains classes related to loging assembler output. Currently logging
-//! is implemented in @c AsmJit::Logger class.You can override
-//! @c AsmJit::Logger::log() to log messages into your stream. There is also
-//! @c FILE based logger implemented in @c AsmJit::FileLogger class.
+//! Contains classes related to loging. Currently logging is implemented in
+//! @ref asmjit::BaseLogger class. The function @ref asmjit::BaseLogger::log()
+//! can be overridden to redirect logging into any user-defined stream.
 //!
 //! To log your assembler output to FILE stream use this code:
 //!
@@ -249,94 +241,81 @@
 //! a.setLogger(&logger);
 //! @endcode
 //!
-//! You can see that logging goes through @c Assembler. If you are using 
+//! You can see that logging goes through @c Assembler. If you are using
 //! @c Compiler and you want to log messages in correct assembler order,
-//! you should look at @ref Compiler::comment() method. It allows  you to 
+//! you should look at @ref Compiler::comment() method. It allows  you to
 //! insert text message into items stream so the @c Compiler is able to
 //! send messages to @ref Assembler in correct order.
 //!
-//! @sa @c AsmJit::Logger, @c AsmJit::FileLogger.
+//! @sa @c asmjit::BaseLogger, @c asmjit::FileLogger.
 
 
 //! @defgroup AsmJit_MemoryManagement Virtual memory management.
 //!
-//! Using @c AsmJit::Assembler or @c AsmJit::Compiler to generate machine 
-//! code is not final step. Each generated code needs to run in memory 
+//! Using @c asmjit::Assembler or @c asmjit::Compiler to generate machine
+//! code is not final step. Each generated code needs to run in memory
 //! that is not protected against code execution. To alloc this code it's
 //! needed to use operating system functions provided to enable execution
 //! code in specified memory block or to allocate memory that is not
-//! protected. The solution is always to use @c See AsmJit::Assembler::make() 
-//! and @c AsmJit::Compiler::make() functions that can allocate memory and
+//! protected. The solution is always to use @c See asmjit::Assembler::make()
+//! and @c asmjit::Compiler::make() functions that can allocate memory and
 //! relocate code for you. But AsmJit also contains classes for manual memory
 //! management thats internally used by AsmJit but can be used by programmers
 //! too.
 //!
 //! Memory management contains low level and high level classes related to
-//! allocating and freeing virtual memory. Low level class is 
-//! @c AsmJit::VirtualMemory that can allocate and free full pages of
-//! virtual memory provided by operating system. Higher level class is
-//! @c AsmJit::MemoryManager that is able to manage complete allocation and
-//! free mechanism. It internally uses larger chunks of memory to make
-//! allocation fast and effective.
+//! allocating and freeing virtual memory. Low level class is
+//! @c asmjit::VMem that can allocate and free full pages of virtual memory
+//! provided by operating system. Higher level class is @c asmjit::MemoryManager
+//! that is able to manage complete allocation and free mechanism. It
+//! internally uses larger chunks of memory to make allocation fast and
+//! effective.
 //!
-//! Using @c AsmJit::VirtualMemory::alloc() is cross-platform way how to 
-//! allocate this kind of memory without worrying about operating system 
-//! and it's API. Each memory block that is no longer needed should be 
-//! freed by @c AsmJit::VirtualMemory::free() method. If you want better
-//! comfort and malloc()/free() interface, look at the 
-//! @c AsmJit::MemoryManager class.
+//! Using @c asmjit::VMem::alloc() is cross-platform way how to allocate this
+//! kind of memory without worrying about operating system and it's API. Each
+//! memory block that is no longer needed should be released by @ref
+//! asmjit::VMem::release() method. Higher-level interface for virtual memory
+//! allocation can be found at asmjit::MemoryManager class.
 //!
-//! @sa @c AsmJit::VirtualMemory, @ AsmJit::MemoryManager.
+//! @sa @c asmjit::VMem, @ asmjit::MemoryManager.
 
 
-//! @addtogroup AsmJit_Config
+//! @addtogroup asmjit_config
 //! @{
 
-//! @def ASMJIT_WINDOWS
+//! @def ASMJIT_OS_WINDOWS
 //! @brief Macro that is declared if AsmJit is compiled for Windows.
 
-//! @def ASMJIT_POSIX
-//! @brief Macro that is declared if AsmJit is compiled for unix like 
+//! @def ASMJIT_OS_POSIX
+//! @brief Macro that is declared if AsmJit is compiled for unix like
 //! operating system.
 
 //! @def ASMJIT_API
 //! @brief Attribute that's added to classes that can be exported if AsmJit
 //! is compiled as a dll library.
 
-//! @def ASMJIT_MALLOC
-//! @brief Function to call to allocate dynamic memory.
-
-//! @def ASMJIT_REALLOC
-//! @brief Function to call to reallocate dynamic memory.
-
-//! @def ASMJIT_FREE
-//! @brief Function to call to free dynamic memory.
-
 //! @def ASMJIT_ASSERT
-//! @brief Assertion macro. Default implementation calls 
-//! @c AsmJit::assertionFailure() function.
+//! @brief Assertion macro. Default implementation calls
+//! @c asmjit::assertionFailed() function.
 
 //! @}
 
 
-//! @namespace AsmJit
+//! @namespace asmjit
 //! @brief Main AsmJit library namespace.
 //!
 //! There are not other namespaces used in AsmJit library.
 
-// ----------------------------------------------------------------------------
 // [Dependencies - Core]
-// ----------------------------------------------------------------------------
+#include "base.h"
 
-#include "core.h"
-
-// ----------------------------------------------------------------------------
-// [Dependencies - X86 / X64]
-// ----------------------------------------------------------------------------
-
-#if defined(ASMJIT_X86) || defined(ASMJIT_X64)
+// [Dependencies - X86/X64]
+#if defined(ASMJIT_BUILD_X86) || defined(ASMJIT_BUILD_X64)
 #include "x86.h"
-#endif // ASMJIT_X86 || ASMJIT_X64
+#endif // ASMJIT_BUILD_X86 || ASMJIT_BUILD_X64
+
+// [Dependencies - Host]
+#include "host.h"
 
 // [Guard]
 #endif // _ASMJIT_ASMJIT_H

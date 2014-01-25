@@ -1,4 +1,4 @@
-AsmJit - Complete x86/x64 JIT Assembler for C++ Language - Version 1.0
+AsmJit - Complete x86/x64 JIT Assembler for C++ Language - Version 1.1
 ======================================================================
 
 http://code.google.com/p/asmjit/
@@ -7,17 +7,17 @@ Introduction
 ============
 
 AsmJit is a complete x86/x64 JIT Assembler for C++ language. It supports 32-bit
-and 64-bit mode, FPU, MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 through type-safe API
+and 64-bit modes, FPU, MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 through type-safe API
 which mimics an Intel assembler syntax and eliminates nearly all common mistakes
-which can be done by developers at compile time or run-time.
+that can happen at compile time or run-time.
 
 AsmJit has a high-level code generation classes which can be used as a portable
 way to create JIT code. It abstracts differences caused by 32-bit/64-bit mode,
 function calling conventions, and platform specific ABI.
 
-AsmJit has been successfully tested by various C++ compilers (including MSVC, 
+AsmJit has been successfully tested by various C++ compilers (including MSVC,
 GCC, Clang, and BorlandC++) under all major operating systems (including Windows,
-Linux and Mac). 
+Linux and Mac).
 
 Features
 ========
@@ -46,7 +46,7 @@ own.
 The second concept, called Compiler, is a high-level code generation, which uses
 variables (virtual registers) instead of physical registers. After the code
 serialization is finished, register allocator gathers the most important information
-about the usage of variables, their scope, and registers which might be used for 
+about the usage of variables, their scope, and registers which might be used for
 each variable. Then all variables are translated into real registers or memory
 addresses. Compiler also contains built-in calling convention handling so it's
 portable between 32-bit and 64-bit architectures.
@@ -68,7 +68,7 @@ add the C++ files into your project and sometimes to setup src/asmjit/config.h f
 This file contains set of C macros which can be used to configure AsmJit to use
 your memory allocation functions, visibility attributes, and error handling. The
 standard way to build AsmJit is to create a dynamically linked library. To build
-AsmJit statically edit src/asmjit/config.h and uncomment // #define ASMJIT_API 
+AsmJit statically edit src/asmjit/config.h and uncomment // #define ASMJIT_API
 macro. See http://code.google.com/p/asmjit/wiki/Configuring section for details.
 
 AsmJit contains also CMakeLists.txt which can be used by cmake to generate project
@@ -91,23 +91,23 @@ Examples
 Directory Structure
 ===================
 
-  - extras          - Extras.
-  - extras/doc      - Documentation generator files.
-  - extras/contrib  - Contribution (source code/headers), not official part of 
-                      AsmJit.
-  - scripts         - Scripts, including project generators.
-  - src             - Source code
-  - src/asmjit      - Public header files (always include files here!),
-  - src/asmjit/core - Core files used by all AsmJit backends,
-  - src/asmjit/x86  - X86 platform support and code-generation.
+  - extras     - Extras,
+    - contrib  - Contributions (not official, but included),
+    - doc      - Documentation generator files,
+    - msvs     - MS Visual Studio additions,
+  - scripts    - Scripts to generate project files and regenerate source,
+  - src        - Source code,
+    - asmjit   - Public header files (always include files here!),
+      - base   - Base files, used by the AsmJit and all backends,
+      - x86    - X86/X64 specific files, used only by X86/X64 backend.
 
 Supported Compilers
 ===================
 
-  - BorlandC++,
+  - Borland C++,
   - GNU (3.4.X+, 4.0+),
   - MinGW,
-  - MSVC (VC6.0, VS2005, VS2008, VS2010),
+  - MSVC (VS2005, VS2008, VS2010),
   - Other compilers require testing.
 
 Supported Platforms
@@ -128,12 +128,20 @@ Google Groups and Mailing Lists
 ===============================
 
 AsmJit google group:
-  * http://groups.google.com/group/asmjit-dev 
+  * http://groups.google.com/group/asmjit-dev
 
 AsmJit mailing list:
-  * asmjit-dev@googlegroups.com 
+  * asmjit-dev@googlegroups.com
 
 Contact Author/Maintainer
 =========================
 
 Petr Kobalicek <kobalicek.petr@gmail.com>
+
+TODO, CORRECTIONS:
+@section
+BaseAssembler
+BaseCompiler
+BaseState
+
+getGlobal

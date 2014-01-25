@@ -40,20 +40,26 @@ def writeFile(fileName, data):
   handle.write(data)
   handle.close()
 
+def firstUpper(s):
+  if len(s) == 0:
+    return s
+  else:
+    return s[0].upper() + s[1:]
+  
 # =============================================================================
 # [Main]
 # =============================================================================
 
 def processFile(fileName, arch):
   data = readFile(fileName);
-  ARCH = arch.upper();
+  Arch = firstUpper(arch);
 
   dIn = data
-  r = re.compile(arch + r"InstInfo\[\][\s]*=[\s]*{(?P<BLOCK>[^}])*}")
+  r = re.compile(r"_instInfo\[\][\s]*=[\s]*{(?P<BLOCK>[^}])*}")
   m = r.search(dIn)
 
   if not m:
-    print "Couldn't match " + arch + "InstInfo[] in " + fileName
+    print "Couldn't match _instInfo[] in " + fileName
     exit(0)
 
   dIn = dIn[m.start():m.end()]
@@ -80,18 +86,28 @@ def processFile(fileName, arch):
       dInstAddr.append(dInstPos)
       dInstPos += len(kStr) + 1
 
-  dOut += "const char " + arch + "InstName[] =\n"
+  dOut += "const char _instName[] =\n"
   for i in xrange(len(dInstStr)):
-    dOut += "  \"" + dInstStr[i] + "\\0\"\n"
-  dOut += "  ;\n"
+    dOut += "  \"" + dInstStr[i] + "\\0\""
+    if i != len(dInstStr) - 1:
+      dOut += "\n"
+    else:
+      dOut += ";\n"
 
   dOut += "\n"
+  dOut += "enum kInstData_NameIndex {\n"
 
   for i in xrange(len(dInstId)):
-    dOut += "#define INDEX_" + dInstId[i] + " " + str(dInstAddr[i]) + "\n"
+    dOut += "  " + dInstId[i] + "_NameIndex = " + str(dInstAddr[i])
+    if i != len(dInstId) - 1:
+      dOut += ",\n"
+    else:
+      dOut += "\n"
 
-  mb_string = "// ${" + ARCH + "_INST_DATA:BEGIN}\n"
-  me_string = "// ${" + ARCH + "_INST_DATA:END}\n"
+  dOut += "};\n"
+
+  mb_string = "// ${kInstData:Begin}\n"
+  me_string = "// ${kInstData:End}\n"
 
   mb = data.index(mb_string)
   me = data.index(me_string)

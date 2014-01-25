@@ -14,82 +14,53 @@
 #include <stdlib.h>
 #include <string.h>
 
-// This is type of function we will generate
-typedef void (*MyFn)(void);
+typedef void (*MyFunc)(void);
 
-static void dummyFunc(void) {}
+int main(int argc, char* argv[]) {
+  using namespace asmjit;
+  using namespace asmjit::host;
 
-int main(int argc, char* argv[])
-{
-  using namespace AsmJit;
-
-  // ==========================================================================
-  // Log compiler output.
+  JitRuntime runtime;
   FileLogger logger(stderr);
-  logger.setLogBinary(true);
+  logger.setOption(kLoggerOptionBinaryForm, true);
 
-  // Create compiler.
-  /*
-  X86Compiler c;
+  Compiler c(&runtime);
   c.setLogger(&logger);
 
-  c.newFunc(kX86FuncConvDefault, FuncBuilder0<Void>());
-  c.getFunc()->setHint(kFuncHintNaked, true);
+  c.addFunc(kFuncConvHost, FuncBuilder0<void>());
 
-  X86CompilerFuncCall* ctx = c.call((void*)dummyFunc);
-  ctx->setPrototype(kX86FuncConvDefault, FuncBuilder0<Void>());
+  Label L_1(c);
+  Label L_2(c);
+  Label L_3(c);
+  Label L_4(c);
+  Label L_5(c);
+  Label L_6(c);
+  Label L_7(c);
 
-  c.endFunc();
-  */
+  GpVar v1(c);
+  GpVar v2(c);
 
-  X86Compiler c;
-  c.setLogger(&logger);
+  c.bind(L_2);
+  c.bind(L_3);
 
-  c.newFunc(kX86FuncConvDefault, FuncBuilder0<void>());
-  c.getFunc()->setHint(kFuncHintNaked, true);
-  
-  Label l91 = c.newLabel();
-  Label l92 = c.newLabel();
-  Label l93 = c.newLabel();
-  Label l94 = c.newLabel();
-  Label l95 = c.newLabel();
-  Label l96 = c.newLabel();
-  Label l97 = c.newLabel();
-  c.bind(l92);
+  c.jmp(L_1);
+  c.bind(L_5);
+  c.mov(v1, 0);
+  c.bind(L_6);
+  c.jmp(L_3);
+  c.mov(v2, 1);
+  c.jmp(L_1);
+  c.bind(L_4);
+  c.jmp(L_2);
+  c.bind(L_7);
+  c.add(v1, v2);
 
-  GpVar _var91(c.newGpVar());
-  GpVar _var92(c.newGpVar());
-  
-  c.bind(l93);
-  c.jmp(l91);
-  c.bind(l95);
-  c.mov(_var91, imm(0));
-  c.bind(l96);
-  c.jmp(l93);
-  c.mov(_var92, imm(1));
-  c.jmp(l91);
-  c.bind(l94);
-  c.jmp(l92);
-  c.bind(l97);
-  c.add(_var91, _var92);
-  c.bind(l91);
+  c.bind(L_1);
   c.ret();
   c.endFunc();
-  
-  typedef void (*Func9)(void);
-  Func9 func9 = asmjit_cast<Func9>(c.make());
-  // ==========================================================================
 
-  // ==========================================================================
-  // Make the function.
-  // MyFn fn = asmjit_cast<MyFn>(c.make());
-
-  // Call it.
-  // printf("Result %llu\n", (unsigned long long)fn());
-
-  // Free the generated function if it's not needed anymore.
-  //MemoryManager::getGlobal()->free((void*)fn);
-  // ==========================================================================
+  MyFunc func = asmjit_cast<MyFunc>(c.make());
+  runtime.release(func);
 
   return 0;
 }
