@@ -245,7 +245,9 @@ var Database = (function() {
 // ----------------------------------------------------------------------------
 
 var generate = function(fileName, arch, suffixes) {
-  var data = fs.readFileSync(fileName, "utf8").replace(/\r\n/g, "\n");
+  var oldData = fs.readFileSync(fileName, "utf8").replace(/\r\n/g, "\n");
+
+  var data = oldData;
   var code = "";
 
   var Arch = uppercaseFirst(arch);
@@ -284,7 +286,10 @@ var generate = function(fileName, arch, suffixes) {
 
   // Inject.
   data = inject(data, injectStartMarker, injectEndMarker, code);
-  fs.writeFileSync(fileName, data, "utf8");
+
+  // Save only if modified.
+  if (data !== oldData)
+    fs.writeFileSync(fileName, data, "utf8");
 };
 
 // ----------------------------------------------------------------------------
