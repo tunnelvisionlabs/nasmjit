@@ -764,7 +764,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_1x(dec, kInstDec, Mem)
 
-  //! @brief Unsigned divide (xDX:xAX <- xAX / o0).
+  //! @brief Unsigned divide (xDX:xAX <- xDX:xAX / o0).
   INST_1x(div, kInstDiv, GpReg)
   //! @overload
   INST_1x(div, kInstDiv, Mem)
@@ -772,7 +772,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Make stack frame for procedure parameters.
   INST_2x(enter, kInstEnter, Imm, Imm)
 
-  //! @brief Signed divide (xDX:xAX <- xAX / op).
+  //! @brief Signed divide (xDX:xAX <- xDX:xAX / op).
   INST_1x(idiv, kInstIdiv, GpReg)
   //! @overload
   INST_1x(idiv, kInstIdiv, Mem)

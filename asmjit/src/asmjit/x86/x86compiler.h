@@ -1691,14 +1691,14 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_1x(dec, kInstDec, Mem)
 
-  //! @brief Unsigned divide (o0:o1 <- o1 / o2).
+  //! @brief Unsigned divide (o0:o1 <- o0:o1 / o2).
   //!
   //! Remainder is stored in @a o0, quotient is stored in @a o1.
   INST_3x_(div, kInstDiv, GpVar, GpVar, GpVar, o0.getId() != o1.getId())
   //! @overload
   INST_3x_(div, kInstDiv, GpVar, GpVar, Mem, o0.getId() != o1.getId())
 
-  //! @brief Signed divide (o0:o1 <- o1 / o2).
+  //! @brief Signed divide (o0:o1 <- o0:o1 / o2).
   //!
   //! Remainder is stored in @a o0, quotient is stored in @a o1.
   INST_3x_(idiv, kInstIdiv, GpVar, GpVar, GpVar, o0.getId() != o1.getId())

@@ -152,13 +152,6 @@ struct X64TrampolineWriter {
     cursor += 1; \
   } while (0)
 
-#define EMIT_BYTE_NONZERO(_Val_) \
-  do { \
-    uint32_t _tmp = static_cast<uint32_t>(_Val_); \
-    cursor[0] = static_cast<uint8_t>(_tmp); \
-    cursor += _tmp != 0; \
-  } while (0)
-
 #define EMIT_WORD(_Val_) \
   do { \
     reinterpret_cast<uint16_t*>(cursor)[0] = static_cast<uint16_t>(_Val_); \

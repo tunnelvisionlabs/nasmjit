@@ -112,7 +112,7 @@ struct RbNode {
 };
 
 // Get whether the node is red (NULL or node with red flag).
-ASMJIT_INLINE bool isRed(RbNode* node) {
+ASMJIT_INLINE bool rbIsRed(RbNode* node) {
   return node != NULL && node->red;
 }
 
@@ -134,10 +134,8 @@ struct MemNode : public RbNode {
   size_t used;          // How many bytes are used in this node.
   size_t largestBlock;  // Contains largest block that can be allocated.
 
-  size_t* baUsed;       // Contains bits about used blocks.
-                        // (0 = unused, 1 = used).
-  size_t* baCont;       // Contains bits about continuous blocks.
-                        // (0 = stop, 1 = continue).
+  size_t* baUsed;       // Contains bits about used blocks       (0 = unused, 1 = used).
+  size_t* baCont;       // Contains bits about continuous blocks (0 = stop  , 1 = continue).
 
   // --------------------------------------------------------------------------
   // [Methods]
@@ -146,8 +144,7 @@ struct MemNode : public RbNode {
   // Get available space.
   ASMJIT_INLINE size_t getAvailable() const { return size - used; }
 
-  ASMJIT_INLINE void fillData(MemNode* other)
-  {
+  ASMJIT_INLINE void fillData(MemNode* other) {
     mem = other->mem;
 
     size = other->size;
@@ -161,7 +158,7 @@ struct MemNode : public RbNode {
 };
 
 // ============================================================================
-// [asmjit::M_Permanent]
+// [asmjit::PermanentNode]
 // ============================================================================
 
 //! @brief Permanent node.
@@ -717,7 +714,7 @@ static int rbAssert(RbNode* root) {
   RbNode* rn = root->node[1];
 
   // Red violation.
-  ASMJIT_ASSERT( !(isRed(root) && (isRed(ln) || isRed(rn))) );
+  ASMJIT_ASSERT( !(rbIsRed(root) && (rbIsRed(ln) || rbIsRed(rn))) );
 
   int lh = rbAssert(ln);
   int rh = rbAssert(rn);
@@ -731,7 +728,7 @@ static int rbAssert(RbNode* root) {
 
   // Only count black links.
   if (lh != 0 && rh != 0)
-    return isRed(root) ? lh : lh + 1;
+    return rbIsRed(root) ? lh : lh + 1;
   else
     return 0;
 }
@@ -783,7 +780,7 @@ void MemoryManagerPrivate::insertNode(MemNode* node) {
         q = node;
         p->node[dir] = node;
       }
-      else if (isRed(q->node[0]) && isRed(q->node[1])) {
+      else if (rbIsRed(q->node[0]) && rbIsRed(q->node[1])) {
         // Color flip.
         q->red = 1;
         q->node[0]->red = 0;
@@ -791,7 +788,7 @@ void MemoryManagerPrivate::insertNode(MemNode* node) {
       }
 
       // Fix red violation.
-      if (isRed(q) && isRed(p)) {
+      if (rbIsRed(q) && rbIsRed(p)) {
         int dir2 = t->node[1] == g;
         t->node[dir2] = q == p->node[last] ? rbRotateSingle(g, !last) : rbRotateDouble(g, !last);
       }
@@ -865,15 +862,15 @@ MemNode* MemoryManagerPrivate::removeNode(MemNode* node) {
       f = q;
 
     // Push the red node down.
-    if (!isRed(q) && !isRed(q->node[dir])) {
-      if (isRed(q->node[!dir])) {
+    if (!rbIsRed(q) && !rbIsRed(q->node[dir])) {
+      if (rbIsRed(q->node[!dir])) {
         p = p->node[last] = rbRotateSingle(q, dir);
       }
-      else if (!isRed(q->node[!dir])) {
+      else if (!rbIsRed(q->node[!dir])) {
         RbNode* s = p->node[!last];
 
         if (s != NULL) {
-          if (!isRed(s->node[!last]) && !isRed(s->node[last])) {
+          if (!rbIsRed(s->node[!last]) && !rbIsRed(s->node[last])) {
             // Color flip.
             p->red = 0;
             s->red = 1;
@@ -882,9 +879,9 @@ MemNode* MemoryManagerPrivate::removeNode(MemNode* node) {
           else {
             int dir2 = g->node[1] == p;
 
-            if (isRed(s->node[last]))
+            if (rbIsRed(s->node[last]))
               g->node[dir2] = rbRotateDouble(p, last);
-            else if (isRed(s->node[!last]))
+            else if (rbIsRed(s->node[!last]))
               g->node[dir2] = rbRotateSingle(p, last);
 
             // Ensure correct coloring.

@@ -76,7 +76,7 @@ ASMJIT_ENUM(kVarAttrFlags) {
   kVarAttrOutConv = 0x00000080,
   //! @brief Combination of @ref kVarAttrInConv and @ref kVarAttrOutConv.
   kVarAttrInOutConv = 0x000000C0,
-  
+
   //! @brief Variable is a function call operand.
   kVarAttrInCall = 0x00000100,
   //! @brief Variable is a function argument passed in register.
@@ -651,7 +651,7 @@ struct VarAttr {
   // [Members]
   // --------------------------------------------------------------------------
 
-  VarData* _vd; 
+  VarData* _vd;
   //! @brief Flags.
   uint32_t _flags;
 

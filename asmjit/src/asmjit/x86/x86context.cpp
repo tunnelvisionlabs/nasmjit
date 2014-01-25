@@ -129,7 +129,13 @@ static const X86X64SpecialInst x86SpecialInstDaaDas[] = {
   { kRegIndexAx, kRegIndexAx, kVarAttrInOutReg  }
 };
 
-static const X86X64SpecialInst x86SpecialInstMulDiv[] = {
+static const X86X64SpecialInst x86SpecialInstDiv[] = {
+  { kInvalidReg, kRegIndexDx, kVarAttrInOutReg  },
+  { kRegIndexAx, kRegIndexAx, kVarAttrInOutReg  },
+  { kInvalidReg, kInvalidReg, kVarAttrInReg     }
+};
+
+static const X86X64SpecialInst x86SpecialInstMul[] = {
   { kInvalidReg, kRegIndexDx, kVarAttrOutReg    },
   { kRegIndexAx, kRegIndexAx, kVarAttrInOutReg  },
   { kInvalidReg, kInvalidReg, kVarAttrInReg     }
@@ -227,17 +233,18 @@ static ASMJIT_INLINE const X86X64SpecialInst* X86X64SpecialInst_get(uint32_t cod
     case kInstDas:
       return x86SpecialInstDaaDas;
 
+    case kInstIdiv:
+    case kInstDiv:
+      return x86SpecialInstDiv;
+
     case kInstImul:
       if (opCount == 2)
         return NULL;
       if (opCount == 3 && !(opList[0].isVar() && opList[1].isVar() && opList[2].isVarOrMem()))
         return NULL;
       // ... Fall through ...
-
-    case kInstIdiv:
-    case kInstDiv:
     case kInstMul:
-      return x86SpecialInstMulDiv;
+      return x86SpecialInstMul;
 
     case kInstMovptr:
       return x86SpecialInstMovPtr;
@@ -2852,7 +2859,7 @@ ASMJIT_INLINE void X86X64BaseAlloc::unuseBefore() {
   VarAttr* list = getVaListByClass(C);
   uint32_t count = getVaCountByClass(C);
 
-  const uint32_t checkFlags = 
+  const uint32_t checkFlags =
     kVarAttrInOutReg |
     kVarAttrInMem    |
     kVarAttrInArg    |
