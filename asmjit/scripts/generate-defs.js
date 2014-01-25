@@ -120,10 +120,10 @@ var inject = function(s, start, end, code) {
 // [Database]
 // ----------------------------------------------------------------------------
 
-// CompactIndex - Index of the name of the instruction in one big string (no
-//                prefix/suffix concept).
-// PrefixIndex  - Index to a prefix string.
-// SuffixIndex  - Index to a suffix string.
+// FullIndex   - Index of the name of the instruction in one big string (no
+//               prefix/suffix concept).
+// PrefixIndex - Index to a prefix string.
+// SuffixIndex - Index to a suffix string.
 
 var Database = (function() {
   function bestSuffix(s, suffixes) {
