@@ -1,147 +1,161 @@
 AsmJit - Complete x86/x64 JIT Assembler for C++ Language - Version 1.1
 ======================================================================
 
-http://code.google.com/p/asmjit/
+https://code.google.com/p/asmjit/
 
 Introduction
 ============
 
-AsmJit is a complete x86/x64 JIT Assembler for C++ language. It supports 32-bit
-and 64-bit modes, FPU, MMX, 3dNow, SSE, SSE2, SSE3 and SSE4 through type-safe API
-which mimics an Intel assembler syntax and eliminates nearly all common mistakes
-that can happen at compile time or run-time.
+AsmJit is a complete JIT and remote assembler for C++ language. It can generate
+native code for x86 and x64 architectures having support for a full instruction
+set, from legacy MMX to the newest AVX2. It has a type-safe API that allows C++
+compiler to do a semantic checks at compile-time even before the assembled code
+is used or run.
 
-AsmJit has a high-level code generation classes which can be used as a portable
-way to create JIT code. It abstracts differences caused by 32-bit/64-bit mode,
-function calling conventions, and platform specific ABI.
+AsmJit is not a virtual machine. It doesn't have functionality often required
+and implemented by virtual machines; however, it is designed to be extensible
+by third-parties and mostly used as JIT backend. There is also support for an
+abstract way of writing your code called Compiler, in addition to a low-level
+code generator that uses physical registers. Compiler lets you use virtually
+unlimited registers that are translated to physical registers after the code
+emitting is done.
 
-AsmJit has been successfully tested by various C++ compilers (including MSVC,
-GCC, Clang, and BorlandC++) under all major operating systems (including Windows,
-Linux and Mac).
+Code Generation Concepts
+========================
+
+AsmJit has two completely different code generation concepts. The difference is
+in how the code is generated. The first concept, also referred as the low level
+concept, is called 'Assembler' and it's the same as writing RAW assembly by using
+physical registers directly. In this case AsmJit does only instruction encoding,
+verification and relocation.
+
+The second concept, also referred as the high level concept, is called 'Compiler'.
+Compiler lets you use virtually unlimited number of registers (called variables)
+significantly simplifying the code generation process. Compiler allocates these
+virtual registers to physical registers after the code generation is done. This
+requires some extra effort - Compiler has to generate information for each node
+(instruction, function declaration, function call) in the code, perform a variable
+liveness analysis and translate the code having variables into code having only
+registers.
+
+In addition, Compiler understands functions and function calling conventions. It
+has been designed in a way that the code generated is always a function having
+prototype like in a programming language. By having a function prototype the
+Compiler is able to insert prolog and epilog to a function being generated and
+it is able to call a function inside a generated one.
+
+There is no conclusion on which concept is better. Assembler brings full control
+on how the code is generated, while Compiler makes the generation more portable.
 
 Features
 ========
 
-  - Complete x86/x64 instruction set, including FPU, MMX, SSE, SSE2, SSE3, SSSE3
-    and SSE4,
-  - Compile time and run-time safety,
+  - Complete x86/x64 instruction set - MMX, SSE, AVX, BMI, XOP, FMA...,
   - Low-level and high-level code generation,
   - Built-in CPU detection,
-  - Virtual memory management,
-  - Configurable memory management, logging and error handling,
-  - Small and embeddable (size of compiled AsmJit is less than 200kB),
-  - No dependencies on STL or other libraries,
-  - No exceptions and RTTI,
-  - Extensible design.
+  - Virtual Memory management,
+  - Pretty logging and error handling,
+  - Small and embeddable, around 150kB compiled,
+  - Zero dependencies, not even STL or RTTI.
 
-Assembler / Compiler
-====================
+Supported Environment
+=====================
 
-AsmJit library contains two main code generation concepts - Assembler and Compiler.
-The first concept, called Assembler, contains only interface to emit instructions
-and their operands (registers, memory locations, immediates, and labels). This
-class can be used by tools which do not need register allocator or contains their
-own.
+Operating Systems:
+  - BSDs,
+  - Linux,
+  - Mac,
+  - Windows.
 
-The second concept, called Compiler, is a high-level code generation, which uses
-variables (virtual registers) instead of physical registers. After the code
-serialization is finished, register allocator gathers the most important information
-about the usage of variables, their scope, and registers which might be used for
-each variable. Then all variables are translated into real registers or memory
-addresses. Compiler also contains built-in calling convention handling so it's
-portable between 32-bit and 64-bit architectures.
+C++ Compilers:
+  - BorlandC++,
+  - GNU (3.4.X+, 4.0+, MinGW)
+  - MSVC (VS2005, VS2008, VS2010),
+  - Other compilers require testing.
 
-The Compiler is probably not the best tool which can handle register allocation
-(linear-scan register allocation is designed for fast-execution). There are some
-areas where it could be improved. However, it's built-in, and in the most cases
-the output is comparable to the code that is generated by the C/C++ compiler.
-The main advantage of Compiler compared to other tools is that it has complete
-statistics of variables and their scope, because the register allocator is run
-after the code was serialized. There are also some hints which might be used to
-improve the process of register allocation.
+Asm Backends:
+  - X86/X64.
 
-Configuring
-===========
-
-AsmJit is designed to be easily embeddable into any project. It's only needed to
-add the C++ files into your project and sometimes to setup src/asmjit/config.h file.
-This file contains set of C macros which can be used to configure AsmJit to use
-your memory allocation functions, visibility attributes, and error handling. The
-standard way to build AsmJit is to create a dynamically linked library. To build
-AsmJit statically edit src/asmjit/config.h and uncomment // #define ASMJIT_API
-macro. See http://code.google.com/p/asmjit/wiki/Configuring section for details.
-
-AsmJit contains also CMakeLists.txt which can be used by cmake to generate project
-files for many platforms and compilers. If you don't know what cmake is, visit its
-homepage at http://www.cmake.org.
-
-Upgrading
-=========
-
-Please see http://code.google.com/p/asmjit/wiki/Upgrading_Notes for detailed
-information about upgrading to latest AsmJit version.
-
-Examples
-========
-
-  - AsmJit home page <http://code.google.com/p/asmjit/>,
-  - AsmJit wiki <http://code.google.com/p/asmjit/w/list>,
-  - AsmJit Test directory (in this package).
-
-Directory Structure
-===================
+Project Structure
+=================
 
   - extras     - Extras,
     - contrib  - Contributions (not official, but included),
     - doc      - Documentation generator files,
     - msvs     - MS Visual Studio additions,
-  - scripts    - Scripts to generate project files and regenerate source,
+  - scripts    - Scripts to generate project files and regenerate defs,
   - src        - Source code,
-    - asmjit   - Public header files (always include files here!),
+    - asmjit   - Public header files (always include from here),
       - base   - Base files, used by the AsmJit and all backends,
       - x86    - X86/X64 specific files, used only by X86/X64 backend.
 
-Supported Compilers
-===================
+Configuring/Building
+====================
 
-  - Borland C++,
-  - GNU (3.4.X+, 4.0+),
-  - MinGW,
-  - MSVC (VS2005, VS2008, VS2010),
-  - Other compilers require testing.
+AsmJit is designed to be easy embeddable in any project. However, it has some
+compile-time flags that can be used to build a specific version of AsmJit
+including or omitting certain features:
 
-Supported Platforms
-===================
+Debugging:
+  - ASMJIT_DEBUG - Define to always turn debugging on (regardless of build-mode).
+  - ASMJIT_NO_DEBUG - Define to always turn debugging of (regardless of build-mode).
 
-Fully supported platforms at this time are X86 (32-bit) and X86_64/X64 (64-bit).
-Other platforms need volunteers. Also note that AsmJit is designed to generate
-assembler binary only for host CPU, don't try to generate 64-bit assembler in
-32 bit mode and vica versa - this is not designed to work and will not work.
+  - By default none of these is defined, AsmJit detects mode based on compile-time
+    macros (useful when using IDE that has switches for Debug/Release/etc...).
+
+Library:
+  - ASMJIT_STATIC - Define when building AsmJit as a static library. No symbols
+    will be exported by AsmJit by default.
+  - ASMJIT_API - This is AsmJit API decorator that is used in all functions that
+    has to be exported. It can be redefined, however it's not a recommended way.
+
+  - By default AsmJit build is configured as a shared library and ASMJIT_API
+    contains compiler specific attributes to import/export AsmJit symbols.
+
+Backends:
+  - ASMJIT_BUILD_X86 - Always build x86 backend regardless of host architecture.
+  - ASMJIT_BUILD_X64 - Always build x64 backend regardless of host architecture.
+  - ASMJIT_BUILD_HOST - Always build host backand, if only ASMJIT_BUILD_HOST is
+    used only the host architecture detected at compile-time will be included.
+
+  - By default only ASMJIT_BUILD_HOST is defined.
+
+To build AsmJit please use cmake <http://www.cmake.org> that will generate 
+project files for your favorite IDE and platform. If you don't use cmake and
+you still want to include AsmJit in your project it's perfectly fine by just
+including it there, probably defining ASMJIT_STATIC to prevent AsmJit trying
+to export the API.
+
+Examples
+========
+
+  - AsmJit home <https://code.google.com/p/asmjit/>,
+  - AsmJit wiki <https://code.google.com/p/asmjit/w/list>,
+  - AsmJit test directory, see src/test in the package.
+
+Upgrading
+=========
+
+Please see https://code.google.com/p/asmjit/wiki/Upgrading_Notes page, which
+contains detailed information of upgrading to the latest AsmJit version.
 
 License
 =======
 
 AsmJit can be distributed under zlib license:
-<http://www.opensource.org/licenses/zlib-license.php>
+  - <http://www.opensource.org/licenses/zlib-license.php>
 
 Google Groups and Mailing Lists
 ===============================
 
 AsmJit google group:
-  * http://groups.google.com/group/asmjit-dev
+  - http://groups.google.com/group/asmjit-dev
 
 AsmJit mailing list:
-  * asmjit-dev@googlegroups.com
+  - asmjit-dev@googlegroups.com
 
-Contact Author/Maintainer
-=========================
+Contact Authors/Maintainers
+===========================
 
-Petr Kobalicek <kobalicek.petr@gmail.com>
-
-TODO, CORRECTIONS:
-@section
-BaseAssembler
-BaseCompiler
-BaseState
-
-getGlobal
+Author(s):
+  - Petr Kobalicek <kobalicek.petr@gmail.com>
