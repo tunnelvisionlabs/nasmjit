@@ -14,14 +14,14 @@
 // cross-compiling.
 
 // ============================================================================
-// [AsmJit - Debug]
+// [AsmJit - Debugging]
 // ============================================================================
 
 // #define ASMJIT_DEBUG        // Define to enable debugging.
 // #define ASMJIT_NO_DEBUG     // Define to disable debugging.
 
 // ============================================================================
-// [AsmJit - Static]
+// [AsmJit - Library]
 // ============================================================================
 
 // #define ASMJIT_STATIC       // Define to enable static-library build.

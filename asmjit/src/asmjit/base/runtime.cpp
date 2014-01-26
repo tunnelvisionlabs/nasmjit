@@ -50,7 +50,6 @@ uint32_t JitRuntime::getStackAlignment() {
   // is addition to an older specification.
 #if (defined(__linux__)   || \
      defined(__linux)     || \
-     defined(linux)       || \
      defined(__unix__)    || \
      defined(__FreeBSD__) || \
      defined(__NetBSD__)  || \
