@@ -14,11 +14,9 @@ is used or run.
 
 AsmJit is not a virtual machine. It doesn't have functionality often required
 and implemented by virtual machines; however, it is designed to be extensible
-by third-parties and mostly used as JIT backend. There is also support for an
-abstract way of writing your code called Compiler, in addition to a low-level
-code generator that uses physical registers. Compiler lets you use virtually
-unlimited registers that are translated to physical registers after the code
-emitting is done.
+by third-parties and mostly used as a JIT backend. The usage of AsmJit is not
+limited, it's suitable for multimedia, virtual machines or remote code 
+generation.
 
 Code Generation Concepts
 ========================
@@ -73,8 +71,9 @@ C++ Compilers:
   - MSVC (VS2005, VS2008, VS2010),
   - Other compilers require testing.
 
-Asm Backends:
-  - X86/X64.
+Backends:
+  - X86,
+  - X64.
 
 Project Structure
 =================
