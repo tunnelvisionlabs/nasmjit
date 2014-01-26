@@ -598,7 +598,7 @@ struct X86X64CallNode : public CallNode {
   // --------------------------------------------------------------------------
 
   //! @brief Set function prototype.
-  ASMJIT_API void setPrototype(uint32_t convention, const FuncPrototype& prototype);
+  ASMJIT_API Error setPrototype(uint32_t conv, const FuncPrototype& p);
 
   // --------------------------------------------------------------------------
   // [Arg / Ret]
@@ -819,7 +819,7 @@ struct X86X64CallNode : public CallNode {
 //! Compiler c;
 //! GpVar a0(c, kVarTypeIntPtr);
 //!
-//! c.addFunc(kFuncConvHost, BuildFunction1<Void, int*>());
+//! c.addFunc(kFuncConvHost, BuildFunction1<FnVoid, int*>());
 //! c.setArg(0, a0);
 //!
 //! // Create your variables.
@@ -854,15 +854,18 @@ struct X86X64CallNode : public CallNode {
 //!
 //! - @c kVarTypeInt8 - Signed 8-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
 //! - @c kVarTypeUInt8 - Unsigned 8-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
+//!
 //! - @c kVarTypeInt16 - Signed 16-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
 //! - @c kVarTypeUInt16 - Unsigned 16-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
+//!
 //! - @c kVarTypeInt32 - Signed 32-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
 //! - @c kVarTypeUInt32 - Unsigned 32-bit integer, mapped to 32-bit Gp register (eax, ebx, ...).
+//!
 //! - @c kVarTypeInt64 - Signed 64-bit integer, mapped to 64-bit Gp register (rax, rbx, ...).
 //! - @c kVarTypeUInt64 - Unsigned 64-bit integer, mapped to 64-bit Gp register (rax, rbx, ...).
 //!
-//! - @c kVarTypeIntPtr - intptr_t, mapped to 32/64-bit Gp register.
-//! - @c kVarTypeUIntPtr - uintptr_t, mapped to 32/64-bit Gp register.
+//! - @c kVarTypeIntPtr - intptr_t, mapped to 32/64-bit Gp register; depends on target, not host!
+//! - @c kVarTypeUIntPtr - uintptr_t, mapped to 32/64-bit Gp register; depends on target, not host!
 //!
 //! - @c kVarTypeFp32 - 32-bit floating point register (fp0, fp1, ...).
 //! - @c kVarTypeFp64 - 64-bit floating point register (fp0, fp1, ...).
@@ -871,14 +874,14 @@ struct X86X64CallNode : public CallNode {
 //! - @c kVarTypeMm - 64-bit Mm register (mm0, mm1, ...).
 //!
 //! - @c kVarTypeXmm - 128-bit SSE register.
-//! - @c kVarTypeXmmSs - 128-bit SSE register which contains
-//!   scalar 32-bit single precision floating point.
-//! - @c kVarTypeXmmSd - 128-bit SSE register which contains
-//!   scalar 64-bit double precision floating point.
-//! - @c kVarTypeXmmPs - 128-bit SSE register which contains
-//!   4 packed 32-bit single precision floating points.
-//! - @c kVarTypeXmmPd - 128-bit SSE register which contains
-//!   2 packed 64-bit double precision floating points.
+//! - @c kVarTypeXmmSs - 128-bit SSE register that contains a scalar 32-bit SP-FP value.
+//! - @c kVarTypeXmmSd - 128-bit SSE register that contains a scalar 64-bit DP-FP value.
+//! - @c kVarTypeXmmPs - 128-bit SSE register that contains 4 packed 32-bit SP-FP values.
+//! - @c kVarTypeXmmPd - 128-bit SSE register that contains 2 packed 64-bit DP-FP values.
+//!
+//! - @c kVarTypeYmm - 256-bit AVX register.
+//! - @c kVarTypeYmmPs - 256-bit AVX register that contains 4 packed 32-bit SP-FP values.
+//! - @c kVarTypeYmmPd - 256-bit AVX register that contains 2 packed 64-bit DP-FP values.
 //!
 //! Variable states:
 //!
@@ -952,7 +955,7 @@ struct X86X64CallNode : public CallNode {
 //! @code
 //! Compiler c;
 //!
-//! c.addFunc(kFuncConvHost, FuncBuilder0<Void>());
+//! c.addFunc(kFuncConvHost, FuncBuilder0<FnVoid>());
 //!
 //! // Labels.
 //! Label L0(c);
@@ -1043,7 +1046,7 @@ struct X86X64CallNode : public CallNode {
 //! @code
 //! Compiler c;
 //!
-//! c.addFunc(kFuncConvHost, FuncBuilder0<Void>());
+//! c.addFunc(kFuncConvHost, FuncBuilder0<FnVoid>());
 //!
 //! // Labels.
 //! Label L0(c);
@@ -1264,7 +1267,7 @@ struct X86X64Compiler : public BaseCompiler {
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref X86X64FuncNode.
-  ASMJIT_API X86X64FuncNode* newFunc(uint32_t convention, const FuncPrototype& func);
+  ASMJIT_API X86X64FuncNode* newFunc(uint32_t conv, const FuncPrototype& p);
 
   //! @brief Add a new function.
   //!
@@ -1293,7 +1296,7 @@ struct X86X64Compiler : public BaseCompiler {
   //!   // Default calling convention (32-bit cdecl or 64-bit for host OS)
   //!   kFuncConvHost,
   //!   // Using function builder to generate arguments list
-  //!   BuildFunction2<Void, int, int>());
+  //!   BuildFunction2<FnVoid, int, int>());
   //!
   //! // End of function (also emits function @c Epilog)
   //! c.endFunc();
@@ -1317,7 +1320,7 @@ struct X86X64Compiler : public BaseCompiler {
   //!   // Default calling convention (32-bit cdecl or 64-bit for host OS)
   //!   kFuncConvHost,
   //!   // Using function builder to generate arguments list
-  //!   BuildFunction2<Void, int, int>());
+  //!   BuildFunction2<FnVoid, int, int>());
   //!
   //! c.setArg(0, a0);
   //! c.setArg(1, a1);
@@ -1337,7 +1340,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! method. Recommended is to save the pointer.
   //!
   //! @sa @c BuildFunction0, @c BuildFunction1, @c BuildFunction2, ...
-  ASMJIT_API X86X64FuncNode* addFunc(uint32_t convention, const FuncPrototype& func);
+  ASMJIT_API X86X64FuncNode* addFunc(uint32_t conv, const FuncPrototype& p);
 
   //! @brief End of current function.
   ASMJIT_API EndNode* endFunc();
@@ -1365,9 +1368,9 @@ struct X86X64Compiler : public BaseCompiler {
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref X86X64CallNode.
-  ASMJIT_API X86X64CallNode* newCall(const Operand& o0, uint32_t convention, const FuncPrototype& prototype);
+  ASMJIT_API X86X64CallNode* newCall(const Operand& o0, uint32_t conv, const FuncPrototype& p);
   //! @brief Add a new @ref X86X64CallNode.
-  ASMJIT_API X86X64CallNode* addCall(const Operand& o0, uint32_t convention, const FuncPrototype& prototype);
+  ASMJIT_API X86X64CallNode* addCall(const Operand& o0, uint32_t conv, const FuncPrototype& p);
 
   // --------------------------------------------------------------------------
   // [VarData]
@@ -1376,7 +1379,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @internal
   //!
   //! @brief Create a new @ref VarData.
-  ASMJIT_API VarData* newVd(const char* name, uint32_t type, uint32_t size);
+  ASMJIT_API VarData* newVd(const char* name, uint32_t type);
 
   //! @brief Get @ref VarData by @a var.
   ASMJIT_INLINE VarData* getVd(const BaseVar& var) const {
@@ -1408,6 +1411,8 @@ struct X86X64Compiler : public BaseCompiler {
   ASMJIT_API MmVar newMmVar(uint32_t type = kVarTypeMm, const char* name = NULL);
   //! @brief Create a new Xmm variable.
   ASMJIT_API XmmVar newXmmVar(uint32_t type = kVarTypeXmm, const char* name = NULL);
+  //! @brief Create a new Ymm variable.
+  ASMJIT_API YmmVar newYmmVar(uint32_t type = kVarTypeYmm, const char* name = NULL);
 
   //! @brief Get memory home of variable @a var.
   ASMJIT_API void getMemoryHome(BaseVar& var, GpVar* home, int* displacement = NULL);
@@ -1487,7 +1492,7 @@ struct X86X64Compiler : public BaseCompiler {
   ASMJIT_INLINE EmbedNode* dstruct(const T& x) { return embed(&x, static_cast<uint32_t>(sizeof(T))); }
 
   // -------------------------------------------------------------------------
-  // [Make / Serialize]
+  // [Serialize]
   // -------------------------------------------------------------------------
 
   //! @brief Method that will send translated code to BaseAssembler instance
@@ -1605,22 +1610,22 @@ struct X86X64Compiler : public BaseCompiler {
   INST_2i(bts, kInstBts, Mem, Imm)
 
   //! @brief Call Procedure.
-  ASMJIT_INLINE X86X64CallNode* call(const GpVar& dst, uint32_t convention, const FuncPrototype& prototype)
-  { return addCall(dst, convention, prototype); }
+  ASMJIT_INLINE X86X64CallNode* call(const GpVar& dst, uint32_t conv, const FuncPrototype& p)
+  { return addCall(dst, conv, p); }
   //! @overload
-  ASMJIT_INLINE X86X64CallNode* call(const Mem& dst, uint32_t convention, const FuncPrototype& prototype)
-  { return addCall(dst, convention, prototype); }
+  ASMJIT_INLINE X86X64CallNode* call(const Mem& dst, uint32_t conv, const FuncPrototype& p)
+  { return addCall(dst, conv, p); }
   //! @overload
-  ASMJIT_INLINE X86X64CallNode* call(const Imm& dst, uint32_t convention, const FuncPrototype& prototype)
-  { return addCall(dst, convention, prototype); }
+  ASMJIT_INLINE X86X64CallNode* call(const Imm& dst, uint32_t conv, const FuncPrototype& p)
+  { return addCall(dst, conv, p); }
   //! @overload
-  ASMJIT_INLINE X86X64CallNode* call(void* dst, uint32_t convention, const FuncPrototype& prototype) {
+  ASMJIT_INLINE X86X64CallNode* call(void* dst, uint32_t conv, const FuncPrototype& p) {
     Imm imm((intptr_t)dst);
-    return addCall(imm, convention, prototype);
+    return addCall(imm, conv, p);
   }
   //! @overload
-  ASMJIT_INLINE X86X64CallNode* call(const Label& label, uint32_t convention, const FuncPrototype& prototype)
-  { return addCall(label, convention, prototype); }
+  ASMJIT_INLINE X86X64CallNode* call(const Label& label, uint32_t conv, const FuncPrototype& p)
+  { return addCall(label, conv, p); }
 
   //! @brief Clear Carry flag
   INST_0x(clc, kInstClc)
@@ -3976,7 +3981,7 @@ struct Compiler : public X86X64Compiler {
   ASMJIT_API ~Compiler();
 
   // --------------------------------------------------------------------------
-  // [Make / Serialize]
+  // [Make]
   // --------------------------------------------------------------------------
 
   //! @overriden
@@ -4054,7 +4059,7 @@ struct Compiler : public X86X64Compiler {
   ASMJIT_API ~Compiler();
 
   // --------------------------------------------------------------------------
-  // [Make / Serialize]
+  // [Make]
   // --------------------------------------------------------------------------
 
   //! @overriden

@@ -23,7 +23,7 @@ namespace x86x64 {
 //! @{
 
 // ============================================================================
-// [asmjit::kFuncConv]
+// [asmjit::x86x64::kFuncConv]
 // ============================================================================
 
 //! @brief X86 function calling conventions.
@@ -275,6 +275,11 @@ ASMJIT_ENUM(kFuncConv) {
   //! - Floating points - fp0 register.
   kFuncConvGccRegParm3 = 11,
 
+  //! @internal
+  //!
+  //! @brief Count of function calling conventions.
+  _kFuncConvCount = 12,
+
   // --------------------------------------------------------------------------
   // [Host]
   // --------------------------------------------------------------------------
@@ -331,7 +336,7 @@ ASMJIT_ENUM(kFuncConv) {
 };
 
 // ============================================================================
-// [asmjit::kFuncHint]
+// [asmjit::x86x64::kFuncHint]
 // ============================================================================
 
 //! @brief X86 function hints.
@@ -348,7 +353,7 @@ ASMJIT_ENUM(kFuncHint) {
 };
 
 // ============================================================================
-// [asmjit::kFuncFlags]
+// [asmjit::x86x64::kFuncFlags]
 // ============================================================================
 
 //! @brief X86 function flags.
@@ -385,7 +390,15 @@ ASMJIT_ENUM(kFuncFlags) {
 };
 
 // ============================================================================
-// [asmjit::X86X64FuncDecl]
+// [asmjit::x86x64::x86GetArchFromCConv]
+// ============================================================================
+
+static ASMJIT_INLINE uint32_t x86GetArchFromCConv(uint32_t conv) {
+  return IntUtil::inInterval<uint32_t>(conv, kFuncConvX64W, kFuncConvX64U) ? kArchX64 : kArchX86;
+}
+
+// ============================================================================
+// [asmjit::x86x64::X86X64FuncDecl]
 // ============================================================================
 
 //! @brief X86 function, including calling convention, arguments and their
@@ -449,7 +462,7 @@ struct X86X64FuncDecl : public FuncDecl {
   //! This will set function calling convention and setup arguments variables.
   //!
   //! @note This function will allocate variables, it can be called only once.
-  ASMJIT_API bool setPrototype(uint32_t convention, const FuncPrototype& prototype);
+  ASMJIT_API Error setPrototype(uint32_t conv, const FuncPrototype& p);
 
   // --------------------------------------------------------------------------
   // [Reset]
@@ -478,35 +491,6 @@ struct X86X64FuncDecl : public FuncDecl {
 //! @}
 
 } // x86x64 namespace
-} // asmjit namespace
-
-// ============================================================================
-// [asmjit::TypeId]
-// ============================================================================
-
-namespace asmjit {
-
-// TODO: [Func] Port.
-ASMJIT_DECLARE_TYPE_CORE(kVarTypeIntPtr);
-
-ASMJIT_DECLARE_TYPE_ID(void, kVarTypeInvalid);
-ASMJIT_DECLARE_TYPE_ID(Void, kVarTypeInvalid);
-
-ASMJIT_DECLARE_TYPE_ID(int8_t, kVarTypeInt8);
-ASMJIT_DECLARE_TYPE_ID(uint8_t, kVarTypeUInt8);
-
-ASMJIT_DECLARE_TYPE_ID(int16_t, kVarTypeInt16);
-ASMJIT_DECLARE_TYPE_ID(uint16_t, kVarTypeUInt8);
-
-ASMJIT_DECLARE_TYPE_ID(int32_t, kVarTypeInt32);
-ASMJIT_DECLARE_TYPE_ID(uint32_t, kVarTypeUInt32);
-
-ASMJIT_DECLARE_TYPE_ID(int64_t, kVarTypeInt64);
-ASMJIT_DECLARE_TYPE_ID(uint64_t, kVarTypeUInt64);
-
-ASMJIT_DECLARE_TYPE_ID(float, kVarTypeFp32);
-ASMJIT_DECLARE_TYPE_ID(double, kVarTypeFp64);
-
 } // asmjit namespace
 
 // [Api-End]

@@ -38,6 +38,7 @@ BaseCompiler::BaseCompiler(BaseRuntime* runtime) :
   _nodeFlowId(0),
   _nodeFlags(0),
   _maxLookAhead(kBaseCompilerDefaultLookAhead),
+  _targetVarMapping(NULL),
   _firstNode(NULL),
   _lastNode(NULL),
   _cursor(NULL),

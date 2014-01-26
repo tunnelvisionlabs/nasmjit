@@ -45,7 +45,7 @@ static void blend(asmjit::host::Compiler& c) {
 
   Label L_Data(c);
 
-  c.addFunc(kFuncConvHost, FuncBuilder3<Void, void*, const void*, size_t>());
+  c.addFunc(kFuncConvHost, FuncBuilder3<FnVoid, void*, const void*, size_t>());
 
   c.setArg(0, dst);
   c.setArg(1, src);

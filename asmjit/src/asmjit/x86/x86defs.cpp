@@ -2688,10 +2688,10 @@ const InstInfo _instInfo[] = {
   INST(kInstVfnmsub231ps     , "vfnmsub231ps"     , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F38(BE,U)  , U               ),
   INST(kInstVfnmsub231sd     , "vfnmsub231sd"     , G(AvxRvm)        ,                    F(W), O(Xmm)              , O(Xmm)              , O(XmmMem)           , U                   , O_660F38(BF,U)  , U               ),
   INST(kInstVfnmsub231ss     , "vfnmsub231ss"     , G(AvxRvm)        , F(None)                , O(Xmm)              , O(Xmm)              , O(XmmMem)           , U                   , O_660F38(BF,U)  , U               ),
-  INST(kInstVgatherdpd       , "vgatherdpd"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , 0               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVgatherdps       , "vgatherdps"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , 0               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVgatherqpd       , "vgatherqpd"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , 0               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVgatherqps       , "vgatherqps"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , 0               , U               ), // TODO: [Defs] Incomplete.
+  INST(kInstVgatherdpd       , "vgatherdpd"       , G(AvxGather)     ,                    F(W), O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(92,U)  , U               ),
+  INST(kInstVgatherdps       , "vgatherdps"       , G(AvxGather)     , F(None)                , O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(92,U)  , U               ),
+  INST(kInstVgatherqpd       , "vgatherqpd"       , G(AvxGather)     ,                    F(W), O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(93,U)  , U               ),
+  INST(kInstVgatherqps       , "vgatherqps"       , G(AvxGatherEx)   , F(None)                , O(Xmm)              , O(Mem)              , O(Xmm)              , U                   , O_660F38(93,U)  , U               ),
   INST(kInstVhaddpd          , "vhaddpd"          , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F00(7C,U)  , U               ),
   INST(kInstVhaddps          , "vhaddps"          , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_F20F00(7C,U)  , U               ),
   INST(kInstVhsubpd          , "vhsubpd"          , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F00(7D,U)  , U               ),
@@ -2731,10 +2731,10 @@ const InstInfo _instInfo[] = {
   INST(kInstVmovntpd         , "vmovntpd"         , G(AvxMr_P)       , F(None)                , O(Mem)              , O(XmmYmm)           , U                   , U                   , O_660F00(2B,U)  , U               ),
   INST(kInstVmovntps         , "vmovntps"         , G(AvxMr_P)       , F(None)                , O(Mem)              , O(XmmYmm)           , U                   , U                   , O_000F00(2B,U)  , U               ),
   INST(kInstVmovq            , "vmovq"            , G(AvxRmMr)       ,                    F(W), O(XmmMem)           , O(XmmMem)           , U                   , U                   , O_660F00(6E,U)  , O_660F00(7E,U)  ),
-  INST(kInstVmovsd           , "vmovsd"           , G(None)          , F(None)                , 0                   , 0                   , 0                   , U                   , O_F20F00(10,U)  , O_F20F00(11,U)  ), // TODO: [Defs] Incomplete.
+  INST(kInstVmovsd           , "vmovsd"           , G(AvxMovSsSd)    , F(None)                , O(XmmMem)           , O(XmmMem)           , O(Xmm)              , U                   , O_F20F00(10,U)  , O_F20F00(11,U)  ),
   INST(kInstVmovshdup        , "vmovshdup"        , G(AvxRm_P)       , F(None)                , O(XmmYmm)           , O(XmmYmmMem)        , U                   , U                   , O_F30F00(16,U)  , U               ),
   INST(kInstVmovsldup        , "vmovsldup"        , G(AvxRm_P)       , F(None)                , O(XmmYmm)           , O(XmmYmmMem)        , U                   , U                   , O_F30F00(12,U)  , U               ),
-  INST(kInstVmovss           , "vmovss"           , G(None)          , F(None)                , 0                   , 0                   , 0                   , U                   , O_F30F00(10,U)  , O_F30F00(11,U)  ), // TODO: [Defs] Incomplete.
+  INST(kInstVmovss           , "vmovss"           , G(AvxMovSsSd)    , F(None)                , O(XmmMem)           , O(Xmm)              , O(Xmm)              , U                   , O_F30F00(10,U)  , O_F30F00(11,U)  ),
   INST(kInstVmovupd          , "vmovupd"          , G(AvxRmMr_P)     , F(None)                , O(XmmYmmMem)        , O(XmmYmmMem)        , U                   , U                   , O_660F00(10,U)  , O_660F00(11,U)  ),
   INST(kInstVmovups          , "vmovups"          , G(AvxRmMr_P)     , F(None)                , O(XmmYmmMem)        , O(XmmYmmMem)        , U                   , U                   , O_000F00(10,U)  , O_000F00(11,U)  ),
   INST(kInstVmpsadbw         , "vmpsadbw"         , G(AvxRvmi_P)     , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , O(Imm)              , O_660F3A(42,U)  , U               ),
@@ -2796,10 +2796,10 @@ const InstInfo _instInfo[] = {
   INST(kInstVpextrd          , "vpextrd"          , G(AvxMri)        , F(None)                , O(GqdMem)           , O(Xmm)              , O(Imm)              , U                   , O_660F3A(16,U)  , U               ),
   INST(kInstVpextrq          , "vpextrq"          , G(AvxMri)        ,                    F(W), O(GqMem)            , O(Xmm)              , O(Imm)              , U                   , O_660F3A(16,U)  , U               ),
   INST(kInstVpextrw          , "vpextrw"          , G(AvxMri)        , F(None)                , O(GqdwMem)          , O(Xmm)              , O(Imm)              , U                   , O_660F3A(15,U)  , U               ),
-  INST(kInstVpgatherdd       , "vpgatherdd"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , U               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVpgatherdq       , "vpgatherdq"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , U               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVpgatherqd       , "vpgatherqd"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , U               , U               ), // TODO: [Defs] Incomplete.
-  INST(kInstVpgatherqq       , "vpgatherqq"       , G(AvxGather)     , F(None)                , 0                   , 0                   , 0                   , U                   , U               , U               ), // TODO: [Defs] Incomplete.
+  INST(kInstVpgatherdd       , "vpgatherdd"       , G(AvxGather)     , F(None)                , O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(90,U)  , U               ),
+  INST(kInstVpgatherdq       , "vpgatherdq"       , G(AvxGather)     ,                    F(W), O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(90,U)  , U               ),
+  INST(kInstVpgatherqd       , "vpgatherqd"       , G(AvxGatherEx)   , F(None)                , O(Xmm)              , O(Mem)              , O(Xmm)              , U                   , O_660F38(91,U)  , U               ),
+  INST(kInstVpgatherqq       , "vpgatherqq"       , G(AvxGather)     ,                    F(W), O(XmmYmm)           , O(Mem)              , O(XmmYmm)           , U                   , O_660F38(91,U)  , U               ),
   INST(kInstVphaddd          , "vphaddd"          , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F38(02,U)  , U               ),
   INST(kInstVphaddsw         , "vphaddsw"         , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F38(03,U)  , U               ),
   INST(kInstVphaddw          , "vphaddw"          , G(AvxRvm_P)      , F(None)                , O(XmmYmm)           , O(XmmYmm)           , O(XmmYmmMem)        , U                   , O_660F38(01,U)  , U               ),
@@ -3026,26 +3026,28 @@ const uint32_t _condToSetcc [20] = COND_TO_INST(kInstSet );
 #define D(_Desc_) kVarDesc##_Desc_
 
 const VarInfo _varInfo[] = {
-  /*  0 */ { kRegTypeGpbLo, 1 , C(Gp), 0                , "gpb" },
-  /*  1 */ { kRegTypeGpbLo, 1 , C(Gp), 0                , "gpb" },
-  /*  2 */ { kRegTypeGpw  , 2 , C(Gp), 0                , "gpw" },
-  /*  3 */ { kRegTypeGpw  , 2 , C(Gp), 0                , "gpw" },
-  /*  4 */ { kRegTypeGpd  , 4 , C(Gp), 0                , "gpd" },
-  /*  5 */ { kRegTypeGpd  , 4 , C(Gp), 0                , "gpd" },
-  /*  6 */ { kRegTypeGpq  , 8 , C(Gp), 0                , "gpq" },
-  /*  7 */ { kRegTypeGpq  , 8 , C(Gp), 0                , "gpq" },
-  /*  8 */ { kRegTypeFp   , 4 , C(Fp), D(Sp)            , "fp"  },
-  /*  9 */ { kRegTypeFp   , 8 , C(Fp), D(Dp)            , "fp"  },
-  /* 10 */ { kRegTypeFp   , 16, C(Fp), D(Sp)            , "fp"  },
-  /* 11 */ { kRegTypeMm   , 8 , C(Mm), 0                , "mm"  },
-  /* 12 */ { kRegTypeXmm  , 16, C(Xy), 0                , "xmm" },
-  /* 13 */ { kRegTypeXmm  , 4 , C(Xy), D(Sp)            , "xmm" },
-  /* 14 */ { kRegTypeXmm  , 8 , C(Xy), D(Dp)            , "xmm" },
-  /* 15 */ { kRegTypeXmm  , 16, C(Xy), D(Sp) | D(Packed), "xmm" },
-  /* 16 */ { kRegTypeXmm  , 16, C(Xy), D(Dp) | D(Packed), "xmm" },
-  /* 17 */ { kRegTypeYmm  , 32, C(Xy), 0                , "ymm" },
-  /* 18 */ { kRegTypeYmm  , 32, C(Xy), D(Sp) | D(Packed), "ymm" },
-  /* 19 */ { kRegTypeYmm  , 32, C(Xy), D(Dp) | D(Packed), "ymm" }
+  /* 00: kVarTypeInt8    */ { kRegTypeGpbLo, 1 , C(Gp), 0                , "gpb" },
+  /* 01: kVarTypeUInt8   */ { kRegTypeGpbLo, 1 , C(Gp), 0                , "gpb" },
+  /* 02: kVarTypeInt16   */ { kRegTypeGpw  , 2 , C(Gp), 0                , "gpw" },
+  /* 03: kVarTypeUInt16  */ { kRegTypeGpw  , 2 , C(Gp), 0                , "gpw" },
+  /* 04: kVarTypeInt32   */ { kRegTypeGpd  , 4 , C(Gp), 0                , "gpd" },
+  /* 05: kVarTypeUInt32  */ { kRegTypeGpd  , 4 , C(Gp), 0                , "gpd" },
+  /* 06: kVarTypeInt64   */ { kRegTypeGpq  , 8 , C(Gp), 0                , "gpq" },
+  /* 07: kVarTypeUInt64  */ { kRegTypeGpq  , 8 , C(Gp), 0                , "gpq" },
+  /* 08: kVarTypeIntPtr  */ { 0            , 0 , C(Gp), 0                , ""    }, // Remapped.
+  /* 09: kVarTypeUIntPtr */ { 0            , 0 , C(Gp), 0                , ""    }, // Remapped.
+  /* 10: kVarTypeFp32    */ { kRegTypeFp   , 4 , C(Fp), D(Sp)            , "fp"  },
+  /* 11: kVarTypeFp64    */ { kRegTypeFp   , 8 , C(Fp), D(Dp)            , "fp"  },
+  /* 12: kVarTypeFpEx    */ { kRegTypeFp   , 16, C(Fp), D(Sp)            , "fp"  },
+  /* 13: kVarTypeMm      */ { kRegTypeMm   , 8 , C(Mm), 0                , "mm"  },
+  /* 14: kVarTypeXmm     */ { kRegTypeXmm  , 16, C(Xy), 0                , "xmm" },
+  /* 15: kVarTypeXmmSs   */ { kRegTypeXmm  , 4 , C(Xy), D(Sp)            , "xmm" },
+  /* 16: kVarTypeXmmSd   */ { kRegTypeXmm  , 8 , C(Xy), D(Dp)            , "xmm" },
+  /* 17: kVarTypeXmmPs   */ { kRegTypeXmm  , 16, C(Xy), D(Sp) | D(Packed), "xmm" },
+  /* 18: kVarTypeXmmPd   */ { kRegTypeXmm  , 16, C(Xy), D(Dp) | D(Packed), "xmm" },
+  /* 19: kVarTypeYmm     */ { kRegTypeYmm  , 32, C(Xy), 0                , "ymm" },
+  /* 20: kVarTypeYmmPs   */ { kRegTypeYmm  , 32, C(Xy), D(Sp) | D(Packed), "ymm" },
+  /* 21: kVarTypeYmmPd   */ { kRegTypeYmm  , 32, C(Xy), D(Dp) | D(Packed), "ymm" }
 };
 
 #undef D
@@ -3132,7 +3134,8 @@ const SegReg gs(kRegTypeSeg, kSegGs, 2);
 // ============================================================================
 
 Mem ptr_abs(void* target, int32_t disp, uint32_t size) {
-  Mem m;
+  Mem m(DontInitialize);
+
   m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
     size,
     kMemTypeAbsolute,
@@ -3144,9 +3147,9 @@ Mem ptr_abs(void* target, int32_t disp, uint32_t size) {
 }
 
 Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size) {
-  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
-
   Mem m(DontInitialize);
+
+  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
   m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
     size,
     kMemTypeAbsolute,
@@ -3158,9 +3161,9 @@ Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp, uint
 }
 
 Mem ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) {
-  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
-
   Mem m(DontInitialize);
+
+  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
   m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
     size,
     kMemTypeAbsolute,
@@ -3183,6 +3186,31 @@ Mem ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp, uint
 namespace asmjit {
 namespace x86 {
 
+const uint8_t _varMapping[kVarTypeCount] = {
+  /* 00: kVarTypeInt8    */ kVarTypeInt8,
+  /* 01: kVarTypeUInt8   */ kVarTypeUInt8,
+  /* 02: kVarTypeInt16   */ kVarTypeInt16,
+  /* 03: kVarTypeUInt16  */ kVarTypeUInt16,
+  /* 04: kVarTypeInt32   */ kVarTypeInt32,
+  /* 05: kVarTypeUInt32  */ kVarTypeUInt32,
+  /* 06: kVarTypeInt64   */ kVarTypeInt32,   // Remapped (Invalid in 32-bit mode).
+  /* 07: kVarTypeUInt64  */ kVarTypeUInt32,  // Remapped (Invalid in 32-bit mode).
+  /* 08: kVarTypeIntPtr  */ kVarTypeInt32,   // Remapped.
+  /* 09: kVarTypeUIntPtr */ kVarTypeUInt32,  // Remapped.
+  /* 10: kVarTypeFp32    */ kVarTypeFp32,
+  /* 11: kVarTypeFp64    */ kVarTypeFp64,
+  /* 12: kVarTypeFpEx    */ kVarTypeFpEx,
+  /* 13: kVarTypeMm      */ kVarTypeMm,
+  /* 14: kVarTypeXmm     */ kVarTypeXmm,
+  /* 15: kVarTypeXmmSs   */ kVarTypeXmmSs,
+  /* 16: kVarTypeXmmSd   */ kVarTypeXmmSd,
+  /* 17: kVarTypeXmmPs   */ kVarTypeXmmPs,
+  /* 18: kVarTypeXmmPd   */ kVarTypeXmmPd,
+  /* 19: kVarTypeYmm     */ kVarTypeYmm,
+  /* 20: kVarTypeYmmPs   */ kVarTypeYmmPs,
+  /* 21: kVarTypeYmmPd   */ kVarTypeYmmPd
+};
+
 const GpReg zax(kRegTypeGpd, kRegIndexAx, 4);
 const GpReg zcx(kRegTypeGpd, kRegIndexCx, 4);
 const GpReg zdx(kRegTypeGpd, kRegIndexDx, 4);
@@ -3204,6 +3232,31 @@ const GpReg zdi(kRegTypeGpd, kRegIndexDi, 4);
 #if defined(ASMJIT_BUILD_X64)
 namespace asmjit {
 namespace x64 {
+
+const uint8_t _varMapping[kVarTypeCount] = {
+  /* 00: kVarTypeInt8    */ kVarTypeInt8,
+  /* 01: kVarTypeUInt8   */ kVarTypeUInt8,
+  /* 02: kVarTypeInt16   */ kVarTypeInt16,
+  /* 03: kVarTypeUInt16  */ kVarTypeUInt16,
+  /* 04: kVarTypeInt32   */ kVarTypeInt32,
+  /* 05: kVarTypeUInt32  */ kVarTypeUInt32,
+  /* 06: kVarTypeInt64   */ kVarTypeInt64,
+  /* 07: kVarTypeUInt64  */ kVarTypeUInt64,
+  /* 08: kVarTypeIntPtr  */ kVarTypeInt64,   // Remapped.
+  /* 09: kVarTypeUIntPtr */ kVarTypeUInt64,  // Remapped.
+  /* 10: kVarTypeFp32    */ kVarTypeFp32,
+  /* 11: kVarTypeFp64    */ kVarTypeFp64,
+  /* 12: kVarTypeFpEx    */ kVarTypeFpEx,
+  /* 13: kVarTypeMm      */ kVarTypeMm,
+  /* 14: kVarTypeXmm     */ kVarTypeXmm,
+  /* 15: kVarTypeXmmSs   */ kVarTypeXmmSs,
+  /* 16: kVarTypeXmmSd   */ kVarTypeXmmSd,
+  /* 17: kVarTypeXmmPs   */ kVarTypeXmmPs,
+  /* 18: kVarTypeXmmPd   */ kVarTypeXmmPd,
+  /* 19: kVarTypeYmm     */ kVarTypeYmm,
+  /* 20: kVarTypeYmmPs   */ kVarTypeYmmPs,
+  /* 21: kVarTypeYmmPd   */ kVarTypeYmmPd
+};
 
 const GpReg spl(kRegTypeGpbLo, kRegIndexSp, 1);
 const GpReg bpl(kRegTypeGpbLo, kRegIndexBp, 1);

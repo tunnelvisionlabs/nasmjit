@@ -106,13 +106,6 @@ static const _Initialize Initialize;
 struct _DontInitialize {};
 static const _DontInitialize DontInitialize;
 
-// ============================================================================
-// [asmjit::Void]
-// ============================================================================
-
-//! @brief Void type which can be used in @ref FuncDecl templates.
-struct Void {};
-
 //! @}
 
 } // asmjit namespace

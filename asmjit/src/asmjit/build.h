@@ -197,26 +197,6 @@ public:
 #endif // ASMJIT_NOP
 
 // ============================================================================
-// [ASMJIT_CC]
-// ============================================================================
-
-// [AsmJit - C++ Compiler Support]
-#define ASMJIT_TYPE_TO_TYPE(_Type_) _Type_
-#define ASMJIT_HAS_STANDARD_DEFINE_OPTIONS
-#define ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION
-
-// Support for VC6
-#if defined(_MSC_VER) && (_MSC_VER < 1400)
-
-# undef ASMJIT_TYPE_TO_TYPE
-# define ASMJIT_TYPE_TO_TYPE(_Type_) ::asmjit::_TypeToType<_Type_>::Type
-
-# undef ASMJIT_HAS_STANDARD_DEFINE_OPTIONS
-# undef ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION
-
-#endif
-
-// ============================================================================
 // [ASMJIT_CCONV]
 // ============================================================================
 
@@ -286,9 +266,9 @@ typedef unsigned __int64 uint64_t;
 // [OS Support]
 // ============================================================================
 
-#if defined(ASMJIT_OS_WINDOWS) && !defined(ASMJIT_WINDOWS_INCLUDED)
+#if defined(ASMJIT_OS_WINDOWS) && !defined(ASMJIT_SUPRESS_WINDOWS_H)
 #include <windows.h>
-#endif // ASMJIT_OS_WINDOWS  && !ASMJIT_WINDOWS_INCLUDED
+#endif // ASMJIT_OS_WINDOWS  && !ASMJIT_SUPRESS_WINDOWS_H
 
 // [Guard]
 #endif // _ASMJIT_BUILD_H

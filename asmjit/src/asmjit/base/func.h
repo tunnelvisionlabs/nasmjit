@@ -22,7 +22,7 @@ namespace asmjit {
 // ============================================================================
 
 template<typename T>
-struct TypeId;
+struct FnTypeId;
 
 // ============================================================================
 // [asmjit::kFuncConv]
@@ -174,49 +174,91 @@ ASMJIT_ENUM(kFuncRet) {
 };
 
 // ============================================================================
-// [asmjit::TypeId]
+// [asmjit::FnTypeId]
 // ============================================================================
 
-#if defined(ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION)
-
+//! @internal
 #define ASMJIT_DECLARE_TYPE_CORE(_PtrId_) \
   template<typename T> \
-  struct TypeId { \
-    enum { \
-      kId = static_cast<int>(::asmjit::kVarTypeInvalid) \
-    }; \
-  }; \
+  struct TypeId { enum { kId = static_cast<int>(::asmjit::kVarTypeInvalid) }; }; \
   \
   template<typename T> \
   struct TypeId<T*> { enum { kId = _PtrId_ }; }
 
-#else
-
-// Code without partial template specialization is a bit complex. We need to
-// determine whether the size of the return value of this function is equal
-// to sizeof(char) or sizeof(void*). Any sizeof() can be used to distinguish
-// between these two, but these are commonly used in other libraries as well.
-template<typename T>
-char TypeId_NoPtiHelper(T*(*)());
-// And specialization.
-void* TypeId_NoPtiHelper(...);
-
-#define ASMJIT_DECLARE_TYPE_CORE(_PtrId_) \
-  template<typename T> \
-  struct TypeId { \
-    enum { \
-      kId = (sizeof( ::asmjit::TypeId_NoPtiHelper((T(*)())0) ) == sizeof(char) \
-        ? static_cast<int>(_PtrId_) \
-        : static_cast<int>(::asmjit::kVarTypeInvalid)) \
-    }; \
-  }
-
-#endif // ASMJIT_HAS_PARTIAL_TEMPLATE_SPECIALIZATION
-
+//! @internal
+//!
 //! @brief Declare C/C++ type-id mapped to @c asmjit::kVarType.
 #define ASMJIT_DECLARE_TYPE_ID(_T_, _Id_) \
   template<> \
   struct TypeId<_T_> { enum { kId = _Id_ }; }
+
+//! @brief Function builder 'void' type.
+struct FnVoid {};
+
+//! @brief Function builder 'int8_t' type.
+struct FnInt8 {};
+//! @brief Function builder 'uint8_t' type.
+struct FnUInt8 {};
+
+//! @brief Function builder 'int16_t' type.
+struct FnInt16 {};
+//! @brief Function builder 'uint16_t' type.
+struct FnUInt16 {};
+
+//! @brief Function builder 'int32_t' type.
+struct FnInt32 {};
+//! @brief Function builder 'uint32_t' type.
+struct FnUInt32 {};
+
+//! @brief Function builder 'int64_t' type.
+struct FnInt64 {};
+//! @brief Function builder 'uint64_t' type.
+struct FnUInt64 {};
+
+//! @brief Function builder 'intptr_t' type.
+struct FnIntPtr {};
+//! @brief Function builder 'uintptr_t' type.
+struct FnUIntPtr {};
+
+//! @brief Function builder 'float' type.
+struct FnFloat {};
+//! @brief Function builder 'double' type.
+struct FnDouble {};
+
+ASMJIT_DECLARE_TYPE_CORE(kVarTypeIntPtr);
+
+ASMJIT_DECLARE_TYPE_ID(void, kVarTypeInvalid);
+ASMJIT_DECLARE_TYPE_ID(FnVoid, kVarTypeInvalid);
+
+ASMJIT_DECLARE_TYPE_ID(int8_t, kVarTypeInt8);
+ASMJIT_DECLARE_TYPE_ID(FnInt8, kVarTypeInt8);
+
+ASMJIT_DECLARE_TYPE_ID(uint8_t, kVarTypeUInt8);
+ASMJIT_DECLARE_TYPE_ID(FnUInt8, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(int16_t, kVarTypeInt16);
+ASMJIT_DECLARE_TYPE_ID(FnInt16, kVarTypeInt16);
+
+ASMJIT_DECLARE_TYPE_ID(uint16_t, kVarTypeUInt8);
+ASMJIT_DECLARE_TYPE_ID(FnUInt16, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(int32_t, kVarTypeInt32);
+ASMJIT_DECLARE_TYPE_ID(FnInt32, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(uint32_t, kVarTypeUInt32);
+ASMJIT_DECLARE_TYPE_ID(FnUInt32, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(int64_t, kVarTypeInt64);
+ASMJIT_DECLARE_TYPE_ID(FnInt64, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(uint64_t, kVarTypeUInt64);
+ASMJIT_DECLARE_TYPE_ID(FnUInt64, kVarTypeUInt8);
+
+ASMJIT_DECLARE_TYPE_ID(float, kVarTypeFp32);
+ASMJIT_DECLARE_TYPE_ID(FnFloat, kVarTypeFp32);
+
+ASMJIT_DECLARE_TYPE_ID(double, kVarTypeFp64);
+ASMJIT_DECLARE_TYPE_ID(FnDouble, kVarTypeFp64);
 
 // ============================================================================
 // [asmjit::FuncInOut]
@@ -443,8 +485,9 @@ struct FuncBuilderX : public FuncPrototype {
   // --------------------------------------------------------------------------
 
   //! @brief Set return type to @a retType.
-  ASMJIT_INLINE void setRet(uint32_t retType)
-  { _ret = retType; }
+  ASMJIT_INLINE void setRet(uint32_t retType) {
+    _ret = retType;
+  }
 
   ASMJIT_INLINE void setArg(uint32_t id, uint32_t type) {
     ASMJIT_ASSERT(id < _argCount);
@@ -458,15 +501,15 @@ struct FuncBuilderX : public FuncPrototype {
 
   template<typename T>
   ASMJIT_INLINE void setRetT()
-  { setRet(TypeId<ASMJIT_TYPE_TO_TYPE(T)>::kId); }
+  { setRet(TypeId<T>::kId); }
 
   template<typename T>
   ASMJIT_INLINE void setArgT(uint32_t id)
-  { setArg(id, TypeId<ASMJIT_TYPE_TO_TYPE(T)>::kId); }
+  { setArg(id, TypeId<T>::kId); }
 
   template<typename T>
   ASMJIT_INLINE void addArgT()
-  { addArg(TypeId<ASMJIT_TYPE_TO_TYPE(T)>::kId); }
+  { addArg(TypeId<T>::kId); }
 
   // --------------------------------------------------------------------------
   // [Members]
@@ -475,168 +518,107 @@ struct FuncBuilderX : public FuncPrototype {
   uint32_t _builderArgList[kFuncArgCount];
 };
 
-//! @brief Class used to build function without arguments.
+#define _TID(_T_) TypeId<_T_>::kId
+
+//! @brief Function builder (no args).
 template<typename RET>
 struct FuncBuilder0 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder0() {
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, NULL, 0);
+    _setPrototype(_TID(RET), NULL, 0);
   }
 };
 
-//! @brief Class used to build function with 1 argument.
+//! @brief Function builder (1 argument).
 template<typename RET, typename P0>
 struct FuncBuilder1 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder1() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 2 args.
+//! @brief Function builder (2 arguments).
 template<typename RET, typename P0, typename P1>
 struct FuncBuilder2 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder2() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 3 args.
+//! @brief Function builder (3 arguments).
 template<typename RET, typename P0, typename P1, typename P2>
 struct FuncBuilder3 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder3() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 4 args.
+//! @brief Function builder (4 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3>
 struct FuncBuilder4 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder4() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 5 args.
+//! @brief Function builder (5 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4>
 struct FuncBuilder5 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder5() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3), _TID(P4) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 6 args.
+//! @brief Function builder (6 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct FuncBuilder6 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder6() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3), _TID(P4), _TID(P5) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 7 args.
+//! @brief Function builder (7 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
 struct FuncBuilder7 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder7() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3), _TID(P4), _TID(P5), _TID(P6) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 8 args.
+//! @brief Function builder (8 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 struct FuncBuilder8 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder8() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2),_TID(P3), _TID(P4), _TID(P5), _TID(P6), _TID(P7) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 9 args.
+//! @brief Function builder (9 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 struct FuncBuilder9 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder9() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P8)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3), _TID(P4), _TID(P5), _TID(P6), _TID(P7), _TID(P8) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
 
-//! @brief Class used to build function with 10 args.
+//! @brief Function builder (10 arguments).
 template<typename RET, typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct FuncBuilder10 : public FuncPrototype {
   ASMJIT_INLINE FuncBuilder10() {
-    static const uint32_t args[] = {
-      TypeId<ASMJIT_TYPE_TO_TYPE(P0)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P1)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P2)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P3)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P4)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P5)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P6)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P7)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P8)>::kId,
-      TypeId<ASMJIT_TYPE_TO_TYPE(P9)>::kId
-    };
-    _setPrototype(TypeId<ASMJIT_TYPE_TO_TYPE(RET)>::kId, args, ASMJIT_ARRAY_SIZE(args));
+    static const uint32_t args[] = { _TID(P0), _TID(P1), _TID(P2), _TID(P3), _TID(P4), _TID(P5), _TID(P6), _TID(P7), _TID(P8), _TID(P9) };
+    _setPrototype(_TID(RET), args, ASMJIT_ARRAY_SIZE(args));
   }
 };
+
+#undef _TID
 
 } // asmjit namespace
 

@@ -194,24 +194,27 @@ ASMJIT_ENUM(kVarType) {
   //! @brief Variable is unsigned 64-bit integer.
   kVarTypeUInt64 = 7,
 
-  // TODO: Port
-
-  //! @brief Variable is intptr_t.
-  kVarTypeIntPtr = sizeof(intptr_t) == sizeof(int32_t) ? kVarTypeInt32 : kVarTypeInt64,
-  //! @brief Variable is uintptr_t.
-  kVarTypeUIntPtr = sizeof(uintptr_t) == sizeof(uint32_t) ? kVarTypeUInt32 : kVarTypeUInt64,
+  //! @brief Variable is target @c intptr_t (not compatible with host @c intptr_t).
+  kVarTypeIntPtr = 8,
+  //! @brief Variable is target @c uintptr_t (not compatible with host @c uintptr_t).
+  kVarTypeUIntPtr = 9,
 
   //! @brief Variable is 32-bit floating point (single precision).
-  kVarTypeFp32 = 8,
+  kVarTypeFp32 = 10,
   //! @brief Variable is 64-bit floating point (double precision).
-  kVarTypeFp64 = 9,
+  kVarTypeFp64 = 11,
   //! @brief Variable is 80-bit or 128-bit floating point (extended precision).
   //!
   //! @note Experimental, better not to use.
-  kVarTypeFpEx = 10,
+  kVarTypeFpEx = 12,
 
   //! @brief Invalid variable type.
-  kVarTypeInvalid = 0xFF
+  kVarTypeInvalid = 0xFF,
+
+  //! @internal
+  _kVarTypeIntStart = kVarTypeInt8,
+  //! @internal
+  _kVarTypeIntEnd = kVarTypeUIntPtr
 };
 
 // ============================================================================

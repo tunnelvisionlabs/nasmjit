@@ -28,8 +28,8 @@ namespace x86x64 {
 // [asmjit::x86x64::X86X64CallNode - Prototype]
 // ============================================================================
 
-void X86X64CallNode::setPrototype(uint32_t convention, const FuncPrototype& prototype) {
-  _x86Decl.setPrototype(convention, prototype);
+Error X86X64CallNode::setPrototype(uint32_t conv, const FuncPrototype& p) {
+  return _x86Decl.setPrototype(conv, p);
 }
 
 // ============================================================================
@@ -280,7 +280,7 @@ InstNode* X86X64Compiler::emit(uint32_t code, const Operand& o0, const Operand& 
 // [asmjit::x86x64::X86X64Compiler - Func]
 // ============================================================================
 
-X86X64FuncNode* X86X64Compiler::newFunc(uint32_t convention, const FuncPrototype& prototype) {
+X86X64FuncNode* X86X64Compiler::newFunc(uint32_t conv, const FuncPrototype& p) {
   X86X64FuncNode* func = newNode<X86X64FuncNode>();
   if (func == NULL)
     goto _NoMemory;
@@ -297,7 +297,11 @@ X86X64FuncNode* X86X64Compiler::newFunc(uint32_t convention, const FuncPrototype
   func->_funcHints |= IntUtil::mask(kFuncHintPushPop);
 
   // Function prototype.
-  func->_x86Decl.setPrototype(convention, prototype);
+  Error error = func->_x86Decl.setPrototype(conv, p);
+  if (error != kErrorOk) {
+    setError(error);
+    return NULL;
+  }
 
   // Function arguments stack size. Since function requires _argStackSize to be
   // set, we have to copy it from X86X64FuncDecl.
@@ -325,8 +329,8 @@ _NoMemory:
   return NULL;
 }
 
-X86X64FuncNode* X86X64Compiler::addFunc(uint32_t convention, const FuncPrototype& prototype) {
-  X86X64FuncNode* func = newFunc(convention, prototype);
+X86X64FuncNode* X86X64Compiler::addFunc(uint32_t conv, const FuncPrototype& p) {
+  X86X64FuncNode* func = newFunc(conv, p);
 
   if (func == NULL) {
     setError(kErrorNoHeapMemory);
@@ -381,32 +385,38 @@ RetNode* X86X64Compiler::addRet(const Operand& o0, const Operand& o1) {
 // [asmjit::x86x64::X86X64Compiler - Call]
 // ============================================================================
 
-X86X64CallNode* X86X64Compiler::newCall(const Operand& o0, uint32_t convention, const FuncPrototype& prototype) {
+X86X64CallNode* X86X64Compiler::newCall(const Operand& o0, uint32_t conv, const FuncPrototype& p) {
   X86X64CallNode* node = newNode<X86X64CallNode>(o0);
   if (node == NULL)
     goto _NoMemory;
 
-  uint32_t nArgs = prototype.getArgCount();
-  node->_x86Decl.setPrototype(convention, prototype);
+  {
+    Error error = node->_x86Decl.setPrototype(conv, p);
+    if (error != kErrorOk) {
+      setError(error);
+      return NULL;
+    }
 
-  // If there are no arguments skip the allocation.
-  if (!nArgs)
+    // If there are no arguments skip the allocation.
+    uint32_t nArgs = p.getArgCount();
+    if (!nArgs)
+      return node;
+
+    node->_args = static_cast<Operand*>(_zoneAllocator.alloc(nArgs * sizeof(Operand)));
+    if (node->_args == NULL)
+      goto _NoMemory;
+
+    ::memset(node->_args, 0, nArgs * sizeof(Operand));
     return node;
-
-  node->_args = static_cast<Operand*>(_zoneAllocator.alloc(nArgs * sizeof(Operand)));
-  if (node->_args == NULL)
-    goto _NoMemory;
-
-  ::memset(node->_args, 0, sizeof(Operand) * nArgs);
-  return node;
+  }
 
 _NoMemory:
   setError(kErrorNoHeapMemory);
   return NULL;
 }
 
-X86X64CallNode* X86X64Compiler::addCall(const Operand& o0, uint32_t convention, const FuncPrototype& prototype) {
-  X86X64CallNode* node = newCall(o0, convention, prototype);
+X86X64CallNode* X86X64Compiler::addCall(const Operand& o0, uint32_t conv, const FuncPrototype& p) {
+  X86X64CallNode* node = newCall(o0, conv, p);
   if (node == NULL)
     return NULL;
   return static_cast<X86X64CallNode*>(addNode(node));
@@ -416,19 +426,24 @@ X86X64CallNode* X86X64Compiler::addCall(const Operand& o0, uint32_t convention, 
 // [asmjit::x86x64::X86X64Compiler - Variables]
 // ============================================================================
 
-VarData* X86X64Compiler::newVd(const char* name, uint32_t type, uint32_t size) {
+VarData* X86X64Compiler::newVd(const char* name, uint32_t vType) {
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+
   VarData* vd = reinterpret_cast<VarData*>(_varAllocator.alloc(sizeof(VarData)));
   if (vd == NULL)
     goto _NoMemory;
+
+  vType = _targetVarMapping[vType];
+  const VarInfo& vInfo = _varInfo[vType];
 
   vd->_name = name ? _stringAllocator.sdup(name) : static_cast<char*>(NULL);
   vd->_id = OperandUtil::makeVarId(static_cast<uint32_t>(_vars.getLength()));
 
   vd->_contextId = kInvalidValue;
 
-  vd->_type = static_cast<uint8_t>(type);
-  vd->_class = static_cast<uint8_t>(_varInfo[type].getClass());
-  vd->_size = static_cast<uint8_t>(size);
+  vd->_type = static_cast<uint8_t>(vType);
+  vd->_class = static_cast<uint8_t>(vInfo.getClass());
+  vd->_size = static_cast<uint8_t>(vInfo.getSize());
   vd->_flags = 0;
 
   vd->_priority = 10;
@@ -480,31 +495,26 @@ bool X86X64Compiler::setArg(uint32_t argIndex, BaseVar& var) {
 bool X86X64Compiler::_newVar(BaseVar* var, uint32_t vType, const char* name) {
   ASMJIT_ASSERT(vType < kVarTypeCount);
 
-  if (getArch() == kArchX86 && IntUtil::inInterval<uint32_t>(vType, kVarTypeInt64, vType == kVarTypeUInt64)) {
-    vType -= 2;
-    if (_logger)
-      _logger->logString(kLoggerStyleComment, "*** WARNING: 64-bit variable truncated to 32-bit. ***\n");
-  }
-
-  uint32_t size = _varInfo[vType].getSize();
-  VarData* vd = newVd(name, vType, size);
-
+  VarData* vd = newVd(name, vType);
   if (vd == NULL) {
-    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar,
-      0, 0, 0, kInvalidValue);
+    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, 0, 0, 0, kInvalidValue);
     var->_init_packed_u2_u3(kInvalidValue, kInvalidValue);
     return false;
   }
   else {
-    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar,
-      vd->_size, _varInfo[vType].getReg(), 0, vd->_id);
+    // VarType can be mapped to architecture dependent varType, it has to be
+    // get from vd to keep it consistent.
+    vType = vd->getType();
+
+    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, vd->_size, _varInfo[vType].getReg(), 0, vd->_id);
     var->_vreg.vType = vType;
     return true;
   }
 }
 
 GpVar X86X64Compiler::newGpVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(_varInfo[vType].getClass() == kRegClassGp);
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeIntStart, _kVarTypeIntEnd));
 
   GpVar var(DontInitialize);
   _newVar(&var, vType, name);
@@ -512,7 +522,8 @@ GpVar X86X64Compiler::newGpVar(uint32_t vType, const char* name) {
 }
 
 MmVar X86X64Compiler::newMmVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(_varInfo[vType].getClass() == kRegClassMm);
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeMmStart, _kVarTypeMmEnd));
 
   MmVar var(DontInitialize);
   _newVar(&var, vType, name);
@@ -520,9 +531,19 @@ MmVar X86X64Compiler::newMmVar(uint32_t vType, const char* name) {
 }
 
 XmmVar X86X64Compiler::newXmmVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(_varInfo[vType].getClass() == kRegClassXy);
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeXmmStart, _kVarTypeXmmEnd));
 
   XmmVar var(DontInitialize);
+  _newVar(&var, vType, name);
+  return var;
+}
+
+YmmVar X86X64Compiler::newYmmVar(uint32_t vType, const char* name) {
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeYmmStart, _kVarTypeYmmEnd));
+
+  YmmVar var(DontInitialize);
   _newVar(&var, vType, name);
   return var;
 }
@@ -618,6 +639,7 @@ namespace x86 {
 Compiler::Compiler(BaseRuntime* runtime) : X86X64Compiler(runtime) {
   _arch = kArchX86;
   _regSize = 4;
+  _targetVarMapping = _varMapping;
 }
 
 Compiler::~Compiler() {}
@@ -643,6 +665,7 @@ namespace x64 {
 Compiler::Compiler(BaseRuntime* runtime) : X86X64Compiler(runtime) {
   _arch = kArchX64;
   _regSize = 8;
+  _targetVarMapping = _varMapping;
 }
 
 Compiler::~Compiler() {}

@@ -190,13 +190,61 @@ struct IntUtil {
   }
 
   // --------------------------------------------------------------------------
-  // [AsmJit - Mask / Bits]
+  // [AsmJit - Mask]
   // --------------------------------------------------------------------------
 
   static ASMJIT_INLINE uint32_t mask(uint32_t x) {
     ASMJIT_ASSERT(x < 32);
     return (1U << x);
   }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1) {
+    return mask(x0) | mask(x1);
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2) {
+    return mask(x0) | mask(x1) | mask(x2);
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3);
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) ;
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) | mask(x5) ;
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5, uint32_t x6) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) | mask(x5) | mask(x6) ;
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5, uint32_t x6, uint32_t x7) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) | mask(x5) | mask(x6) | mask(x7) ;
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5, uint32_t x6, uint32_t x7, uint32_t x8) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) | mask(x5) | mask(x6) | mask(x7) |
+           mask(x8) ;
+  }
+
+  static ASMJIT_INLINE uint32_t mask(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5, uint32_t x6, uint32_t x7, uint32_t x8, uint32_t x9) {
+    return mask(x0) | mask(x1) | mask(x2) | mask(x3) |
+           mask(x4) | mask(x5) | mask(x6) | mask(x7) |
+           mask(x8) | mask(x9) ;
+  }
+
+  // --------------------------------------------------------------------------
+  // [AsmJit - Bits]
+  // --------------------------------------------------------------------------
 
   static ASMJIT_INLINE uint32_t bits(uint32_t x) {
     // Shifting more bits that the type has has undefined behavior. Everything

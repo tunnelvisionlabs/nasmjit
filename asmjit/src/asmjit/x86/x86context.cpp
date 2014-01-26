@@ -259,13 +259,13 @@ static ASMJIT_INLINE const X86X64SpecialInst* X86X64SpecialInst_get(uint32_t cod
     case kInstMaskmovdqu:
       return x86SpecialInstMaskmovqMaskmovdqu;
 
+    // Not supported.
     case kInstEnter:
     case kInstLeave:
-      // TODO: [COMPILER] Enter/Leave.
       return NULL;
 
+    // Not supported.
     case kInstRet:
-      // TODO: [COMPILER] Ret.
       return NULL;
 
     case kInstMonitor:
@@ -277,18 +277,18 @@ static ASMJIT_INLINE const X86X64SpecialInst* X86X64SpecialInst_get(uint32_t cod
       // TODO: [COMPILER] Pop.
       return NULL;
 
+    // Not supported.
     case kInstPopa:
     case kInstPopf:
-      // TODO: [COMPILER] Pop.
       return NULL;
 
     case kInstPush:
       // TODO: [COMPILER] Push.
       return NULL;
 
+    // Not supported.
     case kInstPusha:
     case kInstPushf:
-      // TODO: [COMPILER] Push.
       return NULL;
 
     // Rot instruction is special only if the last operand is a variable.
@@ -680,6 +680,7 @@ void X86X64Context::emitMoveArgOnStack(
   uint32_t dstType, const Mem* dst,
   uint32_t srcType, uint32_t srcIndex) {
 
+  ASMJIT_ASSERT(srcIndex != kInvalidReg);
   X86X64Compiler* compiler = getCompiler();
 
   Mem m0(*dst);
@@ -944,269 +945,6 @@ _MovXmmQ:
   r0.setReg(kRegTypeXmm, srcIndex);
   compiler->emit(kInstMovq, m0, r0);
 }
-
-/*
-void X86X64Context::emitMoveSpilledVarOnStack(
-  uint32_t dstType, const Mem* dst,
-  uint32_t srcType, const Mem* src,
-  uint32_t tmpGpRegIndex,
-  uint32_t tmpXmmRegIndex) {
-
-  X86X64Compiler* compiler = getCompiler();
-  const Cpu* cpu = static_cast<const Cpu*>(compiler->getRuntime()->getCpu());
-
-  Mem m0(*dst);
-  Mem m1(*src);
-  X86Reg r0;
-
-  uint32_t regSize = compiler->getRegSize();
-  uint32_t instCode;
-
-  switch (dstType) {
-    case kVarTypeInt8:
-    case kVarTypeUInt8:
-      goto _MovD;
-
-    case kVarTypeInt16:
-    case kVarTypeUInt16:
-      // Extend BYTE->WORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
-        m1.setSize(1);
-        instCode = (dstType == kVarTypeInt16 && srcType == kVarTypeInt8) ? kInstMovsx : kInstMovzx;
-        goto _ExtendMovGpD;
-      }
-
-      // Move DWORD (Gp, Mm. Xmm).
-      goto _MovD;
-
-    case kVarTypeInt32:
-    case kVarTypeUInt32:
-      // Extend BYTE->DWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
-        m1.setSize(1);
-        instCode = (dstType == kVarTypeInt32 && srcType == kVarTypeInt8) ? kInstMovsx : kInstMovzx;
-        goto _ExtendMovGpD;
-      }
-
-      // Extend WORD->DWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
-        m1.setSize(2);
-        instCode = (dstType == kVarTypeInt32 && srcType == kVarTypeInt16) ? kInstMovsx : kInstMovzx;
-        goto _ExtendMovGpD;
-      }
-
-      // Move DWORD (Gp, Mm, Xmm).
-      goto _MovD;
-
-    case kVarTypeInt64:
-    case kVarTypeUInt64:
-      // Extend BYTE->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
-        m1.setSize(1);
-        if (dstType == kVarTypeInt64 && srcType == kVarTypeInt8)
-          goto _SignExtendGpQ;
-        else
-          goto _ZeroExtendGpQ;
-      }
-
-      // Extend WORD->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
-        m1.setSize(2);
-        if (dstType == kVarTypeInt64 && srcType == kVarTypeInt16)
-          goto _SignExtendGpQ;
-        else
-          goto _ZeroExtendGpQ;
-      }
-
-      // Extend DWORD->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt32, kVarTypeUInt32)) {
-        m1.setSize(4);
-        if (dstType == kVarTypeInt64 && srcType == kVarTypeInt32)
-          goto _SignExtendGpQ;
-        else
-          goto _ZeroExtendGpQ;
-      }
-
-      // Move QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt64, kVarTypeUInt64))
-        goto _MovQ;
-
-      // Move QWORD (Mm/Xmm).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeMm, kVarTypeXmmPd))
-        goto _MovQ;
-      break;
-
-    case kVarTypeMm:
-      // Extend BYTE->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
-        m1.setSize(1);
-        goto _ZeroExtendGpQ;
-      }
-
-      // Extend WORD->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
-        m1.setSize(2);
-        goto _ZeroExtendGpQ;
-      }
-
-      // Extend DWORD->QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt32, kVarTypeUInt32)) {
-        m1.setSize(4);
-        goto _ZeroExtendGpQ;
-      }
-
-      // Move QWORD (Gp).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt64, kVarTypeUInt64))
-        goto _MovQ;
-
-      // Move QWORD (Mm/Xmm).
-      if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeMm, kVarTypeXmmPd))
-        goto _MovQ;
-      break;
-
-    case kVarTypeXmm:
-    case kVarTypeXmmPs:
-    case kVarTypeXmmPd:
-      // TODO: [COMPILER] MoveImmOnStack Conversion.
-      break;
-
-    case kVarTypeXmmSs:
-      // TODO: [COMPILER] MoveImmOnStack Conversion.
-      break;
-
-    case kVarTypeXmmSd:
-      // TODO: [COMPILER] MoveImmOnStack Conversion.
-      break;
-  }
-  return;
-
-  // Extend+Move DWORD.
-_ExtendMovGpD:
-  m0.setSize(4);
-  r0.setSize(4);
-  r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-  compiler->emit(instCode, r0, m1);
-  compiler->emit(kInstMov, m0, r0);
-
-  _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  return;
-
-_SignExtendGpQ:
-  if (regSize == 8) {
-    m0.setSize(8);
-    r0.setSize(8);
-    r0.setReg(kRegTypeGpq, tmpGpRegIndex);
-
-    compiler->emit(m1.getSize() != 4 ? kInstMovsx : kInstMovsxd, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-  }
-  else {
-    m0.setSize(4);
-    r0.setSize(4);
-    r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-    compiler->emit((m1.getSize() != 4) ? kInstMovzx : kInstMov, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-
-    m0.adjust(4);
-    compiler->emit(kInstSal, r0, 31);
-    compiler->emit(kInstMov, m0, r0);
-  }
-
-  _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  return;
-
-_ZeroExtendGpQ:
-  if (regSize == 8) {
-    m0.setSize(8);
-    m1.setSize(4);
-
-    r0.setSize(4);
-    r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-    compiler->emit(kInstMov, r0, m1);
-
-    r0.setSize(8);
-    r0.setReg(kRegTypeGpq, tmpGpRegIndex);
-
-    compiler->emit(kInstMov, m0, r0);
-  }
-  else {
-    m0.setSize(4);
-    m1.setSize(4);
-
-    r0.setSize(4);
-    r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-    compiler->emit(kInstMov, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-
-    m0.adjust(4);
-
-    compiler->emit(kInstAnd, m0, 0);
-  }
-
-  _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  return;
-
-  // Move DWORD.
-_MovD:
-  m0.setSize(4);
-  m1.setSize(4);
-
-  r0.setSize(4);
-  r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-  compiler->emit(kInstMov, r0, m1);
-  compiler->emit(kInstMov, m0, r0);
-
-  _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  return;
-
-_MovQ:
-  if (regSize == 8) {
-    m0.setSize(8);
-    m1.setSize(8);
-
-    r0.setSize(8);
-    r0.setReg(kRegTypeGpq, tmpGpRegIndex);
-
-    compiler->emit(kInstMov, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-
-    _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  }
-  else if (cpu->hasFeature(kCpuFeatureSse2)) {
-    m0.setSize(8);
-    m1.setSize(8);
-
-    r0.setSize(16);
-    r0.setReg(kRegTypeXmm, tmpGpRegIndex);
-
-    compiler->emit(kInstMovq, r0, m1);
-    compiler->emit(kInstMovq, m0, r0);
-
-    _clobberedRegs.add(kRegClassGp, tmpXmmRegIndex);
-  }
-  else {
-    m0.setSize(4);
-    m1.setSize(4);
-
-    r0.setSize(4);
-    r0.setReg(kRegTypeGpd, tmpGpRegIndex);
-
-    compiler->emit(kInstMov, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-
-    m0.adjust(4);
-    compiler->emit(kInstMov, r0, m1);
-    compiler->emit(kInstMov, m0, r0);
-
-    _clobberedRegs.add(kRegClassGp, tmpGpRegIndex);
-  }
-}
-*/
 
 void X86X64Context::emitMoveImmOnStack(const Mem* dst, uint32_t dstType, const Imm* src) {
   X86X64Compiler* compiler = getCompiler();
@@ -1708,7 +1446,7 @@ static ASMJIT_INLINE RegMask X86X64Context_getUsedArgs(X86X64Context* self, X86X
     const FuncInOut& arg = decl->getArg(i);
     if (!arg.hasRegIndex())
       continue;
-    regs.add(_varInfo[arg.getVarType()].getClass(), IntUtil::mask(arg.getRegIndex()));
+    regs.add(x86VarTypeToClass(arg.getVarType()), IntUtil::mask(arg.getRegIndex()));
   }
 
   return regs;
@@ -1726,14 +1464,9 @@ static ASMJIT_INLINE SArgNode* X86X64Context_insertSArgNode(
 
   uint32_t vType = vd->getType();
   const VarInfo& vInfo = _varInfo[vType];
-  uint32_t c = vInfo.getClass();
+  uint32_t vClass = vInfo.getClass();
 
-  Operand sReg;
-
-  sReg._init_packed_op_sz_r0_r1_id(kOperandTypeVar, vd->_size, vInfo.getReg(), 0, vd->_id);
-  sReg._vreg.vType = vType;
-
-  SArgNode* sArg = compiler->newNode<SArgNode>(sReg, call);
+  SArgNode* sArg = compiler->newNode<SArgNode>(vd, call);
   if (sArg == NULL)
     return NULL;
 
@@ -1743,12 +1476,12 @@ static ASMJIT_INLINE SArgNode* X86X64Context_insertSArgNode(
 
   vi->_vaCount = 1;
   vi->_count.reset();
-  vi->_count.add(c);
+  vi->_count.add(vClass);
   vi->_start.reset();
   vi->_inRegs.reset();
   vi->_outRegs.reset();
   vi->_clobberedRegs.reset();
-  vi->_list[0].setup(vd, kVarAttrInReg, 0, gaRegs[c]);
+  vi->_list[0].setup(vd, kVarAttrInReg, 0, gaRegs[vClass]);
 
   sArg->setVarInst(vi);
 
@@ -2308,7 +2041,7 @@ _NextGroup:
             return compiler->setError(kErrorCompilerOverlappedArgs);
           VI_ADD_VAR(vd, va, 0, 0);
 
-          if (_varInfo[arg.getVarType()].getClass() == vd->getClass()) {
+          if (x86VarTypeToClass(arg.getVarType()) == vd->getClass()) {
             if (arg.hasRegIndex()) {
               va->addFlags(kVarAttrOutReg);
               va->setOutRegIndex(arg.getRegIndex());
@@ -2344,7 +2077,7 @@ _NextGroup:
 
         if (decl->hasRet()) {
           const FuncInOut& ret = decl->getRet(0);
-          uint32_t retClass = _varInfo[ret.getVarType()].getClass();
+          uint32_t retClass = x86VarTypeToClass(ret.getVarType());
 
           VI_BEGIN();
           for (uint32_t i = 0; i < 2; i++) {
@@ -2442,7 +2175,7 @@ _NextGroup:
           const FuncInOut& arg = decl->getArg(i);
           if (arg.hasRegIndex()) {
             uint32_t argType = arg.getVarType();
-            uint32_t argClass = _varInfo[argType].getClass();
+            uint32_t argClass = x86VarTypeToClass(argType);
 
             if (vd->getClass() == argClass) {
               va->addInRegs(IntUtil::mask(arg.getRegIndex()));
@@ -2467,7 +2200,7 @@ _NextGroup:
           const FuncInOut& ret = decl->getRet(i);
           if (ret.hasRegIndex()) {
             uint32_t retType = ret.getVarType();
-            uint32_t retClass = _varInfo[retType].getClass();
+            uint32_t retClass = x86VarTypeToClass(retType);
 
             vd = compiler->getVdById(op->getId());
             VI_MERGE_VAR(vd, va, 0, 0);
@@ -2890,19 +2623,19 @@ ASMJIT_INLINE void X86X64BaseAlloc::unuseAfter() {
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64InstAlloc]
+// [asmjit::x86x64::X86X64VarAlloc]
 // ============================================================================
 
 //! @internal
 //!
 //! @brief Register allocator context (asm instructions).
-struct X86X64InstAlloc : public X86X64BaseAlloc {
+struct X86X64VarAlloc : public X86X64BaseAlloc {
   // --------------------------------------------------------------------------
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE X86X64InstAlloc(X86X64Context* context) : X86X64BaseAlloc(context) {}
-  ASMJIT_INLINE ~X86X64InstAlloc() {}
+  ASMJIT_INLINE X86X64VarAlloc(X86X64Context* context) : X86X64BaseAlloc(context) {}
+  ASMJIT_INLINE ~X86X64VarAlloc() {}
 
   // --------------------------------------------------------------------------
   // [Run]
@@ -2970,17 +2703,17 @@ protected:
 };
 
 // ============================================================================
-// [asmjit::X86X64InstAlloc - Run]
+// [asmjit::X86X64VarAlloc - Run]
 // ============================================================================
 
-ASMJIT_INLINE Error X86X64InstAlloc::run(BaseNode* node) {
+ASMJIT_INLINE Error X86X64VarAlloc::run(BaseNode* node_) {
   // Initialize.
-  VarInst* vi = node->getVarInst<VarInst>();
+  VarInst* vi = node_->getVarInst<VarInst>();
   if (vi == NULL)
     return kErrorOk;
 
   // Initialize the allocator; connect Vd->Va.
-  init(node, vi);
+  init(node_, vi);
 
   // Unuse overwritten variables.
   unuseBefore<kRegClassGp>();
@@ -3004,9 +2737,28 @@ ASMJIT_INLINE Error X86X64InstAlloc::run(BaseNode* node) {
   alloc<kRegClassXy>();
 
   // Translate node operands.
-  if (node->getType() == kNodeTypeInst) {
-    InstNode* instNode = static_cast<InstNode*>(node);
-    ASMJIT_PROPAGATE_ERROR(X86X64Context_translateOperands(_context, instNode->getOpList(), instNode->getOpCount()));
+  if (node_->getType() == kNodeTypeInst) {
+    InstNode* node = static_cast<InstNode*>(node_);
+    ASMJIT_PROPAGATE_ERROR(X86X64Context_translateOperands(_context, node->getOpList(), node->getOpCount()));
+  }
+  else if (node_->getType() == kNodeTypeSArg) {
+    SArgNode* node = static_cast<SArgNode*>(node_);
+    VarData* vd = node->getVd();
+
+    X86X64CallNode* call = static_cast<X86X64CallNode*>(node->getCall());
+    X86X64FuncDecl* decl = call->getDecl();
+
+    uint32_t argCount = decl->getArgCount();
+    for (uint32_t i = 0; i < argCount; i++) {
+      Operand& op = call->getArg(i);
+      FuncInOut& arg = decl->getArg(i);
+
+      if (!op.isVar() || op.getId() != vd->getId())
+        continue;
+
+      Mem dst = ptr(_context->_zsp, -static_cast<int>(_context->getRegSize()) + arg.getStackOffset());
+      _context->emitMoveArgOnStack(arg.getVarType(), &dst, vd->getType(), vd->getRegIndex());
+    }
   }
 
   // Mark variables as modified.
@@ -3030,10 +2782,10 @@ ASMJIT_INLINE Error X86X64InstAlloc::run(BaseNode* node) {
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64InstAlloc - Init / Cleanup]
+// [asmjit::x86x64::X86X64VarAlloc - Init / Cleanup]
 // ============================================================================
 
-ASMJIT_INLINE void X86X64InstAlloc::init(BaseNode* node, VarInst* vi) {
+ASMJIT_INLINE void X86X64VarAlloc::init(BaseNode* node, VarInst* vi) {
   X86X64BaseAlloc::init(node, vi);
 
   // These will block planner from assigning them during planning. Planner will
@@ -3044,16 +2796,16 @@ ASMJIT_INLINE void X86X64InstAlloc::init(BaseNode* node, VarInst* vi) {
   _willSpill.reset();
 }
 
-ASMJIT_INLINE void X86X64InstAlloc::cleanup() {
+ASMJIT_INLINE void X86X64VarAlloc::cleanup() {
   X86X64BaseAlloc::cleanup();
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64InstAlloc - Plan / Spill / Alloc]
+// [asmjit::x86x64::X86X64VarAlloc - Plan / Spill / Alloc]
 // ============================================================================
 
 template<int C>
-ASMJIT_INLINE void X86X64InstAlloc::plan() {
+ASMJIT_INLINE void X86X64VarAlloc::plan() {
   if (isVaDone(C))
     return;
 
@@ -3243,7 +2995,7 @@ ASMJIT_INLINE void X86X64InstAlloc::plan() {
 }
 
 template<int C>
-ASMJIT_INLINE void X86X64InstAlloc::spill() {
+ASMJIT_INLINE void X86X64VarAlloc::spill() {
   uint32_t m = _willSpill.get(C);
   uint32_t i = static_cast<uint32_t>(0) - 1;
 
@@ -3285,7 +3037,7 @@ ASMJIT_INLINE void X86X64InstAlloc::spill() {
 }
 
 template<int C>
-ASMJIT_INLINE void X86X64InstAlloc::alloc() {
+ASMJIT_INLINE void X86X64VarAlloc::alloc() {
   if (isVaDone(C))
     return;
 
@@ -3380,11 +3132,11 @@ ASMJIT_INLINE void X86X64InstAlloc::alloc() {
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64InstAlloc - GuessAlloc / GuessSpill]
+// [asmjit::x86x64::X86X64VarAlloc - GuessAlloc / GuessSpill]
 // ============================================================================
 
 template<int C>
-ASMJIT_INLINE uint32_t X86X64InstAlloc::guessAlloc(VarData* vd, uint32_t allocableRegs) {
+ASMJIT_INLINE uint32_t X86X64VarAlloc::guessAlloc(VarData* vd, uint32_t allocableRegs) {
   ASMJIT_ASSERT(allocableRegs != 0);
 
   // Stop now if there is only one bit (register) set in 'allocableRegs' mask.
@@ -3442,18 +3194,18 @@ _UseSafeRegs:
 }
 
 template<int C>
-ASMJIT_INLINE uint32_t X86X64InstAlloc::guessSpill(VarData* vd, uint32_t allocableRegs) {
+ASMJIT_INLINE uint32_t X86X64VarAlloc::guessSpill(VarData* vd, uint32_t allocableRegs) {
   ASMJIT_ASSERT(allocableRegs != 0);
 
   return 0;
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64InstAlloc - Modified]
+// [asmjit::x86x64::X86X64VarAlloc - Modified]
 // ============================================================================
 
 template<int C>
-ASMJIT_INLINE void X86X64InstAlloc::modified() {
+ASMJIT_INLINE void X86X64VarAlloc::modified() {
   VarAttr* list = getVaListByClass(C);
   uint32_t count = getVaCountByClass(C);
 
@@ -4159,6 +3911,7 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
     if (op->isVar()) {
       VarData* vd = compiler->getVdById(op->getId());
       ASMJIT_ASSERT(vd != NULL);
+      ASMJIT_ASSERT(vd->getRegIndex() != kInvalidReg);
 
       op->_vreg.op = kOperandTypeReg;
       op->_vreg.index = vd->getRegIndex();
@@ -4170,6 +3923,8 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
         VarData* vd = compiler->getVdById(m->getBase());
 
         if (m->getMemType() == kMemTypeBaseIndex) {
+          ASMJIT_ASSERT(vd->getRegIndex() != kInvalidReg);
+
           op->_vmem.base = vd->getRegIndex();
         }
         else {
@@ -4183,6 +3938,9 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
 
       if (OperandUtil::isVarId(m->getIndex())) {
         VarData* vd = compiler->getVdById(m->getIndex());
+        ASMJIT_ASSERT(vd->getRegIndex() != kInvalidReg);
+        ASMJIT_ASSERT(vd->getRegIndex() != kRegIndexR12);
+
         op->_vmem.index = vd->getRegIndex();
       }
     }
@@ -4836,8 +4594,8 @@ Error X86X64Context::translate() {
   X86X64FuncNode* func = getFunc();
 
   // Register allocator contexts.
-  X86X64InstAlloc ia(this);
-  X86X64CallAlloc ca(this);
+  X86X64VarAlloc vAlloc(this);
+  X86X64CallAlloc cAlloc(this);
 
   // Flow.
   BaseNode* node_ = func;
@@ -4929,14 +4687,14 @@ _NextGroup:
         }
 
         if (node_->getType() == kNodeTypeCall) {
-          ASMJIT_PROPAGATE_ERROR(ca.run(static_cast<X86X64CallNode*>(node_)));
+          ASMJIT_PROPAGATE_ERROR(cAlloc.run(static_cast<X86X64CallNode*>(node_)));
           break;
         }
         // ... Fall through ...
 
       case kNodeTypeHint:
       case kNodeTypeRet: {
-        ASMJIT_PROPAGATE_ERROR(ia.run(node_));
+        ASMJIT_PROPAGATE_ERROR(vAlloc.run(node_));
 
         // Handle conditional/unconditional jump.
         if (node_->isJmpOrJcc()) {
@@ -4989,26 +4747,6 @@ _NextGroup:
         else if (node_->isRet()) {
           ASMJIT_PROPAGATE_ERROR(
             X86X64Context_translateRet(this, static_cast<RetNode*>(node_), func->getExitNode()));
-        }
-        else if (node_->getType() == kNodeTypeSArg) {
-          SArgNode* node = static_cast<SArgNode*>(node_);
-
-          VarData* vd = compiler->getVdById(node->getOp().getId());
-          X86X64CallNode* call = static_cast<X86X64CallNode*>(node->getCall());
-
-          X86X64FuncDecl* decl = call->getDecl();
-          uint32_t argCount = decl->getArgCount();
-
-          for (uint32_t i = 0; i < argCount; i++) {
-            Operand& op = call->getArg(i);
-            FuncInOut& arg = decl->getArg(i);
-
-            if (!op.isVar() || op.getId() != vd->getId())
-              continue;
-
-            Mem dst = ptr(_zsp, -static_cast<int>(getRegSize()) + arg.getStackOffset());
-            emitMoveArgOnStack(arg.getVarType(), &dst, vd->getType(), vd->getRegIndex());
-          }
         }
         break;
       }

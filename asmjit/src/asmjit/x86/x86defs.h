@@ -52,32 +52,32 @@ typedef Vec256Data YmmData;
 
 //! @internal
 //!
-//! @brief Compact instruction names table.
+//! @brief X86/X64 instructions' names.
 ASMJIT_VAR const char _instName[];
 
 //! @internal
 //!
-//! @brief Information about every supported instruction (opcode, flags, ...).
+//! @brief X86/X64 instructions' information.
 ASMJIT_VAR const InstInfo _instInfo[];
 
 //! @internal
 //!
-//! @brief Map condition code to reversed condition code.
+//! @brief X86/X64 condition codes to reversed condition codes map.
 ASMJIT_VAR const uint32_t _reverseCond[20];
 
 //! @internal
 //!
-//! @brief Map condition code to "cmovcc" group of instructions.
+//! @brief X86X64 condition codes to "cmovcc" group map.
 ASMJIT_VAR const uint32_t _condToCmovcc[20];
 
 //! @internal
 //!
-//! @brief Map condition code to "jcc" group of instructions.
+//! @brief X86X64 condition codes to "jcc" group map.
 ASMJIT_VAR const uint32_t _condToJcc[20];
 
 //! @internal
 //!
-//! @brief Map condition code to "setcc" group of instructions.
+//! @brief X86X64 condition codes to "setcc" group map.
 ASMJIT_VAR const uint32_t _condToSetcc[20];
 
 // ============================================================================
@@ -94,14 +94,14 @@ ASMJIT_VAR const VarInfo _varInfo[];
 ASMJIT_ENUM(kRegClass) {
   // kRegClassGp defined in base/defs.h; it's used by all implementations.
 
-  //! @brief X86 Fp register class.
+  //! @brief X86/X64 Fp register class.
   kRegClassFp = 1,
-  //! @brief X86 Mm register class.
+  //! @brief X86/X64 Mm register class.
   kRegClassMm = 2,
-  //! @brief X86 Xmm/Ymm register class.
+  //! @brief X86/X64 Xmm/Ymm register class.
   kRegClassXy = 3,
 
-  //! @brief Count of X86 register classes.
+  //! @brief Count of X86/X64 register classes.
   kRegClassCount = 4
 };
 
@@ -1597,8 +1597,12 @@ ASMJIT_ENUM(kInstGroup) {
   kInstGroupAvxVmi,
   //! @brief AVX instruction encoded as 'VMI' (propagates AVX.L if the instruction uses YMM register).
   kInstGroupAvxVmi_P,
-  //! @brief AVX2 gather family instructions using [Reg+Vec] addresing (VSIB).
-  kInstGroupAvxGather
+  //! @brief Vmovss/Vmovsd.
+  kInstGroupAvxMovSsSd,
+  //! @brief AVX2 gather family instructions (VSIB).
+  kInstGroupAvxGather,
+  //! @brief AVX2 gather family instructions (VSIB), differs only in mem operand.
+  kInstGroupAvxGatherEx
 };
 
 // ============================================================================
@@ -1836,29 +1840,44 @@ ASMJIT_ENUM(kCond) {
 
 //! @brief X86 variable type.
 ASMJIT_ENUM(kVarType) {
-  //! @brief Variable is Mm register / memory location.
-  kVarTypeMm = 11,
+  //! @brief Variable is Mm (MMX).
+  kVarTypeMm = 13,
 
-  //! @brief Variable is Xmm register / memory location.
-  kVarTypeXmm = 12,
+  //! @brief Variable is Xmm (SSE/SSE2).
+  kVarTypeXmm = 14,
   //! @brief Variable is SSE scalar SP-FP number.
-  kVarTypeXmmSs = 13,
+  kVarTypeXmmSs = 15,
   //! @brief Variable is SSE packed SP-FP number (4 floats).
-  kVarTypeXmmPs = 14,
+  kVarTypeXmmPs = 16,
   //! @brief Variable is SSE2 scalar DP-FP number.
-  kVarTypeXmmSd = 15,
+  kVarTypeXmmSd = 17,
   //! @brief Variable is SSE2 packed DP-FP number (2 doubles).
-  kVarTypeXmmPd = 16,
+  kVarTypeXmmPd = 18,
 
-  //! @brief Variable is Ymm register / memory location.
-  kVarTypeYmm = 17,
+  //! @brief Variable is Ymm (AVX).
+  kVarTypeYmm = 19,
   //! @brief Variable is AVX packed SP-FP number (8 floats).
-  kVarTypeYmmPs = 18,
+  kVarTypeYmmPs = 20,
   //! @brief Variable is AVX packed DP-FP number (4 doubles).
-  kVarTypeYmmPd = 19,
+  kVarTypeYmmPd = 21,
 
   //! @brief Count of variable types.
-  kVarTypeCount = 20
+  kVarTypeCount = 22,
+
+  //! @internal
+  _kVarTypeMmStart = kVarTypeMm,
+  //! @internal
+  _kVarTypeMmEnd = kVarTypeMm,
+
+  //! @internal
+  _kVarTypeXmmStart = kVarTypeXmm,
+  //! @internal
+  _kVarTypeXmmEnd = kVarTypeXmmPd,
+
+  //! @internal
+  _kVarTypeYmmStart = kVarTypeYmm,
+  //! @internal
+  _kVarTypeYmmEnd = kVarTypeYmmPd
 };
 
 // ============================================================================
@@ -1876,7 +1895,7 @@ ASMJIT_ENUM(kVarDesc) {
 };
 
 // ============================================================================
-// [asmjit::InstInfo]
+// [asmjit::x86x64::InstInfo]
 // ============================================================================
 
 //! @brief X86 instruction information.
@@ -1954,7 +1973,7 @@ struct InstInfo {
 };
 
 // ============================================================================
-// [asmjit::VarInfo]
+// [asmjit::x86x64::VarInfo]
 // ============================================================================
 
 //! @brief X86 variable information.
@@ -1987,7 +2006,7 @@ struct VarInfo {
   //! @brief Variable flags, see @ref kVarDesc.
   uint8_t _desc;
   //! @brief Variable type name.
-  char _name[8];
+  char _name[4];
 };
 
 // ============================================================================
@@ -2384,7 +2403,7 @@ struct SegReg : public X86Reg {
 };
 
 // ============================================================================
-// [asmjit::Mem]
+// [asmjit::x86x64::Mem]
 // ============================================================================
 
 //! @brief X86 memory operand.
@@ -2642,7 +2661,9 @@ struct Mem : public BaseMem {
            _packed[1] == other._packed[1] ;
   }
 
-  ASMJIT_INLINE bool operator!=(const Mem& other) const { return !(*this == other); }
+  ASMJIT_INLINE bool operator!=(const Mem& other) const {
+    return !(*this == other);
+  }
 
   // --------------------------------------------------------------------------
   // [Misc]
@@ -2659,7 +2680,7 @@ struct Mem : public BaseMem {
 };
 
 // ============================================================================
-// [asmjit::X86Var]
+// [asmjit::x86x64::X86Var]
 // ============================================================================
 
 //! @brief Base class for all variables.
@@ -2800,7 +2821,7 @@ protected:
 };
 
 // ============================================================================
-// [asmjit::GpVar]
+// [asmjit::x86x64::GpVar]
 // ============================================================================
 
 //! @brief Gp variable.
@@ -2863,7 +2884,7 @@ protected:
 };
 
 // ============================================================================
-// [asmjit::FpVar]
+// [asmjit::x86x64::FpVar]
 // ============================================================================
 
 //! @brief Fpu variable.
@@ -2890,7 +2911,7 @@ struct FpVar : public X86Var {
 };
 
 // ============================================================================
-// [asmjit::MmVar]
+// [asmjit::x86x64::MmVar]
 // ============================================================================
 
 //! @brief Mm variable.
@@ -2927,7 +2948,7 @@ struct MmVar : public X86Var {
 };
 
 // ============================================================================
-// [asmjit::XmmVar]
+// [asmjit::x86x64::XmmVar]
 // ============================================================================
 
 //! @brief Xmm variable.
@@ -2959,7 +2980,7 @@ struct XmmVar : public X86Var {
 };
 
 // ============================================================================
-// [asmjit::YmmVar]
+// [asmjit::x86x64::YmmVar]
 // ============================================================================
 
 //! @brief Ymm variable.
@@ -2991,10 +3012,11 @@ struct YmmVar : public X86Var {
 };
 
 // ============================================================================
-// [asmjit::Macros]
+// [asmjit::x86x64::Macros]
 // ============================================================================
 
 //! @brief Create Shuffle Constant for MMX/SSE shuffle instrutions.
+//!
 //! @param z First component position, number at interval [0, 3] inclusive.
 //! @param x Second component position, number at interval [0, 3] inclusive.
 //! @param y Third component position, number at interval [0, 3] inclusive.
@@ -3010,7 +3032,7 @@ static ASMJIT_INLINE uint8_t mm_shuffle(uint8_t z, uint8_t y, uint8_t x, uint8_t
 { return (z << 6) | (y << 4) | (x << 2) | w; }
 
 // ============================================================================
-// [asmjit::X86Cond - Reverse / Negate]
+// [asmjit::x86x64::Cond - Reverse / Negate]
 // ============================================================================
 
 //! @brief Corresponds to transposing the operands of a comparison.
@@ -3026,7 +3048,7 @@ static ASMJIT_INLINE uint32_t negateCond(uint32_t cond) {
 }
 
 // ============================================================================
-// [asmjit::X86Cond - ToJcc / ToMovcc / ToSetcc]
+// [asmjit::x86x64::Cond - ToJcc / ToMovcc / ToSetcc]
 // ============================================================================
 
 //! @brief Translate condition code @a cc to cmovcc instruction code.
@@ -3218,7 +3240,7 @@ static ASMJIT_INLINE XmmReg xmm(uint32_t index)
 { return XmmReg(kRegTypeXmm, index, 16); }
 
 // ============================================================================
-// [asmjit::Mem - [label + displacement]]
+// [asmjit::x86x64::Mem - [label + displacement]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3237,7 +3259,7 @@ static ASMJIT_INLINE Mem tword_ptr(const Label& label, int32_t disp = 0) { retur
 static ASMJIT_INLINE Mem dqword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::Mem - [label + index << shift + displacement]]
+// [asmjit::x86x64::Mem - [label + index << shift + displacement]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3271,7 +3293,7 @@ static ASMJIT_INLINE Mem tword_ptr(const Label& label, const GpVar& index, uint3
 static ASMJIT_INLINE Mem dqword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::Mem - segment[target + displacement]
+// [asmjit::x86x64::Mem - segment[target + displacement]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3290,7 +3312,7 @@ static ASMJIT_INLINE Mem tword_ptr_abs(void* target, int32_t disp = 0) { return 
 static ASMJIT_INLINE Mem dqword_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::Mem - segment[target + index << shift + displacement]
+// [asmjit::x86x64::Mem - segment[target + index << shift + displacement]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3324,7 +3346,7 @@ static ASMJIT_INLINE Mem tword_ptr_abs(void* target, const GpVar& index, uint32_
 static ASMJIT_INLINE Mem dqword_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::Mem - ptr[base + displacement]]
+// [asmjit::x86x64::Mem - ptr[base + displacement]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3358,7 +3380,7 @@ static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, int32_t disp = 0) { return
 static ASMJIT_INLINE Mem dqword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::Mem - ptr[base + (index << shift) + displacement]]
+// [asmjit::x86x64::Mem - ptr[base + (index << shift) + displacement]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
@@ -3392,12 +3414,20 @@ static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, const GpVar& index, uint32
 static ASMJIT_INLINE Mem dqword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDQWord); }
 
 // ============================================================================
-// [asmjit::_varInfo]
+// [asmjit::x86x64::Util]
 // ============================================================================
+
+static ASMJIT_INLINE uint32_t x86VarTypeToClass(uint32_t vType) {
+  // Getting varClass is the only safe operation when dealing with denormalized
+  // varType. Any other property would require to map vType to the architecture
+  // specific one.
+  ASMJIT_ASSERT(vType < kVarTypeCount);
+  return _varInfo[vType].getClass();
+}
 
 static ASMJIT_INLINE bool x86VarIsInt(uint32_t vType) {
   ASMJIT_ASSERT(vType < kVarTypeCount);
-  return _varInfo[vType].getClass() == kRegClassGp;
+  return IntUtil::inInterval<uint32_t>(vType, _kVarTypeIntStart, _kVarTypeIntEnd);
 }
 
 static ASMJIT_INLINE bool x86VarIsFloat(uint32_t vType) {
@@ -3405,21 +3435,10 @@ static ASMJIT_INLINE bool x86VarIsFloat(uint32_t vType) {
   return (_varInfo[vType].getDesc() & (kVarDescSp | kVarDescDp)) != 0;
 }
 
-static ASMJIT_INLINE uint32_t x86VarTypeToRegClass(uint32_t vType) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-  return _varInfo[vType].getClass();
+static ASMJIT_INLINE bool x86IsGpbRegOp(const Operand* op) {
+  const uint32_t mask = IntUtil::pack32_4x8(0xFF, 0xFF, 0xFF & ~(kRegTypePatchedGpbHi), 0);
+  return (op->_packed[0].u32[0] & mask) == IntUtil::pack32_4x8(kOperandTypeReg, 1, 0, 0);
 }
-
-// ============================================================================
-// [asmjit::x86x64::Util]
-// ============================================================================
-
-struct Util {
-  static ASMJIT_INLINE bool isGpbReg(const Operand* op) {
-    const uint32_t mask = IntUtil::pack32_4x8(0xFF, 0xFF, 0xFF & ~(kRegTypePatchedGpbHi), 0);
-    return (op->_packed[0].u32[0] & mask) == IntUtil::pack32_4x8(kOperandTypeReg, 1, 0, 0);
-  }
-};
 
 //! @}
 
@@ -3463,8 +3482,21 @@ ASMJIT_ENUM(kRegCount) {
   //! @brief Count of Xmm registers (8).
   kRegCountXmm = kRegCountBase,
   //! @brief Count of Ymm registers (8).
-  kRegCountYmm = kRegCountBase,
+  kRegCountYmm = kRegCountBase
 };
+
+// ============================================================================
+// [asmjit::x86::Variables]
+// ============================================================================
+
+//! @internal
+//!
+//! @brief Mapping of x64 variables into their real IDs.
+//!
+//! This mapping translates the following:
+//! - @c kVarTypeIntPtr to @c kVarTypeInt32.
+//! - @c kVarTypeUIntPtr to @c kVarTypeUInt32.
+ASMJIT_VAR const uint8_t _varMapping[kVarTypeCount];
 
 // ============================================================================
 // [asmjit::x86::Registers]
@@ -3490,6 +3522,10 @@ ASMJIT_VAR const GpReg zdi;
 //! @brief Get Gpq register.
 static ASMJIT_INLINE GpReg gpz(uint32_t index)
 { return GpReg(kRegTypeGpd, index, 4); }
+
+// ============================================================================
+// [asmjit::x86::Mem]
+// ============================================================================
 
 //! @brief Create an intptr_t 32-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, 4); }
@@ -3537,7 +3573,7 @@ using namespace ::asmjit::x86x64;
 //! @{
 
 // ============================================================================
-// [asmjit::x86::kRegType]
+// [asmjit::x64::kRegType]
 // ============================================================================
 
 ASMJIT_ENUM(kRegType) {
@@ -3560,6 +3596,19 @@ ASMJIT_ENUM(kRegCount) {
   //! @brief Count of Ymm registers (16).
   kRegCountYmm = kRegCountBase
 };
+
+// ============================================================================
+// [asmjit::x64::Variables]
+// ============================================================================
+
+//! @internal
+//!
+//! @brief Mapping of x64 variables into their real IDs.
+//!
+//! This mapping translates the following:
+//! - @c kVarTypeIntPtr to @c kVarTypeInt64.
+//! - @c kVarTypeUIntPtr to @c kVarTypeUInt64.
+ASMJIT_VAR const uint8_t _varMapping[kVarTypeCount];
 
 // ============================================================================
 // [asmjit::x64::Registers]
@@ -3716,6 +3765,10 @@ static ASMJIT_INLINE GpReg gpq(uint32_t index)
 //! @brief Get Gpq register.
 static ASMJIT_INLINE GpReg gpz(uint32_t index)
 { return GpReg(kRegTypeGpq, index, 8); }
+
+// ============================================================================
+// [asmjit::x64::Mem]
+// ============================================================================
 
 //! @brief Create an intptr_t 64-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, 8); }

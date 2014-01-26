@@ -1610,9 +1610,9 @@ struct SArgNode : public BaseNode {
   // --------------------------------------------------------------------------
 
   //! @brief Create a new @ref SArgNode instance.
-  ASMJIT_INLINE SArgNode(BaseCompiler* compiler, const Operand& var, CallNode* call) :
+  ASMJIT_INLINE SArgNode(BaseCompiler* compiler, VarData* vd, CallNode* call) :
     BaseNode(compiler, kNodeTypeSArg),
-    _op(var),
+    _vd(vd),
     _call(call) {}
 
   //! @brief Destroy the @ref SArgNode instance.
@@ -1622,10 +1622,8 @@ struct SArgNode : public BaseNode {
   // [Accessors]
   // --------------------------------------------------------------------------
 
-  //! @brief Get the associated variable as operand.
-  ASMJIT_INLINE const Operand& getOp() { return _op; }
-  //! @overload
-  ASMJIT_INLINE const Operand& getOp() const { return _op; }
+  //! @brief Get the associated @ref VarData.
+  ASMJIT_INLINE VarData* getVd() const { return _vd; }
 
   //! @brief Get the associated @ref CallNode.
   ASMJIT_INLINE CallNode* getCall() const { return _call; }
@@ -1634,8 +1632,8 @@ struct SArgNode : public BaseNode {
   // [Members]
   // --------------------------------------------------------------------------
 
-  //! @brief Variable operand used to pass argument in stack.
-  Operand _op;
+  //! @brief Variable.
+  VarData* _vd;
   //! @brief Associated @ref CallNode.
   CallNode* _call;
 };
@@ -1923,6 +1921,9 @@ struct BaseCompiler : public CodeGen {
   //! @brief Maximum count of nodes to look ahead when allocating/spilling
   //! registers.
   uint32_t _maxLookAhead;
+
+  //! @brief Variable mapping (translates incoming kVarType into target).
+  const uint8_t* _targetVarMapping;
 
   //! @brief First node.
   BaseNode* _firstNode;

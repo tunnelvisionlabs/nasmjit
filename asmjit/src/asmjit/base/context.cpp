@@ -217,7 +217,7 @@ Error BaseContext::compile(FuncNode* func) {
 
   // We alter the compiler cursor, because it doesn't make sense to reference
   // it after compilation - some nodes may disappear and it's forbidden to add
-  // new code after compilation.
+  // new code after the compilation is done.
   _compiler->_setCursor(NULL);
 
   return kErrorOk;

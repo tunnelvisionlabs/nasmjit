@@ -968,7 +968,7 @@ _Prepare:
 
     // Check if one or more register operand is one of BPL, SPL, SIL, DIL and
     // force a REX prefix in such case.
-    if (Util::isGpbReg(o0)) {
+    if (x86IsGpbRegOp(o0)) {
       uint32_t index = static_cast<const X86Reg*>(o0)->getIndex();
       if (static_cast<const X86Reg*>(o0)->isGpbLo()) {
         opX |= (index >= 4) << kRexShift;
@@ -979,7 +979,7 @@ _Prepare:
       }
     }
 
-    if (Util::isGpbReg(o1)) {
+    if (x86IsGpbRegOp(o1)) {
       uint32_t index = static_cast<const X86Reg*>(o1)->getIndex();
       if (static_cast<const X86Reg*>(o1)->isGpbLo()) {
         opX |= (index >= 4) << kRexShift;
@@ -2661,6 +2661,7 @@ _EmitMmMovD:
 
     case kInstGroupAvxRvm:
       if (encoded == ENC_OPS(Reg, Reg, Reg)) {
+_EmitAvxRvm:
         opReg = static_cast<const X86Reg*>(o0)->getIndex();
         rmReg = static_cast<const X86Reg*>(o2)->getIndex();
         opX  |= static_cast<const X86Reg*>(o1)->getIndex() << kVexVVVVShift;
@@ -2963,13 +2964,34 @@ _EmitMmMovD:
 
       if (encoded == ENC_OPS(Reg, Mem, Imm)) {
         opX  |= static_cast<const X86Reg*>(o0)->getIndex() << kVexVVVVShift;
+        rmMem = static_cast<const Mem*>(o1);
+        goto _EmitAvxM;
+      }
+      break;
+
+    case kInstGroupAvxMovSsSd:
+      if (encoded == ENC_OPS(Reg, Reg, Reg)) {
+        goto _EmitAvxRvm;
+      }
+
+      if (encoded == ENC_OPS(Reg, Mem, None)) {
+        opX  |= static_cast<const X86Reg*>(o0)->getIndex() << kVexVVVVShift;
+        rmMem = static_cast<const Mem*>(o1);
+        goto _EmitAvxM;
+      }
+
+      if (encoded == ENC_OPS(Mem, Reg, None)) {
+        opReg = static_cast<const X86Reg*>(o1)->getIndex();
         rmMem = static_cast<const Mem*>(o0);
         goto _EmitAvxM;
       }
       break;
 
+    // TODO: [ASSEMBLER] Gather (AVX) family instructions support.
+    case kInstGroupAvxGatherEx:
+      goto _EmitDone;
+
     case kInstGroupAvxGather:
-      // TODO: [ASSEMBLER] Gather (AVX) family instructions support.
       goto _EmitDone;
   }
 
