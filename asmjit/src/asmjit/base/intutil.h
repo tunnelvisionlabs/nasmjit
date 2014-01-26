@@ -175,9 +175,9 @@ struct IntUtil {
   template<typename T>
   static ASMJIT_INLINE bool isUInt32(T x) {
     if (IntTraits<T>::kIsSigned)
-      return x >= T(0) && (sizeof(T) <= sizeof(uint32_t) ? true : x <= T(4294967295));
+      return x >= T(0) && (sizeof(T) <= sizeof(uint32_t) ? true : x <= T(4294967295U));
     else
-      return sizeof(T) <= sizeof(uint32_t) ? true : x <= T(4294967295);
+      return sizeof(T) <= sizeof(uint32_t) ? true : x <= T(4294967295U);
   }
 
   // --------------------------------------------------------------------------
@@ -398,9 +398,11 @@ struct IntUtil {
     base = base | (base >> 2);
     base = base | (base >> 4);
 
-    if (sizeof(T) >= 2) base = base | (base >>  8);
-    if (sizeof(T) >= 4) base = base | (base >> 16);
-    if (sizeof(T) >= 8) base = base | (base >> 32);
+    // 8/16/32 constants are multiplied by the condition to prevent a compiler
+    // complaining about the 'shift count >= type width' (GCC).
+    if (sizeof(T) >= 2) base = base | (base >> ( 8 * (sizeof(T) >= 2))); // Base >>  8.
+    if (sizeof(T) >= 4) base = base | (base >> (16 * (sizeof(T) >= 4))); // Base >> 16.
+    if (sizeof(T) >= 8) base = base | (base >> (32 * (sizeof(T) >= 8))); // Base >> 32.
 
 #if defined(_MSC_VER)
 # pragma warning(pop)

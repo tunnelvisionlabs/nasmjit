@@ -188,8 +188,11 @@ Error BaseContext::removeUnreachableCode() {
 //!
 //! @brief Translate the given function @a func.
 void BaseContext::cleanup() {
-  ASMJIT_FOR_EACH(_contextVd, VarData*, vd)
-  {
+  VarData** array = _contextVd.getData();
+  size_t length = _contextVd.getLength();
+  
+  for (size_t i = 0; i < length; i++) {
+    VarData* vd = array[i];
     vd->resetContextId();
     vd->resetRegIndex();
   }

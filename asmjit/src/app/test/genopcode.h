@@ -31,6 +31,9 @@ static void opcode(asmjit::host::Assembler& a) {
   Mem ptr_gp0 = ptr(gp0);
   Mem ptr_gp1 = ptr(gp1);
 
+  Mem vm32x = ptr_gp0;
+  Mem vm32y = ptr_gp1;
+
   Mem intptr_gp0 = intptr_ptr(gp0);
   Mem intptr_gp1 = intptr_ptr(gp1);
 
@@ -1744,13 +1747,14 @@ static void opcode(asmjit::host::Assembler& a) {
   a.vbroadcastss(ymm0, xmm1);
   a.vextracti128(xmm0, ymm1, 0);
   a.vextracti128(ptr_gp0, ymm1, 0);
-  a.vgatherdpd(xmm0, ptr_gp0, xmm2);
-  a.vgatherdpd(ymm0, ptr_gp0, ymm2);
-  a.vgatherdps(xmm0, ptr_gp0, xmm2);
-  a.vgatherdps(ymm0, ptr_gp0, ymm2);
-  a.vgatherqpd(xmm0, ptr_gp0, xmm2);
-  a.vgatherqpd(ymm0, ptr_gp0, ymm2);
-  a.vgatherqps(xmm0, ptr_gp0, xmm2);
+  a.vgatherdpd(xmm0, vm32x, xmm2);
+  a.vgatherdpd(ymm0, vm32y, ymm2);
+  a.vgatherdps(xmm0, vm32x, xmm2);
+  a.vgatherdps(ymm0, vm32y, ymm2);
+  a.vgatherqpd(xmm0, vm32x, xmm2);
+  a.vgatherqpd(ymm0, vm32y, ymm2);
+  a.vgatherqps(xmm0, vm32x, xmm2);
+  a.vgatherqps(xmm0, vm32y, xmm2);
   a.vinserti128(ymm0, ymm1, xmm2, 0);
   a.vinserti128(ymm0, ymm1, ptr_gp0, 0);
   a.vmovntdqa(ymm0, ptr_gp0);
@@ -1846,13 +1850,14 @@ static void opcode(asmjit::host::Assembler& a) {
   a.vpermpd(ymm0, ptr_gp0, 0);
   a.vpermq(ymm0, ymm1, 0);
   a.vpermq(ymm0, ptr_gp0, 0);
-  a.vpgatherdd(xmm0, ptr_gp0, xmm2);
-  a.vpgatherdd(ymm0, ptr_gp0, ymm2);
-  a.vpgatherdq(xmm0, ptr_gp0, xmm2);
-  a.vpgatherdq(ymm0, ptr_gp0, ymm2);
-  a.vpgatherqd(xmm0, ptr_gp0, xmm2);
-  a.vpgatherqq(xmm0, ptr_gp0, xmm2);
-  a.vpgatherqq(ymm0, ptr_gp0, ymm2);
+  a.vpgatherdd(xmm0, vm32x, xmm2);
+  a.vpgatherdd(ymm0, vm32y, ymm2);
+  a.vpgatherdq(xmm0, vm32x, xmm2);
+  a.vpgatherdq(ymm0, vm32y, ymm2);
+  a.vpgatherqd(xmm0, vm32x, xmm2);
+  a.vpgatherqd(xmm0, vm32y, xmm2);
+  a.vpgatherqq(xmm0, vm32x, xmm2);
+  a.vpgatherqq(ymm0, vm32y, ymm2);
   a.vpmovmskb(gp0, ymm1);
   a.vpmovsxbd(ymm0, ptr_gp0);
   a.vpmovsxbd(ymm0, xmm1);

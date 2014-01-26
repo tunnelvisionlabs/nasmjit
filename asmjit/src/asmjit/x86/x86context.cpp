@@ -1843,7 +1843,12 @@ _NextGroup:
               if (special != NULL) {
                 uint32_t inReg = special[i].inReg;
                 uint32_t outReg = special[i].outReg;
-                uint32_t c = static_cast<const X86Reg*>(op)->isGp() ? kRegClassGp : kRegClassXy;
+                uint32_t c;
+                
+                if (static_cast<const X86Reg*>(op)->isGp())
+                  c = kRegClassGp;
+                else
+                  c = kRegClassXy;
 
                 if (inReg != kInvalidReg) {
                   uint32_t mask = IntUtil::mask(inReg);

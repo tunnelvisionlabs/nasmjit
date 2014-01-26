@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 
   VoidFunc p = asmjit_cast<VoidFunc>(a.make());
   p();
-  runtime.release(p);
+  runtime.release((void*)p);
 
   return 0;
 }

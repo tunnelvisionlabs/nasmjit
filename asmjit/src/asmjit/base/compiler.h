@@ -1411,7 +1411,7 @@ struct FuncNode : public BaseNode {
   }
 
   //! @brief Get function hint.
-  ASMJIT_INLINE uint32_t FuncNode::getHint(uint32_t hint) const {
+  ASMJIT_INLINE uint32_t getHint(uint32_t hint) const {
     ASMJIT_ASSERT(hint <= 31);
     return (_funcHints >> hint) & 0x1;
   }

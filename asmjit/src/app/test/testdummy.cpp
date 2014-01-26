@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   c.endFunc();
 
   MyFunc func = asmjit_cast<MyFunc>(c.make());
-  runtime.release(func);
+  runtime.release((void*)func);
 
   return 0;
 }

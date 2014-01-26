@@ -86,25 +86,18 @@ ASMJIT_ENUM(kArch) {
 };
 
 // ============================================================================
-// [asmjit::_TypeToType]
-// ============================================================================
-
-template<typename T>
-struct _TypeToType { typedef T Type; };
-
-// ============================================================================
 // [asmjit::_Initialize]
 // ============================================================================
 
 struct _Initialize {};
-static const _Initialize Initialize;
+static const _Initialize Initialize = {};
 
 // ============================================================================
 // [asmjit::_DontInitialize]
 // ============================================================================
 
 struct _DontInitialize {};
-static const _DontInitialize DontInitialize;
+static const _DontInitialize DontInitialize = {};
 
 //! @}
 

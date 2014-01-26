@@ -67,10 +67,10 @@ static const CpuFeature x86x64Features[] = {
 };
 #endif // ASMJIT_HOST || ASMJIT_HOST_X64
 
-static void printFeatures(const char* msg, const BaseCpu* cpu, const CpuFeature* d) {
+static void printFeatures(const char* prefix, const BaseCpu* cpu, const CpuFeature* data) {
   for (uint32_t i = 0; i < ASMJIT_ARRAY_SIZE(x86x64Features); i++) {
-    if (cpu->hasFeature(x86x64Features[i].feature)) {
-      printf("%s%s\n", msg, d->description);
+    if (cpu->hasFeature(data[i].feature)) {
+      printf("%s%s\n", prefix, data[i].description);
     }
   }
 }

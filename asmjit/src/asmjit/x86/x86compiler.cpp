@@ -282,6 +282,8 @@ InstNode* X86X64Compiler::emit(uint32_t code, const Operand& o0, const Operand& 
 
 X86X64FuncNode* X86X64Compiler::newFunc(uint32_t conv, const FuncPrototype& p) {
   X86X64FuncNode* func = newNode<X86X64FuncNode>();
+  Error error;
+
   if (func == NULL)
     goto _NoMemory;
 
@@ -297,8 +299,7 @@ X86X64FuncNode* X86X64Compiler::newFunc(uint32_t conv, const FuncPrototype& p) {
   func->_funcHints |= IntUtil::mask(kFuncHintPushPop);
 
   // Function prototype.
-  Error error = func->_x86Decl.setPrototype(conv, p);
-  if (error != kErrorOk) {
+  if ((error = func->_x86Decl.setPrototype(conv, p)) != kErrorOk) {
     setError(error);
     return NULL;
   }
@@ -387,28 +388,27 @@ RetNode* X86X64Compiler::addRet(const Operand& o0, const Operand& o1) {
 
 X86X64CallNode* X86X64Compiler::newCall(const Operand& o0, uint32_t conv, const FuncPrototype& p) {
   X86X64CallNode* node = newNode<X86X64CallNode>(o0);
+  Error error;
+  uint32_t nArgs;
+
   if (node == NULL)
     goto _NoMemory;
 
-  {
-    Error error = node->_x86Decl.setPrototype(conv, p);
-    if (error != kErrorOk) {
-      setError(error);
-      return NULL;
-    }
-
-    // If there are no arguments skip the allocation.
-    uint32_t nArgs = p.getArgCount();
-    if (!nArgs)
-      return node;
-
-    node->_args = static_cast<Operand*>(_zoneAllocator.alloc(nArgs * sizeof(Operand)));
-    if (node->_args == NULL)
-      goto _NoMemory;
-
-    ::memset(node->_args, 0, nArgs * sizeof(Operand));
-    return node;
+  if ((error = node->_x86Decl.setPrototype(conv, p)) != kErrorOk) {
+    setError(error);
+    return NULL;
   }
+
+  // If there are no arguments skip the allocation.
+  if ((nArgs = p.getArgCount()) == 0)
+    return node;
+
+  node->_args = static_cast<Operand*>(_zoneAllocator.alloc(nArgs * sizeof(Operand)));
+  if (node->_args == NULL)
+    goto _NoMemory;
+
+  ::memset(node->_args, 0, nArgs * sizeof(Operand));
+  return node;
 
 _NoMemory:
   setError(kErrorNoHeapMemory);
@@ -429,12 +429,12 @@ X86X64CallNode* X86X64Compiler::addCall(const Operand& o0, uint32_t conv, const 
 VarData* X86X64Compiler::newVd(const char* name, uint32_t vType) {
   ASMJIT_ASSERT(vType < kVarTypeCount);
 
+  vType = _targetVarMapping[vType];
+  const VarInfo& vInfo = _varInfo[vType];
+
   VarData* vd = reinterpret_cast<VarData*>(_varAllocator.alloc(sizeof(VarData)));
   if (vd == NULL)
     goto _NoMemory;
-
-  vType = _targetVarMapping[vType];
-  const VarInfo& vInfo = _varInfo[vType];
 
   vd->_name = name ? _stringAllocator.sdup(name) : static_cast<char*>(NULL);
   vd->_id = OperandUtil::makeVarId(static_cast<uint32_t>(_vars.getLength()));

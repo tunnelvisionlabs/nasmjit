@@ -252,24 +252,6 @@ struct PodVector : PodVectorBase {
   }
 };
 
-// ============================================================================
-// [ASMJIT_FOR_EACH]
-// ============================================================================
-
-#define ASMJIT_FOR_EACH(_Container_, _Type_, _Var_) \
-  if ((_Container_).isEmpty()) \
-    ; \
-  else \
-    for (::asmjit::_TypeToType<_Type_>::Type \
-      *_Var_##_Iterator_Cur_ = reinterpret_cast<::asmjit::_TypeToType<_Type_>::Type*>((_Container_).getData()), \
-      *_Var_##_Iterator_End_ = _Var_##_Iterator_Cur_ + (_Container_).getLength(), \
-      _Var_ = _Var_##_Iterator_Cur_[0]; \
-      \
-      _Var_##_Iterator_Cur_ < _Var_##_Iterator_End_; \
-      \
-      _Var_##_Iterator_Cur_++, \
-      _Var_ = *_Var_##_Iterator_Cur_)
-
 //! @}
 
 } // asmjit namespace

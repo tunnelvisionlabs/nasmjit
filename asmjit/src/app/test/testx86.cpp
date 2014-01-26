@@ -1371,6 +1371,10 @@ struct X86Test_CallMultiple : public X86Test {
     tests.append(new X86Test_CallMultiple());
   }
 
+  static int ASMJIT_FASTCALL calledFunc(int* pInt, int index) {
+    return pInt[index];
+  }
+
   virtual void compile(Compiler& c) {
     unsigned int i;
 
@@ -1378,7 +1382,7 @@ struct X86Test_CallMultiple : public X86Test {
     GpVar acc0(c, kVarTypeInt32, "acc0");
     GpVar acc1(c, kVarTypeInt32, "acc1");
 
-    c.addFunc(kFuncConvHostFastCall, FuncBuilder1<int, int*>());
+    c.addFunc(kFuncConvHost, FuncBuilder1<int, int*>());
     c.setArg(0, buf);
 
     c.mov(acc0, 0);
@@ -1429,10 +1433,6 @@ struct X86Test_CallMultiple : public X86Test {
     expect.setFormat("ret=%d", expectRet);
 
     return resultRet == expectRet;
-  }
-
-  static int ASMJIT_FASTCALL calledFunc(int* pInt, int index) {
-    return pInt[index];
   }
 };
 
