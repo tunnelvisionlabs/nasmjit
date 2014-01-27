@@ -120,36 +120,41 @@ struct BaseAssembler : public CodeGen {
   // --------------------------------------------------------------------------
 
   //! @brief Get capacity of the code buffer.
-  ASMJIT_INLINE size_t getCapacity() const
-  { return (size_t)(_end - _buffer); }
+  ASMJIT_INLINE size_t getCapacity() const {
+    return (size_t)(_end - _buffer);
+  }
 
   //! @brief Get the number of remaining bytes (space between cursor and the
   //! end of the buffer).
-  ASMJIT_INLINE size_t getRemainingSpace() const
-  { return (size_t)(_end - _cursor); }
+  ASMJIT_INLINE size_t getRemainingSpace() const {
+    return (size_t)(_end - _cursor);
+  }
 
   //! @brief Get buffer.
-  ASMJIT_INLINE uint8_t* getBuffer() const
-  { return _buffer; }
+  ASMJIT_INLINE uint8_t* getBuffer() const {
+    return _buffer;
+  }
 
   //! @brief Get the end of the buffer (points to the first byte that is outside).
-  ASMJIT_INLINE uint8_t* getEnd() const
-  { return _end; }
+  ASMJIT_INLINE uint8_t* getEnd() const {
+    return _end;
+  }
 
   //! @brief Get the current position in the buffer.
-  ASMJIT_INLINE uint8_t* getCursor() const
-  { return _cursor; }
+  ASMJIT_INLINE uint8_t* getCursor() const {
+    return _cursor;
+  }
 
   //! @brief Set the current position in the buffer.
-  ASMJIT_INLINE void setCursor(uint8_t* cursor)
-  {
+  ASMJIT_INLINE void setCursor(uint8_t* cursor) {
     ASMJIT_ASSERT(cursor >= _buffer && cursor <= _end);
     _cursor = cursor;
   }
 
   //! @brief Get the current offset in the buffer (<code>_cursor - _buffer</code>).
-  ASMJIT_INLINE size_t getOffset() const
-  { return (size_t)(_cursor - _buffer); }
+  ASMJIT_INLINE size_t getOffset() const {
+    return (size_t)(_cursor - _buffer);
+  }
 
   //! @brief Set the current offset in the buffer to @a offset and get the
   //! previous offset value.
@@ -249,8 +254,9 @@ struct BaseAssembler : public CodeGen {
   // --------------------------------------------------------------------------
 
   //! @brief Get current offset in buffer (same as <code>getOffset() + getTramplineSize()</code>).
-  ASMJIT_INLINE size_t getCodeSize() const
-  { return getOffset() + getTrampolineSize(); }
+  ASMJIT_INLINE size_t getCodeSize() const {
+    return getOffset() + getTrampolineSize();
+  }
 
   // --------------------------------------------------------------------------
   // [GetTrampolineSize]
@@ -260,20 +266,23 @@ struct BaseAssembler : public CodeGen {
   //! relative jumps to absolute addresses. This value is only non-zero if jmp
   //! of call instructions were used with immediate operand (this means jumping
   //! or calling an absolute address directly).
-  ASMJIT_INLINE size_t getTrampolineSize() const
-  { return _trampolineSize; }
+  ASMJIT_INLINE size_t getTrampolineSize() const {
+    return _trampolineSize;
+  }
 
   // --------------------------------------------------------------------------
   // [Label]
   // --------------------------------------------------------------------------
 
   //! @brief Get count of labels created.
-  ASMJIT_INLINE size_t getLabelsCount() const
-  { return _labels.getLength(); }
+  ASMJIT_INLINE size_t getLabelsCount() const {
+    return _labels.getLength();
+  }
 
   //! @brief Get whether @a label is created.
-  ASMJIT_INLINE bool isLabelCreated(const Label& label) const
-  { return static_cast<size_t>(label.getId()) < _labels.getLength(); }
+  ASMJIT_INLINE bool isLabelCreated(const Label& label) const {
+    return static_cast<size_t>(label.getId()) < _labels.getLength();
+  }
 
   //! @internal
   //!
@@ -298,13 +307,14 @@ struct BaseAssembler : public CodeGen {
   }
 
   //! @brief Bind label to the current offset (virtual).
-  //!
-  //! @note Label can be bound only once!
-  ASMJIT_INLINE void bind(const Label& label)
-  { _bind(label); }
+  virtual void _bind(const Label& label) = 0;
 
   //! @brief Bind label to the current offset (virtual).
-  virtual void _bind(const Label& label) = 0;
+  //!
+  //! @note Label can be bound only once!
+  ASMJIT_INLINE void bind(const Label& label) {
+    _bind(label);
+  }
 
   // --------------------------------------------------------------------------
   // [Embed]
@@ -322,8 +332,9 @@ struct BaseAssembler : public CodeGen {
   //! Typical usage of this is to align labels at start of the inner loops.
   //!
   //! Inserts @c nop() instructions or CPU optimized NOPs.
-  ASMJIT_INLINE Error align(uint32_t m)
-  { return _align(m); }
+  ASMJIT_INLINE Error align(uint32_t m) {
+    return _align(m);
+  }
 
   //! @brief Align target buffer to @a m bytes (virtual).
   virtual Error _align(uint32_t m) = 0;
@@ -335,8 +346,9 @@ struct BaseAssembler : public CodeGen {
   //! @brief Simplifed version of @c relocCode() method designed for JIT.
   //!
   //! @overload
-  ASMJIT_INLINE size_t relocCode(void* dst) const
-  { return _relocCode(dst, static_cast<Ptr>((uintptr_t)dst)); }
+  ASMJIT_INLINE size_t relocCode(void* dst) const {
+    return _relocCode(dst, static_cast<Ptr>((uintptr_t)dst));
+  }
 
   //! @brief Relocate code to a given address @a dst.
   //!
@@ -355,8 +367,9 @@ struct BaseAssembler : public CodeGen {
   //!
   //! A given buffer will be overwritten, to get number of bytes required use
   //! @c getCodeSize().
-  ASMJIT_INLINE size_t relocCode(void* dst, Ptr base) const
-  { return _relocCode(dst, base); }
+  ASMJIT_INLINE size_t relocCode(void* dst, Ptr base) const {
+    return _relocCode(dst, base);
+  }
 
   //! @brief Reloc code (virtual).
   virtual size_t _relocCode(void* dst, Ptr base) const = 0;

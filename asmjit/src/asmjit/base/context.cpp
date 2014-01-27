@@ -22,26 +22,10 @@ namespace asmjit {
 
 BaseContext::BaseContext(BaseCompiler* compiler) :
   _compiler(compiler),
-  _func(NULL),
-  _zoneAllocator(8192 - sizeof(Zone::Chunk) - kMemAllocOverhead),
-  _start(NULL),
-  _end(NULL),
-  _extraBlock(NULL),
-  _stop(NULL),
-  _unreachableList(),
-  _jccList(),
-  _contextVd(),
-  _memCells(NULL),
-  _numStackCells(0),
-  _num64ByteCells(0),
-  _num32ByteCells(0),
-  _num16ByteCells(0),
-  _num8ByteCells(0),
-  _num4ByteCells(0),
-  _num2ByteCells(0),
-  _num1ByteCells(0),
-  _memSize(0),
-  _state(NULL) {}
+  _zoneAllocator(8192 - sizeof(Zone::Chunk) - kMemAllocOverhead) {
+
+  BaseContext::reset();
+}
 
 BaseContext::~BaseContext() {}
 
@@ -55,30 +39,38 @@ void BaseContext::reset() {
   _func = NULL;
   _start = NULL;
   _end = NULL;
+  _extraBlock = NULL;
+  _stop = NULL;
 
   _unreachableList.reset();
   _jccList.reset();
-
   _contextVd.clear();
-  _memCells = NULL;
 
-  _num64ByteCells = 0;
-  _num32ByteCells = 0;
-  _num16ByteCells = 0;
-  _num8ByteCells = 0;
-  _num4ByteCells = 0;
-  _num2ByteCells = 0;
-  _num1ByteCells = 0;
+  _memVarCells = NULL;
+  _memStackCells = NULL;
 
-  _memSize = 0;
-  _maxCellSize = 0;
+  _mem1ByteVarsUsed = 0;
+  _mem2ByteVarsUsed = 0;
+  _mem4ByteVarsUsed = 0;
+  _mem8ByteVarsUsed = 0;
+  _mem16ByteVarsUsed = 0;
+  _mem32ByteVarsUsed = 0;
+  _mem64ByteVarsUsed = 0;
+  _memStackCellsUsed = 0;
+
+  _memMaxAlign = 0;
+  _memVarTotal = 0;
+  _memStackTotal = 0;
+  _memAllTotal = 0;
+
+  _state = NULL;
 }
 
 // ============================================================================
-// [asmjit::BaseContext - MemCell]
+// [asmjit::BaseContext - Mem]
 // ============================================================================
 
-static ASMJIT_INLINE uint32_t BaseContext_getVarAlignment(uint32_t size) {
+static ASMJIT_INLINE uint32_t BaseContext_getDefaultAlignment(uint32_t size) {
   if (size > 32)
     return 64;
   else if (size > 16)
@@ -95,38 +87,89 @@ static ASMJIT_INLINE uint32_t BaseContext_getVarAlignment(uint32_t size) {
     return 1;
 }
 
-MemCell* BaseContext::_newMemCell(uint32_t size, uint32_t alignment) {
-  ASMJIT_ASSERT(size != 0);
+MemCell* BaseContext::_newVarCell(VarData* vd) {
+  ASMJIT_ASSERT(vd->_memCell == NULL);
 
-  if (alignment > 1)
-    size = IntUtil::alignTo<uint32_t>(size, alignment);
-
-  // First try to find free block.
   MemCell* cell;
+  uint32_t size = vd->getSize();
 
-  // If there is no free cell we create a new one.
-  cell = static_cast<MemCell*>(_zoneAllocator.alloc(sizeof(MemCell)));
+  if (vd->isStack()) {
+    cell = _newStackCell(size, vd->getAlignment());
+
+    if (cell == NULL)
+      return NULL;
+  }
+  else {
+    cell = static_cast<MemCell*>(_zoneAllocator.alloc(sizeof(MemCell)));
+    if (cell == NULL)
+      goto _NoMemory;
+
+    cell->_next = _memVarCells;
+    _memVarCells = cell;
+
+    cell->_offset = 0;
+    cell->_size = size;
+    cell->_alignment = size;
+
+    _memMaxAlign = IntUtil::iMax<uint32_t>(_memMaxAlign, size);
+    _memVarTotal += size;
+
+    switch (size) {
+      case  1: _mem1ByteVarsUsed++ ; break;
+      case  2: _mem2ByteVarsUsed++ ; break;
+      case  4: _mem4ByteVarsUsed++ ; break;
+      case  8: _mem8ByteVarsUsed++ ; break;
+      case 16: _mem16ByteVarsUsed++; break;
+      case 32: _mem32ByteVarsUsed++; break;
+      case 64: _mem64ByteVarsUsed++; break;
+      default: ASMJIT_ASSERT(!"Reached");
+    }
+  }
+
+  vd->_memCell = cell;
+  return cell;
+
+_NoMemory:
+  _compiler->setError(kErrorNoHeapMemory);
+  return NULL;
+}
+
+MemCell* BaseContext::_newStackCell(uint32_t size, uint32_t alignment) {
+  MemCell* cell = static_cast<MemCell*>(_zoneAllocator.alloc(sizeof(MemCell)));
   if (cell == NULL)
     goto _NoMemory;
 
-  cell->_next = _memCells;
+  if (alignment == 0)
+    alignment = BaseContext_getDefaultAlignment(size);
+
+  if (alignment > 64)
+    alignment = 64;
+
+  ASMJIT_ASSERT(IntUtil::isPowerOf2(alignment));
+  size = IntUtil::alignTo<uint32_t>(size, alignment);
+
+  // Insert it sorted according to the alignment and size.
+  MemCell** pPrev = &_memStackCells;
+  MemCell* cur = *pPrev;
+
+  for (cur = *pPrev; cur != NULL; cur = cur->_next) {
+    if (cur->getAlignment() > alignment)
+      continue;
+    if (cur->getAlignment() == alignment && cur->getSize() > size)
+      continue;
+    break;
+  }
+
+  cell->_next = cur;
   cell->_offset = 0;
   cell->_size = size;
-  cell->_occupied = true;
+  cell->_alignment = alignment;
 
-  _memCells = cell;
-  _memSize += size;
-  _maxCellSize = IntUtil::iMax(_maxCellSize, size);
+  *pPrev = cell;
+  _memStackCellsUsed++;
 
-  switch (size) {
-    case 64: _num64ByteCells++; break;
-    case 32: _num32ByteCells++; break;
-    case 16: _num16ByteCells++; break;
-    case  8: _num8ByteCells++ ; break;
-    case  4: _num4ByteCells++ ; break;
-    case  2: _num2ByteCells++ ; break;
-    case  1: _num1ByteCells++ ; break;
-  }
+  _memMaxAlign = IntUtil::iMax<uint32_t>(_memMaxAlign, alignment);
+  _memStackTotal += size;
 
   return cell;
 
@@ -135,17 +178,83 @@ _NoMemory:
   return NULL;
 }
 
-MemCell* BaseContext::_newVarCell(VarData* vd) {
-  ASMJIT_ASSERT(vd->_memCell == NULL);
+Error BaseContext::resolveCellOffsets() {
+  MemCell* varCell = _memVarCells;
+  MemCell* stackCell = _memStackCells;
 
-  uint32_t size = vd->getSize();
-  MemCell* cell = _newMemCell(size, BaseContext_getVarAlignment(size));
+  uint32_t stackAlignment = 0;
+  if (stackCell != NULL)
+    stackAlignment = stackCell->getAlignment();  
 
-  if (cell == NULL)
-    return NULL;
+  uint32_t pos64 = 0;
+  uint32_t pos32 = pos64 + _mem64ByteVarsUsed * 64;
+  uint32_t pos16 = pos32 + _mem32ByteVarsUsed * 32;
+  uint32_t pos8  = pos16 + _mem16ByteVarsUsed * 16;
+  uint32_t pos4  = pos8  + _mem8ByteVarsUsed  * 8 ;
+  uint32_t pos2  = pos4  + _mem4ByteVarsUsed  * 4 ;
+  uint32_t pos1  = pos2  + _mem2ByteVarsUsed  * 2 ;
 
-  vd->_memCell = cell;
-  return cell;
+  uint32_t stackPos = pos1 + _mem1ByteVarsUsed;
+
+  uint32_t gapAlignment = stackAlignment;
+  uint32_t gapSize = 0;
+ 
+  if (gapAlignment)
+    IntUtil::deltaTo(stackPos, gapAlignment);
+  stackPos += gapSize;
+
+  uint32_t gapPos = stackPos;
+  uint32_t allTotal = stackPos;
+
+  // Vars - Allocated according to alignment/width.
+  while (varCell != NULL) {
+    uint32_t size = varCell->getSize();
+    uint32_t offset;
+
+    switch (size) {
+      case  1: offset = pos1 ; pos1  += 1 ; break;
+      case  2: offset = pos2 ; pos2  += 2 ; break;
+      case  4: offset = pos4 ; pos4  += 4 ; break;
+      case  8: offset = pos8 ; pos8  += 8 ; break;
+      case 16: offset = pos16; pos16 += 16; break;
+      case 32: offset = pos32; pos32 += 32; break;
+      case 64: offset = pos64; pos64 += 64; break;
+      default: ASMJIT_ASSERT(!"Reached");
+    }
+
+    varCell->setOffset(static_cast<int32_t>(offset));
+    varCell = varCell->_next;
+  }
+
+  // Stack - Allocated according to alignment and width.
+  while (stackCell != NULL) {
+    uint32_t size = stackCell->getSize();
+    uint32_t alignment = stackCell->getAlignment();
+    uint32_t offset;
+
+    // Try to fill the gap between variables / stack first.
+    if (size <= gapSize && alignment <= gapAlignment) {
+      offset = gapPos;
+
+      gapSize -= size;
+      gapPos -= size;
+
+      if (alignment < gapAlignment)
+        gapAlignment = alignment;
+    }
+    else {
+      offset = stackPos;
+
+      stackPos += size;
+      allTotal += size;
+    }
+
+    stackCell->setOffset(offset);
+    stackCell = stackCell->_next;
+  }
+
+  _memAllTotal = allTotal;
+  return kErrorOk;
 }
 
 // ============================================================================

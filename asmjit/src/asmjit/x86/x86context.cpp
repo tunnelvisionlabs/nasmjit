@@ -74,7 +74,10 @@ void X86X64Context::reset() {
   _clobberedRegs.reset();
 
   _stackFrameCell = NULL;
-  ::memset(_allocableRegs, 0, kRegClassCount * sizeof(uint32_t));
+  _gaRegs[kRegClassGp] = IntUtil::bits(_baseRegsCount) & ~IntUtil::mask(kRegIndexSp);
+  _gaRegs[kRegClassFp] = IntUtil::bits(kRegCountFp);
+  _gaRegs[kRegClassMm] = IntUtil::bits(kRegCountMm);
+  _gaRegs[kRegClassXy] = IntUtil::bits(_baseRegsCount);
 
   _argBaseReg = kInvalidReg; // Used by patcher.
   _varBaseReg = kInvalidReg; // Used by patcher.
@@ -647,10 +650,8 @@ void X86X64Context::emitPushSequence(uint32_t regs) {
   GpReg gpReg(_zsp);
   while (regs != 0) {
     ASMJIT_ASSERT(i < _baseRegsCount);
-
     if ((regs & 0x1) != 0)
       compiler->emit(kInstPush, gpReg.setIndex(i));
-
     i++;
     regs >>= 1;
   }
@@ -1311,6 +1312,7 @@ void X86X64Context::switchState(BaseVarState* src_) {
   X86X64Context_switchStateVars<kRegClassXy>(this, src);
 
   // Copy occupied mask.
+  // TODO: Review.
   // cur->_occupied = src->_occupied;
   // cur->_modified = src->_modified;
 
@@ -1464,7 +1466,7 @@ static ASMJIT_INLINE SArgNode* X86X64Context_insertSArgNode(
 
   uint32_t vType = vd->getType();
   const VarInfo& vInfo = _varInfo[vType];
-  uint32_t vClass = vInfo.getClass();
+  uint32_t c = vInfo.getClass();
 
   SArgNode* sArg = compiler->newNode<SArgNode>(vd, call);
   if (sArg == NULL)
@@ -1476,12 +1478,12 @@ static ASMJIT_INLINE SArgNode* X86X64Context_insertSArgNode(
 
   vi->_vaCount = 1;
   vi->_count.reset();
-  vi->_count.add(vClass);
+  vi->_count.add(c);
   vi->_start.reset();
   vi->_inRegs.reset();
   vi->_outRegs.reset();
   vi->_clobberedRegs.reset();
-  vi->_list[0].setup(vd, kVarAttrInReg, 0, gaRegs[vClass]);
+  vi->_list[0].setup(vd, kVarAttrInReg, 0, gaRegs[c]);
 
   sArg->setVarInst(vi);
 
@@ -1528,17 +1530,13 @@ Error X86X64Context::fetch() {
   if (func->getHint(kFuncHintLFence ) != 0) func->addFuncFlags(kFuncFlagLFence );
 
   // Global allocable registers.
-  uint32_t gaRegs[kRegClassCount] = {
-    IntUtil::bits(_baseRegsCount) & ~IntUtil::mask(kRegIndexSp),
-    IntUtil::bits(kRegCountFp),
-    IntUtil::bits(kRegCountMm),
-    IntUtil::bits(_baseRegsCount)
-  };
+  uint32_t* gaRegs = _gaRegs;
 
   if (!func->hasFuncFlag(kFuncFlagIsNaked))
     gaRegs[kRegClassGp] &= ~IntUtil::mask(kRegIndexBp);
 
-  const uint32_t gpIndexMask = _allocableRegs[kRegClassGp] & ~IntUtil::mask(kRegIndexR12);
+  // Allowed index registers (Gp/Xmm/Ymm).
+  const uint32_t indexMask = IntUtil::bits(_baseRegsCount) & ~(IntUtil::mask(4, 12));
 
   // --------------------------------------------------------------------------
   // [VI Macros]
@@ -1914,53 +1912,54 @@ _NextGroup:
 
               if (OperandUtil::isVarId(m->getBase()) && m->isBaseIndexType()) {
                 vd = compiler->getVdById(m->getBase());
-                VI_MERGE_VAR(vd, va, 0, gaRegs[vd->getClass()] & gpAllowedMask);
-
-                if (m->getMemType() == kMemTypeBaseIndex) {
-                  va->addFlags(kVarAttrInReg);
-                }
-                else {
-                  uint32_t inFlags = kVarAttrInMem;
-                  uint32_t outFlags = kVarAttrOutMem;
-                  uint32_t combinedFlags;
-
-                  if (i == 0) {
-                    // Default for the first operand.
-                    combinedFlags = inFlags | outFlags;
-
-                    // Comparison/Test instructions never modify the source operand.
-                    if (info->isTest()) {
-                      combinedFlags = inFlags;
-                    }
-                    // Move instructions typically overwrite the first operand, but
-                    // there are some exceptions based on the operands' size and type.
-                    else if (info->isMove()) {
-                      // Movss.
-                      if (code == kInstMovss)
-                        combinedFlags = vd->getSize() == 4 ? outFlags : inFlags | outFlags;
-                      // Movsd.
-                      else if (code == kInstMovsd)
-                        combinedFlags = vd->getSize() == 8 ? outFlags : inFlags | outFlags;
-                      else
-                        combinedFlags = outFlags;
-                    }
+                if (!vd->isStack()) {
+                  VI_MERGE_VAR(vd, va, 0, gaRegs[vd->getClass()] & gpAllowedMask);
+                  if (m->getMemType() == kMemTypeBaseIndex) {
+                    va->addFlags(kVarAttrInReg);
                   }
                   else {
-                    // Default for the second operand.
-                    combinedFlags = inFlags;
-                    if (info->isXchg())
-                      combinedFlags = inFlags | outFlags;
-                  }
+                    uint32_t inFlags = kVarAttrInMem;
+                    uint32_t outFlags = kVarAttrOutMem;
+                    uint32_t combinedFlags;
 
-                  va->addFlags(combinedFlags);
+                    if (i == 0) {
+                      // Default for the first operand.
+                      combinedFlags = inFlags | outFlags;
+
+                      // Comparison/Test instructions never modify the source operand.
+                      if (info->isTest()) {
+                        combinedFlags = inFlags;
+                      }
+                      // Move instructions typically overwrite the first operand, but
+                      // there are some exceptions based on the operands' size and type.
+                      else if (info->isMove()) {
+                        // Movss.
+                        if (code == kInstMovss)
+                          combinedFlags = vd->getSize() == 4 ? outFlags : inFlags | outFlags;
+                        // Movsd.
+                        else if (code == kInstMovsd)
+                          combinedFlags = vd->getSize() == 8 ? outFlags : inFlags | outFlags;
+                        else
+                          combinedFlags = outFlags;
+                      }
+                    }
+                    else {
+                      // Default for the second operand.
+                      combinedFlags = inFlags;
+                      if (info->isXchg())
+                        combinedFlags = inFlags | outFlags;
+                    }
+
+                    va->addFlags(combinedFlags);
+                  }
                 }
               }
 
               if (OperandUtil::isVarId(m->getIndex())) {
                 // Restrict allocation to all registers except ESP/RSP/R12.
                 vd = compiler->getVdById(m->getIndex());
-                VI_MERGE_VAR(vd, va, 0, gaRegs[kRegClassGp] & gpAllowedMask & gpIndexMask);
-                va->andAllocableRegs(gpIndexMask);
+                VI_MERGE_VAR(vd, va, 0, gaRegs[kRegClassGp] & gpAllowedMask);
+                va->andAllocableRegs(indexMask);
                 va->addFlags(kVarAttrInReg);
               }
             }
@@ -2145,15 +2144,16 @@ _NextGroup:
 
           if (OperandUtil::isVarId(m->getBase()) && m->isBaseIndexType()) {
             vd = compiler->getVdById(m->getBase());
-            VI_MERGE_VAR(vd, va, 0, 0);
-
-            if (m->getMemType() == kMemTypeBaseIndex) {
-              va->addFlags(kVarAttrInReg | kVarAttrInCall);
-              if (va->getInRegs() == 0)
-                va->addAllocableRegs(gpAllocableMask);
-            }
-            else {
-              va->addFlags(kVarAttrInMem | kVarAttrInCall);
+            if (!vd->isStack()) {
+              VI_MERGE_VAR(vd, va, 0, 0);
+              if (m->getMemType() == kMemTypeBaseIndex) {
+                va->addFlags(kVarAttrInReg | kVarAttrInCall);
+                if (va->getInRegs() == 0)
+                  va->addAllocableRegs(gpAllocableMask);
+              }
+              else {
+                va->addFlags(kVarAttrInMem | kVarAttrInCall);
+              }
             }
           }
 
@@ -2163,8 +2163,8 @@ _NextGroup:
             VI_MERGE_VAR(vd, va, 0, 0);
 
             va->addFlags(kVarAttrInReg | kVarAttrInCall);
-            if ((va->getInRegs() & ~gpIndexMask) == 0)
-              va->andAllocableRegs(gpAllocableMask & gpIndexMask);
+            if ((va->getInRegs() & ~indexMask) == 0)
+              va->andAllocableRegs(gpAllocableMask & indexMask);
           }
         }
 
@@ -2491,8 +2491,8 @@ struct X86X64BaseAlloc {
   ASMJIT_INLINE void addVaDone(uint32_t c, uint32_t n = 1) { _done.add(c, n); }
 
   //! @brief Get number of allocable registers per class.
-  ASMJIT_INLINE uint32_t getAllocableRegs(uint32_t c) const {
-    return _context->_allocableRegs[c];
+  ASMJIT_INLINE uint32_t getGaRegs(uint32_t c) const {
+    return _context->_gaRegs[c];
   }
 
   // --------------------------------------------------------------------------
@@ -3011,7 +3011,7 @@ ASMJIT_INLINE void X86X64VarAlloc::spill() {
   VarData** sVars = state->getListByClass(C);
 
   // Available registers for decision if move has any benefit over spill.
-  uint32_t availableRegs = getAllocableRegs(C) & ~(state->_occupied.get(C) | m | _willAlloc.get(C));
+  uint32_t availableRegs = getGaRegs(C) & ~(state->_occupied.get(C) | m | _willAlloc.get(C));
 
   do {
     // We always advance one more to destroy the bit that we have found.
@@ -3589,7 +3589,7 @@ ASMJIT_INLINE void X86X64CallAlloc::spill() {
   VarData** sVars = state->getListByClass(C);
 
   // Available registers for decision if move has any benefit over spill.
-  uint32_t availableRegs = getAllocableRegs(C) & ~(state->_occupied.get(C) | m | _willAlloc.get(C));
+  uint32_t availableRegs = getGaRegs(C) & ~(state->_occupied.get(C) | m | _willAlloc.get(C));
 
   do {
     // We always advance one more to destroy the bit that we have found.
@@ -3976,18 +3976,17 @@ static Error X86X64Context_initFunc(X86X64Context* self, X86X64FuncNode* func) {
 
   // Setup required stack alignment and kFuncFlagIsStackMisaligned.
   {
-    uint32_t requiredStackAlignment = 0;
+    uint32_t requiredStackAlignment = IntUtil::iMax(self->_memMaxAlign, self->getRegSize());
 
-    if (self->_num64ByteCells > 0)
-      requiredStackAlignment = 64;
-    else if (self->_num32ByteCells > 0)
-      requiredStackAlignment = 32;
-    else if (self->_num16ByteCells > 0 || self->_num8ByteCells > 0)
-      requiredStackAlignment = 16;
-    else if (func->_saveRestoreRegs.get(kRegClassMm) || func->_saveRestoreRegs.get(kRegClassXy))
-      requiredStackAlignment = 16;
-    else if (IntUtil::inInterval<uint32_t>(func->getRequiredStackAlignment(), 8, 16))
-      requiredStackAlignment = 16;
+    if (requiredStackAlignment < 16) {
+      // Require 16-byte alignment 8-byte vars are used.
+      if (self->_mem8ByteVarsUsed)
+        requiredStackAlignment = 16;
+      else if (func->_saveRestoreRegs.get(kRegClassMm) || func->_saveRestoreRegs.get(kRegClassXy))
+        requiredStackAlignment = 16;
+      else if (IntUtil::inInterval<uint32_t>(func->getRequiredStackAlignment(), 8, 16))
+        requiredStackAlignment = 16;
+    }
 
     if (func->getRequiredStackAlignment() < requiredStackAlignment)
       func->setRequiredStackAlignment(requiredStackAlignment);
@@ -3995,22 +3994,17 @@ static Error X86X64Context_initFunc(X86X64Context* self, X86X64FuncNode* func) {
     func->updateRequiredStackAlignment();
   }
 
-  // We have to adjust stack pointer if function is caller.
-  if (func->isCaller())
+  // Adjust stack pointer if function is caller.
+  if (func->isCaller()) {
     func->addFuncFlags(kFuncFlagIsStackAdjusted);
+  }
 
-  // We have to adjust stack pointer if requested memory can't fit into
-  // "Red Zone" or "Spill Zone".
-  if (!(self->_memSize <= func->getRedZoneSize() || self->_memSize <= func->getSpillZoneSize()))
-    func->addFuncFlags(kFuncFlagIsStackAdjusted);
-
-  // We have to adjust stack pointer if we have to perform manual stack
-  // alignment.
+  // Adjust stack pointer if manual stack alignment is needed.
   if (func->isStackMisaligned() && func->isNaked()) {
     // Get a memory cell where the original stack frame will be stored.
-    MemCell* cell = self->_newMemCell(regSize, 1);
+    MemCell* cell = self->_newStackCell(regSize, regSize);
     if (cell == NULL)
-      return self->setError(kErrorNoHeapMemory);
+      return self->getError();
 
     func->addFuncFlags(kFuncFlagIsStackAdjusted);
     self->_stackFrameCell = cell;
@@ -4075,6 +4069,13 @@ static Error X86X64Context_initFunc(X86X64Context* self, X86X64FuncNode* func) {
     func->_isStackFrameRegPreserved = true;
   }
 
+  ASMJIT_PROPAGATE_ERROR(self->resolveCellOffsets());
+
+  // Adjust stack pointer if requested memory can't fit into "Red Zone" or "Spill Zone".
+  if (self->_memAllTotal > IntUtil::iMax<uint32_t>(func->getRedZoneSize(), func->getSpillZoneSize())) {
+    func->addFuncFlags(kFuncFlagIsStackAdjusted);
+  }
+
   // Setup stack size used to save preserved registers.
   {
     uint32_t memGpSize  = IntUtil::bitCount(func->_saveRestoreRegs.get(kRegClassGp)) * regSize;
@@ -4113,7 +4114,7 @@ static Error X86X64Context_initFunc(X86X64Context* self, X86X64FuncNode* func) {
   }
 
   // Memory stack size.
-  func->_memStackSize = self->_memSize;
+  func->_memStackSize = self->_memAllTotal;
   func->_alignedMemStackSize = IntUtil::alignTo<uint32_t>(func->_memStackSize, func->_requiredStackAlignment);
 
   if (func->isNaked()) {
@@ -4157,51 +4158,6 @@ static Error X86X64Context_initFunc(X86X64Context* self, X86X64FuncNode* func) {
       func->_moveStackSize);
   }
 
-  return kErrorOk;
-}
-
-//! @internal
-static Error X86X64Context_allocFuncMem(X86X64Context* self, X86X64FuncNode* func) {
-  MemCell* cell = self->_memCells;
-
-  // Offsets, and order used to allocate memory.
-  uint32_t pos64 = 0;
-  uint32_t pos32 = pos64 + self->_num64ByteCells * 64;
-  uint32_t pos16 = pos32 + self->_num32ByteCells * 32;
-  uint32_t pos08 = pos16 + self->_num16ByteCells * 16;
-  uint32_t pos04 = pos08 + self->_num8ByteCells * 8;
-  uint32_t pos02 = pos04 + self->_num4ByteCells * 4;
-  uint32_t pos01 = pos02 + self->_num2ByteCells * 2;
-  uint32_t posM  = pos01 + self->_num1ByteCells;
-
-  uint32_t total = 0;
-
-  while (cell != NULL) {
-    uint32_t size = cell->getSize();
-    uint32_t offset;
-
-    switch (size) {
-      case 64: offset = pos64; pos64 += 64; break;
-      case 32: offset = pos32; pos32 += 32; break;
-      case 16: offset = pos16; pos16 += 16; break;
-      case  8: offset = pos08; pos08 +=  8; break;
-      case  4: offset = pos04; pos04 +=  4; break;
-      case  2: offset = pos02; pos02 +=  2; break;
-      case  1: offset = pos01; pos01 +=  1; break;
-
-      default:
-        // TODO: [COMPILER] Mem support.
-        ASMJIT_ASSERT(!"Reached");
-        break;
-    }
-
-    cell->setOffset(static_cast<int32_t>(offset));
-    cell = cell->_next;
-
-    total += size;
-  }
-
-  self->_memSize += total;
   return kErrorOk;
 }
 
@@ -4821,7 +4777,6 @@ _NextGroup:
 
 _Done:
   ASMJIT_PROPAGATE_ERROR(X86X64Context_initFunc(this, func));
-  ASMJIT_PROPAGATE_ERROR(X86X64Context_allocFuncMem(this, func));
   ASMJIT_PROPAGATE_ERROR(X86X64Context_patchFuncMem(this, func, stop));
   ASMJIT_PROPAGATE_ERROR(X86X64Context_translatePrologEpilog(this, func));
 

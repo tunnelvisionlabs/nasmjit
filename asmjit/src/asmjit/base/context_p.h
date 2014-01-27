@@ -64,9 +64,15 @@ struct BaseContext {
   // [Error]
   // --------------------------------------------------------------------------
 
-  //! @brief Set last error code and propagate it through the error handler.
-  ASMJIT_INLINE Error setError(Error error, const char* message = NULL)
-  { return getCompiler()->setError(error, message); }
+  //! @brief Get the last error code.
+  ASMJIT_INLINE Error getError() const {
+    return getCompiler()->getError();
+  }
+
+  //! @brief Set the last error code and propagate it through the error handler.
+  ASMJIT_INLINE Error setError(Error error, const char* message = NULL) {
+    return getCompiler()->setError(error, message);
+  }
 
   // --------------------------------------------------------------------------
   // [State]
@@ -88,19 +94,18 @@ struct BaseContext {
   virtual void intersectStates(BaseVarState* a, BaseVarState* b) = 0;
 
   // --------------------------------------------------------------------------
-  // [Memory]
+  // [Mem]
   // --------------------------------------------------------------------------
 
-  MemCell* _newMemCell(uint32_t size, uint32_t alignment);
   MemCell* _newVarCell(VarData* vd);
+  MemCell* _newStackCell(uint32_t size, uint32_t alignment);
 
   ASMJIT_INLINE MemCell* getVarCell(VarData* vd) {
     MemCell* cell = vd->getMemCell();
-    if (cell != NULL)
-      return cell;
-    else
-      return _newVarCell(vd);
+    return cell ? cell : _newVarCell(vd);
   }
+
+  virtual Error resolveCellOffsets();
 
   // --------------------------------------------------------------------------
   // [Bits]
@@ -173,7 +178,7 @@ struct BaseContext {
   virtual Error compile(FuncNode* func);
 
   // --------------------------------------------------------------------------
-  // [Assemble]
+  // [Serialize]
   // --------------------------------------------------------------------------
 
   virtual Error serialize(BaseAssembler* assembler, BaseNode* start, BaseNode* stop) = 0;
@@ -208,30 +213,36 @@ struct BaseContext {
   //! @brief All variables used by the current function.
   PodVector<VarData*> _contextVd;
 
-  //! @brief Memory cells.
-  MemCell* _memCells;
+  //! @brief Memory used to spill variables.
+  MemCell* _memVarCells;
+  //! @brief Memory used to alloc memory on the stack.
+  MemCell* _memStackCells;
 
-  //! @brief Count of stack memory cells (not assigned to variables).
-  uint32_t _numStackCells;
-  //! @brief Count of 64-byte cells.
-  uint32_t _num64ByteCells;
-  //! @brief Count of 32-byte cells.
-  uint32_t _num32ByteCells;
-  //! @brief Count of 16-byte cells.
-  uint32_t _num16ByteCells;
-  //! @brief Count of 8-byte cells.
-  uint32_t _num8ByteCells;
-  //! @brief Count of 4-byte cells.
-  uint32_t _num4ByteCells;
-  //! @brief Count of 2-byte cells.
-  uint32_t _num2ByteCells;
   //! @brief Count of 1-byte cells.
-  uint32_t _num1ByteCells;
+  uint32_t _mem1ByteVarsUsed;
+  //! @brief Count of 2-byte cells.
+  uint32_t _mem2ByteVarsUsed;
+  //! @brief Count of 4-byte cells.
+  uint32_t _mem4ByteVarsUsed;
+  //! @brief Count of 8-byte cells.
+  uint32_t _mem8ByteVarsUsed;
+  //! @brief Count of 16-byte cells.
+  uint32_t _mem16ByteVarsUsed;
+  //! @brief Count of 32-byte cells.
+  uint32_t _mem32ByteVarsUsed;
+  //! @brief Count of 64-byte cells.
+  uint32_t _mem64ByteVarsUsed;
+  //! @brief Count of stack memory cells.
+  uint32_t _memStackCellsUsed;
 
-  //! @brief Count of bytes required for all cells.
-  uint32_t _memSize;
-  //! @brief Maximum size of one cell (used to adjust function alignment).
-  uint32_t _maxCellSize;
+  //! @brief Maximum memory alignment used by the function.
+  uint32_t _memMaxAlign;
+  //! @brief Count of bytes used by variables.
+  uint32_t _memVarTotal;
+  //! @brief Count of bytes used by stack.
+  uint32_t _memStackTotal;
+  //! @brief Count of bytes used by variables and stack after alignment.
+  uint32_t _memAllTotal;
 
   //! @brief Current state (used by register allocator).
   BaseVarState* _state;

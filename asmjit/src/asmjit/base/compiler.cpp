@@ -27,6 +27,7 @@ namespace asmjit {
 // [Constants]
 // ============================================================================
 
+static const char noName[1] = { '\0' };
 enum { kBaseCompilerDefaultLookAhead = 64 };
 
 // ============================================================================
@@ -422,6 +423,55 @@ HintNode* BaseCompiler::addHint(BaseVar& var, uint32_t hint, uint32_t value) {
 // [asmjit::BaseCompiler - Vars]
 // ============================================================================
 
+VarData* BaseCompiler:: _newVd(uint32_t type, uint32_t size, uint32_t c, const char* name) {
+  VarData* vd = reinterpret_cast<VarData*>(_varAllocator.alloc(sizeof(VarData)));
+  if (vd == NULL)
+    goto _NoMemory;
+
+  vd->_name = noName;
+  vd->_id = OperandUtil::makeVarId(static_cast<uint32_t>(_vars.getLength()));
+  vd->_contextId = kInvalidValue;
+
+  if (name != NULL && name[0] != '\0') {
+    vd->_name = _stringAllocator.sdup(name);
+  }
+
+  vd->_type = static_cast<uint8_t>(type);
+  vd->_class = static_cast<uint8_t>(c);
+  vd->_flags = 0;
+  vd->_priority = 10;
+
+  vd->_state = kVarStateUnused;
+  vd->_regIndex = kInvalidReg;
+  vd->_isStack = false;
+  vd->_isMemArg = false;
+  vd->_isCalculated = false;
+  vd->_saveOnUnuse = false;
+  vd->_modified = false;
+  vd->_reserved0 = 0;
+  vd->_alignment = static_cast<uint8_t>(IntUtil::iMin<uint32_t>(size, 64));
+
+  vd->_size = size;
+
+  vd->_memOffset = 0;
+  vd->_memCell = NULL;
+
+  vd->rReadCount = 0;
+  vd->rWriteCount = 0;
+  vd->mReadCount = 0;
+  vd->mWriteCount = 0;
+
+  vd->_va = NULL;
+
+  if (_vars.append(vd) != kErrorOk)
+    goto _NoMemory;
+  return vd;
+
+_NoMemory:
+  setError(kErrorNoHeapMemory);
+  return NULL;
+}
+
 void BaseCompiler::alloc(BaseVar& var) {
   addHint(var, kVarHintAlloc, kInvalidValue);
 }
@@ -486,7 +536,11 @@ void BaseCompiler::rename(BaseVar& var, const char* name) {
     return;
 
   VarData* vd = getVdById(var.getId());
-  vd->_name = _stringAllocator.sdup(name);
+  vd->_name = noName;
+
+  if (name != NULL && name[0] != '\0') {
+    vd->_name = _stringAllocator.sdup(name);
+  }
 }
 
 } // asmjit namespace

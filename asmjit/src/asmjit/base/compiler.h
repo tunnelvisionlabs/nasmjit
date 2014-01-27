@@ -224,24 +224,24 @@ struct MemCell {
   //! @brief Set cell size.
   ASMJIT_INLINE void setSize(uint32_t size) { _size = size; }
 
-  //! @brief Get whether the cell is occupied.
-  ASMJIT_INLINE bool isOccupied() const { return static_cast<bool>(_occupied); }
-  //! @brief Set cell occupied flag.
-  ASMJIT_INLINE void setOccupied(bool occupied) { _occupied = occupied; }
+  //! @brief Get cell alignment.
+  ASMJIT_INLINE uint32_t getAlignment() const { return _alignment; }
+  //! @brief Set cell alignment.
+  ASMJIT_INLINE void setAlignment(uint32_t alignment) { _alignment = alignment; }
 
   // --------------------------------------------------------------------------
   // [Members]
   // --------------------------------------------------------------------------
 
-  //! @brief Next active cell (in active-list).
+  //! @brief Next active cell.
   MemCell* _next;
 
-  //! @brief Offset (relative to base-offset).
+  //! @brief Offset, relative to base-offset.
   int32_t _offset;
-  //! @brief Size of cell.
-  uint32_t _size : 31;
-  //! @brief Whether the cell is currently occupied.
-  uint32_t _occupied : 1;
+  //! @brief Size.
+  uint32_t _size;
+  //! @brief Alignment.
+  uint32_t _alignment;
 };
 
 // ============================================================================
@@ -281,14 +281,11 @@ struct VarBits {
 
   ASMJIT_INLINE bool copyBits(const VarBits* s0, uint32_t len) {
     uintptr_t r = 0;
-
-    for (uint32_t i = 0; i < len; i++)
-    {
+    for (uint32_t i = 0; i < len; i++) {
       uintptr_t t = s0->data[i];
       data[i] = t;
       r |= t;
     }
-
     return r != 0;
   }
 
@@ -298,14 +295,11 @@ struct VarBits {
 
   ASMJIT_INLINE bool addBits(const VarBits* s0, const VarBits* s1, uint32_t len) {
     uintptr_t r = 0;
-
-    for (uint32_t i = 0; i < len; i++)
-    {
+    for (uint32_t i = 0; i < len; i++) {
       uintptr_t t = s0->data[i] | s1->data[i];
       data[i] = t;
       r |= t;
     }
-
     return r != 0;
   }
 
@@ -315,14 +309,11 @@ struct VarBits {
 
   ASMJIT_INLINE bool andBits(const VarBits* s0, const VarBits* s1, uint32_t len) {
     uintptr_t r = 0;
-
-    for (uint32_t i = 0; i < len; i++)
-    {
+    for (uint32_t i = 0; i < len; i++) {
       uintptr_t t = s0->data[i] & s1->data[i];
       data[i] = t;
       r |= t;
     }
-
     return r != 0;
   }
 
@@ -332,14 +323,11 @@ struct VarBits {
 
   ASMJIT_INLINE bool delBits(const VarBits* s0, const VarBits* s1, uint32_t len) {
     uintptr_t r = 0;
-
-    for (uint32_t i = 0; i < len; i++)
-    {
+    for (uint32_t i = 0; i < len; i++) {
       uintptr_t t = s0->data[i] & ~s1->data[i];
       data[i] = t;
       r |= t;
     }
-
     return r != 0;
   }
 
@@ -349,9 +337,7 @@ struct VarBits {
 
   ASMJIT_INLINE bool _addBitsDelSource(const VarBits* s0, VarBits* s1, uint32_t len) {
     uintptr_t r = 0;
-
-    for (uint32_t i = 0; i < len; i++)
-    {
+    for (uint32_t i = 0; i < len; i++) {
       uintptr_t a = s0->data[i];
       uintptr_t b = s1->data[i];
 
@@ -361,7 +347,6 @@ struct VarBits {
       s1->data[i] = b;
       r |= b;
     }
-
     return r != 0;
   }
 
@@ -400,8 +385,6 @@ struct VarData {
   ASMJIT_INLINE uint32_t getType() const { return _type; }
   //! @brief Get variable class.
   ASMJIT_INLINE uint32_t getClass() const { return _class; }
-  //! @brief Get variable size.
-  ASMJIT_INLINE uint32_t getSize() const { return _size; }
   //! @brief Get variable flags.
   ASMJIT_INLINE uint32_t getFlags() const { return _flags; }
 
@@ -420,6 +403,9 @@ struct VarData {
   //! @brief Reset register index.
   ASMJIT_INLINE void resetRegIndex() { _regIndex = static_cast<uint8_t>(kInvalidReg); }
 
+  //! @brief Get whether the VarData is only memory allocated on the stack.
+  ASMJIT_INLINE bool isStack() const { return static_cast<bool>(_isStack); }
+
   //! @brief Get whether the variable is a function argument passed through memory.
   ASMJIT_INLINE bool isMemArg() const { return static_cast<bool>(_isMemArg); }
 
@@ -432,6 +418,11 @@ struct VarData {
   ASMJIT_INLINE bool isModified() const { return static_cast<bool>(_modified); }
   //! @brief Set whether the variable was changed.
   ASMJIT_INLINE void setModified(bool modified) { _modified = modified; }
+
+  //! @brief Get variable alignment.
+  ASMJIT_INLINE uint32_t getAlignment() const { return _alignment; }
+  //! @brief Get variable size.
+  ASMJIT_INLINE uint32_t getSize() const { return _size; }
 
   //! @brief Get home memory offset.
   ASMJIT_INLINE int32_t getMemOffset() const { return _memOffset; }
@@ -471,18 +462,18 @@ struct VarData {
   uint8_t _type;
   //! @brief Variable class.
   uint8_t _class;
-  //! @brief Variable size.
-  uint8_t _size;
   //! @brief Variable flags.
   uint8_t _flags;
-
   //! @brief Variable priority.
   uint8_t _priority;
+
   //! @brief Variable state (connected with actual @ref BaseVarState).
   uint8_t _state;
   //! @brief Actual register index (only used by @ref Context), during translate.
   uint8_t _regIndex;
 
+  //! @brief Whether the variable is only used as memory allocated on the stack.
+  uint8_t _isStack : 1;
   //! @brief Whether the variable is a function argument passed through memory.
   uint8_t _isMemArg : 1;
   //! @brief Whether variable content can be calculated by a simple instruction.
@@ -496,11 +487,12 @@ struct VarData {
   //! @brief Whether variable was changed (connected with actual @ref BaseVarState).
   uint8_t _modified : 1;
   //! @internal
-  //!
-  //! @brief Reserved.
-  uint8_t _reserved0 : 4;
-  //! @brief Reserved.
-  uint32_t _reserved1;
+  uint8_t _reserved0 : 3;
+  //! @brief Varialbe natural alignment.
+  uint8_t _alignment;
+
+  //! @brief Variable size.
+  uint32_t _size;
 
   //! @brief Home memory offset.
   int32_t _memOffset;
@@ -1601,7 +1593,7 @@ struct CallNode : public BaseNode {
 // [asmjit::SArgNode]
 // ============================================================================
 
-//! @brief Function-call node.
+//! @brief Function-call 'argument on the stack' node.
 struct SArgNode : public BaseNode {
   ASMJIT_NO_COPY(SArgNode)
 
@@ -1622,10 +1614,10 @@ struct SArgNode : public BaseNode {
   // [Accessors]
   // --------------------------------------------------------------------------
 
-  //! @brief Get the associated @ref VarData.
+  //! @brief Get the associated variable.
   ASMJIT_INLINE VarData* getVd() const { return _vd; }
 
-  //! @brief Get the associated @ref CallNode.
+  //! @brief Get the associated function-call.
   ASMJIT_INLINE CallNode* getCall() const { return _call; }
 
   // --------------------------------------------------------------------------
@@ -1811,13 +1803,6 @@ struct BaseCompiler : public CodeGen {
   ASMJIT_API void bind(const Label& label);
 
   // --------------------------------------------------------------------------
-  // [VarData]
-  // --------------------------------------------------------------------------
-
-  //! @brief Create a new variable.
-  virtual bool _newVar(BaseVar* var, uint32_t type, const char* name) = 0;
-
-  // --------------------------------------------------------------------------
   // [Embed]
   // --------------------------------------------------------------------------
 
@@ -1855,13 +1840,19 @@ struct BaseCompiler : public CodeGen {
   // --------------------------------------------------------------------------
 
   //! @brief Get whether variable @a var is created.
-  ASMJIT_INLINE bool isVarCreated(const BaseVar& var) const
-  { return static_cast<size_t>(var.getId() & kOperandIdNum) < _vars.getLength(); }
+  ASMJIT_INLINE bool isVarCreated(const BaseVar& var) const {
+    return static_cast<size_t>(var.getId() & kOperandIdNum) < _vars.getLength();
+  }
 
+  //! @internal
+  //!
   //! @brief Get @ref VarData by @a var.
-  ASMJIT_INLINE VarData* getVd(const BaseVar& var) const
-  { return getVdById(var.getId()); }
+  ASMJIT_INLINE VarData* getVd(const BaseVar& var) const {
+    return getVdById(var.getId());
+  }
 
+  //! @internal
+  //!
   //! @brief Get @ref VarData by @a id.
   ASMJIT_INLINE VarData* getVdById(uint32_t id) const {
     ASMJIT_ASSERT(id != kInvalidValue);
@@ -1870,10 +1861,20 @@ struct BaseCompiler : public CodeGen {
     return _vars[id & kOperandIdNum];
   }
 
+  //! @internal
+  //!
   //! @brief Get an array of 'VarData*'.
   ASMJIT_INLINE VarData** _getVdArray() const {
     return const_cast<VarData**>(_vars.getData());
   }
+
+  //! @internal
+  //!
+  //! @brief Create a new @ref VarData.
+  ASMJIT_API VarData* _newVd(uint32_t type, uint32_t size, uint32_t c, const char* name);
+
+  //! @brief Create a new @ref BaseVar.
+  virtual Error _newVar(BaseVar* var, uint32_t type, const char* name) = 0;
 
   //! @brief Alloc variable @a var.
   ASMJIT_API void alloc(BaseVar& var);
@@ -1904,7 +1905,14 @@ struct BaseCompiler : public CodeGen {
   ASMJIT_API void rename(BaseVar& var, const char* name);
 
   // --------------------------------------------------------------------------
-  // [Assemble]
+  // [Stack]
+  // --------------------------------------------------------------------------
+
+  //! @brief Create a new @ref BaseMem.
+  virtual Error _newStack(BaseMem* mem, uint32_t size, uint32_t alignment, const char* name) = 0;
+
+  // --------------------------------------------------------------------------
+  // [Serialize]
   // --------------------------------------------------------------------------
 
   //! @brief Send assembled code to @a assembler.

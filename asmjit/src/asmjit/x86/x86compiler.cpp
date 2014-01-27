@@ -423,129 +423,63 @@ X86X64CallNode* X86X64Compiler::addCall(const Operand& o0, uint32_t conv, const 
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64Compiler - Variables]
+// [asmjit::x86x64::X86X64Compiler - Vars]
 // ============================================================================
 
-VarData* X86X64Compiler::newVd(const char* name, uint32_t vType) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-
-  vType = _targetVarMapping[vType];
-  const VarInfo& vInfo = _varInfo[vType];
-
-  VarData* vd = reinterpret_cast<VarData*>(_varAllocator.alloc(sizeof(VarData)));
-  if (vd == NULL)
-    goto _NoMemory;
-
-  vd->_name = name ? _stringAllocator.sdup(name) : static_cast<char*>(NULL);
-  vd->_id = OperandUtil::makeVarId(static_cast<uint32_t>(_vars.getLength()));
-
-  vd->_contextId = kInvalidValue;
-
-  vd->_type = static_cast<uint8_t>(vType);
-  vd->_class = static_cast<uint8_t>(vInfo.getClass());
-  vd->_size = static_cast<uint8_t>(vInfo.getSize());
-  vd->_flags = 0;
-
-  vd->_priority = 10;
-  vd->_state = kVarStateUnused;
-  vd->_regIndex = kInvalidReg;
-
-  vd->_isMemArg = false;
-  vd->_isCalculated = false;
-  vd->_saveOnUnuse = false;
-  vd->_modified = false;
-
-  vd->_reserved0 = 0;
-  vd->_reserved1 = 0;
-
-  vd->_memOffset = 0;
-  vd->_memCell = NULL;
-
-  vd->rReadCount = 0;
-  vd->rWriteCount = 0;
-  vd->mReadCount = 0;
-  vd->mWriteCount = 0;
-
-  vd->_va = NULL;
-
-  if (_vars.append(vd) != kErrorOk)
-    goto _NoMemory;
-  return vd;
-
-_NoMemory:
-  setError(kErrorNoHeapMemory);
-  return NULL;
-}
-
-bool X86X64Compiler::setArg(uint32_t argIndex, BaseVar& var) {
+Error X86X64Compiler::setArg(uint32_t argIndex, BaseVar& var) {
   X86X64FuncNode* func = getFunc();
 
   if (func == NULL)
-    return false;
+    return kErrorInvalidArgument;
 
   if (!isVarCreated(var))
-    return false;
+    return kErrorInvalidState;
 
   VarData* vd = getVd(var);
   func->setArg(argIndex, vd);
 
-  return true;
+  return kErrorOk;
 }
 
-bool X86X64Compiler::_newVar(BaseVar* var, uint32_t vType, const char* name) {
+Error X86X64Compiler::_newVar(BaseVar* var, uint32_t vType, const char* name) {
   ASMJIT_ASSERT(vType < kVarTypeCount);
+  
+  vType = _targetVarMapping[vType];
+  const VarInfo& vInfo = _varInfo[vType];
 
-  VarData* vd = newVd(name, vType);
+  VarData* vd = _newVd(vType, vInfo.getSize(), vInfo.getClass(), name);
   if (vd == NULL) {
-    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, 0, 0, 0, kInvalidValue);
-    var->_init_packed_u2_u3(kInvalidValue, kInvalidValue);
-    return false;
+    static_cast<X86Var*>(var)->reset();
+    return getError();
   }
-  else {
-    // VarType can be mapped to architecture dependent varType, it has to be
-    // get from vd to keep it consistent.
-    vType = vd->getType();
 
-    var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, vd->_size, _varInfo[vType].getReg(), 0, vd->_id);
-    var->_vreg.vType = vType;
-    return true;
+  var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, vd->getSize(), vInfo.getReg(), 0, vd->getId());
+  var->_vreg.vType = vType;
+  return kErrorOk;
+}
+
+// ============================================================================
+// [asmjit::x86x64::X86X64Compiler - Stack]
+// ============================================================================
+
+Error X86X64Compiler::_newStack(BaseMem* mem, uint32_t size, uint32_t alignment, const char* name) {
+  if (size == 0)
+    return kErrorInvalidArgument;
+
+  if (alignment > 64)
+    alignment = 64;
+
+  VarData* vd = _newVd(kVarTypeInvalid, size, kRegClassInvalid, name);
+  if (vd == NULL) {
+    static_cast<Mem*>(mem)->reset();
+    return getError();
   }
-}
 
-GpVar X86X64Compiler::newGpVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeIntStart, _kVarTypeIntEnd));
+  vd->_isStack = true;
+  vd->_alignment = static_cast<uint8_t>(alignment);
 
-  GpVar var(DontInitialize);
-  _newVar(&var, vType, name);
-  return var;
-}
-
-MmVar X86X64Compiler::newMmVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeMmStart, _kVarTypeMmEnd));
-
-  MmVar var(DontInitialize);
-  _newVar(&var, vType, name);
-  return var;
-}
-
-XmmVar X86X64Compiler::newXmmVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeXmmStart, _kVarTypeXmmEnd));
-
-  XmmVar var(DontInitialize);
-  _newVar(&var, vType, name);
-  return var;
-}
-
-YmmVar X86X64Compiler::newYmmVar(uint32_t vType, const char* name) {
-  ASMJIT_ASSERT(vType < kVarTypeCount);
-  ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeYmmStart, _kVarTypeYmmEnd));
-
-  YmmVar var(DontInitialize);
-  _newVar(&var, vType, name);
-  return var;
+  static_cast<Mem*>(mem)->_init(kMemTypeStackIndex, vd->getId(), 0, 0);
+  return kErrorOk;
 }
 
 // ============================================================================
@@ -557,13 +491,15 @@ static ASMJIT_INLINE void* X86X64Compiler_make(X86X64Compiler* self) {
   Assembler assembler(self->_runtime);
   BaseLogger* logger = self->_logger;
 
-  if (logger)
+  if (logger) {
     assembler.setLogger(logger);
+  }
 
   assembler._features = self->_features;
 
-  if (self->serialize(assembler) != kErrorOk)
+  if (self->serialize(assembler) != kErrorOk) {
     return NULL;
+  }
 
   if (assembler.getError() != kErrorOk) {
     self->setError(assembler.getError());
@@ -580,6 +516,19 @@ static ASMJIT_INLINE void* X86X64Compiler_make(X86X64Compiler* self) {
   }
 
   return result;
+}
+
+void* X86X64Compiler::make() {
+#if defined(ASMJIT_BUILD_X86) && !defined(ASMJIT_BUILD_X64)
+  return X86X64Compiler_make<x86::Assembler>(this);
+#elif !defined(ASMJIT_BUILD_X86) && defined(ASMJIT_BUILD_X64)
+  return X86X64Compiler_make<x64::Assembler>(this);
+#else
+  if (_arch == kArchX86)
+    return X86X64Compiler_make<x86::Assembler>(this);
+  else
+    return X86X64Compiler_make<x64::Assembler>(this);
+#endif // ASMJIT_BUILD_X86 && ASMJIT_BUILD_X64
 }
 
 // ============================================================================
@@ -644,10 +593,6 @@ Compiler::Compiler(BaseRuntime* runtime) : X86X64Compiler(runtime) {
 
 Compiler::~Compiler() {}
 
-void* Compiler::make() {
-  return X86X64Compiler_make<x86::Assembler>(this);
-}
-
 } // x86 namespace
 } // asmjit namespace
 
@@ -669,10 +614,6 @@ Compiler::Compiler(BaseRuntime* runtime) : X86X64Compiler(runtime) {
 }
 
 Compiler::~Compiler() {}
-
-void* Compiler::make() {
-  return X86X64Compiler_make<x64::Assembler>(this);
-}
 
 } // x64 namespace
 } // asmjit namespace

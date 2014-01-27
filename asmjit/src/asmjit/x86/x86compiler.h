@@ -1373,46 +1373,54 @@ struct X86X64Compiler : public BaseCompiler {
   ASMJIT_API X86X64CallNode* addCall(const Operand& o0, uint32_t conv, const FuncPrototype& p);
 
   // --------------------------------------------------------------------------
-  // [VarData]
+  // [Vars]
   // --------------------------------------------------------------------------
 
-  //! @internal
-  //!
-  //! @brief Create a new @ref VarData.
-  ASMJIT_API VarData* newVd(const char* name, uint32_t type);
-
-  //! @brief Get @ref VarData by @a var.
-  ASMJIT_INLINE VarData* getVd(const BaseVar& var) const {
-    return getVdById(var.getId());
-  }
-
-  //! @brief Get @ref VarData by @a id.
-  ASMJIT_INLINE VarData* getVdById(uint32_t id) const {
-    ASMJIT_ASSERT(id != kInvalidValue);
-    ASMJIT_ASSERT(static_cast<size_t>(id & kOperandIdNum) < _vars.getLength());
-
-    return static_cast<VarData*>(_vars[id & kOperandIdNum]);
-  }
-
-  //! @brief Get an array of 'VarData*'.
-  ASMJIT_INLINE VarData** _getVdArray() const {
-    return reinterpret_cast<VarData**>(const_cast<VarData**>(_vars.getData()));
-  }
-
   //! @brief Set function argument to @a var.
-  ASMJIT_API bool setArg(uint32_t argIndex, BaseVar& var);
+  ASMJIT_API Error setArg(uint32_t argIndex, BaseVar& var);
 
-  //! @brief Create a new variable.
-  ASMJIT_API virtual bool _newVar(BaseVar* var, uint32_t type, const char* name);
+  //! @overridden
+  ASMJIT_API virtual Error _newVar(BaseVar* var, uint32_t type, const char* name);
 
   //! @brief Create a new Gp variable.
-  ASMJIT_API GpVar newGpVar(uint32_t type = kVarTypeIntPtr, const char* name = NULL);
+  ASMJIT_INLINE GpVar newGpVar(uint32_t vType = kVarTypeIntPtr, const char* name = NULL) {
+    ASMJIT_ASSERT(vType < kVarTypeCount);
+    ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeIntStart, _kVarTypeIntEnd));
+
+    GpVar var(DontInitialize);
+    _newVar(&var, vType, name);
+    return var;
+  }
+
   //! @brief Create a new Mm variable.
-  ASMJIT_API MmVar newMmVar(uint32_t type = kVarTypeMm, const char* name = NULL);
+  ASMJIT_INLINE MmVar newMmVar(uint32_t vType = kVarTypeMm, const char* name = NULL) {
+    ASMJIT_ASSERT(vType < kVarTypeCount);
+    ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeMmStart, _kVarTypeMmEnd));
+
+    MmVar var(DontInitialize);
+    _newVar(&var, vType, name);
+    return var;
+  }
+
   //! @brief Create a new Xmm variable.
-  ASMJIT_API XmmVar newXmmVar(uint32_t type = kVarTypeXmm, const char* name = NULL);
+  ASMJIT_INLINE XmmVar newXmmVar(uint32_t vType = kVarTypeXmm, const char* name = NULL) {
+    ASMJIT_ASSERT(vType < kVarTypeCount);
+    ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeXmmStart, _kVarTypeXmmEnd));
+
+    XmmVar var(DontInitialize);
+    _newVar(&var, vType, name);
+    return var;
+  }
+
   //! @brief Create a new Ymm variable.
-  ASMJIT_API YmmVar newYmmVar(uint32_t type = kVarTypeYmm, const char* name = NULL);
+  ASMJIT_INLINE YmmVar newYmmVar(uint32_t vType = kVarTypeYmm, const char* name = NULL) {
+    ASMJIT_ASSERT(vType < kVarTypeCount);
+    ASMJIT_ASSERT(IntUtil::inInterval<uint32_t>(vType, _kVarTypeYmmStart, _kVarTypeYmmEnd));
+
+    YmmVar var(DontInitialize);
+    _newVar(&var, vType, name);
+    return var;
+  }
 
   //! @brief Get memory home of variable @a var.
   ASMJIT_API void getMemoryHome(BaseVar& var, GpVar* home, int* displacement = NULL);
@@ -1440,6 +1448,20 @@ struct X86X64Compiler : public BaseCompiler {
   //! c.setMemoryHome(v3, v2);    // CHAINING, NOT ALLOWED!
   //! @endcode
   ASMJIT_API void setMemoryHome(BaseVar& var, const GpVar& home, int displacement = 0);
+
+  // --------------------------------------------------------------------------
+  // [Stack]
+  // --------------------------------------------------------------------------
+
+  //! @overridden
+  ASMJIT_API virtual Error _newStack(BaseMem* mem, uint32_t size, uint32_t alignment, const char* name);
+
+  //! @brief Create a new memory chunk allocated on the stack.
+  ASMJIT_INLINE Mem newStack(uint32_t size, uint32_t alignment, const char* name = NULL) {
+    Mem m(DontInitialize);
+    _newStack(&m, size, alignment, name);
+    return m;
+  }
 
   // --------------------------------------------------------------------------
   // [Embed]
@@ -1491,12 +1513,18 @@ struct X86X64Compiler : public BaseCompiler {
   template<typename T>
   ASMJIT_INLINE EmbedNode* dstruct(const T& x) { return embed(&x, static_cast<uint32_t>(sizeof(T))); }
 
+  // --------------------------------------------------------------------------
+  // [Make]
+  // --------------------------------------------------------------------------
+
+  //! @overridden
+  ASMJIT_API virtual void* make();
+
   // -------------------------------------------------------------------------
   // [Serialize]
   // -------------------------------------------------------------------------
 
-  //! @brief Method that will send translated code to BaseAssembler instance
-  //! @a assembler.
+  //! @overridden
   ASMJIT_API virtual Error serialize(BaseAssembler& assembler);
 
   // -------------------------------------------------------------------------
@@ -3980,13 +4008,6 @@ struct Compiler : public X86X64Compiler {
   //! @brief Destroy the @ref Compiler instance.
   ASMJIT_API ~Compiler();
 
-  // --------------------------------------------------------------------------
-  // [Make]
-  // --------------------------------------------------------------------------
-
-  //! @overriden
-  ASMJIT_API virtual void* make();
-
   // -------------------------------------------------------------------------
   // [Options]
   // -------------------------------------------------------------------------
@@ -4057,13 +4078,6 @@ struct Compiler : public X86X64Compiler {
   ASMJIT_API Compiler(BaseRuntime* runtime);
   //! @brief Destroy the @ref Compiler instance.
   ASMJIT_API ~Compiler();
-
-  // --------------------------------------------------------------------------
-  // [Make]
-  // --------------------------------------------------------------------------
-
-  //! @overriden
-  ASMJIT_API virtual void* make();
 
   // -------------------------------------------------------------------------
   // [Options]

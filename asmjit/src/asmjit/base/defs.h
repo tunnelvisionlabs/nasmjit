@@ -649,8 +649,7 @@ struct BaseMem : public Operand {
   // --------------------------------------------------------------------------
 
   ASMJIT_INLINE BaseMem() : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, 0, kInvalidValue);
-    _init_packed_u2_u3(kInvalidValue, 0);
+    reset();
   }
 
   ASMJIT_INLINE BaseMem(const BaseMem& other) : Operand(other) {}
@@ -659,6 +658,12 @@ struct BaseMem : public Operand {
   // --------------------------------------------------------------------------
   // [BaseMem Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Reset BaseMem operand.
+  ASMJIT_INLINE void reset() {
+    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, 0, kInvalidValue);
+    _init_packed_u2_u3(kInvalidValue, 0);
+  }
 
   //! @brief Get the type of the memory operand, see @c kMemType.
   ASMJIT_INLINE uint32_t getMemType() const { return _vmem.type; }

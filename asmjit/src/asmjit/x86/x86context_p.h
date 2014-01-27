@@ -467,8 +467,8 @@ struct X86X64Context : public BaseContext {
   //! aligned stack.
   MemCell* _stackFrameCell;
 
-  //! @brief Allocable registers mask.
-  uint32_t _allocableRegs[kRegClassCount];
+  //! @brief Global allocable registers mask.
+  uint32_t _gaRegs[kRegClassCount];
   //! @brief X86/X64 number of Gp/Xmm registers.
   uint8_t _baseRegsCount;
 
