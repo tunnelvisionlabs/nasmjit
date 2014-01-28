@@ -42,6 +42,8 @@ X86X64Context::X86X64Context(X86X64Compiler* compiler) : BaseContext(compiler) {
   if (compiler->getArch() == kArchX86) {
     _zsp = x86::esp;
     _zbp = x86::ebp;
+    _memSlot._vmem.type = kMemTypeStackIndex;
+    _memSlot.setGpdBase(true);
     _baseRegsCount = x86::kRegCountGp;
   }
 #endif // ASMJIT_BUILD_X86
@@ -51,6 +53,8 @@ X86X64Context::X86X64Context(X86X64Compiler* compiler) : BaseContext(compiler) {
   if (compiler->getArch() == kArchX64) {
     _zsp = x64::rsp;
     _zbp = x64::rbp;
+    _memSlot._vmem.type = kMemTypeStackIndex;
+    _memSlot.setGpdBase(false);
     _baseRegsCount = x64::kRegCountGp;
   }
 #endif // ASMJIT_BUILD_X64
@@ -3910,6 +3914,8 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
   X86X64Compiler* compiler = self->getCompiler();
   const VarInfo* varInfo = _varInfo;
 
+  uint32_t hasGpdBase = compiler->getRegSize() == 4;
+
   // Translate variables into registers.
   for (uint32_t i = 0; i < opCount; i++) {
     Operand* op = &opList[i];
@@ -3935,7 +3941,9 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
         else {
           if (!vd->isMemArg())
             self->getVarCell(vd);
+
           // Offset will be patched later by X86X64Context_patchFuncMem().
+          m->setGpdBase(hasGpdBase);
           m->adjust(vd->isMemArg() ? self->_argActualDisp : self->_varActualDisp);
         }
       }

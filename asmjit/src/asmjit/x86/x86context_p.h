@@ -418,16 +418,11 @@ struct X86X64Context : public BaseContext {
   // --------------------------------------------------------------------------
 
   ASMJIT_INLINE Mem getVarMem(VarData* vd) {
-    Mem m;
-
-    m._vmem.type = kMemTypeStackIndex;
-    m._vmem.base = vd->getId();
-
-    if (!vd->isMemArg())
-      m._vmem.displacement = 0;
-
     (void)getVarCell(vd);
-    return m;
+
+    Mem mem(_memSlot);
+    mem.setBase(vd->getId());
+    return mem;
   }
 
   // --------------------------------------------------------------------------
@@ -457,6 +452,8 @@ struct X86X64Context : public BaseContext {
   GpReg _zsp;
   //! @brief X86/X64 frame-pointer (ebp or rbp).
   GpReg _zbp;
+  //! @brief Temporary memory operand.
+  Mem _memSlot;
 
   //! @brief X86/X64 specific compiler state (linked with @ref _state).
   VarState _x86State;
@@ -469,14 +466,13 @@ struct X86X64Context : public BaseContext {
 
   //! @brief Global allocable registers mask.
   uint32_t _gaRegs[kRegClassCount];
+
   //! @brief X86/X64 number of Gp/Xmm registers.
   uint8_t _baseRegsCount;
-
   //! @brief Function arguments base pointer (register).
   uint8_t _argBaseReg;
   //! @brief Function variables base pointer (register).
   uint8_t _varBaseReg;
-
   //! @brief Whether to emit comments.
   uint8_t _emitComments;
 

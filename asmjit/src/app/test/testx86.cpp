@@ -1632,7 +1632,7 @@ struct X86TestSuite {
 X86TestSuite::X86TestSuite() :
   result(EXIT_SUCCESS),
   binSize(0),
-  alwaysPrintLog(false) {
+  alwaysPrintLog(true) {
 
   // Align.
   ADD_TEST(X86Test_AlignBase);

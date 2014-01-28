@@ -2564,9 +2564,7 @@ struct Mem : public BaseMem {
   }
 
   ASMJIT_INLINE Mem(const _Initialize&, uint32_t memType, const X86Var& base, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType,
-      _getGpdFlags(reinterpret_cast<const BaseVar&>(base)),
-      _OP_ID(base));
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType, 0, _OP_ID(base));
     _vmem.index = kInvalidValue;
     _vmem.displacement = disp;
   }
@@ -2574,10 +2572,7 @@ struct Mem : public BaseMem {
   ASMJIT_INLINE Mem(const _Initialize&, uint32_t memType, const X86Var& base, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType,
-      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
-        + (shift << kMemShiftIndex),
-      _OP_ID(base));
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType, shift << kMemShiftIndex, _OP_ID(base));
     _vmem.index = _OP_ID(index);
     _vmem.displacement = disp;
   }
