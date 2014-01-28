@@ -691,7 +691,7 @@ struct VarAttr {
   //! Optional input registers is a mask of all allocable registers for a given
   //! variable where we have to pick one of them. This mask is usually not used
   //! when _inRegs is set. If both masks are used then the register
-  //! allocator tries first to find an intersection between these, and allocates
+  //! allocator tries first to find an intersection between these and allocates
   //! an extra slot if not found.
   uint32_t _allocableRegs;
 };

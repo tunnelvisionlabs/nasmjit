@@ -127,7 +127,9 @@ struct BaseContext {
 
   //! @brief Fetch.
   //!
-  //! TODO: Documentation.
+  //! Fetch iterates over all nodes and gathers information about all variables
+  //! used. The process generates information required by register allocator,
+  //! variable liveness analysis and translator.
   virtual Error fetch() = 0;
 
   // --------------------------------------------------------------------------
@@ -135,8 +137,6 @@ struct BaseContext {
   // --------------------------------------------------------------------------
 
   //! @brief Remove unreachable code.
-  //!
-  //! TODO: Documentation.
   virtual Error removeUnreachableCode();
 
   // --------------------------------------------------------------------------
@@ -147,13 +147,12 @@ struct BaseContext {
   //!
   //! Analysis phase iterates over nodes in reverse order and generates a bit
   //! array describing variables that are alive at every node in the function.
-  //! When the analysis start all variables are assumed dead, when a read or
-  //! read/write operations of a variable is detected, it's assumed alive and
-  //! when write-only operation is detected it's assumed dead.
+  //! When the analysis start all variables are assumed dead. When a read or
+  //! read/write operations of a variable is detected the variable becomes
+  //! alive; when only write operation is detected the variable becomes dead.
   //!
-  //! When a label is found, analysis will go through all nodes that jump to
-  //! the label and to a previous node if it's not a direct jump or it's not
-  //! part of a binary-data section.
+  //! When a label is found all jumps to that label are followed and analysis
+  //! repeats until all variables are resolved.
   virtual Error analyze() = 0;
 
   // --------------------------------------------------------------------------
@@ -161,8 +160,6 @@ struct BaseContext {
   // --------------------------------------------------------------------------
 
   //! @brief Translate code by allocating registers and handling state changes.
-  //!
-  //! TODO: Documentation.
   virtual Error translate() = 0;
 
   // --------------------------------------------------------------------------

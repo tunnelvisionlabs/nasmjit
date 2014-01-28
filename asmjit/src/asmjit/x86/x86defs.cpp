@@ -3136,11 +3136,7 @@ const SegReg gs(kRegTypeSeg, kSegGs, 2);
 Mem ptr_abs(void* target, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
 
-  m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-    size,
-    kMemTypeAbsolute,
-    (kSegNone << kMemSegIndex),
-    kInvalidValue);
+  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, 0, kInvalidValue);
   m._vmem.index = kInvalidValue;
   m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
   return m;
@@ -3149,12 +3145,7 @@ Mem ptr_abs(void* target, int32_t disp, uint32_t size) {
 Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
 
-  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
-  m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-    size,
-    kMemTypeAbsolute,
-    (kSegNone << kMemSegIndex) + sizePrefix + (shift << kMemShiftIndex),
-    kInvalidValue);
+  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, shift << kMemShiftIndex, kInvalidValue);
   m._vmem.index = index.getIndex();
   m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
   return m;
@@ -3163,12 +3154,7 @@ Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp, uint
 Mem ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
 
-  uint32_t sizePrefix = Mem::use67hPrefix(index.getSize()) << kMem67hIndex;
-  m._init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-    size,
-    kMemTypeAbsolute,
-    (kSegNone << kMemSegIndex) + sizePrefix + (shift << kMemShiftIndex),
-    kInvalidValue);
+  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, shift << kMemShiftIndex, kInvalidValue);
   m._vmem.index = index.getId();
   m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
   return m;

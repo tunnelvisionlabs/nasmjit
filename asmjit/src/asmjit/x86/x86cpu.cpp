@@ -177,7 +177,7 @@ void hostCpuDetect(Cpu* out) {
     }
   }
 
-  // Get feature flags in ecx/edx, and family/model in eax.
+  // Get feature flags in ecx/edx and family/model in eax.
   hostCpuId(1, 0, &regs);
 
   // Fill family and model fields.

@@ -453,7 +453,7 @@ Error X86X64Compiler::_newVar(BaseVar* var, uint32_t vType, const char* name) {
     return getError();
   }
 
-  var->_init_packed_op_sz_r0_r1_id(kOperandTypeVar, vd->getSize(), vInfo.getReg(), 0, vd->getId());
+  var->_init_packed_op_sz_w0_id(kOperandTypeVar, vd->getSize(), vInfo.getReg() << 8, vd->getId());
   var->_vreg.vType = vType;
   return kErrorOk;
 }

@@ -154,7 +154,7 @@ struct X86X64Context : public BaseContext {
   //! @brief Detach.
   //!
   //! The opposite of 'Attach'. Detach resets the members in 'VarData'
-  //! (regIndex, state, and changed flags) and unlinks the variable with the
+  //! (regIndex, state and changed flags) and unlinks the variable with the
   //! current 'VarState'.
   template<int C>
   ASMJIT_INLINE void detach(VarData* vd, uint32_t regIndex, uint32_t vState) {

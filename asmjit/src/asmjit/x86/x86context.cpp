@@ -713,7 +713,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend BYTE->WORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
         r1.setSize(1);
-        r1.setReg(kRegTypeGpbLo, srcIndex);
+        r1.setCode(kRegTypeGpbLo, srcIndex);
 
         instCode = (dstType == kVarTypeInt16 && srcType == kVarTypeInt8) ? kInstMovsx : kInstMovzx;
         goto _ExtendMovGpD;
@@ -738,7 +738,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend BYTE->DWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
         r1.setSize(1);
-        r1.setReg(kRegTypeGpbLo, srcIndex);
+        r1.setCode(kRegTypeGpbLo, srcIndex);
 
         instCode = (dstType == kVarTypeInt32 && srcType == kVarTypeInt8) ? kInstMovsx : kInstMovzx;
         goto _ExtendMovGpD;
@@ -747,7 +747,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend WORD->DWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
         r1.setSize(2);
-        r1.setReg(kRegTypeGpw, srcIndex);
+        r1.setCode(kRegTypeGpw, srcIndex);
 
         instCode = (dstType == kVarTypeInt32 && srcType == kVarTypeInt16) ? kInstMovsx : kInstMovzx;
         goto _ExtendMovGpD;
@@ -771,7 +771,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend BYTE->QWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
         r1.setSize(1);
-        r1.setReg(kRegTypeGpbLo, srcIndex);
+        r1.setCode(kRegTypeGpbLo, srcIndex);
 
         instCode = (dstType == kVarTypeInt64 && srcType == kVarTypeInt8) ? kInstMovsx : kInstMovzx;
         goto _ExtendMovGpXQ;
@@ -780,7 +780,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend WORD->QWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
         r1.setSize(2);
-        r1.setReg(kRegTypeGpw, srcIndex);
+        r1.setCode(kRegTypeGpw, srcIndex);
 
         instCode = (dstType == kVarTypeInt64 && srcType == kVarTypeInt16) ? kInstMovsx : kInstMovzx;
         goto _ExtendMovGpXQ;
@@ -789,7 +789,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend DWORD->QWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt32, kVarTypeUInt32)) {
         r1.setSize(4);
-        r1.setReg(kRegTypeGpd, srcIndex);
+        r1.setCode(kRegTypeGpd, srcIndex);
 
         instCode = kInstMovsxd;
         if (dstType == kVarTypeInt64 && srcType == kVarTypeInt32)
@@ -815,7 +815,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend BYTE->QWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt8, kVarTypeUInt8)) {
         r1.setSize(1);
-        r1.setReg(kRegTypeGpbLo, srcIndex);
+        r1.setCode(kRegTypeGpbLo, srcIndex);
 
         instCode = kInstMovzx;
         goto _ExtendMovGpXQ;
@@ -824,7 +824,7 @@ void X86X64Context::emitMoveArgOnStack(
       // Extend WORD->QWORD (Gp).
       if (IntUtil::inInterval<uint32_t>(srcType, kVarTypeInt16, kVarTypeUInt16)) {
         r1.setSize(2);
-        r1.setReg(kRegTypeGpw, srcIndex);
+        r1.setCode(kRegTypeGpw, srcIndex);
 
         instCode = kInstMovzx;
         goto _ExtendMovGpXQ;
@@ -867,7 +867,7 @@ void X86X64Context::emitMoveArgOnStack(
 _ExtendMovGpD:
   m0.setSize(4);
   r0.setSize(4);
-  r0.setReg(kRegTypeGpd, srcIndex);
+  r0.setCode(kRegTypeGpd, srcIndex);
 
   compiler->emit(instCode, r0, r1);
   compiler->emit(kInstMov, m0, r0);
@@ -877,7 +877,7 @@ _ExtendMovGpXQ:
   if (regSize == 8) {
     m0.setSize(8);
     r0.setSize(8);
-    r0.setReg(kRegTypeGpq, srcIndex);
+    r0.setCode(kRegTypeGpq, srcIndex);
 
     compiler->emit(instCode, r0, r1);
     compiler->emit(kInstMov, m0, r0);
@@ -885,7 +885,7 @@ _ExtendMovGpXQ:
   else {
     m0.setSize(4);
     r0.setSize(4);
-    r0.setReg(kRegTypeGpd, srcIndex);
+    r0.setCode(kRegTypeGpd, srcIndex);
 
     compiler->emit(instCode, r0, r1);
 
@@ -899,21 +899,21 @@ _ExtendMovGpDQ:
 _ZeroExtendGpDQ:
   m0.setSize(4);
   r0.setSize(4);
-  r0.setReg(kRegTypeGpd, srcIndex);
+  r0.setCode(kRegTypeGpd, srcIndex);
   goto _ExtendMovGpDQ;
 
   // Move Gp.
 _MovGpD:
   m0.setSize(4);
   r0.setSize(4);
-  r0.setReg(kRegTypeGpd, srcIndex);
+  r0.setCode(kRegTypeGpd, srcIndex);
   compiler->emit(kInstMov, m0, r0);
   return;
 
 _MovGpQ:
   m0.setSize(8);
   r0.setSize(8);
-  r0.setReg(kRegTypeGpq, srcIndex);
+  r0.setCode(kRegTypeGpq, srcIndex);
   compiler->emit(kInstMov, m0, r0);
   return;
 
@@ -921,14 +921,14 @@ _MovGpQ:
 _MovMmD:
   m0.setSize(4);
   r0.setSize(8);
-  r0.setReg(kRegTypeMm, srcIndex);
+  r0.setCode(kRegTypeMm, srcIndex);
   compiler->emit(kInstMovd, m0, r0);
   return;
 
 _MovMmQ:
   m0.setSize(8);
   r0.setSize(8);
-  r0.setReg(kRegTypeMm, srcIndex);
+  r0.setCode(kRegTypeMm, srcIndex);
   compiler->emit(kInstMovq, m0, r0);
   return;
 
@@ -936,14 +936,14 @@ _MovMmQ:
 _MovXmmD:
   m0.setSize(4);
   r0.setSize(16);
-  r0.setReg(kRegTypeXmm, srcIndex);
+  r0.setCode(kRegTypeXmm, srcIndex);
   compiler->emit(kInstMovd, m0, r0);
   return;
 
 _MovXmmQ:
   m0.setSize(8);
   r0.setSize(16);
-  r0.setReg(kRegTypeXmm, srcIndex);
+  r0.setCode(kRegTypeXmm, srcIndex);
   compiler->emit(kInstMovq, m0, r0);
 }
 
@@ -1882,7 +1882,7 @@ _NextGroup:
                     // In 64-bit mode we need to check whether the destination operand size
                     // is 64-bits.
                     if (code == kInstCvttsd2si || code == kInstCvttss2si)
-                      combinedFlags = vd->getSize() > 4 ? (op->isReg(kRegTypeGpq) ? outFlags : inFlags | outFlags) : outFlags;
+                      combinedFlags = vd->getSize() > 4 ? (op->isRegType(kRegTypeGpq) ? outFlags : inFlags | outFlags) : outFlags;
                     // Movss/Movsd. These instructions won't overwrite the whole register if move
                     // is between two registers.
                     else if (code == kInstMovss || code == kInstMovsd)
@@ -3908,6 +3908,7 @@ ASMJIT_INLINE void X86X64CallAlloc::ret() {
 //! @internal
 static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opList, uint32_t opCount) {
   X86X64Compiler* compiler = self->getCompiler();
+  const VarInfo* varInfo = _varInfo;
 
   // Translate variables into registers.
   for (uint32_t i = 0; i < opCount; i++) {
@@ -3929,13 +3930,11 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
 
         if (m->getMemType() == kMemTypeBaseIndex) {
           ASMJIT_ASSERT(vd->getRegIndex() != kInvalidReg);
-
           op->_vmem.base = vd->getRegIndex();
         }
         else {
           if (!vd->isMemArg())
             self->getVarCell(vd);
-
           // Offset will be patched later by X86X64Context_patchFuncMem().
           m->adjust(vd->isMemArg() ? self->_argActualDisp : self->_varActualDisp);
         }
@@ -3945,7 +3944,6 @@ static Error X86X64Context_translateOperands(X86X64Context* self, Operand* opLis
         VarData* vd = compiler->getVdById(m->getIndex());
         ASMJIT_ASSERT(vd->getRegIndex() != kInvalidReg);
         ASMJIT_ASSERT(vd->getRegIndex() != kRegIndexR12);
-
         op->_vmem.index = vd->getRegIndex();
       }
     }

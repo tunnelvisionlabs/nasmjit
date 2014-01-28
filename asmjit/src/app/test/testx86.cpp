@@ -977,7 +977,7 @@ struct X86Test_AllocStack : public X86Test {
     c.xor_(i, i);
     
     c.bind(L_1);
-    c.mov(Mem(stack, i, 0), i.r8());
+    c.mov(stack.clone().setIndex(i, 0), i.r8());
     c.inc(i);
     c.cmp(i, 255);
     c.jle(L_1);
@@ -987,7 +987,7 @@ struct X86Test_AllocStack : public X86Test {
     c.xor_(a, a);
     
     c.bind(L_2);
-    c.movzx(b, Mem(stack, i, 0));
+    c.movzx(b, stack.clone().setIndex(i, 0));
     c.add(a, b);
     c.inc(i);
     c.cmp(i, 255);
@@ -1650,8 +1650,8 @@ X86TestSuite::X86TestSuite() :
   ADD_TEST(X86Test_AllocImul2);
   ADD_TEST(X86Test_AllocSetz);
   ADD_TEST(X86Test_AllocShlRor);
-  ADD_TEST(X86Test_AllocRepMovsb);
   ADD_TEST(X86Test_AllocGpLo);
+  ADD_TEST(X86Test_AllocRepMovsb);
   ADD_TEST(X86Test_AllocArgs);
   ADD_TEST(X86Test_AllocStack);
   ADD_TEST(X86Test_AllocMemcpy);

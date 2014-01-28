@@ -38,6 +38,15 @@ struct X86Var;
 struct GpReg;
 struct GpVar;
 
+struct MmReg;
+struct MmVar;
+
+struct XmmReg;
+struct XmmVar;
+
+struct YmmReg;
+struct YmmVar;
+
 // ============================================================================
 // [asmjit::x86x64::Typedefs]
 // ============================================================================
@@ -307,20 +316,34 @@ ASMJIT_ENUM(kRegIndex) {
 
 //! @brief X86 segment codes.
 ASMJIT_ENUM(kSeg) {
-  //! @brief Es segment.
-  kSegEs = 0,
-  //! @brief Cs segment.
-  kSegCs = 1,
-  //! @brief Ss segment.
-  kSegSs = 2,
-  //! @brief Ds segment.
-  kSegDs = 3,
-  //! @brief Fs segment.
-  kSegFs = 4,
-  //! @brief Gs segment.
-  kSegGs = 5,
   //! @brief No segment.
-  kSegNone = 0xF
+  kSegDefault = 0,
+  //! @brief Es segment.
+  kSegEs = 1,
+  //! @brief Cs segment.
+  kSegCs = 2,
+  //! @brief Ss segment.
+  kSegSs = 3,
+  //! @brief Ds segment.
+  kSegDs = 4,
+  //! @brief Fs segment.
+  kSegFs = 5,
+  //! @brief Gs segment.
+  kSegGs = 6
+};
+
+// ============================================================================
+// [asmjit::x86x64::kMemVSib]
+// ============================================================================
+
+//! @brief X86 index register legacy and AVX2 (VSIB) support.
+ASMJIT_ENUM(kMemVSib) {
+  //! @brief Memory operand uses Gp or no index register.
+  kMemVSibGpz = 0,
+  //! @brief Memory operand uses Xmm or no index register.
+  kMemVSibXmm = 1,
+  //! @brief Memory operand uses Ymm or no index register.
+  kMemVSibYmm = 2
 };
 
 // ============================================================================
@@ -331,13 +354,17 @@ ASMJIT_ENUM(kSeg) {
 //!
 //! @brief X86 specific memory flags.
 ASMJIT_ENUM(kMemFlags) {
-  kMemSegBits    = 0xF,
+  kMemSegBits    = 0x7,
   kMemSegIndex   = 0,
   kMemSegMask    = kMemSegBits << kMemSegIndex,
 
-  kMem67hBits    = 0x1,
-  kMem67hIndex   = 4,
-  kMem67hMask    = kMem67hBits << kMem67hIndex,
+  kMemGpdBits    = 0x1,
+  kMemGpdIndex   = 3,
+  kMemGpdMask    = kMemGpdBits << kMemGpdIndex,
+
+  kMemVSibBits   = 0x3,
+  kMemVSibIndex  = 4,
+  kMemVSibMask   = kMemVSibBits << kMemVSibIndex,
 
   kMemShiftBits  = 0x3,
   kMemShiftIndex = 6,
@@ -1655,7 +1682,7 @@ ASMJIT_ENUM(kInstFlags) {
 
   //! @brief Instruction is a control-flow instruction.
   //!
-  //! Control flow instructions are jmp, jcc, call, and ret.
+  //! Control flow instructions are jmp, jcc, call and ret.
   kInstFlagFlow        = 0x0001,
 
   //! @brief Instruction is a compare/test like instruction.
@@ -1668,8 +1695,8 @@ ASMJIT_ENUM(kInstFlags) {
   //! or it can be any kind of conversion. Mov instructions are typically
   //! 'mov', 'movd', 'movq', 'movdq?', 'cmov??' like instructions, but we also
   //! consider 'lea' (Load Effective Address), multimedia  instructions like
-  //! 'cvtdq2pd', shuffle instructions like 'pshufb', and SSE/SSE2 mathematic
-  //! instructions like 'rcp??', 'round??', and 'rsqrt??'.
+  //! 'cvtdq2pd', shuffle instructions like 'pshufb' and SSE/SSE2 mathematic
+  //! instructions like 'rcp??', 'round??' and 'rsqrt??'.
   kInstFlagMove        = 0x0004,
 
   //! @brief Instruction is an exchange like instruction.
@@ -1932,7 +1959,7 @@ struct InstInfo {
   //!
   //! Move instructions typically overwrite the first operand, so it's an useful
   //! hint for @ref Compiler. Applies also to multimedia instruction - MMX,
-  //! SSE, SSE2, and AVX moves).
+  //! SSE, SSE2 and AVX moves).
   ASMJIT_INLINE bool isMove() const { return (_flags & kInstFlagMove) != 0; }
 
   //! @brief Get whether the instruction is a typical Exchange instruction.
@@ -2208,11 +2235,10 @@ struct X86Reg : public BaseReg {
 
   //! @brief Create a dummy X86 register.
   ASMJIT_INLINE X86Reg() : BaseReg() {}
-  //! @brief Create a custom register.
-  ASMJIT_INLINE X86Reg(uint32_t reg, uint32_t index, uint32_t size) : BaseReg(reg, index, size) {}
-  //! @brief Create a reference to @a other Gp register.
+  //! @brief Create a custom X86 register.
+  ASMJIT_INLINE X86Reg(uint32_t type, uint32_t index, uint32_t size) : BaseReg(type, index, size) {}
+  //! @brief Create a reference to @a other X86 register.
   ASMJIT_INLINE X86Reg(const X86Reg& other) : BaseReg(other) {}
-
   //! @brief Create non-initialized X86 register.
   explicit ASMJIT_INLINE X86Reg(const _DontInitialize&) : BaseReg(DontInitialize) {}
 
@@ -2223,31 +2249,31 @@ struct X86Reg : public BaseReg {
   ASMJIT_REG_OP(X86Reg)
 
   //! @brief Get whether the register is Gp register.
-  ASMJIT_INLINE bool isGp() const { return _vreg.reg <= kRegTypeGpq; }
+  ASMJIT_INLINE bool isGp() const { return _vreg.type <= kRegTypeGpq; }
   //! @brief Get whether the register is Gp BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpb() const { return _vreg.reg <= kRegTypeGpbHi; }
+  ASMJIT_INLINE bool isGpb() const { return _vreg.type <= kRegTypeGpbHi; }
   //! @brief Get whether the register is Gp LO-BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpbLo() const { return _vreg.reg == kRegTypeGpbLo; }
+  ASMJIT_INLINE bool isGpbLo() const { return _vreg.type == kRegTypeGpbLo; }
   //! @brief Get whether the register is Gp HI-BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpbHi() const { return _vreg.reg == kRegTypeGpbHi; }
+  ASMJIT_INLINE bool isGpbHi() const { return _vreg.type == kRegTypeGpbHi; }
   //! @brief Get whether the register is Gp WORD (16-bit) register.
-  ASMJIT_INLINE bool isGpw() const { return _vreg.reg == kRegTypeGpw; }
+  ASMJIT_INLINE bool isGpw() const { return _vreg.type == kRegTypeGpw; }
   //! @brief Get whether the register is Gp DWORD (32-bit) register.
-  ASMJIT_INLINE bool isGpd() const { return _vreg.reg == kRegTypeGpd; }
+  ASMJIT_INLINE bool isGpd() const { return _vreg.type == kRegTypeGpd; }
   //! @brief Get whether the register is Gp QWORD (64-bit) register.
-  ASMJIT_INLINE bool isGpq() const { return _vreg.reg == kRegTypeGpq; }
+  ASMJIT_INLINE bool isGpq() const { return _vreg.type == kRegTypeGpq; }
 
   //! @brief Get whether the register is Fp register.
-  ASMJIT_INLINE bool isFp() const { return _vreg.reg == kRegTypeFp; }
+  ASMJIT_INLINE bool isFp() const { return _vreg.type == kRegTypeFp; }
   //! @brief Get whether the register is Mm (64-bit) register.
-  ASMJIT_INLINE bool isMm() const { return _vreg.reg == kRegTypeMm; }
+  ASMJIT_INLINE bool isMm() const { return _vreg.type == kRegTypeMm; }
   //! @brief Get whether the register is Xmm (128-bit) register.
-  ASMJIT_INLINE bool isXmm() const { return _vreg.reg == kRegTypeXmm; }
+  ASMJIT_INLINE bool isXmm() const { return _vreg.type == kRegTypeXmm; }
   //! @brief Get whether the register is Ymm (256-bit) register.
-  ASMJIT_INLINE bool isYmm() const { return _vreg.reg == kRegTypeYmm; }
+  ASMJIT_INLINE bool isYmm() const { return _vreg.type == kRegTypeYmm; }
 
   //! @brief Get whether the register is a segment.
-  ASMJIT_INLINE bool isSeg() const { return _vreg.reg == kRegTypeSeg; }
+  ASMJIT_INLINE bool isSeg() const { return _vreg.type == kRegTypeSeg; }
 };
 
 // ============================================================================
@@ -2262,12 +2288,13 @@ struct GpReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized Gp register.
+  //! @brief Create a dummy Gp register.
   ASMJIT_INLINE GpReg() : X86Reg() {}
   //! @brief Create a reference to @a other Gp register.
   ASMJIT_INLINE GpReg(const GpReg& other) : X86Reg(other) {}
-
-  ASMJIT_INLINE GpReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
+  //! @brief Create a custom Gp register.
+  ASMJIT_INLINE GpReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized Gp register.
   explicit ASMJIT_INLINE GpReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2287,12 +2314,13 @@ struct FpReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized FPU register.
+  //! @brief Create a dummy Fp register.
   ASMJIT_INLINE FpReg() : X86Reg() {}
   //! @brief Create a reference to @a other FPU register.
   ASMJIT_INLINE FpReg(const FpReg& other) : X86Reg(other) {}
-
-  ASMJIT_INLINE FpReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
+  //! @brief Create a custom Fp register.
+  ASMJIT_INLINE FpReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized Fp register.
   explicit ASMJIT_INLINE FpReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2312,12 +2340,13 @@ struct MmReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized Mm register.
+  //! @brief Create a dummy Mm register.
   ASMJIT_INLINE MmReg() : X86Reg() {}
   //! @brief Create a reference to @a other Mm register.
   ASMJIT_INLINE MmReg(const MmReg& other) : X86Reg(other) {}
-
-  ASMJIT_INLINE MmReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
+  //! @brief Create a custom Mm register.
+  ASMJIT_INLINE MmReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized Mm register.
   explicit ASMJIT_INLINE MmReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2337,12 +2366,13 @@ struct XmmReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized Xmm register.
+  //! @brief Create a dummy Xmm register.
   ASMJIT_INLINE XmmReg() : X86Reg() {}
   //! @brief Create a reference to @a other Xmm register.
   ASMJIT_INLINE XmmReg(const XmmReg& other) : X86Reg(other) {}
-
-  ASMJIT_INLINE XmmReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
+  //! @brief Create a custom Xmm register.
+  ASMJIT_INLINE XmmReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized Xmm register.
   explicit ASMJIT_INLINE XmmReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2362,12 +2392,13 @@ struct YmmReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized Xmm register.
+  //! @brief Create a dummy Ymm register.
   ASMJIT_INLINE YmmReg() : X86Reg() {}
   //! @brief Create a reference to @a other Xmm register.
   ASMJIT_INLINE YmmReg(const YmmReg& other) : X86Reg(other) {}
-
-  ASMJIT_INLINE YmmReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
+  //! @brief Create a custom Ymm register.
+  ASMJIT_INLINE YmmReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized Ymm register.
   explicit ASMJIT_INLINE YmmReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2387,12 +2418,13 @@ struct SegReg : public X86Reg {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  //! @brief Create non-initialized segment register.
+  //! @brief Create a dummy segment register.
   ASMJIT_INLINE SegReg() : X86Reg() {}
   //! @brief Create a reference to @a other segment register.
-  ASMJIT_INLINE SegReg(uint32_t reg, uint32_t index, uint32_t size) : X86Reg(reg, index, size) {}
-
   ASMJIT_INLINE SegReg(const SegReg& other) : X86Reg(other) {}
+  //! @brief Create a custom segment register.
+  ASMJIT_INLINE SegReg(uint32_t type, uint32_t index, uint32_t size) : X86Reg(type, index, size) {}
+  //! @brief Create non-initialized segment register.
   explicit ASMJIT_INLINE SegReg(const _DontInitialize&) : X86Reg(DontInitialize) {}
 
   // --------------------------------------------------------------------------
@@ -2406,6 +2438,8 @@ struct SegReg : public X86Reg {
 // [asmjit::x86x64::Mem]
 // ============================================================================
 
+#define _OP_ID(_Op_) reinterpret_cast<const Operand&>(_Op_).getId()
+
 //! @brief X86 memory operand.
 struct Mem : public BaseMem {
   // --------------------------------------------------------------------------
@@ -2417,22 +2451,17 @@ struct Mem : public BaseMem {
   }
 
   ASMJIT_INLINE Mem(const Label& label, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeLabel,
-      kSegNone << kMemSegIndex,
-      label._base.id);
-    _init_packed_u2_u3(kInvalidValue, disp);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeLabel, 0, label._base.id);
+    _init_packed_d2_d3(kInvalidValue, disp);
   }
 
   ASMJIT_INLINE Mem(const Label& label, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeLabel,
-      (kSegNone << kMemSegIndex) + (shift << kMemShiftIndex),
-      label._base.id);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeLabel,
+      (kMemVSibGpz << kMemVSibIndex)
+        + (shift << kMemShiftIndex),
+      label.getId());
     _vmem.index = index.getIndex();
     _vmem.displacement = disp;
   }
@@ -2440,143 +2469,117 @@ struct Mem : public BaseMem {
   ASMJIT_INLINE Mem(const Label& label, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeLabel,
-      (kSegNone << kMemSegIndex) + (shift << kMemShiftIndex),
-      label._base.id);
-    _vmem.index = reinterpret_cast<const Operand&>(index).getId();
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeLabel,
+      (kMemVSibGpz << kMemVSibIndex)
+        + (shift << kMemShiftIndex),
+      label.getId());
+    _vmem.index = _OP_ID(index);
     _vmem.displacement = disp;
   }
 
-  ASMJIT_INLINE Mem(const Mem& base, int32_t disp) : BaseMem(DontInitialize) {
-    _copy(base);
-    _vmem.displacement += disp;
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    _copy(base);
-    _vmem.size = static_cast<uint8_t>(size);
-    _vmem.displacement += disp;
-  }
-
   ASMJIT_INLINE Mem(const GpReg& base, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeBaseIndex,
-      kSegNone << kMemSegIndex,
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(base)
+        + (kMemVSibGpz << kMemVSibIndex),
       base.getIndex());
-    _init_packed_u2_u3(kInvalidValue, disp);
-  }
-
-  ASMJIT_INLINE Mem(const GpVar& base, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeBaseIndex,
-      kSegNone << kMemSegIndex,
-      reinterpret_cast<const Operand&>(base).getId());
-    _init_packed_u2_u3(kInvalidValue, disp);
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, const GpReg& index) : BaseMem(DontInitialize) {
-    _copy(base);
-    _vmem.index = index.getIndex();
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, const GpReg& index, uint32_t shift) : BaseMem(DontInitialize) {
-    ASMJIT_ASSERT(shift <= 3);
-
-    _copy(base);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = index.getIndex();
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, const GpReg& index, uint32_t shift, int32_t disp) : BaseMem(DontInitialize) {
-    ASMJIT_ASSERT(shift <= 3);
-
-    _copy(base);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = index.getIndex();
-    _vmem.displacement += disp;
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    ASMJIT_ASSERT(shift <= 3);
-
-    _copy(base);
-    _vmem.size = static_cast<uint8_t>(size);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = index.getIndex();
-    _vmem.displacement += disp;
+    _init_packed_d2_d3(kInvalidValue, disp);
   }
 
   ASMJIT_INLINE Mem(const GpReg& base, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeBaseIndex,
-      (kSegNone << kMemSegIndex) + (shift << kMemShiftIndex),
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(base) + (shift << kMemShiftIndex),
       base.getIndex());
     _vmem.index = index.getIndex();
     _vmem.displacement = disp;
   }
 
-  ASMJIT_INLINE Mem(const Mem& base, const GpVar& index) : BaseMem(DontInitialize) {
-    _copy(base);
-    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
-  }
-
-  ASMJIT_INLINE Mem(const Mem& base, const GpVar& index, uint32_t shift) : BaseMem(DontInitialize) {
+  ASMJIT_INLINE Mem(const GpReg& base, const XmmReg& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _copy(base);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(base)
+        + (kMemVSibXmm << kMemVSibIndex)
+        + (shift << kMemShiftIndex),
+      base.getIndex());
+    _vmem.index = index.getIndex();
+    _vmem.displacement = disp;
   }
 
-  ASMJIT_INLINE Mem(const Mem& base, const GpVar& index, uint32_t shift, int32_t disp) : BaseMem(DontInitialize) {
+  ASMJIT_INLINE Mem(const GpReg& base, const YmmReg& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _copy(base);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
-    _vmem.displacement += disp;
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(base)
+        + (kMemVSibYmm << kMemVSibIndex)
+        + (shift << kMemShiftIndex),
+      base.getIndex());
+    _vmem.index = index.getIndex();
+    _vmem.displacement = disp;
   }
 
-  ASMJIT_INLINE Mem(const Mem& base, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    ASMJIT_ASSERT(shift <= 3);
-
-    _copy(base);
-    _vmem.size = static_cast<uint8_t>(size);
-    _vmem.flags = static_cast<uint8_t>((static_cast<uint32_t>(_vmem.flags) & ~(0x03 << kMemShiftIndex)) + (shift << kMemShiftIndex));
-    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
-    _vmem.displacement += disp;
+  ASMJIT_INLINE Mem(const GpVar& base, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
+        + (kMemVSibGpz << kMemVSibIndex),
+      _OP_ID(base));
+    _init_packed_d2_d3(kInvalidValue, disp);
   }
+
 
   ASMJIT_INLINE Mem(const GpVar& base, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
     ASMJIT_ASSERT(shift <= 3);
 
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem,
-      size,
-      kMemTypeBaseIndex,
-      (kSegNone << kMemSegIndex) + (shift << kMemShiftIndex),
-      reinterpret_cast<const Operand&>(base).getId());
-    _vmem.index = reinterpret_cast<const Operand&>(index).getId();
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
+        + (shift << kMemShiftIndex),
+      _OP_ID(base));
+    _vmem.index = _OP_ID(index);
+    _vmem.displacement = disp;
+  }
+
+  ASMJIT_INLINE Mem(const GpVar& base, const XmmVar& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
+    ASMJIT_ASSERT(shift <= 3);
+
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
+        + (kMemVSibXmm << kMemVSibIndex) 
+        + (shift << kMemShiftIndex),
+      _OP_ID(base));
+    _vmem.index = _OP_ID(index);
+    _vmem.displacement = disp;
+  }
+
+  ASMJIT_INLINE Mem(const GpVar& base, const YmmVar& index, uint32_t shift, int32_t disp, uint32_t size = 0) : BaseMem(DontInitialize) {
+    ASMJIT_ASSERT(shift <= 3);
+
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
+        + (kMemVSibYmm << kMemVSibIndex) 
+        + (shift << kMemShiftIndex),
+      _OP_ID(base));
+    _vmem.index = _OP_ID(index);
     _vmem.displacement = disp;
   }
 
   ASMJIT_INLINE Mem(const _Initialize&, uint32_t memType, const X86Var& base, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    _init(memType,
-      reinterpret_cast<const BaseVar&>(base).getId(),
-      disp, size);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base)),
+      _OP_ID(base));
+    _vmem.index = kInvalidValue;
+    _vmem.displacement = disp;
   }
 
   ASMJIT_INLINE Mem(const _Initialize&, uint32_t memType, const X86Var& base, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) : BaseMem(DontInitialize) {
-    _init(memType,
-      reinterpret_cast<const BaseVar&>(base).getId(),
-      reinterpret_cast<const BaseVar&>(index).getId(),
-      shift, disp, size);
+    ASMJIT_ASSERT(shift <= 3);
+
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType,
+      _getGpdFlags(reinterpret_cast<const BaseVar&>(base))
+        + (shift << kMemShiftIndex),
+      _OP_ID(base));
+    _vmem.index = _OP_ID(index);
+    _vmem.displacement = disp;
   }
 
   ASMJIT_INLINE Mem(const Mem& other) : BaseMem(other) {}
@@ -2586,79 +2589,91 @@ struct Mem : public BaseMem {
   // [Mem Specific]
   // --------------------------------------------------------------------------
 
+  //! @brief Clone Mem operand.
+  ASMJIT_INLINE Mem clone() const {
+    return Mem(*this);
+  }
+
   //! @brief Reset Mem operand.
   ASMJIT_INLINE void reset() {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, kSegNone << kMemSegIndex, kInvalidValue);
-    _init_packed_u2_u3(kInvalidValue, 0);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, 0, kInvalidValue);
+    _init_packed_d2_d3(kInvalidValue, 0);
   }
 
   //! @internal
   ASMJIT_INLINE void _init(uint32_t memType, uint32_t base, int32_t disp, uint32_t size) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, size, memType, kSegNone << kMemSegIndex, base);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, memType, 0, base);
     _vmem.index = kInvalidValue;
     _vmem.displacement = disp;
   }
 
-  //! @internal
-  ASMJIT_INLINE void _init(uint32_t memType, uint32_t base, uint32_t index, uint32_t shift, int32_t disp, uint32_t size) {
-    ASMJIT_ASSERT(shift <= 3);
-
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, size, memType, (kSegNone << kMemSegIndex) + (shift << kMemShiftIndex), base);
-    _vmem.index = index;
-    _vmem.displacement = disp;
-  }
-
-  ASMJIT_INLINE bool hasSegmentOrSizePrefix() const {
-    uint32_t m = _vmem.flags & (kMemSegMask | kMem67hMask);
-    return m != (kSegNone << kMemSegIndex);
-  }
+  // --------------------------------------------------------------------------
+  // [Segment]
+  // --------------------------------------------------------------------------
 
   //! @brief Get whether the memory operand has segment override prefix.
-  ASMJIT_INLINE bool hasSegment() const
-  { return (_vmem.flags & kMemSegMask) != (kSegNone << kMemSegIndex); }
+  ASMJIT_INLINE bool hasSegment() const {
+    return (_vmem.flags & kMemSegMask) != (kSegDefault << kMemSegIndex);
+  }
 
   //! @brief Get memory operand segment, see @c kSeg.
-  ASMJIT_INLINE uint32_t getSegment() const
-  { return (static_cast<uint32_t>(_vmem.flags) >> kMemSegIndex) & kMemSegBits; }
-
-  //! @brief Set memory operand segment, see @c kSeg.
-  ASMJIT_INLINE Mem& setSegment(uint32_t seg) {
-    _vmem.flags = static_cast<uint8_t>(
-      (static_cast<uint32_t>(_vmem.flags) & kMemSegMask) + (seg << kMemSegIndex));
-    return *this;
+  ASMJIT_INLINE uint32_t getSegment() const {
+    return (static_cast<uint32_t>(_vmem.flags) >> kMemSegIndex) & kMemSegBits;
   }
 
   //! @brief Set memory operand segment, see @c kSeg.
-  ASMJIT_INLINE Mem& setSegment(const SegReg& seg)
-  { return setSegment(seg.getIndex()); }
-
-  //! @brief Get whether to use size-override prefix.
-  //!
-  //! @note This is useful only for MOV and LEA type of instructions.
-  ASMJIT_INLINE bool hasSizePrefix() const
-  { return (_vmem.flags & kMem67hMask) != 0; }
-
-  //! @brief Set whether to use size-override prefix.
-  ASMJIT_INLINE Mem& setSizePrefix(bool b) {
+  ASMJIT_INLINE Mem& setSegment(uint32_t segIndex) {
     _vmem.flags = static_cast<uint8_t>(
-      (static_cast<uint32_t>(_vmem.flags) & ~kMem67hMask) | (static_cast<uint32_t>(b) << kMem67hIndex));
+      (static_cast<uint32_t>(_vmem.flags) & kMemSegMask) + (segIndex << kMemSegIndex));
     return *this;
   }
 
-  // TODO: [Runtime] Port to use runtime dispatch.
+  //! @brief Set memory operand segment, see @c kSeg.
+  ASMJIT_INLINE Mem& setSegment(const SegReg& seg) {
+    return setSegment(seg.getIndex());
+  }
 
-  //! @brief Use 32-bit prefix (only does something when running in 64-bit mode).
-  //!
-  //! Adds size override prefix in case that it's running in 64-bit mode. Helps
-  //! to emit mov/lea instruction with 67h prefix that overrides the default
-  //! size of the memory operand. Mostly usable for lea to emit something like
-  //! "lea r32, [r32 + r32 * index + disp]".
-  ASMJIT_INLINE Mem& set32Bit() {
-#if defined(ASMJIT_HOST_X64)
-    _vmem.flags |= static_cast<uint8_t>(kMem67hMask);
-#endif // ASMJIT_HOST
+  // --------------------------------------------------------------------------
+  // [Gpd]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get whether the memory operand has 32-bit GP base.
+  ASMJIT_INLINE bool hasGpdBase() const {
+    return (_packed[0].u32[0] & IntUtil::pack32_4x8(0x00, 0x00, 0x00, kMemGpdMask)) != 0;
+  }
+
+  //! @brief Set whether the memory operand has 32-bit GP base.
+  ASMJIT_INLINE Mem& setGpdBase() {
+    _packed[0].u32[0] |= IntUtil::pack32_4x8(0x00, 0x00, 0x00, kMemGpdMask);
     return *this;
   }
+
+  //! @brief Set whether the memory operand has 32-bit GP base to @a b.
+  ASMJIT_INLINE Mem& setGpdBase(uint32_t b) {
+    _packed[0].u32[0] &=~IntUtil::pack32_4x8(0x00, 0x00, 0x00, kMemGpdMask);
+    _packed[0].u32[0] |= IntUtil::pack32_4x8(0x00, 0x00, 0x00, b << kMemGpdIndex);
+    return *this;
+  }
+
+  // --------------------------------------------------------------------------
+  // [VSib]
+  // --------------------------------------------------------------------------
+
+  //! @brief Get SIB type.
+  ASMJIT_INLINE uint32_t getVSib() const {
+    return (static_cast<uint32_t>(_vmem.flags) >> kMemVSibIndex) & kMemVSibBits;
+  }
+
+  //! @brief Set SIB type.
+  ASMJIT_INLINE Mem& _setVSib(uint32_t vsib) {
+    _packed[0].u32[0] &=~IntUtil::pack32_4x8(0x00, 0x00, 0x00, kMemVSibMask);
+    _packed[0].u32[0] |= IntUtil::pack32_4x8(0x00, 0x00, 0x00, vsib << kMemVSibIndex);
+    return *this;
+  }
+
+  // --------------------------------------------------------------------------
+  // [Size]
+  // --------------------------------------------------------------------------
 
   //! @brief Set memory operand size.
   ASMJIT_INLINE Mem& setSize(uint32_t size) {
@@ -2666,56 +2681,161 @@ struct Mem : public BaseMem {
     return *this;
   }
 
+  // --------------------------------------------------------------------------
+  // [Base]
+  // --------------------------------------------------------------------------
+
   //! @brief Get whether the memory operand has base register.
   ASMJIT_INLINE bool hasBase() const
   { return _vmem.base != kInvalidValue; }
 
-  //! @brief Get memory operand base register, variable, or @ref kInvalidValue.
+  //! @brief Get memory operand base register code, variable id, or @ref kInvalidValue.
   ASMJIT_INLINE uint32_t getBase() const
   { return _vmem.base; }
 
-  //! @brief Set memory operand base register, variable, or @ref kInvalidValue.
+  //! @brief Set memory operand base register code, variable id, or @ref kInvalidValue.
   ASMJIT_INLINE Mem& setBase(uint32_t base) {
     _vmem.base = base;
     return *this;
   }
 
+  // --------------------------------------------------------------------------
+  // [Index]
+  // --------------------------------------------------------------------------
+
   //! @brief Get whether the memory operand has index.
-  ASMJIT_INLINE bool hasIndex() const
-  { return _vmem.index != kInvalidValue; }
+  ASMJIT_INLINE bool hasIndex() const {
+    return _vmem.index != kInvalidValue;
+  }
 
-  //! @brief Get memory operand index register, variable, or @ref kInvalidValue.
-  ASMJIT_INLINE uint32_t getIndex() const
-  { return _vmem.index; }
+  //! @brief Get memory operand index register code, variable id, or @ref kInvalidValue.
+  ASMJIT_INLINE uint32_t getIndex() const {
+    return _vmem.index;
+  }
 
-  //! @brief Set memory operand index register, variable, or @ref kInvalidValue.
+  //! @brief Set memory operand index register code, variable id, or @ref kInvalidValue.
   ASMJIT_INLINE Mem& setIndex(uint32_t index) {
     _vmem.index = index;
     return *this;
   }
 
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const GpReg& index) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibGpz);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const GpReg& index, uint32_t shift) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibGpz).setShift(shift);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const GpVar& index) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibGpz);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const GpVar& index, uint32_t shift) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibGpz).setShift(shift);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const XmmReg& index) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibXmm);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const XmmReg& index, uint32_t shift) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibXmm).setShift(shift);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const XmmVar& index) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibXmm);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const XmmVar& index, uint32_t shift) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibXmm).setShift(shift);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const YmmReg& index) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibYmm);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const YmmReg& index, uint32_t shift) {
+    _vmem.index = index.getIndex();
+    return _setVSib(kMemVSibYmm).setShift(shift);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const YmmVar& index) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibYmm);
+  }
+
+  //! @brief Set memory index.
+  ASMJIT_INLINE Mem& setIndex(const YmmVar& index, uint32_t shift) {
+    _vmem.index = reinterpret_cast<const BaseVar&>(index).getId();
+    return _setVSib(kMemVSibYmm).setShift(shift);
+  }
+
+  //! @brief Reset memory index.
+  ASMJIT_INLINE Mem& resetIndex() {
+    _vmem.index = kInvalidValue;
+    return _setVSib(kMemVSibGpz);
+  }
+
+  // --------------------------------------------------------------------------
+  // [Shift]
+  // --------------------------------------------------------------------------
+
   //! @brief Get whether the memory operand has shift used.
-  ASMJIT_INLINE bool hasShift() const
-  { return (_vmem.flags & kMemShiftMask) != 0; }
+  ASMJIT_INLINE bool hasShift() const {
+    return (_vmem.flags & kMemShiftMask) != 0;
+  }
 
   //! @brief Get memory operand index scale (0, 1, 2 or 3).
-  ASMJIT_INLINE uint32_t getShift() const
-  { return _vmem.flags >> kMemShiftIndex; }
+  ASMJIT_INLINE uint32_t getShift() const {
+    return _vmem.flags >> kMemShiftIndex;
+  }
 
   //! @brief Set memory operand index scale (0, 1, 2 or 3).
   ASMJIT_INLINE Mem& setShift(uint32_t shift) {
-    _vmem.flags = static_cast<uint8_t>(
-      (static_cast<uint32_t>(_vmem.flags) & ~kMemShiftMask) + (shift << kMemShiftIndex));
+    _packed[0].u32[0] &=~IntUtil::pack32_4x8(0x00, 0x00, 0x00, kMemShiftMask);
+    _packed[0].u32[0] |= IntUtil::pack32_4x8(0x00, 0x00, 0x00, shift << kMemShiftIndex);
     return *this;
   }
 
+  // --------------------------------------------------------------------------
+  // [Displacement]
+  // --------------------------------------------------------------------------
+
   //! @brief Get memory operand relative displacement.
-  ASMJIT_INLINE int32_t getDisplacement() const
-  { return _vmem.displacement; }
+  ASMJIT_INLINE int32_t getDisplacement() const {
+    return _vmem.displacement;
+  }
 
   //! @brief Set memory operand relative displacement.
   ASMJIT_INLINE Mem& setDisplacement(int32_t disp) {
     _vmem.displacement = disp;
+    return *this;
+  }
+
+  //! @brief Reset memory operand relative displacement.
+  ASMJIT_INLINE Mem& resetDisplacement(int32_t disp) {
+    _vmem.displacement = 0;
     return *this;
   }
 
@@ -2742,8 +2862,7 @@ struct Mem : public BaseMem {
   }
 
   ASMJIT_INLINE bool operator==(const Mem& other) const {
-    return _packed[0] == other._packed[0] &
-           _packed[1] == other._packed[1] ;
+    return (_packed[0] == other._packed[0]) & (_packed[1] == other._packed[1]) ;
   }
 
   ASMJIT_INLINE bool operator!=(const Mem& other) const {
@@ -2751,18 +2870,15 @@ struct Mem : public BaseMem {
   }
 
   // --------------------------------------------------------------------------
-  // [Misc]
+  // [Static]
   // --------------------------------------------------------------------------
 
-  // TODO: [Runtime] Port to use runtime dispatch.
-  static ASMJIT_INLINE uint32_t use67hPrefix(uint32_t opSize) {
-#if defined(ASMJIT_HOST_X86)
-    return static_cast<uint32_t>(opSize != 4);
-#else
-    return static_cast<uint32_t>(opSize != 8);
-#endif
+  static ASMJIT_INLINE uint32_t _getGpdFlags(const Operand& base) {
+    return (base._vreg.size & 0x4) << (kMemGpdIndex - 2);
   }
 };
+
+#undef _OP_ID
 
 // ============================================================================
 // [asmjit::x86x64::X86Var]
@@ -2786,10 +2902,15 @@ struct X86Var : public BaseVar {
   // [X86Var Specific]
   // --------------------------------------------------------------------------
 
+  //! @brief Clone X86Var operand.
+  ASMJIT_INLINE X86Var clone() const {
+    return X86Var(*this);
+  }
+
   //! @brief Reset X86Var operand.
   ASMJIT_INLINE void reset() {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeVar, 0, kInvalidReg, kInvalidReg, kInvalidValue);
-    _init_packed_u2_u3(kInvalidValue, kInvalidValue);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeVar, 0, kInvalidReg, kInvalidReg, kInvalidValue);
+    _init_packed_d2_d3(kInvalidValue, kInvalidValue);
   }
 
   // --------------------------------------------------------------------------
@@ -2799,28 +2920,28 @@ struct X86Var : public BaseVar {
   ASMJIT_INLINE uint32_t getVarType() const { return _vreg.vType; }
 
   //! @brief Get whether the variable is Gp register.
-  ASMJIT_INLINE bool isGp() const { return _vreg.reg <= kRegTypeGpq; }
+  ASMJIT_INLINE bool isGp() const { return _vreg.type <= kRegTypeGpq; }
   //! @brief Get whether the variable is Gp BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpb() const { return _vreg.reg <= kRegTypeGpbHi; }
+  ASMJIT_INLINE bool isGpb() const { return _vreg.type <= kRegTypeGpbHi; }
   //! @brief Get whether the variable is Gp LO-BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpbLo() const { return _vreg.reg == kRegTypeGpbLo; }
+  ASMJIT_INLINE bool isGpbLo() const { return _vreg.type == kRegTypeGpbLo; }
   //! @brief Get whether the variable is Gp HI-BYTE (8-bit) register.
-  ASMJIT_INLINE bool isGpbHi() const { return _vreg.reg == kRegTypeGpbHi; }
+  ASMJIT_INLINE bool isGpbHi() const { return _vreg.type == kRegTypeGpbHi; }
   //! @brief Get whether the variable is Gp WORD (16-bit) register.
-  ASMJIT_INLINE bool isGpw() const { return _vreg.reg == kRegTypeGpw; }
+  ASMJIT_INLINE bool isGpw() const { return _vreg.type == kRegTypeGpw; }
   //! @brief Get whether the variable is Gp DWORD (32-bit) register.
-  ASMJIT_INLINE bool isGpd() const { return _vreg.reg == kRegTypeGpd; }
+  ASMJIT_INLINE bool isGpd() const { return _vreg.type == kRegTypeGpd; }
   //! @brief Get whether the variable is Gp QWORD (64-bit) register.
-  ASMJIT_INLINE bool isGpq() const { return _vreg.reg == kRegTypeGpq; }
+  ASMJIT_INLINE bool isGpq() const { return _vreg.type == kRegTypeGpq; }
 
   //! @brief Get whether the variable is Fp register.
-  ASMJIT_INLINE bool isFp() const { return _vreg.reg == kRegTypeFp; }
+  ASMJIT_INLINE bool isFp() const { return _vreg.type == kRegTypeFp; }
   //! @brief Get whether the variable is Mm (64-bit) type.
-  ASMJIT_INLINE bool isMm() const { return _vreg.reg == kRegTypeMm; }
+  ASMJIT_INLINE bool isMm() const { return _vreg.type == kRegTypeMm; }
   //! @brief Get whether the variable is Xmm (128-bit) type.
-  ASMJIT_INLINE bool isXmm() const { return _vreg.reg == kRegTypeXmm; }
+  ASMJIT_INLINE bool isXmm() const { return _vreg.type == kRegTypeXmm; }
   //! @brief Get whether the variable is Ymm (256-bit) type.
-  ASMJIT_INLINE bool isYmm() const { return _vreg.reg == kRegTypeYmm; }
+  ASMJIT_INLINE bool isYmm() const { return _vreg.type == kRegTypeYmm; }
 
   // --------------------------------------------------------------------------
   // [Memory Cast]
@@ -2909,7 +3030,7 @@ struct X86Var : public BaseVar {
 protected:
   ASMJIT_INLINE X86Var(const X86Var& other, uint32_t reg, uint32_t size) : BaseVar(DontInitialize)
   {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeVar, size, reg, other._vreg.index, other._base.id);
+    _init_packed_op_sz_w0_id(kOperandTypeVar, size, (reg << 8) + other._vreg.index, other._base.id);
     _vreg.vType = other._vreg.vType;
   }
 };
@@ -2939,12 +3060,17 @@ struct GpVar : public X86Var {
   //! the same variable in different places.
   ASMJIT_INLINE GpVar(const GpVar& other) : X86Var(other) {}
 
-  //! @brief Create new uninitialized @c GpVar instance (internal constructor).
+  //! @brief Create new uninitialized @c GpVar instance (internal).
   explicit ASMJIT_INLINE GpVar(const _DontInitialize&) : X86Var(DontInitialize) {}
 
   // --------------------------------------------------------------------------
   // [GpVar Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone GpVar operand.
+  ASMJIT_INLINE GpVar clone() const {
+    return GpVar(*this);
+  }
 
   //! @brief Reset GpVar operand.
   ASMJIT_INLINE void reset() {
@@ -3000,12 +3126,17 @@ struct FpVar : public X86Var {
   ASMJIT_INLINE FpVar() : X86Var() {}
   ASMJIT_INLINE FpVar(const FpVar& other) : X86Var(other) {}
 
-  //! @brief Create new uninitialized @c FpVar instance (internal constructor).
+  //! @brief Create new uninitialized @c FpVar instance (internal).
   explicit ASMJIT_INLINE FpVar(const _DontInitialize&) : X86Var(DontInitialize) {}
 
   // --------------------------------------------------------------------------
-  // [GpVar Specific]
+  // [FpVar Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone FpVar operand.
+  ASMJIT_INLINE FpVar clone() const {
+    return FpVar(*this);
+  }
 
   //! @brief Reset FpVar operand.
   ASMJIT_INLINE void reset() {
@@ -3046,12 +3177,17 @@ struct MmVar : public X86Var {
   //! the same variable in different places.
   ASMJIT_INLINE MmVar(const MmVar& other) : X86Var(other) {}
 
-  //! @brief Create new uninitialized @c MmVar instance (internal constructor).
+  //! @brief Create new uninitialized @c MmVar instance (internal).
   explicit ASMJIT_INLINE MmVar(const _DontInitialize&) : X86Var(DontInitialize) {}
 
   // --------------------------------------------------------------------------
   // [MmVar Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone MmVar operand.
+  ASMJIT_INLINE MmVar clone() const {
+    return MmVar(*this);
+  }
 
   //! @brief Reset MmVar operand.
   ASMJIT_INLINE void reset() {
@@ -3087,12 +3223,17 @@ struct XmmVar : public X86Var {
 
   ASMJIT_INLINE XmmVar(const XmmVar& other) : X86Var(other) {}
 
-  //! @brief Create new uninitialized @c XmmVar instance (internal constructor).
+  //! @brief Create new uninitialized @c XmmVar instance (internal).
   explicit ASMJIT_INLINE XmmVar(const _DontInitialize&) : X86Var(DontInitialize) {}
 
   // --------------------------------------------------------------------------
   // [XmmVar Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone XmmVar operand.
+  ASMJIT_INLINE XmmVar clone() const {
+    return XmmVar(*this);
+  }
 
   //! @brief Reset XmmVar operand.
   ASMJIT_INLINE void reset() {
@@ -3128,12 +3269,17 @@ struct YmmVar : public X86Var {
 
   ASMJIT_INLINE YmmVar(const YmmVar& other) : X86Var(other) {}
 
-  //! @brief Create new uninitialized @c YmmVar instance (internal constructor).
+  //! @brief Create new uninitialized @c YmmVar instance (internal).
   explicit ASMJIT_INLINE YmmVar(const _DontInitialize&) : X86Var(DontInitialize) {}
 
   // --------------------------------------------------------------------------
   // [YmmVar Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone YmmVar operand.
+  ASMJIT_INLINE YmmVar clone() const {
+    return YmmVar(*this);
+  }
 
   //! @brief Reset YmmVar operand.
   ASMJIT_INLINE void reset() {
@@ -3351,32 +3497,19 @@ ASMJIT_VAR const SegReg fs;
 ASMJIT_VAR const SegReg gs;
 
 //! @brief Get Gpb register (lo-byte).
-static ASMJIT_INLINE GpReg gpb_lo(uint32_t index)
-{ return GpReg(kRegTypeGpbLo, index, 1); }
-
+static ASMJIT_INLINE GpReg gpb_lo(uint32_t index) { return GpReg(kRegTypeGpbLo, index, 1); }
 //! @brief Get Gpb register (hi-byte).
-static ASMJIT_INLINE GpReg gpb_hi(uint32_t index)
-{ return GpReg(kRegTypeGpbHi, index, 1); }
-
+static ASMJIT_INLINE GpReg gpb_hi(uint32_t index) { return GpReg(kRegTypeGpbHi, index, 1); }
 //! @brief Get Gpw register.
-static ASMJIT_INLINE GpReg gpw(uint32_t index)
-{ return GpReg(kRegTypeGpw, index, 2); }
-
+static ASMJIT_INLINE GpReg gpw(uint32_t index) { return GpReg(kRegTypeGpw, index, 2); }
 //! @brief Get Gpd register.
-static ASMJIT_INLINE GpReg gpd(uint32_t index)
-{ return GpReg(kRegTypeGpd, index, 4); }
-
+static ASMJIT_INLINE GpReg gpd(uint32_t index) { return GpReg(kRegTypeGpd, index, 4); }
 //! @brief Get Fp register.
-static ASMJIT_INLINE FpReg fp(uint32_t index)
-{ return FpReg(kRegTypeFp, index, 10); }
-
+static ASMJIT_INLINE FpReg fp(uint32_t index) { return FpReg(kRegTypeFp, index, 10); }
 //! @brief Get Mm register.
-static ASMJIT_INLINE MmReg mm(uint32_t index)
-{ return MmReg(kRegTypeMm, index, 8); }
-
+static ASMJIT_INLINE MmReg mm(uint32_t index) { return MmReg(kRegTypeMm, index, 8); }
 //! @brief Get Xmm register.
-static ASMJIT_INLINE XmmReg xmm(uint32_t index)
-{ return XmmReg(kRegTypeXmm, index, 16); }
+static ASMJIT_INLINE XmmReg xmm(uint32_t index) { return XmmReg(kRegTypeXmm, index, 16); }
 
 // ============================================================================
 // [asmjit::x86x64::Mem - [label + displacement]]
@@ -3556,6 +3689,11 @@ static ASMJIT_INLINE Mem dqword_ptr(const GpVar& base, const GpVar& index, uint3
 // [asmjit::x86x64::Util]
 // ============================================================================
 
+static ASMJIT_INLINE bool x86IsGpbRegOp(const Operand* op) {
+  const uint32_t mask = IntUtil::pack32_2x8_1x16(0xFF, 0xFF, ~(kRegTypePatchedGpbHi << 8) & 0xFF00);
+  return (op->_packed[0].u32[0] & mask) == IntUtil::pack32_2x8_1x16(kOperandTypeReg, 1, 0x0000);
+}
+
 static ASMJIT_INLINE uint32_t x86VarTypeToClass(uint32_t vType) {
   // Getting varClass is the only safe operation when dealing with denormalized
   // varType. Any other property would require to map vType to the architecture
@@ -3572,11 +3710,6 @@ static ASMJIT_INLINE bool x86VarIsInt(uint32_t vType) {
 static ASMJIT_INLINE bool x86VarIsFloat(uint32_t vType) {
   ASMJIT_ASSERT(vType < kVarTypeCount);
   return (_varInfo[vType].getDesc() & (kVarDescSp | kVarDescDp)) != 0;
-}
-
-static ASMJIT_INLINE bool x86IsGpbRegOp(const Operand* op) {
-  const uint32_t mask = IntUtil::pack32_4x8(0xFF, 0xFF, 0xFF & ~(kRegTypePatchedGpbHi), 0);
-  return (op->_packed[0].u32[0] & mask) == IntUtil::pack32_4x8(kOperandTypeReg, 1, 0, 0);
 }
 
 //! @}
@@ -3659,8 +3792,7 @@ ASMJIT_VAR const GpReg zsi;
 ASMJIT_VAR const GpReg zdi;
 
 //! @brief Get Gpq register.
-static ASMJIT_INLINE GpReg gpz(uint32_t index)
-{ return GpReg(kRegTypeGpd, index, 4); }
+static ASMJIT_INLINE GpReg gpz(uint32_t index) { return GpReg(kRegTypeGpd, index, 4); }
 
 // ============================================================================
 // [asmjit::x86::Mem]
@@ -3898,12 +4030,9 @@ ASMJIT_VAR const YmmReg ymm14;
 ASMJIT_VAR const YmmReg ymm15;
 
 //! @brief Get Gpq register.
-static ASMJIT_INLINE GpReg gpq(uint32_t index)
-{ return GpReg(kRegTypeGpq, index, 8); }
-
+static ASMJIT_INLINE GpReg gpq(uint32_t index) { return GpReg(kRegTypeGpq, index, 8); }
 //! @brief Get Gpq register.
-static ASMJIT_INLINE GpReg gpz(uint32_t index)
-{ return GpReg(kRegTypeGpq, index, 8); }
+static ASMJIT_INLINE GpReg gpz(uint32_t index) { return GpReg(kRegTypeGpq, index, 8); }
 
 // ============================================================================
 // [asmjit::x64::Mem]

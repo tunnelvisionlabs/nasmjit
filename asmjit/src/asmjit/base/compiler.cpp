@@ -286,8 +286,8 @@ TargetNode* BaseCompiler::addTarget() {
 // ============================================================================
 
 Error BaseCompiler::_newLabel(Label* dst) {
-  dst->_init_packed_op_sz_r0_r1_id(kOperandTypeLabel, 0, 0, 0, kInvalidValue);
-  dst->_init_packed_u2_u3(0, 0);
+  dst->_init_packed_op_sz_b0_b1_id(kOperandTypeLabel, 0, 0, 0, kInvalidValue);
+  dst->_init_packed_d2_d3(0, 0);
 
   TargetNode* node = newTarget();
   if (node == NULL)

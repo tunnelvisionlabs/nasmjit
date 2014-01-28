@@ -1715,9 +1715,9 @@ struct X86X64Compiler : public BaseCompiler {
   }
 
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
-  INST_2x_(crc32, kInstCrc32, GpVar, GpVar, o0.isReg(kRegTypeGpd) || o0.isReg(kRegTypeGpq))
+  INST_2x_(crc32, kInstCrc32, GpVar, GpVar, o0.isRegType(kRegTypeGpd) || o0.isRegType(kRegTypeGpq))
   //! @overload
-  INST_2x_(crc32, kInstCrc32, GpVar, Mem, o0.isReg(kRegTypeGpd) || o0.isReg(kRegTypeGpq))
+  INST_2x_(crc32, kInstCrc32, GpVar, Mem, o0.isRegType(kRegTypeGpd) || o0.isRegType(kRegTypeGpq))
 
   //! @brief Decrement by 1.
   INST_1x(dec, kInstDec, GpVar)

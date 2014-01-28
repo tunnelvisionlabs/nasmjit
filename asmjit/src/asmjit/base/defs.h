@@ -62,7 +62,7 @@ ASMJIT_ENUM(kOperandId) {
 // [asmjit::kRegClass]
 // ============================================================================
 
-//! @brief X86 register class.
+//! @brief Register class.
 ASMJIT_ENUM(kRegClass) {
   //! @brief Gp register class (any architecture).
   kRegClassGp = 0,
@@ -115,7 +115,6 @@ ASMJIT_ENUM(kInstOptions) {
   //! @brief Condition is unlikely to be taken (instruction).
   kInstOptionNotTaken = 0x08
 };
-
 
 // ============================================================================
 // [asmjit::kSize]
@@ -276,12 +275,28 @@ struct Operand {
     uint8_t op;
     //! @brief Size of register or variable.
     uint8_t size;
-    //! @brief Register type.
-    uint8_t reg;
-    //! @brief Register index.
-    uint8_t index;
 
-    //! @brief Variable id (used by @ref Compiler to identify variables).
+    union {
+      //! @brief Register code = (type << 8) | index.
+      uint16_t code;
+
+      //! @brief Register type and index access.
+      struct {
+#if defined(ASMJIT_HOST_LE)
+        //! @brief Register index.
+        uint8_t index;
+        //! @brief Register type.
+        uint8_t type;
+#else
+        //! @brief Register type.
+        uint8_t type;
+        //! @brief Register index.
+        uint8_t index;
+#endif // ASMJIT_HOST
+      };
+    };
+
+    //! @brief Variable id (used by @ref BaseCompiler to identify variables).
     uint32_t id;
 
     //! @brief Variable type.
@@ -303,15 +318,13 @@ struct Operand {
     //! @brief Type of the memory operand, see @ref kMemType.
     uint8_t type;
     //! X86/X64 layout:
-    //!   - segment  [4 bits], see @ref kSeg or @ref kSegNone.
-    //!   - 67h      [1 bits], set to use size override prefix (67h).
-    //!   - reserved [1 bit ]
+    //!   - segment  [3 bits], see @ref kSeg.
     //!   - shift    [2 bits], index register shift (0 to 3).
     uint8_t flags;
 
-    //! @brief Base register, variable id, or label id.
+    //! @brief Base register, variable or label id.
     uint32_t base;
-    //! @brief Index register or variable id.
+    //! @brief Index register or variable.
     uint32_t index;
     //! @brief 32-bit displacement or absolute address.
     int32_t displacement;
@@ -384,8 +397,8 @@ struct Operand {
 
   //! @brief Create an uninitialized operand.
   ASMJIT_INLINE Operand() {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeNone, 0, 0, 0, kInvalidValue);
-    _init_packed_u2_u3(0, 0);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeNone, 0, 0, 0, kInvalidValue);
+    _init_packed_d2_d3(0, 0);
   }
 
   //! @brief Create a reference to @a other operand.
@@ -396,6 +409,15 @@ struct Operand {
   explicit ASMJIT_INLINE Operand(const _DontInitialize&) {}
 
   // --------------------------------------------------------------------------
+  // [Operand]
+  // --------------------------------------------------------------------------
+
+  //! @brief Clone Operand.
+  ASMJIT_INLINE Operand clone() const {
+    return Operand(*this);
+  }
+
+  // --------------------------------------------------------------------------
   // [Init & Copy]
   // --------------------------------------------------------------------------
 
@@ -404,30 +426,32 @@ struct Operand {
   //! @brief Initialize operand to @a other (used by constructors).
   ASMJIT_INLINE void _init(const Operand& other) { ::memcpy(this, &other, sizeof(Operand)); }
 
+  ASMJIT_INLINE void _init_packed_op_sz_b0_b1_id(uint32_t op, uint32_t sz, uint32_t r0, uint32_t r1, uint32_t id) {
+    // This hack is not for performance, but to decrease the size of the binary
+    // generated when constructing AsmJit operands (mostly for third parties).
+    // Some compilers are not able to join four BYTE writes to a single DWORD
+    // write. Because the 'a', 'b', 'c' and 'd' variables are usually compile
+    // time constants the compiler can do a really nice job if they are joined
+    // by using bitwise operations.
+    _packed[0].setPacked_2x32(IntUtil::pack32_4x8(op, sz, r0, r1), id);
+  }
+
+  ASMJIT_INLINE void _init_packed_op_sz_w0_id(uint32_t op, uint32_t sz, uint32_t w0, uint32_t id) {
+    _packed[0].setPacked_2x32(IntUtil::pack32_2x8_1x16(op, sz, w0), id);
+  }
+
+  ASMJIT_INLINE void _init_packed_d0_d1(uint32_t u0, uint32_t u1) {
+    _packed[0].setPacked_2x32(u0, u1);
+  }
+
+  ASMJIT_INLINE void _init_packed_d2_d3(uint32_t u2, uint32_t u3) {
+    _packed[1].setPacked_2x32(u2, u3);
+  }
+
   //! @internal
   //!
   //! @brief Initialize operand to @a other (used by assign operators).
   ASMJIT_INLINE void _copy(const Operand& other) { ::memcpy(this, &other, sizeof(Operand)); }
-
-  // --------------------------------------------------------------------------
-  // [Init Hacks]
-  // --------------------------------------------------------------------------
-
-  ASMJIT_INLINE void _init_packed_op_sz_r0_r1_id(uint32_t op, uint32_t sz, uint32_t r0, uint32_t r1, uint32_t id) {
-    // This hack is not for performance, but to decrease the size of the binary
-    // generated when constructing AsmJit operands (mostly for third parties).
-    // Some compilers are not able to join four BYTE writes to as single DWORD
-    // write. Because the 'a', 'b', 'c', and 'd' constants are usually
-    // determinted at compile time, the compiler can do a really nice job when
-    // we join them by using bit operations.
-    _packed[0].setPacked_2x32(IntUtil::pack32_4x8(op, sz, r0, r1), id);
-  }
-
-  ASMJIT_INLINE void _init_packed_u0_u1(uint32_t u0, uint32_t u1)
-  { _packed[0].setPacked_2x32(u0, u1); }
-
-  ASMJIT_INLINE void _init_packed_u2_u3(uint32_t u2, uint32_t u3)
-  { _packed[1].setPacked_2x32(u2, u3); }
 
   // --------------------------------------------------------------------------
   // [Data]
@@ -463,13 +487,15 @@ struct Operand {
   // [Type - Combined]
   // --------------------------------------------------------------------------
 
-  //! @brief Get whether the operand is register and register is @a reg.
-  ASMJIT_INLINE bool isReg(uint32_t reg) const
-  { return (_packed[0].u32[0] & IntUtil::pack32_4x8(0xFF, 0, 0xFF, 0)) == IntUtil::pack32_4x8(kOperandTypeReg, 0, reg, 0); }
+  //! @brief Get whether the operand is register of @a type.
+  ASMJIT_INLINE bool isRegType(uint32_t type) const {
+    return (_packed[0].u32[0] & IntUtil::pack32_2x8_1x16(0xFF, 0, 0xFF00)) == IntUtil::pack32_2x8_1x16(kOperandTypeReg, 0, (type << 8));
+  }
 
-  //! @brief Get whether the operand is register and register is @a reg + @a index.
-  ASMJIT_INLINE bool isReg(uint32_t reg, uint32_t index) const
-  { return (_packed[0].u32[0] & IntUtil::pack32_4x8(0xFF, 0, 0xFF, 0xFF)) == IntUtil::pack32_4x8(kOperandTypeReg, 0, reg, index); }
+  //! @brief Get whether the operand is register and of @a type and @a index.
+  ASMJIT_INLINE bool isRegCode(uint32_t type, uint32_t index) const {
+    return (_packed[0].u32[0] & IntUtil::pack32_2x8_1x16(0xFF, 0, 0xFFFF)) == IntUtil::pack32_2x8_1x16(kOperandTypeReg, 0, (type << 8) + index);
+  }
 
   //! @brief Get whether the operand is a register or memory.
   ASMJIT_INLINE bool isRegOrMem() const {
@@ -533,12 +559,14 @@ ASMJIT_VAR const Operand noOperand;
 //! @brief Operand utilities.
 struct OperandUtil {
   //! @brief Make variable id.
-  static ASMJIT_INLINE uint32_t makeVarId(uint32_t id)
-  { return id | kOperandIdVar; }
+  static ASMJIT_INLINE uint32_t makeVarId(uint32_t id) {
+    return id | kOperandIdVar;
+  }
 
   //! @brief Make label id.
-  static ASMJIT_INLINE uint32_t makeLabelId(uint32_t id)
-  { return id; }
+  static ASMJIT_INLINE uint32_t makeLabelId(uint32_t id) {
+    return id;
+  }
 
   //! @brief Strip variable id bit so it becomes a pure index to VarData[] array.
   static ASMJIT_INLINE uint32_t stripVarId(uint32_t id) {
@@ -550,14 +578,16 @@ struct OperandUtil {
   //! @note The function will never return @c true if the id is @c kInvalidValue.
   //! The trick is to compare a given id to -1 (kInvalidValue) so we check both
   //! using only one comparison.
-  static ASMJIT_INLINE bool isVarId(uint32_t id)
-  { return static_cast<int32_t>(id) < -1; }
+  static ASMJIT_INLINE bool isVarId(uint32_t id) {
+    return static_cast<int32_t>(id) < -1;
+  }
 
   //! @brief Get whether the id refers to @ref Label.
   //!
   //! @note The function will never return @c true if the id is @c kInvalidValue.
-  static ASMJIT_INLINE bool isLabelId(uint32_t id)
-  { return static_cast<int32_t>(id) >= 0; }
+  static ASMJIT_INLINE bool isLabelId(uint32_t id) {
+    return static_cast<int32_t>(id) >= 0;
+  }
 };
 
 // ============================================================================
@@ -572,11 +602,11 @@ struct BaseReg : public Operand {
 
   //! @brief Create a dummy base register.
   ASMJIT_INLINE BaseReg() : Operand(DontInitialize)
-  { _init_packed_op_sz_r0_r1_id(kOperandTypeReg, 0, kInvalidReg, kInvalidReg, kInvalidValue); }
+  { _init_packed_op_sz_w0_id(kOperandTypeReg, 0, (kInvalidReg << 8) + kInvalidReg, kInvalidValue); }
 
   //! @brief Create a new base register.
-  ASMJIT_INLINE BaseReg(uint32_t reg, uint32_t index, uint32_t size) : Operand(DontInitialize)
-  { _init_packed_op_sz_r0_r1_id(kOperandTypeReg, size, reg, index, kInvalidValue); }
+  ASMJIT_INLINE BaseReg(uint32_t type, uint32_t index, uint32_t size) : Operand(DontInitialize)
+  { _init_packed_op_sz_w0_id(kOperandTypeReg, size, (type << 8) + index, kInvalidValue); }
 
   //! @brief Create a new reference to @a other.
   ASMJIT_INLINE BaseReg(const BaseReg& other) : Operand(other) {}
@@ -587,19 +617,34 @@ struct BaseReg : public Operand {
   // [BaseReg Specific]
   // --------------------------------------------------------------------------
 
-  //! @brief Get whether register code is equal to @a type.
-  ASMJIT_INLINE bool isReg(uint32_t reg) const {
-    return _vreg.reg == reg;
+  //! @brief Clone BaseReg operand.
+  ASMJIT_INLINE BaseReg clone() const {
+    return BaseReg(*this);
   }
 
   //! @brief Get whether register code is equal to @a type.
-  ASMJIT_INLINE bool isReg(uint32_t reg, uint32_t index) const {
-    return (_packed[0].u32[0] & IntUtil::pack32_4x8(0, 0, 0xFF, 0xFF)) == IntUtil::pack32_4x8(0, 0, reg, index);
+  ASMJIT_INLINE bool isRegType(uint32_t type) const {
+    return _vreg.type == type;
+  }
+
+  //! @brief Get whether register code is equal to @a type.
+  ASMJIT_INLINE bool isRegCode(uint32_t code) const {
+    return _vreg.code == code;
+  }
+
+  //! @brief Get whether register code is equal to @a type.
+  ASMJIT_INLINE bool isRegCode(uint32_t type, uint32_t index) const {
+    return _vreg.code == (type << 8) + index;
+  }
+
+  //! @brief Get register code that equals to '(type << 8) + index'.
+  ASMJIT_INLINE uint32_t getCode() const {
+    return _vreg.code;
   }
 
   //! @brief Get register type.
-  ASMJIT_INLINE uint32_t getReg() const {
-    return _vreg.reg;
+  ASMJIT_INLINE uint32_t getType() const {
+    return _vreg.type;
   }
 
   //! @brief Get register index.
@@ -608,21 +653,32 @@ struct BaseReg : public Operand {
   }
 
 #define ASMJIT_REG_OP(_Type_) \
+  ASMJIT_INLINE _Type_ clone() const { \
+    return _Type_(*this); \
+  } \
+  \
   /*! @brief Set register @a size. */ \
   ASMJIT_INLINE _Type_& setSize(uint32_t size) { \
     _vreg.size = static_cast<uint8_t>(size); \
     return *this; \
   } \
   \
-  /*! @brief Set register @a type. */ \
-  ASMJIT_INLINE _Type_& setReg(uint32_t reg) { \
-    _vreg.reg = static_cast<uint8_t>(reg); \
-    return *this; } \
+  /*! @brief Set register @a code. */ \
+  ASMJIT_INLINE _Type_& setCode(uint32_t code) { \
+    _vreg.code = static_cast<uint16_t>(code); \
+    return *this; \
+  } \
   \
   /*! @brief Set register @a type and @a index. */ \
-  ASMJIT_INLINE _Type_& setReg(uint32_t reg, uint32_t index) { \
-    _vreg.reg = static_cast<uint8_t>(reg); \
+  ASMJIT_INLINE _Type_& setCode(uint32_t type, uint32_t index) { \
+    _vreg.type = static_cast<uint8_t>(type); \
     _vreg.index = static_cast<uint8_t>(index); \
+    return *this; \
+  } \
+  \
+  /*! @brief Set register @a type. */ \
+  ASMJIT_INLINE _Type_& setType(uint32_t type) { \
+    _vreg.type = static_cast<uint8_t>(type); \
     return *this; \
   } \
   \
@@ -659,10 +715,15 @@ struct BaseMem : public Operand {
   // [BaseMem Specific]
   // --------------------------------------------------------------------------
 
+  //! @brief Clone BaseMem operand.
+  ASMJIT_INLINE BaseMem clone() const {
+    return BaseMem(*this);
+  }
+
   //! @brief Reset BaseMem operand.
   ASMJIT_INLINE void reset() {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, 0, kInvalidValue);
-    _init_packed_u2_u3(kInvalidValue, 0);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeMem, 0, kMemTypeBaseIndex, 0, kInvalidValue);
+    _init_packed_d2_d3(kInvalidValue, 0);
   }
 
   //! @brief Get the type of the memory operand, see @c kMemType.
@@ -719,8 +780,8 @@ struct BaseVar : public Operand {
   // --------------------------------------------------------------------------
 
   ASMJIT_INLINE BaseVar() : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeVar, 0, 0, 0, kInvalidValue);
-    _init_packed_u2_u3(kInvalidValue, kInvalidValue);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeVar, 0, 0, 0, kInvalidValue);
+    _init_packed_d2_d3(kInvalidValue, kInvalidValue);
   }
 
   ASMJIT_INLINE BaseVar(const BaseVar& other) : Operand(other) {}
@@ -728,10 +789,17 @@ struct BaseVar : public Operand {
   explicit ASMJIT_INLINE BaseVar(const _DontInitialize&) : Operand(DontInitialize) {}
 
   // --------------------------------------------------------------------------
-  // [Type]
+  // [BaseVar Specific]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE uint32_t getVarType() const { return _vreg.vType; }
+  //! @brief Clone BaseVar operand.
+  ASMJIT_INLINE BaseVar clone() const {
+    return BaseVar(*this);
+  }
+
+  ASMJIT_INLINE uint32_t getVarType() const {
+    return _vreg.vType;
+  }
 
   // --------------------------------------------------------------------------
   // [Operator Overload]
@@ -764,13 +832,13 @@ struct Imm : public Operand {
 
   //! @brief Create a new immediate value (initial value is 0).
   Imm() : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeImm, 0, 0, 0, kInvalidValue);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeImm, 0, 0, 0, kInvalidValue);
     _imm.value._i64[0] = 0;
   }
 
   //! @brief Create a new signed immediate value, assigning the value to @a val.
   explicit Imm(int64_t val) : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeImm, 0, 0, 0, kInvalidValue);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeImm, 0, 0, 0, kInvalidValue);
     _imm.value._i64[0] = val;
   }
 
@@ -782,6 +850,11 @@ struct Imm : public Operand {
   // --------------------------------------------------------------------------
   // [Immediate Specific]
   // --------------------------------------------------------------------------
+
+  //! @brief Clone Imm operand.
+  ASMJIT_INLINE Imm clone() const {
+    return Imm(*this);
+  }
 
   //! @brief Get whether the immediate can be casted to 8-bit signed integer.
   ASMJIT_INLINE bool isInt8() const { return IntUtil::isInt8(_imm.value._i64[0]); }
@@ -1041,13 +1114,13 @@ struct Label : public Operand {
 
   //! @brief Create new, unassociated label.
   ASMJIT_INLINE Label() : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeLabel, 0, 0, 0, kInvalidValue);
-    _init_packed_u2_u3(0, 0);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeLabel, 0, 0, 0, kInvalidValue);
+    _init_packed_d2_d3(0, 0);
   }
 
   explicit ASMJIT_INLINE Label(uint32_t id) : Operand(DontInitialize) {
-    _init_packed_op_sz_r0_r1_id(kOperandTypeLabel, 0, 0, 0, id);
-    _init_packed_u2_u3(0, 0);
+    _init_packed_op_sz_b0_b1_id(kOperandTypeLabel, 0, 0, 0, id);
+    _init_packed_d2_d3(0, 0);
   }
 
   //! @brief Create new initialized label.

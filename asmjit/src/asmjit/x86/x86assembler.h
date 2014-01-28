@@ -755,9 +755,9 @@ struct X86X64Assembler : public BaseAssembler {
   INST_0x(cpuid, kInstCpuid)
 
   //! @brief Accumulate CRC32 Value (polynomial 0x11EDC6F41) (SSE4.2).
-  INST_2x_(crc32, kInstCrc32, GpReg, GpReg, o0.isReg(kRegTypeGpd) || o0.isReg(kRegTypeGpq))
+  INST_2x_(crc32, kInstCrc32, GpReg, GpReg, o0.isRegType(kRegTypeGpd) || o0.isRegType(kRegTypeGpq))
   //! @overload
-  INST_2x_(crc32, kInstCrc32, GpReg, Mem, o0.isReg(kRegTypeGpd) || o0.isReg(kRegTypeGpq))
+  INST_2x_(crc32, kInstCrc32, GpReg, Mem, o0.isRegType(kRegTypeGpd) || o0.isRegType(kRegTypeGpq))
 
   //! @brief Decrement by 1.
   INST_1x(dec, kInstDec, GpReg)
@@ -921,7 +921,7 @@ struct X86X64Assembler : public BaseAssembler {
   INST_0x(popf, kInstPopf)
 
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
-  INST_2x_(popcnt, kInstPopcnt, GpReg, GpReg, !o0.isGpb() && o0.getReg() == o1.getReg())
+  INST_2x_(popcnt, kInstPopcnt, GpReg, GpReg, !o0.isGpb() && o0.getType() == o1.getType())
   //! @overload
   INST_2x_(popcnt, kInstPopcnt, GpReg, Mem, !o0.isGpb())
 
@@ -1207,8 +1207,8 @@ struct X86X64Assembler : public BaseAssembler {
   //! Clear floating-point exception flags after checking for pending unmasked
   //! floating-point exceptions.
   //!
-  //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE, and IE),
-  //! the exception summary status flag (ES), the stack fault flag (SF), and
+  //! Clears the floating-point exception flags (PE, UE, OE, ZE, DE and IE),
+  //! the exception summary status flag (ES), the stack fault flag (SF) and
   //! the busy flag (B) in the FPU status word. The FCLEX instruction checks
   //! for and handles any pending unmasked floating-point exceptions before
   //! clearing the exception flags.
@@ -1366,7 +1366,7 @@ struct X86X64Assembler : public BaseAssembler {
   INST_1x(fnstcw, kInstFnstcw, Mem)
 
   //! @brief Store x87 FPU Status Word to @a o0 (AX) (FPU).
-  INST_1x_(fnstsw, kInstFnstsw, GpReg, o0.isReg(kRegTypeGpw, kRegIndexAx))
+  INST_1x_(fnstsw, kInstFnstsw, GpReg, o0.isRegCode(kRegTypeGpw, kRegIndexAx))
   //! @brief Store x87 FPU Status Word to @a o0 (2 Bytes) (FPU).
   INST_1x(fnstsw, kInstFnstsw, Mem)
 
@@ -1403,8 +1403,8 @@ struct X86X64Assembler : public BaseAssembler {
 
   //! @brief Sine and Cosine (FPU).
   //!
-  //! Compute the sine and cosine of fp0; replace fp0 with
-  //! the sine, and push the cosine on the register stack.
+  //! Compute the sine and cosine of fp0; replace fp0 with the sine
+  //! and push the cosine on the register stack.
   INST_0x(fsincos, kInstFsincos)
 
   //! @brief Square Root (FPU).
@@ -1445,7 +1445,7 @@ struct X86X64Assembler : public BaseAssembler {
   INST_1x(fstenv, kInstFstenv, Mem)
 
   //! @brief Store x87 FPU Status Word (AX) (FPU).
-  INST_1x_(fstsw, kInstFstsw, GpReg, o0.isReg(kRegTypeGpw, kRegIndexAx))
+  INST_1x_(fstsw, kInstFstsw, GpReg, o0.isRegCode(kRegTypeGpw, kRegIndexAx))
   //! @brief Store x87 FPU Status Word (2 Bytes) (FPU).
   INST_1x(fstsw, kInstFstsw, Mem)
 
@@ -1510,7 +1510,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Extract Exponent and Significand (FPU).
   //!
   //! Separate value in fp0 into exponent and significand, store exponent
-  //! in fp0, and push the significand on the register stack.
+  //! in fp0 and push the significand on the register stack.
   INST_0x(fxtract, kInstFxtract)
 
   //! @brief Compute y * log2(x).
