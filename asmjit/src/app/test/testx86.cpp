@@ -1349,6 +1349,59 @@ struct X86Test_CallManyArgs : public X86Test {
 };
 
 // ============================================================================
+// [X86Test_CallImmArgs]
+// ============================================================================
+
+struct X86Test_CallImmArgs : public X86Test {
+  X86Test_CallImmArgs() : X86Test("[Call] Imm Args") {}
+
+  static void add(PodVector<X86Test*>& tests) {
+    tests.append(new X86Test_CallImmArgs());
+  }
+
+  virtual void compile(Compiler& c) {
+    c.addFunc(kFuncConvHost, FuncBuilder0<int>());
+
+    // Prepare.
+    GpVar fn(c, kVarTypeIntPtr, "fn");
+    GpVar rv(c, kVarTypeInt32, "rv");
+
+    c.mov(fn, imm_ptr((void*)X86Test_CallManyArgs::calledFunc));
+
+    // Call function.
+    X86X64CallNode* call = c.call(fn, kFuncConvHost,
+      FuncBuilder10<int, int, int, int, int, int, int, int, int, int, int>());
+    call->setArg(0, imm(0x03));
+    call->setArg(1, imm(0x12));
+    call->setArg(2, imm(0xA0));
+    call->setArg(3, imm(0x0B));
+    call->setArg(4, imm(0x2F));
+    call->setArg(5, imm(0x02));
+    call->setArg(6, imm(0x0C));
+    call->setArg(7, imm(0x12));
+    call->setArg(8, imm(0x18));
+    call->setArg(9, imm(0x1E));
+    call->setRet(0, rv);
+
+    c.ret(rv);
+    c.endFunc();
+  }
+
+  virtual bool run(void* _func, StringBuilder& result, StringBuilder& expect) {
+    typedef int (*Func)(void);
+    Func func = asmjit_cast<Func>(_func);
+
+    int resultRet = func();
+    int expectRet = X86Test_CallManyArgs::calledFunc(0x03, 0x12, 0xA0, 0x0B, 0x2F, 0x02, 0x0C, 0x12, 0x18, 0x1E);
+
+    result.setFormat("ret=%d", resultRet);
+    expect.setFormat("ret=%d", expectRet);
+
+    return resultRet == expectRet;
+  }
+};
+
+// ============================================================================
 // [X86Test_CallConditional]
 // ============================================================================
 
@@ -1632,8 +1685,8 @@ struct X86TestSuite {
 X86TestSuite::X86TestSuite() :
   result(EXIT_SUCCESS),
   binSize(0),
-  alwaysPrintLog(false) {
-
+  alwaysPrintLog(true) {
+  /*
   // Align.
   ADD_TEST(X86Test_AlignBase);
 
@@ -1660,13 +1713,14 @@ X86TestSuite::X86TestSuite() :
   // Call.
   ADD_TEST(X86Test_CallBase);
   ADD_TEST(X86Test_CallFast);
-  ADD_TEST(X86Test_CallManyArgs);
+  ADD_TEST(X86Test_CallManyArgs);*/
+  ADD_TEST(X86Test_CallImmArgs);/*
   ADD_TEST(X86Test_CallConditional);
   ADD_TEST(X86Test_CallMultiple);
-  ADD_TEST(X86Test_CallRecursive);
+  ADD_TEST(X86Test_CallRecursive);*/
 
   // Dummy.
-  //ADD_TEST(X86Test_Dummy);
+  // ADD_TEST(X86Test_Dummy);
 }
 
 X86TestSuite::~X86TestSuite() {
@@ -1712,7 +1766,8 @@ int X86TestSuite::run() {
         fprintf(file, "[Success] %s.\n", test->getName());
       }
       else {
-        fprintf(file, "\n%s", logger.getString());
+        if (!alwaysPrintLog)
+          fprintf(file, "\n%s", logger.getString());
         fprintf(file, "-------------------------------------------------------------------------------\n");
         fprintf(file, "[Failure] %s.\n", test->getName());
         fprintf(file, "-------------------------------------------------------------------------------\n");
@@ -1724,9 +1779,10 @@ int X86TestSuite::run() {
       runtime.release(func);
     }
     else {
-      fprintf(file, "[Failure] %s.\n", test->getName());
+      if (!alwaysPrintLog)
+        fprintf(file, "%s\n", logger.getString());
       fprintf(file, "-------------------------------------------------------------------------------\n");
-      fprintf(file, "%s\n", logger.getString());
+      fprintf(file, "[Failure] %s.\n", test->getName());
       fprintf(file, "===============================================================================\n");
     }
 

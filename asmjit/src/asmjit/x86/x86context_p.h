@@ -89,14 +89,10 @@ struct X86X64Context : public BaseContext {
   void emitPushSequence(uint32_t regs);
   void emitPopSequence(uint32_t regs);
 
-  void emitMoveArgOnStack(uint32_t dstType, const Mem* dst, uint32_t srcType, uint32_t srcIndex);
-  void emitMoveSpilledVarOnStack(
-    uint32_t dstType, const Mem* dst,
-    uint32_t srcType, const Mem* src,
-    uint32_t tmpGpRegIndex,
-    uint32_t tmpXmmRegIndex);
+  void emitMoveVarOnStack(uint32_t dstType, const Mem* dst, uint32_t srcType, uint32_t srcIndex);
+  void emitMoveImmOnStack(uint32_t dstType, const Mem* dst, const Imm* src);
 
-  void emitMoveImmOnStack(const Mem* dst, uint32_t dstType, const Imm* src);
+  void emitMoveImmToReg(uint32_t dstType, uint32_t dstIndex, const Imm* src);
 
   // --------------------------------------------------------------------------
   // [Register Management]

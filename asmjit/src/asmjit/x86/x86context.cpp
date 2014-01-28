@@ -681,7 +681,7 @@ void X86X64Context::emitPopSequence(uint32_t regs) {
 // [asmjit::x86x64::X86X64Context - EmitMoveArgOnStack / EmitMoveImmOnStack]
 // ============================================================================
 
-void X86X64Context::emitMoveArgOnStack(
+void X86X64Context::emitMoveVarOnStack(
   uint32_t dstType, const Mem* dst,
   uint32_t srcType, uint32_t srcIndex) {
 
@@ -951,7 +951,7 @@ _MovXmmQ:
   compiler->emit(kInstMovq, m0, r0);
 }
 
-void X86X64Context::emitMoveImmOnStack(const Mem* dst, uint32_t dstType, const Imm* src) {
+void X86X64Context::emitMoveImmOnStack(uint32_t dstType, const Mem* dst, const Imm* src) {
   X86X64Compiler* compiler = getCompiler();
 
   Mem mem(*dst);
@@ -1058,6 +1058,70 @@ _Move64:
 
     default:
       ASMJIT_ASSERT(!"Reached");
+      break;
+  }
+}
+
+// ============================================================================
+// [asmjit::x86x64::X86X64Context - EmitMoveImmToReg]
+// ============================================================================
+
+void X86X64Context::emitMoveImmToReg(uint32_t dstType, uint32_t dstIndex, const Imm* src) {
+  ASMJIT_ASSERT(dstIndex != kInvalidReg);
+  X86X64Compiler* compiler = getCompiler();
+
+  X86Reg r0;
+  Imm imm(*src);
+
+  switch (dstType) {
+    case kVarTypeInt8:
+    case kVarTypeUInt8:
+      imm.truncateTo8Bits();
+      goto _Move32;
+
+    case kVarTypeInt16:
+    case kVarTypeUInt16:
+      imm.truncateTo16Bits();
+      goto _Move32;
+
+    case kVarTypeInt32:
+    case kVarTypeUInt32:
+_Move32Truncate:
+      imm.truncateTo32Bits();
+_Move32:
+      r0.setSize(4);
+      r0.setCode(kRegTypeGpd, dstIndex);
+      compiler->emit(kInstMov, r0, imm);
+      break;
+
+    case kVarTypeInt64:
+    case kVarTypeUInt64:
+      // Move to GPD register will clear the HI-DWORD of GPQ register in 64-bit
+      // mode.
+      if (imm.isUInt32())
+        goto _Move32Truncate;
+
+      r0.setSize(8);
+      r0.setCode(kRegTypeGpq, dstIndex);
+      compiler->emit(kInstMov, r0, imm);
+      break;
+
+    case kVarTypeFp32:
+    case kVarTypeFp64:
+    case kVarTypeFpEx:
+      // TODO: [COMPILER] EmitMoveImmToReg.
+      break;
+      
+    case kVarTypeMm:
+      // TODO: [COMPILER] EmitMoveImmToReg.
+      break;
+
+    case kVarTypeXmm:
+    case kVarTypeXmmSs:
+    case kVarTypeXmmSd:
+    case kVarTypeXmmPs:
+    case kVarTypeXmmPd:
+      // TODO: [COMPILER] EmitMoveImmToReg.
       break;
   }
 }
@@ -2766,7 +2830,7 @@ ASMJIT_INLINE Error X86X64VarAlloc::run(BaseNode* node_) {
         continue;
 
       Mem dst = ptr(_context->_zsp, -static_cast<int>(_context->getRegSize()) + arg.getStackOffset());
-      _context->emitMoveArgOnStack(arg.getVarType(), &dst, vd->getType(), vd->getRegIndex());
+      _context->emitMoveVarOnStack(arg.getVarType(), &dst, vd->getType(), vd->getRegIndex());
     }
   }
 
@@ -3285,11 +3349,11 @@ protected:
   ASMJIT_INLINE void alloc();
 
   // --------------------------------------------------------------------------
-  // [Move]
+  // [AllocVars/Imms]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE void moveAllocatedVarsOnStack();
-  ASMJIT_INLINE void moveImmediatesOnStack();
+  ASMJIT_INLINE void allocVarsOnStack();
+  ASMJIT_INLINE void allocImmsOnStack();
 
   // --------------------------------------------------------------------------
   // [GuessAlloc / GuessSpill]
@@ -3360,7 +3424,7 @@ ASMJIT_INLINE Error X86X64CallAlloc::run(X86X64CallNode* node) {
   init(node, vi);
 
   // Move whatever can be moved on the stack.
-  moveAllocatedVarsOnStack();
+  allocVarsOnStack();
 
   // Plan register allocation. Planner is only able to assign one register per
   // variable. If any variable is used multiple times it will be handled later.
@@ -3379,7 +3443,7 @@ ASMJIT_INLINE Error X86X64CallAlloc::run(X86X64CallNode* node) {
   alloc<kRegClassXy>();
 
   // Move the remaining variables on the stack.
-  moveAllocatedVarsOnStack();
+  allocVarsOnStack();
 
   // Unuse clobbered registers that are not used to pass function arguments and
   // save variables used to pass function arguments that will be reused later on.
@@ -3387,8 +3451,8 @@ ASMJIT_INLINE Error X86X64CallAlloc::run(X86X64CallNode* node) {
   save<kRegClassMm>();
   save<kRegClassXy>();
 
-  // Move immediates on the stack.
-  moveImmediatesOnStack();
+  // Allocate immediates in registers and on the stack.
+  allocImmsOnStack();
 
   // Duplicate/Convert.
   // TODO:
@@ -3699,10 +3763,10 @@ ASMJIT_INLINE void X86X64CallAlloc::alloc() {
 }
 
 // ============================================================================
-// [asmjit::x86x64::X86X64CallAlloc - Move]
+// [asmjit::x86x64::X86X64CallAlloc - AllocVars/Imms]
 // ============================================================================
 
-ASMJIT_INLINE void X86X64CallAlloc::moveAllocatedVarsOnStack() {
+ASMJIT_INLINE void X86X64CallAlloc::allocVarsOnStack() {
   if (_stackArgsMask == 0)
     return;
 
@@ -3732,12 +3796,34 @@ ASMJIT_INLINE void X86X64CallAlloc::moveAllocatedVarsOnStack() {
     const FuncInOut& arg = decl->getArg(i);
     Mem dst = ptr(_context->_zsp, -static_cast<int>(_context->getRegSize()) + arg.getStackOffset());
 
-    _context->emitMoveArgOnStack(arg.getVarType(), &dst, vd->getType(), regIndex);
+    _context->emitMoveVarOnStack(arg.getVarType(), &dst, vd->getType(), regIndex);
     stackArgDone(mask);
   }
 }
 
-ASMJIT_INLINE void X86X64CallAlloc::moveImmediatesOnStack() {
+ASMJIT_INLINE void X86X64CallAlloc::allocImmsOnStack() {
+  X86X64CallNode* node = getNode();
+  X86X64FuncDecl* decl = node->getDecl();
+
+  uint32_t argCount = decl->getArgCount();
+  Operand* argList = node->_args;
+
+  for (uint32_t i = 0; i < argCount; i++) {
+    VarAttr* va = _argToVa[i];
+    if (va != NULL)
+      continue;
+
+    const Imm& imm = static_cast<const Imm&>(node->getArg(i));
+    const FuncInOut& arg = decl->getArg(i);
+
+    if (arg.hasStackOffset()) {
+      Mem dst = ptr(_context->_zsp, -static_cast<int>(_context->getRegSize()) + arg.getStackOffset());
+      _context->emitMoveImmOnStack(arg.getVarType(), &dst, &imm);
+    }
+    else {
+      _context->emitMoveImmToReg(arg.getVarType(), arg.getRegIndex(), &imm);
+    }
+  }
 }
 
 // ============================================================================
