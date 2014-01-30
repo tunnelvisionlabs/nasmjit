@@ -4392,7 +4392,7 @@ static Error X86X64Context_translatePrologEpilog(X86X64Context* self, X86X64Func
   stackPtr = stackBase;
   for (i = 0, mask = regsXmm; mask != 0; i++, mask >>= 1) {
     if (mask & 0x1) {
-      compiler->emit(kInstMovaps, dqword_ptr(self->_zsp, stackPtr), xmm(i));
+      compiler->emit(kInstMovaps, oword_ptr(self->_zsp, stackPtr), xmm(i));
       stackPtr += 16;
     }
   }
@@ -4472,7 +4472,7 @@ static Error X86X64Context_translatePrologEpilog(X86X64Context* self, X86X64Func
   stackPtr = stackBase;
   for (i = 0, mask = regsXmm; mask != 0; i++, mask >>= 1) {
     if (mask & 0x1) {
-      compiler->emit(kInstMovaps, xmm(i), dqword_ptr(self->_zsp, stackPtr));
+      compiler->emit(kInstMovaps, xmm(i), oword_ptr(self->_zsp, stackPtr));
       stackPtr += 16;
     }
   }

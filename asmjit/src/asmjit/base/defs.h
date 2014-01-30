@@ -133,9 +133,9 @@ ASMJIT_ENUM(kSize) {
   //! @brief 10 bytes size (80-but extended precision floating point).
   kSizeTWord = 10,
   //! @brief 16 bytes size (128-bit, Xmm).
-  kSizeDQWord = 16,
+  kSizeOWord = 16,
   //! @brief 32 bytes size (256-bit, Ymm).
-  kSizeQQWord = 32
+  kSizeYWord = 32
 };
 
 // ============================================================================
@@ -638,17 +638,17 @@ struct BaseReg : public Operand {
   }
 
   //! @brief Get register code that equals to '(type << 8) + index'.
-  ASMJIT_INLINE uint32_t getCode() const {
+  ASMJIT_INLINE uint32_t getRegCode() const {
     return _vreg.code;
   }
 
   //! @brief Get register type.
-  ASMJIT_INLINE uint32_t getType() const {
+  ASMJIT_INLINE uint32_t getRegType() const {
     return _vreg.type;
   }
 
   //! @brief Get register index.
-  ASMJIT_INLINE uint32_t getIndex() const {
+  ASMJIT_INLINE uint32_t getRegIndex() const {
     return _vreg.index;
   }
 

@@ -31,8 +31,8 @@ static void opcode(asmjit::host::Assembler& a) {
   Mem ptr_gp0 = ptr(gp0);
   Mem ptr_gp1 = ptr(gp1);
 
-  Mem vm32x = ptr_gp0.clone().setIndex(xmm1);
-  Mem vm32y = ptr_gp1.clone().setIndex(ymm1);
+  Mem vm32x = ptr(gp0, xmm1);
+  Mem vm32y = ptr(gp0, ymm1);
 
   Mem intptr_gp0 = intptr_ptr(gp0);
   Mem intptr_gp1 = intptr_ptr(gp1);

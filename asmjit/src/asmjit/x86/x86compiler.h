@@ -1912,30 +1912,30 @@ struct X86X64Compiler : public BaseCompiler {
 
   //! @brief Load ECX/RCX BYTEs from DS:[ESI/RSI] to AL.
   INST_3x_(rep_lodsb, kInstRepLodsb, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Load ECX/RCX DWORDs from DS:[ESI/RSI] to AL.
+  //! @brief Load ECX/RCX DDWords from DS:[ESI/RSI] to AL.
   INST_3x_(rep_lodsd, kInstRepLodsd, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Load ECX/RCX WORDs from DS:[ESI/RSI] to AX.
+  //! @brief Load ECX/RCX DWords from DS:[ESI/RSI] to AX.
   INST_3x_(rep_lodsw, kInstRepLodsw, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Move ECX/RCX BYTEs from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_3x_(rep_movsb, kInstRepMovsb, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Move ECX/RCX DWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX DDWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_3x_(rep_movsd, kInstRepMovsd, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Move ECX/RCX DWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX DDWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_3x_(rep_movsw, kInstRepMovsw, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Fill ECX/RCX BYTEs at ES:[EDI/RDI] with AL.
   INST_3x_(rep_stosb, kInstRepStosb, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Fill ECX/RCX DWORDs at ES:[EDI/RDI] with EAX.
+  //! @brief Fill ECX/RCX DDWords at ES:[EDI/RDI] with EAX.
   INST_3x_(rep_stosd, kInstRepStosd, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Fill ECX/RCX WORDs at ES:[EDI/RDI] with AX.
+  //! @brief Fill ECX/RCX DWords at ES:[EDI/RDI] with AX.
   INST_3x_(rep_stosw, kInstRepStosw, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_3x_(repe_cmpsb, kInstRepeCmpsb, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_3x_(repe_cmpsd, kInstRepeCmpsd, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_3x_(repe_cmpsw, kInstRepeCmpsw, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Find non-AL BYTE starting at ES:[EDI/RDI].
@@ -1947,9 +1947,9 @@ struct X86X64Compiler : public BaseCompiler {
 
   //! @brief Find matching BYTEs in [RDI] and [RSI].
   INST_3x_(repne_cmpsb, kInstRepneCmpsb, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Find matching DWORDs in [RDI] and [RSI].
+  //! @brief Find matching DDWords in [RDI] and [RSI].
   INST_3x_(repne_cmpsd, kInstRepneCmpsd, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
-  //! @brief Find matching WORDs in [RDI] and [RSI].
+  //! @brief Find matching DWords in [RDI] and [RSI].
   INST_3x_(repne_cmpsw, kInstRepneCmpsw, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Find AL, starting at ES:[EDI/RDI].
@@ -2941,7 +2941,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @brief Load Fence (SSE2).
   INST_0x(lfence, kInstLfence)
 
-  //! @brief Store Selected Bytes of DQWORD (SSE2).
+  //! @brief Store Selected Bytes of OWORD (SSE2).
   //!
   //! @note Target is DS:EDI.
   INST_2x(maskmovdqu, kInstMaskmovdqu, XmmVar, XmmVar)
@@ -2969,14 +2969,14 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_2x(minsd, kInstMinsd, XmmVar, Mem)
 
-  //! @brief Move Aligned DQWord (SSE2).
+  //! @brief Move Aligned OWord (SSE2).
   INST_2x(movdqa, kInstMovdqa, XmmVar, XmmVar)
   //! @overload
   INST_2x(movdqa, kInstMovdqa, XmmVar, Mem)
   //! @overload
   INST_2x(movdqa, kInstMovdqa, Mem, XmmVar)
 
-  //! @brief Move Unaligned DQWORD (SSE2).
+  //! @brief Move Unaligned OWORD (SSE2).
   INST_2x(movdqu, kInstMovdqu, XmmVar, XmmVar)
   //! @overload
   INST_2x(movdqu, kInstMovdqu, XmmVar, Mem)
@@ -3019,7 +3019,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_2x(movlpd, kInstMovlpd, Mem, XmmVar)
 
-  //! @brief Store DQWORD Using Non-Temporal Hint (SSE2).
+  //! @brief Store OWORD Using Non-Temporal Hint (SSE2).
   INST_2x(movntdq, kInstMovntdq, Mem, XmmVar)
 
   //! @brief Store Store DWORD Using Non-Temporal Hint (SSE2).
@@ -3292,7 +3292,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_2x(pmaddwd, kInstPmaddwd, XmmVar, Mem)
 
-  //! @brief Shuffle Packed DWORDs (SSE2).
+  //! @brief Shuffle Packed DDWords (SSE2).
   INST_3i(pshufd, kInstPshufd, XmmVar, XmmVar, Imm)
   //! @overload
   INST_3i(pshufd, kInstPshufd, XmmVar, Mem, Imm)
@@ -3321,7 +3321,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_2i(psrlq, kInstPsrlq, XmmVar, Imm)
 
-  //! @brief DQWord Shift Right Logical (SSE2).
+  //! @brief OWord Shift Right Logical (SSE2).
   INST_2i(psrldq, kInstPsrldq, XmmVar, Imm)
 
   //! @brief Packed Shift Right Logical (SSE2).
@@ -3705,7 +3705,7 @@ struct X86X64Compiler : public BaseCompiler {
   //! @overload
   INST_3i(extractps, kInstExtractps, Mem, XmmVar, Imm)
 
-  //! @brief Load DQWORD Non-Temporal Aligned Hint (SSE4.1).
+  //! @brief Load OWORD Non-Temporal Aligned Hint (SSE4.1).
   INST_2x(movntdqa, kInstMovntdqa, XmmVar, Mem)
 
   //! @brief Compute Multiple Packed Sums of Absolute Difference (SSE4.1).
@@ -4113,7 +4113,7 @@ struct Compiler : public X86X64Compiler {
 
   //! @brief Convert DWord to QWord (RAX <- Sign Extend EAX).
   INST_1x(cdqe, kInstCdqe, GpVar /* eax */)
-  //! @brief Convert QWord to DQWord (RDX:RAX <- Sign Extend RAX).
+  //! @brief Convert QWord to OWord (RDX:RAX <- Sign Extend RAX).
   INST_2x(cqo, kInstCdq, GpVar /* rdx */, GpVar /* rax */)
 
   //! @brief Compares the 128-bit value in RDX:RAX with the memory operand (X64).
@@ -4128,22 +4128,22 @@ struct Compiler : public X86X64Compiler {
   //! @overload
   INST_2x(movsxd, kInstMovsxd, GpVar, Mem)
 
-  //! @brief Load ECX/RCX QWORDs from DS:[ESI/RSI] to RAX.
+  //! @brief Load ECX/RCX QDWords from DS:[ESI/RSI] to RAX.
   INST_3x_(rep_lodsq, kInstRepLodsq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
-  //! @brief Move ECX/RCX QWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX QDWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_3x_(rep_movsq, kInstRepMovsq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
-  //! @brief Fill ECX/RCX QWORDs at ES:[EDI/RDI] with RAX.
+  //! @brief Fill ECX/RCX QDWords at ES:[EDI/RDI] with RAX.
   INST_3x_(rep_stosq, kInstRepStosq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
-  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching QDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_3x_(repe_cmpsq, kInstRepeCmpsq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Find non-RAX QWORD starting at ES:[EDI/RDI].
   INST_3x_(repe_scasq, kInstRepeScasq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
-  //! @brief Find matching QWORDs in [RDI] and [RSI].
+  //! @brief Find matching QDWords in [RDI] and [RSI].
   INST_3x_(repne_cmpsq, kInstRepneCmpsq, GpVar, GpVar, GpVar, o0.getId() != o1.getId() && o1.getId() != o2.getId())
 
   //! @brief Find RAX, starting at ES:[EDI/RDI].

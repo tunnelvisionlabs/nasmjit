@@ -3130,33 +3130,44 @@ const SegReg fs(kRegTypeSeg, kSegFs, 2);
 const SegReg gs(kRegTypeSeg, kSegGs, 2);
 
 // ============================================================================
-// [asmjit::Mem - ptr[] - Absolute Addressing]
+// [asmjit::Mem - abs[]]
 // ============================================================================
 
-Mem ptr_abs(void* target, int32_t disp, uint32_t size) {
+Mem ptr_abs(Ptr pAbs, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
 
   m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, 0, kInvalidValue);
   m._vmem.index = kInvalidValue;
-  m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
+  m._vmem.displacement = static_cast<int32_t>((intptr_t)(pAbs + disp));
+
   return m;
 }
 
-Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp, uint32_t size) {
+Mem ptr_abs(Ptr pAbs, const X86Reg& index, uint32_t shift, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
+  uint32_t flags = shift << kMemShiftIndex;
 
-  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, shift << kMemShiftIndex, kInvalidValue);
-  m._vmem.index = index.getIndex();
-  m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
+  if (index.isXmm()) flags |= kMemVSibXmm << kMemVSibIndex;
+  if (index.isYmm()) flags |= kMemVSibYmm << kMemVSibIndex;
+
+  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, flags, kInvalidValue);
+  m._vmem.index = index.getRegIndex();
+  m._vmem.displacement = static_cast<int32_t>((intptr_t)(pAbs + disp));
+
   return m;
 }
 
-Mem ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp, uint32_t size) {
+Mem ptr_abs(Ptr pAbs, const X86Var& index, uint32_t shift, int32_t disp, uint32_t size) {
   Mem m(DontInitialize);
+  uint32_t flags = shift << kMemShiftIndex;
 
-  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, shift << kMemShiftIndex, kInvalidValue);
+  if (index.isXmm()) flags |= kMemVSibXmm << kMemVSibIndex;
+  if (index.isYmm()) flags |= kMemVSibYmm << kMemVSibIndex;
+
+  m._init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeAbsolute, flags, kInvalidValue);
   m._vmem.index = index.getId();
-  m._vmem.displacement = static_cast<int32_t>((intptr_t)target + disp);
+  m._vmem.displacement = static_cast<int32_t>((intptr_t)(pAbs + disp));
+
   return m;
 }
 

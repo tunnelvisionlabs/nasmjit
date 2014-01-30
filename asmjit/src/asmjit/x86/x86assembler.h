@@ -401,12 +401,12 @@ namespace x86x64 {
 //! offset, use @c bind() method.
 //!
 //! See next example that contains complete code that creates simple memory
-//! copy function (in DWORD entities).
+//! copy function (in DWord entities).
 //!
 //! @code
 //! // Example: Usage of Label (32-bit code).
 //! //
-//! // Create simple DWORD memory copy function:
+//! // Create simple DWord memory copy function:
 //! // ASMJIT_STDCALL void copy32(uint32_t* dst, const uint32_t* src, size_t count);
 //! using namespace asmjit;
 //!
@@ -849,7 +849,7 @@ struct X86X64Assembler : public BaseAssembler {
 
   //! @brief Move (AL|AX|EAX|RAX <- absolute address in immediate).
   ASMJIT_INLINE Error mov_ptr(const GpReg& dst, void* src) {
-    ASMJIT_ASSERT(dst.getIndex() == 0);
+    ASMJIT_ASSERT(dst.getRegIndex() == 0);
 
     Imm imm(static_cast<int64_t>((intptr_t)src));
     return emit(kInstMovptr, dst, imm);
@@ -857,7 +857,7 @@ struct X86X64Assembler : public BaseAssembler {
 
   //! @brief Move (absolute address in immediate <- AL|AX|EAX|RAX).
   ASMJIT_INLINE Error mov_ptr(void* dst, const GpReg& src) {
-    ASMJIT_ASSERT(src.getIndex() == 0);
+    ASMJIT_ASSERT(src.getRegIndex() == 0);
 
     Imm imm(static_cast<int64_t>((intptr_t)dst));
     return emit(kInstMovptr, imm, src);
@@ -915,23 +915,23 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Pop a segment register from the stack.
   //!
   //! @note There is no instruction to pop a cs segment register.
-  INST_1x_(pop, kInstPop, SegReg, o0.getIndex() != kSegCs);
+  INST_1x_(pop, kInstPop, SegReg, o0.getRegIndex() != kSegCs);
 
   //! @brief Pop stack into EFLAGS register (32-bit or 64-bit).
   INST_0x(popf, kInstPopf)
 
   //! @brief Return the Count of Number of Bits Set to 1 (SSE4.2).
-  INST_2x_(popcnt, kInstPopcnt, GpReg, GpReg, !o0.isGpb() && o0.getType() == o1.getType())
+  INST_2x_(popcnt, kInstPopcnt, GpReg, GpReg, !o0.isGpb() && o0.getRegType() == o1.getRegType())
   //! @overload
   INST_2x_(popcnt, kInstPopcnt, GpReg, Mem, !o0.isGpb())
 
-  //! @brief Push WORD/DWORD/QWORD on the stack.
+  //! @brief Push Word/DWord/QWord on the stack.
   INST_1x_(push, kInstPush, GpReg, o0.getSize() == 2 || o0.getSize() == _regSize)
-  //! @brief Push WORD/DWORD/QWORD on the stack.
+  //! @brief Push Word/DWord/QWord on the stack.
   INST_1x_(push, kInstPush, Mem, o0.getSize() == 2 || o0.getSize() == _regSize)
   //! @brief Push Segment Register on the stack.
   INST_1x(push, kInstPush, SegReg)
-  //! @brief Push WORD/DWORD/QWORD on the stack.
+  //! @brief Push Word/DWord/QWord on the stack.
   INST_1i(push, kInstPush, Imm)
 
   //! @brief Push EFLAGS Register (32-bit or 64-bit) on the stack.
@@ -964,46 +964,46 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Read Time-Stamp Counter and Processor ID (New).
   INST_0x(rdtscp, kInstRdtscp)
 
-  //! @brief Load ECX/RCX BYTEs from DS:[ESI/RSI] to AL.
+  //! @brief Load ECX/RCX Bytes from DS:[ESI/RSI] to AL.
   INST_0x(rep_lodsb, kInstRepLodsb)
-  //! @brief Load ECX/RCX DWORDs from DS:[ESI/RSI] to EAX.
+  //! @brief Load ECX/RCX DDWords from DS:[ESI/RSI] to EAX.
   INST_0x(rep_lodsd, kInstRepLodsd)
-  //! @brief Load ECX/RCX WORDs from DS:[ESI/RSI] to AX.
+  //! @brief Load ECX/RCX DWords from DS:[ESI/RSI] to AX.
   INST_0x(rep_lodsw, kInstRepLodsw)
 
   //! @brief Move ECX/RCX BYTEs from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_0x(rep_movsb, kInstRepMovsb)
-  //! @brief Move ECX/RCX DWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX DDWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_0x(rep_movsd, kInstRepMovsd)
-  //! @brief Move ECX/RCX WORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX DWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_0x(rep_movsw, kInstRepMovsw)
 
   //! @brief Fill ECX/RCX BYTEs at ES:[EDI/RDI] with AL.
   INST_0x(rep_stosb, kInstRepStosb)
-  //! @brief Fill ECX/RCX DWORDs at ES:[EDI/RDI] with EAX.
+  //! @brief Fill ECX/RCX DDWords at ES:[EDI/RDI] with EAX.
   INST_0x(rep_stosd, kInstRepStosd)
-  //! @brief Fill ECX/RCX WORDs at ES:[EDI/RDI] with AX.
+  //! @brief Fill ECX/RCX DWords at ES:[EDI/RDI] with AX.
   INST_0x(rep_stosw, kInstRepStosw)
 
   //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repe_cmpsb, kInstRepeCmpsb)
-  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repe_cmpsd, kInstRepeCmpsd)
-  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repe_cmpsw, kInstRepeCmpsw)
 
-  //! @brief Find non-AL BYTE starting at ES:[EDI/RDI].
+  //! @brief Find non-AL Byte starting at ES:[EDI/RDI].
   INST_0x(repe_scasb, kInstRepeScasb)
-  //! @brief Find non-EAX DWORD starting at ES:[EDI/RDI].
+  //! @brief Find non-EAX DWord starting at ES:[EDI/RDI].
   INST_0x(repe_scasd, kInstRepeScasd)
-  //! @brief Find non-AX WORD starting at ES:[EDI/RDI].
+  //! @brief Find non-AX Word starting at ES:[EDI/RDI].
   INST_0x(repe_scasw, kInstRepeScasw)
 
-  //! @brief Repeated find nonmatching BYTEs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching Byte's in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repne_cmpsb, kInstRepneCmpsb)
-  //! @brief Repeated find nonmatching DWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repne_cmpsd, kInstRepneCmpsd)
-  //! @brief Repeated find nonmatching WORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching DWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repne_cmpsw, kInstRepneCmpsw)
 
   //! @brief Find AL, starting at ES:[EDI/RDI].
@@ -1189,7 +1189,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Add @a o1 to @a o0 and store result in @a o0 (FPU).
   //!
   //! @note One of dst or src must be fp0.
-  INST_2x_(fadd, kInstFadd, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fadd, kInstFadd, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Add 4-byte or 8-byte FP @a o0 to fp0 and store result in fp0 (FPU).
   INST_1x(fadd, kInstFadd, Mem)
   //! @brief Add fp0 to @a o0 and POP register stack (FPU).
@@ -1255,7 +1255,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Divide @a o0 by @a o1 (FPU).
   //!
   //! @note One of @a o0 or @a o1 register must be fp0.
-  INST_2x_(fdiv, kInstFdiv, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fdiv, kInstFdiv, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Divide fp0 by 32-bit or 64-bit FP value (FPU).
   INST_1x(fdiv, kInstFdiv, Mem)
   //! @brief Divide @a o0 by fp0 (FPU).
@@ -1264,7 +1264,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Reverse Divide @a o0 by @a o1 (FPU).
   //!
   //! @note One of @a o0 or @a src register must be fp0.
-  INST_2x_(fdivr, kInstFdivr, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fdivr, kInstFdivr, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Reverse Divide fp0 by 32-bit or 64-bit FP value (FPU).
   INST_1x(fdivr, kInstFdivr, Mem)
   //! @brief Reverse Divide @a o0 by fp0 (FPU).
@@ -1343,7 +1343,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Multiply @a o0 by @a o1 and store result in @a o0 (FPU).
   //!
   //! @note One of dst or src must be fp0.
-  INST_2x_(fmul, kInstFmul, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fmul, kInstFmul, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Multiply fp0 by 32-bit or 64-bit @a o0 and store result in fp0 (FPU).
   INST_1x(fmul, kInstFmul, Mem)
 
@@ -1452,7 +1452,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Subtract @a o0 from @a o0 and store result in @a o0 (FPU).
   //!
   //! @note One of dst or src must be fp0.
-  INST_2x_(fsub, kInstFsub, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fsub, kInstFsub, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Subtract 32-bit or 64-bit @a o0 from fp0 and store result in fp0 (FPU).
   INST_1x_(fsub, kInstFsub, Mem, o0.getSize() == 4 || o0.getSize() == 8)
   //! @brief Subtract fp0 from @a o0 and POP register stack (FPU).
@@ -1461,7 +1461,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Reverse Subtract @a o1 from @a o0 and store result in @a o0 (FPU).
   //!
   //! @note One of dst or src must be fp0.
-  INST_2x_(fsubr, kInstFsubr, FpReg, FpReg, o0.getIndex() == 0 || o1.getIndex() == 0)
+  INST_2x_(fsubr, kInstFsubr, FpReg, FpReg, o0.getRegIndex() == 0 || o1.getRegIndex() == 0)
   //! @brief Reverse Subtract 32-bit or 64-bit @a o0 from fp0 and store result in fp0 (FPU).
   INST_1x_(fsubr, kInstFsubr, Mem, o0.getSize() == 4 || o0.getSize() == 8)
   //! @brief Reverse Subtract fp0 from @a o0 and POP register stack (FPU).
@@ -1557,17 +1557,17 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(packuswb, kInstPackuswb, MmReg, Mem)
 
-  //! @brief Packed BYTE Add (MMX).
+  //! @brief Packed Byte Add (MMX).
   INST_2x(paddb, kInstPaddb, MmReg, MmReg)
   //! @overload
   INST_2x(paddb, kInstPaddb, MmReg, Mem)
 
-  //! @brief Packed WORD Add (MMX).
+  //! @brief Packed Word Add (MMX).
   INST_2x(paddw, kInstPaddw, MmReg, MmReg)
   //! @overload
   INST_2x(paddw, kInstPaddw, MmReg, Mem)
 
-  //! @brief Packed DWORD Add (MMX).
+  //! @brief Packed DWord Add (MMX).
   INST_2x(paddd, kInstPaddd, MmReg, MmReg)
   //! @overload
   INST_2x(paddd, kInstPaddd, MmReg, Mem)
@@ -2136,7 +2136,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(psadbw, kInstPsadbw, MmReg, Mem)
 
-  //! @brief Packed Shuffle WORD (SSE).
+  //! @brief Packed Shuffle Word (SSE).
   INST_3i(pshufw, kInstPshufw, MmReg, MmReg, Imm)
   //! @overload
   INST_3i(pshufw, kInstPshufw, MmReg, Mem, Imm)
@@ -2355,7 +2355,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @brief Load Fence (SSE2).
   INST_0x(lfence, kInstLfence)
 
-  //! @brief Store Selected Bytes of DQWORD (SSE2).
+  //! @brief Store Selected Bytes of OWORD (SSE2).
   //!
   //! @note Target is DS:EDI.
   INST_2x(maskmovdqu, kInstMaskmovdqu, XmmReg, XmmReg)
@@ -2383,14 +2383,14 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(minsd, kInstMinsd, XmmReg, Mem)
 
-  //! @brief Move Aligned DQWord (SSE2).
+  //! @brief Move Aligned OWORD (SSE2).
   INST_2x(movdqa, kInstMovdqa, XmmReg, XmmReg)
   //! @overload
   INST_2x(movdqa, kInstMovdqa, XmmReg, Mem)
   //! @overload
   INST_2x(movdqa, kInstMovdqa, Mem, XmmReg)
 
-  //! @brief Move Unaligned DQWORD (SSE2).
+  //! @brief Move Unaligned OWORD (SSE2).
   INST_2x(movdqu, kInstMovdqu, XmmReg, XmmReg)
   //! @overload
   INST_2x(movdqu, kInstMovdqu, XmmReg, Mem)
@@ -2417,10 +2417,10 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(movapd, kInstMovapd, Mem, XmmReg)
 
-  //! @brief Move QWORD from XMM to MMX Technology Register (SSE2).
+  //! @brief Move QWord from XMM to MMX Technology Register (SSE2).
   INST_2x(movdq2q, kInstMovdq2q, MmReg, XmmReg)
 
-  //! @brief Move QWORD from MMX Technology to XMM Register (SSE2).
+  //! @brief Move QWord from MMX Technology to XMM Register (SSE2).
   INST_2x(movq2dq, kInstMovq2dq, XmmReg, MmReg)
 
   //! @brief Move High Packed Double-Precision FP Value (SSE2).
@@ -2433,10 +2433,10 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(movlpd, kInstMovlpd, Mem, XmmReg)
 
-  //! @brief Store DQWORD Using Non-Temporal Hint (SSE2).
+  //! @brief Store OWORD Using Non-Temporal Hint (SSE2).
   INST_2x(movntdq, kInstMovntdq, Mem, XmmReg)
 
-  //! @brief Store Store DWORD Using Non-Temporal Hint (SSE2).
+  //! @brief Store Store DWord Using Non-Temporal Hint (SSE2).
   INST_2x(movnti, kInstMovnti, Mem, GpReg)
 
   //! @brief Store Packed Double-Precision FP Values Using Non-Temporal Hint (SSE2).
@@ -2479,27 +2479,27 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(packuswb, kInstPackuswb, XmmReg, Mem)
 
-  //! @brief Packed BYTE Add (SSE2).
+  //! @brief Packed Byte Add (SSE2).
   INST_2x(paddb, kInstPaddb, XmmReg, XmmReg)
   //! @overload
   INST_2x(paddb, kInstPaddb, XmmReg, Mem)
 
-  //! @brief Packed WORD Add (SSE2).
+  //! @brief Packed Word Add (SSE2).
   INST_2x(paddw, kInstPaddw, XmmReg, XmmReg)
   //! @overload
   INST_2x(paddw, kInstPaddw, XmmReg, Mem)
 
-  //! @brief Packed DWORD Add (SSE2).
+  //! @brief Packed DWord Add (SSE2).
   INST_2x(paddd, kInstPaddd, XmmReg, XmmReg)
   //! @overload
   INST_2x(paddd, kInstPaddd, XmmReg, Mem)
 
-  //! @brief Packed QWORD Add (SSE2).
+  //! @brief Packed QWord Add (SSE2).
   INST_2x(paddq, kInstPaddq, MmReg, MmReg)
   //! @overload
   INST_2x(paddq, kInstPaddq, MmReg, Mem)
 
-  //! @brief Packed QWORD Add (SSE2).
+  //! @brief Packed QWord Add (SSE2).
   INST_2x(paddq, kInstPaddq, XmmReg, XmmReg)
   //! @overload
   INST_2x(paddq, kInstPaddq, XmmReg, Mem)
@@ -2623,12 +2623,12 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(pmullw, kInstPmullw, XmmReg, Mem)
 
-  //! @brief Packed Multiply to QWORD (SSE2).
+  //! @brief Packed Multiply to QWord (SSE2).
   INST_2x(pmuludq, kInstPmuludq, MmReg, MmReg)
   //! @overload
   INST_2x(pmuludq, kInstPmuludq, MmReg, Mem)
 
-  //! @brief Packed Multiply to QWORD (SSE2).
+  //! @brief Packed Multiply to QWord (SSE2).
   INST_2x(pmuludq, kInstPmuludq, XmmReg, XmmReg)
   //! @overload
   INST_2x(pmuludq, kInstPmuludq, XmmReg, Mem)
@@ -2706,7 +2706,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2x(pmaddwd, kInstPmaddwd, XmmReg, Mem)
 
-  //! @brief Shuffle Packed DWORDs (SSE2).
+  //! @brief Shuffle Packed DDWords (SSE2).
   INST_3i(pshufd, kInstPshufd, XmmReg, XmmReg, Imm)
   //! @overload
   INST_3i(pshufd, kInstPshufd, XmmReg, Mem, Imm)
@@ -2735,7 +2735,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_2i(psrlq, kInstPsrlq, XmmReg, Imm)
 
-  //! @brief DQWord Shift Right Logical (SSE2).
+  //! @brief OWord Shift Right Logical (SSE2).
   INST_2i(psrldq, kInstPsrldq, XmmReg, Imm)
 
   //! @brief Packed Shift Right Logical (SSE2).
@@ -3119,7 +3119,7 @@ struct X86X64Assembler : public BaseAssembler {
   //! @overload
   INST_3i(extractps, kInstExtractps, Mem, XmmReg, Imm)
 
-  //! @brief Load DQWORD Non-Temporal Aligned Hint (SSE4.1).
+  //! @brief Load OWORD Non-Temporal Aligned Hint (SSE4.1).
   INST_2x(movntdqa, kInstMovntdqa, XmmReg, Mem)
 
   //! @brief Compute Multiple Packed Sums of Absolute Difference (SSE4.1).
@@ -5290,7 +5290,7 @@ struct Assembler : public X86X64Assembler {
 
   //! @brief Convert DWord to QWord (RAX <- Sign Extend EAX).
   INST_0x(cdqe, kInstCdqe)
-  //! @brief Convert QWord to DQWord (RDX:RAX <- Sign Extend RAX).
+  //! @brief Convert QWord to OWord (RDX:RAX <- Sign Extend RAX).
   INST_0x(cqo, kInstCqo)
 
   //! @brief Compares the 128-bit value in RDX:RAX with the memory operand (64-bit).
@@ -5301,22 +5301,22 @@ struct Assembler : public X86X64Assembler {
   //! @overload
   INST_2x(movsxd, kInstMovsxd, GpReg, Mem)
 
-  //! @brief Load ECX/RCX QWORDs from DS:[ESI/RSI] to RAX.
+  //! @brief Load ECX/RCX QDWords from DS:[ESI/RSI] to RAX.
   INST_0x(rep_lodsq, kInstRepLodsq)
 
-  //! @brief Move ECX/RCX QWORDs from DS:[ESI/RSI] to ES:[EDI/RDI].
+  //! @brief Move ECX/RCX QDWords from DS:[ESI/RSI] to ES:[EDI/RDI].
   INST_0x(rep_movsq, kInstRepMovsq)
 
-  //! @brief Fill ECX/RCX QWORDs at ES:[EDI/RDI] with RAX.
+  //! @brief Fill ECX/RCX QDWords at ES:[EDI/RDI] with RAX.
   INST_0x(rep_stosq, kInstRepStosq)
 
-  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching QDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repe_cmpsq, kInstRepeCmpsq)
 
-  //! @brief Find non-RAX QWORD starting at ES:[EDI/RDI].
+  //! @brief Find non-rax QWord starting at ES:[EDI/RDI].
   INST_0x(repe_scasq, kInstRepeScasq)
 
-  //! @brief Repeated find nonmatching QWORDs in ES:[EDI/RDI] and DS:[ESI/RDI].
+  //! @brief Repeated find nonmatching QDWords in ES:[EDI/RDI] and DS:[ESI/RDI].
   INST_0x(repne_cmpsq, kInstRepneCmpsq)
 
   //! @brief Find RAX, starting at ES:[EDI/RDI].

@@ -391,7 +391,7 @@ ASMJIT_ENUM(kPrefetchHint) {
 // [asmjit::x86x64::kFPSW]
 // ============================================================================
 
-//! @brief X86 FPU status WORD.
+//! @brief X86 FPU status Word.
 ASMJIT_ENUM(kFPSW) {
   kFPSW_Invalid        = 0x0001,
   kFPSW_Denormalized   = 0x0002,
@@ -413,7 +413,7 @@ ASMJIT_ENUM(kFPSW) {
 // [asmjit::x86x64::kFPCW]
 // ============================================================================
 
-//! @brief X86 FPU control WORD.
+//! @brief X86 FPU control Word.
 ASMJIT_ENUM(kFPCW) {
   kFPCW_EM_Mask        = 0x003F, // Bits 0-5.
   kFPCW_EM_Invalid     = 0x0001,
@@ -2250,17 +2250,17 @@ struct X86Reg : public BaseReg {
 
   //! @brief Get whether the register is Gp register.
   ASMJIT_INLINE bool isGp() const { return _vreg.type <= kRegTypeGpq; }
-  //! @brief Get whether the register is Gp BYTE (8-bit) register.
+  //! @brief Get whether the register is Gp Byte (8-bit) register.
   ASMJIT_INLINE bool isGpb() const { return _vreg.type <= kRegTypeGpbHi; }
-  //! @brief Get whether the register is Gp LO-BYTE (8-bit) register.
+  //! @brief Get whether the register is Gp LO-Byte (8-bit) register.
   ASMJIT_INLINE bool isGpbLo() const { return _vreg.type == kRegTypeGpbLo; }
-  //! @brief Get whether the register is Gp HI-BYTE (8-bit) register.
+  //! @brief Get whether the register is Gp HI-Byte (8-bit) register.
   ASMJIT_INLINE bool isGpbHi() const { return _vreg.type == kRegTypeGpbHi; }
-  //! @brief Get whether the register is Gp WORD (16-bit) register.
+  //! @brief Get whether the register is Gp Word (16-bit) register.
   ASMJIT_INLINE bool isGpw() const { return _vreg.type == kRegTypeGpw; }
-  //! @brief Get whether the register is Gp DWORD (32-bit) register.
+  //! @brief Get whether the register is Gp DWord (32-bit) register.
   ASMJIT_INLINE bool isGpd() const { return _vreg.type == kRegTypeGpd; }
-  //! @brief Get whether the register is Gp QWORD (64-bit) register.
+  //! @brief Get whether the register is Gp QWord (64-bit) register.
   ASMJIT_INLINE bool isGpq() const { return _vreg.type == kRegTypeGpq; }
 
   //! @brief Get whether the register is Fp register.
@@ -2462,7 +2462,7 @@ struct Mem : public BaseMem {
       (kMemVSibGpz << kMemVSibIndex)
         + (shift << kMemShiftIndex),
       label.getId());
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     _vmem.displacement = disp;
   }
 
@@ -2481,7 +2481,7 @@ struct Mem : public BaseMem {
     _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
       _getGpdFlags(base)
         + (kMemVSibGpz << kMemVSibIndex),
-      base.getIndex());
+      base.getRegIndex());
     _init_packed_d2_d3(kInvalidValue, disp);
   }
 
@@ -2490,8 +2490,8 @@ struct Mem : public BaseMem {
 
     _init_packed_op_sz_b0_b1_id(kOperandTypeMem, size, kMemTypeBaseIndex,
       _getGpdFlags(base) + (shift << kMemShiftIndex),
-      base.getIndex());
-    _vmem.index = index.getIndex();
+      base.getRegIndex());
+    _vmem.index = index.getRegIndex();
     _vmem.displacement = disp;
   }
 
@@ -2502,8 +2502,8 @@ struct Mem : public BaseMem {
       _getGpdFlags(base)
         + (kMemVSibXmm << kMemVSibIndex)
         + (shift << kMemShiftIndex),
-      base.getIndex());
-    _vmem.index = index.getIndex();
+      base.getRegIndex());
+    _vmem.index = index.getRegIndex();
     _vmem.displacement = disp;
   }
 
@@ -2514,8 +2514,8 @@ struct Mem : public BaseMem {
       _getGpdFlags(base)
         + (kMemVSibYmm << kMemVSibIndex)
         + (shift << kMemShiftIndex),
-      base.getIndex());
-    _vmem.index = index.getIndex();
+      base.getRegIndex());
+    _vmem.index = index.getRegIndex();
     _vmem.displacement = disp;
   }
 
@@ -2625,7 +2625,7 @@ struct Mem : public BaseMem {
 
   //! @brief Set memory operand segment, see @c kSeg.
   ASMJIT_INLINE Mem& setSegment(const SegReg& seg) {
-    return setSegment(seg.getIndex());
+    return setSegment(seg.getRegIndex());
   }
 
   // --------------------------------------------------------------------------
@@ -2716,13 +2716,13 @@ struct Mem : public BaseMem {
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const GpReg& index) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibGpz);
   }
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const GpReg& index, uint32_t shift) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibGpz).setShift(shift);
   }
 
@@ -2740,13 +2740,13 @@ struct Mem : public BaseMem {
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const XmmReg& index) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibXmm);
   }
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const XmmReg& index, uint32_t shift) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibXmm).setShift(shift);
   }
 
@@ -2764,13 +2764,13 @@ struct Mem : public BaseMem {
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const YmmReg& index) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibYmm);
   }
 
   //! @brief Set memory index.
   ASMJIT_INLINE Mem& setIndex(const YmmReg& index, uint32_t shift) {
-    _vmem.index = index.getIndex();
+    _vmem.index = index.getRegIndex();
     return _setVSib(kMemVSibYmm).setShift(shift);
   }
 
@@ -2912,21 +2912,22 @@ struct X86Var : public BaseVar {
   // [Type]
   // --------------------------------------------------------------------------
 
+  ASMJIT_INLINE uint32_t getRegType() const { return _vreg.type; }
   ASMJIT_INLINE uint32_t getVarType() const { return _vreg.vType; }
 
   //! @brief Get whether the variable is Gp register.
   ASMJIT_INLINE bool isGp() const { return _vreg.type <= kRegTypeGpq; }
-  //! @brief Get whether the variable is Gp BYTE (8-bit) register.
+  //! @brief Get whether the variable is Gp Byte (8-bit) register.
   ASMJIT_INLINE bool isGpb() const { return _vreg.type <= kRegTypeGpbHi; }
-  //! @brief Get whether the variable is Gp LO-BYTE (8-bit) register.
+  //! @brief Get whether the variable is Gp LO-Byte (8-bit) register.
   ASMJIT_INLINE bool isGpbLo() const { return _vreg.type == kRegTypeGpbLo; }
-  //! @brief Get whether the variable is Gp HI-BYTE (8-bit) register.
+  //! @brief Get whether the variable is Gp HI-Byte (8-bit) register.
   ASMJIT_INLINE bool isGpbHi() const { return _vreg.type == kRegTypeGpbHi; }
-  //! @brief Get whether the variable is Gp WORD (16-bit) register.
+  //! @brief Get whether the variable is Gp Word (16-bit) register.
   ASMJIT_INLINE bool isGpw() const { return _vreg.type == kRegTypeGpw; }
-  //! @brief Get whether the variable is Gp DWORD (32-bit) register.
+  //! @brief Get whether the variable is Gp DWord (32-bit) register.
   ASMJIT_INLINE bool isGpd() const { return _vreg.type == kRegTypeGpd; }
-  //! @brief Get whether the variable is Gp QWORD (64-bit) register.
+  //! @brief Get whether the variable is Gp QWord (64-bit) register.
   ASMJIT_INLINE bool isGpq() const { return _vreg.type == kRegTypeGpq; }
 
   //! @brief Get whether the variable is Fp register.
@@ -3507,178 +3508,317 @@ static ASMJIT_INLINE MmReg mm(uint32_t index) { return MmReg(kRegTypeMm, index, 
 static ASMJIT_INLINE XmmReg xmm(uint32_t index) { return XmmReg(kRegTypeXmm, index, 16); }
 
 // ============================================================================
-// [asmjit::x86x64::Mem - [label + displacement]]
-// ============================================================================
-
-//! @brief Create a custom pointer operand.
-static ASMJIT_INLINE Mem ptr(const Label& label, int32_t disp = 0, uint32_t size = 0) { return Mem(label, disp, size); }
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
-static ASMJIT_INLINE Mem tword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeDQWord); }
-
-// ============================================================================
-// [asmjit::x86x64::Mem - [label + index << shift + displacement]]
-// ============================================================================
-
-//! @brief Create a custom pointer operand.
-static ASMJIT_INLINE Mem ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0) { return Mem(label, index, shift, disp, size); }
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
-static ASMJIT_INLINE Mem tword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDQWord); }
-
-//! @brief Create a custom pointer operand.
-static ASMJIT_INLINE Mem ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0) { return Mem(label, index, shift, disp, size); }
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
-static ASMJIT_INLINE Mem tword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDQWord); }
-
-// ============================================================================
-// [asmjit::x86x64::Mem - segment[target + displacement]
-// ============================================================================
-
-//! @brief Create a custom pointer operand.
-ASMJIT_API Mem ptr_abs(void* target, int32_t disp = 0, uint32_t size = 0);
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand (used for 80-bit floating points).
-static ASMJIT_INLINE Mem tword_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, kSizeDQWord); }
-
-// ============================================================================
-// [asmjit::x86x64::Mem - segment[target + index << shift + displacement]
-// ============================================================================
-
-//! @brief Create a custom pointer operand.
-ASMJIT_API Mem ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0);
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
-static ASMJIT_INLINE Mem tword_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeDQWord); }
-
-//! @brief Create a custom pointer operand.
-ASMJIT_API Mem ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0);
-//! @brief Create a BYTE pointer operand.
-static ASMJIT_INLINE Mem byte_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
-static ASMJIT_INLINE Mem word_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
-static ASMJIT_INLINE Mem dword_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
-static ASMJIT_INLINE Mem qword_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
-static ASMJIT_INLINE Mem tword_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, kSizeDQWord); }
-
-// ============================================================================
-// [asmjit::x86x64::Mem - ptr[base + displacement]]
+// [asmjit::x86x64::Mem - ptr[base + disp]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
 static ASMJIT_INLINE Mem ptr(const GpReg& base, int32_t disp = 0, uint32_t size = 0) { return Mem(base, disp, size); }
-//! @brief Create a BYTE pointer operand.
+//! @brief Create a Byte pointer operand.
 static ASMJIT_INLINE Mem byte_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
+//! @brief Create a Word pointer operand.
 static ASMJIT_INLINE Mem word_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
+//! @brief Create a DWord pointer operand.
 static ASMJIT_INLINE Mem dword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
+//! @brief Create a QWord pointer operand.
 static ASMJIT_INLINE Mem qword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
+//! @brief Create a TWord pointer operand.
 static ASMJIT_INLINE Mem tword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeDQWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, kSizeYWord); }
 
 //! @brief Create a custom pointer operand.
 static ASMJIT_INLINE Mem ptr(const GpVar& base, int32_t disp = 0, uint32_t size = 0) { return Mem(base, disp, size); }
-//! @brief Create a BYTE pointer operand.
+//! @brief Create a Byte pointer operand.
 static ASMJIT_INLINE Mem byte_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
+//! @brief Create a Word pointer operand.
 static ASMJIT_INLINE Mem word_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
+//! @brief Create a DWord pointer operand.
 static ASMJIT_INLINE Mem dword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
+//! @brief Create a QWord pointer operand.
 static ASMJIT_INLINE Mem qword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
+//! @brief Create a TWord pointer operand.
 static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeDQWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, kSizeYWord); }
 
 // ============================================================================
-// [asmjit::x86x64::Mem - ptr[base + (index << shift) + displacement]]
+// [asmjit::x86x64::Mem - ptr[base + (index << shift) + disp]]
 // ============================================================================
 
 //! @brief Create a custom pointer operand.
 static ASMJIT_INLINE Mem ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
-//! @brief Create a BYTE pointer operand.
+//! @brief Create a Byte pointer operand.
 static ASMJIT_INLINE Mem byte_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
+//! @brief Create a Word pointer operand.
 static ASMJIT_INLINE Mem word_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
+//! @brief Create a DWord pointer operand.
 static ASMJIT_INLINE Mem dword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
+//! @brief Create a QWord pointer operand.
 static ASMJIT_INLINE Mem qword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
+//! @brief Create a TWord pointer operand.
 static ASMJIT_INLINE Mem tword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDQWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
 
 //! @brief Create a custom pointer operand.
 static ASMJIT_INLINE Mem ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
-//! @brief Create a BYTE pointer operand.
+//! @brief Create a Byte pointer operand.
 static ASMJIT_INLINE Mem byte_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
-//! @brief Create a WORD pointer operand.
+//! @brief Create a Word pointer operand.
 static ASMJIT_INLINE Mem word_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
-//! @brief Create a DWORD pointer operand.
+//! @brief Create a DWord pointer operand.
 static ASMJIT_INLINE Mem dword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
-//! @brief Create a QWORD pointer operand.
+//! @brief Create a QWord pointer operand.
 static ASMJIT_INLINE Mem qword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
-//! @brief Create a TWORD pointer operand.
+//! @brief Create a TWord pointer operand.
 static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
-//! @brief Create a DQWORD pointer operand.
-static ASMJIT_INLINE Mem dqword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDQWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
+
+// ============================================================================
+// [asmjit::x86x64::Mem - ptr[base + (vex << shift) + disp]]
+// ============================================================================
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpReg& base, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpReg& base, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpVar& base, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0) { return Mem(base, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const GpVar& base, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, kSizeYWord); }
+
+// ============================================================================
+// [asmjit::x86x64::Mem - [label + disp]]
+// ============================================================================
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const Label& label, int32_t disp = 0, uint32_t size = 0) { return Mem(label, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, kSizeYWord); }
+
+// ============================================================================
+// [asmjit::x86x64::Mem - [label + index << shift + disp]]
+// ============================================================================
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0) { return Mem(label, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a custom pointer operand.
+static ASMJIT_INLINE Mem ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0, uint32_t size = 0) { return Mem(label, index, shift, disp, size); }
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, kSizeYWord); }
+
+// ============================================================================
+// [asmjit::x86x64::Mem - [ptr + disp]
+// ============================================================================
+
+//! @brief Create a custom pointer operand.
+ASMJIT_API Mem ptr_abs(Ptr pAbs, int32_t disp = 0, uint32_t size = 0);
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand (used for 80-bit floating points).
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, kSizeYWord); }
+
+// ============================================================================
+// [asmjit::x86x64::Mem - [pAbs + index << shift + disp]
+// ============================================================================
+
+//! @brief Create a custom pointer operand.
+ASMJIT_API Mem ptr_abs(Ptr pAbs, const X86Reg& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0);
+//! @brief Create a custom pointer operand.
+ASMJIT_API Mem ptr_abs(Ptr pAbs, const X86Var& index, uint32_t shift = 0, int32_t disp = 0, uint32_t size = 0);
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, const XmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, const YmmReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, const XmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeYWord); }
+
+//! @brief Create a Byte pointer operand.
+static ASMJIT_INLINE Mem byte_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeByte); }
+//! @brief Create a Word pointer operand.
+static ASMJIT_INLINE Mem word_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeWord); }
+//! @brief Create a DWord pointer operand.
+static ASMJIT_INLINE Mem dword_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeDWord); }
+//! @brief Create a QWord pointer operand.
+static ASMJIT_INLINE Mem qword_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeQWord); }
+//! @brief Create a TWord pointer operand.
+static ASMJIT_INLINE Mem tword_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeTWord); }
+//! @brief Create a OWord pointer operand.
+static ASMJIT_INLINE Mem oword_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeOWord); }
+//! @brief Create a YWord pointer operand.
+static ASMJIT_INLINE Mem yword_ptr_abs(Ptr pAbs, const YmmVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, kSizeYWord); }
 
 // ============================================================================
 // [asmjit::x86x64::Util]
@@ -3794,20 +3934,6 @@ static ASMJIT_INLINE GpReg gpz(uint32_t index) { return GpReg(kRegTypeGpd, index
 // ============================================================================
 
 //! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, 4); }
-//! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, 4); }
-//! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, 4); }
-
-//! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, 4); }
-//! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, 4); }
-//! @brief Create an intptr_t 32-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, 4); }
-
-//! @brief Create an intptr_t 32-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, 4); }
 //! @brief Create an intptr_t 32-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const GpVar& base, int32_t disp = 0) { return ptr(base, disp, 4); }
@@ -3815,6 +3941,20 @@ static ASMJIT_INLINE Mem intptr_ptr(const GpVar& base, int32_t disp = 0) { retur
 static ASMJIT_INLINE Mem intptr_ptr(const GpReg& base, const GpReg& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, 4); }
 //! @brief Create an intptr_t 32-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const GpVar& base, const GpVar& index, uint32_t shift = 0, int32_t disp = 0) { return ptr(base, index, shift, disp, 4); }
+
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr(const Label& label, int32_t disp = 0) { return ptr(label, disp, 4); }
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, 4); }
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, 4); }
+
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, 4); }
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, 4); }
+//! @brief Create an intptr_t 32-bit pointer operand.
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, 4); }
 
 //! @}
 
@@ -4041,11 +4181,11 @@ static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpReg& index, uint
 static ASMJIT_INLINE Mem intptr_ptr(const Label& label, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr(label, index, shift, disp, 8); }
 
 //! @brief Create an intptr_t 64-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, int32_t disp = 0) { return ptr_abs(target, disp, 8); }
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, int32_t disp = 0) { return ptr_abs(pAbs, disp, 8); }
 //! @brief Create an intptr_t 64-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, 8); }
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, const GpReg& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, 8); }
 //! @brief Create an intptr_t 64-bit pointer operand.
-static ASMJIT_INLINE Mem intptr_ptr_abs(void* target, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(target, index, shift, disp, 8); }
+static ASMJIT_INLINE Mem intptr_ptr_abs(Ptr pAbs, const GpVar& index, uint32_t shift, int32_t disp = 0) { return ptr_abs(pAbs, index, shift, disp, 8); }
 
 //! @brief Create an intptr_t 64-bit pointer operand.
 static ASMJIT_INLINE Mem intptr_ptr(const GpReg& base, int32_t disp = 0) { return ptr(base, disp, 8); }

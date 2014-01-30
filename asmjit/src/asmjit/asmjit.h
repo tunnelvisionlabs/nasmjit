@@ -87,15 +87,15 @@
 //! be used directly (like @c eax, @c mm, @c xmm, ...) or created through
 //! these functions:
 //!
-//! - @c asmjit::gpb_lo() - Get Gp-LO register (BYTE).
-//! - @c asmjit::gpb_hi() - Get Gp-HI register (BYTE).
-//! - @c asmjit::gpw() - Get Gp register (WORD).
-//! - @c asmjit::gpd() - Get Gp register (DWORD).
-//! - @c asmjit::gpq() - Get Gp register (QWORD).
-//! - @c asmjit::gpz() - Get Gp register (DWORD/QWORD).
+//! - @c asmjit::gpb_lo() - Get Gp-LO register (Byte).
+//! - @c asmjit::gpb_hi() - Get Gp-HI register (Byte).
+//! - @c asmjit::gpw() - Get Gp register (Word).
+//! - @c asmjit::gpd() - Get Gp register (DWord).
+//! - @c asmjit::gpq() - Get Gp register (QWord).
+//! - @c asmjit::gpz() - Get Gp register (DWord/QWord).
 //! - @c asmjit::fp()  - Get Fp register.
-//! - @c asmjit::mm()  - Get Mmx register (QWORD).
-//! - @c asmjit::xmm() - Get Xmm register (DQWORD).
+//! - @c asmjit::mm()  - Get Mmx register (QWord).
+//! - @c asmjit::xmm() - Get Xmm register (OWord).
 //!
 //! @section AsmJit_Core_Addressing Addressing
 //!
@@ -110,7 +110,7 @@
 //! - @c asmjit::dword_ptr()
 //! - @c asmjit::qword_ptr()
 //! - @c asmjit::tword_ptr()
-//! - @c asmjit::dqword_ptr()
+//! - @c asmjit::oword_ptr()
 //! - @c asmjit::intptr_ptr()
 //!
 //! Most useful function to make pointer should be @c asmjit::ptr(). It creates

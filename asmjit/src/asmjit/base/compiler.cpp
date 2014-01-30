@@ -481,7 +481,7 @@ void BaseCompiler::alloc(BaseVar& var, uint32_t regIndex) {
 }
 
 void BaseCompiler::alloc(BaseVar& var, const BaseReg& reg) {
-  addHint(var, kVarHintAlloc, reg.getIndex());
+  addHint(var, kVarHintAlloc, reg.getRegIndex());
 }
 
 void BaseCompiler::save(BaseVar& var) {
