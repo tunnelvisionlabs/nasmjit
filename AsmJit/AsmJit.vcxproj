@@ -10,6 +10,82 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\reference\AsmJit\Util\generate-defs.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\AsmJit.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Config.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ApiBegin.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ApiEnd.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Assembler.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Assert.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Buffer.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Build.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Compiler.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerContext.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerFunc.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerItem.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Context.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CpuInfo.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Defs.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Func.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\IntUtil.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Lock.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Logger.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\MemoryManager.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\MemoryMarker.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Operand.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\PodVector.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\StringBuilder.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\StringUtil.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\VirtualMemory.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ZoneMemory.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Assembler.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Compiler.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerContext.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerFunc.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerItem.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CpuInfo.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Defs.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Func.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Operand.h" />
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Assembler.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Assert.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Buffer.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Compiler.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerContext.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerFunc.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerItem.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Context.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CpuInfo.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Defs.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Func.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Logger.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\MemoryManager.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\MemoryMarker.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Operand.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\PodVector.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\StringBuilder.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\StringUtil.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\VirtualMemory.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\ZoneMemory.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Assembler.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Compiler.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerContext.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerFunc.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerItem.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CpuInfo.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Defs.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Func.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Operand.cpp" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Util.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7CF67962-1EE0-4C5E-98C1-FA5340CCCD47}</ProjectGuid>
     <RootNamespace>AsmJit</RootNamespace>
@@ -61,43 +137,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\ApiBegin.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\ApiEnd.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\AsmJit.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Assembler.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\AssemblerX86X64.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Build.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Compiler.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\CompilerX86X64.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Config.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\CpuInfo.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Defs.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\DefsX86X64.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Logger.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\MemoryManager.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Operand.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\OperandX86X64.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Platform.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Util.h" />
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Util_p.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\AssemblerX86X64.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Compiler.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\CompilerX86X64.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\CpuInfo.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Defs.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\DefsX86X64.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Logger.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\MemoryManager.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\OperandX86X64.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Platform.cpp" />
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Util.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\AsmJit-1.0\AsmJit\Regenerate.py" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

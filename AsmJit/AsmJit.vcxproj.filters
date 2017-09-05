@@ -13,102 +13,231 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{481a72e5-0184-4880-9ef3-85ebb9ea6ecf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{2d4808b0-fe61-4215-920e-da4444e123cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\X86">
+      <UniqueIdentifier>{f76f8f2d-2e34-4705-b66a-cbe605de8a42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\X86">
+      <UniqueIdentifier>{6b70241a-5887-4c8d-90a1-f2b6ce41771b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\ApiBegin.h">
+    <None Include="..\reference\AsmJit\Util\generate-defs.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ApiBegin.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ApiEnd.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Assembler.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Assert.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Buffer.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Build.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Compiler.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerContext.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerFunc.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CompilerItem.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Context.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\CpuInfo.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Defs.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Func.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\IntUtil.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Lock.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Logger.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\MemoryManager.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\MemoryMarker.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\Operand.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\PodVector.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\StringBuilder.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\StringUtil.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\VirtualMemory.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core\ZoneMemory.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Assembler.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Compiler.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerContext.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerFunc.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CompilerItem.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86CpuInfo.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Defs.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Func.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Operand.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86\X86Util.h">
+      <Filter>Header Files\X86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reference\AsmJit\AsmJit\AsmJit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\ApiEnd.h">
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\AsmJit.h">
+    <ClInclude Include="..\reference\AsmJit\AsmJit\Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Assembler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\AssemblerX86X64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Build.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Compiler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\CompilerX86X64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\CpuInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Defs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\DefsX86X64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\MemoryManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Operand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\OperandX86X64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\AsmJit-1.0\AsmJit\Util_p.h">
+    <ClInclude Include="..\reference\AsmJit\AsmJit\X86.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\AssemblerX86X64.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Assembler.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Compiler.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Assert.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\CompilerX86X64.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Buffer.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\CpuInfo.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Compiler.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Defs.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerContext.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\DefsX86X64.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerFunc.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CompilerItem.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\MemoryManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Context.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\OperandX86X64.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\CpuInfo.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Platform.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Defs.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\AsmJit-1.0\AsmJit\Util.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Func.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\AsmJit-1.0\AsmJit\Regenerate.py" />
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Logger.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\MemoryManager.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\MemoryMarker.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\Operand.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\PodVector.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\StringBuilder.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\StringUtil.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\VirtualMemory.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\Core\ZoneMemory.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Assembler.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Compiler.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerContext.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerFunc.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CompilerItem.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86CpuInfo.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Defs.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Func.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Operand.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reference\AsmJit\AsmJit\X86\X86Util.cpp">
+      <Filter>Source Files\X86</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
